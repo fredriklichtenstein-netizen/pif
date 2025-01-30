@@ -13,6 +13,8 @@ import {
 import { ImagePlus, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import type { CreatePostInput } from "@/types/post";
+import { useQueryClient } from "@tanstack/react-query";
+import { addPost } from "./Index";
 
 const CATEGORIES = [
   "Furniture",
@@ -26,21 +28,21 @@ const CATEGORIES = [
 const Post = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     description: "",
     category: "",
     images: [],
-    location: "", // TODO: Integrate with geolocation
+    location: "",
   });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    // TODO: Implement actual image upload
-    // For now, just create URLs for the selected images
+    // Create URLs for the selected images
     const imageUrls = Array.from(files).map((file) =>
       URL.createObjectURL(file)
     );
@@ -55,8 +57,8 @@ const Post = () => {
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await addPost(formData);
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
       
       toast({
         title: "Success!",

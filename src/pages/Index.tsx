@@ -1,9 +1,9 @@
 import { ItemCard } from "@/components/ItemCard";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Post } from "@/types/post";
 
-// Temporary mock data
-const MOCK_POSTS: Post[] = [
+// Initialize with some mock data
+let POSTS: Post[] = [
   {
     id: "1",
     title: "Vintage Denim Jacket",
@@ -34,15 +34,27 @@ const MOCK_POSTS: Post[] = [
   },
 ];
 
+// Mock API functions
+const getPosts = async () => POSTS;
+const addPost = async (post: Omit<Post, "id" | "postedBy" | "createdAt">) => {
+  const newPost: Post = {
+    ...post,
+    id: (POSTS.length + 1).toString(),
+    postedBy: {
+      id: "current-user",
+      name: "Current User",
+      avatar: "https://i.pravatar.cc/150?img=3",
+    },
+    createdAt: new Date(),
+  };
+  POSTS = [newPost, ...POSTS];
+  return newPost;
+};
+
 const Index = () => {
-  // TODO: Replace with actual API call
   const { data: posts, isLoading } = useQuery({
     queryKey: ["posts"],
-    queryFn: async () => {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return MOCK_POSTS;
-    },
+    queryFn: getPosts,
   });
 
   return (
@@ -82,4 +94,6 @@ const Index = () => {
   );
 };
 
+// Export the addPost function to be used in the Post page
+export { addPost };
 export default Index;
