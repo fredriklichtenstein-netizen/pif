@@ -9,6 +9,7 @@ interface ItemCardProps {
   image: string;
   location: string;
   category: string;
+  condition?: string;
   postedBy: {
     name: string;
     avatar: string;
@@ -22,6 +23,7 @@ export function ItemCard({
   image,
   location,
   category,
+  condition,
   postedBy,
 }: ItemCardProps) {
   const [isLiked, setIsLiked] = useState(false);
@@ -35,7 +37,12 @@ export function ItemCard({
       />
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-secondary">{category}</span>
+          <div className="space-x-2">
+            <span className="text-sm font-medium text-secondary">{category}</span>
+            {condition && (
+              <span className="text-sm text-gray-500">• {condition}</span>
+            )}
+          </div>
           <div className="flex items-center text-gray-500 text-sm">
             <MapPin size={14} className="mr-1" />
             <span>{location}</span>

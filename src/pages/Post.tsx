@@ -22,8 +22,26 @@ const CATEGORIES = [
   "Clothing",
   "Books",
   "Home & Garden",
+  "Shoes",
+  "Toys",
+  "Children's Clothing",
   "Other",
 ];
+
+const CONDITIONS = [
+  "New",
+  "Like New",
+  "Good",
+  "Fair",
+  "Well Loved",
+];
+
+const CATEGORY_MEASUREMENTS: { [key: string]: string[] } = {
+  "Clothing": ["Chest", "Length", "Shoulders", "Sleeves"],
+  "Shoes": ["EU Size", "US Size", "UK Size", "Insole Length"],
+  "Children's Clothing": ["Age", "Height", "Chest", "Length"],
+  "Furniture": ["Width", "Depth", "Height"],
+};
 
 const Post = () => {
   const navigate = useNavigate();
@@ -34,6 +52,8 @@ const Post = () => {
     title: "",
     description: "",
     category: "",
+    condition: "",
+    measurements: {},
     images: [],
     location: "",
   });
@@ -42,13 +62,22 @@ const Post = () => {
     const files = e.target.files;
     if (!files) return;
 
-    // Create URLs for the selected images
     const imageUrls = Array.from(files).map((file) =>
       URL.createObjectURL(file)
     );
     setFormData((prev) => ({
       ...prev,
       images: [...prev.images, ...imageUrls],
+    }));
+  };
+
+  const handleMeasurementChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      measurements: {
+        ...prev.measurements,
+        [field]: value,
+      },
     }));
   };
 
@@ -120,6 +149,48 @@ const Post = () => {
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2">
+          <label htmlFor="condition" className="text-sm font-medium">
+            Condition
+          </label>
+          <Select
+            value={formData.condition}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, condition: value }))
+            }
+            required
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select condition" />
+            </SelectTrigger>
+            <SelectContent>
+              {CONDITIONS.map((condition) => (
+                <SelectItem key={condition} value={condition}>
+                  {condition}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.category && CATEGORY_MEASUREMENTS[formData.category] && (
+          <div className="space-y-4">
+            <label className="text-sm font-medium">Measurements</label>
+            <div className="grid grid-cols-2 gap-4">
+              {CATEGORY_MEASUREMENTS[formData.category].map((field) => (
+                <div key={field} className="space-y-2">
+                  <label className="text-sm text-gray-600">{field}</label>
+                  <Input
+                    value={formData.measurements[field] || ""}
+                    onChange={(e) => handleMeasurementChange(field, e.target.value)}
+                    placeholder={field}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           <label htmlFor="description" className="text-sm font-medium">

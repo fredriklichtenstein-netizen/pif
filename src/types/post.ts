@@ -3,6 +3,10 @@ export interface Post {
   title: string;
   description: string;
   category: string;
+  condition: string;
+  measurements: {
+    [key: string]: string;
+  };
   images: string[];
   location: string;
   postedBy: {
