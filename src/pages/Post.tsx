@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, MapPin } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import type { CreatePostInput } from "@/types/post";
 import { useQueryClient } from "@tanstack/react-query";
@@ -48,6 +48,7 @@ const Post = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     description: "",
@@ -56,7 +57,52 @@ const Post = () => {
     measurements: {},
     images: [],
     location: "",
+    coordinates: undefined,
   });
+
+  const geocodeAddress = async (address: string) => {
+    if (!address) return;
+    
+    setIsGeocoding(true);
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          address
+        )}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&country=SE`
+      );
+      
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        const [lng, lat] = data.features[0].center;
+        setFormData(prev => ({
+          ...prev,
+          coordinates: { lat, lng },
+          location: address,
+        }));
+        
+        toast({
+          title: "Location found",
+          description: "Address has been successfully geocoded.",
+        });
+      } else {
+        toast({
+          title: "Location not found",
+          description: "Please enter a valid address in Sweden.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to geocode address. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -83,6 +129,16 @@ const Post = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.coordinates) {
+      toast({
+        title: "Missing location",
+        description: "Please enter and verify a valid address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -193,6 +249,40 @@ const Post = () => {
         )}
 
         <div className="space-y-2">
+          <label htmlFor="location" className="text-sm font-medium">
+            Location
+          </label>
+          <div className="flex gap-2">
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, location: e.target.value }))
+              }
+              placeholder="Enter your address"
+              required
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => geocodeAddress(formData.location)}
+              disabled={isGeocoding || !formData.location}
+            >
+              {isGeocoding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MapPin className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          {formData.coordinates && (
+            <p className="text-sm text-muted-foreground">
+              Location verified ✓
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <label htmlFor="description" className="text-sm font-medium">
             Description
           </label>
@@ -232,21 +322,6 @@ const Post = () => {
               />
             </label>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="location" className="text-sm font-medium">
-            Location
-          </label>
-          <Input
-            id="location"
-            value={formData.location}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, location: e.target.value }))
-            }
-            placeholder="Your location"
-            required
-          />
         </div>
 
         <Button
