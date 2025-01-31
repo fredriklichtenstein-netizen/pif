@@ -11,6 +11,13 @@ let POSTS: Post[] = [
     images: ["https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=800"],
     location: "2.5 km away",
     category: "Clothing",
+    condition: "Good",
+    measurements: {
+      Chest: "52cm",
+      Length: "65cm",
+      Shoulders: "45cm",
+      Sleeves: "60cm"
+    },
     postedBy: {
       id: "user1",
       name: "Sarah K.",
@@ -25,6 +32,12 @@ let POSTS: Post[] = [
     images: ["https://images.unsplash.com/photo-1594620302200-9a762244a156?w=800"],
     location: "1.2 km away",
     category: "Furniture",
+    condition: "Like New",
+    measurements: {
+      Width: "80cm",
+      Depth: "30cm",
+      Height: "180cm"
+    },
     postedBy: {
       id: "user2",
       name: "Mike R.",
@@ -84,6 +97,7 @@ const Index = () => {
                 image={post.images[0]}
                 location={post.location}
                 category={post.category}
+                condition={post.condition}
                 postedBy={post.postedBy}
               />
             ))}
@@ -94,6 +108,5 @@ const Index = () => {
   );
 };
 
-// Export the addPost function to be used in the Post page
 export { addPost };
 export default Index;
