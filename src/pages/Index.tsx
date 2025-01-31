@@ -48,7 +48,8 @@ let POSTS: Post[] = [
 ];
 
 // Mock API functions
-const getPosts = async () => POSTS;
+export const getPosts = async (): Promise<Post[]> => POSTS;
+
 const addPost = async (post: Omit<Post, "id" | "postedBy" | "createdAt">) => {
   const newPost: Post = {
     ...post,

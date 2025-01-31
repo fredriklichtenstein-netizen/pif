@@ -6,6 +6,7 @@ import { getPosts } from "./Index";
 import { useNavigate } from "react-router-dom";
 import { Map as MapIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import type { Post } from "@/types/post";
 
 // Function to add random offset to coordinates
 const addLocationNoise = (lat: number, lng: number, isDenseArea: boolean) => {
@@ -21,11 +22,7 @@ const addLocationNoise = (lat: number, lng: number, isDenseArea: boolean) => {
 };
 
 // Mock function to determine if area is densely populated
-// In a real app, this would use population density data
 const isDenselyPopulated = (lat: number, lng: number) => {
-  // Simple mock implementation - consider areas between
-  // latitudes 55 and 65 (roughly covering most of Sweden's populated areas)
-  // as densely populated
   return lat > 55 && lat < 65;
 };
 
@@ -36,7 +33,7 @@ const MapView = () => {
   const navigate = useNavigate();
   const [mapboxToken, setMapboxToken] = useState("");
 
-  const { data: posts } = useQuery({
+  const { data: posts } = useQuery<Post[]>({
     queryKey: ["posts"],
     queryFn: getPosts,
   });
@@ -102,7 +99,6 @@ const MapView = () => {
       // Add click handler to navigate to post
       el.addEventListener("click", () => {
         popup.addTo(map.current!);
-        // In a real app, this would navigate to the specific post
         navigate(`/?post=${post.id}`);
       });
 
