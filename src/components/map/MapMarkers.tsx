@@ -13,8 +13,8 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Wait for map to be initialized
-    if (!map) return;
+    // Wait for map to be initialized and loaded
+    if (!map || !map.loaded()) return;
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -35,17 +35,21 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
       const el = document.createElement("div");
       el.className = "w-4 h-4 bg-primary rounded-full cursor-pointer";
 
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([post.coordinates.lng, post.coordinates.lat])
-        .setPopup(popup)
-        .addTo(map);
+      try {
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([post.coordinates.lng, post.coordinates.lat])
+          .setPopup(popup)
+          .addTo(map);
 
-      el.addEventListener("click", () => {
-        popup.addTo(map);
-        navigate(`/?post=${post.id}`);
-      });
+        el.addEventListener("click", () => {
+          popup.addTo(map);
+          navigate(`/?post=${post.id}`);
+        });
 
-      markers.current.push(marker);
+        markers.current.push(marker);
+      } catch (error) {
+        console.error("Error adding marker:", error);
+      }
     });
 
     // Fit bounds to show all markers if there are any

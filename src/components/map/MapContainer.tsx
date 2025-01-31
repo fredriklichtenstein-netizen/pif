@@ -23,13 +23,20 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
       zoom: 11,
     });
 
-    newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
-    
-    // Only set the map instance after it's fully loaded
-    newMap.on('load', () => {
-      map.current = newMap;
-      onMapLoad(newMap);
+    // Wait for both style and map to be loaded before initializing
+    newMap.on('style.load', () => {
+      if (newMap.loaded()) {
+        map.current = newMap;
+        onMapLoad(newMap);
+      } else {
+        newMap.on('load', () => {
+          map.current = newMap;
+          onMapLoad(newMap);
+        });
+      }
     });
+
+    newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     return () => {
       map.current?.remove();
