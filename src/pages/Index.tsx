@@ -9,7 +9,11 @@ let POSTS: Post[] = [
     title: "Vintage Denim Jacket",
     description: "Size M, great condition, perfect for spring!",
     images: ["https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=800"],
-    location: "2.5 km away",
+    location: "Norrmalm, Stockholm",
+    coordinates: {
+      lat: 59.3362,
+      lng: 18.0598
+    },
     category: "Clothing",
     condition: "Good",
     measurements: {
@@ -30,7 +34,11 @@ let POSTS: Post[] = [
     title: "Wooden Bookshelf",
     description: "Sturdy bookshelf, perfect for small spaces",
     images: ["https://images.unsplash.com/photo-1594620302200-9a762244a156?w=800"],
-    location: "1.2 km away",
+    location: "Södermalm, Stockholm",
+    coordinates: {
+      lat: 59.3150,
+      lng: 18.0722
+    },
     category: "Furniture",
     condition: "Like New",
     measurements: {
@@ -50,7 +58,7 @@ let POSTS: Post[] = [
 // Mock API functions
 export const getPosts = async (): Promise<Post[]> => POSTS;
 
-const addPost = async (post: Omit<Post, "id" | "postedBy" | "createdAt">) => {
+export const addPost = async (post: Omit<Post, "id" | "postedBy" | "createdAt">) => {
   const newPost: Post = {
     ...post,
     id: (POSTS.length + 1).toString(),
@@ -109,5 +117,4 @@ const Index = () => {
   );
 };
 
-export { addPost };
 export default Index;

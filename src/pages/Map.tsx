@@ -4,27 +4,8 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useQuery } from "@tanstack/react-query";
 import { getPosts } from "./Index";
 import { useNavigate } from "react-router-dom";
-import { Map as MapIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { Post } from "@/types/post";
-
-// Function to add random offset to coordinates
-const addLocationNoise = (lat: number, lng: number, isDenseArea: boolean) => {
-  // Convert radius to degrees (approximate)
-  const radiusInDegrees = isDenseArea ? 0.001 : 0.045; // ~100m or ~5km
-  const angle = Math.random() * 2 * Math.PI;
-  const radius = Math.random() * radiusInDegrees;
-
-  return {
-    lat: lat + radius * Math.cos(angle),
-    lng: lng + radius * Math.sin(angle),
-  };
-};
-
-// Mock function to determine if area is densely populated
-const isDenselyPopulated = (lat: number, lng: number) => {
-  return lat > 55 && lat < 65;
-};
 
 const MapView = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -68,14 +49,7 @@ const MapView = () => {
     markersRef.current = [];
 
     posts.forEach((post) => {
-      // Mock coordinates for demo - in real app, these would come from the post data
-      const baseCoords = {
-        lat: 59.3293 + (Math.random() - 0.5) * 0.1,
-        lng: 18.0686 + (Math.random() - 0.5) * 0.1,
-      };
-
-      const isDense = isDenselyPopulated(baseCoords.lat, baseCoords.lng);
-      const { lat, lng } = addLocationNoise(baseCoords.lat, baseCoords.lng, isDense);
+      if (!post.coordinates) return;
 
       // Create popup
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
@@ -92,7 +66,7 @@ const MapView = () => {
 
       // Create and add the marker
       const marker = new mapboxgl.Marker(el)
-        .setLngLat([lng, lat])
+        .setLngLat([post.coordinates.lng, post.coordinates.lat])
         .setPopup(popup)
         .addTo(map.current!);
 
