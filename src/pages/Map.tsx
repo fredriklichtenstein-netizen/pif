@@ -10,7 +10,7 @@ import type { Post } from "@/types/post";
 const MapView = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const markers = useRef<mapboxgl.Marker[]>([]);
   const navigate = useNavigate();
   const [mapboxToken, setMapboxToken] = useState("");
 
@@ -19,39 +19,40 @@ const MapView = () => {
     queryFn: getPosts,
   });
 
+  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    // Initialize map
     mapboxgl.accessToken = mapboxToken;
     
-    map.current = new mapboxgl.Map({
+    const newMap = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/light-v11",
       center: [18.0686, 59.3293], // Stockholm center
       zoom: 11,
     });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+    newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.current = newMap;
 
     return () => {
       map.current?.remove();
+      map.current = null;
     };
   }, [mapboxToken]);
 
-  // Add markers when posts data changes
+  // Handle markers
   useEffect(() => {
     if (!map.current || !posts) return;
 
     // Clear existing markers
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current = [];
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
 
+    // Add new markers
     posts.forEach((post) => {
       if (!post.coordinates) return;
 
-      // Create popup
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <div class="max-w-xs">
           <img src="${post.images[0]}" alt="${post.title}" class="w-full h-32 object-cover rounded-lg mb-2"/>
@@ -60,24 +61,26 @@ const MapView = () => {
         </div>
       `);
 
-      // Create marker element
       const el = document.createElement("div");
       el.className = "w-4 h-4 bg-primary rounded-full cursor-pointer";
 
-      // Create and add the marker
       const marker = new mapboxgl.Marker(el)
         .setLngLat([post.coordinates.lng, post.coordinates.lat])
         .setPopup(popup)
-        .addTo(map.current!);
+        .addTo(map.current);
 
-      // Add click handler to navigate to post
       el.addEventListener("click", () => {
         popup.addTo(map.current!);
         navigate(`/?post=${post.id}`);
       });
 
-      markersRef.current.push(marker);
+      markers.current.push(marker);
     });
+
+    return () => {
+      markers.current.forEach(marker => marker.remove());
+      markers.current = [];
+    };
   }, [posts, navigate]);
 
   if (!mapboxToken) {
