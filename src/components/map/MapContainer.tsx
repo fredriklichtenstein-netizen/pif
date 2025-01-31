@@ -25,6 +25,7 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
 
     newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
     
+    // Only set the map instance after it's fully loaded
     newMap.on('load', () => {
       map.current = newMap;
       onMapLoad(newMap);

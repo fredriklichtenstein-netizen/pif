@@ -13,6 +13,9 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Wait for map to be initialized
+    if (!map) return;
+
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
@@ -45,7 +48,7 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
       markers.current.push(marker);
     });
 
-    // Fit bounds to show all markers
+    // Fit bounds to show all markers if there are any
     if (markers.current.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       posts.forEach(post => {
