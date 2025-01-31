@@ -9,6 +9,10 @@ export interface Post {
   };
   images: string[];
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   postedBy: {
     id: string;
     name: string;
