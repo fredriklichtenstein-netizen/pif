@@ -49,6 +49,7 @@ const Post = () => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState("");
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     description: "",
@@ -61,14 +62,21 @@ const Post = () => {
   });
 
   const geocodeAddress = async (address: string) => {
-    if (!address) return;
+    if (!address || !mapboxToken) {
+      toast({
+        title: "Missing Mapbox token",
+        description: "Please enter your Mapbox token first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsGeocoding(true);
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
           address
-        )}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&country=SE`
+        )}.json?access_token=${mapboxToken}&country=SE`
       );
       
       const data = await response.json();
@@ -161,6 +169,34 @@ const Post = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (!mapboxToken) {
+    return (
+      <div className="container mx-auto px-4 pb-20 pt-4">
+        <h1 className="text-2xl font-bold mb-4">Create Post</h1>
+        <div className="max-w-md mx-auto space-y-4">
+          <p className="text-gray-600">
+            Please enter your Mapbox public token to create a post. You can get one
+            from{" "}
+            <a
+              href="https://mapbox.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Mapbox
+            </a>
+          </p>
+          <Input
+            type="text"
+            placeholder="Enter Mapbox token"
+            value={mapboxToken}
+            onChange={(e) => setMapboxToken(e.target.value)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
