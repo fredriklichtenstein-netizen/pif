@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, MapPin, ThumbsUp, Mail, Share2 } from "lucide-react";
+import { Heart, MessageCircle, MapPin, ThumbsUp, Mail, Share2, Flag } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -6,6 +6,17 @@ import { useToast } from "@/hooks/use-toast";
 import { CommentInput } from "./comments/CommentInput";
 import { CommentCard } from "./comments/CommentCard";
 import { PostActions } from "./post/PostActions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 import type { Comment } from "@/types/comment";
 
 interface ItemCardProps {
@@ -36,6 +47,7 @@ export function ItemCard({
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [showInterest, setShowInterest] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const { toast } = useToast();
 
   const handleShowInterest = () => {
@@ -78,6 +90,19 @@ export function ItemCard({
     }));
   };
 
+  const handleEditComment = (commentId: string, newText: string) => {
+    setComments(comments.map(comment => {
+      if (comment.id === commentId) {
+        return { ...comment, text: newText };
+      }
+      return comment;
+    }));
+    toast({
+      title: "Comment updated",
+      description: "Your comment has been edited successfully",
+    });
+  };
+
   const handleDeleteComment = (commentId: string) => {
     setComments(comments.filter(comment => comment.id !== commentId));
     toast({
@@ -86,12 +111,52 @@ export function ItemCard({
     });
   };
 
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}/item/${id}`;
-    navigator.clipboard.writeText(shareUrl);
+  const handleReplyToComment = (commentId: string, text: string) => {
+    const reply: Comment = {
+      id: Date.now().toString(),
+      text,
+      author: {
+        name: "Current User",
+        avatar: "https://i.pravatar.cc/150?img=3",
+      },
+      likes: 0,
+      isLiked: false,
+      replies: [],
+      createdAt: new Date(),
+    };
+
+    setComments(comments.map(comment => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          replies: [reply, ...comment.replies],
+        };
+      }
+      return comment;
+    }));
+  };
+
+  const handleReportComment = (commentId: string) => {
     toast({
-      title: "Link copied!",
-      description: "Share this item with your friends",
+      title: "Comment reported",
+      description: "Thank you for helping keep our community safe. We'll review this comment.",
+    });
+  };
+
+  const handleReact = (type: string) => {
+    toast({
+      title: `Reacted with ${type}`,
+      description: "Your reaction has been recorded",
+    });
+  };
+
+  const handleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+    toast({
+      title: isBookmarked ? "Removed from saved items" : "Saved to your items",
+      description: isBookmarked 
+        ? "This item has been removed from your saved items" 
+        : "You can find this item in your saved items",
     });
   };
 
@@ -114,11 +179,6 @@ export function ItemCard({
       onClick: () => null,
       component: Link,
       to: `/messages/new/${postedBy.name}`,
-    },
-    {
-      icon: <Share2 size={20} />,
-      label: "Share",
-      onClick: handleShare,
     },
   ];
 
@@ -157,7 +217,39 @@ export function ItemCard({
             <span className="text-sm text-gray-600">{postedBy.name}</span>
           </Link>
           <div className="flex items-center space-x-3">
-            <PostActions actions={postActions} />
+            <PostActions
+              actions={postActions}
+              onReact={handleReact}
+              onBookmark={handleBookmark}
+              isBookmarked={isBookmarked}
+            />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Flag className="mr-2 h-4 w-4" />
+                  Report
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Report this item</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to report this item? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => {
+                    toast({
+                      title: "Item reported",
+                      description: "Thank you for helping keep our community safe. We'll review this item.",
+                    });
+                  }}>
+                    Report
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Button
               variant={showInterest ? "default" : "outline"}
               size="sm"
@@ -180,6 +272,9 @@ export function ItemCard({
                   comment={comment}
                   onLike={handleLikeComment}
                   onDelete={handleDeleteComment}
+                  onEdit={handleEditComment}
+                  onReply={handleReplyToComment}
+                  onReport={handleReportComment}
                   currentUser="Current User"
                 />
               ))}

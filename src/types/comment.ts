@@ -9,6 +9,11 @@ export interface Comment {
   isLiked: boolean;
   replies: Comment[];
   createdAt: Date;
+  isEditing?: boolean;
+  reactions?: {
+    type: "like" | "love" | "haha" | "wow" | "sad" | "angry";
+    count: number;
+  }[];
 }
 
 export interface PostAction {
@@ -17,4 +22,12 @@ export interface PostAction {
   onClick: () => void;
   variant?: "default" | "outline";
   active?: boolean;
+  component?: any;
+  to?: string;
+}
+
+export interface ReactionType {
+  type: "like" | "love" | "haha" | "wow" | "sad" | "angry";
+  icon: React.ReactNode;
+  label: string;
 }
