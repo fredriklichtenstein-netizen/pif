@@ -1,9 +1,12 @@
-import { Heart, MessageCircle, MapPin, ThumbsUp, Reply, Mail } from "lucide-react";
+import { Heart, MessageCircle, MapPin, ThumbsUp, Reply, Mail, Trash2, Share2, Smile } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 interface Comment {
   id: string;
@@ -47,6 +50,7 @@ export function ItemCard({
   const [newComment, setNewComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [showInterest, setShowInterest] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const { toast } = useToast();
 
   const handleShowInterest = () => {
@@ -66,7 +70,7 @@ export function ItemCard({
       id: Date.now().toString(),
       text: newComment,
       author: {
-        name: "Current User", // This will be replaced with actual user data
+        name: "Current User",
         avatar: "https://i.pravatar.cc/150?img=3",
       },
       likes: 0,
@@ -77,6 +81,13 @@ export function ItemCard({
 
     setComments([comment, ...comments]);
     setNewComment("");
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddComment();
+    }
   };
 
   const handleLikeComment = (commentId: string) => {
@@ -90,6 +101,28 @@ export function ItemCard({
       }
       return comment;
     }));
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    setComments(comments.filter(comment => comment.id !== commentId));
+    toast({
+      title: "Comment deleted",
+      description: "Your comment has been removed",
+    });
+  };
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/item/${id}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: "Link copied!",
+      description: "Share this item with your friends",
+    });
+  };
+
+  const handleEmojiSelect = (emoji: any) => {
+    setNewComment(prev => prev + emoji.native);
+    setShowEmojiPicker(false);
   };
 
   return (
@@ -147,6 +180,12 @@ export function ItemCard({
             >
               <Mail size={20} />
             </Link>
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-full text-gray-400 hover:text-primary transition-colors"
+            >
+              <Share2 size={20} />
+            </button>
             <Button
               variant={showInterest ? "default" : "outline"}
               size="sm"
@@ -162,12 +201,32 @@ export function ItemCard({
         {showComments && (
           <div className="mt-4 space-y-4">
             <div className="flex gap-2">
-              <Textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write a comment..."
-                className="min-h-[60px]"
-              />
+              <div className="flex-1 relative">
+                <Textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Write a comment..."
+                  className="min-h-[60px] pr-10"
+                />
+                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                  <PopoverTrigger asChild>
+                    <button 
+                      className="absolute right-2 bottom-2 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                      <Smile size={20} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Picker 
+                      data={data} 
+                      onEmojiSelect={handleEmojiSelect}
+                      theme="light"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
               <Button onClick={handleAddComment}>Post</Button>
             </div>
             
@@ -181,11 +240,21 @@ export function ItemCard({
                       className="w-8 h-8 rounded-full"
                     />
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{comment.author.name}</span>
-                        <span className="text-sm text-gray-500">
-                          {new Date(comment.createdAt).toLocaleDateString()}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{comment.author.name}</span>
+                          <span className="text-sm text-gray-500">
+                            {new Date(comment.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {comment.author.name === "Current User" && (
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="text-gray-400 hover:text-red-500"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                       <p className="text-sm mt-1">{comment.text}</p>
                       <div className="flex items-center gap-4 mt-2">
