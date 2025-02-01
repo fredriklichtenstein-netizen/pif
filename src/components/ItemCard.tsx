@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, MapPin, ThumbsUp, Reply } from "lucide-react";
+import { Heart, MessageCircle, MapPin, ThumbsUp, Reply, Mail } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -145,7 +145,7 @@ export function ItemCard({
               to={`/messages/new/${postedBy.name}`}
               className="p-2 rounded-full text-gray-400 hover:text-primary transition-colors"
             >
-              <MessageCircle size={20} />
+              <Mail size={20} />
             </Link>
             <Button
               variant={showInterest ? "default" : "outline"}
