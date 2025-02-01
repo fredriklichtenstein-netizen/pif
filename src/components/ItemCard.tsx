@@ -1,25 +1,12 @@
-import { Heart, MessageCircle, MapPin, ThumbsUp, Reply, Mail, Trash2, Share2, Smile } from "lucide-react";
+import { Heart, MessageCircle, MapPin, ThumbsUp, Mail, Share2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import data from '@emoji-mart/data'
-import Picker from '@emoji-mart/react'
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-
-interface Comment {
-  id: string;
-  text: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
-  likes: number;
-  isLiked: boolean;
-  replies: Comment[];
-  createdAt: Date;
-}
+import { CommentInput } from "./comments/CommentInput";
+import { CommentCard } from "./comments/CommentCard";
+import { PostActions } from "./post/PostActions";
+import type { Comment } from "@/types/comment";
 
 interface ItemCardProps {
   id: string;
@@ -47,10 +34,8 @@ export function ItemCard({
 }: ItemCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [newComment, setNewComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [showInterest, setShowInterest] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const { toast } = useToast();
 
   const handleShowInterest = () => {
@@ -63,12 +48,10 @@ export function ItemCard({
     });
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    
+  const handleAddComment = (text: string) => {
     const comment: Comment = {
       id: Date.now().toString(),
-      text: newComment,
+      text,
       author: {
         name: "Current User",
         avatar: "https://i.pravatar.cc/150?img=3",
@@ -80,14 +63,6 @@ export function ItemCard({
     };
 
     setComments([comment, ...comments]);
-    setNewComment("");
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAddComment();
-    }
   };
 
   const handleLikeComment = (commentId: string) => {
@@ -120,10 +95,32 @@ export function ItemCard({
     });
   };
 
-  const handleEmojiSelect = (emoji: any) => {
-    setNewComment(prev => prev + emoji.native);
-    setShowEmojiPicker(false);
-  };
+  const postActions = [
+    {
+      icon: <Heart size={20} fill={isLiked ? "currentColor" : "none"} />,
+      label: "Like",
+      onClick: () => setIsLiked(!isLiked),
+      active: isLiked,
+    },
+    {
+      icon: <MessageCircle size={20} />,
+      label: "Comment",
+      onClick: () => setShowComments(!showComments),
+      active: showComments,
+    },
+    {
+      icon: <Mail size={20} />,
+      label: "Message",
+      onClick: () => null,
+      component: Link,
+      to: `/messages/new/${postedBy.name}`,
+    },
+    {
+      icon: <Share2 size={20} />,
+      label: "Share",
+      onClick: handleShare,
+    },
+  ];
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
@@ -160,32 +157,7 @@ export function ItemCard({
             <span className="text-sm text-gray-600">{postedBy.name}</span>
           </Link>
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setIsLiked(!isLiked)}
-              className={`p-2 rounded-full transition-colors ${
-                isLiked ? "text-red-500" : "text-gray-400 hover:text-red-500"
-              }`}
-            >
-              <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
-            </button>
-            <button
-              onClick={() => setShowComments(!showComments)}
-              className="p-2 rounded-full text-gray-400 hover:text-primary transition-colors"
-            >
-              <MessageCircle size={20} />
-            </button>
-            <Link
-              to={`/messages/new/${postedBy.name}`}
-              className="p-2 rounded-full text-gray-400 hover:text-primary transition-colors"
-            >
-              <Mail size={20} />
-            </Link>
-            <button
-              onClick={handleShare}
-              className="p-2 rounded-full text-gray-400 hover:text-primary transition-colors"
-            >
-              <Share2 size={20} />
-            </button>
+            <PostActions actions={postActions} />
             <Button
               variant={showInterest ? "default" : "outline"}
               size="sm"
@@ -200,81 +172,16 @@ export function ItemCard({
 
         {showComments && (
           <div className="mt-4 space-y-4">
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <Textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Write a comment..."
-                  className="min-h-[60px] pr-10"
-                />
-                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-                  <PopoverTrigger asChild>
-                    <button 
-                      className="absolute right-2 bottom-2 text-gray-400 hover:text-gray-600"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    >
-                      <Smile size={20} />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Picker 
-                      data={data} 
-                      onEmojiSelect={handleEmojiSelect}
-                      theme="light"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <Button onClick={handleAddComment}>Post</Button>
-            </div>
-            
+            <CommentInput onSubmit={handleAddComment} />
             <div className="space-y-4">
               {comments.map((comment) => (
-                <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <img
-                      src={comment.author.avatar}
-                      alt={comment.author.name}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{comment.author.name}</span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(comment.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        {comment.author.name === "Current User" && (
-                          <button
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="text-gray-400 hover:text-red-500"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-sm mt-1">{comment.text}</p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <button
-                          onClick={() => handleLikeComment(comment.id)}
-                          className={`text-sm flex items-center gap-1 ${
-                            comment.isLiked ? "text-primary" : "text-gray-500"
-                          }`}
-                        >
-                          <ThumbsUp size={14} />
-                          {comment.likes > 0 && <span>{comment.likes}</span>}
-                        </button>
-                        <button className="text-sm flex items-center gap-1 text-gray-500">
-                          <Reply size={14} />
-                          Reply
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <CommentCard
+                  key={comment.id}
+                  comment={comment}
+                  onLike={handleLikeComment}
+                  onDelete={handleDeleteComment}
+                  currentUser="Current User"
+                />
               ))}
             </div>
           </div>
