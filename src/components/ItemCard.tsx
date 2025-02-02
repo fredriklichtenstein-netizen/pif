@@ -1,22 +1,9 @@
-import { Heart, MessageCircle, MapPin, ThumbsUp, Mail, Share2, Flag } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { CommentInput } from "./comments/CommentInput";
-import { CommentCard } from "./comments/CommentCard";
-import { PostActions } from "./post/PostActions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "./ui/alert-dialog";
+import { ItemHeader } from "./post/ItemHeader";
+import { ItemImage } from "./post/ItemImage";
+import { ItemInteractions } from "./post/ItemInteractions";
+import { CommentSection } from "./post/CommentSection";
 import type { Comment } from "@/types/comment";
 
 interface ItemCardProps {
@@ -73,7 +60,6 @@ export function ItemCard({
       replies: [],
       createdAt: new Date(),
     };
-
     setComments([comment, ...comments]);
   };
 
@@ -160,127 +146,43 @@ export function ItemCard({
     });
   };
 
-  const postActions = [
-    {
-      icon: <Heart size={20} fill={isLiked ? "currentColor" : "none"} />,
-      label: "Like",
-      onClick: () => setIsLiked(!isLiked),
-      active: isLiked,
-    },
-    {
-      icon: <MessageCircle size={20} />,
-      label: "Comment",
-      onClick: () => setShowComments(!showComments),
-      active: showComments,
-    },
-    {
-      icon: <Mail size={20} />,
-      label: "Message",
-      onClick: () => null,
-      component: Link,
-      to: `/messages/new/${postedBy.name}`,
-    },
-  ];
-
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
-      <img
-        src={image}
-        alt={title}
-        className="w-full h-48 object-cover"
-      />
+      <ItemImage image={image} title={title} />
       <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="space-x-2">
-            <span className="text-sm font-medium text-secondary">{category}</span>
-            {condition && (
-              <span className="text-sm text-gray-500">• {condition}</span>
-            )}
-          </div>
-          <div className="flex items-center text-gray-500 text-sm">
-            <MapPin size={14} className="mr-1" />
-            <span>{location}</span>
-          </div>
+        <ItemHeader
+          category={category}
+          condition={condition}
+          location={location}
+          title={title}
+          description={description}
+          postedBy={postedBy}
+        />
+        <div className="mt-4">
+          <ItemInteractions
+            id={id}
+            postedBy={postedBy}
+            isLiked={isLiked}
+            showComments={showComments}
+            isBookmarked={isBookmarked}
+            showInterest={showInterest}
+            onLikeToggle={() => setIsLiked(!isLiked)}
+            onCommentToggle={() => setShowComments(!showComments)}
+            onShowInterest={handleShowInterest}
+            onBookmarkToggle={handleBookmark}
+            onReact={handleReact}
+          />
         </div>
-        <h3 className="text-lg font-semibold mb-1">{title}</h3>
-        <p className="text-gray-600 text-sm mb-3">{description}</p>
-        <div className="flex items-center justify-between">
-          <Link
-            to={`/profile/${postedBy.name}`}
-            className="flex items-center"
-          >
-            <img
-              src={postedBy.avatar}
-              alt={postedBy.name}
-              className="w-6 h-6 rounded-full mr-2"
-            />
-            <span className="text-sm text-gray-600">{postedBy.name}</span>
-          </Link>
-          <div className="flex items-center space-x-3">
-            <PostActions
-              actions={postActions}
-              onReact={handleReact}
-              onBookmark={handleBookmark}
-              isBookmarked={isBookmarked}
-            />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Flag className="mr-2 h-4 w-4" />
-                  Report
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Report this item</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to report this item? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => {
-                    toast({
-                      title: "Item reported",
-                      description: "Thank you for helping keep our community safe. We'll review this item.",
-                    });
-                  }}>
-                    Report
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <Button
-              variant={showInterest ? "default" : "outline"}
-              size="sm"
-              onClick={handleShowInterest}
-              className="ml-2"
-            >
-              <ThumbsUp size={16} className="mr-2" />
-              {showInterest ? "Interested" : "Show Interest"}
-            </Button>
-          </div>
-        </div>
-
-        {showComments && (
-          <div className="mt-4 space-y-4">
-            <CommentInput onSubmit={handleAddComment} />
-            <div className="space-y-4">
-              {comments.map((comment) => (
-                <CommentCard
-                  key={comment.id}
-                  comment={comment}
-                  onLike={handleLikeComment}
-                  onDelete={handleDeleteComment}
-                  onEdit={handleEditComment}
-                  onReply={handleReplyToComment}
-                  onReport={handleReportComment}
-                  currentUser="Current User"
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        <CommentSection
+          comments={comments}
+          showComments={showComments}
+          onAddComment={handleAddComment}
+          onLikeComment={handleLikeComment}
+          onDeleteComment={handleDeleteComment}
+          onEditComment={handleEditComment}
+          onReplyToComment={handleReplyToComment}
+          onReportComment={handleReportComment}
+        />
       </div>
     </div>
   );
