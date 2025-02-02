@@ -40,7 +40,25 @@ export default function Auth() {
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          // Handle specific error cases
+          if (error.message.includes("Email not confirmed")) {
+            // Resend confirmation email
+            const { error: resendError } = await supabase.auth.resend({
+              type: 'signup',
+              email,
+            });
+            
+            if (resendError) throw resendError;
+            
+            toast({
+              title: "Email not confirmed",
+              description: "We've sent a new confirmation email. Please check your inbox.",
+            });
+            return;
+          }
+          throw error;
+        }
         
         toast({
           title: "Welcome back!",
@@ -51,9 +69,7 @@ export default function Auth() {
     } catch (error: any) {
       let errorMessage = error.message;
       // Handle common error cases
-      if (error.message.includes("Email not confirmed")) {
-        errorMessage = "Please check your email to confirm your account.";
-      } else if (error.message.includes("Invalid login credentials")) {
+      if (error.message.includes("Invalid login credentials")) {
         errorMessage = "Invalid email or password.";
       } else if (error.message.includes("User already registered")) {
         errorMessage = "An account with this email already exists.";
