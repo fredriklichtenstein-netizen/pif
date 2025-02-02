@@ -8,9 +8,10 @@ import Picker from '@emoji-mart/react';
 
 interface CommentInputProps {
   onSubmit: (text: string) => void;
+  placeholder?: string;
 }
 
-export function CommentInput({ onSubmit }: CommentInputProps) {
+export function CommentInput({ onSubmit, placeholder = "Write a comment..." }: CommentInputProps) {
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -39,7 +40,7 @@ export function CommentInput({ onSubmit }: CommentInputProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Write a comment..."
+          placeholder={placeholder}
           className="min-h-[60px] pr-10"
         />
         <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
