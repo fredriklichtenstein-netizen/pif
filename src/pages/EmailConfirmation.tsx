@@ -14,12 +14,23 @@ export default function EmailConfirmation() {
 
   useEffect(() => {
     // Get the user's email from the session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
+      } else {
+        // If no session, try to get email from URL params
+        const params = new URLSearchParams(window.location.search);
+        const email = params.get('email');
+        if (email) {
+          setUserEmail(email);
+        }
       }
-    });
+    };
 
+    getSession();
+
+    // Check email confirmation status periodically
     const checkEmailConfirmation = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email_confirmed_at) {
@@ -63,6 +74,7 @@ export default function EmailConfirmation() {
         description: "Please check your inbox for the confirmation link.",
       });
       
+      // Start cooldown timer
       setResendCooldown(60);
       const timer = setInterval(() => {
         setResendCooldown((prev) => {
@@ -92,8 +104,9 @@ export default function EmailConfirmation() {
         </div>
         <h2 className="text-3xl font-bold text-gray-900">Check your email</h2>
         <p className="text-gray-600">
-          We've sent you a confirmation link. Please check your inbox and click the
-          link to continue with your profile creation.
+          We've sent you a confirmation link to{" "}
+          <span className="font-medium">{userEmail}</span>. Please check your inbox
+          and click the link to continue with your profile creation.
         </p>
         <Button
           onClick={handleResendConfirmation}
