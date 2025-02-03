@@ -34,7 +34,9 @@ interface ItemInteractionsProps {
   onCommentToggle: () => void;
   onShowInterest: () => void;
   onBookmarkToggle: () => void;
-  onReact: (type: string) => void;
+  onMessage: () => void;
+  onShare: () => void;
+  onReport: () => void;
 }
 
 export function ItemInteractions({
@@ -48,25 +50,11 @@ export function ItemInteractions({
   onCommentToggle,
   onShowInterest,
   onBookmarkToggle,
-  onReact,
+  onMessage,
+  onShare,
+  onReport,
 }: ItemInteractionsProps) {
   const { toast } = useToast();
-
-  const handleShare = (platform: string) => {
-    const url = window.location.href;
-    window.open(`https://${platform}.com/share?url=${url}`, '_blank');
-    toast({
-      title: "Shared!",
-      description: `Item shared on ${platform}`,
-    });
-  };
-
-  const handleReport = () => {
-    toast({
-      title: "Item reported",
-      description: "Thank you for helping keep our community safe. We'll review this item.",
-    });
-  };
 
   const primaryActions = [
     {
@@ -84,7 +72,7 @@ export function ItemInteractions({
     {
       icon: <Mail size={20} />,
       label: "Message",
-      onClick: () => null,
+      onClick: onMessage,
       component: Link,
       to: `/messages/new/${postedBy.name}`,
     },
@@ -120,7 +108,7 @@ export function ItemInteractions({
               <Bookmark className={`mr-2 h-4 w-4 ${isBookmarked ? "fill-current" : ""}`} />
               {isBookmarked ? "Saved" : "Save item"}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleShare("facebook")}>
+            <DropdownMenuItem onClick={onShare}>
               <Share2 className="mr-2 h-4 w-4" />
               Share
             </DropdownMenuItem>
@@ -140,7 +128,7 @@ export function ItemInteractions({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleReport}>Report</AlertDialogAction>
+                  <AlertDialogAction onClick={onReport}>Report</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
