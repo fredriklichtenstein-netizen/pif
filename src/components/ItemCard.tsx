@@ -80,8 +80,11 @@ export function ItemCard({
     setShowComments(!showComments);
   };
 
-  const handleMessage = async () => {
-    if (!await checkAuth("message the owner")) return;
+  const handleMessage = async (e: React.MouseEvent) => {
+    if (!await checkAuth("message the owner")) {
+      e.preventDefault();
+      return;
+    }
     navigate(`/messages/new/${postedBy.name}`);
   };
 

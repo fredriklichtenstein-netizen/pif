@@ -73,8 +73,6 @@ export function ItemInteractions({
       icon: <Mail size={20} />,
       label: "Message",
       onClick: onMessage,
-      component: Link,
-      to: `/messages/new/${postedBy.name}`,
     },
   ];
 
