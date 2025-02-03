@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 
 interface ItemInteractionsProps {
   id: string;
@@ -34,7 +33,7 @@ interface ItemInteractionsProps {
   onCommentToggle: () => void;
   onShowInterest: () => void;
   onBookmarkToggle: () => void;
-  onMessage: () => void;
+  onMessage: (e: React.MouseEvent) => void;
   onShare: () => void;
   onReport: () => void;
 }
