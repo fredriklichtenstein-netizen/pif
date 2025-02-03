@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,39 +8,52 @@ import { useToast } from "@/hooks/use-toast";
 export default function EmailConfirmation() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get the user's email from the session
+    // Get the email from URL params or session
+    const getEmailFromParams = () => {
+      const email = searchParams.get('email');
+      if (email) {
+        setUserEmail(email);
+      }
+    };
+
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
-      } else {
-        // If no session, try to get email from URL params
-        const params = new URLSearchParams(window.location.search);
-        const email = params.get('email');
-        if (email) {
-          setUserEmail(email);
+        // If user is authenticated and email is confirmed, redirect to profile creation
+        if (session.user.email_confirmed_at) {
+          navigate("/create-profile");
         }
+      } else {
+        getEmailFromParams();
       }
     };
 
     getSession();
 
-    // Check email confirmation status periodically
-    const checkEmailConfirmation = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email_confirmed_at) {
-        navigate("/create-profile");
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        if (session?.user?.email_confirmed_at) {
+          toast({
+            title: "Email confirmed",
+            description: "Your email has been confirmed. Let's create your profile!",
+          });
+          navigate("/create-profile");
+        }
       }
-    };
+    });
 
-    const interval = setInterval(checkEmailConfirmation, 3000);
-    return () => clearInterval(interval);
-  }, [navigate]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, searchParams, toast]);
 
   const handleResendConfirmation = async () => {
     if (!userEmail) {
