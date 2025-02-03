@@ -8,46 +8,31 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
   const markers = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
-    if (!map || !posts) {
-      console.log("Map or posts not available");
-      return;
-    }
+    if (!map || !posts) return;
 
-    console.log("Clearing existing markers");
-    // Always clear existing markers
+    // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    console.log(`Adding ${posts.length} markers to map`);
-    // Add new markers
+    // Add new markers for posts with coordinates
     posts.forEach((post) => {
-      if (!post.coordinates) {
-        console.warn(`Post ${post.id} has no coordinates`);
-        return;
-      }
+      if (!post.coordinates) return;
 
-      const popup = createMapPopup({ post });
-      const markerElement = createMarkerElement({
-        onClick: () => {
-          console.log(`Marker clicked for post ${post.id}`);
-          onMarkerClick(post.id);
-        },
-        onMouseEnter: () => popup.addTo(map),
-        onMouseLeave: () => popup.remove(),
-      });
-
+      // Create marker
       const marker = new mapboxgl.Marker({
-        element: markerElement,
-        anchor: 'bottom',
+        element: createMarkerElement({
+          onClick: () => onMarkerClick(post.id),
+          onMouseEnter: () => createMapPopup({ post }).addTo(map),
+          onMouseLeave: () => map.getPopup()?.remove(),
+        })
       })
         .setLngLat([post.coordinates.lng, post.coordinates.lat])
         .addTo(map);
 
       markers.current.push(marker);
-      console.log(`Added marker for post ${post.id}`);
     });
 
-    // Fit bounds if there are markers
+    // Fit map to show all markers
     if (markers.current.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       posts.forEach(post => {
@@ -58,11 +43,11 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
       
       map.fitBounds(bounds, { 
         padding: 50,
-        maxZoom: 14
+        maxZoom: 14,
+        duration: 1000
       });
-      console.log("Adjusted map bounds to show all markers");
     }
-  }, [map, posts, onMarkerClick]); // Always run when these dependencies change
+  }, [map, posts, onMarkerClick]);
 
   return markers.current;
 };

@@ -13,44 +13,29 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || mapInstance.current) return;
-
-    console.log("Initializing map with token:", mapboxToken);
     
     mapboxgl.accessToken = mapboxToken;
     
-    const newMap = new mapboxgl.Map({
+    const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/light-v11",
       center: [18.0686, 59.3293], // Stockholm center
       zoom: 11,
     });
 
-    mapInstance.current = newMap;
-
-    // Wait for both style and map to be loaded before initializing
-    newMap.on('style.load', () => {
-      console.log("Map style loaded");
-      if (newMap.loaded()) {
-        console.log("Map already loaded, calling onMapLoad");
-        onMapLoad(newMap);
-      } else {
-        console.log("Waiting for map load");
-        newMap.on('load', () => {
-          console.log("Map loaded, calling onMapLoad");
-          onMapLoad(newMap);
-        });
-      }
+    map.on('load', () => {
+      onMapLoad(map);
     });
 
-    newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+    mapInstance.current = map;
 
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
+      map.remove();
+      mapInstance.current = null;
     };
-  }, [mapboxToken]); // Only re-run if mapboxToken changes
+  }, [mapboxToken, onMapLoad]);
 
   return (
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden">
