@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPosts } from "./Index";
 import { MapContainer } from "@/components/map/MapContainer";
 import { MapMarkers } from "@/components/map/MapMarkers";
 import mapboxgl from "mapbox-gl";
 import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams } from "react-router-dom";
 
 const MapView = () => {
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const location = searchParams.get("location");
 
   const { data: posts } = useQuery({
     queryKey: ["posts"],
@@ -25,6 +28,20 @@ const MapView = () => {
       return data.token;
     },
   });
+
+  // Center map on selected location if provided
+  useEffect(() => {
+    if (mapInstance && location && posts) {
+      const post = posts.find(p => p.location === location);
+      if (post?.coordinates) {
+        mapInstance.flyTo({
+          center: [post.coordinates.lng, post.coordinates.lat],
+          zoom: 14,
+          essential: true
+        });
+      }
+    }
+  }, [mapInstance, location, posts]);
 
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
