@@ -36,6 +36,8 @@ export default function CreateProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      console.log("Starting profile creation for user:", user.id);
+
       let avatarPath = null;
       if (avatar) {
         const fileExt = avatar.name.split('.').pop();
@@ -51,10 +53,12 @@ export default function CreateProfile() {
           .getPublicUrl(fileName);
         
         avatarPath = publicUrl;
+        console.log("Avatar uploaded successfully:", avatarPath);
       }
 
       // First update the profile data
-      const { error: updateError } = await supabase
+      console.log("Updating profile data...");
+      const { data: profileData, error: updateError } = await supabase
         .from('profiles')
         .update({
           full_name: formData.fullName,
@@ -63,18 +67,35 @@ export default function CreateProfile() {
           address: formData.address,
           avatar_url: avatarPath,
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
       if (updateError) throw updateError;
+      console.log("Profile data updated successfully:", profileData);
 
       // Then set onboarding_completed to true in a separate update
-      // This ensures all profile data is saved before marking onboarding as complete
-      const { error: onboardingError } = await supabase
+      console.log("Setting onboarding_completed flag...");
+      const { data: onboardingData, error: onboardingError } = await supabase
         .from('profiles')
         .update({ onboarding_completed: true })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
       if (onboardingError) throw onboardingError;
+      console.log("Onboarding completed flag set successfully:", onboardingData);
+
+      // Verify the profile was created correctly
+      const { data: verifyProfile, error: verifyError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (verifyError) {
+        console.error("Error verifying profile:", verifyError);
+      } else {
+        console.log("Final profile state:", verifyProfile);
+      }
 
       toast({
         title: "Profile created!",
@@ -83,12 +104,12 @@ export default function CreateProfile() {
 
       navigate("/");
     } catch (error: any) {
+      console.error("Profile creation error:", error);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-      console.error("Profile creation error:", error);
     } finally {
       setLoading(false);
     }
