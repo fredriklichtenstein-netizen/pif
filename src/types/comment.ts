@@ -19,7 +19,7 @@ export interface Comment {
 export interface PostAction {
   icon: React.ReactNode;
   label: string;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   variant?: "default" | "outline";
   active?: boolean;
   component?: any;

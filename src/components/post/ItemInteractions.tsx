@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import type { PostAction } from "@/types/comment";
 
 interface ItemInteractionsProps {
   id: string;
@@ -55,17 +56,17 @@ export function ItemInteractions({
 }: ItemInteractionsProps) {
   const { toast } = useToast();
 
-  const primaryActions = [
+  const primaryActions: PostAction[] = [
     {
       icon: <ThumbsUp size={20} fill={isLiked ? "currentColor" : "none"} />,
       label: "Like",
-      onClick: onLikeToggle,
+      onClick: (e) => onLikeToggle(),
       active: isLiked,
     },
     {
       icon: <MessageCircle size={20} />,
       label: "Comment",
-      onClick: onCommentToggle,
+      onClick: (e) => onCommentToggle(),
       active: showComments,
     },
     {

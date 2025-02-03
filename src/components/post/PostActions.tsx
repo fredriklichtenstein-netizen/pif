@@ -15,7 +15,7 @@ export function PostActions({ actions }: PostActionsProps) {
             key={index}
             variant="ghost"
             size="sm"
-            onClick={(e: React.MouseEvent) => action.onClick(e)}
+            onClick={action.onClick}
             to={action.to}
             className={`p-2 rounded-full transition-colors ${
               action.active ? "text-primary" : "text-gray-500 hover:text-primary"
