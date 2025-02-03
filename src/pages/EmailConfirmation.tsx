@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function EmailConfirmation() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -14,6 +15,45 @@ export default function EmailConfirmation() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    const handleEmailConfirmation = async () => {
+      // Check if we have a hash in the URL (from email confirmation link)
+      if (location.hash) {
+        try {
+          // Extract the access_token from the URL hash
+          const hashParams = new URLSearchParams(location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          
+          if (accessToken) {
+            // Set the session using the access token
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: hashParams.get('refresh_token') || '',
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+              toast({
+                title: "Email confirmed",
+                description: "Your email has been confirmed successfully!",
+              });
+              navigate("/create-profile");
+              return;
+            }
+          }
+        } catch (error: any) {
+          console.error('Error confirming email:', error);
+          toast({
+            title: "Error",
+            description: "There was an error confirming your email. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+
+    handleEmailConfirmation();
+
     // Get the email from URL params or session
     const getEmailFromParams = () => {
       const email = searchParams.get('email');
@@ -53,7 +93,7 @@ export default function EmailConfirmation() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, searchParams, toast]);
+  }, [navigate, searchParams, location.hash, toast]);
 
   const handleResendConfirmation = async () => {
     if (!userEmail) {
