@@ -14,24 +14,7 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
-        const { data: existingUser, error: userCheckError } = await supabase.auth.signInWithPassword({
-          email,
-          password: "dummy-password-for-check", // We use a dummy password to check if the user exists
-        });
-
-        // If we get a specific error about invalid credentials, it means the email exists
-        // If we get any other error, the email doesn't exist (which is what we want for signup)
-        if (!userCheckError || existingUser) {
-          toast({
-            title: "Account already exists",
-            description: "An account with this email already exists. Please sign in instead.",
-            variant: "destructive",
-          });
-          setIsSignUp(false);
-          setLoading(false);
-          return;
-        }
-
+        // For sign up, directly attempt to create the account
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -41,11 +24,21 @@ export function useAuth() {
         });
 
         if (error) {
-          toast({
-            title: "Sign up failed",
-            description: error.message,
-            variant: "destructive",
-          });
+          // Check if the error is due to email already being registered
+          if (error.message.includes("User already registered")) {
+            toast({
+              title: "Account already exists",
+              description: "An account with this email already exists. Please sign in instead.",
+              variant: "destructive",
+            });
+            setIsSignUp(false);
+          } else {
+            toast({
+              title: "Sign up failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
           return;
         }
 
@@ -107,7 +100,7 @@ export function useAuth() {
       console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
