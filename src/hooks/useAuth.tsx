@@ -14,20 +14,19 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
-        // First check if user exists by trying to sign in
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        // First check if user exists
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', email.split('@')[0])
+          .single();
 
-        // If sign in succeeds, user exists
-        if (!signInError) {
+        if (existingUser) {
           toast({
-            title: "Email already registered",
-            description: "This email is already associated with an account. Please sign in instead.",
+            title: "Username already taken",
+            description: "Please try a different email address",
             variant: "destructive",
           });
-          setIsSignUp(false);
           setLoading(false);
           return;
         }
@@ -36,10 +35,10 @@ export function useAuth() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           }
         });
-        
+
         if (error) {
           if (error.message.includes("User already registered")) {
             toast({
@@ -48,23 +47,32 @@ export function useAuth() {
               variant: "destructive",
             });
             setIsSignUp(false);
-            return;
+          } else {
+            throw error;
           }
-          throw error;
+          return;
         }
-        
+
         if (data.user) {
-          // Directly create profile after signup
           const { error: profileError } = await supabase
             .from('profiles')
             .insert([
               {
                 id: data.user.id,
-                username: email.split('@')[0], // Default username from email
+                username: email.split('@')[0],
+                onboarding_completed: false
               }
             ]);
 
-          if (profileError) throw profileError;
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            toast({
+              title: "Error creating profile",
+              description: profileError.message,
+              variant: "destructive",
+            });
+            return;
+          }
 
           toast({
             title: "Account created successfully!",
@@ -77,28 +85,32 @@ export function useAuth() {
           email,
           password,
         });
-        
+
         if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast({
-              title: "Invalid credentials",
-              description: "Please check your email and password and try again.",
-              variant: "destructive",
-            });
-            return;
-          }
-          throw error;
+          toast({
+            title: "Invalid credentials",
+            description: "Please check your email and password and try again.",
+            variant: "destructive",
+          });
+          return;
         }
 
         if (data.user) {
-          // Check if profile exists and onboarding is completed
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
-            .maybeSingle();
+            .single();
 
-          if (profileError) throw profileError;
+          if (profileError) {
+            console.error('Profile fetch error:', profileError);
+            toast({
+              title: "Error fetching profile",
+              description: profileError.message,
+              variant: "destructive",
+            });
+            return;
+          }
 
           if (!profile || !profile.onboarding_completed) {
             toast({
