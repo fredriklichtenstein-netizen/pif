@@ -51,7 +51,7 @@ export function SecondaryActions({
             variant="outline" 
             size="sm" 
             onClick={() => navigate("/auth")}
-            className="border-destructive-foreground text-destructive-foreground hover:bg-destructive/10"
+            className="bg-transparent border-white text-white hover:bg-white/10"
           >
             Sign in
           </Button>
