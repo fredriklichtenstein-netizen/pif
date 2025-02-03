@@ -33,18 +33,34 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
 
     // Add new markers
     posts.forEach((post) => {
-      if (!post.coordinates) return;
+      if (!post.coordinates) {
+        console.warn(`Post ${post.id} has no coordinates`);
+        return;
+      }
 
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div class="max-w-xs">
-          <img src="${post.images[0]}" alt="${post.title}" class="w-full h-32 object-cover rounded-lg mb-2"/>
-          <h3 class="font-semibold">${post.title}</h3>
-          <p class="text-sm text-gray-600">${post.category}</p>
-        </div>
-      `);
-
+      // Create custom marker element
       const el = document.createElement("div");
-      el.className = "w-4 h-4 bg-primary rounded-full cursor-pointer";
+      el.className = "relative group";
+
+      // Marker dot
+      const dot = document.createElement("div");
+      dot.className = "w-4 h-4 bg-primary rounded-full cursor-pointer transition-transform group-hover:scale-110 shadow-lg";
+      el.appendChild(dot);
+
+      // Create popup with post details
+      const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
+        .setHTML(`
+          <div class="max-w-xs p-2">
+            <img 
+              src="${post.images[0]}" 
+              alt="${post.title}" 
+              class="w-full h-32 object-cover rounded-lg mb-2"
+            />
+            <h3 class="font-semibold text-sm">${post.title}</h3>
+            <p class="text-xs text-gray-600 mt-1">${post.category}</p>
+            <p class="text-xs text-gray-500 mt-1">${post.location}</p>
+          </div>
+        `);
 
       try {
         const marker = new mapboxgl.Marker(el)
@@ -52,14 +68,23 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
           .setPopup(popup)
           .addTo(map);
 
-        el.addEventListener("click", () => {
+        // Show popup on hover
+        el.addEventListener("mouseenter", () => {
           popup.addTo(map);
+        });
+
+        el.addEventListener("mouseleave", () => {
+          popup.remove();
+        });
+
+        // Navigate to post details on click
+        el.addEventListener("click", () => {
           navigate(`/?post=${post.id}`);
         });
 
         markers.current.push(marker);
       } catch (error) {
-        console.error("Error adding marker:", error);
+        console.error("Error adding marker:", error, post);
       }
     });
 
