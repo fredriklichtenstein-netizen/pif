@@ -33,31 +33,54 @@ export default function CreateProfile() {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error("Error getting user:", userError);
+        throw userError;
+      }
+      
+      if (!user) {
+        console.error("No user found");
+        throw new Error("No user found");
+      }
 
       console.log("Starting profile creation for user:", user.id);
+      console.log("Form data to be saved:", formData);
 
       let avatarPath = null;
       if (avatar) {
         const fileExt = avatar.name.split('.').pop();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
+        
+        console.log("Uploading avatar...");
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('profile-photos')
           .upload(fileName, avatar);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Avatar upload error:", uploadError);
+          throw uploadError;
+        }
 
+        console.log("Avatar uploaded successfully:", uploadData);
+        
         const { data: { publicUrl } } = supabase.storage
           .from('profile-photos')
           .getPublicUrl(fileName);
         
         avatarPath = publicUrl;
-        console.log("Avatar uploaded successfully:", avatarPath);
+        console.log("Avatar public URL:", avatarPath);
       }
 
-      // First update the profile data
-      console.log("Updating profile data...");
+      console.log("Updating profile data with:", {
+        full_name: formData.fullName,
+        gender: formData.gender,
+        phone: formData.phone,
+        address: formData.address,
+        avatar_url: avatarPath,
+      });
+
       const { data: profileData, error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -66,25 +89,20 @@ export default function CreateProfile() {
           phone: formData.phone,
           address: formData.address,
           avatar_url: avatarPath,
+          onboarding_completed: true
         })
         .eq('id', user.id)
-        .select();
+        .select('*')
+        .single();
 
-      if (updateError) throw updateError;
-      console.log("Profile data updated successfully:", profileData);
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw updateError;
+      }
 
-      // Then set onboarding_completed to true in a separate update
-      console.log("Setting onboarding_completed flag...");
-      const { data: onboardingData, error: onboardingError } = await supabase
-        .from('profiles')
-        .update({ onboarding_completed: true })
-        .eq('id', user.id)
-        .select();
+      console.log("Profile updated successfully:", profileData);
 
-      if (onboardingError) throw onboardingError;
-      console.log("Onboarding completed flag set successfully:", onboardingData);
-
-      // Verify the profile was created correctly
+      // Verify the final state
       const { data: verifyProfile, error: verifyError } = await supabase
         .from('profiles')
         .select('*')
