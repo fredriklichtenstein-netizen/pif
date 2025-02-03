@@ -17,6 +17,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface SecondaryActionsProps {
   isBookmarked: boolean;
@@ -31,6 +34,34 @@ export function SecondaryActions({
   onShare,
   onReport,
 }: SecondaryActionsProps) {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleReportClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: "You must be signed in to report items",
+        variant: "destructive",
+        action: (
+          <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
+            Sign in
+          </Button>
+        ),
+      });
+      return;
+    }
+
+    // If user is authenticated, show the report confirmation dialog
+    const reportTrigger = document.querySelector('[data-report-trigger]');
+    if (reportTrigger instanceof HTMLElement) {
+      reportTrigger.click();
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -47,12 +78,13 @@ export function SecondaryActions({
           <Share2 className="mr-2 h-4 w-4" />
           Share
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleReportClick}>
+          <Flag className="mr-2 h-4 w-4" />
+          Report
+        </DropdownMenuItem>
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <Flag className="mr-2 h-4 w-4" />
-              Report
-            </DropdownMenuItem>
+          <AlertDialogTrigger data-report-trigger className="hidden">
+            Report
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
