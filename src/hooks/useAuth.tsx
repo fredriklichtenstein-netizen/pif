@@ -14,14 +14,14 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
-        // First check if user exists
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', email)
-          .maybeSingle();
+        // First check if user exists by trying to sign in
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        if (existingUser) {
+        // If sign in succeeds, user exists
+        if (!signInError) {
           toast({
             title: "Email already registered",
             description: "This email is already associated with an account. Please sign in instead.",
