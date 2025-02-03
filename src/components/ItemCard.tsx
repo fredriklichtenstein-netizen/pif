@@ -7,6 +7,7 @@ import { CommentSection } from "./post/CommentSection";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Comment } from "@/types/comment";
+import { Button } from "./ui/button";
 
 interface ItemCardProps {
   id: string;
@@ -46,10 +47,11 @@ export function ItemCard({
       toast({
         title: "Authentication required",
         description: `Please sign in to ${action}`,
-        action: {
-          label: "Sign in",
-          onClick: () => navigate("/auth"),
-        },
+        action: (
+          <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
+            Sign in
+          </Button>
+        ),
       });
       return false;
     }
