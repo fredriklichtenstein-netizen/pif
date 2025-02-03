@@ -32,7 +32,7 @@ export default function Auth() {
             title: "Account created successfully!",
             description: "Please check your email to confirm your account.",
           });
-          navigate("/email-confirmation");
+          navigate(`/email-confirmation?email=${encodeURIComponent(email)}`);
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -46,7 +46,7 @@ export default function Auth() {
               title: "Email not confirmed",
               description: "Please confirm your email before signing in.",
             });
-            navigate("/email-confirmation");
+            navigate(`/email-confirmation?email=${encodeURIComponent(email)}`);
             return;
           }
           throw error;
