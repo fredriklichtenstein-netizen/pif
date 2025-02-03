@@ -43,11 +43,16 @@ export function SecondaryActions({
     
     if (!session) {
       toast({
-        title: "Authentication required",
+        title: "Authentication Required",
         description: "You must be signed in to report items",
         variant: "destructive",
         action: (
-          <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate("/auth")}
+            className="border-destructive-foreground text-destructive-foreground hover:bg-destructive/10"
+          >
             Sign in
           </Button>
         ),
