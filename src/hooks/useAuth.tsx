@@ -27,7 +27,6 @@ export function useAuth() {
             description: "Please try a different email address",
             variant: "destructive",
           });
-          setLoading(false);
           return;
         }
 
@@ -57,24 +56,19 @@ export function useAuth() {
         }
 
         if (data.user) {
-          // Create profile using the user's ID
-          const { error: insertError } = await supabase
+          const { error: profileError } = await supabase
             .from('profiles')
-            .insert([
-              {
-                id: data.user.id,
-                username: email.split('@')[0],
-                onboarding_completed: false
-              }
-            ])
-            .select()
-            .single();
+            .insert({
+              id: data.user.id,
+              username: email.split('@')[0],
+              onboarding_completed: false
+            });
 
-          if (insertError) {
-            console.error('Profile creation error:', insertError);
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
             toast({
               title: "Error creating profile",
-              description: insertError.message,
+              description: profileError.message,
               variant: "destructive",
             });
             return;
@@ -116,7 +110,7 @@ export function useAuth() {
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
-            .maybeSingle();
+            .single();
 
           if (profileError) {
             console.error('Profile fetch error:', profileError);
