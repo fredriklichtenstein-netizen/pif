@@ -53,6 +53,7 @@ export default function CreateProfile() {
         avatarPath = publicUrl;
       }
 
+      // First update the profile data
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -61,11 +62,19 @@ export default function CreateProfile() {
           phone: formData.phone,
           address: formData.address,
           avatar_url: avatarPath,
-          onboarding_completed: true,
         })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
+
+      // Then set onboarding_completed to true in a separate update
+      // This ensures all profile data is saved before marking onboarding as complete
+      const { error: onboardingError } = await supabase
+        .from('profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id);
+
+      if (onboardingError) throw onboardingError;
 
       toast({
         title: "Profile created!",
@@ -79,6 +88,7 @@ export default function CreateProfile() {
         description: error.message,
         variant: "destructive",
       });
+      console.error("Profile creation error:", error);
     } finally {
       setLoading(false);
     }
