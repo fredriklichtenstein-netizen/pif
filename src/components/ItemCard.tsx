@@ -70,9 +70,40 @@ export function ItemCard({
     });
   };
 
-  const handleAddComment = async (text: string) => {
-    if (!await checkAuth("add a comment")) return;
+  const handleLike = async () => {
+    if (!await checkAuth("like this item")) return;
+    setIsLiked(!isLiked);
+  };
 
+  const handleCommentToggle = async () => {
+    if (!await checkAuth("comment on this item")) return;
+    setShowComments(!showComments);
+  };
+
+  const handleMessage = async () => {
+    if (!await checkAuth("message the owner")) return;
+    navigate(`/messages/new/${postedBy.name}`);
+  };
+
+  const handleShare = async () => {
+    if (!await checkAuth("share this item")) return;
+    const url = window.location.href;
+    window.open(`https://facebook.com/share?url=${url}`, '_blank');
+    toast({
+      title: "Shared!",
+      description: "Item shared on Facebook",
+    });
+  };
+
+  const handleReport = async () => {
+    if (!await checkAuth("report this item")) return;
+    toast({
+      title: "Item reported",
+      description: "Thank you for helping keep our community safe. We'll review this item.",
+    });
+  };
+
+  const handleAddComment = async (text: string) => {
     const comment: Comment = {
       id: Date.now().toString(),
       text,
@@ -164,15 +195,6 @@ export function ItemCard({
     });
   };
 
-  const handleReact = async (type: string) => {
-    if (!await checkAuth("react to this item")) return;
-
-    toast({
-      title: `Reacted with ${type}`,
-      description: "Your reaction has been recorded",
-    });
-  };
-
   const handleBookmark = async () => {
     if (!await checkAuth("bookmark this item")) return;
 
@@ -205,11 +227,13 @@ export function ItemCard({
             showComments={showComments}
             isBookmarked={isBookmarked}
             showInterest={showInterest}
-            onLikeToggle={() => setIsLiked(!isLiked)}
-            onCommentToggle={() => setShowComments(!showComments)}
+            onLikeToggle={handleLike}
+            onCommentToggle={handleCommentToggle}
             onShowInterest={handleShowInterest}
             onBookmarkToggle={handleBookmark}
-            onReact={handleReact}
+            onMessage={handleMessage}
+            onShare={handleShare}
+            onReport={handleReport}
           />
         </div>
         <CommentSection
