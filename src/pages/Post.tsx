@@ -59,6 +59,7 @@ const Post = () => {
     images: [],
     location: "",
     coordinates: undefined,
+    status: "available", // Added default status
   });
 
   const geocodeAddress = async (address: string) => {
