@@ -10,8 +10,16 @@ export default function EmailConfirmation() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get the user's email from the session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+      }
+    });
+
     const checkEmailConfirmation = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email_confirmed_at) {
@@ -24,6 +32,15 @@ export default function EmailConfirmation() {
   }, [navigate]);
 
   const handleResendConfirmation = async () => {
+    if (!userEmail) {
+      toast({
+        title: "Error",
+        description: "No email found. Please try signing up again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (resendCooldown > 0) {
       toast({
         title: "Please wait",
@@ -36,6 +53,7 @@ export default function EmailConfirmation() {
     try {
       const { error } = await supabase.auth.resend({
         type: "signup",
+        email: userEmail,
       });
 
       if (error) throw error;
