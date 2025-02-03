@@ -18,6 +18,21 @@ const MapView = () => {
     queryFn: getPosts,
   });
 
+  // Add debug logs
+  useEffect(() => {
+    if (posts) {
+      console.log("Posts data:", posts);
+      console.log("Posts with coordinates:", posts.filter(p => p.coordinates));
+    }
+  }, [posts]);
+
+  // Add debug log for map instance
+  useEffect(() => {
+    if (mapInstance) {
+      console.log("Map instance loaded:", mapInstance);
+    }
+  }, [mapInstance]);
+
   // Fetch Mapbox token
   useQuery({
     queryKey: ["mapbox-token"],
@@ -52,7 +67,12 @@ const MapView = () => {
             mapboxToken={mapboxToken} 
             onMapLoad={(map) => setMapInstance(map)} 
           />
-          {mapInstance && posts && <MapMarkers map={mapInstance} posts={posts} />}
+          {mapInstance && posts && (
+            <>
+              {console.log("Rendering MapMarkers with:", { mapInstance, posts })}
+              <MapMarkers map={mapInstance} posts={posts} />
+            </>
+          )}
         </>
       ) : (
         <div className="max-w-md mx-auto space-y-4">

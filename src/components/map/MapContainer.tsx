@@ -14,6 +14,8 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || mapInstance.current) return;
 
+    console.log("Initializing map with token:", mapboxToken);
+    
     mapboxgl.accessToken = mapboxToken;
     
     const newMap = new mapboxgl.Map({
@@ -27,10 +29,14 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
 
     // Wait for both style and map to be loaded before initializing
     newMap.on('style.load', () => {
+      console.log("Map style loaded");
       if (newMap.loaded()) {
+        console.log("Map already loaded, calling onMapLoad");
         onMapLoad(newMap);
       } else {
+        console.log("Waiting for map load");
         newMap.on('load', () => {
+          console.log("Map loaded, calling onMapLoad");
           onMapLoad(newMap);
         });
       }
