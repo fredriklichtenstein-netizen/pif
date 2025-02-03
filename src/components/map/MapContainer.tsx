@@ -23,9 +23,17 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
       zoom: 11,
     });
 
-    map.on('load', () => {
-      onMapLoad(map);
-    });
+    // Wait for both style and map to load
+    const setup = () => {
+      if (map.loaded() && map.isStyleLoaded()) {
+        onMapLoad(map);
+      } else {
+        setTimeout(setup, 100);
+      }
+    };
+
+    map.on('load', setup);
+    map.on('style.load', setup);
 
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 

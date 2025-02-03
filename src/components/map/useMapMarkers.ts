@@ -6,13 +6,20 @@ import { createMarkerElement } from "./MapMarkerElement";
 
 export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (postId: string) => void) => {
   const markers = useRef<mapboxgl.Marker[]>([]);
+  const popup = useRef<mapboxgl.Popup | null>(null);
 
   useEffect(() => {
-    if (!map || !posts) return;
+    if (!map || !posts || !map.loaded()) return;
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
+
+    // Remove existing popup if any
+    if (popup.current) {
+      popup.current.remove();
+      popup.current = null;
+    }
 
     // Add new markers for posts with coordinates
     posts.forEach((post) => {
@@ -22,8 +29,21 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
       const marker = new mapboxgl.Marker({
         element: createMarkerElement({
           onClick: () => onMarkerClick(post.id),
-          onMouseEnter: () => createMapPopup({ post }).addTo(map),
-          onMouseLeave: () => map.getPopup()?.remove(),
+          onMouseEnter: () => {
+            // Remove existing popup if any
+            if (popup.current) {
+              popup.current.remove();
+            }
+            // Create and show new popup
+            popup.current = createMapPopup({ post });
+            popup.current.addTo(map);
+          },
+          onMouseLeave: () => {
+            if (popup.current) {
+              popup.current.remove();
+              popup.current = null;
+            }
+          },
         })
       })
         .setLngLat([post.coordinates.lng, post.coordinates.lat])
