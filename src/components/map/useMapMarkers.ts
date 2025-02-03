@@ -9,6 +9,12 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
   const popup = useRef<mapboxgl.Popup | null>(null);
 
   useEffect(() => {
+    // Wait for map to be fully loaded
+    if (!map.loaded() || !map.isStyleLoaded()) {
+      console.log("Map not fully loaded yet, waiting...");
+      return;
+    }
+
     console.log("Setting up markers with posts:", posts);
     
     // Clear existing markers
@@ -30,19 +36,19 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
 
       console.log("Creating marker for post:", post.id, post.coordinates);
 
-      const marker = new mapboxgl.Marker({
-        element: createMarkerElement({
-          onClick: () => onMarkerClick(post.id),
-          onMouseEnter: () => {
-            popup.current?.remove();
-            popup.current = createMapPopup({ post }).addTo(map);
-          },
-          onMouseLeave: () => {
-            popup.current?.remove();
-            popup.current = null;
-          },
-        })
-      })
+      const markerElement = createMarkerElement({
+        onClick: () => onMarkerClick(post.id),
+        onMouseEnter: () => {
+          popup.current?.remove();
+          popup.current = createMapPopup({ post }).addTo(map);
+        },
+        onMouseLeave: () => {
+          popup.current?.remove();
+          popup.current = null;
+        },
+      });
+
+      const marker = new mapboxgl.Marker({ element: markerElement })
         .setLngLat([post.coordinates.lng, post.coordinates.lat])
         .addTo(map);
 
