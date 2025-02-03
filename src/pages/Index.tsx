@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Post, CreatePostInput } from "@/types/post";
+import { ItemCard } from "@/components/ItemCard";
 
 export const getPosts = async (): Promise<Post[]> => {
   // Simulating API call delay
@@ -78,9 +79,13 @@ const IndexPage = () => {
   }
 
   return (
-    <div>
-      <h1>Posts</h1>
-      {/* Add your posts display logic here */}
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Posts</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts?.map((post) => (
+          <ItemCard key={post.id} item={post} />
+        ))}
+      </div>
     </div>
   );
 };

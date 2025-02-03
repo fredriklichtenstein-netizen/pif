@@ -14,7 +14,6 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
   const postsRef = useRef(posts);
 
   useEffect(() => {
-    // Wait for map to be initialized and loaded
     if (!map || !map.loaded()) {
       console.log("Map not ready yet");
       return;
@@ -54,26 +53,32 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
       dot.className = "w-4 h-4 bg-primary rounded-full cursor-pointer transition-transform group-hover:scale-110 shadow-lg";
       el.appendChild(dot);
 
-      // Create popup with post details
-      const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
-        .setHTML(`
-          <div class="max-w-xs p-2">
-            <img 
-              src="${post.images[0]}" 
-              alt="${post.title}" 
-              class="w-full h-32 object-cover rounded-lg mb-2"
-            />
-            <h3 class="font-semibold text-sm">${post.title}</h3>
-            <p class="text-xs text-gray-600 mt-1">${post.category}</p>
-            <p class="text-xs text-gray-500 mt-1">${post.location}</p>
-          </div>
-        `);
-
       try {
-        const marker = new mapboxgl.Marker(el)
+        const marker = new mapboxgl.Marker({
+          element: el,
+          anchor: 'bottom',
+        })
           .setLngLat([post.coordinates.lng, post.coordinates.lat])
-          .setPopup(popup)
           .addTo(map);
+
+        // Create popup with post details
+        const popup = new mapboxgl.Popup({
+          offset: 25,
+          closeButton: false,
+          anchor: 'bottom',
+        })
+          .setHTML(`
+            <div class="max-w-xs p-2">
+              <img 
+                src="${post.images[0]}" 
+                alt="${post.title}" 
+                class="w-full h-32 object-cover rounded-lg mb-2"
+              />
+              <h3 class="font-semibold text-sm">${post.title}</h3>
+              <p class="text-xs text-gray-600 mt-1">${post.category}</p>
+              <p class="text-xs text-gray-500 mt-1">${post.location}</p>
+            </div>
+          `);
 
         // Show popup on hover
         el.addEventListener("mouseenter", () => {
@@ -96,15 +101,18 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
       }
     });
 
-    // Fit bounds to show all markers if there are any
-    if (markers.current.length > 0) {
+    // Fit bounds to show all markers if there are any and if it's the first load
+    if (markers.current.length > 0 && !map.isMoving()) {
       const bounds = new mapboxgl.LngLatBounds();
       posts.forEach(post => {
         if (post.coordinates) {
           bounds.extend([post.coordinates.lng, post.coordinates.lat]);
         }
       });
-      map.fitBounds(bounds, { padding: 50 });
+      map.fitBounds(bounds, { 
+        padding: 50,
+        maxZoom: 14 // Prevent zooming in too close
+      });
       console.log("Fitted bounds to show all markers");
     }
   }, [map, posts, navigate]);
