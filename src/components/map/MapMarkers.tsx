@@ -15,16 +15,21 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
 
   useEffect(() => {
     // Wait for map to be initialized and loaded
-    if (!map || !map.loaded()) return;
+    if (!map || !map.loaded()) {
+      console.log("Map not ready yet");
+      return;
+    }
 
     // Check if posts have actually changed
     if (
       postsRef.current.length === posts.length &&
       JSON.stringify(postsRef.current) === JSON.stringify(posts)
     ) {
+      console.log("Posts unchanged, skipping marker update");
       return;
     }
 
+    console.log("Updating markers with posts:", posts);
     postsRef.current = posts;
 
     // Clear existing markers
@@ -37,6 +42,8 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
         console.warn(`Post ${post.id} has no coordinates`);
         return;
       }
+
+      console.log(`Adding marker for post ${post.id} at:`, post.coordinates);
 
       // Create custom marker element
       const el = document.createElement("div");
@@ -83,6 +90,7 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
         });
 
         markers.current.push(marker);
+        console.log(`Successfully added marker for post ${post.id}`);
       } catch (error) {
         console.error("Error adding marker:", error, post);
       }
@@ -97,6 +105,7 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
         }
       });
       map.fitBounds(bounds, { padding: 50 });
+      console.log("Fitted bounds to show all markers");
     }
   }, [map, posts, navigate]);
 
