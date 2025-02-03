@@ -14,7 +14,6 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
-        // For sign up, directly attempt to create the account
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -24,21 +23,22 @@ export function useAuth() {
         });
 
         if (error) {
-          // Check if the error is due to email already being registered
-          if (error.message.includes("User already registered")) {
-            toast({
-              title: "Account already exists",
-              description: "An account with this email already exists. Please sign in instead.",
-              variant: "destructive",
-            });
-            setIsSignUp(false);
-          } else {
-            toast({
-              title: "Sign up failed",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Sign up failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Check if user already exists (Supabase returns a user with empty identities array)
+        if (data?.user?.identities?.length === 0) {
+          toast({
+            title: "Account already exists",
+            description: "An account with this email already exists. Please sign in instead.",
+            variant: "destructive",
+          });
+          setIsSignUp(false);
           return;
         }
 
