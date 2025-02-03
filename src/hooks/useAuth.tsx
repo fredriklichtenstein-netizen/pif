@@ -14,6 +14,24 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
+        // First check if user exists
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', email)
+          .maybeSingle();
+
+        if (existingUser) {
+          toast({
+            title: "Email already registered",
+            description: "This email is already associated with an account. Please sign in instead.",
+            variant: "destructive",
+          });
+          setIsSignUp(false);
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -36,52 +54,72 @@ export function useAuth() {
         }
         
         if (data.user) {
+          // Directly create profile after signup
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                username: email.split('@')[0], // Default username from email
+              }
+            ]);
+
+          if (profileError) throw profileError;
+
           toast({
             title: "Account created successfully!",
-            description: "You can now sign in with your credentials.",
+            description: "Let's set up your profile.",
           });
-          setIsSignUp(false); // Switch to sign in mode
+          navigate("/create-profile");
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
-        if (error) throw error;
-        
-        // Check if profile exists and onboarding is completed
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', (await supabase.auth.getUser()).data.user?.id)
-          .maybeSingle();
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast({
+              title: "Invalid credentials",
+              description: "Please check your email and password and try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw error;
+        }
 
-        if (profileError) throw profileError;
+        if (data.user) {
+          // Check if profile exists and onboarding is completed
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', data.user.id)
+            .maybeSingle();
 
-        if (!profile || !profile.onboarding_completed) {
-          toast({
-            title: "Complete your profile",
-            description: "Let's set up your profile to get started.",
-          });
-          navigate("/create-profile");
-        } else {
-          toast({
-            title: "Welcome back!",
-            description: "Successfully signed in.",
-          });
-          navigate("/");
+          if (profileError) throw profileError;
+
+          if (!profile || !profile.onboarding_completed) {
+            toast({
+              title: "Complete your profile",
+              description: "Let's set up your profile to get started.",
+            });
+            navigate("/create-profile");
+          } else {
+            toast({
+              title: "Welcome back!",
+              description: "Successfully signed in.",
+            });
+            navigate("/");
+          }
         }
       }
     } catch (error: any) {
-      let errorMessage = error.message;
-      if (error.message.includes("Invalid login credentials")) {
-        errorMessage = "Invalid email or password.";
-      }
-      
+      console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message,
         variant: "destructive",
       });
     } finally {
