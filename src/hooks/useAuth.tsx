@@ -19,7 +19,19 @@ export function useAuth() {
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          // Handle the case where the email already exists
+          if (error.message.includes("User already registered")) {
+            toast({
+              title: "Email already registered",
+              description: "This email is already associated with an account. Please sign in instead.",
+              variant: "destructive",
+            });
+            setIsSignUp(false);
+            return;
+          }
+          throw error;
+        }
         
         if (data.user) {
           toast({
