@@ -73,6 +73,24 @@ export default function CreateProfile() {
         console.log("Avatar public URL:", avatarPath);
       }
 
+      // First, check if the profile exists
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking existing profile:", checkError);
+        throw checkError;
+      }
+
+      if (!existingProfile) {
+        console.error("No profile found for user:", user.id);
+        throw new Error("Profile not found");
+      }
+
+      console.log("Existing profile found:", existingProfile);
       console.log("Updating profile data with:", {
         full_name: formData.fullName,
         gender: formData.gender,
@@ -93,27 +111,19 @@ export default function CreateProfile() {
         })
         .eq('id', user.id)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (updateError) {
         console.error("Profile update error:", updateError);
         throw updateError;
       }
 
-      console.log("Profile updated successfully:", profileData);
-
-      // Verify the final state
-      const { data: verifyProfile, error: verifyError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (verifyError) {
-        console.error("Error verifying profile:", verifyError);
-      } else {
-        console.log("Final profile state:", verifyProfile);
+      if (!profileData) {
+        console.error("Profile update returned no data");
+        throw new Error("Profile update failed");
       }
+
+      console.log("Profile updated successfully:", profileData);
 
       toast({
         title: "Profile created!",
