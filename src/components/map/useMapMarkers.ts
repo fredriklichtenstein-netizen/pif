@@ -9,11 +9,17 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
   const postsRef = useRef(posts);
 
   useEffect(() => {
-    if (!map || !map.loaded()) {
-      console.log("Map not ready yet");
+    if (!map) {
+      console.log("Map instance not available");
       return;
     }
 
+    if (!posts || posts.length === 0) {
+      console.log("No posts available to display markers");
+      return;
+    }
+
+    // Check if posts have changed
     if (
       postsRef.current.length === posts.length &&
       JSON.stringify(postsRef.current) === JSON.stringify(posts)
@@ -32,17 +38,20 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
     // Add new markers
     posts.forEach((post) => {
       if (!post.coordinates) {
-        console.warn(`Post ${post.id} has no coordinates`);
+        console.warn(`Post ${post.id} has no coordinates, skipping marker`);
         return;
       }
 
-      console.log(`Adding marker for post ${post.id} at:`, post.coordinates);
-
       try {
+        console.log(`Creating marker for post ${post.id} at:`, post.coordinates);
+        
         const popup = createMapPopup({ post });
 
         const markerElement = createMarkerElement({
-          onClick: () => onMarkerClick(post.id),
+          onClick: () => {
+            console.log(`Marker clicked for post ${post.id}`);
+            onMarkerClick(post.id);
+          },
           onMouseEnter: () => popup.addTo(map),
           onMouseLeave: () => popup.remove(),
         });
@@ -57,23 +66,28 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
         markers.current.push(marker);
         console.log(`Successfully added marker for post ${post.id}`);
       } catch (error) {
-        console.error("Error adding marker:", error, post);
+        console.error(`Error adding marker for post ${post.id}:`, error);
       }
     });
 
-    // Fit bounds to show all markers if there are any and if it's the first load
-    if (markers.current.length > 0 && !map.isMoving()) {
+    // Fit bounds to show all markers if there are any
+    if (markers.current.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       posts.forEach(post => {
         if (post.coordinates) {
           bounds.extend([post.coordinates.lng, post.coordinates.lat]);
         }
       });
-      map.fitBounds(bounds, { 
-        padding: 50,
-        maxZoom: 14
-      });
-      console.log("Fitted bounds to show all markers");
+      
+      try {
+        map.fitBounds(bounds, { 
+          padding: 50,
+          maxZoom: 14
+        });
+        console.log("Map bounds adjusted to show all markers");
+      } catch (error) {
+        console.error("Error fitting bounds:", error);
+      }
     }
   }, [map, posts, onMarkerClick]);
 
