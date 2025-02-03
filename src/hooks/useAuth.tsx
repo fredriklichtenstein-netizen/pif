@@ -57,12 +57,6 @@ export function useAuth() {
         }
 
         if (data.user) {
-          const { error: profileError } = await supabase.auth.getSession();
-          if (profileError) {
-            console.error('Session error:', profileError);
-            throw profileError;
-          }
-
           // Create profile using the user's ID
           const { error: insertError } = await supabase
             .from('profiles')
@@ -72,7 +66,9 @@ export function useAuth() {
                 username: email.split('@')[0],
                 onboarding_completed: false
               }
-            ]);
+            ])
+            .select()
+            .single();
 
           if (insertError) {
             console.error('Profile creation error:', insertError);
