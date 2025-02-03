@@ -70,13 +70,17 @@ export default function Auth() {
         }
         
         // Check if profile exists and onboarding is completed
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('onboarding_completed')
           .eq('id', (await supabase.auth.getUser()).data.user?.id)
-          .single();
+          .maybeSingle();
 
-        if (!profile?.onboarding_completed) {
+        if (profileError) {
+          throw profileError;
+        }
+
+        if (!profile || !profile.onboarding_completed) {
           toast({
             title: "Complete your profile",
             description: "Let's set up your profile to get started.",
