@@ -17,10 +17,12 @@ export function useAuth() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
         });
         
         if (error) {
-          // Handle the case where the email already exists
           if (error.message.includes("User already registered")) {
             toast({
               title: "Email already registered",
@@ -36,9 +38,9 @@ export function useAuth() {
         if (data.user) {
           toast({
             title: "Account created successfully!",
-            description: "Please check your email to confirm your account.",
+            description: "You can now sign in with your credentials.",
           });
-          navigate(`/email-confirmation?email=${encodeURIComponent(email)}`);
+          setIsSignUp(false); // Switch to sign in mode
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -46,17 +48,7 @@ export function useAuth() {
           password,
         });
         
-        if (error) {
-          if (error.message.includes("Email not confirmed")) {
-            toast({
-              title: "Email not confirmed",
-              description: "Please confirm your email before signing in.",
-            });
-            navigate(`/email-confirmation?email=${encodeURIComponent(email)}`);
-            return;
-          }
-          throw error;
-        }
+        if (error) throw error;
         
         // Check if profile exists and onboarding is completed
         const { data: profile, error: profileError } = await supabase
@@ -65,9 +57,7 @@ export function useAuth() {
           .eq('id', (await supabase.auth.getUser()).data.user?.id)
           .maybeSingle();
 
-        if (profileError) {
-          throw profileError;
-        }
+        if (profileError) throw profileError;
 
         if (!profile || !profile.onboarding_completed) {
           toast({
