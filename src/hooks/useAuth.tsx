@@ -14,17 +14,17 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
-        // First check if user exists
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', email.split('@')[0])
-          .maybeSingle();
+        const { data: existingUser, error: userCheckError } = await supabase.auth.signInWithPassword({
+          email,
+          password: "dummy-password-for-check", // We use a dummy password to check if the user exists
+        });
 
-        if (existingUser) {
+        // If we get a specific error about invalid credentials, it means the email exists
+        // If we get any other error, the email doesn't exist (which is what we want for signup)
+        if (!userCheckError || existingUser) {
           toast({
             title: "Account already exists",
-            description: "Please sign in instead.",
+            description: "An account with this email already exists. Please sign in instead.",
             variant: "destructive",
           });
           setIsSignUp(false);
@@ -40,19 +40,7 @@ export function useAuth() {
           },
         });
 
-        if (error) {
-          if (error.message.includes("User already registered")) {
-            toast({
-              title: "Email already registered",
-              description: "Please sign in instead.",
-              variant: "destructive",
-            });
-            setIsSignUp(false);
-          } else {
-            throw error;
-          }
-          return;
-        }
+        if (error) throw error;
 
         if (data.user) {
           toast({
