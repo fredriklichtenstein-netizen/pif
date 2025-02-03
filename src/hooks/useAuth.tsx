@@ -70,9 +70,9 @@ export function useAuth() {
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
 
-          if (!profile?.onboarding_completed) {
+          if (!profile || !profile.onboarding_completed) {
             toast({
               title: "Complete your profile",
               description: "Let's set up your profile to get started.",
