@@ -14,22 +14,6 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
-        // First check if the email already exists
-        const { data: existingUser } = await supabase.auth.signInWithPassword({
-          email,
-          password: "dummy-password-for-check",
-        });
-
-        if (existingUser.user) {
-          toast({
-            title: "Email already registered",
-            description: "This email is already associated with an account. Please sign in instead.",
-            variant: "destructive",
-          });
-          setIsSignUp(false);
-          return;
-        }
-
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
