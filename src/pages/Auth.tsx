@@ -11,64 +11,8 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleResendConfirmation = async (email: string) => {
-    if (resendCooldown > 0) {
-      toast({
-        title: "Please wait",
-        description: `You can request another confirmation email in ${resendCooldown} seconds.`,
-      });
-      return;
-    }
-
-    try {
-      const { error: resendError } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-      });
-      
-      if (resendError) {
-        if (resendError.message.includes("rate_limit")) {
-          // Extract the wait time from the error message
-          const waitTime = resendError.message.match(/\d+/)?.[0] || "60";
-          setResendCooldown(parseInt(waitTime));
-          
-          // Start countdown
-          const timer = setInterval(() => {
-            setResendCooldown((prev) => {
-              if (prev <= 1) {
-                clearInterval(timer);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-          
-          toast({
-            title: "Please wait",
-            description: `You can request another confirmation email in ${waitTime} seconds.`,
-          });
-        } else {
-          throw resendError;
-        }
-      } else {
-        toast({
-          title: "Confirmation email sent",
-          description: "Please check your inbox and spam folder.",
-        });
-        setResendCooldown(60); // Default cooldown
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +32,7 @@ export default function Auth() {
             title: "Account created successfully!",
             description: "Please check your email to confirm your account.",
           });
-          setIsSignUp(false);
+          navigate("/email-confirmation");
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -100,16 +44,9 @@ export default function Auth() {
           if (error.message.includes("Email not confirmed")) {
             toast({
               title: "Email not confirmed",
-              description: "Your email is not confirmed. Would you like us to resend the confirmation email?",
-              action: (
-                <Button
-                  onClick={() => handleResendConfirmation(email)}
-                  disabled={resendCooldown > 0}
-                >
-                  {resendCooldown > 0 ? `Wait ${resendCooldown}s` : "Resend"}
-                </Button>
-              ),
+              description: "Please confirm your email before signing in.",
             });
+            navigate("/email-confirmation");
             return;
           }
           throw error;

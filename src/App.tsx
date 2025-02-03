@@ -12,6 +12,8 @@ import Messages from "./pages/Messages";
 import Post from "./pages/Post";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
+import EmailConfirmation from "./pages/EmailConfirmation";
+import CreateProfile from "./pages/CreateProfile";
 import NotFound from "./pages/NotFound";
 import { MainNav } from "./components/MainNav";
 
@@ -95,6 +97,15 @@ const App = () => (
             }
           />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/email-confirmation" element={<EmailConfirmation />} />
+          <Route
+            path="/create-profile"
+            element={
+              <PrivateRoute>
+                <CreateProfile />
+              </PrivateRoute>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <MainNav />

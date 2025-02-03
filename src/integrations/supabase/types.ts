@@ -191,26 +191,41 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
           created_at: string | null
+          full_name: string | null
+          gender: string | null
           id: string
           location: string | null
+          onboarding_completed: boolean | null
+          phone: string | null
           updated_at: string | null
           username: string
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          full_name?: string | null
+          gender?: string | null
           id: string
           location?: string | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
           updated_at?: string | null
           username: string
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          full_name?: string | null
+          gender?: string | null
           id?: string
           location?: string | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
           updated_at?: string | null
           username?: string
         }
