@@ -20,6 +20,23 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
+        // First check if the email already exists
+        const { data: existingUser } = await supabase.auth.signInWithPassword({
+          email,
+          password: "dummy-password-for-check",
+        });
+
+        if (existingUser.user) {
+          toast({
+            title: "Email already registered",
+            description: "This email is already associated with an account. Please sign in instead.",
+            variant: "destructive",
+          });
+          setIsSignUp(false);
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -52,18 +69,31 @@ export default function Auth() {
           throw error;
         }
         
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in.",
-        });
-        navigate("/");
+        // Check if profile exists and onboarding is completed
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
+
+        if (!profile?.onboarding_completed) {
+          toast({
+            title: "Complete your profile",
+            description: "Let's set up your profile to get started.",
+          });
+          navigate("/create-profile");
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "Successfully signed in.",
+          });
+          navigate("/");
+        }
       }
     } catch (error: any) {
       let errorMessage = error.message;
       if (error.message.includes("Invalid login credentials")) {
         errorMessage = "Invalid email or password.";
-      } else if (error.message.includes("User already registered")) {
-        errorMessage = "An account with this email already exists.";
       }
       
       toast({

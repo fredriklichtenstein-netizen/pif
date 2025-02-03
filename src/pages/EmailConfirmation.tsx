@@ -33,11 +33,31 @@ export default function EmailConfirmation() {
             if (error) throw error;
 
             if (data.user) {
+              // Check if profile exists
+              const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('onboarding_completed')
+                .eq('id', data.user.id)
+                .single();
+
+              if (profileError) {
+                // If no profile exists or there's an error, redirect to create profile
+                navigate("/create-profile");
+                return;
+              }
+
+              if (!profileData?.onboarding_completed) {
+                // If profile exists but onboarding not completed, redirect to create profile
+                navigate("/create-profile");
+                return;
+              }
+
+              // If profile exists and onboarding is completed, redirect to home
               toast({
-                title: "Email confirmed",
-                description: "Your email has been confirmed successfully!",
+                title: "Welcome back!",
+                description: "You have successfully signed in.",
               });
-              navigate("/create-profile");
+              navigate("/");
               return;
             }
           }
@@ -66,9 +86,19 @@ export default function EmailConfirmation() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
-        // If user is authenticated and email is confirmed, redirect to profile creation
+        // If user is authenticated and email is confirmed, check profile status
         if (session.user.email_confirmed_at) {
-          navigate("/create-profile");
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!error && profile?.onboarding_completed) {
+            navigate("/");
+          } else {
+            navigate("/create-profile");
+          }
         }
       } else {
         getEmailFromParams();
@@ -81,11 +111,25 @@ export default function EmailConfirmation() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         if (session?.user?.email_confirmed_at) {
-          toast({
-            title: "Email confirmed",
-            description: "Your email has been confirmed. Let's create your profile!",
-          });
-          navigate("/create-profile");
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!error && profile?.onboarding_completed) {
+            toast({
+              title: "Welcome back!",
+              description: "You have successfully signed in.",
+            });
+            navigate("/");
+          } else {
+            toast({
+              title: "Complete your profile",
+              description: "Let's set up your profile to get started.",
+            });
+            navigate("/create-profile");
+          }
         }
       }
     });
