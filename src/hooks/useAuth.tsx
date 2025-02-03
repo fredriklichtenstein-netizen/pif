@@ -14,9 +14,30 @@ export function useAuth() {
 
     try {
       if (isSignUp) {
+        // First check if user exists
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', email.split('@')[0])
+          .maybeSingle();
+
+        if (existingUser) {
+          toast({
+            title: "Account already exists",
+            description: "Please sign in instead.",
+            variant: "destructive",
+          });
+          setIsSignUp(false);
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin + '/email-confirmation',
+          },
         });
 
         if (error) {
