@@ -19,7 +19,7 @@ export function useAuth() {
           .from('profiles')
           .select('id')
           .eq('username', email.split('@')[0])
-          .single();
+          .maybeSingle();
 
         if (existingUser) {
           toast({
@@ -76,9 +76,9 @@ export function useAuth() {
 
           toast({
             title: "Account created successfully!",
-            description: "Let's set up your profile.",
+            description: "Please check your email to confirm your account.",
           });
-          navigate("/create-profile");
+          navigate("/email-confirmation?email=" + encodeURIComponent(email));
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -87,6 +87,16 @@ export function useAuth() {
         });
 
         if (error) {
+          if (error.message.includes("Email not confirmed")) {
+            toast({
+              title: "Email not confirmed",
+              description: "Please check your inbox and confirm your email before signing in.",
+              variant: "destructive",
+            });
+            navigate("/email-confirmation?email=" + encodeURIComponent(email));
+            return;
+          }
+          
           toast({
             title: "Invalid credentials",
             description: "Please check your email and password and try again.",
@@ -100,7 +110,7 @@ export function useAuth() {
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
 
           if (profileError) {
             console.error('Profile fetch error:', profileError);
