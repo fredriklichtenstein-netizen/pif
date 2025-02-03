@@ -4,6 +4,8 @@ import { ItemHeader } from "./post/ItemHeader";
 import { ItemImage } from "./post/ItemImage";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { CommentSection } from "./post/CommentSection";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import type { Comment } from "@/types/comment";
 
 interface ItemCardProps {
@@ -36,8 +38,27 @@ export function ItemCard({
   const [showInterest, setShowInterest] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleShowInterest = () => {
+  const checkAuth = async (action: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: `Please sign in to ${action}`,
+        action: {
+          label: "Sign in",
+          onClick: () => navigate("/auth"),
+        },
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleShowInterest = async () => {
+    if (!await checkAuth("show interest")) return;
+    
     setShowInterest(!showInterest);
     toast({
       title: showInterest ? "Interest removed" : "Interest shown!",
@@ -47,7 +68,9 @@ export function ItemCard({
     });
   };
 
-  const handleAddComment = (text: string) => {
+  const handleAddComment = async (text: string) => {
+    if (!await checkAuth("add a comment")) return;
+
     const comment: Comment = {
       id: Date.now().toString(),
       text,
@@ -63,7 +86,9 @@ export function ItemCard({
     setComments([comment, ...comments]);
   };
 
-  const handleLikeComment = (commentId: string) => {
+  const handleLikeComment = async (commentId: string) => {
+    if (!await checkAuth("like a comment")) return;
+
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
         return {
@@ -76,7 +101,9 @@ export function ItemCard({
     }));
   };
 
-  const handleEditComment = (commentId: string, newText: string) => {
+  const handleEditComment = async (commentId: string, newText: string) => {
+    if (!await checkAuth("edit a comment")) return;
+
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
         return { ...comment, text: newText };
@@ -89,7 +116,9 @@ export function ItemCard({
     });
   };
 
-  const handleDeleteComment = (commentId: string) => {
+  const handleDeleteComment = async (commentId: string) => {
+    if (!await checkAuth("delete a comment")) return;
+
     setComments(comments.filter(comment => comment.id !== commentId));
     toast({
       title: "Comment deleted",
@@ -97,7 +126,9 @@ export function ItemCard({
     });
   };
 
-  const handleReplyToComment = (commentId: string, text: string) => {
+  const handleReplyToComment = async (commentId: string, text: string) => {
+    if (!await checkAuth("reply to a comment")) return;
+
     const reply: Comment = {
       id: Date.now().toString(),
       text,
@@ -122,21 +153,27 @@ export function ItemCard({
     }));
   };
 
-  const handleReportComment = (commentId: string) => {
+  const handleReportComment = async (commentId: string) => {
+    if (!await checkAuth("report a comment")) return;
+
     toast({
       title: "Comment reported",
       description: "Thank you for helping keep our community safe. We'll review this comment.",
     });
   };
 
-  const handleReact = (type: string) => {
+  const handleReact = async (type: string) => {
+    if (!await checkAuth("react to this item")) return;
+
     toast({
       title: `Reacted with ${type}`,
       description: "Your reaction has been recorded",
     });
   };
 
-  const handleBookmark = () => {
+  const handleBookmark = async () => {
+    if (!await checkAuth("bookmark this item")) return;
+
     setIsBookmarked(!isBookmarked);
     toast({
       title: isBookmarked ? "Removed from saved items" : "Saved to your items",
