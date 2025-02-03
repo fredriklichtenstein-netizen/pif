@@ -9,13 +9,13 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
   const popup = useRef<mapboxgl.Popup | null>(null);
 
   useEffect(() => {
-    if (!map || !posts || !map.loaded()) return;
-
+    console.log("Setting up markers with posts:", posts);
+    
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Remove existing popup if any
+    // Remove existing popup
     if (popup.current) {
       popup.current.remove();
       popup.current = null;
@@ -23,26 +23,23 @@ export const useMapMarkers = (map: mapboxgl.Map, posts: Post[], onMarkerClick: (
 
     // Add new markers for posts with coordinates
     posts.forEach((post) => {
-      if (!post.coordinates) return;
+      if (!post.coordinates) {
+        console.log("Skipping post without coordinates:", post.id);
+        return;
+      }
 
-      // Create marker
+      console.log("Creating marker for post:", post.id, post.coordinates);
+
       const marker = new mapboxgl.Marker({
         element: createMarkerElement({
           onClick: () => onMarkerClick(post.id),
           onMouseEnter: () => {
-            // Remove existing popup if any
-            if (popup.current) {
-              popup.current.remove();
-            }
-            // Create and show new popup
-            popup.current = createMapPopup({ post });
-            popup.current.addTo(map);
+            popup.current?.remove();
+            popup.current = createMapPopup({ post }).addTo(map);
           },
           onMouseLeave: () => {
-            if (popup.current) {
-              popup.current.remove();
-              popup.current = null;
-            }
+            popup.current?.remove();
+            popup.current = null;
           },
         })
       })

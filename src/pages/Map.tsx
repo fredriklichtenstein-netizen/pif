@@ -68,10 +68,7 @@ const MapView = () => {
             onMapLoad={(map) => setMapInstance(map)} 
           />
           {mapInstance && posts && (
-            <>
-              {console.log("Rendering MapMarkers with:", { mapInstance, posts })}
-              <MapMarkers map={mapInstance} posts={posts} />
-            </>
+            <MapMarkers map={mapInstance} posts={posts} />
           )}
         </>
       ) : (
