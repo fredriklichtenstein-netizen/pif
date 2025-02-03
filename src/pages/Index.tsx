@@ -83,7 +83,17 @@ const IndexPage = () => {
       <h1 className="text-2xl font-bold mb-6">Posts</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {posts?.map((post) => (
-          <ItemCard key={post.id} item={post} />
+          <ItemCard
+            key={post.id}
+            id={post.id}
+            title={post.title}
+            description={post.description}
+            image={post.images[0]}
+            location={post.location}
+            category={post.category}
+            condition={post.condition}
+            postedBy={post.postedBy}
+          />
         ))}
       </div>
     </div>
