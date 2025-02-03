@@ -36,6 +36,9 @@ export function useAuth() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              username: email.split('@')[0],
+            }
           }
         });
 
@@ -54,6 +57,7 @@ export function useAuth() {
         }
 
         if (data.user) {
+          // Create profile using the user's ID
           const { error: profileError } = await supabase
             .from('profiles')
             .insert([
