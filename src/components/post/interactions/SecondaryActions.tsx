@@ -45,7 +45,7 @@ export function SecondaryActions({
       toast({
         title: "Authentication Required",
         description: "You must be signed in to report items",
-        variant: "destructive",
+        className: "bg-background border-destructive",
         action: (
           <Button 
             variant="outline" 
