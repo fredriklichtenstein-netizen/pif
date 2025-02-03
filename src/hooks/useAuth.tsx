@@ -56,22 +56,26 @@ export function useAuth() {
         }
 
         if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              username: email.split('@')[0],
-              onboarding_completed: false
-            });
+          const { data: session } = await supabase.auth.getSession();
+          
+          if (session?.session) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                username: email.split('@')[0],
+                onboarding_completed: false
+              });
 
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            toast({
-              title: "Error creating profile",
-              description: profileError.message,
-              variant: "destructive",
-            });
-            return;
+            if (profileError) {
+              console.error('Profile creation error:', profileError);
+              toast({
+                title: "Error creating profile",
+                description: profileError.message,
+                variant: "destructive",
+              });
+              return;
+            }
           }
 
           toast({
