@@ -1,11 +1,7 @@
 import { ItemCard } from "@/components/ItemCard";
 import { useQuery } from "@tanstack/react-query";
 import type { Post } from "@/types/post";
-import { MapContainer } from "@/components/map/MapContainer";
-import { MapMarkers } from "@/components/map/MapMarkers";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import mapboxgl from "mapbox-gl";
 
 // Initialize with some mock data
 let POSTS: Post[] = [
@@ -79,23 +75,9 @@ export const addPost = async (post: Omit<Post, "id" | "postedBy" | "createdAt">)
 };
 
 const Index = () => {
-  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>("");
-
   const { data: posts, isLoading } = useQuery({
     queryKey: ["posts"],
     queryFn: getPosts,
-  });
-
-  // Fetch Mapbox token
-  useQuery({
-    queryKey: ["mapbox-token"],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("get-mapbox-token");
-      if (error) throw error;
-      setMapboxToken(data.token);
-      return data.token;
-    },
   });
 
   return (
@@ -105,16 +87,6 @@ const Index = () => {
       </header>
       
       <main className="container mx-auto px-4 py-6">
-        {mapboxToken && (
-          <div className="mb-8">
-            <MapContainer 
-              mapboxToken={mapboxToken} 
-              onMapLoad={(map) => setMapInstance(map)} 
-            />
-            {mapInstance && posts && <MapMarkers map={mapInstance} posts={posts} />}
-          </div>
-        )}
-
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2].map((n) => (
