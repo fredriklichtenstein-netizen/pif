@@ -9,10 +9,10 @@ interface MapContainerProps {
 
 export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const mapInstance = useRef<mapboxgl.Map | null>(null);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken || mapInstance.current) return;
 
     mapboxgl.accessToken = mapboxToken;
     
@@ -23,14 +23,14 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
       zoom: 11,
     });
 
+    mapInstance.current = newMap;
+
     // Wait for both style and map to be loaded before initializing
     newMap.on('style.load', () => {
       if (newMap.loaded()) {
-        map.current = newMap;
         onMapLoad(newMap);
       } else {
         newMap.on('load', () => {
-          map.current = newMap;
           onMapLoad(newMap);
         });
       }
@@ -39,10 +39,12 @@ export const MapContainer = ({ mapboxToken, onMapLoad }: MapContainerProps) => {
     newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     return () => {
-      map.current?.remove();
-      map.current = null;
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
     };
-  }, [mapboxToken, onMapLoad]);
+  }, [mapboxToken]); // Only re-run if mapboxToken changes
 
   return (
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden">

@@ -11,10 +11,21 @@ interface MapMarkersProps {
 export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
   const markers = useRef<mapboxgl.Marker[]>([]);
   const navigate = useNavigate();
+  const postsRef = useRef(posts);
 
   useEffect(() => {
     // Wait for map to be initialized and loaded
     if (!map || !map.loaded()) return;
+
+    // Check if posts have actually changed
+    if (
+      postsRef.current.length === posts.length &&
+      JSON.stringify(postsRef.current) === JSON.stringify(posts)
+    ) {
+      return;
+    }
+
+    postsRef.current = posts;
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -62,11 +73,6 @@ export const MapMarkers = ({ map, posts }: MapMarkersProps) => {
       });
       map.fitBounds(bounds, { padding: 50 });
     }
-
-    return () => {
-      markers.current.forEach(marker => marker.remove());
-      markers.current = [];
-    };
   }, [map, posts, navigate]);
 
   return null;
