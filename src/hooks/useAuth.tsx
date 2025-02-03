@@ -57,8 +57,14 @@ export function useAuth() {
         }
 
         if (data.user) {
+          const { error: profileError } = await supabase.auth.getSession();
+          if (profileError) {
+            console.error('Session error:', profileError);
+            throw profileError;
+          }
+
           // Create profile using the user's ID
-          const { error: profileError } = await supabase
+          const { error: insertError } = await supabase
             .from('profiles')
             .insert([
               {
@@ -68,11 +74,11 @@ export function useAuth() {
               }
             ]);
 
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
+          if (insertError) {
+            console.error('Profile creation error:', insertError);
             toast({
               title: "Error creating profile",
-              description: profileError.message,
+              description: insertError.message,
               variant: "destructive",
             });
             return;
