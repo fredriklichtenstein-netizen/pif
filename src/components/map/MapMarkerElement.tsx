@@ -12,9 +12,10 @@ export const createMarkerElement = ({
   const el = document.createElement("div");
   el.className = "cursor-pointer";
 
-  // Create the main marker element with simpler styling
+  // Create the main marker element with more visible styling
   const marker = document.createElement("div");
-  marker.className = "w-4 h-4 bg-primary rounded-full border border-white transform transition-transform duration-200 hover:scale-110";
+  marker.className = "w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg";
+  marker.style.backgroundColor = "rgb(var(--primary))"; // Ensure the primary color is applied
 
   el.appendChild(marker);
 

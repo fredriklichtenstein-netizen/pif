@@ -16,13 +16,18 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
   const processedCoordinates = useRef<Map<string, [number, number]>>(new Map());
 
   useEffect(() => {
+    console.log("Creating markers for posts:", posts.length);
+    
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
     // Add new markers with privacy offsets
     posts.forEach(post => {
-      if (!post.coordinates) return;
+      if (!post.coordinates) {
+        console.log("Skipping post without coordinates:", post.id);
+        return;
+      }
 
       // Use cached privacy-adjusted coordinates if they exist
       let privateLng: number, privateLat: number;
@@ -30,12 +35,14 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
       
       if (cachedCoords) {
         [privateLng, privateLat] = cachedCoords;
+        console.log("Using cached coordinates for post:", post.id);
       } else {
         // Calculate new privacy-adjusted coordinates
         [privateLng, privateLat] = addLocationPrivacy(
           post.coordinates.lng,
           post.coordinates.lat
         );
+        console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
         // Cache the coordinates
         processedCoordinates.current.set(post.id, [privateLng, privateLat]);
       }
@@ -64,6 +71,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
         .setLngLat([privateLng, privateLat])
         .addTo(map);
 
+      console.log("Added marker for post:", post.id);
       markers.current.push(marker);
     });
 
@@ -79,6 +87,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
         maxZoom: 14,
         duration: 1000
       });
+      console.log("Fitted map to bounds with", markers.current.length, "markers");
     }
   }, [posts, map, onPostClick]);
 
