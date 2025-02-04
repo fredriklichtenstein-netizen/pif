@@ -15,26 +15,19 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
   const markers = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
-    console.log("Updating markers for posts:", posts);
-
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
     // Add new markers with privacy offsets
     posts.forEach(post => {
-      if (!post.coordinates) {
-        console.log("Skipping post without coordinates:", post.id);
-        return;
-      }
+      if (!post.coordinates) return;
 
       // Add privacy offset to coordinates
       const [privateLng, privateLat] = addLocationPrivacy(
         post.coordinates.lng,
         post.coordinates.lat
       );
-
-      console.log("Creating privacy-adjusted marker for post:", post.id, "at:", [privateLng, privateLat]);
 
       const markerElement = createMarkerElement({
         onClick: () => onPostClick(post.id),
@@ -53,8 +46,11 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
         }
       });
 
-      const marker = new mapboxgl.Marker({ element: markerElement })
-        .setLngLat([privateLng, privateLat] as [number, number])
+      const marker = new mapboxgl.Marker({
+        element: markerElement,
+        anchor: 'center'
+      })
+        .setLngLat([privateLng, privateLat])
         .addTo(map);
 
       markers.current.push(marker);
