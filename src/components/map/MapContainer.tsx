@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Post } from "@/types/post";
 import { createMapPopup } from "./MapPopup";
+import { createMarkerElement } from "./MapMarkerElement";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -67,36 +68,27 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         return;
       }
 
-      const el = document.createElement("div");
-      el.className = "relative group";
-      
-      const dot = document.createElement("div");
-      dot.className = "w-6 h-6 bg-primary rounded-full cursor-pointer transition-all duration-200 group-hover:scale-110 shadow-lg border-2 border-white";
-      
-      const pulse = document.createElement("div");
-      pulse.className = "absolute -inset-1 bg-primary/30 rounded-full animate-pulse";
-      
-      el.appendChild(pulse);
-      el.appendChild(dot);
-
-      // Add event listeners
-      el.addEventListener("click", () => onPostClick(post.id));
-      el.addEventListener("mouseenter", () => {
-        createMapPopup({ post }).addTo(map.current!);
-      });
-      el.addEventListener("mouseleave", () => {
-        const popups = document.getElementsByClassName('mapboxgl-popup');
-        while (popups[0]) popups[0].remove();
+      const markerElement = createMarkerElement({
+        onClick: () => onPostClick(post.id),
+        onMouseEnter: () => {
+          const popup = createMapPopup({ post });
+          popup.setLngLat([post.coordinates!.lng, post.coordinates!.lat])
+               .addTo(map.current!);
+        },
+        onMouseLeave: () => {
+          const popups = document.getElementsByClassName('mapboxgl-popup');
+          while (popups[0]) popups[0].remove();
+        }
       });
 
-      const marker = new mapboxgl.Marker({ element: el })
+      const marker = new mapboxgl.Marker({ element: markerElement })
         .setLngLat([post.coordinates.lng, post.coordinates.lat])
         .addTo(map.current);
 
       markers.current.push(marker);
     });
 
-    // Fit map to show all markers
+    // Fit map to show all markers if there are any
     if (markers.current.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       posts.forEach(post => {

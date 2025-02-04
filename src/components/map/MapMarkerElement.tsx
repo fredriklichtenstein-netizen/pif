@@ -10,17 +10,16 @@ export const createMarkerElement = ({
   onMouseLeave,
 }: MapMarkerElementProps): HTMLDivElement => {
   const el = document.createElement("div");
-  el.className = "relative group";
+  el.className = "relative group cursor-pointer";
 
-  const dot = document.createElement("div");
-  dot.className = "w-6 h-6 bg-primary rounded-full cursor-pointer transition-all duration-200 group-hover:scale-110 shadow-lg border-2 border-white";
+  const marker = document.createElement("div");
+  marker.className = "w-6 h-6 bg-primary rounded-full shadow-lg border-2 border-white transform transition-transform duration-200 group-hover:scale-110";
   
-  // Add a pulse animation
   const pulse = document.createElement("div");
-  pulse.className = "absolute -inset-1 bg-primary/30 rounded-full animate-pulse";
+  pulse.className = "absolute -inset-1 rounded-full animate-pulse bg-primary/20";
   
   el.appendChild(pulse);
-  el.appendChild(dot);
+  el.appendChild(marker);
 
   if (onClick) el.addEventListener("click", onClick);
   if (onMouseEnter) el.addEventListener("mouseenter", onMouseEnter);
