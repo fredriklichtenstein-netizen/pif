@@ -12,7 +12,6 @@ export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
     anchor: 'bottom',
   });
 
-  // Set popup content
   popup.setHTML(`
     <div class="max-w-xs p-2">
       <img 
@@ -26,7 +25,6 @@ export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
     </div>
   `);
 
-  // Set coordinates in the correct order [longitude, latitude]
   if (post.coordinates) {
     const coordinates: [number, number] = [post.coordinates.lng, post.coordinates.lat];
     popup.setLngLat(coordinates);
