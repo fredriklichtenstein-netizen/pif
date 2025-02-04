@@ -14,8 +14,8 @@ export const createMarkerElement = ({
 
   // Create the main marker element with more visible styling
   const marker = document.createElement("div");
-  marker.className = "w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg";
-  marker.style.backgroundColor = "rgb(var(--primary))"; // Ensure the primary color is applied
+  marker.className = "w-6 h-6 rounded-full border-2 border-white shadow-lg";
+  marker.style.backgroundColor = "#2F5233"; // Use the direct HEX color value from tailwind.config.ts
 
   el.appendChild(marker);
 
