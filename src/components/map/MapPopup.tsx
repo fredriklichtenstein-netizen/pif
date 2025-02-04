@@ -28,7 +28,7 @@ export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
 
   // Set coordinates in the correct order [longitude, latitude]
   if (post.coordinates) {
-    const coordinates = [post.coordinates.lng, post.coordinates.lat];
+    const coordinates: [number, number] = [post.coordinates.lng, post.coordinates.lat];
     popup.setLngLat(coordinates);
   }
 

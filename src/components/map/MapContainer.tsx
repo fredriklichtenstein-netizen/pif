@@ -68,8 +68,8 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         return;
       }
 
-      // Create coordinates array in the correct format [longitude, latitude]
-      const coordinates = [post.coordinates.lng, post.coordinates.lat];
+      // Create coordinates tuple in the correct format [longitude, latitude]
+      const coordinates: [number, number] = [post.coordinates.lng, post.coordinates.lat];
       console.log("Creating marker at coordinates:", coordinates, "for post:", post.id);
 
       const markerElement = createMarkerElement({
@@ -96,7 +96,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       const bounds = new mapboxgl.LngLatBounds();
       posts.forEach(post => {
         if (post.coordinates) {
-          bounds.extend([post.coordinates.lng, post.coordinates.lat]);
+          bounds.extend([post.coordinates.lng, post.coordinates.lat] as [number, number]);
         }
       });
       
