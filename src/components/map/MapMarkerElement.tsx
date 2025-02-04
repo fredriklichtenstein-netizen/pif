@@ -13,10 +13,15 @@ export const createMarkerElement = ({
   el.className = "relative group cursor-pointer";
 
   const marker = document.createElement("div");
-  marker.className = "w-6 h-6 bg-primary rounded-full shadow-lg border-2 border-white transform transition-transform duration-200 group-hover:scale-110";
+  marker.className = "w-8 h-8 bg-primary rounded-full shadow-lg border-2 border-white transform transition-transform duration-200 group-hover:scale-110 flex items-center justify-center";
+  
+  // Add an inner dot
+  const innerDot = document.createElement("div");
+  innerDot.className = "w-2 h-2 bg-white rounded-full";
+  marker.appendChild(innerDot);
   
   const pulse = document.createElement("div");
-  pulse.className = "absolute -inset-1 rounded-full animate-pulse bg-primary/20";
+  pulse.className = "absolute -inset-2 rounded-full animate-pulse bg-primary/20";
   
   el.appendChild(pulse);
   el.appendChild(marker);

@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
 import { createMapPopup } from "./MapPopup";
 import { createMarkerElement } from "./MapMarkerElement";
+import { addLocationPrivacy } from "@/utils/locationPrivacy";
 
 interface MapMarkersLayerProps {
   map: mapboxgl.Map;
@@ -20,20 +21,30 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Add new markers
+    // Add new markers with privacy offsets
     posts.forEach(post => {
       if (!post.coordinates) {
         console.log("Skipping post without coordinates:", post.id);
         return;
       }
 
-      const coordinates: [number, number] = [post.coordinates.lng, post.coordinates.lat];
-      console.log("Creating marker at coordinates:", coordinates, "for post:", post.id);
+      // Add privacy offset to coordinates
+      const [privateLng, privateLat] = addLocationPrivacy(
+        post.coordinates.lng,
+        post.coordinates.lat
+      );
+
+      console.log("Creating privacy-adjusted marker for post:", post.id, "at:", [privateLng, privateLat]);
 
       const markerElement = createMarkerElement({
         onClick: () => onPostClick(post.id),
         onMouseEnter: () => {
-          const popup = createMapPopup({ post });
+          const popup = createMapPopup({ 
+            post: {
+              ...post,
+              coordinates: { lng: privateLng, lat: privateLat }
+            }
+          });
           popup.addTo(map);
         },
         onMouseLeave: () => {
@@ -43,7 +54,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
       });
 
       const marker = new mapboxgl.Marker({ element: markerElement })
-        .setLngLat(coordinates)
+        .setLngLat([privateLng, privateLat] as [number, number])
         .addTo(map);
 
       markers.current.push(marker);
@@ -52,10 +63,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
     // Fit map to show all markers if there are any
     if (markers.current.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
-      posts.forEach(post => {
-        if (post.coordinates) {
-          bounds.extend([post.coordinates.lng, post.coordinates.lat] as [number, number]);
-        }
+      markers.current.forEach(marker => {
+        bounds.extend(marker.getLngLat());
       });
       
       map.fitBounds(bounds, { 
