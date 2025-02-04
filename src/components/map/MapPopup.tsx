@@ -6,11 +6,14 @@ interface MapPopupProps {
 }
 
 export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
-  return new mapboxgl.Popup({
+  const popup = new mapboxgl.Popup({
     offset: 25,
     closeButton: false,
     anchor: 'bottom',
-  }).setHTML(`
+  });
+
+  // Set popup content
+  popup.setHTML(`
     <div class="max-w-xs p-2">
       <img 
         src="${post.images[0]}" 
@@ -22,4 +25,11 @@ export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
       <p class="text-xs text-gray-500 mt-1">${post.location}</p>
     </div>
   `);
+
+  // Set coordinates
+  if (post.coordinates) {
+    popup.setLngLat([post.coordinates.lng, post.coordinates.lat]);
+  }
+
+  return popup;
 };

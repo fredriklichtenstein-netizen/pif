@@ -68,12 +68,14 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         return;
       }
 
+      const coordinates: [number, number] = [post.coordinates.lng, post.coordinates.lat];
+      console.log("Creating marker at coordinates:", coordinates);
+
       const markerElement = createMarkerElement({
         onClick: () => onPostClick(post.id),
         onMouseEnter: () => {
           const popup = createMapPopup({ post });
-          popup.setLngLat([post.coordinates!.lng, post.coordinates!.lat])
-               .addTo(map.current!);
+          popup.addTo(map.current!);
         },
         onMouseLeave: () => {
           const popups = document.getElementsByClassName('mapboxgl-popup');
@@ -82,7 +84,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       });
 
       const marker = new mapboxgl.Marker({ element: markerElement })
-        .setLngLat([post.coordinates.lng, post.coordinates.lat])
+        .setLngLat(coordinates)
         .addTo(map.current);
 
       markers.current.push(marker);
