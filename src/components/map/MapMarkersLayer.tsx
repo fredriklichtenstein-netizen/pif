@@ -21,8 +21,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
-
-    // Add new markers with privacy offsets
+    
+    // Process all posts
     posts.forEach(post => {
       if (!post.coordinates) {
         console.log("Skipping post without coordinates:", post.id);
@@ -43,51 +43,58 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
           post.coordinates.lat
         );
         console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
-        // Cache the coordinates
         processedCoordinates.current.set(post.id, [privateLng, privateLat]);
       }
 
-      const markerElement = createMarkerElement({
-        onClick: () => onPostClick(post.id),
-        onMouseEnter: () => {
-          const popup = createMapPopup({ 
-            post: {
-              ...post,
-              coordinates: { lng: privateLng, lat: privateLat }
-            }
-          });
-          popup.addTo(map);
-        },
-        onMouseLeave: () => {
-          const popups = document.getElementsByClassName('mapboxgl-popup');
-          while (popups[0]) popups[0].remove();
-        }
-      });
+      try {
+        const markerElement = createMarkerElement({
+          onClick: () => onPostClick(post.id),
+          onMouseEnter: () => {
+            const popup = createMapPopup({ 
+              post: {
+                ...post,
+                coordinates: { lng: privateLng, lat: privateLat }
+              }
+            });
+            popup.addTo(map);
+          },
+          onMouseLeave: () => {
+            const popups = document.getElementsByClassName('mapboxgl-popup');
+            while (popups[0]) popups[0].remove();
+          }
+        });
 
-      const marker = new mapboxgl.Marker({
-        element: markerElement,
-        anchor: 'center'
-      })
-        .setLngLat([privateLng, privateLat])
-        .addTo(map);
+        const marker = new mapboxgl.Marker({
+          element: markerElement,
+          anchor: 'center'
+        })
+          .setLngLat([privateLng, privateLat])
+          .addTo(map);
 
-      console.log("Added marker for post:", post.id);
-      markers.current.push(marker);
+        console.log("Successfully added marker for post:", post.id, "at coordinates:", [privateLng, privateLat]);
+        markers.current.push(marker);
+      } catch (error) {
+        console.error("Error creating marker for post:", post.id, error);
+      }
     });
 
     // Fit map to show all markers if there are any
     if (markers.current.length > 0) {
-      const bounds = new mapboxgl.LngLatBounds();
-      markers.current.forEach(marker => {
-        bounds.extend(marker.getLngLat());
-      });
-      
-      map.fitBounds(bounds, { 
-        padding: 50,
-        maxZoom: 14,
-        duration: 1000
-      });
-      console.log("Fitted map to bounds with", markers.current.length, "markers");
+      try {
+        const bounds = new mapboxgl.LngLatBounds();
+        markers.current.forEach(marker => {
+          bounds.extend(marker.getLngLat());
+        });
+        
+        map.fitBounds(bounds, { 
+          padding: 50,
+          maxZoom: 14,
+          duration: 1000
+        });
+        console.log("Successfully fitted map to bounds with", markers.current.length, "markers");
+      } catch (error) {
+        console.error("Error fitting bounds:", error);
+      }
     }
   }, [posts, map, onPostClick]);
 
