@@ -13,6 +13,7 @@ interface MapMarkersLayerProps {
 
 export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProps) => {
   const markers = useRef<mapboxgl.Marker[]>([]);
+  const processedCoordinates = useRef<Map<string, [number, number]>>(new Map());
 
   useEffect(() => {
     // Clear existing markers
@@ -23,11 +24,21 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
     posts.forEach(post => {
       if (!post.coordinates) return;
 
-      // Add privacy offset to coordinates
-      const [privateLng, privateLat] = addLocationPrivacy(
-        post.coordinates.lng,
-        post.coordinates.lat
-      );
+      // Use cached privacy-adjusted coordinates if they exist
+      let privateLng: number, privateLat: number;
+      const cachedCoords = processedCoordinates.current.get(post.id);
+      
+      if (cachedCoords) {
+        [privateLng, privateLat] = cachedCoords;
+      } else {
+        // Calculate new privacy-adjusted coordinates
+        [privateLng, privateLat] = addLocationPrivacy(
+          post.coordinates.lng,
+          post.coordinates.lat
+        );
+        // Cache the coordinates
+        processedCoordinates.current.set(post.id, [privateLng, privateLat]);
+      }
 
       const markerElement = createMarkerElement({
         onClick: () => onPostClick(post.id),

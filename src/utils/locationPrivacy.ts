@@ -4,19 +4,25 @@
  */
 export const addLocationPrivacy = (lng: number, lat: number): [number, number] => {
   // Define radii in degrees (approximate conversion)
-  const URBAN_RADIUS = 0.002; // ~200m
+  const URBAN_RADIUS = 0.001; // ~100m
   const RURAL_RADIUS = 0.045; // ~5km
   
-  // Simple urban detection based on Stockholm city coordinates
-  const isUrban = Math.abs(lat - 59.3293) < 0.1 && Math.abs(lng - 18.0686) < 0.1;
+  // Stockholm bounds (approximate)
+  const isUrban = (
+    lat >= 59.1 && lat <= 59.5 && // Stockholm latitude bounds
+    lng >= 17.8 && lng <= 18.3    // Stockholm longitude bounds
+  );
+  
   const radius = isUrban ? URBAN_RADIUS : RURAL_RADIUS;
   
-  // Add random offset within radius
-  const randomAngle = Math.random() * 2 * Math.PI;
-  const randomDistance = Math.random() * radius;
+  // Generate a deterministic offset based on the coordinates
+  // This ensures the same coordinates always get the same offset
+  const seed = Math.sin(lat * lng) * 10000;
+  const angle = seed * Math.PI * 2;
+  const distance = Math.abs(Math.cos(seed)) * radius;
   
-  const offsetLng = randomDistance * Math.cos(randomAngle);
-  const offsetLat = randomDistance * Math.sin(randomAngle);
+  const offsetLng = distance * Math.cos(angle);
+  const offsetLat = distance * Math.sin(angle);
   
   return [
     lng + offsetLng,
