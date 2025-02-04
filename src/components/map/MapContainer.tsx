@@ -68,8 +68,9 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         return;
       }
 
-      const coordinates: [number, number] = [post.coordinates.lng, post.coordinates.lat];
-      console.log("Creating marker at coordinates:", coordinates);
+      // Create coordinates array in the correct format [longitude, latitude]
+      const coordinates = [post.coordinates.lng, post.coordinates.lat];
+      console.log("Creating marker at coordinates:", coordinates, "for post:", post.id);
 
       const markerElement = createMarkerElement({
         onClick: () => onPostClick(post.id),
