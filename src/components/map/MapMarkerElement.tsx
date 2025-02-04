@@ -12,6 +12,7 @@ export const createMarkerElement = ({
   const el = document.createElement("div");
   el.className = "relative group cursor-pointer";
 
+  // Create the main marker element
   const marker = document.createElement("div");
   marker.className = "w-8 h-8 bg-primary rounded-full shadow-lg border-2 border-white transform transition-transform duration-200 group-hover:scale-110 flex items-center justify-center";
   
@@ -20,6 +21,7 @@ export const createMarkerElement = ({
   innerDot.className = "w-2 h-2 bg-white rounded-full";
   marker.appendChild(innerDot);
   
+  // Add a pulsing effect
   const pulse = document.createElement("div");
   pulse.className = "absolute -inset-2 rounded-full animate-pulse bg-primary/20";
   
