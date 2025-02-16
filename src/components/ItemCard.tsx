@@ -1,3 +1,4 @@
+
 import { useItemCard } from "@/hooks/useItemCard";
 import { ItemHeader } from "./post/ItemHeader";
 import { ItemImage } from "./post/ItemImage";
@@ -10,6 +11,10 @@ interface ItemCardProps {
   description: string;
   image: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   category: string;
   condition?: string;
   postedBy: {
@@ -24,6 +29,7 @@ export function ItemCard({
   description,
   image,
   location,
+  coordinates,
   category,
   condition,
   postedBy,
@@ -52,6 +58,7 @@ export function ItemCard({
           category={category}
           condition={condition}
           location={location}
+          coordinates={coordinates}
           title={title}
           description={description}
           postedBy={postedBy}

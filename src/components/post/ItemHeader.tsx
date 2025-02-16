@@ -1,10 +1,17 @@
+
 import { MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { calculateDistance, formatDistance } from "@/utils/distance";
 
 interface ItemHeaderProps {
   category: string;
   condition?: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   title: string;
   description: string;
   postedBy: {
@@ -17,11 +24,41 @@ export function ItemHeader({
   category,
   condition,
   location,
+  coordinates,
   title,
   description,
   postedBy,
 }: ItemHeaderProps) {
   const navigate = useNavigate();
+  const [distanceText, setDistanceText] = useState<string>("Loading...");
+
+  useEffect(() => {
+    if (!coordinates) {
+      setDistanceText("Location unknown");
+      return;
+    }
+
+    // Get user's location
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const distance = calculateDistance(
+            position.coords.latitude,
+            position.coords.longitude,
+            coordinates.lat,
+            coordinates.lng
+          );
+          setDistanceText(formatDistance(distance));
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setDistanceText(location); // Fallback to location name
+        }
+      );
+    } else {
+      setDistanceText(location); // Fallback to location name
+    }
+  }, [coordinates, location]);
 
   const handleLocationClick = () => {
     navigate(`/map?location=${encodeURIComponent(location)}`);
@@ -41,7 +78,7 @@ export function ItemHeader({
           className="flex items-center text-gray-500 text-sm hover:text-primary transition-colors"
         >
           <MapPin size={14} className="mr-1" />
-          <span>{location}</span>
+          <span>{distanceText}</span>
         </button>
       </div>
       <h3 className="text-lg font-semibold mb-1">{title}</h3>
