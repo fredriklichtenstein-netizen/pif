@@ -4,8 +4,9 @@ import mapboxgl, { Point } from "mapbox-gl";
 /**
  * Checks if coordinates are within an urban area based on Mapbox infrastructure data
  * Uses building density, road network, and land use classification
+ * Falls back to predefined city boundaries if infrastructure data isn't available
  */
-export const isUrbanArea = (lat: number, lng: number, mapZoom?: number, map?: mapboxgl.Map): boolean => {
+export const isUrbanArea = (lat: number, lng: number, _mapZoom?: number, map?: mapboxgl.Map): boolean => {
   // If map object is provided, use infrastructure data
   if (map && map.isStyleLoaded()) {
     try {
@@ -57,15 +58,12 @@ export const isUrbanArea = (lat: number, lng: number, mapZoom?: number, map?: ma
       return isUrban;
     } catch (error) {
       console.error("Error determining urban area:", error);
-      // Fall back to existing zoom-based logic
-      if (mapZoom !== undefined) {
-        return mapZoom >= 10;
-      }
+      // Fall back directly to city bounds, no zoom check
     }
   }
   
-  // Fallback for when infrastructure data isn't available
-  // Use existing city bounds logic for consistency
+  // Fallback for when infrastructure data isn't available or fails
+  // Use predefined city bounds as the only fallback
   const MAJOR_URBAN_AREAS = [
     // Stockholm
     { minLat: 59.1, maxLat: 59.5, minLng: 17.8, maxLng: 18.3 },

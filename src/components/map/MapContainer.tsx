@@ -84,9 +84,11 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         const { latitude: lat, longitude: lng } = position.coords;
         const lngLat: [number, number] = [lng, lat];
         
-        // Set zoom based on urban/rural area using current zoom and map data
-        const currentZoom = map.getZoom();
-        const zoom = isUrbanArea(lat, lng, currentZoom, map) ? 13.5 : 8.5;
+        // Use infrastructure data for urban/rural determination
+        const isUrbanLocation = isUrbanArea(lat, lng, undefined, map);
+        
+        // Set appropriate zoom level based on urban/rural classification
+        const zoom = isUrbanLocation ? 13.5 : 8.5;
         
         // Update user location and create/update marker
         setUserLocation(lngLat);
