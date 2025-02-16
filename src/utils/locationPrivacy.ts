@@ -6,20 +6,39 @@
 export const isUrbanArea = async (map: mapboxgl.Map | null, lat: number, lng: number): Promise<boolean> => {
   if (!map) return false;
 
-  // Query features at the given coordinates
+  // Wait for map style to load if it hasn't already
+  if (!map.isStyleLoaded()) {
+    return new Promise((resolve) => {
+      map.once('style.load', () => {
+        // Re-run the check after style is loaded
+        const point = map.project([lng, lat]);
+        const features = map.queryRenderedFeatures(point, {
+          layers: ['landuse', 'landuse-residential', 'building']
+        });
+        
+        const hasBuildings = features.some(f => f.sourceLayer === 'building');
+        const hasResidential = features.some(f => 
+          f.sourceLayer === 'landuse' && 
+          (f.properties?.class === 'residential' || f.properties?.class === 'commercial')
+        );
+        
+        resolve(hasBuildings && hasResidential);
+      });
+    });
+  }
+
+  // If style is already loaded, proceed with the check
   const point = map.project([lng, lat]);
   const features = map.queryRenderedFeatures(point, {
     layers: ['landuse', 'landuse-residential', 'building']
   });
 
-  // Calculate urban density based on features
   const hasBuildings = features.some(f => f.sourceLayer === 'building');
   const hasResidential = features.some(f => 
     f.sourceLayer === 'landuse' && 
     (f.properties?.class === 'residential' || f.properties?.class === 'commercial')
   );
   
-  // Consider area urban if it has both buildings and residential/commercial landuse
   return hasBuildings && hasResidential;
 };
 
