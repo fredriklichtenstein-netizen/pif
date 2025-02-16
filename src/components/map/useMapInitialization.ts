@@ -22,7 +22,17 @@ export const useMapInitialization = (mapboxToken: string) => {
       maxZoom: 16
     });
 
+    // Add navigation controls (top-right)
     newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+    // Add scale control (bottom-left) - shows distance in km and miles
+    newMap.addControl(
+      new mapboxgl.ScaleControl({
+        maxWidth: 150,
+        unit: 'metric'
+      }),
+      'bottom-left'
+    );
 
     const checkIfReady = () => {
       if (newMap.loaded() && newMap.isStyleLoaded()) {
