@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { calculateDistance, formatDistance } from "@/utils/distance";
+import { addLocationPrivacy } from "@/utils/locationPrivacy";
 
 interface ItemHeaderProps {
   category: string;
@@ -41,14 +42,25 @@ export function ItemHeader({
     // Get user's location
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const distance = calculateDistance(
-            position.coords.latitude,
-            position.coords.longitude,
-            coordinates.lat,
-            coordinates.lng
-          );
-          setDistanceText(formatDistance(distance));
+        async (position) => {
+          try {
+            // Get privacy-adjusted coordinates
+            const [privateLng, privateLat] = await addLocationPrivacy(
+              coordinates.lng,
+              coordinates.lat
+            );
+
+            const distance = calculateDistance(
+              position.coords.latitude,
+              position.coords.longitude,
+              privateLat,
+              privateLng
+            );
+            setDistanceText(formatDistance(distance));
+          } catch (error) {
+            console.error("Error calculating distance:", error);
+            setDistanceText(location); // Fallback to location name
+          }
         },
         (error) => {
           console.error("Error getting location:", error);
