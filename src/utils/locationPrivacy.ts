@@ -1,17 +1,71 @@
 
+import mapboxgl, { Point } from "mapbox-gl";
+
 /**
- * Checks if coordinates are within an urban area based on map zoom level
- * Uses zoom level as a proxy for population density/urban development
- * Zoom 10+ typically represents city/town level detail
+ * Checks if coordinates are within an urban area based on Mapbox infrastructure data
+ * Uses building density, road network, and land use classification
  */
-export const isUrbanArea = (lat: number, lng: number, mapZoom?: number): boolean => {
-  if (mapZoom !== undefined) {
-    return mapZoom >= 10;
+export const isUrbanArea = (lat: number, lng: number, mapZoom?: number, map?: mapboxgl.Map): boolean => {
+  // If map object is provided, use infrastructure data
+  if (map && map.isStyleLoaded()) {
+    try {
+      // Convert lat/lng to pixel coordinates for querying features
+      const point = map.project([lng, lat]);
+      
+      // Create two points for the bounding box
+      const sw: Point = new Point(point.x - 100, point.y + 100);
+      const ne: Point = new Point(point.x + 100, point.y - 100);
+
+      // Get all relevant features within the bounding box
+      const features = map.queryRenderedFeatures([sw, ne], {
+        layers: [
+          'building',          // Building footprints
+          'road',             // Road networks
+          'landuse'           // Land use classifications
+        ]
+      });
+
+      // Count buildings
+      const buildingCount = features.filter(f => 
+        f.sourceLayer === 'building' || 
+        f.layer.type === 'fill' && f.layer.id.includes('building')
+      ).length;
+
+      // Count road segments
+      const roadCount = features.filter(f => 
+        f.sourceLayer === 'road' || 
+        f.layer.type === 'line' && f.layer.id.includes('road')
+      ).length;
+
+      // Check landuse types
+      const ruralLandUseTypes = ['agriculture', 'forest', 'grass', 'meadow', 'farmland'];
+      const hasRuralLanduse = features.some(f => 
+        f.sourceLayer === 'landuse' && 
+        ruralLandUseTypes.includes(f.properties?.class as string)
+      );
+
+      // Urban if: many buildings OR (multiple roads AND not rural)
+      const isUrban = (buildingCount > 5 || (roadCount >= 2 && !hasRuralLanduse));
+
+      console.log(`Location analysis at [${lng}, ${lat}]:`, {
+        buildingCount,
+        roadCount,
+        hasRuralLanduse,
+        isUrban
+      });
+
+      return isUrban;
+    } catch (error) {
+      console.error("Error determining urban area:", error);
+      // Fall back to existing zoom-based logic
+      if (mapZoom !== undefined) {
+        return mapZoom >= 10;
+      }
+    }
   }
   
-  // Fallback for when zoom level isn't available (e.g., during privacy calculations)
-  // Use a more granular approach based on known major urban coordinates
-  // These bounds are approximate and should be expanded based on usage data
+  // Fallback for when infrastructure data isn't available
+  // Use existing city bounds logic for consistency
   const MAJOR_URBAN_AREAS = [
     // Stockholm
     { minLat: 59.1, maxLat: 59.5, minLng: 17.8, maxLng: 18.3 },
