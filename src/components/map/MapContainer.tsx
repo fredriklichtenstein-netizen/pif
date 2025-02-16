@@ -80,13 +80,13 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
     if (!map || !navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
         const lngLat: [number, number] = [lng, lat];
         
-        // Set zoom based on urban/rural area using current zoom
-        const currentZoom = map.getZoom();
-        const zoom = isUrbanArea(lat, lng, currentZoom) ? 13.5 : 8.5;
+        // Set zoom based on urban/rural area using Mapbox data
+        const isUrbanLocation = await isUrbanArea(map, lat, lng);
+        const zoom = isUrbanLocation ? 13.5 : 8.5;
         
         // Update user location and create/update marker
         setUserLocation(lngLat);

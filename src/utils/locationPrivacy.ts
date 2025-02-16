@@ -1,42 +1,39 @@
 
 /**
- * Checks if coordinates are within an urban area based on map zoom level
- * Uses zoom level as a proxy for population density/urban development
- * Zoom 10+ typically represents city/town level detail
+ * Uses Mapbox's landuse layer to determine if a location is urban
+ * This provides more accurate and consistent classification
  */
-export const isUrbanArea = (lat: number, lng: number, mapZoom?: number): boolean => {
-  if (mapZoom !== undefined) {
-    return mapZoom >= 10;
-  }
-  
-  // Fallback for when zoom level isn't available (e.g., during privacy calculations)
-  // Use a more granular approach based on known major urban coordinates
-  // These bounds are approximate and should be expanded based on usage data
-  const MAJOR_URBAN_AREAS = [
-    // Stockholm
-    { minLat: 59.1, maxLat: 59.5, minLng: 17.8, maxLng: 18.3 },
-    // Gothenburg
-    { minLat: 57.6, maxLat: 57.8, minLng: 11.8, maxLng: 12.1 },
-    // Malmö
-    { minLat: 55.5, maxLat: 55.7, minLng: 12.9, maxLng: 13.1 }
-  ];
+export const isUrbanArea = async (map: mapboxgl.Map | null, lat: number, lng: number): Promise<boolean> => {
+  if (!map) return false;
 
-  return MAJOR_URBAN_AREAS.some(area => 
-    lat >= area.minLat && lat <= area.maxLat &&
-    lng >= area.minLng && lng <= area.maxLng
+  // Query features at the given coordinates
+  const point = map.project([lng, lat]);
+  const features = map.queryRenderedFeatures(point, {
+    layers: ['landuse', 'landuse-residential', 'building']
+  });
+
+  // Calculate urban density based on features
+  const hasBuildings = features.some(f => f.sourceLayer === 'building');
+  const hasResidential = features.some(f => 
+    f.sourceLayer === 'landuse' && 
+    (f.properties?.class === 'residential' || f.properties?.class === 'commercial')
   );
+  
+  // Consider area urban if it has both buildings and residential/commercial landuse
+  return hasBuildings && hasResidential;
 };
 
 /**
  * Adds intentional variance to coordinates for privacy
  * Uses smaller radius in urban areas (+-200m) and larger in rural areas (+-5km)
  */
-export const addLocationPrivacy = (lng: number, lat: number): [number, number] => {
+export const addLocationPrivacy = async (map: mapboxgl.Map | null, lng: number, lat: number): Promise<[number, number]> => {
   // Define radii in degrees (approximate conversion)
   const URBAN_RADIUS = 0.001; // ~100m
   const RURAL_RADIUS = 0.045; // ~5km
   
-  const radius = isUrbanArea(lat, lng) ? URBAN_RADIUS : RURAL_RADIUS;
+  const isUrban = await isUrbanArea(map, lat, lng);
+  const radius = isUrban ? URBAN_RADIUS : RURAL_RADIUS;
   
   // Generate a deterministic offset based on the coordinates
   // This ensures the same coordinates always get the same offset
