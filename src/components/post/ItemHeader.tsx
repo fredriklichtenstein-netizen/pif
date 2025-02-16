@@ -3,7 +3,6 @@ import { MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { calculateDistance, formatDistance } from "@/utils/distance";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
 
 interface ItemHeaderProps {
   category: string;
@@ -31,45 +30,35 @@ export function ItemHeader({
   postedBy,
 }: ItemHeaderProps) {
   const navigate = useNavigate();
-  const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "Location unknown");
+  const [distanceText, setDistanceText] = useState<string>("Calculating...");
 
   useEffect(() => {
     let isMounted = true;
 
-    const updateDistance = async () => {
+    const updateDistance = () => {
       if (!coordinates) {
-        setDistanceText("Location unknown");
+        if (isMounted) setDistanceText("Location unknown");
         return;
       }
 
-      // Get user's location
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
-          async (position) => {
+          (position) => {
             if (!isMounted) return;
 
             try {
-              // Get privacy-adjusted coordinates
-              const [privateLng, privateLat] = await addLocationPrivacy(
-                coordinates.lng,
-                coordinates.lat
-              );
-
+              // Calculate distance directly using the provided coordinates
               const distance = calculateDistance(
                 position.coords.latitude,
                 position.coords.longitude,
-                privateLat,
-                privateLng
+                coordinates.lat,
+                coordinates.lng
               );
               
-              if (isMounted) {
-                setDistanceText(formatDistance(distance));
-              }
+              setDistanceText(formatDistance(distance));
             } catch (error) {
               console.error("Error calculating distance:", error);
-              if (isMounted) {
-                setDistanceText(location);
-              }
+              setDistanceText(location);
             }
           },
           (error) => {
@@ -80,7 +69,9 @@ export function ItemHeader({
           }
         );
       } else {
-        setDistanceText("Location not supported");
+        if (isMounted) {
+          setDistanceText("Location not supported");
+        }
       }
     };
 
