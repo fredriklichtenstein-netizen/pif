@@ -231,6 +231,39 @@ export type Database = {
         }
         Relationships: []
       }
+      swedish_urban_areas: {
+        Row: {
+          created_at: string
+          id: number
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          name: string
+          population: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          name: string
+          population?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          max_lat?: number
+          max_lng?: number
+          min_lat?: number
+          min_lng?: number
+          name?: string
+          population?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

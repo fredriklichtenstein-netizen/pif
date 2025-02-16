@@ -80,12 +80,12 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
     if (!map || !navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
         const lngLat: [number, number] = [lng, lat];
         
         // Use infrastructure data for urban/rural determination
-        const isUrbanLocation = isUrbanArea(lat, lng, undefined, map);
+        const isUrbanLocation = await isUrbanArea(lat, lng, undefined, map);
         
         // Set appropriate zoom level based on urban/rural classification
         const zoom = isUrbanLocation ? 13.5 : 8.5;

@@ -1,12 +1,13 @@
 
 import mapboxgl, { Point } from "mapbox-gl";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Checks if coordinates are within an urban area based on Mapbox infrastructure data
  * Uses building density, road network, and land use classification
- * Falls back to predefined city boundaries if infrastructure data isn't available
+ * Falls back to database of Swedish urban areas if infrastructure data isn't available
  */
-export const isUrbanArea = (lat: number, lng: number, _mapZoom?: number, map?: mapboxgl.Map): boolean => {
+export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, map?: mapboxgl.Map): Promise<boolean> => {
   // If map object is provided, use infrastructure data
   if (map && map.isStyleLoaded()) {
     try {
@@ -58,37 +59,39 @@ export const isUrbanArea = (lat: number, lng: number, _mapZoom?: number, map?: m
       return isUrban;
     } catch (error) {
       console.error("Error determining urban area:", error);
-      // Fall back directly to city bounds, no zoom check
+      // Fall back to database check
     }
   }
   
-  // Fallback for when infrastructure data isn't available or fails
-  // Use predefined city bounds as the only fallback
-  const MAJOR_URBAN_AREAS = [
-    // Stockholm
-    { minLat: 59.1, maxLat: 59.5, minLng: 17.8, maxLng: 18.3 },
-    // Gothenburg
-    { minLat: 57.6, maxLat: 57.8, minLng: 11.8, maxLng: 12.1 },
-    // Malmö
-    { minLat: 55.5, maxLat: 55.7, minLng: 12.9, maxLng: 13.1 }
-  ];
+  // Fallback: Check against database of Swedish urban areas
+  const { data, error } = await supabase
+    .from('swedish_urban_areas')
+    .select('id')
+    .gte('min_lat', lat)
+    .lte('max_lat', lat)
+    .gte('min_lng', lng)
+    .lte('max_lng', lng)
+    .limit(1);
 
-  return MAJOR_URBAN_AREAS.some(area => 
-    lat >= area.minLat && lat <= area.maxLat &&
-    lng >= area.minLng && lng <= area.maxLng
-  );
+  if (error) {
+    console.error("Error checking urban areas database:", error);
+    return false;
+  }
+
+  return data.length > 0;
 };
 
 /**
  * Adds intentional variance to coordinates for privacy
  * Uses smaller radius in urban areas (+-200m) and larger in rural areas (+-5km)
  */
-export const addLocationPrivacy = (lng: number, lat: number): [number, number] => {
+export const addLocationPrivacy = async (lng: number, lat: number): Promise<[number, number]> => {
   // Define radii in degrees (approximate conversion)
   const URBAN_RADIUS = 0.001; // ~100m
   const RURAL_RADIUS = 0.045; // ~5km
   
-  const radius = isUrbanArea(lat, lng) ? URBAN_RADIUS : RURAL_RADIUS;
+  const isUrbanLocation = await isUrbanArea(lat, lng);
+  const radius = isUrbanLocation ? URBAN_RADIUS : RURAL_RADIUS;
   
   // Generate a deterministic offset based on the coordinates
   // This ensures the same coordinates always get the same offset
