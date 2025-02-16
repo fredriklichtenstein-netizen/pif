@@ -30,7 +30,7 @@ export function ItemHeader({
   postedBy,
 }: ItemHeaderProps) {
   const navigate = useNavigate();
-  const [distanceText, setDistanceText] = useState<string>("Calculating...");
+  const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "Location unknown");
 
   useEffect(() => {
     let isMounted = true;
@@ -44,10 +44,10 @@ export function ItemHeader({
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            if (!isMounted) return;
+            if (!isMounted || !coordinates) return;
 
             try {
-              // Calculate distance directly using the provided coordinates
+              // Calculate distance using true coordinates for accuracy
               const distance = calculateDistance(
                 position.coords.latitude,
                 position.coords.longitude,
@@ -55,10 +55,14 @@ export function ItemHeader({
                 coordinates.lng
               );
               
-              setDistanceText(formatDistance(distance));
+              if (isMounted) {
+                setDistanceText(formatDistance(distance));
+              }
             } catch (error) {
               console.error("Error calculating distance:", error);
-              setDistanceText(location);
+              if (isMounted) {
+                setDistanceText(location);
+              }
             }
           },
           (error) => {
@@ -66,6 +70,12 @@ export function ItemHeader({
             if (isMounted) {
               setDistanceText("Enable location to see distance");
             }
+          },
+          // Add options to improve geolocation responsiveness
+          {
+            enableHighAccuracy: false, // Don't need high accuracy for rough distances
+            timeout: 5000, // Timeout after 5 seconds
+            maximumAge: 30000 // Cache location for 30 seconds
           }
         );
       } else {
@@ -75,6 +85,7 @@ export function ItemHeader({
       }
     };
 
+    // Initial update
     updateDistance();
 
     return () => {
