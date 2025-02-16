@@ -31,45 +31,64 @@ export function ItemHeader({
   postedBy,
 }: ItemHeaderProps) {
   const navigate = useNavigate();
-  const [distanceText, setDistanceText] = useState<string>("Loading...");
+  const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "Location unknown");
 
   useEffect(() => {
-    if (!coordinates) {
-      setDistanceText("Location unknown");
-      return;
-    }
+    let isMounted = true;
 
-    // Get user's location
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            // Get privacy-adjusted coordinates
-            const [privateLng, privateLat] = await addLocationPrivacy(
-              coordinates.lng,
-              coordinates.lat
-            );
+    const updateDistance = async () => {
+      if (!coordinates) {
+        setDistanceText("Location unknown");
+        return;
+      }
 
-            const distance = calculateDistance(
-              position.coords.latitude,
-              position.coords.longitude,
-              privateLat,
-              privateLng
-            );
-            setDistanceText(formatDistance(distance));
-          } catch (error) {
-            console.error("Error calculating distance:", error);
-            setDistanceText(location); // Fallback to location name
+      // Get user's location
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            if (!isMounted) return;
+
+            try {
+              // Get privacy-adjusted coordinates
+              const [privateLng, privateLat] = await addLocationPrivacy(
+                coordinates.lng,
+                coordinates.lat
+              );
+
+              const distance = calculateDistance(
+                position.coords.latitude,
+                position.coords.longitude,
+                privateLat,
+                privateLng
+              );
+              
+              if (isMounted) {
+                setDistanceText(formatDistance(distance));
+              }
+            } catch (error) {
+              console.error("Error calculating distance:", error);
+              if (isMounted) {
+                setDistanceText(location);
+              }
+            }
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            if (isMounted) {
+              setDistanceText("Enable location to see distance");
+            }
           }
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setDistanceText(location); // Fallback to location name
-        }
-      );
-    } else {
-      setDistanceText(location); // Fallback to location name
-    }
+        );
+      } else {
+        setDistanceText("Location not supported");
+      }
+    };
+
+    updateDistance();
+
+    return () => {
+      isMounted = false;
+    };
   }, [coordinates, location]);
 
   const handleLocationClick = () => {
