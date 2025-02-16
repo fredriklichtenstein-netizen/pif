@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import 'mapbox-gl/dist/mapbox-gl.css';  // Add this critical CSS import
 
 export const useMapInitialization = (mapboxToken: string) => {
   const mapContainer = useRef<HTMLDivElement>(null);
