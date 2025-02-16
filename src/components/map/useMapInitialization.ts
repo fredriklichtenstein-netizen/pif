@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import 'mapbox-gl/dist/mapbox-gl.css';  // Add this critical CSS import
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 export const useMapInitialization = (mapboxToken: string) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -16,10 +16,10 @@ export const useMapInitialization = (mapboxToken: string) => {
     const newMap = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/light-v11",
-      center: [18.0686, 59.3293], // Stockholm center
-      zoom: 11,
-      minZoom: 9, // Prevent zooming out too far
-      maxZoom: 16 // Prevent zooming in too far
+      center: [0, 0], // This will be immediately updated with user location
+      zoom: 14, // Default zoom level showing ~1km radius
+      minZoom: 9,
+      maxZoom: 16
     });
 
     newMap.addControl(new mapboxgl.NavigationControl(), "top-right");

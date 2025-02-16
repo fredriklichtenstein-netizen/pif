@@ -84,11 +84,8 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         const { latitude: lat, longitude: lng } = position.coords;
         const lngLat: [number, number] = [lng, lat];
         
-        // Use infrastructure data for urban/rural determination
-        const isUrbanLocation = await isUrbanArea(lat, lng, undefined, map);
-        
-        // Set appropriate zoom level based on urban/rural classification
-        const zoom = isUrbanLocation ? 13.5 : 8.5;
+        // Set zoom level for ~1km radius view (zoom level 14 typically shows about 1-2km radius)
+        const zoom = 14;
         
         // Update user location and create/update marker
         setUserLocation(lngLat);
@@ -106,6 +103,13 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       }
     );
   };
+
+  // Get initial user location on mount
+  useEffect(() => {
+    if (isMapReady && map) {
+      handleGeolocation();
+    }
+  }, [isMapReady, map]);
 
   // Ensure marker stays visible when map moves
   useEffect(() => {
