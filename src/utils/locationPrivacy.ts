@@ -1,5 +1,5 @@
 
-import mapboxgl from "mapbox-gl";
+import mapboxgl, { Point } from "mapbox-gl";
 
 /**
  * Checks if coordinates are within an urban area based on Mapbox infrastructure data
@@ -12,15 +12,12 @@ export const isUrbanArea = (map: mapboxgl.Map, lat: number, lng: number): boolea
     // Convert lat/lng to pixel coordinates for querying features
     const point = map.project([lng, lat]);
     
-    // Query features within a 100m radius (roughly 100 pixels at typical zoom levels)
-    const radius = 100;
-    const boundingBox = [
-      [point.x - radius, point.y - radius],
-      [point.x + radius, point.y + radius]
-    ];
+    // Create two points for the bounding box that Mapbox expects
+    const sw: Point = new Point(point.x - 100, point.y + 100);
+    const ne: Point = new Point(point.x + 100, point.y - 100);
 
     // Get all relevant features within the bounding box
-    const features = map.queryRenderedFeatures(boundingBox, {
+    const features = map.queryRenderedFeatures([sw, ne], {
       layers: [
         'building',          // Building footprints
         'road',             // Road networks
