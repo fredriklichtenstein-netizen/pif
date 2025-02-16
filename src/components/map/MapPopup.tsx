@@ -1,3 +1,4 @@
+
 import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
 
@@ -21,7 +22,7 @@ export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
       />
       <h3 class="font-semibold text-sm">${post.title}</h3>
       <p class="text-xs text-gray-600 mt-1">${post.category}</p>
-      <p class="text-xs text-gray-500 mt-1">${post.location}</p>
+      <p class="text-xs text-gray-500 mt-1">Distance will update when browsing</p>
       <p class="text-xs text-gray-400 mt-1">Location shown is approximate for privacy</p>
     </div>
   `);

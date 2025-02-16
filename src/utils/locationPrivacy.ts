@@ -83,11 +83,11 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
 
 /**
  * Adds intentional variance to coordinates for privacy
- * Uses smaller radius in urban areas (+-200m) and larger in rural areas (+-5km)
+ * Uses smaller radius in urban areas (+-100m) and larger in rural areas (+-5km)
  */
 export const addLocationPrivacy = async (lng: number, lat: number): Promise<[number, number]> => {
   // Define radii in degrees (approximate conversion)
-  const URBAN_RADIUS = 0.001; // ~100m
+  const URBAN_RADIUS = 0.0005; // ~100m at these latitudes
   const RURAL_RADIUS = 0.045; // ~5km
   
   const isUrbanLocation = await isUrbanArea(lat, lng);
