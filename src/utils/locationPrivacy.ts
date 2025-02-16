@@ -1,4 +1,3 @@
-
 import mapboxgl, { Point } from "mapbox-gl";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -81,11 +80,22 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
   return data.length > 0;
 };
 
+// Cache for privacy-adjusted coordinates
+const coordinateCache = new Map<string, [number, number]>();
+
 /**
  * Adds intentional variance to coordinates for privacy
  * Uses smaller radius in urban areas (+-100m) and larger in rural areas (+-5km)
  */
 export const addLocationPrivacy = async (lng: number, lat: number): Promise<[number, number]> => {
+  // Check cache first
+  const cacheKey = `${lng},${lat}`;
+  const cachedValue = coordinateCache.get(cacheKey);
+  if (cachedValue) {
+    console.log('Using cached privacy coordinates for:', cacheKey);
+    return cachedValue;
+  }
+
   // Define radii in degrees (approximate conversion)
   const URBAN_RADIUS = 0.0005; // ~100m at these latitudes
   const RURAL_RADIUS = 0.045; // ~5km
@@ -102,8 +112,14 @@ export const addLocationPrivacy = async (lng: number, lat: number): Promise<[num
   const offsetLng = distance * Math.cos(angle);
   const offsetLat = distance * Math.sin(angle);
   
-  return [
+  const result: [number, number] = [
     lng + offsetLng,
     lat + offsetLat
   ];
+
+  // Cache the result
+  coordinateCache.set(cacheKey, result);
+  console.log('Cached new privacy coordinates for:', cacheKey);
+  
+  return result;
 };
