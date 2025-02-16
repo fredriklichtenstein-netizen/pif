@@ -1,30 +1,70 @@
 
-/**
- * Checks if coordinates are within an urban area based on map zoom level
- * Uses zoom level as a proxy for population density/urban development
- * Zoom 10+ typically represents city/town level detail
- */
-export const isUrbanArea = (lat: number, lng: number, mapZoom?: number): boolean => {
-  if (mapZoom !== undefined) {
-    return mapZoom >= 10;
-  }
-  
-  // Fallback for when zoom level isn't available (e.g., during privacy calculations)
-  // Use a more granular approach based on known major urban coordinates
-  // These bounds are approximate and should be expanded based on usage data
-  const MAJOR_URBAN_AREAS = [
-    // Stockholm
-    { minLat: 59.1, maxLat: 59.5, minLng: 17.8, maxLng: 18.3 },
-    // Gothenburg
-    { minLat: 57.6, maxLat: 57.8, minLng: 11.8, maxLng: 12.1 },
-    // Malmö
-    { minLat: 55.5, maxLat: 55.7, minLng: 12.9, maxLng: 13.1 }
-  ];
+import mapboxgl from "mapbox-gl";
 
-  return MAJOR_URBAN_AREAS.some(area => 
-    lat >= area.minLat && lat <= area.maxLat &&
-    lng >= area.minLng && lng <= area.maxLng
-  );
+/**
+ * Checks if coordinates are within an urban area based on Mapbox infrastructure data
+ * Uses building density, road network, and land use classification
+ */
+export const isUrbanArea = (map: mapboxgl.Map, lat: number, lng: number): boolean => {
+  if (!map || !map.isStyleLoaded()) return false;
+
+  try {
+    // Convert lat/lng to pixel coordinates for querying features
+    const point = map.project([lng, lat]);
+    
+    // Query features within a 100m radius (roughly 100 pixels at typical zoom levels)
+    const radius = 100;
+    const boundingBox = [
+      [point.x - radius, point.y - radius],
+      [point.x + radius, point.y + radius]
+    ];
+
+    // Get all relevant features within the bounding box
+    const features = map.queryRenderedFeatures(boundingBox, {
+      layers: [
+        'building',          // Building footprints
+        'road',             // Road networks
+        'landuse'           // Land use classifications
+      ]
+    });
+
+    // Count buildings
+    const buildingCount = features.filter(f => 
+      f.sourceLayer === 'building' || 
+      f.layer.type === 'fill' && f.layer.id.includes('building')
+    ).length;
+
+    // Count road segments (as proxy for network density)
+    const roadCount = features.filter(f => 
+      f.sourceLayer === 'road' || 
+      f.layer.type === 'line' && f.layer.id.includes('road')
+    ).length;
+
+    // Check landuse types
+    const ruralLandUseTypes = ['agriculture', 'forest', 'grass', 'meadow', 'farmland'];
+    const hasRuralLanduse = features.some(f => 
+      f.sourceLayer === 'landuse' && 
+      ruralLandUseTypes.includes(f.properties?.class as string)
+    );
+
+    // Define urban criteria:
+    // - More than 5 buildings within radius OR
+    // - At least 2 road segments AND
+    // - Not explicitly rural landuse
+    const isUrban = (buildingCount > 5 || roadCount >= 2) && !hasRuralLanduse;
+
+    console.log(`Location analysis at [${lng}, ${lat}]:`, {
+      buildingCount,
+      roadCount,
+      hasRuralLanduse,
+      isUrban
+    });
+
+    return isUrban;
+  } catch (error) {
+    console.error("Error determining urban area:", error);
+    return false; // Default to false on error
+  }
 };
 
 /**
@@ -36,7 +76,8 @@ export const addLocationPrivacy = (lng: number, lat: number): [number, number] =
   const URBAN_RADIUS = 0.001; // ~100m
   const RURAL_RADIUS = 0.045; // ~5km
   
-  const radius = isUrbanArea(lat, lng) ? URBAN_RADIUS : RURAL_RADIUS;
+  // If we can't determine urban/rural status, default to urban for safety
+  const radius = RURAL_RADIUS;
   
   // Generate a deterministic offset based on the coordinates
   // This ensures the same coordinates always get the same offset
