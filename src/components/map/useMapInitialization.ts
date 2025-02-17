@@ -12,51 +12,58 @@ export const useMapInitialization = (mapboxToken: string) => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
     
     const preloadResources = async () => {
-      mapboxgl.accessToken = mapboxToken;
-      
-      const newMap = new mapboxgl.Map({
-        container: mapContainer.current!,
-        style: "mapbox://styles/mapbox/light-v11",
-        center: [0, 0],
-        zoom: 14,
-        minZoom: 9,
-        maxZoom: 16,
-        fadeDuration: 0,
-        attributionControl: false,
-        preserveDrawingBuffer: false,
-        renderWorldCopies: false,
-        antialias: true,
-        transformRequest: (url, resourceType) => {
-          return {
-            url: url,
-            credentials: 'same-origin'
-          };
-        }
-      });
+      try {
+        mapboxgl.accessToken = mapboxToken;
+        
+        const newMap = new mapboxgl.Map({
+          container: mapContainer.current!,
+          style: "mapbox://styles/mapbox/light-v11",
+          center: [0, 0],
+          zoom: 14,
+          minZoom: 9,
+          maxZoom: 16,
+          fadeDuration: 0,
+          attributionControl: false,
+          preserveDrawingBuffer: false,
+          renderWorldCopies: false,
+          antialias: true,
+        });
 
-      // Wait for style and essential resources to load
-      await new Promise<void>((resolve) => {
-        newMap.once('styledata', () => {
-          newMap.once('idle', () => {
-            // Add controls only after the map is fully loaded
-            newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
-            newMap.addControl(
-              new mapboxgl.ScaleControl({
-                maxWidth: 150,
-                unit: 'metric'
-              }),
-              'bottom-left'
-            );
-            resolve();
+        // Wait for style and essential resources to load
+        await new Promise<void>((resolve, reject) => {
+          newMap.on('load', () => {
+            try {
+              // Add controls only after the map is fully loaded
+              newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+              newMap.addControl(
+                new mapboxgl.ScaleControl({
+                  maxWidth: 150,
+                  unit: 'metric'
+                }),
+                'bottom-left'
+              );
+              resolve();
+            } catch (error) {
+              console.error('Error adding controls:', error);
+              reject(error);
+            }
+          });
+
+          newMap.on('error', (e) => {
+            console.error('Map error:', e);
+            reject(e.error);
           });
         });
-      });
 
-      map.current = newMap;
-      setIsMapReady(true);
+        map.current = newMap;
+        setIsMapReady(true);
+      } catch (error) {
+        console.error('Error initializing map:', error);
+        setIsMapReady(false);
+      }
     };
 
-    preloadResources().catch(console.error);
+    preloadResources();
 
     return () => {
       if (map.current) {
