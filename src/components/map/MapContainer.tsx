@@ -4,8 +4,9 @@ import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
 import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
+import { Toaster } from "@/components/ui/toaster";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -13,10 +14,10 @@ interface MapContainerProps {
   onPostClick: (postId: string) => void;
 }
 
-export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
+export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
   const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
-  const { isTracking, toggleLocationTracking } = useLocationTracking(map);
+  const { isTracking, toggleLocationTracking } = useLocationTracking(isMapReady ? map : null);
 
   // Effect to handle initial map setup
   useEffect(() => {
@@ -63,6 +64,9 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
           </Button>
         </>
       )}
+      <Toaster />
     </div>
   );
-};
+});
+
+MapContainer.displayName = "MapContainer";
