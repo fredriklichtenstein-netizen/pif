@@ -123,6 +123,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       locationMarker.current.remove();
       locationMarker.current = null;
     }
+    setUserLocation(null);
   };
 
   const toggleLocationTracking = () => {
@@ -133,6 +134,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
     }
   };
 
+  // Effect to handle initial map setup and cleanup
   useEffect(() => {
     if (isMapReady && map) {
       setIsMapVisible(true);
@@ -145,6 +147,20 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       stopLocationTracking();
     };
   }, [isMapReady, map]);
+
+  // Effect to handle marker updates based on tracking state
+  useEffect(() => {
+    if (!isTracking) {
+      // Remove marker when tracking is disabled
+      if (locationMarker.current) {
+        locationMarker.current.remove();
+        locationMarker.current = null;
+      }
+    } else if (userLocation) {
+      // Recreate marker if we have a location and tracking is enabled
+      createLocationMarker(userLocation);
+    }
+  }, [isTracking, userLocation]);
 
   return (
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative bg-gray-50">
@@ -177,7 +193,10 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
             size="icon"
             variant="outline"
           >
-            <Locate className={`h-4 w-4 ${isTracking ? 'text-blue-500' : ''}`} />
+            <Locate 
+              className={`h-4 w-4 ${isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
+              strokeWidth={1.5}
+            />
           </Button>
         </>
       )}
