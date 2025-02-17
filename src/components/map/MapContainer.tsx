@@ -11,10 +11,11 @@ interface MapContainerProps {
   mapboxToken: string;
   posts: Post[];
   onPostClick: (postId: string) => void;
+  isReady: boolean;
 }
 
-export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
-  const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
+export const MapContainer = memo(({ mapboxToken, posts, onPostClick, isReady }: MapContainerProps) => {
+  const { mapContainer, map, isMapReady } = useMapInitialization(isReady ? mapboxToken : null);
   const [isMapVisible, setIsMapVisible] = useState(false);
   
   // Only initialize location tracking when map is ready
@@ -26,8 +27,19 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
     }
   }, [isMapReady, map]);
 
+  if (!isReady) {
+    return (
+      <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative bg-gray-50">
+    <div className="h-full rounded-lg overflow-hidden relative bg-gray-50">
       <div 
         ref={mapContainer} 
         className="w-full h-full"

@@ -34,33 +34,29 @@ const MapView = () => {
     navigate(`/?post=${postId}`);
   };
 
-  if (isLoadingToken || !posts) {
-    return (
-      <div className="container mx-auto px-4 pb-20 pt-4">
-        <h1 className="text-2xl font-bold mb-4">Map View</h1>
-        <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative">
-          <Skeleton className="w-full h-full animate-pulse bg-gray-200" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-gray-500 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-              <p>Loading map...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
       <h1 className="text-2xl font-bold mb-4">Map View</h1>
-      {mapboxToken && (
-        <MapContainer 
-          mapboxToken={mapboxToken}
-          posts={posts}
-          onPostClick={handlePostClick}
-        />
-      )}
+      <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative">
+        {isLoadingToken || !posts ? (
+          <>
+            <Skeleton className="w-full h-full animate-pulse bg-gray-200" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-gray-500 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                <p>Loading map...</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <MapContainer 
+            mapboxToken={mapboxToken}
+            posts={posts}
+            onPostClick={handlePostClick}
+            isReady={!!mapboxToken}
+          />
+        )}
+      </div>
       <Toaster />
     </div>
   );
