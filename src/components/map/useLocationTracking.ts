@@ -17,6 +17,7 @@ const USER_LOCATION_KEY = 'map_user_location';
 export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingResult => {
   const locationMarker = useRef<mapboxgl.Marker | null>(null);
   const watchId = useRef<number | null>(null);
+  const retryCount = useRef(0);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(() => {
     try {
       const stored = localStorage.getItem(USER_LOCATION_KEY);
@@ -58,8 +59,6 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       TIMEOUT: error.TIMEOUT
     });
     
-    setIsLoadingLocation(false);
-
     if (error.code === error.PERMISSION_DENIED) {
       stopLocationTracking();
       toast({
@@ -68,18 +67,34 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         description: "Please enable location permissions in your browser settings and refresh the page.",
       });
     } else if (error.code === error.POSITION_UNAVAILABLE) {
+      stopLocationTracking();
       toast({
         variant: "destructive",
         title: "Location Unavailable",
         description: "Could not determine your location. Please check your device's location services.",
       });
     } else if (error.code === error.TIMEOUT) {
-      toast({
-        variant: "destructive",
-        title: "Location Timeout",
-        description: "Location request timed out. Please try again.",
-      });
+      retryCount.current += 1;
+      if (retryCount.current <= 3) {
+        // Only show toast on first retry
+        if (retryCount.current === 1) {
+          toast({
+            title: "Location Taking Longer",
+            description: "Still trying to get your location...",
+          });
+        }
+        console.log(`Retrying location tracking (attempt ${retryCount.current}/3)`);
+        setTimeout(startLocationTracking, 1000);
+      } else {
+        stopLocationTracking();
+        toast({
+          variant: "destructive",
+          title: "Location Unavailable",
+          description: "Unable to get your location after several attempts. Please try again later.",
+        });
+      }
     }
+    setIsLoadingLocation(false);
   };
 
   const stopLocationTracking = () => {
@@ -89,6 +104,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     localStorage.removeItem(USER_LOCATION_KEY);
     setUserLocation(null);
     setIsLoadingLocation(false);
+    retryCount.current = 0;
   };
 
   const updateLocationMarker = (lngLat: [number, number]) => {
@@ -114,16 +130,19 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       return;
     }
 
-    // Clear any existing tracking before starting new
-    clearExistingTracking();
+    // Don't clear existing tracking on retry attempts
+    if (retryCount.current === 0) {
+      clearExistingTracking();
+      setIsTracking(true);
+      localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
+    }
     
-    setIsTracking(true);
-    localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
     setIsLoadingLocation(true);
 
     // First get current position
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        retryCount.current = 0;
         const lngLat: [number, number] = [
           position.coords.longitude,
           position.coords.latitude
@@ -164,8 +183,8 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           handleLocationError,
           { 
             enableHighAccuracy: true, 
-            maximumAge: 10000, // Reduce from 300000 to 10000 for more frequent updates
-            timeout: 10000 // Reduce from 30000 to 10000 for faster error feedback
+            maximumAge: 30000, // Increased from 10000 to reduce updates
+            timeout: 30000 // Increased from 10000 to allow more time
           }
         );
         console.log('Started location watcher:', watchId.current);
@@ -174,7 +193,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       { 
         enableHighAccuracy: true, 
         maximumAge: 0, // No cache for initial position
-        timeout: 10000
+        timeout: 30000 // Increased from 10000 to allow more time
       }
     );
   };
