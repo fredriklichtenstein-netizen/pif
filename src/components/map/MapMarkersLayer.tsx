@@ -53,10 +53,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             onClick: () => onPostClick(post.id),
             onMouseEnter: () => {
               const popup = createMapPopup({ 
-                post: {
-                  ...post,
-                  coordinates: { lng: privateLng, lat: privateLat }
-                }
+                post,  // Pass original post with true coordinates
+                displayCoordinates: { lng: privateLng, lat: privateLat }  // Pass privacy-adjusted coordinates for display
               });
               popup.addTo(map);
             },
@@ -73,7 +71,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             .setLngLat([privateLng, privateLat])
             .addTo(map);
 
-          console.log("Successfully added marker for post:", post.id, "at coordinates:", [privateLng, privateLat]);
+          console.log("Successfully added marker for post:", post.id);
           markers.current.push(marker);
         } catch (error) {
           console.error("Error creating marker for post:", post.id, error);

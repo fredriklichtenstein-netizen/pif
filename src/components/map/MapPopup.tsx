@@ -5,21 +5,26 @@ import { calculateDistance, formatDistance } from "@/utils/distance";
 
 interface MapPopupProps {
   post: Post;
+  displayCoordinates: {
+    lng: number;
+    lat: number;
+  };
 }
 
-export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
+export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): mapboxgl.Popup => {
   const popup = new mapboxgl.Popup({
     offset: 25,
     closeButton: false,
     anchor: 'bottom',
   });
 
-  // Get user's current position and update distance
+  // Get user's current position and update distance using TRUE coordinates
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         if (!post.coordinates) return;
         
+        // Use original coordinates for distance calculation
         const distance = calculateDistance(
           position.coords.latitude,
           position.coords.longitude,
@@ -60,9 +65,8 @@ export const createMapPopup = ({ post }: MapPopupProps): mapboxgl.Popup => {
     );
   }
 
-  if (post.coordinates) {
-    popup.setLngLat([post.coordinates.lng, post.coordinates.lat] as [number, number]);
-  }
+  // Use privacy-adjusted coordinates for map display
+  popup.setLngLat([displayCoordinates.lng, displayCoordinates.lat]);
 
   return popup;
 };
