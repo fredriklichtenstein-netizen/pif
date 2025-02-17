@@ -16,7 +16,7 @@ export const getPosts = async (): Promise<Post[]> => {
       category: "Clothing",
       condition: "Good",
       measurements: {},
-      images: ["https://images.unsplash.com/photo-1551533740-f2875a1f2f28"],
+      images: ["https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef"],
       location: "Norrmalm, Stockholm",
       coordinates: {
         lng: 18.0686,
