@@ -19,6 +19,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   const storage = useLocationStorage();
   const locationProvider = useLocationProvider();
   const { toast } = useToast();
+  const isFirstMount = useRef(true);
 
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     storage.getStoredLocation()
@@ -32,7 +33,8 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     if (!map) return;
 
     try {
-      if (locationMarker.current) {
+      // Only remove the old marker if it's attached to a map
+      if (locationMarker.current?.getElement()?.parentNode) {
         locationMarker.current.remove();
       }
       locationMarker.current = createLocationMarker(map, lngLat);
@@ -48,8 +50,9 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     
     if (map) {
       updateLocationMarker(result.coords);
-      // Only fly to location on initial position
-      if (!userLocation) {
+      // Only fly to location on initial position or when explicitly requested
+      if (!userLocation || isFirstMount.current) {
+        isFirstMount.current = false;
         map.flyTo({
           center: result.coords,
           zoom: 14,
@@ -100,6 +103,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   };
 
   const startLocationTracking = () => {
+    if (!map) return;
     setIsTracking(true);
     storage.setStoredTrackingState(true);
     locationProvider.startTracking(handleLocationUpdate, handleLocationError);
@@ -107,7 +111,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
 
   const stopLocationTracking = () => {
     locationProvider.stopTracking();
-    if (locationMarker.current && map) {
+    if (locationMarker.current) {
       locationMarker.current.remove();
       locationMarker.current = null;
     }
@@ -118,16 +122,27 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     retryCount.current = 0;
   };
 
+  // Handle tracking state when map changes
   useEffect(() => {
-    const shouldTrack = storage.getStoredTrackingState();
-    if (map && shouldTrack && !locationProvider.isTracking) {
-      console.log('Initializing location tracking');
-      startLocationTracking();
+    if (!map) {
+      if (isTracking) {
+        stopLocationTracking();
+      }
+      return;
     }
 
+    // Restore tracking state if needed
+    const shouldTrack = storage.getStoredTrackingState();
+    if (shouldTrack && !locationProvider.isTracking) {
+      console.log('Initializing location tracking with new map instance');
+      startLocationTracking();
+    }
+    
+    // Cleanup function
     return () => {
-      if (locationMarker.current && map) {
-        console.log('Cleaning up location marker');
+      // Only clean up marker, don't stop tracking
+      if (locationMarker.current) {
+        console.log('Cleaning up location marker for map instance change');
         locationMarker.current.remove();
         locationMarker.current = null;
       }
