@@ -76,7 +76,16 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
   };
 
   const startLocationTracking = () => {
-    if (!navigator.geolocation || watchId.current !== null) return;
+    if (!navigator.geolocation) {
+      console.error("Geolocation is not supported");
+      return;
+    }
+
+    // Clear any existing watch
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
 
     setIsTracking(true);
     setIsLoadingLocation(true);
@@ -104,6 +113,11 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         console.error("Geolocation error:", error);
         setIsLoadingLocation(false);
         setIsTracking(false);
+        if (locationMarker.current) {
+          locationMarker.current.remove();
+          locationMarker.current = null;
+        }
+        setUserLocation(null);
       },
       {
         enableHighAccuracy: true,
@@ -124,6 +138,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       locationMarker.current = null;
     }
     setUserLocation(null);
+    setIsLoadingLocation(false);
   };
 
   const toggleLocationTracking = () => {
@@ -134,30 +149,31 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
     }
   };
 
-  // Effect to handle initial map setup and cleanup
+  // Effect to handle initial map setup
   useEffect(() => {
     if (isMapReady && map) {
       setIsMapVisible(true);
-      // Start tracking automatically
-      startLocationTracking();
+      // Do not start tracking automatically anymore
+      // Let user explicitly control it
     }
-    
-    // Cleanup on unmount
+  }, [isMapReady, map]);
+
+  // Effect to handle cleanup on unmount
+  useEffect(() => {
     return () => {
       stopLocationTracking();
     };
-  }, [isMapReady, map]);
+  }, []);
 
   // Effect to handle marker updates based on tracking state
   useEffect(() => {
     if (!isTracking) {
-      // Remove marker when tracking is disabled
       if (locationMarker.current) {
         locationMarker.current.remove();
         locationMarker.current = null;
       }
+      setUserLocation(null);
     } else if (userLocation) {
-      // Recreate marker if we have a location and tracking is enabled
       createLocationMarker(userLocation);
     }
   }, [isTracking, userLocation]);
