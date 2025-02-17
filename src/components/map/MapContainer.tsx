@@ -87,26 +87,61 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
     }
     setUserLocation(null);
 
-    let message = "Unable to get your location. ";
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        message += "Please enable location permissions in your browser settings.";
-        break;
-      case error.POSITION_UNAVAILABLE:
-        message += "Location information is unavailable.";
-        break;
-      case error.TIMEOUT:
-        message += "Location request timed out.";
-        break;
-      default:
-        message += "An unknown error occurred.";
+    // Only show error toast if we're not unmounting
+    if (map) {
+      let message = "Unable to get your location. ";
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          message += "Please enable location permissions in your browser settings.";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          message += "Location information is unavailable.";
+          break;
+        case error.TIMEOUT:
+          // If it's just a timeout on watch, try to restart tracking
+          if (isTracking) {
+            restartLocationTracking();
+            return;
+          }
+          message += "Location request timed out.";
+          break;
+        default:
+          message += "An unknown error occurred.";
+      }
+
+      toast({
+        variant: "destructive",
+        title: "Location Error",
+        description: message,
+      });
+    }
+  };
+
+  const restartLocationTracking = () => {
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
     }
 
-    toast({
-      variant: "destructive",
-      title: "Location Error",
-      description: message,
-    });
+    // Only restart if we should still be tracking
+    if (isTracking) {
+      watchId.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const newLngLat: [number, number] = [
+            position.coords.longitude,
+            position.coords.latitude
+          ];
+          setUserLocation(newLngLat);
+          createLocationMarker(newLngLat);
+        },
+        handleLocationError,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 1000,
+          timeout: 20000 // Increased timeout
+        }
+      );
+    }
   };
 
   const startLocationTracking = () => {
@@ -125,7 +160,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
     setIsTracking(true);
     setIsLoadingLocation(true);
 
-    // First get a single position to ensure we have permission
+    // First get a single position
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
@@ -142,7 +177,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         });
         setIsLoadingLocation(false);
 
-        // Start watching position after initial success
+        // Start watching position
         watchId.current = navigator.geolocation.watchPosition(
           (watchPosition) => {
             const newLngLat: [number, number] = [
@@ -155,13 +190,17 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
           handleLocationError,
           {
             enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 5000
+            maximumAge: 1000, // Allow using cached position up to 1 second old
+            timeout: 20000 // Increased timeout to 20 seconds
           }
         );
       },
       handleLocationError,
-      { enableHighAccuracy: true, timeout: 5000 }
+      { 
+        enableHighAccuracy: true, 
+        maximumAge: 0,
+        timeout: 20000 // Increased initial timeout to 20 seconds
+      }
     );
   };
 
