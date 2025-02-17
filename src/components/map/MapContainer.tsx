@@ -17,9 +17,8 @@ interface MapContainerProps {
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
   const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
-  const { isTracking, toggleLocationTracking } = useLocationTracking(isMapReady ? map : null);
+  const { isTracking, toggleLocationTracking } = useLocationTracking(map);
 
-  // Effect to handle initial map setup
   useEffect(() => {
     if (isMapReady && map) {
       setIsMapVisible(true);
@@ -44,26 +43,22 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
           </div>
         </div>
       )}
-      {isMapReady && map && (
-        <>
-          <MapMarkersLayer 
-            map={map}
-            posts={posts}
-            onPostClick={onPostClick}
-          />
-          <Button
-            onClick={toggleLocationTracking}
-            className={`absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800 cursor-pointer`}
-            size="icon"
-            variant="outline"
-          >
-            <Locate 
-              className={`h-4 w-4 ${isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
-              strokeWidth={1.5}
-            />
-          </Button>
-        </>
-      )}
+      <MapMarkersLayer 
+        map={map}
+        posts={posts}
+        onPostClick={onPostClick}
+      />
+      <Button
+        onClick={toggleLocationTracking}
+        className={`absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800 cursor-pointer`}
+        size="icon"
+        variant="outline"
+      >
+        <Locate 
+          className={`h-4 w-4 ${isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
+          strokeWidth={1.5}
+        />
+      </Button>
       <Toaster />
     </div>
   );
