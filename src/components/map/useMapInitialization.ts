@@ -26,7 +26,6 @@ export const useMapInitialization = (mapboxToken: string) => {
         preserveDrawingBuffer: false,
         renderWorldCopies: false,
         antialias: true,
-        optimizeForTerrain: true,
         transformRequest: (url, resourceType) => {
           return {
             url: url,
