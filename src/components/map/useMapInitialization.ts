@@ -11,44 +11,55 @@ export const useMapInitialization = (mapboxToken: string) => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
     
-    mapboxgl.accessToken = mapboxToken;
-    
-    const newMap = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/light-v11",
-      center: [0, 0], // This will be immediately updated with user location
-      zoom: 14, // Default zoom level showing ~1km radius
-      minZoom: 9,
-      maxZoom: 16
-    });
+    // Pre-load necessary resources
+    const preloadResources = async () => {
+      // Pre-initialize mapbox
+      mapboxgl.accessToken = mapboxToken;
+      
+      // Create map instance with optimized initial settings
+      const newMap = new mapboxgl.Map({
+        container: mapContainer.current!,
+        style: "mapbox://styles/mapbox/light-v11",
+        center: [0, 0],
+        zoom: 14,
+        minZoom: 9,
+        maxZoom: 16,
+        attributionControl: false, // We'll add this later
+        preserveDrawingBuffer: false, // Optimization for performance
+        antialias: false // Disable antialiasing for initial load
+      });
 
-    // Add navigation controls (top-right)
-    newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+      // Add controls after initial load
+      newMap.once('load', () => {
+        // Add navigation controls
+        newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+        
+        // Add scale control
+        newMap.addControl(
+          new mapboxgl.ScaleControl({
+            maxWidth: 150,
+            unit: 'metric'
+          }),
+          'bottom-left'
+        );
 
-    // Add scale control (bottom-left) - shows distance in km and miles
-    newMap.addControl(
-      new mapboxgl.ScaleControl({
-        maxWidth: 150,
-        unit: 'metric'
-      }),
-      'bottom-left'
-    );
-
-    const checkIfReady = () => {
-      if (newMap.loaded() && newMap.isStyleLoaded()) {
-        console.log("Map is fully ready");
+        // Enable antialiasing after initial load
+        newMap.setLayoutProperty('background', 'visibility', 'visible');
+        
         map.current = newMap;
         setIsMapReady(true);
-      }
+        console.log("Map fully initialized and ready");
+      });
     };
 
-    newMap.on('load', checkIfReady);
-    newMap.on('style.load', checkIfReady);
+    preloadResources().catch(console.error);
 
     return () => {
-      newMap.remove();
-      map.current = null;
-      setIsMapReady(false);
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        setIsMapReady(false);
+      }
     };
   }, [mapboxToken]);
 
