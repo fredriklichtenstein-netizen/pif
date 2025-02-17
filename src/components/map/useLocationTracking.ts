@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,15 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   const lastErrorTime = useRef<number>(0);
   const errorCount = useRef<number>(0);
   const { toast } = useToast();
+  const isMapValidRef = useRef(false);
+
+  // Update map validity status
+  useEffect(() => {
+    isMapValidRef.current = map?.hasControl !== undefined;
+    return () => {
+      isMapValidRef.current = false;
+    };
+  }, [map]);
 
   const stopLocationTracking = () => {
     if (watchId.current !== null) {
@@ -38,9 +48,25 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     }
     setUserLocation(null);
     setIsLoadingLocation(false);
-    // Reset error tracking when stopping
     errorCount.current = 0;
     lastErrorTime.current = 0;
+  };
+
+  const updateLocationMarker = (lngLat: [number, number]) => {
+    if (!isMapValidRef.current || !map) {
+      console.log("Map is not valid, skipping marker update");
+      return;
+    }
+
+    try {
+      if (locationMarker.current) {
+        locationMarker.current.remove();
+      }
+      locationMarker.current = createLocationMarker(map, lngLat);
+    } catch (error) {
+      console.error("Error updating location marker:", error);
+      // Don't throw, just log - we'll try again on next update
+    }
   };
 
   const startLocationTracking = () => {
@@ -53,13 +79,15 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       return;
     }
 
-    stopLocationTracking(); // This will reset error counts
+    stopLocationTracking();
     setIsTracking(true);
     localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
     setIsLoadingLocation(true);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (!isMapValidRef.current) return;
+
         const lngLat: [number, number] = [
           position.coords.longitude,
           position.coords.latitude
@@ -67,47 +95,44 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         
         console.log("Initial position acquired:", lngLat);
         setUserLocation(lngLat);
-        if (locationMarker.current) {
-          locationMarker.current.remove();
-        }
-        locationMarker.current = createLocationMarker(map, lngLat);
+        updateLocationMarker(lngLat);
         
-        map.flyTo({
-          center: lngLat,
-          zoom: 14,
-          duration: 2000,
-          essential: true
-        });
+        if (map && isMapValidRef.current) {
+          map.flyTo({
+            center: lngLat,
+            zoom: 14,
+            duration: 2000,
+            essential: true
+          });
+        }
         setIsLoadingLocation(false);
 
         watchId.current = navigator.geolocation.watchPosition(
           (watchPosition) => {
+            if (!isMapValidRef.current) return;
+
             const newLngLat: [number, number] = [
               watchPosition.coords.longitude,
               watchPosition.coords.latitude
             ];
             console.log("Watch position update:", newLngLat);
             setUserLocation(newLngLat);
-            if (locationMarker.current) {
-              locationMarker.current.remove();
-            }
-            locationMarker.current = createLocationMarker(map, newLngLat);
-            // Reset error count on successful position
+            updateLocationMarker(newLngLat);
             errorCount.current = 0;
           },
           handleLocationError,
           {
             enableHighAccuracy: true,
-            maximumAge: 300000, // Allow using cached positions up to 5 minutes old
-            timeout: 30000 // 30 second timeout for each attempt
+            maximumAge: 300000,
+            timeout: 30000
           }
         );
       },
       handleLocationError,
       { 
         enableHighAccuracy: true, 
-        maximumAge: 300000, // Also use 5-minute cache for initial position
-        timeout: 30000 // 30 second timeout for initial position
+        maximumAge: 300000,
+        timeout: 30000
       }
     );
   };
@@ -223,18 +248,10 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     if (map && isTracking) {
       startLocationTracking();
     }
-  }, [map]);
-
-  useEffect(() => {
     return () => {
-      if (watchId.current !== null) {
-        navigator.geolocation.clearWatch(watchId.current);
-      }
-      if (locationMarker.current) {
-        locationMarker.current.remove();
-      }
+      stopLocationTracking();
     };
-  }, []);
+  }, [map]);
 
   return {
     userLocation,
