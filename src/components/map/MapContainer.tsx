@@ -11,23 +11,18 @@ interface MapContainerProps {
   mapboxToken: string;
   posts: Post[];
   onPostClick: (postId: string) => void;
-  isReady: boolean;
 }
 
-export const MapContainer = memo(({ mapboxToken, posts, onPostClick, isReady }: MapContainerProps) => {
+export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
   const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
-  const locationTracking = useLocationTracking(map);
+  const locationTracking = useLocationTracking(isMapReady ? map : null);
 
   useEffect(() => {
     if (isMapReady && map) {
       setIsMapVisible(true);
     }
   }, [isMapReady, map]);
-
-  if (!isReady) {
-    return null;
-  }
 
   return (
     <div className="h-full rounded-lg overflow-hidden relative bg-gray-50">
@@ -43,7 +38,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, isReady }: 
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading map...</p>
+            <p className="text-gray-600">Initializing map...</p>
           </div>
         </div>
       )}
