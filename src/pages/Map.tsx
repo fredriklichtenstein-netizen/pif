@@ -6,6 +6,7 @@ import { MapContainer } from "@/components/map/MapContainer";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Toaster } from "@/components/ui/toaster";
 
 const MapView = () => {
   const [mapboxToken, setMapboxToken] = useState<string>("");
@@ -60,6 +61,7 @@ const MapView = () => {
           onPostClick={handlePostClick}
         />
       )}
+      <Toaster />
     </div>
   );
 };

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
-import { Toaster } from "@/components/ui/toaster";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -65,7 +64,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
           </Button>
         </>
       )}
-      <Toaster />
     </div>
   );
 });
