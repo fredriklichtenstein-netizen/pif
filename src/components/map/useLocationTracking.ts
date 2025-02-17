@@ -83,8 +83,9 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
             description: "Still trying to get your location...",
           });
         }
-        console.log(`Retrying location tracking (attempt ${retryCount.current}/3)`);
-        setTimeout(startLocationTracking, 1000);
+        console.log(`Retrying location tracking with lower accuracy (attempt ${retryCount.current}/3)`);
+        // Retry with lower accuracy
+        startLocationTracking(retryCount.current > 1 ? false : true);
       } else {
         stopLocationTracking();
         toast({
@@ -120,7 +121,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     }
   };
 
-  const startLocationTracking = () => {
+  const startLocationTracking = (highAccuracy = true) => {
     if (!navigator.geolocation) {
       toast({
         variant: "destructive",
@@ -138,6 +139,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     }
     
     setIsLoadingLocation(true);
+    console.log(`Requesting location with ${highAccuracy ? 'high' : 'low'} accuracy`);
 
     // First get current position
     navigator.geolocation.getCurrentPosition(
@@ -148,7 +150,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           position.coords.latitude
         ];
         
-        console.log('Got initial position:', lngLat);
+        console.log('Got initial position:', lngLat, 'Accuracy:', position.coords.accuracy, 'meters');
         setUserLocation(lngLat);
         localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(lngLat));
         
@@ -172,7 +174,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
               watchPosition.coords.latitude
             ];
             
-            console.log('Got updated position:', newLngLat);
+            console.log('Got updated position:', newLngLat, 'Accuracy:', watchPosition.coords.accuracy, 'meters');
             setUserLocation(newLngLat);
             localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(newLngLat));
             
@@ -182,18 +184,18 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           },
           handleLocationError,
           { 
-            enableHighAccuracy: true, 
-            maximumAge: 30000, // Increased from 10000 to reduce updates
-            timeout: 30000 // Increased from 10000 to allow more time
+            enableHighAccuracy: highAccuracy,
+            maximumAge: highAccuracy ? 10000 : 60000, // Use shorter cache for high accuracy
+            timeout: highAccuracy ? 15000 : 30000 // Shorter timeout for high accuracy to fail fast
           }
         );
         console.log('Started location watcher:', watchId.current);
       },
       handleLocationError,
       { 
-        enableHighAccuracy: true, 
+        enableHighAccuracy: highAccuracy,
         maximumAge: 0, // No cache for initial position
-        timeout: 30000 // Increased from 10000 to allow more time
+        timeout: highAccuracy ? 15000 : 30000 // Shorter timeout for high accuracy to fail fast
       }
     );
   };
