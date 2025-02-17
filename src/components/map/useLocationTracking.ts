@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { createLocationMarker } from './LocationMarker';
 
 interface LocationTrackingResult {
