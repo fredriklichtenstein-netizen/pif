@@ -1,3 +1,4 @@
+
 import type { Post } from "@/types/post";
 import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
@@ -15,9 +16,11 @@ interface MapContainerProps {
 export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
   const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
   const locationMarker = useRef<mapboxgl.Marker | null>(null);
+  const watchId = useRef<number | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isMapVisible, setIsMapVisible] = useState(false);
+  const [isTracking, setIsTracking] = useState(false);
 
   const createLocationMarker = (lngLat: [number, number]) => {
     if (!map) return;
@@ -72,45 +75,75 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       .addTo(map);
   };
 
-  const handleGeolocation = () => {
-    if (!map || !navigator.geolocation) return;
+  const startLocationTracking = () => {
+    if (!navigator.geolocation || watchId.current !== null) return;
 
+    setIsTracking(true);
     setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+
+    watchId.current = navigator.geolocation.watchPosition(
+      (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
         const lngLat: [number, number] = [lng, lat];
         
         setUserLocation(lngLat);
         createLocationMarker(lngLat);
         
-        map.flyTo({
-          center: lngLat,
-          zoom: 14,
-          duration: 2000,
-          essential: true
-        });
-        setIsLoadingLocation(false);
+        if (isLoadingLocation) {
+          map?.flyTo({
+            center: lngLat,
+            zoom: 14,
+            duration: 2000,
+            essential: true
+          });
+          setIsLoadingLocation(false);
+        }
       },
       (error) => {
         console.error("Geolocation error:", error);
         setIsLoadingLocation(false);
+        setIsTracking(false);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 5000
       }
     );
+  };
+
+  const stopLocationTracking = () => {
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+    setIsTracking(false);
+    if (locationMarker.current) {
+      locationMarker.current.remove();
+      locationMarker.current = null;
+    }
+  };
+
+  const toggleLocationTracking = () => {
+    if (isTracking) {
+      stopLocationTracking();
+    } else {
+      startLocationTracking();
+    }
   };
 
   useEffect(() => {
     if (isMapReady && map) {
       setIsMapVisible(true);
-      handleGeolocation();
+      startLocationTracking();
     }
   }, [isMapReady, map]);
 
   useEffect(() => {
-    if (userLocation && !locationMarker.current && map) {
-      createLocationMarker(userLocation);
-    }
-  }, [map, userLocation]);
+    return () => {
+      stopLocationTracking();
+    };
+  }, []);
 
   return (
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative bg-gray-50">
@@ -138,13 +171,13 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
             onPostClick={onPostClick}
           />
           <Button
-            onClick={handleGeolocation}
+            onClick={toggleLocationTracking}
             className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800"
             size="icon"
             variant="outline"
             disabled={isLoadingLocation}
           >
-            <Locate className={`h-4 w-4 ${isLoadingLocation ? 'animate-spin' : ''}`} />
+            <Locate className={`h-4 w-4 ${isLoadingLocation ? 'animate-spin' : ''} ${isTracking ? 'text-blue-500' : ''}`} />
           </Button>
         </>
       )}
