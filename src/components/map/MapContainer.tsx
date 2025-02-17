@@ -89,6 +89,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         setUserLocation(lngLat);
         createLocationMarker(lngLat);
         
+        // Only fly to location on initial position
         if (isLoadingLocation) {
           map?.flyTo({
             center: lngLat,
@@ -135,15 +136,15 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
   useEffect(() => {
     if (isMapReady && map) {
       setIsMapVisible(true);
+      // Start tracking automatically
       startLocationTracking();
     }
-  }, [isMapReady, map]);
-
-  useEffect(() => {
+    
+    // Cleanup on unmount
     return () => {
       stopLocationTracking();
     };
-  }, []);
+  }, [isMapReady, map]);
 
   return (
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative bg-gray-50">
@@ -172,12 +173,11 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
           />
           <Button
             onClick={toggleLocationTracking}
-            className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800"
+            className={`absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800 cursor-pointer`}
             size="icon"
             variant="outline"
-            disabled={isLoadingLocation}
           >
-            <Locate className={`h-4 w-4 ${isLoadingLocation ? 'animate-spin' : ''} ${isTracking ? 'text-blue-500' : ''}`} />
+            <Locate className={`h-4 w-4 ${isTracking ? 'text-blue-500' : ''}`} />
           </Button>
         </>
       )}
