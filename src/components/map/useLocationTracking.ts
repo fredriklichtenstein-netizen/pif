@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from "@/hooks/use-toast";
@@ -11,12 +10,17 @@ interface LocationTrackingResult {
   toggleLocationTracking: () => void;
 }
 
+const LOCATION_TRACKING_KEY = 'map_location_tracking_enabled';
+
 export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingResult => {
   const locationMarker = useRef<mapboxgl.Marker | null>(null);
   const watchId = useRef<number | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [isTracking, setIsTracking] = useState(false);
+  const [isTracking, setIsTracking] = useState(() => {
+    const stored = localStorage.getItem(LOCATION_TRACKING_KEY);
+    return stored ? JSON.parse(stored) : false;
+  });
   const lastErrorTime = useRef<number>(0);
   const errorCount = useRef<number>(0);
   const { toast } = useToast();
@@ -27,6 +31,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       watchId.current = null;
     }
     setIsTracking(false);
+    localStorage.setItem(LOCATION_TRACKING_KEY, 'false');
     if (locationMarker.current) {
       locationMarker.current.remove();
       locationMarker.current = null;
@@ -36,105 +41,6 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     // Reset error tracking when stopping
     errorCount.current = 0;
     lastErrorTime.current = 0;
-  };
-
-  const restartLocationTracking = () => {
-    // Check if we've had too many errors recently
-    const now = Date.now();
-    if (now - lastErrorTime.current < 10000) { // Within 10 seconds
-      errorCount.current++;
-      if (errorCount.current > 3) {
-        console.log("Too many errors, stopping location tracking");
-        stopLocationTracking();
-        toast({
-          variant: "destructive",
-          title: "Location Error",
-          description: "Unable to get a stable location signal. Please try again later.",
-        });
-        return;
-      }
-    } else {
-      // Reset error count if it's been more than 10 seconds
-      errorCount.current = 1;
-    }
-    lastErrorTime.current = now;
-
-    if (watchId.current !== null) {
-      navigator.geolocation.clearWatch(watchId.current);
-      watchId.current = null;
-    }
-
-    if (isTracking && map) {
-      console.log("Restarting location tracking, attempt:", errorCount.current);
-      watchId.current = navigator.geolocation.watchPosition(
-        (position) => {
-          const newLngLat: [number, number] = [
-            position.coords.longitude,
-            position.coords.latitude
-          ];
-          console.log("Received new position:", newLngLat);
-          setUserLocation(newLngLat);
-          if (locationMarker.current) {
-            locationMarker.current.remove();
-          }
-          locationMarker.current = createLocationMarker(map, newLngLat);
-          // Reset error count on successful position
-          errorCount.current = 0;
-        },
-        handleLocationError,
-        {
-          enableHighAccuracy: true,
-          maximumAge: 300000, // Allow using cached positions up to 5 minutes old
-          timeout: 30000 // 30 second timeout for each attempt
-        }
-      );
-    }
-  };
-
-  const handleLocationError = (error: GeolocationPositionError) => {
-    console.error("Geolocation error:", error, "Code:", error.code, "Message:", error.message);
-
-    // Don't reset tracking state for timeout errors, as we'll try to recover
-    if (error.code !== error.TIMEOUT) {
-      setIsLoadingLocation(false);
-      setIsTracking(false);
-      if (locationMarker.current) {
-        locationMarker.current.remove();
-        locationMarker.current = null;
-      }
-      setUserLocation(null);
-    }
-
-    if (map) {
-      let message = "Unable to get your location. ";
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          message += "Please enable location permissions in your browser settings.";
-          break;
-        case error.POSITION_UNAVAILABLE:
-          message += "Location information is unavailable.";
-          break;
-        case error.TIMEOUT:
-          if (isTracking && errorCount.current < 3) {
-            console.log("Attempting to recover from timeout...");
-            restartLocationTracking();
-            return;
-          }
-          message += "Location request timed out.";
-          break;
-        default:
-          message += "An unknown error occurred.";
-      }
-
-      // Only show toast for non-timeout errors or if we're not tracking
-      if (error.code !== error.TIMEOUT || !isTracking) {
-        toast({
-          variant: "destructive",
-          title: "Location Error",
-          description: message,
-        });
-      }
-    }
   };
 
   const startLocationTracking = () => {
@@ -149,6 +55,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
 
     stopLocationTracking(); // This will reset error counts
     setIsTracking(true);
+    localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
     setIsLoadingLocation(true);
 
     navigator.geolocation.getCurrentPosition(
@@ -205,6 +112,105 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     );
   };
 
+  const handleLocationError = (error: GeolocationPositionError) => {
+    console.error("Geolocation error:", error, "Code:", error.code, "Message:", error.message);
+
+    // Don't reset tracking state for timeout errors, as we'll try to recover
+    if (error.code !== error.TIMEOUT) {
+      setIsLoadingLocation(false);
+      setIsTracking(false);
+      if (locationMarker.current) {
+        locationMarker.current.remove();
+        locationMarker.current = null;
+      }
+      setUserLocation(null);
+    }
+
+    if (map) {
+      let message = "Unable to get your location. ";
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          message += "Please enable location permissions in your browser settings.";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          message += "Location information is unavailable.";
+          break;
+        case error.TIMEOUT:
+          if (isTracking && errorCount.current < 3) {
+            console.log("Attempting to recover from timeout...");
+            restartLocationTracking();
+            return;
+          }
+          message += "Location request timed out.";
+          break;
+        default:
+          message += "An unknown error occurred.";
+      }
+
+      // Only show toast for non-timeout errors or if we're not tracking
+      if (error.code !== error.TIMEOUT || !isTracking) {
+        toast({
+          variant: "destructive",
+          title: "Location Error",
+          description: message,
+        });
+      }
+    }
+  };
+
+  const restartLocationTracking = () => {
+    // Check if we've had too many errors recently
+    const now = Date.now();
+    if (now - lastErrorTime.current < 10000) { // Within 10 seconds
+      errorCount.current++;
+      if (errorCount.current > 3) {
+        console.log("Too many errors, stopping location tracking");
+        stopLocationTracking();
+        toast({
+          variant: "destructive",
+          title: "Location Error",
+          description: "Unable to get a stable location signal. Please try again later.",
+        });
+        return;
+      }
+    } else {
+      // Reset error count if it's been more than 10 seconds
+      errorCount.current = 1;
+    }
+    lastErrorTime.current = now;
+
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+
+    if (isTracking && map) {
+      console.log("Restarting location tracking, attempt:", errorCount.current);
+      watchId.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const newLngLat: [number, number] = [
+            position.coords.longitude,
+            position.coords.latitude
+          ];
+          console.log("Received new position:", newLngLat);
+          setUserLocation(newLngLat);
+          if (locationMarker.current) {
+            locationMarker.current.remove();
+          }
+          locationMarker.current = createLocationMarker(map, newLngLat);
+          // Reset error count on successful position
+          errorCount.current = 0;
+        },
+        handleLocationError,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 300000, // Allow using cached positions up to 5 minutes old
+          timeout: 30000 // 30 second timeout for each attempt
+        }
+      );
+    }
+  };
+
   const toggleLocationTracking = () => {
     if (isTracking) {
       stopLocationTracking();
@@ -214,8 +220,19 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   };
 
   useEffect(() => {
+    if (map && isTracking) {
+      startLocationTracking();
+    }
+  }, [map]);
+
+  useEffect(() => {
     return () => {
-      stopLocationTracking();
+      if (watchId.current !== null) {
+        navigator.geolocation.clearWatch(watchId.current);
+      }
+      if (locationMarker.current) {
+        locationMarker.current.remove();
+      }
     };
   }, []);
 
