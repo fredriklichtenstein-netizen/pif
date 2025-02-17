@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Locate } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import { useToast } from "@/components/ui/use-toast";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -21,6 +22,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
+  const { toast } = useToast();
 
   const createLocationMarker = (lngLat: [number, number]) => {
     if (!map) return;
@@ -75,22 +77,56 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       .addTo(map);
   };
 
+  const handleLocationError = (error: GeolocationPositionError) => {
+    console.error("Geolocation error:", error);
+    setIsLoadingLocation(false);
+    setIsTracking(false);
+    if (locationMarker.current) {
+      locationMarker.current.remove();
+      locationMarker.current = null;
+    }
+    setUserLocation(null);
+
+    let message = "Unable to get your location. ";
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        message += "Please enable location permissions in your browser settings.";
+        break;
+      case error.POSITION_UNAVAILABLE:
+        message += "Location information is unavailable.";
+        break;
+      case error.TIMEOUT:
+        message += "Location request timed out.";
+        break;
+      default:
+        message += "An unknown error occurred.";
+    }
+
+    toast({
+      variant: "destructive",
+      title: "Location Error",
+      description: message,
+    });
+  };
+
   const startLocationTracking = () => {
     if (!navigator.geolocation) {
-      console.error("Geolocation is not supported");
+      toast({
+        variant: "destructive",
+        title: "Location Error",
+        description: "Geolocation is not supported in your browser.",
+      });
       return;
     }
 
     // Clear any existing watch
-    if (watchId.current !== null) {
-      navigator.geolocation.clearWatch(watchId.current);
-      watchId.current = null;
-    }
+    stopLocationTracking();
 
     setIsTracking(true);
     setIsLoadingLocation(true);
 
-    watchId.current = navigator.geolocation.watchPosition(
+    // First get a single position to ensure we have permission
+    navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
         const lngLat: [number, number] = [lng, lat];
@@ -98,32 +134,34 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
         setUserLocation(lngLat);
         createLocationMarker(lngLat);
         
-        // Only fly to location on initial position
-        if (isLoadingLocation) {
-          map?.flyTo({
-            center: lngLat,
-            zoom: 14,
-            duration: 2000,
-            essential: true
-          });
-          setIsLoadingLocation(false);
-        }
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
+        map?.flyTo({
+          center: lngLat,
+          zoom: 14,
+          duration: 2000,
+          essential: true
+        });
         setIsLoadingLocation(false);
-        setIsTracking(false);
-        if (locationMarker.current) {
-          locationMarker.current.remove();
-          locationMarker.current = null;
-        }
-        setUserLocation(null);
+
+        // Start watching position after initial success
+        watchId.current = navigator.geolocation.watchPosition(
+          (watchPosition) => {
+            const newLngLat: [number, number] = [
+              watchPosition.coords.longitude,
+              watchPosition.coords.latitude
+            ];
+            setUserLocation(newLngLat);
+            createLocationMarker(newLngLat);
+          },
+          handleLocationError,
+          {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 5000
+          }
+        );
       },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 5000
-      }
+      handleLocationError,
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   };
 
@@ -153,8 +191,6 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
   useEffect(() => {
     if (isMapReady && map) {
       setIsMapVisible(true);
-      // Do not start tracking automatically anymore
-      // Let user explicitly control it
     }
   }, [isMapReady, map]);
 
@@ -164,19 +200,6 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
       stopLocationTracking();
     };
   }, []);
-
-  // Effect to handle marker updates based on tracking state
-  useEffect(() => {
-    if (!isTracking) {
-      if (locationMarker.current) {
-        locationMarker.current.remove();
-        locationMarker.current = null;
-      }
-      setUserLocation(null);
-    } else if (userLocation) {
-      createLocationMarker(userLocation);
-    }
-  }, [isTracking, userLocation]);
 
   return (
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative bg-gray-50">
