@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from "@/hooks/use-toast";
@@ -33,33 +34,12 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       return false;
     }
   });
-  const lastErrorTime = useRef<number>(0);
-  const errorCount = useRef<number>(0);
   const { toast } = useToast();
 
-  const handleLocationError = (error: GeolocationPositionError) => {
-    console.error("Geolocation error:", error);
-    setIsLoadingLocation(false);
-
-    const message = error.code === error.PERMISSION_DENIED
-      ? "Please enable location permissions in your browser settings."
-      : error.code === error.POSITION_UNAVAILABLE
-        ? "Location information is unavailable."
-        : "Location request timed out.";
-
-    toast({
-      variant: "destructive",
-      title: "Location Error",
-      description: message,
-    });
-
-    if (error.code !== error.TIMEOUT || errorCount.current >= 3) {
-      stopLocationTracking();
-    }
-  };
-
-  const stopLocationTracking = () => {
+  // Clear any existing location tracking
+  const clearExistingTracking = () => {
     if (watchId.current !== null) {
+      console.log('Clearing existing location watcher:', watchId.current);
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
     }
@@ -67,13 +47,48 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       locationMarker.current.remove();
       locationMarker.current = null;
     }
+  };
+
+  const handleLocationError = (error: GeolocationPositionError) => {
+    console.error("Geolocation error:", {
+      code: error.code,
+      message: error.message,
+      PERMISSION_DENIED: error.PERMISSION_DENIED,
+      POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
+      TIMEOUT: error.TIMEOUT
+    });
+    
+    setIsLoadingLocation(false);
+
+    if (error.code === error.PERMISSION_DENIED) {
+      stopLocationTracking();
+      toast({
+        variant: "destructive",
+        title: "Location Permission Denied",
+        description: "Please enable location permissions in your browser settings and refresh the page.",
+      });
+    } else if (error.code === error.POSITION_UNAVAILABLE) {
+      toast({
+        variant: "destructive",
+        title: "Location Unavailable",
+        description: "Could not determine your location. Please check your device's location services.",
+      });
+    } else if (error.code === error.TIMEOUT) {
+      toast({
+        variant: "destructive",
+        title: "Location Timeout",
+        description: "Location request timed out. Please try again.",
+      });
+    }
+  };
+
+  const stopLocationTracking = () => {
+    clearExistingTracking();
     setIsTracking(false);
     localStorage.setItem(LOCATION_TRACKING_KEY, 'false');
     localStorage.removeItem(USER_LOCATION_KEY);
     setUserLocation(null);
     setIsLoadingLocation(false);
-    errorCount.current = 0;
-    lastErrorTime.current = 0;
   };
 
   const updateLocationMarker = (lngLat: [number, number]) => {
@@ -99,10 +114,14 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       return;
     }
 
+    // Clear any existing tracking before starting new
+    clearExistingTracking();
+    
     setIsTracking(true);
     localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
     setIsLoadingLocation(true);
 
+    // First get current position
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lngLat: [number, number] = [
@@ -110,6 +129,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           position.coords.latitude
         ];
         
+        console.log('Got initial position:', lngLat);
         setUserLocation(lngLat);
         localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(lngLat));
         
@@ -125,6 +145,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         
         setIsLoadingLocation(false);
 
+        // Then start watching position
         watchId.current = navigator.geolocation.watchPosition(
           (watchPosition) => {
             const newLngLat: [number, number] = [
@@ -132,33 +153,44 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
               watchPosition.coords.latitude
             ];
             
+            console.log('Got updated position:', newLngLat);
             setUserLocation(newLngLat);
             localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(newLngLat));
             
             if (map) {
               updateLocationMarker(newLngLat);
             }
-            errorCount.current = 0;
           },
           handleLocationError,
-          { enableHighAccuracy: true, maximumAge: 300000, timeout: 30000 }
+          { 
+            enableHighAccuracy: true, 
+            maximumAge: 10000, // Reduce from 300000 to 10000 for more frequent updates
+            timeout: 10000 // Reduce from 30000 to 10000 for faster error feedback
+          }
         );
+        console.log('Started location watcher:', watchId.current);
       },
       handleLocationError,
-      { enableHighAccuracy: true, maximumAge: 300000, timeout: 30000 }
+      { 
+        enableHighAccuracy: true, 
+        maximumAge: 0, // No cache for initial position
+        timeout: 10000
+      }
     );
   };
 
   useEffect(() => {
     // Only start tracking if map is available and tracking was previously enabled
     const shouldTrack = localStorage.getItem(LOCATION_TRACKING_KEY) === 'true';
-    if (map && shouldTrack && !isTracking) {
+    if (map && shouldTrack && !watchId.current) {
+      console.log('Initializing location tracking');
       startLocationTracking();
     }
 
-    // Only clean up marker on unmount, keep other state
     return () => {
+      // Only clear visual elements on unmount, preserve tracking state
       if (locationMarker.current && map) {
+        console.log('Cleaning up location marker');
         locationMarker.current.remove();
         locationMarker.current = null;
       }
@@ -167,8 +199,10 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
 
   const toggleLocationTracking = () => {
     if (isTracking) {
+      console.log('Stopping location tracking');
       stopLocationTracking();
     } else {
+      console.log('Starting location tracking');
       startLocationTracking();
     }
   };
