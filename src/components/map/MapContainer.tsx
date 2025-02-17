@@ -100,21 +100,11 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
   };
 
   useEffect(() => {
-    if (isMapReady && map && !isMapVisible) {
-      console.log('Map is ready, setting visibility');
-      const timer = setTimeout(() => {
-        setIsMapVisible(true);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isMapReady, map, isMapVisible]);
-
-  useEffect(() => {
-    if (isMapReady && map && isMapVisible) {
-      console.log('Map is visible, initializing geolocation');
+    if (isMapReady && map) {
+      setIsMapVisible(true);
       handleGeolocation();
     }
-  }, [isMapReady, map, isMapVisible]);
+  }, [isMapReady, map]);
 
   useEffect(() => {
     if (userLocation && !locationMarker.current && map) {
@@ -126,10 +116,13 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative bg-gray-50">
       <div 
         ref={mapContainer} 
-        className={`w-full h-full transition-opacity duration-500 ${isMapVisible ? 'opacity-100' : 'opacity-0'}`}
-        style={{ visibility: isMapVisible ? 'visible' : 'hidden' }}
+        className="w-full h-full"
+        style={{ 
+          opacity: isMapVisible ? 1 : 0,
+          transition: 'opacity 0.3s ease-in-out'
+        }}
       />
-      {(!isMapReady || !isMapVisible) && (
+      {!isMapReady && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -137,7 +130,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
           </div>
         </div>
       )}
-      {isMapReady && map && isMapVisible && (
+      {isMapReady && map && (
         <>
           <MapMarkersLayer 
             map={map}
