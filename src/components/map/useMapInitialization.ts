@@ -13,27 +13,35 @@ interface MapState {
 const DEFAULT_CENTER: [number, number] = [18.0649, 59.3293]; // Stockholm coordinates
 const DEFAULT_ZOOM = 14;
 
+// Move getInitialMapState outside the hook so it can be used by other components
+export const getInitialMapState = (): MapState => {
+  try {
+    const stored = localStorage.getItem(MAP_STATE_KEY);
+    if (stored) {
+      const state = JSON.parse(stored);
+      if (Array.isArray(state.center) && state.center.length === 2 && 
+          typeof state.zoom === 'number') {
+        return state;
+      }
+    }
+  } catch (error) {
+    console.error('Error reading stored map state:', error);
+  }
+  return { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM };
+};
+
+export const saveMapState = (center: [number, number], zoom: number) => {
+  try {
+    localStorage.setItem(MAP_STATE_KEY, JSON.stringify({ center, zoom }));
+  } catch (error) {
+    console.error('Error saving map state:', error);
+  }
+};
+
 export const useMapInitialization = (mapboxToken: string) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-
-  // Get last saved map state or use defaults
-  const getInitialMapState = (): MapState => {
-    try {
-      const stored = localStorage.getItem(MAP_STATE_KEY);
-      if (stored) {
-        const state = JSON.parse(stored);
-        if (Array.isArray(state.center) && state.center.length === 2 && 
-            typeof state.zoom === 'number') {
-          return state;
-        }
-      }
-    } catch (error) {
-      console.error('Error reading stored map state:', error);
-    }
-    return { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM };
-  };
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
@@ -57,7 +65,6 @@ export const useMapInitialization = (mapboxToken: string) => {
         });
 
         newMap.on('load', () => {
-          // Add controls after map is loaded
           newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
           newMap.addControl(
             new mapboxgl.ScaleControl({
@@ -74,18 +81,10 @@ export const useMapInitialization = (mapboxToken: string) => {
         // Save map state when user moves or zooms
         newMap.on('moveend', () => {
           if (!newMap || !newMap.getCenter()) return;
-          
-          const center = [
-            newMap.getCenter().lng,
-            newMap.getCenter().lat
-          ] as [number, number];
-          
-          const zoom = newMap.getZoom();
-          
-          localStorage.setItem(MAP_STATE_KEY, JSON.stringify({
-            center,
-            zoom
-          }));
+          saveMapState(
+            [newMap.getCenter().lng, newMap.getCenter().lat],
+            newMap.getZoom()
+          );
         });
 
         newMap.on('error', (e) => {
@@ -105,15 +104,10 @@ export const useMapInitialization = (mapboxToken: string) => {
       if (map.current) {
         // Save final state before unmounting
         try {
-          const center = [
-            map.current.getCenter().lng,
-            map.current.getCenter().lat
-          ] as [number, number];
-          
-          localStorage.setItem(MAP_STATE_KEY, JSON.stringify({
-            center,
-            zoom: map.current.getZoom()
-          }));
+          saveMapState(
+            [map.current.getCenter().lng, map.current.getCenter().lat],
+            map.current.getZoom()
+          );
         } catch (error) {
           console.error('Error saving final map state:', error);
         }

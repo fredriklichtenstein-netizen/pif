@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from "@/hooks/use-toast";
 import { createLocationMarker } from './LocationMarker';
+import { getInitialMapState } from './useMapInitialization';
 
 interface LocationTrackingResult {
   userLocation: [number, number] | null;
@@ -12,15 +13,27 @@ interface LocationTrackingResult {
 }
 
 const LOCATION_TRACKING_KEY = 'map_location_tracking_enabled';
+const USER_LOCATION_KEY = 'map_user_location';
 
 export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingResult => {
   const locationMarker = useRef<mapboxgl.Marker | null>(null);
   const watchId = useRef<number | null>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(() => {
+    try {
+      const stored = localStorage.getItem(USER_LOCATION_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isTracking, setIsTracking] = useState(() => {
-    const stored = localStorage.getItem(LOCATION_TRACKING_KEY);
-    return stored ? JSON.parse(stored) : false;
+    try {
+      const stored = localStorage.getItem(LOCATION_TRACKING_KEY);
+      return stored ? JSON.parse(stored) : false;
+    } catch {
+      return false;
+    }
   });
   const lastErrorTime = useRef<number>(0);
   const errorCount = useRef<number>(0);
@@ -61,6 +74,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     }
     setIsTracking(false);
     localStorage.setItem(LOCATION_TRACKING_KEY, 'false');
+    localStorage.removeItem(USER_LOCATION_KEY);
     setUserLocation(null);
     setIsLoadingLocation(false);
     errorCount.current = 0;
@@ -81,7 +95,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   };
 
   const startLocationTracking = () => {
-    if (!navigator.geolocation || !map?.hasControl) {
+    if (!navigator.geolocation) {
       toast({
         variant: "destructive",
         title: "Location Error",
@@ -97,36 +111,39 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        if (!map?.hasControl) return;
-
         const lngLat: [number, number] = [
           position.coords.longitude,
           position.coords.latitude
         ];
         
         setUserLocation(lngLat);
-        updateLocationMarker(lngLat);
+        localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(lngLat));
         
-        map.flyTo({
-          center: lngLat,
-          zoom: 14,
-          duration: 2000,
-          essential: true
-        });
+        if (map?.hasControl) {
+          updateLocationMarker(lngLat);
+          map.flyTo({
+            center: lngLat,
+            zoom: 14,
+            duration: 2000,
+            essential: true
+          });
+        }
         
         setIsLoadingLocation(false);
 
         watchId.current = navigator.geolocation.watchPosition(
           (watchPosition) => {
-            if (!map?.hasControl) return;
-            
             const newLngLat: [number, number] = [
               watchPosition.coords.longitude,
               watchPosition.coords.latitude
             ];
             
             setUserLocation(newLngLat);
-            updateLocationMarker(newLngLat);
+            localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(newLngLat));
+            
+            if (map?.hasControl) {
+              updateLocationMarker(newLngLat);
+            }
             errorCount.current = 0;
           },
           handleLocationError,
@@ -141,13 +158,19 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   useEffect(() => {
     isMapValid.current = Boolean(map?.hasControl);
 
-    if (isTracking && map?.hasControl) {
+    // If we have a stored location and tracking is enabled, restart tracking
+    const shouldTrack = localStorage.getItem(LOCATION_TRACKING_KEY) === 'true';
+    if (shouldTrack) {
       startLocationTracking();
     }
 
     return () => {
       isMapValid.current = false;
-      stopLocationTracking();
+      // Don't stop tracking on unmount if we're just navigating away
+      if (locationMarker.current) {
+        locationMarker.current.remove();
+        locationMarker.current = null;
+      }
     };
   }, [map]);
 
