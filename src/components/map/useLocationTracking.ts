@@ -1,9 +1,7 @@
-
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from "@/hooks/use-toast";
 import { createLocationMarker } from './LocationMarker';
-import { getInitialMapState } from './useMapInitialization';
 
 interface LocationTrackingResult {
   userLocation: [number, number] | null;
@@ -38,25 +36,22 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   const lastErrorTime = useRef<number>(0);
   const errorCount = useRef<number>(0);
   const { toast } = useToast();
-  const isMapValid = useRef(false);
 
   const handleLocationError = (error: GeolocationPositionError) => {
     console.error("Geolocation error:", error);
     setIsLoadingLocation(false);
 
-    if (map) {
-      const message = error.code === error.PERMISSION_DENIED
-        ? "Please enable location permissions in your browser settings."
-        : error.code === error.POSITION_UNAVAILABLE
-          ? "Location information is unavailable."
-          : "Location request timed out.";
+    const message = error.code === error.PERMISSION_DENIED
+      ? "Please enable location permissions in your browser settings."
+      : error.code === error.POSITION_UNAVAILABLE
+        ? "Location information is unavailable."
+        : "Location request timed out.";
 
-      toast({
-        variant: "destructive",
-        title: "Location Error",
-        description: message,
-      });
-    }
+    toast({
+      variant: "destructive",
+      title: "Location Error",
+      description: message,
+    });
 
     if (error.code !== error.TIMEOUT || errorCount.current >= 3) {
       stopLocationTracking();
@@ -68,7 +63,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
     }
-    if (locationMarker.current) {
+    if (locationMarker.current && map) {
       locationMarker.current.remove();
       locationMarker.current = null;
     }
@@ -82,7 +77,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   };
 
   const updateLocationMarker = (lngLat: [number, number]) => {
-    if (!isMapValid.current || !map?.hasControl) return;
+    if (!map) return;
 
     try {
       if (locationMarker.current) {
@@ -104,7 +99,6 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       return;
     }
 
-    stopLocationTracking();
     setIsTracking(true);
     localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
     setIsLoadingLocation(true);
@@ -119,7 +113,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         setUserLocation(lngLat);
         localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(lngLat));
         
-        if (map?.hasControl) {
+        if (map) {
           updateLocationMarker(lngLat);
           map.flyTo({
             center: lngLat,
@@ -141,7 +135,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
             setUserLocation(newLngLat);
             localStorage.setItem(USER_LOCATION_KEY, JSON.stringify(newLngLat));
             
-            if (map?.hasControl) {
+            if (map) {
               updateLocationMarker(newLngLat);
             }
             errorCount.current = 0;
@@ -156,18 +150,15 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   };
 
   useEffect(() => {
-    isMapValid.current = Boolean(map?.hasControl);
-
-    // If we have a stored location and tracking is enabled, restart tracking
+    // Only start tracking if map is available and tracking was previously enabled
     const shouldTrack = localStorage.getItem(LOCATION_TRACKING_KEY) === 'true';
-    if (shouldTrack) {
+    if (map && shouldTrack && !isTracking) {
       startLocationTracking();
     }
 
+    // Only clean up marker on unmount, keep other state
     return () => {
-      isMapValid.current = false;
-      // Don't stop tracking on unmount if we're just navigating away
-      if (locationMarker.current) {
+      if (locationMarker.current && map) {
         locationMarker.current.remove();
         locationMarker.current = null;
       }
