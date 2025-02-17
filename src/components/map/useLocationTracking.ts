@@ -55,8 +55,8 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         handleLocationError,
         {
           enableHighAccuracy: true,
-          maximumAge: 1000,
-          timeout: 20000
+          maximumAge: 300000, // Allow using cached positions up to 5 minutes old
+          timeout: 30000 // 30 second timeout for each attempt
         }
       );
     }
@@ -64,13 +64,17 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
 
   const handleLocationError = (error: GeolocationPositionError) => {
     console.error("Geolocation error:", error);
-    setIsLoadingLocation(false);
-    setIsTracking(false);
-    if (locationMarker.current) {
-      locationMarker.current.remove();
-      locationMarker.current = null;
+
+    // Don't reset tracking state for timeout errors, as we'll try to recover
+    if (error.code !== error.TIMEOUT) {
+      setIsLoadingLocation(false);
+      setIsTracking(false);
+      if (locationMarker.current) {
+        locationMarker.current.remove();
+        locationMarker.current = null;
+      }
+      setUserLocation(null);
     }
-    setUserLocation(null);
 
     if (map) {
       let message = "Unable to get your location. ";
@@ -83,6 +87,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           break;
         case error.TIMEOUT:
           if (isTracking) {
+            console.log("Attempting to recover from timeout...");
             restartLocationTracking();
             return;
           }
@@ -92,11 +97,14 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           message += "An unknown error occurred.";
       }
 
-      toast({
-        variant: "destructive",
-        title: "Location Error",
-        description: message,
-      });
+      // Only show toast for non-timeout errors or if we're not tracking
+      if (error.code !== error.TIMEOUT || !isTracking) {
+        toast({
+          variant: "destructive",
+          title: "Location Error",
+          description: message,
+        });
+      }
     }
   };
 
@@ -150,16 +158,16 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           handleLocationError,
           {
             enableHighAccuracy: true,
-            maximumAge: 1000,
-            timeout: 20000
+            maximumAge: 300000, // Allow using cached positions up to 5 minutes old
+            timeout: 30000 // 30 second timeout for each attempt
           }
         );
       },
       handleLocationError,
       { 
         enableHighAccuracy: true, 
-        maximumAge: 0,
-        timeout: 20000
+        maximumAge: 300000, // Also use 5-minute cache for initial position
+        timeout: 30000 // 30 second timeout for initial position
       }
     );
   };
