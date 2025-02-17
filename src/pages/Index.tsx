@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import type { Post, CreatePostInput } from "@/types/post";
 import { ItemCard } from "@/components/ItemCard";
@@ -90,6 +91,7 @@ const IndexPage = () => {
             description={post.description}
             image={post.images[0]}
             location={post.location}
+            coordinates={post.coordinates}  {/* Added this line */}
             category={post.category}
             condition={post.condition}
             postedBy={post.postedBy}
