@@ -11,12 +11,9 @@ export const useMapInitialization = (mapboxToken: string) => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
     
-    // Pre-load necessary resources
     const preloadResources = async () => {
-      // Pre-initialize mapbox
       mapboxgl.accessToken = mapboxToken;
       
-      // Create map instance with optimized initial settings
       const newMap = new mapboxgl.Map({
         container: mapContainer.current!,
         style: "mapbox://styles/mapbox/light-v11",
@@ -24,32 +21,40 @@ export const useMapInitialization = (mapboxToken: string) => {
         zoom: 14,
         minZoom: 9,
         maxZoom: 16,
-        attributionControl: false, // We'll add this later
-        preserveDrawingBuffer: false, // Optimization for performance
-        antialias: false // Disable antialiasing for initial load
+        fadeDuration: 0,
+        attributionControl: false,
+        preserveDrawingBuffer: false,
+        renderWorldCopies: false,
+        antialias: true,
+        optimizeForTerrain: true,
+        transformRequest: (url, resourceType) => {
+          return {
+            url: url,
+            credentials: 'same-origin'
+          };
+        }
       });
 
-      // Add controls after initial load
-      newMap.once('load', () => {
-        // Add navigation controls
-        newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
-        
-        // Add scale control
-        newMap.addControl(
-          new mapboxgl.ScaleControl({
-            maxWidth: 150,
-            unit: 'metric'
-          }),
-          'bottom-left'
-        );
-
-        // Enable antialiasing after initial load
-        newMap.setLayoutProperty('background', 'visibility', 'visible');
-        
-        map.current = newMap;
-        setIsMapReady(true);
-        console.log("Map fully initialized and ready");
+      // Wait for style and essential resources to load
+      await new Promise<void>((resolve) => {
+        newMap.once('styledata', () => {
+          newMap.once('idle', () => {
+            // Add controls only after the map is fully loaded
+            newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+            newMap.addControl(
+              new mapboxgl.ScaleControl({
+                maxWidth: 150,
+                unit: 'metric'
+              }),
+              'bottom-left'
+            );
+            resolve();
+          });
+        });
       });
+
+      map.current = newMap;
+      setIsMapReady(true);
     };
 
     preloadResources().catch(console.error);

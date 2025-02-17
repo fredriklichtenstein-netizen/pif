@@ -1,3 +1,4 @@
+
 import type { Post } from "@/types/post";
 import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
@@ -17,6 +18,7 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
   const locationMarker = useRef<mapboxgl.Marker | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isMapVisible, setIsMapVisible] = useState(false);
 
   const createLocationMarker = (lngLat: [number, number]) => {
     if (!map) return;
@@ -100,7 +102,12 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
 
   useEffect(() => {
     if (isMapReady && map) {
+      // Small delay before showing the map to ensure smooth transition
+      const timer = setTimeout(() => {
+        setIsMapVisible(true);
+      }, 100);
       handleGeolocation();
+      return () => clearTimeout(timer);
     }
   }, [isMapReady, map]);
 
@@ -112,8 +119,19 @@ export const MapContainer = ({ mapboxToken, posts, onPostClick }: MapContainerPr
 
   return (
     <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative bg-gray-50">
-      <div ref={mapContainer} className="w-full h-full" />
-      {isMapReady && map && (
+      <div 
+        ref={mapContainer} 
+        className={`w-full h-full transition-opacity duration-300 ${isMapVisible ? 'opacity-100' : 'opacity-0'}`}
+      />
+      {(!isMapReady || !isMapVisible) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading map...</p>
+          </div>
+        </div>
+      )}
+      {isMapReady && map && isMapVisible && (
         <>
           <MapMarkersLayer 
             map={map}
