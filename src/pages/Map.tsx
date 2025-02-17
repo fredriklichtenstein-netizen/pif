@@ -9,7 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/toaster";
 
 const MapView = () => {
-  const [mapboxToken, setMapboxToken] = useState<string>("");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = searchParams.get("location");
@@ -20,12 +19,11 @@ const MapView = () => {
   });
 
   // Fetch Mapbox token with better error handling
-  const { isLoading: isLoadingToken } = useQuery({
+  const { data: mapboxToken, isLoading: isLoadingToken } = useQuery({
     queryKey: ["mapbox-token"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-mapbox-token");
       if (error) throw error;
-      setMapboxToken(data.token);
       return data.token;
     },
   });
@@ -34,11 +32,13 @@ const MapView = () => {
     navigate(`/?post=${postId}`);
   };
 
+  const isReady = !!mapboxToken && !!posts && !isLoadingToken;
+
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
       <h1 className="text-2xl font-bold mb-4">Map View</h1>
       <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative">
-        {isLoadingToken || !posts ? (
+        {!isReady ? (
           <>
             <Skeleton className="w-full h-full animate-pulse bg-gray-200" />
             <div className="absolute inset-0 flex items-center justify-center">
@@ -53,7 +53,7 @@ const MapView = () => {
             mapboxToken={mapboxToken}
             posts={posts}
             onPostClick={handlePostClick}
-            isReady={!!mapboxToken}
+            isReady={true}
           />
         )}
       </div>
