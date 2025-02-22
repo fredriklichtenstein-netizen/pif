@@ -10,6 +10,14 @@ import {
 } from "@/components/ui/select";
 import { AddressInput } from "./AddressInput";
 import { Card, CardContent } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, Map } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { PhoneInput } from "./PhoneInput";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 interface ProfileFormData {
   firstName: string;
@@ -17,11 +25,15 @@ interface ProfileFormData {
   gender: string;
   phone: string;
   address: string;
+  dateOfBirth?: Date;
+  countryCode: string;
 }
 
 interface ProfileFormProps {
   formData: ProfileFormData;
   onChange: (data: Partial<ProfileFormData>) => void;
+  avatarUrl?: string | null;
+  onAvatarCropChange?: (cropData: { x: number; y: number; scale: number }) => void;
 }
 
 const genderOptions = [
@@ -33,7 +45,7 @@ const genderOptions = [
   { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
-export function ProfileForm({ formData, onChange }: ProfileFormProps) {
+export function ProfileForm({ formData, onChange, avatarUrl, onAvatarCropChange }: ProfileFormProps) {
   return (
     <div className="space-y-6">
       <Card>
@@ -82,13 +94,45 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
             </div>
 
             <div>
-              <Label htmlFor="phone">Phone number (optional)</Label>
-              <Input
-                id="phone"
-                type="tel"
+              <Label htmlFor="phone">Phone number</Label>
+              <PhoneInput
                 value={formData.phone}
-                onChange={(e) => onChange({ phone: e.target.value })}
+                countryCode={formData.countryCode}
+                onPhoneChange={(phone, countryCode) => 
+                  onChange({ phone, countryCode })
+                }
+                required
               />
+            </div>
+
+            <div>
+              <Label>Date of birth (optional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.dateOfBirth && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.dateOfBirth ? (
+                      format(formData.dateOfBirth, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.dateOfBirth}
+                    onSelect={(date) => onChange({ dateOfBirth: date })}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>
@@ -96,6 +140,8 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               <AddressInput
                 value={formData.address}
                 onChange={(address) => onChange({ address })}
+                locationButtonLabel={<Map className="w-4 h-4" />}
+                mapButtonLabel="Set location on map"
               />
             </div>
           </div>

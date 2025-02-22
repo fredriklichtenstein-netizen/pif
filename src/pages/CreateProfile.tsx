@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
 
 export default function CreateProfile() {
   const navigate = useNavigate();
@@ -19,7 +19,9 @@ export default function CreateProfile() {
     lastName: "",
     gender: "",
     phone: "",
+    countryCode: "+46", // Default to Sweden
     address: "",
+    dateOfBirth: undefined as Date | undefined,
   });
 
   const handleFileChange = (file: File) => {
@@ -38,18 +40,8 @@ export default function CreateProfile() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (userError) {
-        console.error("Error getting user:", userError);
-        throw userError;
-      }
-      
-      if (!user) {
-        console.error("No user found");
-        throw new Error("No user found");
-      }
-
-      console.log("Starting profile creation for user:", user.id);
-      console.log("Form data to be saved:", formData);
+      if (userError) throw userError;
+      if (!user) throw new Error("No user found");
 
       let avatarPath = null;
       if (avatar) {
@@ -76,11 +68,8 @@ export default function CreateProfile() {
         console.log("Avatar public URL:", avatarPath);
       }
 
-      // Generate a username from the email if not already set
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
 
-      console.log("Updating profile with username:", username);
-      
       const { data: profileData, error: updateError } = await supabase
         .from('profiles')
         .upsert({
@@ -89,26 +78,21 @@ export default function CreateProfile() {
           first_name: formData.firstName,
           last_name: formData.lastName,
           gender: formData.gender,
-          phone: formData.phone,
+          phone: formData.countryCode + formData.phone,
           address: formData.address,
           avatar_url: avatarPath,
+          date_of_birth: formData.dateOfBirth,
           onboarding_completed: true
         })
         .select();
 
-      if (updateError) {
-        console.error("Profile update error:", updateError);
-        throw updateError;
-      }
-
-      console.log("Profile created successfully:", profileData);
+      if (updateError) throw updateError;
 
       toast({
         title: "Profile created!",
         description: "Your profile has been created successfully.",
       });
 
-      // Add a small delay before navigation to ensure the toast is visible
       setTimeout(() => {
         navigate("/profile");
       }, 1000);
@@ -140,10 +124,27 @@ export default function CreateProfile() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
             <CardContent className="pt-6">
-              <AvatarUpload 
-                avatarUrl={avatarUrl}
-                onFileChange={handleFileChange}
-              />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="cursor-pointer">
+                    <AvatarUpload 
+                      avatarUrl={avatarUrl}
+                      onFileChange={handleFileChange}
+                    />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  {avatarUrl && (
+                    <div className="relative w-full aspect-square">
+                      <img
+                        src={avatarUrl}
+                        alt="Profile"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
