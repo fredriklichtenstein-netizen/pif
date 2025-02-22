@@ -1,3 +1,4 @@
+
 import { Navigate } from "react-router-dom";
 import Index from "@/pages/Index";
 import Map from "@/pages/Map";
@@ -8,6 +9,7 @@ import Auth from "@/pages/Auth";
 import EmailConfirmation from "@/pages/EmailConfirmation";
 import CreateProfile from "@/pages/CreateProfile";
 import NotFound from "@/pages/NotFound";
+import { PrivateRoute } from "@/components/auth/PrivateRoute";
 
 export const publicRoutes = [
   { path: "/", element: <Index /> },
@@ -18,8 +20,20 @@ export const publicRoutes = [
 ];
 
 export const privateRoutes = [
-  { path: "/messages", element: <Messages /> },
-  { path: "/post", element: <Post /> },
-  { path: "/profile", element: <Profile /> },
-  { path: "/create-profile", element: <CreateProfile /> },
+  { 
+    path: "/messages", 
+    element: <PrivateRoute><Messages /></PrivateRoute>
+  },
+  { 
+    path: "/post", 
+    element: <PrivateRoute><Post /></PrivateRoute>
+  },
+  { 
+    path: "/profile", 
+    element: <PrivateRoute><Profile /></PrivateRoute>
+  },
+  { 
+    path: "/create-profile", 
+    element: <PrivateRoute><CreateProfile /></PrivateRoute>
+  },
 ];
