@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function CreateProfile() {
   const navigate = useNavigate();
@@ -121,22 +122,26 @@ export default function CreateProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 pb-24">
-      <div className="max-w-md mx-auto space-y-8">
-        <div>
-          <h2 className="text-3xl font-bold text-center text-gray-900">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900">
             Create your profile
-          </h2>
-          <p className="mt-2 text-center text-gray-600">
-            Let's get to know you better
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Help others get to know you better
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <AvatarUpload 
-            avatarUrl={avatarUrl}
-            onFileChange={handleFileChange}
-          />
+          <Card>
+            <CardContent className="pt-6">
+              <AvatarUpload 
+                avatarUrl={avatarUrl}
+                onFileChange={handleFileChange}
+              />
+            </CardContent>
+          </Card>
 
           <ProfileForm 
             formData={formData}
