@@ -199,7 +199,7 @@ export type Database = {
           id: string
           last_name: string | null
           location: string | null
-          onboarding_completed: boolean | null
+          onboarding_completed: boolean
           phone: string | null
           updated_at: string | null
           username: string
@@ -213,7 +213,7 @@ export type Database = {
           id: string
           last_name?: string | null
           location?: string | null
-          onboarding_completed?: boolean | null
+          onboarding_completed?: boolean
           phone?: string | null
           updated_at?: string | null
           username: string
@@ -227,7 +227,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           location?: string | null
-          onboarding_completed?: boolean | null
+          onboarding_completed?: boolean
           phone?: string | null
           updated_at?: string | null
           username?: string

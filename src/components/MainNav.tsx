@@ -1,5 +1,5 @@
 
-import { Home, Map, MessageSquare, PlusCircle, User, LogOut } from "lucide-react";
+import { Home, Map, MessageSquare, PlusCircle, User as UserIcon, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -100,7 +100,7 @@ export function MainNav() {
         }`}
         onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
       >
-        <User size={24} />
+        <UserIcon size={24} />
         <span className="text-xs mt-1">Profile</span>
       </Link>
       {user && (
