@@ -110,7 +110,7 @@ export default function CreateProfile() {
 
       // Add a small delay before navigation to ensure the toast is visible
       setTimeout(() => {
-        navigate("/");
+        navigate("/profile");
       }, 1000);
 
     } catch (error: any) {
