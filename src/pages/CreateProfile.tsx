@@ -76,9 +76,10 @@ export default function CreateProfile() {
         console.log("Avatar public URL:", avatarPath);
       }
 
-      const { data: profileData, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
           first_name: formData.firstName,
           last_name: formData.lastName,
           gender: formData.gender,
@@ -87,21 +88,12 @@ export default function CreateProfile() {
           avatar_url: avatarPath,
           onboarding_completed: true
         })
-        .eq('id', user.id)
-        .select('*')
-        .single();
+        .select();
 
       if (updateError) {
         console.error("Profile update error:", updateError);
         throw updateError;
       }
-
-      if (!profileData) {
-        console.error("Profile update returned no data");
-        throw new Error("Profile update failed");
-      }
-
-      console.log("Profile updated successfully:", profileData);
 
       toast({
         title: "Profile created!",
