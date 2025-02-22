@@ -76,10 +76,14 @@ export default function CreateProfile() {
         console.log("Avatar public URL:", avatarPath);
       }
 
+      // Generate a username from the email if not already set
+      const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
+
       const { error: updateError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
+          username: username,
           first_name: formData.firstName,
           last_name: formData.lastName,
           gender: formData.gender,
