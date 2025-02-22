@@ -85,7 +85,7 @@ export default function CreateProfile() {
         onboarding_completed: true
       };
 
-      const { data: profileData, error: updateError } = await supabase
+      const { data: createdProfile, error: updateError } = await supabase
         .from('profiles')
         .upsert(profileData)
         .select();
