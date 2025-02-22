@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,7 +10,8 @@ import {
 } from "@/components/ui/select";
 
 interface ProfileFormData {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   gender: string;
   phone: string;
   address: string;
@@ -32,14 +34,26 @@ const genderOptions = [
 export function ProfileForm({ formData, onChange }: ProfileFormProps) {
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="fullName">Full name</Label>
-        <Input
-          id="fullName"
-          value={formData.fullName}
-          onChange={(e) => onChange({ fullName: e.target.value })}
-          required
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="firstName">First name</Label>
+          <Input
+            id="firstName"
+            value={formData.firstName}
+            onChange={(e) => onChange({ firstName: e.target.value })}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="lastName">Last name</Label>
+          <Input
+            id="lastName"
+            value={formData.lastName}
+            onChange={(e) => onChange({ lastName: e.target.value })}
+            required
+          />
+        </div>
       </div>
 
       <div>

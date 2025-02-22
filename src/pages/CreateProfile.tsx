@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,8 @@ export default function CreateProfile() {
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     gender: "",
     phone: "",
     address: "",
@@ -73,36 +75,11 @@ export default function CreateProfile() {
         console.log("Avatar public URL:", avatarPath);
       }
 
-      // First, check if the profile exists
-      const { data: existingProfile, error: checkError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error("Error checking existing profile:", checkError);
-        throw checkError;
-      }
-
-      if (!existingProfile) {
-        console.error("No profile found for user:", user.id);
-        throw new Error("Profile not found");
-      }
-
-      console.log("Existing profile found:", existingProfile);
-      console.log("Updating profile data with:", {
-        full_name: formData.fullName,
-        gender: formData.gender,
-        phone: formData.phone,
-        address: formData.address,
-        avatar_url: avatarPath,
-      });
-
       const { data: profileData, error: updateError } = await supabase
         .from('profiles')
         .update({
-          full_name: formData.fullName,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           gender: formData.gender,
           phone: formData.phone,
           address: formData.address,
@@ -111,7 +88,7 @@ export default function CreateProfile() {
         })
         .eq('id', user.id)
         .select('*')
-        .maybeSingle();
+        .single();
 
       if (updateError) {
         console.error("Profile update error:", updateError);
