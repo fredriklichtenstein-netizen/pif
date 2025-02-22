@@ -1,8 +1,12 @@
+
 import { useState } from "react";
 import { Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import Cropper from 'react-easy-crop';
+import { Slider } from "@/components/ui/slider";
 
 interface AvatarUploadProps {
   avatarUrl: string | null;
@@ -11,11 +15,20 @@ interface AvatarUploadProps {
 
 export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const { toast } = useToast();
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      onFileChange(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setTempImage(reader.result as string);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -36,14 +49,65 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     }
   };
 
+  const onCropComplete = async (croppedArea: any, croppedAreaPixels: any) => {
+    if (!tempImage) return;
+    
+    try {
+      const image = await getCroppedImg(tempImage, croppedAreaPixels);
+      if (image) {
+        onFileChange(image);
+        setShowCropper(false);
+      }
+    } catch (e) {
+      console.error(e);
+      toast({
+        title: "Error",
+        description: "Failed to crop image",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col items-center space-y-4">
-      <Avatar className="h-32 w-32">
-        <AvatarImage src={avatarUrl || undefined} />
-        <AvatarFallback>
-          <Upload className="h-8 w-8 text-gray-400" />
-        </AvatarFallback>
-      </Avatar>
+      <Dialog open={showCropper} onOpenChange={setShowCropper}>
+        <DialogTrigger asChild>
+          <Avatar className="h-32 w-32 cursor-pointer">
+            <AvatarImage src={avatarUrl || undefined} />
+            <AvatarFallback>
+              <Upload className="h-8 w-8 text-gray-400" />
+            </AvatarFallback>
+          </Avatar>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          {tempImage && (
+            <div>
+              <div className="relative h-[300px] w-full">
+                <Cropper
+                  image={tempImage}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                />
+              </div>
+              <div className="mt-4">
+                <label className="text-sm font-medium">Zoom</label>
+                <Slider
+                  value={[zoom]}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  onValueChange={([value]) => setZoom(value)}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
       <div className="flex space-x-2">
         <Button
@@ -71,4 +135,54 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
       </div>
     </div>
   );
+}
+
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', error => reject(error));
+    image.src = url;
+  });
+
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: { width: number; height: number; x: number; y: number }
+): Promise<File | null> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    return null;
+  }
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob(blob => {
+      if (!blob) {
+        resolve(null);
+        return;
+      }
+      const file = new File([blob], 'cropped-image.jpg', {
+        type: 'image/jpeg',
+        lastModified: Date.now(),
+      });
+      resolve(file);
+    }, 'image/jpeg');
+  });
 }
