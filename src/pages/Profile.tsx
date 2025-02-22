@@ -107,6 +107,7 @@ const Profile = () => {
           phone: formData.phone,
           address: formData.address,
           avatar_url: avatarPath,
+          updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 

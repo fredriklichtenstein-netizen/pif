@@ -194,9 +194,10 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           created_at: string | null
-          full_name: string | null
+          first_name: string | null
           gender: string | null
           id: string
+          last_name: string | null
           location: string | null
           onboarding_completed: boolean | null
           phone: string | null
@@ -207,9 +208,10 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string | null
-          full_name?: string | null
+          first_name?: string | null
           gender?: string | null
           id: string
+          last_name?: string | null
           location?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
@@ -220,9 +222,10 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string | null
-          full_name?: string | null
+          first_name?: string | null
           gender?: string | null
           id?: string
+          last_name?: string | null
           location?: string | null
           onboarding_completed?: boolean | null
           phone?: string | null
