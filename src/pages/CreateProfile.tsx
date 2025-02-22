@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,20 +71,23 @@ export default function CreateProfile() {
 
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
 
+      // Prepare profile data with proper date formatting
+      const profileData = {
+        id: user.id,
+        username: username,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        gender: formData.gender,
+        phone: formData.countryCode + formData.phone,
+        address: formData.address,
+        avatar_url: avatarPath,
+        date_of_birth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : null,
+        onboarding_completed: true
+      };
+
       const { data: profileData, error: updateError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          username: username,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          gender: formData.gender,
-          phone: formData.countryCode + formData.phone,
-          address: formData.address,
-          avatar_url: avatarPath,
-          date_of_birth: formData.dateOfBirth,
-          onboarding_completed: true
-        })
+        .upsert(profileData)
         .select();
 
       if (updateError) throw updateError;
