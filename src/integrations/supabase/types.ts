@@ -194,13 +194,14 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           created_at: string | null
+          date_of_birth: string | null
           first_name: string | null
           gender: string | null
           id: string
           last_name: string | null
           location: string | null
           onboarding_completed: boolean
-          phone: string | null
+          phone: string
           updated_at: string | null
           username: string
         }
@@ -208,13 +209,14 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           first_name?: string | null
           gender?: string | null
           id: string
           last_name?: string | null
           location?: string | null
           onboarding_completed?: boolean
-          phone?: string | null
+          phone: string
           updated_at?: string | null
           username: string
         }
@@ -222,13 +224,14 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           first_name?: string | null
           gender?: string | null
           id?: string
           last_name?: string | null
           location?: string | null
           onboarding_completed?: boolean
-          phone?: string | null
+          phone?: string
           updated_at?: string | null
           username?: string
         }
