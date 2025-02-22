@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { AddressInput } from "./AddressInput";
+import { AddressInput } from "./address/AddressInput";
 import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "./form/NameFields";
 import { GenderSelector } from "./form/GenderSelector";
