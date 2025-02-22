@@ -4,7 +4,7 @@ import { Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Cropper from 'react-easy-crop';
 import { Slider } from "@/components/ui/slider";
 
@@ -57,6 +57,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
       if (image) {
         onFileChange(image);
         setShowCropper(false);
+        setTempImage(null);
       }
     } catch (e) {
       console.error(e);
@@ -70,7 +71,10 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <Dialog open={showCropper} onOpenChange={setShowCropper}>
+      <Dialog open={showCropper} onOpenChange={(open) => {
+        setShowCropper(open);
+        if (!open) setTempImage(null);
+      }}>
         <DialogTrigger asChild>
           <Avatar className="h-32 w-32 cursor-pointer">
             <AvatarImage src={avatarUrl || undefined} />
@@ -80,8 +84,12 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
           </Avatar>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
-          {tempImage && (
-            <div>
+          <DialogHeader>
+            <DialogTitle>Edit Profile Picture</DialogTitle>
+          </DialogHeader>
+          
+          {tempImage ? (
+            <div className="space-y-4">
               <div className="relative h-[300px] w-full">
                 <Cropper
                   image={tempImage}
@@ -93,7 +101,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
                   onCropComplete={onCropComplete}
                 />
               </div>
-              <div className="mt-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Zoom</label>
                 <Slider
                   value={[zoom]}
@@ -101,38 +109,41 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
                   max={3}
                   step={0.1}
                   onValueChange={([value]) => setZoom(value)}
-                  className="mt-2"
                 />
               </div>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('avatar-upload')?.click()}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload photo
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCameraCapture}
+                className="w-full"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Take photo
+              </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
       
-      <div className="flex space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => document.getElementById('avatar-upload')?.click()}
-        >
-          Upload photo
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCameraCapture}
-        >
-          <Camera className="h-4 w-4 mr-2" />
-          Take photo
-        </Button>
-        <input
-          id="avatar-upload"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-      </div>
+      <input
+        id="avatar-upload"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
     </div>
   );
 }
