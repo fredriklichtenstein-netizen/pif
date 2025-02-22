@@ -20,6 +20,7 @@ const Profile = () => {
     gender: "",
     phone: "",
     address: "",
+    countryCode: "+46", // Adding default country code for Sweden
   });
 
   useEffect(() => {
@@ -48,6 +49,7 @@ const Profile = () => {
           gender: profile.gender || "",
           phone: profile.phone || "",
           address: profile.address || "",
+          countryCode: "+46", // Default to Swedish country code if not set
         });
         setAvatarUrl(profile.avatar_url);
       }

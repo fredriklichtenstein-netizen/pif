@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,9 +12,11 @@ import { geocodeAddress } from "@/utils/geocoding";
 interface AddressInputProps {
   value: string;
   onChange: (address: string) => void;
+  locationButtonLabel?: React.ReactNode;
+  mapButtonLabel?: string;
 }
 
-export function AddressInput({ value, onChange }: AddressInputProps) {
+export function AddressInput({ value, onChange, locationButtonLabel, mapButtonLabel }: AddressInputProps) {
   const { toast } = useToast();
   const [mapToken, setMapToken] = useState<string>("");
   const [showMap, setShowMap] = useState(false);
@@ -180,8 +181,7 @@ export function AddressInput({ value, onChange }: AddressInputProps) {
             variant="outline" 
             onClick={handleUseCurrentLocation}
           >
-            <MapPin className="w-4 h-4 mr-2" />
-            Current
+            {locationButtonLabel}
           </Button>
         </div>
 
@@ -209,7 +209,7 @@ export function AddressInput({ value, onChange }: AddressInputProps) {
           onClick={handleShowMap}
         >
           <Search className="w-4 h-4 mr-2" />
-          Show on map
+          {mapButtonLabel}
         </Button>
       </div>
 
