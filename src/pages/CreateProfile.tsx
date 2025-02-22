@@ -79,7 +79,9 @@ export default function CreateProfile() {
       // Generate a username from the email if not already set
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
 
-      const { error: updateError } = await supabase
+      console.log("Updating profile with username:", username);
+      
+      const { data: profileData, error: updateError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
@@ -99,17 +101,23 @@ export default function CreateProfile() {
         throw updateError;
       }
 
+      console.log("Profile created successfully:", profileData);
+
       toast({
         title: "Profile created!",
         description: "Your profile has been created successfully.",
       });
 
-      navigate("/");
+      // Add a small delay before navigation to ensure the toast is visible
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+
     } catch (error: any) {
       console.error("Profile creation error:", error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error creating profile",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
