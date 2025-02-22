@@ -30,6 +30,13 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     }
   };
 
+  const handleEditCurrent = () => {
+    if (avatarUrl) {
+      setTempImage(avatarUrl);
+      setShowCropper(true);
+    }
+  };
+
   const handleSaveCrop = async (croppedAreaPixels: any) => {
     if (!tempImage) return;
     
@@ -80,6 +87,8 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
           ) : (
             <UploadOptions
               onFileSelect={() => document.getElementById('avatar-upload')?.click()}
+              onEditCurrent={handleEditCurrent}
+              hasExistingImage={!!avatarUrl}
             />
           )}
         </DialogContent>
