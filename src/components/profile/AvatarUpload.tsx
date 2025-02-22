@@ -4,7 +4,7 @@ import { Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import Cropper from 'react-easy-crop';
 import { Slider } from "@/components/ui/slider";
 
@@ -19,6 +19,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const [zoom, setZoom] = useState(1);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,8 +50,12 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     }
   };
 
-  const onCropComplete = async (croppedArea: any, croppedAreaPixels: any) => {
-    if (!tempImage) return;
+  const onCropComplete = async (_croppedArea: any, pixels: any) => {
+    setCroppedAreaPixels(pixels);
+  };
+
+  const handleSaveCrop = async () => {
+    if (!tempImage || !croppedAreaPixels) return;
     
     try {
       const image = await getCroppedImg(tempImage, croppedAreaPixels);
@@ -58,6 +63,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
         onFileChange(image);
         setShowCropper(false);
         setTempImage(null);
+        setCroppedAreaPixels(null);
       }
     } catch (e) {
       console.error(e);
@@ -73,7 +79,12 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     <div className="flex flex-col items-center space-y-4">
       <Dialog open={showCropper} onOpenChange={(open) => {
         setShowCropper(open);
-        if (!open) setTempImage(null);
+        if (!open) {
+          setTempImage(null);
+          setCroppedAreaPixels(null);
+          setZoom(1);
+          setCrop({ x: 0, y: 0 });
+        }
       }}>
         <DialogTrigger asChild>
           <Avatar className="h-32 w-32 cursor-pointer">
@@ -111,6 +122,14 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
                   onValueChange={([value]) => setZoom(value)}
                 />
               </div>
+              <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => setShowCropper(false)}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={handleSaveCrop}>
+                  Save
+                </Button>
+              </DialogFooter>
             </div>
           ) : (
             <div className="flex flex-col space-y-4">
@@ -197,3 +216,4 @@ async function getCroppedImg(
     }, 'image/jpeg');
   });
 }
+
