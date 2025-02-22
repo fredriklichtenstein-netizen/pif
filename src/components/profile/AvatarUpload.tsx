@@ -107,6 +107,8 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
                   crop={crop}
                   zoom={zoom}
                   aspect={1}
+                  cropShape="round"
+                  showGrid={false}
                   onCropChange={setCrop}
                   onZoomChange={setZoom}
                   onCropComplete={onCropComplete}
@@ -187,9 +189,23 @@ async function getCroppedImg(
     return null;
   }
 
+  // Set canvas dimensions to match the desired crop size
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
+  // Create a circular clipping path
+  ctx.beginPath();
+  ctx.arc(
+    canvas.width / 2,
+    canvas.height / 2,
+    canvas.width / 2,
+    0,
+    2 * Math.PI,
+    true
+  );
+  ctx.clip();
+
+  // Draw the image
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -216,4 +232,3 @@ async function getCroppedImg(
     }, 'image/jpeg');
   });
 }
-
