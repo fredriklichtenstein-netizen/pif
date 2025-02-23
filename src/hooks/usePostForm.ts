@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import type { CreatePostInput } from "@/types/post";
+import type { CreatePostInput, formatCoordinatesForDB } from "@/types/post";
 import { addPost } from "@/pages/Index";
 import { supabase } from "@/integrations/supabase/client";
 import { usePostImages } from "./post/usePostImages";
@@ -24,7 +24,7 @@ export const usePostForm = () => {
     measurements: {},
     images: [],
     location: "",
-    coordinates: undefined,
+    coordinates: null, // Initialize as null to match PostgreSQL point type
     status: "available",
   });
 
@@ -111,7 +111,7 @@ export const usePostForm = () => {
     try {
       const postDataWithUser = {
         ...formData,
-        user_id: session.user.id
+        user_id: session.user.id,
       };
 
       await addPost(postDataWithUser);

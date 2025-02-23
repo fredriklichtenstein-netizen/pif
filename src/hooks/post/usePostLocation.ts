@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { geocodeAddress } from "@/utils/geocoding";
-import type { CreatePostInput } from "@/types/post";
+import type { CreatePostInput, formatCoordinatesForDB } from "@/types/post";
 
 export const usePostLocation = (
   formData: CreatePostInput,
@@ -27,25 +27,29 @@ export const usePostLocation = (
       const geocodeResult = await geocodeAddress(formData.location, mapboxToken);
       console.log("Geocoding successful:", geocodeResult);
       
-      setFormData(prev => ({ 
-        ...prev, 
-        coordinates: {
-          lat: geocodeResult.lat,
-          lng: geocodeResult.lng
-        },
-        location: geocodeResult.formattedAddress
-      }));
-      
-      console.log("Updated form data with coordinates:", {
+      // Convert coordinates to PostgreSQL point format
+      const coordinates = formatCoordinatesForDB({
         lat: geocodeResult.lat,
         lng: geocodeResult.lng
       });
       
+      setFormData(prev => ({ 
+        ...prev, 
+        coordinates,
+        location: geocodeResult.formattedAddress
+      }));
+      
+      console.log("Updated form data with coordinates:", coordinates);
+      
+      toast({
+        title: "Location verified",
+        description: "Address has been successfully verified.",
+      });
     } catch (error) {
       console.error("Geocoding error:", error);
       setFormData(prev => ({ 
         ...prev, 
-        coordinates: undefined 
+        coordinates: null
       }));
       
       toast({

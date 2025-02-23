@@ -10,10 +10,7 @@ export interface Post {
   };
   images: string[];
   location: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
+  coordinates: string | null; // PostgreSQL point type is stored as string "(x,y)"
   postedBy: {
     id: string;
     name: string;
@@ -24,3 +21,26 @@ export interface Post {
 }
 
 export type CreatePostInput = Omit<Post, "id" | "postedBy" | "createdAt">;
+
+// Helper type for coordinate handling
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+// Helper function to convert coordinates to PostgreSQL point format
+export const formatCoordinatesForDB = (coords: Coordinates | undefined): string | null => {
+  if (!coords) return null;
+  return `(${coords.lng},${coords.lat})`;
+};
+
+// Helper function to parse PostgreSQL point format to coordinates
+export const parseCoordinatesFromDB = (point: string | null): Coordinates | undefined => {
+  if (!point) return undefined;
+  const matches = point.match(/\(([-\d.]+),([-\d.]+)\)/);
+  if (!matches) return undefined;
+  return {
+    lng: parseFloat(matches[1]),
+    lat: parseFloat(matches[2])
+  };
+};
