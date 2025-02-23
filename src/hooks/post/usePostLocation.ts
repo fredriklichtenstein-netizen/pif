@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { geocodeAddress } from "@/utils/geocoding";
-import type { CreatePostInput, formatCoordinatesForDB } from "@/types/post";
+import { formatCoordinatesForDB } from "@/types/post";
+import type { CreatePostInput } from "@/types/post";
 
 export const usePostLocation = (
   formData: CreatePostInput,

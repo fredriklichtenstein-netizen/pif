@@ -2,6 +2,7 @@
 import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
 import { calculateDistance, formatDistance } from "@/utils/distance";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 interface MapPopupProps {
   post: Post;
@@ -24,12 +25,15 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
       (position) => {
         if (!post.coordinates) return;
         
+        const originalCoords = parseCoordinatesFromDB(post.coordinates);
+        if (!originalCoords) return;
+        
         // Use original coordinates for distance calculation
         const distance = calculateDistance(
           position.coords.latitude,
           position.coords.longitude,
-          post.coordinates.lat,
-          post.coordinates.lng
+          originalCoords.lat,
+          originalCoords.lng
         );
         
         popup.setHTML(`

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Post, CreatePostInput } from "@/types/post";
@@ -18,10 +17,7 @@ export const getPosts = async (): Promise<Post[]> => {
       measurements: {},
       images: ["https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef"],
       location: "Norrmalm, Stockholm",
-      coordinates: {
-        lng: 18.0686,
-        lat: 59.3293
-      },
+      coordinates: "(18.0686,59.3293)",
       postedBy: {
         id: "123",
         name: "John Doe",
@@ -39,10 +35,7 @@ export const getPosts = async (): Promise<Post[]> => {
       measurements: {},
       images: ["https://images.unsplash.com/photo-1594620302200-9a762244a156"],
       location: "Södermalm, Stockholm",
-      coordinates: {
-        lng: 18.0725,
-        lat: 59.3157
-      },
+      coordinates: "(18.0725,59.3157)",
       postedBy: {
         id: "123",
         name: "John Doe",

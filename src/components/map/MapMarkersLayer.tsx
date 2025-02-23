@@ -5,6 +5,7 @@ import type { Post } from "@/types/post";
 import { createMapPopup } from "./MapPopup";
 import { createMarkerElement } from "./MapMarkerElement";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 interface MapMarkersLayerProps {
   map: mapboxgl.Map;
@@ -32,6 +33,12 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
         }
 
         try {
+          const coords = parseCoordinatesFromDB(post.coordinates);
+          if (!coords) {
+            console.log("Invalid coordinates format for post:", post.id);
+            continue;
+          }
+
           // Use cached privacy-adjusted coordinates if they exist
           let privateLng: number, privateLat: number;
           const cachedCoords = processedCoordinates.current.get(post.id);
@@ -42,8 +49,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
           } else {
             // Calculate new privacy-adjusted coordinates
             [privateLng, privateLat] = await addLocationPrivacy(
-              post.coordinates.lng,
-              post.coordinates.lat
+              coords.lng,
+              coords.lat
             );
             console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
             processedCoordinates.current.set(post.id, [privateLng, privateLat]);
@@ -53,8 +60,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             onClick: () => onPostClick(post.id),
             onMouseEnter: () => {
               const popup = createMapPopup({ 
-                post,  // Pass original post with true coordinates
-                displayCoordinates: { lng: privateLng, lat: privateLat }  // Pass privacy-adjusted coordinates for display
+                post,
+                displayCoordinates: { lng: privateLng, lat: privateLat }
               });
               popup.addTo(map);
             },
