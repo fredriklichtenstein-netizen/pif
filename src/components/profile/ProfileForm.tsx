@@ -2,11 +2,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AddressInput } from "./address/AddressInput";
 import { PhoneInput } from "./PhoneInput";
-import { NameFields } from "./form/NameFields";
-import { GenderSelector } from "./form/GenderSelector";
-import { DateOfBirthSelector } from "./form/DateOfBirthSelector";
+import { NameFields } from "@/components/forms/fields/NameFields";
+import { GenderSelector } from "@/components/forms/fields/GenderSelector";
+import { DateOfBirthSelector } from "@/components/forms/fields/DateOfBirthSelector";
 import { Label } from "@/components/ui/label";
-import { Map } from "lucide-react"; // Add this import
+import { Map } from "lucide-react";
 
 interface ProfileFormData {
   firstName: string;
