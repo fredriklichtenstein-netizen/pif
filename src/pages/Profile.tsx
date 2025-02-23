@@ -63,17 +63,18 @@ const Profile = () => {
   }, [formData, initialFormData]);
 
   useEffect(() => {
-    const blocker = (tx: { pathname: string }) => {
-      if (hasUnsavedChanges) {
-        setNavigationPath(tx.pathname);
-        setShowUnsavedChangesDialog(true);
-        return false;
-      }
-      return true;
+    if (!hasUnsavedChanges) return;
+
+    const handleNavigation = (e: PopStateEvent) => {
+      e.preventDefault();
+      setNavigationPath(window.location.pathname);
+      setShowUnsavedChangesDialog(true);
+      window.history.pushState(null, '', window.location.pathname);
     };
 
-    return navigate(blocker);
-  }, [hasUnsavedChanges, navigate]);
+    window.addEventListener('popstate', handleNavigation);
+    return () => window.removeEventListener('popstate', handleNavigation);
+  }, [hasUnsavedChanges]);
 
   const fetchProfile = async () => {
     try {
