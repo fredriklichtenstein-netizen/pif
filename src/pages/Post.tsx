@@ -9,6 +9,7 @@ const Post = () => {
     formData,
     isSubmitting,
     isGeocoding,
+    isAnalyzing,
     setFormData,
     handleGeocodeAddress,
     handleImageUpload,
@@ -25,6 +26,7 @@ const Post = () => {
       formData={formData}
       isSubmitting={isSubmitting}
       isGeocoding={isGeocoding}
+      isAnalyzing={isAnalyzing}
       onFormSubmit={handleSubmit}
       onGeocodeAddress={() => handleGeocodeAddress(mapToken)}
       onImageUpload={handleImageUpload}
