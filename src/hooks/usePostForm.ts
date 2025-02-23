@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { CreatePostInput } from "@/types/post";
 import { addPost } from "@/pages/Index";
 import { geocodeAddress } from "@/utils/geocoding";
+import { supabase } from "@/integrations/supabase/client";
 
 export const usePostForm = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export const usePostForm = () => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     description: "",
@@ -24,6 +25,40 @@ export const usePostForm = () => {
     coordinates: undefined,
     status: "available",
   });
+
+  const analyzeImage = async (imageUrl: string) => {
+    try {
+      setIsAnalyzing(true);
+      
+      const { data, error } = await supabase.functions.invoke('analyze-image', {
+        body: { imageUrl },
+      });
+
+      if (error) throw error;
+
+      setFormData(prev => ({
+        ...prev,
+        title: data.title || prev.title,
+        description: data.description || prev.description,
+        category: data.category || prev.category,
+        condition: data.condition || prev.condition,
+      }));
+
+      toast({
+        title: "Image analyzed",
+        description: "Post details have been generated from your image.",
+      });
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      toast({
+        title: "Analysis failed",
+        description: "Could not analyze the image. Please fill in the details manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleGeocodeAddress = async (mapboxToken: string) => {
     if (!formData.location) {
@@ -56,7 +91,7 @@ export const usePostForm = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
@@ -67,6 +102,10 @@ export const usePostForm = () => {
       ...prev,
       images: [...prev.images, ...imageUrls],
     }));
+
+    if (imageUrls.length > 0) {
+      await analyzeImage(imageUrls[0]);
+    }
   };
 
   const handleMeasurementChange = (field: string, value: string) => {
@@ -118,6 +157,7 @@ export const usePostForm = () => {
     formData,
     isSubmitting,
     isGeocoding,
+    isAnalyzing,
     setFormData,
     handleGeocodeAddress,
     handleImageUpload,
@@ -125,4 +165,3 @@ export const usePostForm = () => {
     handleSubmit,
   };
 };
-

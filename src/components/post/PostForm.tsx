@@ -12,6 +12,7 @@ interface PostFormProps {
   formData: CreatePostInput;
   isSubmitting: boolean;
   isGeocoding: boolean;
+  isAnalyzing: boolean;
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
   onGeocodeAddress: () => Promise<void>;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -23,6 +24,7 @@ export function PostForm({
   formData,
   isSubmitting,
   isGeocoding,
+  isAnalyzing,
   onFormSubmit,
   onGeocodeAddress,
   onImageUpload,
@@ -64,6 +66,7 @@ export function PostForm({
 
         <PostFormImages
           images={formData.images}
+          isAnalyzing={isAnalyzing}
           onImageUpload={onImageUpload}
         />
 
