@@ -36,25 +36,36 @@ export const usePostForm = () => {
 
   // Fetch user's profile address on mount
   useEffect(() => {
-    async function fetchProfileAddress() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('address')
-          .eq('id', user.id)
-          .single();
+    let isMounted = true;
 
-        if (profile?.address) {
-          // When setting the address from profile, immediately trigger geocoding
-          setFormData(prev => ({ ...prev, location: profile.address }));
-          if (profile.address) {
-            handleGeocodeAddress(await fetchMapboxToken());
+    async function fetchProfileAddress() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('address')
+            .eq('id', user.id)
+            .single();
+
+          if (profile?.address && isMounted) {
+            setFormData(prev => ({ ...prev, location: profile.address }));
+            // Fetch Mapbox token and trigger geocoding
+            const { data, error } = await supabase.functions.invoke("get-mapbox-token");
+            if (!error && data?.token && isMounted) {
+              await handleGeocodeAddress(data.token);
+            }
           }
         }
+      } catch (error) {
+        console.error('Error fetching profile address:', error);
       }
     }
+
     fetchProfileAddress();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const fetchMapboxToken = async () => {
