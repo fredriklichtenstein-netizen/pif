@@ -1,5 +1,4 @@
 
-import { MapboxTokenInput } from "@/components/post/MapboxTokenInput";
 import { PostForm } from "@/components/post/PostForm";
 import { usePostForm } from "@/hooks/usePostForm";
 import { useMapbox } from "@/hooks/useMapbox";
@@ -36,4 +35,3 @@ const Post = () => {
 };
 
 export default Post;
-
