@@ -36,22 +36,6 @@ export function AddressInputContainer({
 
   return (
     <div className="space-y-4 relative">
-      <div className="flex gap-2">
-        <Input
-          value={value}
-          onChange={(e) => handleAddressChange(e.target.value)}
-          placeholder="Enter your address"
-          className="flex-1"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => handleShowMap(value)}
-        >
-          {mapButtonLabel}
-        </Button>
-      </div>
-
       {!hideSearch && (
         <AddressSearchBar 
           value={value}
@@ -59,6 +43,24 @@ export function AddressInputContainer({
           onLocationClick={handleUseCurrentLocation}
           locationButtonLabel={locationButtonLabel}
         />
+      )}
+
+      {hideSearch && (
+        <div className="flex gap-2">
+          <Input
+            value={value}
+            onChange={(e) => handleAddressChange(e.target.value)}
+            placeholder="Enter your address"
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleShowMap(value)}
+          >
+            {mapButtonLabel}
+          </Button>
+        </div>
       )}
 
       <AddressSuggestions

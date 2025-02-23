@@ -106,9 +106,9 @@ export function PostForm({
           <h2 className="text-lg font-semibold">3. Location</h2>
           <AddressInput
             value={formData.location}
+            hideSearch={true}
             onChange={(address) => {
               setFormData(prev => ({ ...prev, location: address }));
-              // Trigger geocoding when address changes
               if (address) {
                 onGeocodeAddress();
               }
