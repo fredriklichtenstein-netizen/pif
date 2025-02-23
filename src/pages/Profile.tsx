@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +25,12 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (avatar) {
+      handleProfileUpdate();
+    }
+  }, [avatar]);
 
   const fetchProfile = async () => {
     try {
@@ -63,7 +68,7 @@ const Profile = () => {
     }
   };
 
-  const handleFileChange = (file: File) => {
+  const handleFileChange = async (file: File) => {
     setAvatar(file);
     setAvatarUrl(URL.createObjectURL(file));
   };
@@ -72,8 +77,7 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, ...data }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleProfileUpdate = async () => {
     setLoading(true);
 
     try {
@@ -98,7 +102,43 @@ const Profile = () => {
           .getPublicUrl(fileName);
         
         avatarPath = publicUrl;
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            avatar_url: avatarPath,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        toast({
+          title: "Success",
+          description: "Profile picture updated successfully",
+        });
       }
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) throw userError;
+      if (!user) throw new Error("No user found");
 
       const { error: updateError } = await supabase
         .from('profiles')
@@ -108,7 +148,6 @@ const Profile = () => {
           gender: formData.gender,
           phone: formData.phone,
           address: formData.address,
-          avatar_url: avatarPath,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
