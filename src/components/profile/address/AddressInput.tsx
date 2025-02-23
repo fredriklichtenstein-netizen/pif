@@ -5,7 +5,8 @@ interface AddressInputProps {
   value: string;
   onChange: (address: string) => void;
   locationButtonLabel?: React.ReactNode;
-  mapButtonLabel?: string;
+  mapButtonLabel?: React.ReactNode;
+  hideSearch?: boolean;
 }
 
 export function AddressInput(props: AddressInputProps) {

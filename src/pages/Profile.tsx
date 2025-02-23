@@ -6,6 +6,17 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Map } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -13,6 +24,9 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [navigationPath, setNavigationPath] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -21,6 +35,7 @@ const Profile = () => {
     address: "",
     countryCode: "+46", // Adding default country code for Sweden
   });
+  const [initialFormData, setInitialFormData] = useState({ ...formData });
 
   useEffect(() => {
     fetchProfile();
@@ -31,6 +46,34 @@ const Profile = () => {
       handleProfileUpdate();
     }
   }, [avatar]);
+
+  useEffect(() => {
+    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    setHasUnsavedChanges(hasChanges);
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, initialFormData]);
+
+  useEffect(() => {
+    const unblock = navigate((to) => {
+      if (hasUnsavedChanges) {
+        setNavigationPath(to.pathname);
+        setShowUnsavedChangesDialog(true);
+        return false;
+      }
+      return true;
+    });
+
+    return () => unblock();
+  }, [hasUnsavedChanges, navigate]);
 
   const fetchProfile = async () => {
     try {
@@ -154,6 +197,7 @@ const Profile = () => {
 
       if (updateError) throw updateError;
 
+      setInitialFormData({ ...formData });
       toast({
         title: "Success",
         description: "Profile updated successfully",
@@ -168,6 +212,19 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConfirmNavigation = () => {
+    setShowUnsavedChangesDialog(false);
+    setHasUnsavedChanges(false);
+    if (navigationPath) {
+      navigate(navigationPath);
+    }
+  };
+
+  const handleCancelNavigation = () => {
+    setShowUnsavedChangesDialog(false);
+    setNavigationPath(null);
   };
 
   return (
@@ -206,6 +263,28 @@ const Profile = () => {
           </Button>
         </form>
       </div>
+
+      <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes in your profile. Would you like to save them before leaving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelNavigation}>
+              Stay on Page
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmNavigation}>
+              Discard Changes
+            </AlertDialogAction>
+            <Button onClick={handleSubmit} variant="default">
+              Save Changes
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -1,21 +1,26 @@
 
-import { Search } from "lucide-react";
+import { Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useMapbox } from "@/hooks/useMapbox";
 import { useAddress } from "@/hooks/address/useAddress";
 import { AddressSuggestions } from "./AddressSuggestions";
 import { AddressMap } from "./AddressMap";
-import { AddressSearchBar } from "./AddressSearchBar";
 
 interface AddressInputProps {
   value: string;
   onChange: (address: string) => void;
   locationButtonLabel?: React.ReactNode;
-  mapButtonLabel?: string;
+  mapButtonLabel?: React.ReactNode;
+  hideSearch?: boolean;
 }
 
-export function AddressInputContainer({ value, onChange, locationButtonLabel, mapButtonLabel }: AddressInputProps) {
+export function AddressInputContainer({ 
+  value, 
+  onChange, 
+  locationButtonLabel, 
+  mapButtonLabel = <Map className="w-4 h-4" />,
+  hideSearch 
+}: AddressInputProps) {
   const { mapToken } = useMapbox();
   const {
     suggestions,
@@ -29,12 +34,14 @@ export function AddressInputContainer({ value, onChange, locationButtonLabel, ma
 
   return (
     <div className="space-y-4">
-      <AddressSearchBar 
-        value={value}
-        onAddressChange={handleAddressChange}
-        onLocationClick={handleUseCurrentLocation}
-        locationButtonLabel={locationButtonLabel}
-      />
+      {!hideSearch && (
+        <AddressSearchBar 
+          value={value}
+          onAddressChange={handleAddressChange}
+          onLocationClick={handleUseCurrentLocation}
+          locationButtonLabel={locationButtonLabel}
+        />
+      )}
 
       <AddressSuggestions
         suggestions={suggestions}
@@ -47,10 +54,9 @@ export function AddressInputContainer({ value, onChange, locationButtonLabel, ma
       <Button
         type="button"
         variant="outline"
-        className="w-full mt-2"
+        className="w-full"
         onClick={() => handleShowMap(value)}
       >
-        <Search className="w-4 h-4 mr-2" />
         {mapButtonLabel}
       </Button>
 

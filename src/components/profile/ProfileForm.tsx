@@ -5,6 +5,7 @@ import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "./form/NameFields";
 import { GenderSelector } from "./form/GenderSelector";
 import { DateOfBirthSelector } from "./form/DateOfBirthSelector";
+import { Label } from "@/components/ui/label";
 
 interface ProfileFormData {
   firstName: string;
@@ -40,7 +41,8 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               required
             />
 
-            <div>
+            <div className="space-y-2">
+              <Label>Mobile phone</Label>
               <PhoneInput
                 value={formData.phone}
                 countryCode={formData.countryCode}
@@ -56,11 +58,13 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               onChange={(dateOfBirth) => onChange({ dateOfBirth })}
             />
 
-            <div>
+            <div className="space-y-2">
+              <Label>Main PIF address</Label>
               <AddressInput
                 value={formData.address}
                 onChange={(address) => onChange({ address })}
-                locationButtonLabel="Set location on map"
+                mapButtonLabel={<MapIcon className="w-4 h-4" />}
+                hideSearch
               />
             </div>
           </div>
