@@ -1,11 +1,10 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import type { CreatePostInput } from "@/types/post";
 import { PostFormHeader } from "./form/PostFormHeader";
 import { PostFormMeasurements } from "./form/PostFormMeasurements";
-import { PostFormLocation } from "./form/PostFormLocation";
 import { PostFormDescription } from "./form/PostFormDescription";
 import { PostFormImages } from "./form/PostFormImages";
 import { AddressInput } from "@/components/profile/address/AddressInput";
@@ -107,17 +106,14 @@ export function PostForm({
           <h2 className="text-lg font-semibold">3. Location</h2>
           <AddressInput
             value={formData.location}
-            onChange={(address) => setFormData(prev => ({ ...prev, location: address }))}
+            onChange={(address) => {
+              setFormData(prev => ({ ...prev, location: address }));
+              // Trigger geocoding when address changes
+              if (address) {
+                onGeocodeAddress();
+              }
+            }}
           />
-          {formData.location && (
-            <PostFormLocation
-              location={formData.location}
-              coordinates={formData.coordinates}
-              isGeocoding={isGeocoding}
-              onLocationChange={(location) => setFormData(prev => ({ ...prev, location }))}
-              onGeocodeAddress={onGeocodeAddress}
-            />
-          )}
         </div>
 
         {/* Step 6: Submit */}
