@@ -1,3 +1,4 @@
+
 export interface Post {
   id: string;
   title: string;
@@ -19,7 +20,7 @@ export interface Post {
     avatar: string;
   };
   createdAt: Date;
-  status: string;  // Added this field
+  status: string;
 }
 
 export type CreatePostInput = Omit<Post, "id" | "postedBy" | "createdAt">;

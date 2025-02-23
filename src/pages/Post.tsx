@@ -13,6 +13,7 @@ const Post = () => {
     setFormData,
     handleGeocodeAddress,
     handleImageUpload,
+    handleAnalyzeImages,
     handleMeasurementChange,
     handleSubmit,
   } = usePostForm();
@@ -30,6 +31,7 @@ const Post = () => {
       onFormSubmit={handleSubmit}
       onGeocodeAddress={() => handleGeocodeAddress(mapToken)}
       onImageUpload={handleImageUpload}
+      onAnalyzeImages={handleAnalyzeImages}
       onMeasurementChange={handleMeasurementChange}
       setFormData={setFormData}
     />

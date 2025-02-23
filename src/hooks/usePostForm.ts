@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,6 +26,25 @@ export const usePostForm = () => {
     coordinates: undefined,
     status: "available",
   });
+
+  // Fetch user's profile address on mount
+  useEffect(() => {
+    async function fetchProfileAddress() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('address')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.address) {
+          setFormData(prev => ({ ...prev, location: profile.address }));
+        }
+      }
+    }
+    fetchProfileAddress();
+  }, []);
 
   const analyzeImage = async (imageUrl: string) => {
     try {
@@ -115,10 +134,19 @@ export const usePostForm = () => {
       ...prev,
       images: [...prev.images, ...imageUrls],
     }));
+  };
 
-    if (imageUrls.length > 0) {
-      await analyzeImage(imageUrls[0]);
+  const handleAnalyzeImages = async () => {
+    if (formData.images.length === 0) {
+      toast({
+        title: "No images",
+        description: "Please upload at least one image to analyze.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    await analyzeImage(formData.images[0]);
   };
 
   const handleMeasurementChange = (field: string, value: string) => {
@@ -174,6 +202,7 @@ export const usePostForm = () => {
     setFormData,
     handleGeocodeAddress,
     handleImageUpload,
+    handleAnalyzeImages,
     handleMeasurementChange,
     handleSubmit,
   };
