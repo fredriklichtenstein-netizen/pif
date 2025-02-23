@@ -63,16 +63,16 @@ const Profile = () => {
   }, [formData, initialFormData]);
 
   useEffect(() => {
-    const unblock = navigate((to) => {
+    const blocker = (tx: { pathname: string }) => {
       if (hasUnsavedChanges) {
-        setNavigationPath(to.pathname);
+        setNavigationPath(tx.pathname);
         setShowUnsavedChangesDialog(true);
         return false;
       }
       return true;
-    });
+    };
 
-    return () => unblock();
+    return navigate(blocker);
   }, [hasUnsavedChanges, navigate]);
 
   const fetchProfile = async () => {

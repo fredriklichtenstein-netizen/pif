@@ -5,6 +5,7 @@ import { useMapbox } from "@/hooks/useMapbox";
 import { useAddress } from "@/hooks/address/useAddress";
 import { AddressSuggestions } from "./AddressSuggestions";
 import { AddressMap } from "./AddressMap";
+import { AddressSearchBar } from "./AddressSearchBar";
 
 interface AddressInputProps {
   value: string;

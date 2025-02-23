@@ -6,6 +6,7 @@ import { NameFields } from "./form/NameFields";
 import { GenderSelector } from "./form/GenderSelector";
 import { DateOfBirthSelector } from "./form/DateOfBirthSelector";
 import { Label } from "@/components/ui/label";
+import { Map } from "lucide-react"; // Add this import
 
 interface ProfileFormData {
   firstName: string;
@@ -63,7 +64,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               <AddressInput
                 value={formData.address}
                 onChange={(address) => onChange({ address })}
-                mapButtonLabel={<MapIcon className="w-4 h-4" />}
+                mapButtonLabel={<Map className="w-4 h-4" />}
                 hideSearch
               />
             </div>
