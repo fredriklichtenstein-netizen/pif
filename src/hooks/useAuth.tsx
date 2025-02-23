@@ -6,26 +6,37 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
 export function useAuth() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);  // Start with loading true
   const [isSignUp, setIsSignUp] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const { handleSignUp } = useSignUp();
   const { handleSignIn } = useSignIn();
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+      if (mounted) {
+        setSession(session);
+        setLoading(false);  // Set loading to false after we get the initial session
+      }
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      if (mounted) {
+        setSession(session);
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleAuth = async (email: string, password: string) => {
@@ -57,3 +68,4 @@ export function useAuth() {
     toggleMode,
   };
 }
+

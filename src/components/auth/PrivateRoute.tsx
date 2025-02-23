@@ -11,12 +11,17 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const [profileCompleted, setProfileCompleted] = useState<boolean | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-
+        
+        if (!mounted) return;
+        
         if (session?.user) {
+          setUser(session.user);
+          
           // Check if the profile is completed
           const { data: profile, error } = await supabase
             .from('profiles')
@@ -25,13 +30,19 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
             .single();
 
           if (error) throw error;
-          setProfileCompleted(profile?.onboarding_completed ?? false);
+          if (mounted) {
+            setProfileCompleted(profile?.onboarding_completed ?? false);
+          }
+        } else {
+          setUser(null);
+          setProfileCompleted(null);
         }
-        
-        setLoading(false);
       } catch (error) {
         console.error('Error checking auth state:', error);
-        setLoading(false);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -40,6 +51,8 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+      
       setUser(session?.user ?? null);
       
       if (session?.user) {
@@ -57,7 +70,10 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {
@@ -80,3 +96,4 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
+
