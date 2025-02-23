@@ -2,14 +2,14 @@
 import { MapboxTokenInput } from "@/components/post/MapboxTokenInput";
 import { PostForm } from "@/components/post/PostForm";
 import { usePostForm } from "@/hooks/usePostForm";
+import { useMapbox } from "@/hooks/useMapbox";
 
 const Post = () => {
+  const { mapToken } = useMapbox();
   const {
     formData,
     isSubmitting,
     isGeocoding,
-    mapboxToken,
-    setMapboxToken,
     setFormData,
     handleGeocodeAddress,
     handleImageUpload,
@@ -17,13 +17,8 @@ const Post = () => {
     handleSubmit,
   } = usePostForm();
 
-  if (!mapboxToken) {
-    return (
-      <MapboxTokenInput
-        mapboxToken={mapboxToken}
-        setMapboxToken={setMapboxToken}
-      />
-    );
+  if (!mapToken) {
+    return <div className="container mx-auto px-4 py-8">Loading map configuration...</div>;
   }
 
   return (
@@ -32,7 +27,7 @@ const Post = () => {
       isSubmitting={isSubmitting}
       isGeocoding={isGeocoding}
       onFormSubmit={handleSubmit}
-      onGeocodeAddress={handleGeocodeAddress}
+      onGeocodeAddress={() => handleGeocodeAddress(mapToken)}
       onImageUpload={handleImageUpload}
       onMeasurementChange={handleMeasurementChange}
       setFormData={setFormData}
@@ -41,3 +36,4 @@ const Post = () => {
 };
 
 export default Post;
+

@@ -13,7 +13,6 @@ export const usePostForm = () => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  const [mapboxToken, setMapboxToken] = useState("");
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     description: "",
@@ -26,11 +25,11 @@ export const usePostForm = () => {
     status: "available",
   });
 
-  const handleGeocodeAddress = async () => {
-    if (!formData.location || !mapboxToken) {
+  const handleGeocodeAddress = async (mapboxToken: string) => {
+    if (!formData.location) {
       toast({
-        title: "Missing Mapbox token",
-        description: "Please enter your Mapbox token first.",
+        title: "Missing address",
+        description: "Please enter an address first.",
         variant: "destructive",
       });
       return;
@@ -119,8 +118,6 @@ export const usePostForm = () => {
     formData,
     isSubmitting,
     isGeocoding,
-    mapboxToken,
-    setMapboxToken,
     setFormData,
     handleGeocodeAddress,
     handleImageUpload,
@@ -128,3 +125,4 @@ export const usePostForm = () => {
     handleSubmit,
   };
 };
+
