@@ -8,11 +8,13 @@ import { addPost } from "@/pages/Index";
 import { supabase } from "@/integrations/supabase/client";
 import { usePostImages } from "./post/usePostImages";
 import { usePostLocation } from "./post/usePostLocation";
+import { useAuth } from "@/hooks/useAuth";
 
 export const usePostForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
@@ -44,12 +46,22 @@ export const usePostForm = () => {
           .single();
 
         if (profile?.address) {
+          // When setting the address from profile, immediately trigger geocoding
           setFormData(prev => ({ ...prev, location: profile.address }));
+          if (profile.address) {
+            handleGeocodeAddress(await fetchMapboxToken());
+          }
         }
       }
     }
     fetchProfileAddress();
   }, []);
+
+  const fetchMapboxToken = async () => {
+    const { data, error } = await supabase.functions.invoke("get-mapbox-token");
+    if (error) throw error;
+    return data.token;
+  };
 
   const handleMeasurementChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -64,6 +76,16 @@ export const usePostForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!session?.user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to post items.",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
     if (!formData.coordinates) {
       toast({
         title: "Missing location",
@@ -76,7 +98,12 @@ export const usePostForm = () => {
     setIsSubmitting(true);
 
     try {
-      await addPost(formData);
+      const postDataWithUser = {
+        ...formData,
+        user_id: session.user.id
+      };
+
+      await addPost(postDataWithUser);
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
       
       toast({
@@ -86,6 +113,7 @@ export const usePostForm = () => {
       
       navigate("/");
     } catch (error) {
+      console.error("Error submitting post:", error);
       toast({
         title: "Error",
         description: "Failed to create post. Please try again.",

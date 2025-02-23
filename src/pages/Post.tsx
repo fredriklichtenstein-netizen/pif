@@ -2,9 +2,12 @@
 import { PostForm } from "@/components/post/PostForm";
 import { usePostForm } from "@/hooks/usePostForm";
 import { useMapbox } from "@/hooks/useMapbox";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Post = () => {
   const { mapToken } = useMapbox();
+  const { session } = useAuth();
   const {
     formData,
     isSubmitting,
@@ -17,6 +20,11 @@ const Post = () => {
     handleMeasurementChange,
     handleSubmit,
   } = usePostForm();
+
+  // Redirect to auth page if not logged in
+  if (!session) {
+    return <Navigate to="/auth" replace />;
+  }
 
   if (!mapToken) {
     return <div className="container mx-auto px-4 py-8">Loading map configuration...</div>;
