@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -34,14 +35,26 @@ export const usePostForm = () => {
         body: { imageUrl },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Image analysis error:', error);
+        toast({
+          title: "Analysis failed",
+          description: "Could not analyze the image. Please fill in the details manually.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Only update fields that have values and aren't empty strings
+      const updates: Partial<CreatePostInput> = {};
+      if (data.title && data.title.trim()) updates.title = data.title;
+      if (data.description && data.description.trim()) updates.description = data.description;
+      if (data.category && data.category.trim()) updates.category = data.category;
+      if (data.condition && data.condition.trim()) updates.condition = data.condition;
 
       setFormData(prev => ({
         ...prev,
-        title: data.title || prev.title,
-        description: data.description || prev.description,
-        category: data.category || prev.category,
-        condition: data.condition || prev.condition,
+        ...updates
       }));
 
       toast({
