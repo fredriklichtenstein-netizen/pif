@@ -22,6 +22,8 @@ const Post = () => {
     return <div className="container mx-auto px-4 py-8">Loading map configuration...</div>;
   }
 
+  console.log("Current form data:", formData); // Debug log
+
   return (
     <PostForm
       formData={formData}
@@ -29,7 +31,10 @@ const Post = () => {
       isGeocoding={isGeocoding}
       isAnalyzing={isAnalyzing}
       onFormSubmit={handleSubmit}
-      onGeocodeAddress={() => handleGeocodeAddress(mapToken)}
+      onGeocodeAddress={() => {
+        console.log("Triggering geocode with address:", formData.location); // Debug log
+        return handleGeocodeAddress(mapToken);
+      }}
       onImageUpload={handleImageUpload}
       onAnalyzeImages={handleAnalyzeImages}
       onMeasurementChange={handleMeasurementChange}

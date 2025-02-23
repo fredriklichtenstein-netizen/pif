@@ -23,7 +23,10 @@ export const usePostLocation = (
     
     setIsGeocoding(true);
     try {
+      console.log("Starting geocoding for address:", formData.location); // Debug log
       const geocodeResult = await geocodeAddress(formData.location, mapboxToken);
+      console.log("Geocoding successful:", geocodeResult); // Debug log
+      
       setFormData(prev => ({ 
         ...prev, 
         coordinates: { lat: geocodeResult.lat, lng: geocodeResult.lng },
@@ -36,6 +39,7 @@ export const usePostLocation = (
       });
     } catch (error) {
       console.error("Geocoding error:", error);
+      setFormData(prev => ({ ...prev, coordinates: undefined }));
       toast({
         title: "Invalid address",
         description: error instanceof Error ? error.message : "Please enter a complete Swedish address.",
