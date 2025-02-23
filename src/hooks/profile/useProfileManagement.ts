@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface ProfileFormData {
+export interface ProfileFormData {
   firstName: string;
   lastName: string;
   gender: string;
