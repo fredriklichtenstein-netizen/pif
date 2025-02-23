@@ -1,7 +1,9 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Post, CreatePostInput } from "@/types/post";
 import { ItemCard } from "@/components/ItemCard";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 export const getPosts = async (): Promise<Post[]> => {
   // Simulating API call delay
@@ -85,7 +87,7 @@ const IndexPage = () => {
             description={post.description}
             image={post.images[0]}
             location={post.location}
-            coordinates={post.coordinates}
+            coordinates={post.coordinates ? parseCoordinatesFromDB(post.coordinates) : undefined}
             category={post.category}
             condition={post.condition}
             postedBy={post.postedBy}
