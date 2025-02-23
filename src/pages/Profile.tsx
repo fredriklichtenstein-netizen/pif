@@ -7,6 +7,7 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { UnsavedChangesDialog } from "@/components/profile/UnsavedChangesDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProfileManagement } from "@/hooks/profile/useProfileManagement";
+import type { ProfileFormData } from "@/hooks/profile/useProfileManagement";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -53,9 +54,11 @@ const Profile = () => {
     return () => window.removeEventListener('popstate', handleNavigation);
   }, [hasUnsavedChanges]);
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await handleSubmit(e);
+  const handleFormSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    await handleSubmit(e as React.FormEvent);
   };
 
   const handleConfirmNavigation = () => {
