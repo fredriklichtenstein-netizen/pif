@@ -1,3 +1,4 @@
+
 import { Textarea } from "@/components/ui/textarea";
 
 interface PostFormDescriptionProps {
@@ -18,7 +19,7 @@ export function PostFormDescription({
         id="description"
         value={description}
         onChange={(e) => onDescriptionChange(e.target.value)}
-        placeholder="Describe your item (condition, size, etc.)"
+        placeholder="Share any additional details about your item that might be helpful for others to know."
         required
       />
     </div>

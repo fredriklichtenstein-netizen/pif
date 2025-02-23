@@ -1,114 +1,67 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const TIMEOUT_MS = 30000; // 30 seconds timeout
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Create a controller for the timeout
-const createTimeoutController = (timeoutMs: number) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  return { controller, timeout };
-};
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
-  const { controller, timeout } = createTimeoutController(TIMEOUT_MS);
-
   try {
-    const { imageUrl } = await req.json();
-    console.log('Analyzing image:', imageUrl);
+    const { imageUrl } = await req.json()
 
+    // Call OpenAI's GPT-4 Vision model for better image analysis
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
       },
-      signal: controller.signal,
       body: JSON.stringify({
-        model: "gpt-4o-mini", // Using the faster model
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant that analyzes images of items that people want to give away. Provide a concise title, brief description, category (from: Furniture, Electronics, Clothing, Books, Home & Garden, Shoes, Toys, Children's Clothing, Other), and condition (from: New, Like New, Good, Fair, Well Loved) for the item in the image. Respond quickly and efficiently."
+            content: "You are an expert at analyzing images of furniture and household items. Focus on identifying the main item, its category, and visible condition. Respond with a JSON object containing title (brief item name), category (furniture/electronics/clothing/etc), condition (like new/good/fair), and a brief description focusing on notable features. Do not include measurements or specific dimensions in the description as these are handled separately."
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "What is in this image? Provide the details in JSON format with title, description, category, and condition fields. Be brief and concise." },
-              { type: "image_url", url: imageUrl }
+              {
+                type: "text",
+                text: "What is this item? Describe it in detail but focus only on what you can see."
+              },
+              {
+                type: "image_url",
+                image_url: imageUrl
+              }
             ]
           }
-        ],
-        max_tokens: 250, // Reduced token limit for faster response
-        temperature: 0.7,
-      }),
-    });
+        ]
+      })
+    })
 
-    clearTimeout(timeout);
+    const result = await response.json()
+    const content = result.choices[0].message.content
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
-      throw new Error('Failed to analyze image');
-    }
+    // Parse the JSON response
+    const analysisResult = JSON.parse(content)
 
-    const data = await response.json();
-    console.log('Analysis completed successfully');
-    
-    let analysis;
-    try {
-      analysis = JSON.parse(data.choices[0].message.content);
-    } catch (e) {
-      console.error('Failed to parse GPT response:', e);
-      analysis = {
-        title: "Item",
-        description: "Could not analyze image properly",
-        category: "Other",
-        condition: "Good"
-      };
-    }
-
-    return new Response(JSON.stringify(analysis), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify(analysisResult),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   } catch (error) {
-    clearTimeout(timeout);
-    console.error('Error in analyze-image function:', error);
-    
-    // Handle timeout specifically
-    if (error.name === 'AbortError') {
-      return new Response(JSON.stringify({ 
-        error: 'Analysis timeout - please try again',
-        title: "Item",
-        description: "Image analysis timed out",
-        category: "Other",
-        condition: "Good"
-      }), {
-        status: 408,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      title: "Item",
-      description: "Failed to analyze image",
-      category: "Other",
-      condition: "Good"
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Failed to analyze image', details: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    )
   }
-});
+})

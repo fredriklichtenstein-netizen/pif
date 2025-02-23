@@ -104,18 +104,22 @@ export const usePostForm = () => {
     
     setIsGeocoding(true);
     try {
-      const coordinates = await geocodeAddress(formData.location, mapboxToken);
-      setFormData(prev => ({ ...prev, coordinates }));
+      const geocodeResult = await geocodeAddress(formData.location, mapboxToken);
+      setFormData(prev => ({ 
+        ...prev, 
+        coordinates: { lat: geocodeResult.lat, lng: geocodeResult.lng },
+        location: geocodeResult.formattedAddress // Use the formatted address
+      }));
       
       toast({
-        title: "Location found",
-        description: "Address has been successfully geocoded.",
+        title: "Location verified",
+        description: "Address has been successfully verified.",
       });
     } catch (error) {
       console.error("Geocoding error:", error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to geocode address. Please try again.",
+        title: "Invalid address",
+        description: error instanceof Error ? error.message : "Please enter a complete Swedish address.",
         variant: "destructive",
       });
     } finally {
