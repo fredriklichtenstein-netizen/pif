@@ -1,51 +1,28 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { UnsavedChangesDialog } from "@/components/profile/UnsavedChangesDialog";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Map } from "lucide-react";
+import { useProfileManagement } from "@/hooks/profile/useProfileManagement";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [avatar, setAvatar] = useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [navigationPath, setNavigationPath] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    gender: "",
-    phone: "",
-    address: "",
-    countryCode: "+46", // Adding default country code for Sweden
-  });
-  const [initialFormData, setInitialFormData] = useState({ ...formData });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  useEffect(() => {
-    if (avatar) {
-      handleProfileUpdate();
-    }
-  }, [avatar]);
+  const {
+    loading,
+    formData,
+    initialFormData,
+    avatarUrl,
+    setAvatar,
+    setFormData,
+    handleSubmit,
+  } = useProfileManagement();
 
   useEffect(() => {
     const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
@@ -75,145 +52,6 @@ const Profile = () => {
     window.addEventListener('popstate', handleNavigation);
     return () => window.removeEventListener('popstate', handleNavigation);
   }, [hasUnsavedChanges]);
-
-  const fetchProfile = async () => {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!user) throw new Error("No user found");
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profile) {
-        setFormData({
-          firstName: profile.first_name || "",
-          lastName: profile.last_name || "",
-          gender: profile.gender || "",
-          phone: profile.phone || "",
-          address: profile.address || "",
-          countryCode: "+46", // Default to Swedish country code if not set
-        });
-        setAvatarUrl(profile.avatar_url);
-      }
-    } catch (error: any) {
-      console.error("Error fetching profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleFileChange = async (file: File) => {
-    setAvatar(file);
-    setAvatarUrl(URL.createObjectURL(file));
-  };
-
-  const handleFormChange = (data: Partial<typeof formData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
-  };
-
-  const handleProfileUpdate = async () => {
-    setLoading(true);
-
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!user) throw new Error("No user found");
-
-      let avatarPath = avatarUrl;
-      if (avatar) {
-        const fileExt = avatar.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('profile-photos')
-          .upload(fileName, avatar);
-
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(fileName);
-        
-        avatarPath = publicUrl;
-
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            avatar_url: avatarPath,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
-
-        if (updateError) throw updateError;
-
-        toast({
-          title: "Success",
-          description: "Profile picture updated successfully",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!user) throw new Error("No user found");
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          gender: formData.gender,
-          phone: formData.phone,
-          address: formData.address,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      setInitialFormData({ ...formData });
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleConfirmNavigation = () => {
     setShowUnsavedChangesDialog(false);
@@ -245,14 +83,14 @@ const Profile = () => {
             <CardContent className="pt-6">
               <AvatarUpload 
                 avatarUrl={avatarUrl}
-                onFileChange={handleFileChange}
+                onFileChange={setAvatar}
               />
             </CardContent>
           </Card>
 
           <ProfileForm 
             formData={formData}
-            onChange={handleFormChange}
+            onChange={setFormData}
           />
 
           <Button
@@ -265,27 +103,13 @@ const Profile = () => {
         </form>
       </div>
 
-      <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes in your profile. Would you like to save them before leaving?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelNavigation}>
-              Stay on Page
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmNavigation}>
-              Discard Changes
-            </AlertDialogAction>
-            <Button onClick={handleSubmit} variant="default">
-              Save Changes
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnsavedChangesDialog
+        open={showUnsavedChangesDialog}
+        onOpenChange={setShowUnsavedChangesDialog}
+        onConfirm={handleConfirmNavigation}
+        onCancel={handleCancelNavigation}
+        onSave={handleSubmit}
+      />
     </div>
   );
 };
