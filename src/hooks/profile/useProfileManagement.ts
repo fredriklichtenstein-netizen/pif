@@ -61,6 +61,7 @@ export const useProfileManagement = () => {
           phone: profile.phone || "",
           address: profile.address || "",
           countryCode: "+46",
+          dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : undefined,
         });
         setInitialFormData({
           firstName: profile.first_name || "",
@@ -69,6 +70,7 @@ export const useProfileManagement = () => {
           phone: profile.phone || "",
           address: profile.address || "",
           countryCode: "+46",
+          dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : undefined,
         });
         setAvatarUrl(profile.avatar_url);
       }
@@ -153,6 +155,7 @@ export const useProfileManagement = () => {
           gender: formData.gender,
           phone: formData.phone,
           address: formData.address,
+          date_of_birth: formData.dateOfBirth?.toISOString().split('T')[0] || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);

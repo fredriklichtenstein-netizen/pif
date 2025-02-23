@@ -15,8 +15,8 @@ interface GenderSelectorProps {
 }
 
 const genderOptions = [
-  { value: "woman", label: "Woman" },
-  { value: "man", label: "Man" },
+  { value: "female", label: "Female" },
+  { value: "male", label: "Male" },
   { value: "transgender", label: "Transgender" },
   { value: "non_binary", label: "Non-binary" },
   { value: "other", label: "Other" },

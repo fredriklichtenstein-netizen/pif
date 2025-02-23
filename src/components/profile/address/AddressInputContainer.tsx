@@ -1,6 +1,7 @@
 
 import { Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useMapbox } from "@/hooks/useMapbox";
 import { useAddress } from "@/hooks/address/useAddress";
 import { AddressSuggestions } from "./AddressSuggestions";
@@ -35,6 +36,22 @@ export function AddressInputContainer({
 
   return (
     <div className="space-y-4">
+      <div className="flex gap-2">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter your address"
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => handleShowMap(value)}
+        >
+          {mapButtonLabel}
+        </Button>
+      </div>
+
       {!hideSearch && (
         <AddressSearchBar 
           value={value}
@@ -51,15 +68,6 @@ export function AddressInputContainer({
           setSuggestions([]);
         }}
       />
-
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => handleShowMap(value)}
-      >
-        {mapButtonLabel}
-      </Button>
 
       {showMap && coordinates && (
         <AddressMap
