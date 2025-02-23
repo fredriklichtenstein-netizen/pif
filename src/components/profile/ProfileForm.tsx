@@ -20,10 +20,17 @@ interface ProfileFormData {
 
 interface ProfileFormProps {
   formData: ProfileFormData;
-  onChange: (data: Partial<ProfileFormData>) => void;
+  onChange: (data: ProfileFormData) => void;
 }
 
 export function ProfileForm({ formData, onChange }: ProfileFormProps) {
+  const handleChange = (updates: Partial<ProfileFormData>) => {
+    onChange({
+      ...formData,
+      ...updates
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -32,13 +39,13 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
             <NameFields
               firstName={formData.firstName}
               lastName={formData.lastName}
-              onFirstNameChange={(firstName) => onChange({ firstName })}
-              onLastNameChange={(lastName) => onChange({ lastName })}
+              onFirstNameChange={(firstName) => handleChange({ firstName })}
+              onLastNameChange={(lastName) => handleChange({ lastName })}
             />
 
             <GenderSelector
               value={formData.gender}
-              onChange={(gender) => onChange({ gender })}
+              onChange={(gender) => handleChange({ gender })}
               required
             />
 
@@ -48,7 +55,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
                 value={formData.phone}
                 countryCode={formData.countryCode}
                 onPhoneChange={(phone, countryCode) => 
-                  onChange({ phone, countryCode })
+                  handleChange({ phone, countryCode })
                 }
                 required
               />
@@ -56,14 +63,14 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
 
             <DateOfBirthSelector
               dateOfBirth={formData.dateOfBirth}
-              onChange={(dateOfBirth) => onChange({ dateOfBirth })}
+              onChange={(dateOfBirth) => handleChange({ dateOfBirth })}
             />
 
             <div className="space-y-2">
               <Label>Main PIF address</Label>
               <AddressInput
                 value={formData.address}
-                onChange={(address) => onChange({ address })}
+                onChange={(address) => handleChange({ address })}
                 mapButtonLabel={<Map className="w-4 h-4" />}
                 hideSearch
               />

@@ -53,6 +53,11 @@ const Profile = () => {
     return () => window.removeEventListener('popstate', handleNavigation);
   }, [hasUnsavedChanges]);
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleSubmit(e);
+  };
+
   const handleConfirmNavigation = () => {
     setShowUnsavedChangesDialog(false);
     setHasUnsavedChanges(false);
@@ -64,6 +69,10 @@ const Profile = () => {
   const handleCancelNavigation = () => {
     setShowUnsavedChangesDialog(false);
     setNavigationPath(null);
+  };
+
+  const handleFormChange = (newData: ProfileFormData) => {
+    setFormData(newData);
   };
 
   return (
@@ -78,7 +87,7 @@ const Profile = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleFormSubmit} className="space-y-6">
           <Card>
             <CardContent className="pt-6">
               <AvatarUpload 
@@ -90,7 +99,7 @@ const Profile = () => {
 
           <ProfileForm 
             formData={formData}
-            onChange={setFormData}
+            onChange={handleFormChange}
           />
 
           <Button
@@ -108,7 +117,7 @@ const Profile = () => {
         onOpenChange={setShowUnsavedChangesDialog}
         onConfirm={handleConfirmNavigation}
         onCancel={handleCancelNavigation}
-        onSave={handleSubmit}
+        onSave={handleFormSubmit}
       />
     </div>
   );
