@@ -10,7 +10,7 @@ export function AddressSuggestions({ suggestions, onSelect }: AddressSuggestions
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg mt-1">
+    <div className="absolute z-10 w-full bg-white border rounded-md shadow-lg">
       {suggestions.map((suggestion, index) => (
         <button
           key={index}

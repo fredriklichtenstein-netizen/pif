@@ -35,11 +35,11 @@ export function AddressInputContainer({
   } = useAddress(mapToken, onChange);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       <div className="flex gap-2">
         <Input
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => handleAddressChange(e.target.value)}
           placeholder="Enter your address"
           className="flex-1"
         />
