@@ -1,13 +1,17 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, X } from "lucide-react";
 import type { CreatePostInput } from "@/types/post";
 import { PostFormHeader } from "./form/PostFormHeader";
 import { PostFormMeasurements } from "./form/PostFormMeasurements";
 import { PostFormDescription } from "./form/PostFormDescription";
 import { PostFormImages } from "./form/PostFormImages";
 import { AddressInput } from "@/components/profile/address/AddressInput";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ImageCropper } from "@/components/profile/ImageCropper";
+import { getCroppedImg } from "@/utils/imageProcessing";
 
 interface PostFormProps {
   formData: CreatePostInput;
@@ -26,58 +30,103 @@ export function PostForm({
   formData,
   isSubmitting,
   isGeocoding,
-  isAnalyzing,
   onFormSubmit,
   onGeocodeAddress,
   onImageUpload,
-  onAnalyzeImages,
   onMeasurementChange,
   setFormData,
 }: PostFormProps) {
-  const [hasUploadedPrimaryImage, setHasUploadedPrimaryImage] = useState(false);
+  const navigate = useNavigate();
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [cropImage, setCropImage] = useState<string | null>(null);
+
+  const handleDeleteImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleCropComplete = async (croppedAreaPixels: any) => {
+    if (!cropImage) return;
+    
+    const croppedImageFile = await getCroppedImg(cropImage, croppedAreaPixels);
+    if (!croppedImageFile) return;
+
+    const croppedImageUrl = URL.createObjectURL(croppedImageFile);
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.map((img, idx) => 
+        idx === selectedImageIndex ? croppedImageUrl : img
+      )
+    }));
+
+    setCropImage(null);
+    setSelectedImageIndex(null);
+  };
 
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
-      <h1 className="text-2xl font-bold mb-6">Create Post</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Create Post</h1>
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="text-gray-500"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
       
       <form onSubmit={onFormSubmit} className="space-y-8 max-w-2xl mx-auto">
-        {/* Step 1 & 2: Image Upload Section */}
+        {/* Step 1: Image Upload Section */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">1. Upload Images</h2>
+          <h2 className="text-lg font-semibold">1. Images</h2>
+          <div className="space-y-4">
+            {formData.images.map((image, index) => (
+              <div key={index} className="relative">
+                <img
+                  src={image}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-60 object-cover rounded-lg"
+                />
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedImageIndex(index);
+                      setCropImage(image);
+                    }}
+                  >
+                    Crop
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteImage(index)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+                {index === 0 && (
+                  <span className="absolute top-2 left-2 bg-primary text-white px-2 py-1 rounded-md text-xs">
+                    Primary
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
           <PostFormImages
             images={formData.images}
-            isAnalyzing={isAnalyzing}
-            onImageUpload={(e) => {
-              onImageUpload(e);
-              if (!hasUploadedPrimaryImage && e.target.files && e.target.files.length > 0) {
-                setHasUploadedPrimaryImage(true);
-              }
-            }}
-            isPrimaryImageRequired={!hasUploadedPrimaryImage}
+            onImageUpload={onImageUpload}
+            isPrimaryImageRequired={formData.images.length === 0}
           />
-          
-          {/* Step 3: AI Analysis Option */}
-          {hasUploadedPrimaryImage && (
-            <Button 
-              type="button"
-              onClick={onAnalyzeImages}
-              disabled={isAnalyzing}
-              variant="outline"
-              className="w-full"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing images...
-                </>
-              ) : (
-                "Analyze images with AI"
-              )}
-            </Button>
-          )}
         </div>
 
-        {/* Step 4: Item Details */}
+        {/* Step 2: Item Details */}
         <div className="space-y-6">
           <h2 className="text-lg font-semibold">2. Item Details</h2>
           <PostFormHeader
@@ -101,25 +150,10 @@ export function PostForm({
           />
         </div>
 
-        {/* Step 5: Location */}
+        {/* Step 3: Location */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">3. Location</h2>
           <div className="space-y-2">
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full"
-              onClick={() => {
-                const profileAddress = sessionStorage.getItem('profile_address');
-                if (profileAddress) {
-                  setFormData(prev => ({ ...prev, location: profileAddress }));
-                  onGeocodeAddress();
-                }
-              }}
-            >
-              <MapPin className="mr-2 h-4 w-4" />
-              Insert primary PIF address
-            </Button>
             <AddressInput
               value={formData.location}
               hideSearch={true}
@@ -133,11 +167,11 @@ export function PostForm({
           </div>
         </div>
 
-        {/* Step 6: Submit */}
+        {/* Submit Button */}
         <Button
           type="submit"
           className="w-full"
-          disabled={isSubmitting || !hasUploadedPrimaryImage || !formData.title || !formData.location}
+          disabled={isSubmitting || formData.images.length === 0 || !formData.title || !formData.location}
         >
           {isSubmitting ? (
             <>
@@ -149,6 +183,22 @@ export function PostForm({
           )}
         </Button>
       </form>
+
+      {/* Image Cropper Dialog */}
+      <Dialog open={!!cropImage} onOpenChange={() => setCropImage(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          {cropImage && (
+            <ImageCropper
+              image={cropImage}
+              onSave={handleCropComplete}
+              onCancel={() => {
+                setCropImage(null);
+                setSelectedImageIndex(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

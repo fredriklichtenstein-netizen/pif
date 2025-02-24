@@ -67,7 +67,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
             />
 
             <div className="space-y-2">
-              <Label>Main PIF address</Label>
+              <Label>Primary PIF address</Label>
               <AddressInput
                 value={formData.address}
                 onChange={(address) => handleChange({ address })}
