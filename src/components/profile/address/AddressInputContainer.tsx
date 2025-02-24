@@ -10,7 +10,7 @@ import { AddressSearchBar } from "./AddressSearchBar";
 
 interface AddressInputProps {
   value: string;
-  onChange: (address: string) => void;
+  onChange: (address: string, coordinates?: { lat: number; lng: number }) => void;
   locationButtonLabel?: React.ReactNode;
   mapButtonLabel?: React.ReactNode;
   hideSearch?: boolean;
@@ -32,7 +32,10 @@ export function AddressInputContainer({
     handleAddressChange,
     handleUseCurrentLocation,
     handleShowMap,
-  } = useAddress(mapToken, onChange);
+  } = useAddress(mapToken, (address: string, coords?: { lat: number; lng: number }) => {
+    console.log("Address selected in container:", { address, coords });
+    onChange(address, coords);
+  });
 
   const handleAddressInput = async (input: string) => {
     handleAddressChange(input);
@@ -74,9 +77,8 @@ export function AddressInputContainer({
       <AddressSuggestions
         suggestions={suggestions}
         onSelect={(suggestion) => {
-          onChange(suggestion);
+          handleAddressInput(suggestion);
           setSuggestions([]);
-          handleShowMap(suggestion);
         }}
       />
 
@@ -84,7 +86,7 @@ export function AddressInputContainer({
         <AddressMap
           mapToken={mapToken}
           coordinates={coordinates}
-          onAddressChange={onChange}
+          onAddressChange={handleAddressInput}
         />
       )}
     </div>
