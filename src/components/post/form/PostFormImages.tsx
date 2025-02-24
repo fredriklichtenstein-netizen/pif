@@ -21,25 +21,33 @@ export function PostFormImages({
 
   const handleDeleteImage = (index: number) => {
     const remainingImages = images.filter((_, i) => i !== index);
+    
     // If we delete the primary image, set the next image as primary
     if (index === primaryImageIndex) {
       setPrimaryImageIndex(0);
     } else if (index < primaryImageIndex) {
       setPrimaryImageIndex(primaryImageIndex - 1);
     }
+
+    // Create a FileList-like object with the remaining images
+    const dt = new DataTransfer();
+    remainingImages.forEach(url => {
+      const file = new File([], url);
+      Object.defineProperty(file, 'name', { value: url });
+      dt.items.add(file);
+    });
+
+    // Create a real input element and dispatch a change event
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    Object.defineProperty(input, 'files', { value: dt.files });
+
+    const event = new Event('change', { bubbles: true }) as any;
+    event.target = input;
+    event.currentTarget = input;
     
-    // Update the parent component's state
-    const newEvent = {
-      target: {
-        files: remainingImages.map(url => {
-          const file = new File([], url);
-          Object.defineProperty(file, 'name', { value: url });
-          return file;
-        })
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    onImageUpload(newEvent);
+    onImageUpload(event);
   };
 
   const handleSetPrimaryImage = (index: number) => {
@@ -51,18 +59,25 @@ export function PostFormImages({
     newImages.unshift(movedImage);
     setPrimaryImageIndex(0);
     
-    // Update the parent component's state
-    const newEvent = {
-      target: {
-        files: newImages.map(url => {
-          const file = new File([], url);
-          Object.defineProperty(file, 'name', { value: url });
-          return file;
-        })
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
+    // Create a FileList-like object with the reordered images
+    const dt = new DataTransfer();
+    newImages.forEach(url => {
+      const file = new File([], url);
+      Object.defineProperty(file, 'name', { value: url });
+      dt.items.add(file);
+    });
+
+    // Create a real input element and dispatch a change event
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    Object.defineProperty(input, 'files', { value: dt.files });
+
+    const event = new Event('change', { bubbles: true }) as any;
+    event.target = input;
+    event.currentTarget = input;
     
-    onImageUpload(newEvent);
+    onImageUpload(event);
   };
 
   return (
