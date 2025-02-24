@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import type { CreatePostInput, formatCoordinatesForDB } from "@/types/post";
+import type { CreatePostInput } from "@/types/post";
 import { addPost } from "@/pages/Index";
 import { supabase } from "@/integrations/supabase/client";
 import { usePostImages } from "./post/usePostImages";
@@ -24,7 +24,7 @@ export const usePostForm = () => {
     measurements: {},
     images: [],
     location: "",
-    coordinates: null, // Initialize as null to match PostgreSQL point type
+    coordinates: null,
     status: "available",
   });
 
@@ -41,20 +41,27 @@ export const usePostForm = () => {
     async function fetchProfileAddress() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('address')
-            .eq('id', user.id)
-            .single();
+        if (!user) return;
 
-          if (profile?.address && isMounted) {
-            setFormData(prev => ({ ...prev, location: profile.address }));
-            // Fetch Mapbox token and trigger geocoding
-            const { data, error } = await supabase.functions.invoke("get-mapbox-token");
-            if (!error && data?.token && isMounted) {
-              await handleGeocodeAddress(data.token);
-            }
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('address')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.address || !isMounted) return;
+
+        // Update form with the address first
+        setFormData(prev => ({ ...prev, location: profile.address }));
+
+        // Then geocode it, but don't show error toasts for the initial load
+        const { data, error } = await supabase.functions.invoke("get-mapbox-token");
+        if (!error && data?.token && isMounted) {
+          try {
+            await handleGeocodeAddress(data.token, true); // Pass true to indicate this is the initial load
+          } catch (error) {
+            console.error('Initial geocoding error:', error);
+            // Don't show toast for initial geocoding errors
           }
         }
       } catch (error) {
@@ -67,22 +74,6 @@ export const usePostForm = () => {
       isMounted = false;
     };
   }, []);
-
-  const fetchMapboxToken = async () => {
-    const { data, error } = await supabase.functions.invoke("get-mapbox-token");
-    if (error) throw error;
-    return data.token;
-  };
-
-  const handleMeasurementChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      measurements: {
-        ...prev.measurements,
-        [field]: value,
-      },
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +135,6 @@ export const usePostForm = () => {
     handleGeocodeAddress,
     handleImageUpload,
     handleAnalyzeImages,
-    handleMeasurementChange,
     handleSubmit,
   };
 };

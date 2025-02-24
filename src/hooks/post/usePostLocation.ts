@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { geocodeAddress } from "@/utils/geocoding";
@@ -11,13 +12,15 @@ export const usePostLocation = (
   const { toast } = useToast();
   const [isGeocoding, setIsGeocoding] = useState(false);
 
-  const handleGeocodeAddress = async (mapboxToken: string) => {
+  const handleGeocodeAddress = async (mapboxToken: string, isInitialLoad = false) => {
     if (!formData.location) {
-      toast({
-        title: "Missing address",
-        description: "Please enter an address first.",
-        variant: "destructive",
-      });
+      if (!isInitialLoad) {
+        toast({
+          title: "Missing address",
+          description: "Please enter an address first.",
+          variant: "destructive",
+        });
+      }
       return;
     }
     
@@ -41,10 +44,12 @@ export const usePostLocation = (
       
       console.log("Updated form data with coordinates:", coordinates);
       
-      toast({
-        title: "Location verified",
-        description: "Address has been successfully verified.",
-      });
+      if (!isInitialLoad) {
+        toast({
+          title: "Location verified",
+          description: "Address has been successfully verified.",
+        });
+      }
     } catch (error) {
       console.error("Geocoding error:", error);
       setFormData(prev => ({ 
@@ -52,11 +57,13 @@ export const usePostLocation = (
         coordinates: null
       }));
       
-      toast({
-        title: "Invalid address",
-        description: error instanceof Error ? error.message : "Please enter a complete Swedish address.",
-        variant: "destructive",
-      });
+      if (!isInitialLoad) {
+        toast({
+          title: "Invalid address",
+          description: error instanceof Error ? error.message : "Please enter a complete Swedish address.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsGeocoding(false);
     }
