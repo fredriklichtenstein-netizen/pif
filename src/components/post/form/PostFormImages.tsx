@@ -7,15 +7,15 @@ interface PostFormImagesProps {
   images: string[];
   isAnalyzing?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  isPrimaryImageRequired?: boolean;
 }
 
 export function PostFormImages({ 
   images, 
   isAnalyzing, 
-  onImageUpload, 
-  isPrimaryImageRequired 
+  onImageUpload 
 }: PostFormImagesProps) {
+  const isPrimaryImageRequired = images.length === 0;
+
   return (
     <div className="space-y-2">
       <label htmlFor="images" className="text-sm font-medium">

@@ -33,13 +33,14 @@ export function PostFormContainer({
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 pb-20 pt-4">
+    <div className="container mx-auto px-4 pb-32 pt-4"> {/* Increased bottom padding */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Create Post</h1>
+        <h1 className="text-2xl font-bold" tabIndex={0}>Create Post</h1>
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
           className="text-gray-500"
+          aria-label="Close form"
         >
           <X className="h-4 w-4" />
         </Button>
@@ -58,7 +59,7 @@ export function PostFormContainer({
 
         <Button
           type="submit"
-          className="w-full"
+          className="w-full mb-24" /* Added margin bottom */
           disabled={isSubmitting || formData.images.length === 0 || !formData.title || !formData.location}
         >
           {isSubmitting ? (
