@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +34,6 @@ export const usePostForm = () => {
   // Location-related functionality
   const { isGeocoding, handleGeocodeAddress } = usePostLocation(formData, setFormData);
 
-  // Add the missing handleMeasurementChange function
   const handleMeasurementChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -61,19 +61,8 @@ export const usePostForm = () => {
 
         if (!profile?.address || !isMounted) return;
 
-        // Update form with the address first
-        setFormData(prev => ({ ...prev, location: profile.address }));
-
-        // Then geocode it, but don't show error toasts for the initial load
-        const { data, error } = await supabase.functions.invoke("get-mapbox-token");
-        if (!error && data?.token && isMounted) {
-          try {
-            await handleGeocodeAddress(data.token, true); // Pass true to indicate this is the initial load
-          } catch (error) {
-            console.error('Initial geocoding error:', error);
-            // Don't show toast for initial geocoding errors
-          }
-        }
+        // Store the address in sessionStorage for quick access
+        sessionStorage.setItem('profile_address', profile.address);
       } catch (error) {
         console.error('Error fetching profile address:', error);
       }

@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import type { CreatePostInput } from "@/types/post";
 import { PostFormHeader } from "./form/PostFormHeader";
 import { PostFormMeasurements } from "./form/PostFormMeasurements";
@@ -104,16 +104,33 @@ export function PostForm({
         {/* Step 5: Location */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">3. Location</h2>
-          <AddressInput
-            value={formData.location}
-            hideSearch={true}
-            onChange={(address) => {
-              setFormData(prev => ({ ...prev, location: address }));
-              if (address) {
-                onGeocodeAddress();
-              }
-            }}
-          />
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => {
+                const profileAddress = sessionStorage.getItem('profile_address');
+                if (profileAddress) {
+                  setFormData(prev => ({ ...prev, location: profileAddress }));
+                  onGeocodeAddress();
+                }
+              }}
+            >
+              <MapPin className="mr-2 h-4 w-4" />
+              Insert primary PIF address
+            </Button>
+            <AddressInput
+              value={formData.location}
+              hideSearch={true}
+              onChange={(address) => {
+                setFormData(prev => ({ ...prev, location: address }));
+                if (address) {
+                  onGeocodeAddress();
+                }
+              }}
+            />
+          </div>
         </div>
 
         {/* Step 6: Submit */}
