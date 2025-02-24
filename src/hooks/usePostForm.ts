@@ -16,6 +16,7 @@ export const usePostForm = () => {
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     description: "",
@@ -29,20 +30,28 @@ export const usePostForm = () => {
     user_id: undefined,
   });
 
-  // Image-related functionality
-  const { isAnalyzing, handleImageUpload, handleAnalyzeImages } = usePostImages(formData, setFormData);
-
   // Location-related functionality
   const { isGeocoding } = usePostLocation(formData, setFormData);
 
-  const handleMeasurementChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      measurements: {
-        ...prev.measurements,
-        [field]: value
-      }
-    }));
+  // Image-related functionality
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    setIsAnalyzing(true);
+    const newImages = [...formData.images];
+    
+    for (const file of e.target.files) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          newImages.push(e.target.result as string);
+          setFormData(prev => ({ ...prev, images: newImages }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    setIsAnalyzing(false);
   };
 
   // Fetch user's profile address on mount
@@ -127,6 +136,16 @@ export const usePostForm = () => {
     }
   };
 
+  const handleMeasurementChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      measurements: {
+        ...prev.measurements,
+        [field]: value
+      }
+    }));
+  };
+
   return {
     formData,
     isSubmitting,
@@ -134,7 +153,6 @@ export const usePostForm = () => {
     isAnalyzing,
     setFormData,
     handleImageUpload,
-    handleAnalyzeImages,
     handleMeasurementChange,
     handleSubmit,
   };
