@@ -53,8 +53,14 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
   // Simulating API call delay
   await new Promise((resolve) => setTimeout(resolve, 1000));
   
+  // Make sure we're handling the coordinates in the correct format
+  const coordinates = typeof post.coordinates === 'string' 
+    ? post.coordinates // If it's already a string in (lng,lat) format, use it
+    : post.coordinates // Otherwise it should be null
+  
   return {
     ...post,
+    coordinates, // Use the properly formatted coordinates
     id: Math.random().toString(),
     postedBy: {
       id: "123",
