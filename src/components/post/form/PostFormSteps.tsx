@@ -4,6 +4,7 @@ import type { CreatePostInput } from "@/types/post";
 import { PostFormImages } from "./PostFormImages";
 import { PostFormDetails } from "./PostFormDetails";
 import { PostFormLocation } from "./PostFormLocation";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 interface PostFormStepsProps {
   formData: CreatePostInput;
@@ -24,6 +25,9 @@ export function PostFormSteps({
   onMeasurementChange,
   setFormData,
 }: PostFormStepsProps) {
+  // Parse coordinates from DB format to the format expected by PostFormLocation
+  const parsedCoordinates = parseCoordinatesFromDB(formData.coordinates);
+
   return (
     <>
       <div className="space-y-4">
@@ -48,7 +52,7 @@ export function PostFormSteps({
         <h2 className="text-lg font-semibold">3. Location</h2>
         <PostFormLocation
           location={formData.location}
-          coordinates={formData.coordinates}
+          coordinates={parsedCoordinates}
           isGeocoding={isGeocoding || false}
           onLocationChange={(address) => setFormData(prev => ({ ...prev, location: address }))}
           onGeocodeAddress={onGeocodeAddress}
