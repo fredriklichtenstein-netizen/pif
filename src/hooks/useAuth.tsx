@@ -6,35 +6,51 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
 export function useAuth() {
-  const [loading, setLoading] = useState(true);  // Start with loading true
+  const [loading, setLoading] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const { handleSignUp } = useSignUp();
   const { handleSignIn } = useSignIn();
 
   useEffect(() => {
-    let mounted = true;
+    // Initialize session from localStorage if available
+    const savedSession = localStorage.getItem('supabase.auth.token');
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        if (parsed?.currentSession) {
+          setSession(parsed.currentSession);
+        }
+      } catch (e) {
+        console.error('Error parsing saved session:', e);
+      }
+    }
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        setSession(session);
-        setLoading(false);  // Set loading to false after we get the initial session
-      }
+      setSession(session);
+      setLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) {
-        setSession(session);
-        setLoading(false);
+      setSession(session);
+      setLoading(false);
+
+      // Update localStorage when session changes
+      if (session) {
+        localStorage.setItem('supabase.auth.token', JSON.stringify({
+          currentSession: session,
+          expiresAt: session.expires_at
+        }));
+      } else {
+        localStorage.removeItem('supabase.auth.token');
       }
     });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -68,4 +84,3 @@ export function useAuth() {
     toggleMode,
   };
 }
-
