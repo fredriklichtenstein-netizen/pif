@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface ItemCardProps {
-  id: string;
+  id: number; // Changed from string to number to match the database type
   title: string;
   description: string;
   image: string;
@@ -119,7 +119,7 @@ export function ItemCard({
         )}
         <div className="mt-4">
           <ItemInteractions
-            id={id}
+            id={id.toString()} // Convert number to string for ItemInteractions
             postedBy={postedBy}
             isLiked={false}
             showComments={false}
