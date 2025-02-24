@@ -10,10 +10,8 @@ import { ImageCropperDialog } from "./ImageCropperDialog";
 interface PostFormContainerProps {
   formData: CreatePostInput;
   isSubmitting: boolean;
-  isGeocoding: boolean;
   isAnalyzing: boolean;
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
-  onGeocodeAddress: () => Promise<void>;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onMeasurementChange: (field: string, value: string) => void;
   setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
@@ -22,10 +20,8 @@ interface PostFormContainerProps {
 export function PostFormContainer({
   formData,
   isSubmitting,
-  isGeocoding,
   isAnalyzing,
   onFormSubmit,
-  onGeocodeAddress,
   onImageUpload,
   onMeasurementChange,
   setFormData,
@@ -33,7 +29,7 @@ export function PostFormContainer({
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 pb-32 pt-4"> {/* Increased bottom padding */}
+    <div className="container mx-auto px-4 pb-32 pt-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold" tabIndex={0}>Create Post</h1>
         <Button
@@ -50,16 +46,14 @@ export function PostFormContainer({
         <PostFormSteps
           formData={formData}
           isAnalyzing={isAnalyzing}
-          isGeocoding={isGeocoding}
           onImageUpload={onImageUpload}
-          onGeocodeAddress={onGeocodeAddress}
           onMeasurementChange={onMeasurementChange}
           setFormData={setFormData}
         />
 
         <Button
           type="submit"
-          className="w-full mb-24" /* Added margin bottom */
+          className="w-full mb-24"
           disabled={isSubmitting || formData.images.length === 0 || !formData.title || !formData.location}
         >
           {isSubmitting ? (

@@ -5,13 +5,12 @@ import { PostFormImages } from "./PostFormImages";
 import { PostFormDetails } from "./PostFormDetails";
 import { PostFormLocation } from "./PostFormLocation";
 import { parseCoordinatesFromDB } from "@/types/post";
+import { AddressInput } from "@/components/profile/address/AddressInput";
 
 interface PostFormStepsProps {
   formData: CreatePostInput;
   isAnalyzing?: boolean;
-  isGeocoding?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onGeocodeAddress: () => Promise<void>;
   onMeasurementChange: (field: string, value: string) => void;
   setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
 }
@@ -19,15 +18,10 @@ interface PostFormStepsProps {
 export function PostFormSteps({
   formData,
   isAnalyzing,
-  isGeocoding,
   onImageUpload,
-  onGeocodeAddress,
   onMeasurementChange,
   setFormData,
 }: PostFormStepsProps) {
-  // Parse coordinates from DB format to the format expected by PostFormLocation
-  const parsedCoordinates = parseCoordinatesFromDB(formData.coordinates);
-
   return (
     <>
       <div className="space-y-4">
@@ -49,14 +43,21 @@ export function PostFormSteps({
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">3. Location</h2>
-        <PostFormLocation
-          location={formData.location}
-          coordinates={parsedCoordinates}
-          isGeocoding={isGeocoding || false}
-          onLocationChange={(address) => setFormData(prev => ({ ...prev, location: address }))}
-          onGeocodeAddress={onGeocodeAddress}
-        />
+        <h2 className="text-lg font-semibold">3. Pick-up Info</h2>
+        <div className="space-y-2">
+          <label htmlFor="location" className="text-sm font-medium">
+            Pick-up location
+          </label>
+          <AddressInput
+            value={formData.location}
+            onChange={(address) => {
+              setFormData(prev => ({
+                ...prev,
+                location: address
+              }));
+            }}
+          />
+        </div>
       </div>
     </>
   );

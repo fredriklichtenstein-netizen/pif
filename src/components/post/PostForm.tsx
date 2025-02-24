@@ -9,10 +9,8 @@ export function PostForm() {
   const {
     formData,
     isSubmitting,
-    isGeocoding,
     isAnalyzing,
     setFormData,
-    handleGeocodeAddress,
     handleImageUpload,
     handleAnalyzeImages,
     handleMeasurementChange,
@@ -27,10 +25,8 @@ export function PostForm() {
     <PostFormContainer
       formData={formData}
       isSubmitting={isSubmitting}
-      isGeocoding={isGeocoding}
       isAnalyzing={isAnalyzing}
       onFormSubmit={handleSubmit}
-      onGeocodeAddress={() => handleGeocodeAddress(mapToken)}
       onImageUpload={handleImageUpload}
       onMeasurementChange={handleMeasurementChange}
       setFormData={setFormData}
