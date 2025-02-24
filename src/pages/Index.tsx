@@ -31,7 +31,8 @@ export const getPosts = async (): Promise<Post[]> => {
           avatar_url
         )
       )
-    `);
+    `)
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error("Error fetching posts:", error);
@@ -61,6 +62,11 @@ export const getPosts = async (): Promise<Post[]> => {
 };
 
 export const addPost = async (post: CreatePostInput): Promise<Post> => {
+  const session = await supabase.auth.getSession();
+  if (!session.data.session?.user) {
+    throw new Error("Must be logged in to create a post");
+  }
+
   const { data, error } = await supabase
     .from('items')
     .insert([{
@@ -72,8 +78,8 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
       images: post.images,
       location: post.location,
       coordinates: post.coordinates,
-      user_id: post.user_id,
-      status: post.status
+      user_id: session.data.session.user.id,
+      status: post.status || 'available'
     }])
     .select(`
       *,
