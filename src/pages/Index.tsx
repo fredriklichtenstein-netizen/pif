@@ -7,7 +7,16 @@ import { parseCoordinatesFromDB } from "@/types/post";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
-type ProfileData = Database["public"]["Tables"]["profiles"]["Row"];
+type ItemWithProfile = Database['public']['Tables']['items']['Row'] & {
+  postedBy: {
+    id: string;
+    profiles: Array<{
+      first_name: string | null;
+      last_name: string | null;
+      avatar_url: string | null;
+    }>;
+  } | null;
+};
 
 export const getPosts = async (): Promise<Post[]> => {
   const { data, error } = await supabase
@@ -22,15 +31,14 @@ export const getPosts = async (): Promise<Post[]> => {
           avatar_url
         )
       )
-    `)
-    .order('created_at', { ascending: false });
+    `);
 
   if (error) {
     console.error("Error fetching posts:", error);
     throw error;
   }
 
-  return data.map(item => ({
+  return (data as ItemWithProfile[]).map(item => ({
     id: item.id.toString(),
     title: item.title,
     description: item.description || '',
@@ -60,7 +68,7 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
       description: post.description,
       category: post.category,
       condition: post.condition,
-      measurements: post.measurements,
+      measurements: post.measurements || {}, // Ensure measurements is always an object
       images: post.images,
       location: post.location,
       coordinates: post.coordinates,
@@ -85,24 +93,26 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
     throw error;
   }
 
+  const itemWithProfile = data as ItemWithProfile;
+
   return {
-    id: data.id.toString(),
-    title: data.title,
-    description: data.description || '',
-    category: data.category || '',
-    condition: data.condition || '',
-    measurements: data.measurements || {},
-    images: data.images || [],
-    location: data.location || '',
-    coordinates: data.coordinates as string | null,
-    status: data.status || 'available',
-    createdAt: data.created_at,
+    id: itemWithProfile.id.toString(),
+    title: itemWithProfile.title,
+    description: itemWithProfile.description || '',
+    category: itemWithProfile.category || '',
+    condition: itemWithProfile.condition || '',
+    measurements: post.measurements || {}, // Use the measurements from the input
+    images: itemWithProfile.images || [],
+    location: itemWithProfile.location || '',
+    coordinates: itemWithProfile.coordinates as string | null,
+    status: itemWithProfile.status || 'available',
+    createdAt: itemWithProfile.created_at,
     postedBy: {
-      id: data.postedBy?.id || '',
-      name: data.postedBy?.profiles?.[0]
-        ? `${data.postedBy.profiles[0].first_name || ''} ${data.postedBy.profiles[0].last_name || ''}`
+      id: itemWithProfile.postedBy?.id || '',
+      name: itemWithProfile.postedBy?.profiles?.[0]
+        ? `${itemWithProfile.postedBy.profiles[0].first_name || ''} ${itemWithProfile.postedBy.profiles[0].last_name || ''}`
         : 'Anonymous',
-      avatar: data.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+      avatar: itemWithProfile.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
     }
   };
 };
