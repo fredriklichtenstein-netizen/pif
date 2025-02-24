@@ -20,7 +20,7 @@ export function ImageCropperDialog({
   const handleCropComplete = async (croppedAreaPixels: any) => {
     if (!cropImage) return;
     
-    const croppedImageFile = await getCroppedImg(cropImage, croppedAreaPixels);
+    const croppedImageFile = await getCroppedImg(cropImage, croppedAreaPixels, 'rect');
     if (!croppedImageFile) return;
 
     const croppedImageUrl = URL.createObjectURL(croppedImageFile);
@@ -35,10 +35,10 @@ export function ImageCropperDialog({
             image={cropImage}
             onSave={handleCropComplete}
             onCancel={onCancel}
+            cropShape="rect"
           />
         )}
       </DialogContent>
     </Dialog>
   );
 }
-
