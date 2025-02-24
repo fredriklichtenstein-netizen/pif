@@ -9,6 +9,7 @@ interface PostFormStepsProps {
   formData: CreatePostInput;
   isAnalyzing?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImagesChange: (newImages: string[]) => void;
   onMeasurementChange: (field: string, value: string) => void;
   setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
 }
@@ -17,6 +18,7 @@ export function PostFormSteps({
   formData,
   isAnalyzing,
   onImageUpload,
+  onImagesChange,
   onMeasurementChange,
   setFormData,
 }: PostFormStepsProps) {
@@ -27,6 +29,7 @@ export function PostFormSteps({
         <PostFormImages 
           images={formData.images} 
           onImageUpload={onImageUpload}
+          onImagesChange={onImagesChange}
           isAnalyzing={isAnalyzing}
         />
       </div>

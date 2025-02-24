@@ -13,6 +13,7 @@ interface PostFormContainerProps {
   isAnalyzing: boolean;
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImagesChange: (newImages: string[]) => void;
   onMeasurementChange: (field: string, value: string) => void;
   setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
 }
@@ -23,6 +24,7 @@ export function PostFormContainer({
   isAnalyzing,
   onFormSubmit,
   onImageUpload,
+  onImagesChange,
   onMeasurementChange,
   setFormData,
 }: PostFormContainerProps) {
@@ -47,6 +49,7 @@ export function PostFormContainer({
           formData={formData}
           isAnalyzing={isAnalyzing}
           onImageUpload={onImageUpload}
+          onImagesChange={onImagesChange}
           onMeasurementChange={onMeasurementChange}
           setFormData={setFormData}
         />
