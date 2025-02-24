@@ -52,7 +52,6 @@ export const usePostForm = () => {
     setIsAnalyzing(false);
   };
 
-  // New function to handle image array updates
   const handleImagesChange = (newImages: string[]) => {
     setFormData(prev => ({ ...prev, images: newImages }));
   };
@@ -89,6 +88,15 @@ export const usePostForm = () => {
         variant: "destructive",
       });
       navigate("/auth");
+      return;
+    }
+
+    if (!formData.title || !formData.category || !formData.condition) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields (title, category, and condition).",
+        variant: "destructive",
+      });
       return;
     }
 

@@ -24,6 +24,13 @@ export function PostForm() {
     return <div>Loading map configuration...</div>;
   }
 
+  const isFormValid = 
+    formData.title &&
+    formData.category &&
+    formData.condition &&
+    formData.coordinates &&
+    formData.images.length > 0;
+
   return (
     <PostFormContainer
       formData={formData}
@@ -35,6 +42,7 @@ export function PostForm() {
       onMeasurementChange={handleMeasurementChange}
       setFormData={setFormData}
       onAddressSelect={handleAddressSelect}
+      isFormValid={isFormValid}
     />
   );
 }
