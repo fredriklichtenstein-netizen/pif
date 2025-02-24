@@ -27,10 +27,42 @@ export function PostFormImages({
     } else if (index < primaryImageIndex) {
       setPrimaryImageIndex(primaryImageIndex - 1);
     }
+    
+    // Update the parent component's state
+    const newEvent = {
+      target: {
+        files: remainingImages.map(url => {
+          const file = new File([], url);
+          Object.defineProperty(file, 'name', { value: url });
+          return file;
+        })
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    onImageUpload(newEvent);
   };
 
   const handleSetPrimaryImage = (index: number) => {
-    setPrimaryImageIndex(index);
+    if (index === primaryImageIndex) return;
+    
+    // Reorder images to put the primary image first
+    const newImages = [...images];
+    const [movedImage] = newImages.splice(index, 1);
+    newImages.unshift(movedImage);
+    setPrimaryImageIndex(0);
+    
+    // Update the parent component's state
+    const newEvent = {
+      target: {
+        files: newImages.map(url => {
+          const file = new File([], url);
+          Object.defineProperty(file, 'name', { value: url });
+          return file;
+        })
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    onImageUpload(newEvent);
   };
 
   return (
