@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import debounce from "lodash/debounce";
 
 export const useAddress = (
   mapToken: string, 
@@ -12,30 +13,37 @@ export const useAddress = (
   const [showMap, setShowMap] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Debounced function for fetching address suggestions
+  const debouncedFetchSuggestions = useCallback(
+    debounce(async (address: string) => {
+      if (address.length > 3) {
+        setIsLoadingSuggestions(true);
+        try {
+          const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+              address
+            )}.json?access_token=${mapToken}&country=SE&language=sv&types=address`
+          );
+          const data = await response.json();
+          setSuggestions(
+            data.features.map((feature: any) => feature.place_name).slice(0, 5)
+          );
+        } catch (error) {
+          console.error("Error fetching address suggestions:", error);
+        } finally {
+          setIsLoadingSuggestions(false);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    }, 300),
+    [mapToken]
+  );
+
   const handleAddressChange = async (address: string) => {
     console.log("useAddress.handleAddressChange:", address);
     onAddressChange(address);
-    
-    if (address.length > 3) {
-      setIsLoadingSuggestions(true);
-      try {
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-            address
-          )}.json?access_token=${mapToken}&country=SE&language=sv&types=address`
-        );
-        const data = await response.json();
-        setSuggestions(
-          data.features.map((feature: any) => feature.place_name).slice(0, 5)
-        );
-      } catch (error) {
-        console.error("Error fetching address suggestions:", error);
-      } finally {
-        setIsLoadingSuggestions(false);
-      }
-    } else {
-      setSuggestions([]);
-    }
+    debouncedFetchSuggestions(address);
   };
 
   const handleUseCurrentLocation = () => {
@@ -53,6 +61,7 @@ export const useAddress = (
               setCoordinates({ lat: latitude, lng: longitude });
               setShowMap(true);
               onAddressChange(address, { lat: latitude, lng: longitude });
+              setSuggestions([]); // Clear suggestions after selection
             }
           } catch (error) {
             console.error("Error reverse geocoding:", error);
@@ -88,6 +97,7 @@ export const useAddress = (
           const newCoords = { lat, lng };
           setCoordinates(newCoords);
           setShowMap(true);
+          setSuggestions([]); // Clear suggestions after showing map
           return newCoords;
         }
       } catch (error) {
