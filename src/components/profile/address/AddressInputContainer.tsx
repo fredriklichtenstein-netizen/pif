@@ -38,10 +38,13 @@ export function AddressInputContainer({
   });
 
   const handleAddressInput = async (input: string) => {
+    console.log("handleAddressInput called with:", input);
     handleAddressChange(input);
-    // Auto-validate address when typing
     if (input.length > 3) {
-      handleShowMap(input);
+      const coords = await handleShowMap(input);
+      onChange(input, coords);
+    } else {
+      onChange(input, undefined);
     }
   };
 
@@ -77,6 +80,7 @@ export function AddressInputContainer({
       <AddressSuggestions
         suggestions={suggestions}
         onSelect={(suggestion) => {
+          console.log("Suggestion selected:", suggestion);
           handleAddressInput(suggestion);
           setSuggestions([]);
         }}

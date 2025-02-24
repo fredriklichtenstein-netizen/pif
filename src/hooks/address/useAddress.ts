@@ -2,7 +2,10 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-export const useAddress = (mapToken: string, onAddressChange: (address: string) => void) => {
+export const useAddress = (
+  mapToken: string, 
+  onAddressChange: (address: string, coordinates?: { lat: number; lng: number }) => void
+) => {
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -10,7 +13,9 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleAddressChange = async (address: string) => {
+    console.log("useAddress.handleAddressChange:", address);
     onAddressChange(address);
+    
     if (address.length > 3) {
       setIsLoadingSuggestions(true);
       try {
@@ -45,9 +50,9 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
             const data = await response.json();
             if (data.features && data.features.length > 0) {
               const address = data.features[0].place_name;
-              onAddressChange(address);
               setCoordinates({ lat: latitude, lng: longitude });
               setShowMap(true);
+              onAddressChange(address, { lat: latitude, lng: longitude });
             }
           } catch (error) {
             console.error("Error reverse geocoding:", error);
@@ -70,7 +75,8 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
     }
   };
 
-  const handleShowMap = async (address: string) => {
+  const handleShowMap = async (address: string): Promise<{ lat: number; lng: number } | undefined> => {
+    console.log("useAddress.handleShowMap:", address);
     if (address) {
       try {
         const response = await fetch(
@@ -79,8 +85,10 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
         const data = await response.json();
         if (data.features && data.features.length > 0) {
           const [lng, lat] = data.features[0].center;
-          setCoordinates({ lat, lng });
+          const newCoords = { lat, lng };
+          setCoordinates(newCoords);
           setShowMap(true);
+          return newCoords;
         }
       } catch (error) {
         console.error("Error geocoding address:", error);
@@ -97,6 +105,7 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
         variant: "destructive",
       });
     }
+    return undefined;
   };
 
   return {

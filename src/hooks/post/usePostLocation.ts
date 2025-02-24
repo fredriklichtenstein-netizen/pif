@@ -14,7 +14,7 @@ export const usePostLocation = (
   const [isAddressVerified, setIsAddressVerified] = useState(false);
 
   const handleAddressSelect = (address: string, coordinates?: { lat: number; lng: number }) => {
-    console.log("handleAddressSelect called with:", { address, coordinates });
+    console.log("usePostLocation.handleAddressSelect called with:", { address, coordinates });
     
     setFormData(prev => ({
       ...prev,
@@ -24,8 +24,7 @@ export const usePostLocation = (
     
     setIsAddressVerified(!!coordinates);
     
-    // Log the update for debugging
-    console.log("Address updated:", { 
+    console.log("Address updated in form state:", { 
       address, 
       coordinates,
       formattedCoordinates: coordinates ? formatCoordinatesForDB(coordinates) : null 
