@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +32,17 @@ export const usePostForm = () => {
 
   // Location-related functionality
   const { isGeocoding, handleGeocodeAddress } = usePostLocation(formData, setFormData);
+
+  // Add the missing handleMeasurementChange function
+  const handleMeasurementChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      measurements: {
+        ...prev.measurements,
+        [field]: value
+      }
+    }));
+  };
 
   // Fetch user's profile address on mount
   useEffect(() => {
@@ -135,6 +145,7 @@ export const usePostForm = () => {
     handleGeocodeAddress,
     handleImageUpload,
     handleAnalyzeImages,
+    handleMeasurementChange,
     handleSubmit,
   };
 };
