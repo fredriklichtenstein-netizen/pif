@@ -3,8 +3,6 @@ import React from "react";
 import type { CreatePostInput } from "@/types/post";
 import { PostFormImages } from "./PostFormImages";
 import { PostFormDetails } from "./PostFormDetails";
-import { PostFormLocation } from "./PostFormLocation";
-import { parseCoordinatesFromDB } from "@/types/post";
 import { AddressInput } from "@/components/profile/address/AddressInput";
 
 interface PostFormStepsProps {
