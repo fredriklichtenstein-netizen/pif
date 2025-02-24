@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MapPin } from "lucide-react";
 
 interface AddressSearchBarProps {
   value: string;
@@ -27,7 +28,9 @@ export function AddressSearchBar({
         type="button" 
         variant="outline" 
         onClick={onLocationClick}
+        className="flex items-center gap-2"
       >
+        <MapPin className="h-4 w-4" />
         {locationButtonLabel}
       </Button>
     </div>

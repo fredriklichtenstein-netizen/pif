@@ -34,12 +34,20 @@ export function AddressInputContainer({
     handleShowMap,
   } = useAddress(mapToken, onChange);
 
+  const handleAddressInput = async (input: string) => {
+    handleAddressChange(input);
+    // Auto-validate address when typing
+    if (input.length > 3) {
+      handleShowMap(input);
+    }
+  };
+
   return (
     <div className="space-y-4 relative">
       {!hideSearch && (
         <AddressSearchBar 
           value={value}
-          onAddressChange={handleAddressChange}
+          onAddressChange={handleAddressInput}
           onLocationClick={handleUseCurrentLocation}
           locationButtonLabel={locationButtonLabel}
         />
@@ -49,7 +57,7 @@ export function AddressInputContainer({
         <div className="flex gap-2">
           <Input
             value={value}
-            onChange={(e) => handleAddressChange(e.target.value)}
+            onChange={(e) => handleAddressInput(e.target.value)}
             placeholder="Enter your address"
             className="flex-1"
           />
@@ -68,6 +76,7 @@ export function AddressInputContainer({
         onSelect={(suggestion) => {
           onChange(suggestion);
           setSuggestions([]);
+          handleShowMap(suggestion);
         }}
       />
 

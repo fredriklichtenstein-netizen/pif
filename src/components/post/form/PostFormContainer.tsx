@@ -54,7 +54,7 @@ export function PostFormContainer({
         <Button
           type="submit"
           className="w-full mb-24"
-          disabled={isSubmitting || formData.images.length === 0 || !formData.title || !formData.location}
+          disabled={isSubmitting || !formData.title || !formData.location || formData.images.length === 0}
         >
           {isSubmitting ? (
             <>
