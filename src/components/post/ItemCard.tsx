@@ -1,0 +1,140 @@
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { ItemHeader } from "./ItemHeader";
+import { ItemImage } from "./ItemImage";
+import { ItemInteractions } from "./ItemInteractions";
+import { CommentSection } from "./CommentSection";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+
+interface ItemCardProps {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  category: string;
+  condition?: string;
+  postedBy: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+}
+
+export function ItemCard({
+  id,
+  title,
+  description,
+  image,
+  location,
+  coordinates,
+  category,
+  condition,
+  postedBy,
+}: ItemCardProps) {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const isOwner = session?.user?.id === postedBy.id;
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this post?")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Post deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete post. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEdit = () => {
+    navigate(`/post/edit/${id}`);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
+      <ItemImage image={image} title={title} />
+      <div className="p-4">
+        <ItemHeader
+          category={category}
+          condition={condition}
+          location={location}
+          coordinates={coordinates}
+          title={title}
+          description={description}
+          postedBy={postedBy}
+        />
+        {isOwner && (
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEdit}
+              className="flex items-center gap-2"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        )}
+        <div className="mt-4">
+          <ItemInteractions
+            id={id}
+            postedBy={postedBy}
+            isLiked={false}
+            showComments={false}
+            isBookmarked={false}
+            showInterest={false}
+            onLikeToggle={() => {}}
+            onCommentToggle={() => {}}
+            onShowInterest={() => {}}
+            onBookmarkToggle={() => {}}
+            onMessage={() => {}}
+            onShare={() => {}}
+            onReport={() => {}}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
