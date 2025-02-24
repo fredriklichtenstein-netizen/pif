@@ -16,7 +16,7 @@ export const usePostForm = () => {
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<CreatePostInput>({
+  const [formData, setFormData] = useState<CreatePostInput & { user_id?: string }>({
     title: "",
     description: "",
     category: "",
@@ -99,12 +99,12 @@ export const usePostForm = () => {
     setIsSubmitting(true);
 
     try {
-      const postDataWithUser = {
+      const postData: CreatePostInput = {
         ...formData,
         user_id: session.user.id,
       };
 
-      await addPost(postDataWithUser);
+      await addPost(postData);
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
       
       toast({

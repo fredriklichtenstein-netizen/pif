@@ -28,18 +28,28 @@ export const getPosts = async (): Promise<Post[]> => {
   }
 
   return data.map(item => ({
-    ...item,
+    id: item.id.toString(),
+    title: item.title,
+    description: item.description || '',
+    category: item.category || '',
+    condition: item.condition || '',
+    measurements: {}, // Initialize with empty object if not present
+    images: item.images || [],
+    location: item.location || '',
+    coordinates: item.coordinates,
+    status: item.status || 'available',
+    createdAt: item.created_at,
     postedBy: {
-      id: item.postedBy.id,
-      name: item.postedBy.profiles?.[0]?.first_name 
+      id: item.postedBy?.id || '',
+      name: item.postedBy?.profiles?.[0]?.first_name 
         ? `${item.postedBy.profiles[0].first_name} ${item.postedBy.profiles[0].last_name || ''}`
         : 'Anonymous',
-      avatar: item.postedBy.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+      avatar: item.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
     }
   }));
 };
 
-export const addPost = async (post: Post): Promise<Post> => {
+export const addPost = async (post: CreatePostInput): Promise<Post> => {
   const { data, error } = await supabase
     .from('items')
     .insert([{
@@ -51,7 +61,7 @@ export const addPost = async (post: Post): Promise<Post> => {
       images: post.images,
       location: post.location,
       coordinates: post.coordinates,
-      user_id: post.postedBy.id,
+      user_id: post.user_id,
       status: post.status
     }])
     .select(`
@@ -73,13 +83,23 @@ export const addPost = async (post: Post): Promise<Post> => {
   }
 
   return {
-    ...data,
+    id: data.id.toString(),
+    title: data.title,
+    description: data.description || '',
+    category: data.category || '',
+    condition: data.condition || '',
+    measurements: data.measurements || {},
+    images: data.images || [],
+    location: data.location || '',
+    coordinates: data.coordinates,
+    status: data.status || 'available',
+    createdAt: data.created_at,
     postedBy: {
-      id: data.postedBy.id,
-      name: data.postedBy.profiles?.[0]?.first_name 
+      id: data.postedBy?.id || '',
+      name: data.postedBy?.profiles?.[0]?.first_name 
         ? `${data.postedBy.profiles[0].first_name} ${data.postedBy.profiles[0].last_name || ''}`
         : 'Anonymous',
-      avatar: data.postedBy.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+      avatar: data.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
     }
   };
 };

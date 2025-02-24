@@ -16,7 +16,7 @@ export interface Post {
     name: string;
     avatar: string;
   };
-  createdAt: Date;
+  createdAt: string;
   status: string;
 }
 
@@ -28,13 +28,11 @@ export interface Coordinates {
   lng: number;
 }
 
-// Helper function to convert coordinates to PostgreSQL point format
 export const formatCoordinatesForDB = (coords: Coordinates | undefined): string | null => {
   if (!coords) return null;
   return `(${coords.lng},${coords.lat})`;
 };
 
-// Helper function to parse PostgreSQL point format to coordinates
 export const parseCoordinatesFromDB = (point: string | null): Coordinates | undefined => {
   if (!point) return undefined;
   const matches = point.match(/\(([-\d.]+),([-\d.]+)\)/);
