@@ -10,6 +10,7 @@ interface PostFormContainerProps {
   formData: CreatePostInput;
   isSubmitting: boolean;
   isAnalyzing: boolean;
+  isFormValid: boolean;
   onFormSubmit: (e: React.FormEvent) => Promise<void>;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImagesChange: (newImages: string[]) => void;
@@ -22,6 +23,7 @@ export function PostFormContainer({
   formData,
   isSubmitting,
   isAnalyzing,
+  isFormValid,
   onFormSubmit,
   onImageUpload,
   onImagesChange,
@@ -59,7 +61,7 @@ export function PostFormContainer({
         <Button
           type="submit"
           className="w-full mb-24"
-          disabled={isSubmitting || !formData.title || !formData.location || formData.images.length === 0}
+          disabled={isSubmitting || !isFormValid}
         >
           {isSubmitting ? (
             <>
