@@ -3,9 +3,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./images/ImageUpload";
 import { Trash2, Crop, Star } from "lucide-react";
-import type { CreatePostInput } from "@/types/post";
 import { usePostImages } from "@/hooks/post/usePostImages";
-import { useToast } from "@/hooks/use-toast";
+import { ImageCropperDialog } from "./ImageCropperDialog";
 
 interface PostFormImagesProps {
   images: string[];
@@ -20,15 +19,18 @@ export function PostFormImages({
   onImageUpload,
   onImagesChange
 }: PostFormImagesProps) {
-  const { toast } = useToast();
   const { 
     primaryImageIndex,
+    cropImage,
+    selectedImageIndex,
     handleDeleteImage,
     handleSetPrimaryImage,
-    handleCropImage
+    handleCropImage,
+    handleCropComplete,
+    handleCropCancel,
   } = usePostImages({
     images,
-    onImagesChange // Now we pass the proper handler directly
+    onImagesChange
   });
 
   const isPrimaryImageRequired = images.length === 0;
@@ -41,7 +43,6 @@ export function PostFormImages({
           {isAnalyzing && <span className="text-muted-foreground ml-2">(Analyzing...)</span>}
         </label>
 
-        {/* Main image upload area */}
         {isPrimaryImageRequired && (
           <div className="mt-2">
             <ImageUpload
@@ -53,7 +54,6 @@ export function PostFormImages({
           </div>
         )}
 
-        {/* Image preview grid with actions */}
         {images.length > 0 && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -101,7 +101,6 @@ export function PostFormImages({
                 </div>
               ))}
               
-              {/* Additional image upload button */}
               <ImageUpload
                 isAnalyzing={isAnalyzing}
                 onImageUpload={onImageUpload}
@@ -112,6 +111,14 @@ export function PostFormImages({
           </div>
         )}
       </div>
+
+      <ImageCropperDialog
+        cropImage={cropImage}
+        selectedImageIndex={selectedImageIndex}
+        onCropComplete={handleCropComplete}
+        onCancel={handleCropCancel}
+      />
     </div>
   );
 }
+

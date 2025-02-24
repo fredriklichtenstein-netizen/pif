@@ -1,19 +1,22 @@
 
-import React, { useState } from "react";
-import type { CreatePostInput } from "@/types/post";
+import React from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ImageCropper } from "@/components/profile/ImageCropper";
 import { getCroppedImg } from "@/utils/imageProcessing";
 
 interface ImageCropperDialogProps {
-  formData: CreatePostInput;
-  setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
+  cropImage: string | null;
+  selectedImageIndex: number | null;
+  onCropComplete: (croppedImageUrl: string) => void;
+  onCancel: () => void;
 }
 
-export function ImageCropperDialog({ formData, setFormData }: ImageCropperDialogProps) {
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-  const [cropImage, setCropImage] = useState<string | null>(null);
-
+export function ImageCropperDialog({ 
+  cropImage,
+  selectedImageIndex,
+  onCropComplete,
+  onCancel
+}: ImageCropperDialogProps) {
   const handleCropComplete = async (croppedAreaPixels: any) => {
     if (!cropImage) return;
     
@@ -21,31 +24,21 @@ export function ImageCropperDialog({ formData, setFormData }: ImageCropperDialog
     if (!croppedImageFile) return;
 
     const croppedImageUrl = URL.createObjectURL(croppedImageFile);
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.map((img, idx) => 
-        idx === selectedImageIndex ? croppedImageUrl : img
-      )
-    }));
-
-    setCropImage(null);
-    setSelectedImageIndex(null);
+    onCropComplete(croppedImageUrl);
   };
 
   return (
-    <Dialog open={!!cropImage} onOpenChange={() => setCropImage(null)}>
+    <Dialog open={!!cropImage} onOpenChange={() => onCancel()}>
       <DialogContent className="sm:max-w-[425px]">
         {cropImage && (
           <ImageCropper
             image={cropImage}
             onSave={handleCropComplete}
-            onCancel={() => {
-              setCropImage(null);
-              setSelectedImageIndex(null);
-            }}
+            onCancel={onCancel}
           />
         )}
       </DialogContent>
     </Dialog>
   );
 }
+
