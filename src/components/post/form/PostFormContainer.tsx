@@ -5,7 +5,6 @@ import { Loader2, X } from "lucide-react";
 import type { CreatePostInput } from "@/types/post";
 import { useNavigate } from "react-router-dom";
 import { PostFormSteps } from "./PostFormSteps";
-import { ImageCropperDialog } from "./ImageCropperDialog";
 
 interface PostFormContainerProps {
   formData: CreatePostInput;
@@ -69,8 +68,6 @@ export function PostFormContainer({
           )}
         </Button>
       </form>
-
-      <ImageCropperDialog formData={formData} setFormData={setFormData} />
     </div>
   );
 }
