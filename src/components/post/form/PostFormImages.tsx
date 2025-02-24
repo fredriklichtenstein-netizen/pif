@@ -29,25 +29,19 @@ export function PostFormImages({
       setPrimaryImageIndex(primaryImageIndex - 1);
     }
 
-    // Create a FileList-like object with the remaining images
-    const dt = new DataTransfer();
-    remainingImages.forEach(url => {
-      const file = new File([], url);
-      Object.defineProperty(file, 'name', { value: url });
-      dt.items.add(file);
+    // Create a change event with the remaining images
+    const changeEvent = new CustomEvent('imagechange', {
+      detail: { images: remainingImages }
     });
+    window.dispatchEvent(changeEvent);
 
-    // Create a real input element and dispatch a change event
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    Object.defineProperty(input, 'files', { value: dt.files });
-
-    const event = new Event('change', { bubbles: true }) as any;
-    event.target = input;
-    event.currentTarget = input;
-    
-    onImageUpload(event);
+    // Update the form data
+    const mockEvent = {
+      target: {
+        value: remainingImages
+      }
+    } as any;
+    onImageUpload(mockEvent);
   };
 
   const handleSetPrimaryImage = (index: number) => {
@@ -59,25 +53,19 @@ export function PostFormImages({
     newImages.unshift(movedImage);
     setPrimaryImageIndex(0);
     
-    // Create a FileList-like object with the reordered images
-    const dt = new DataTransfer();
-    newImages.forEach(url => {
-      const file = new File([], url);
-      Object.defineProperty(file, 'name', { value: url });
-      dt.items.add(file);
+    // Create a change event with the reordered images
+    const changeEvent = new CustomEvent('imagechange', {
+      detail: { images: newImages }
     });
+    window.dispatchEvent(changeEvent);
 
-    // Create a real input element and dispatch a change event
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    Object.defineProperty(input, 'files', { value: dt.files });
-
-    const event = new Event('change', { bubbles: true }) as any;
-    event.target = input;
-    event.currentTarget = input;
-    
-    onImageUpload(event);
+    // Update the form data
+    const mockEvent = {
+      target: {
+        value: newImages
+      }
+    } as any;
+    onImageUpload(mockEvent);
   };
 
   return (
