@@ -33,7 +33,7 @@ export const usePostForm = () => {
   const { isAnalyzing, handleImageUpload, handleAnalyzeImages } = usePostImages(formData, setFormData);
 
   // Location-related functionality
-  const { isGeocoding, handleGeocodeAddress } = usePostLocation(formData, setFormData);
+  const { isGeocoding } = usePostLocation(formData, setFormData);
 
   const handleMeasurementChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -131,7 +131,6 @@ export const usePostForm = () => {
     isGeocoding,
     isAnalyzing,
     setFormData,
-    handleGeocodeAddress,
     handleImageUpload,
     handleAnalyzeImages,
     handleMeasurementChange,

@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { geocodeAddress } from "@/utils/geocoding";
 
 export const useAddress = (mapToken: string, onAddressChange: (address: string) => void) => {
   const { toast } = useToast();
@@ -74,9 +73,15 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
   const handleShowMap = async (address: string) => {
     if (address) {
       try {
-        const coords = await geocodeAddress(address, mapToken);
-        setCoordinates(coords);
-        setShowMap(true);
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapToken}&country=SE&language=sv&types=address`
+        );
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+          const [lng, lat] = data.features[0].center;
+          setCoordinates({ lat, lng });
+          setShowMap(true);
+        }
       } catch (error) {
         console.error("Error geocoding address:", error);
         toast({
