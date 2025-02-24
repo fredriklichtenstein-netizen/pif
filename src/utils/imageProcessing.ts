@@ -4,7 +4,7 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
     image.addEventListener('error', error => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous'); // Add this to handle CORS
+    image.setAttribute('crossOrigin', 'anonymous');
     image.src = url;
   });
 
@@ -21,11 +21,9 @@ export async function getCroppedImg(
       throw new Error('No 2d context');
     }
 
-    // Set proper canvas dimensions
     canvas.width = pixelCrop.width;
     canvas.height = pixelCrop.height;
 
-    // Draw circular crop
     ctx.beginPath();
     ctx.arc(
       canvas.width / 2,
@@ -37,7 +35,6 @@ export async function getCroppedImg(
     );
     ctx.clip();
 
-    // Draw the image
     ctx.drawImage(
       image,
       pixelCrop.x,
@@ -50,7 +47,6 @@ export async function getCroppedImg(
       pixelCrop.height
     );
 
-    // Convert to blob with error handling
     return new Promise((resolve) => {
       try {
         canvas.toBlob(
@@ -59,7 +55,7 @@ export async function getCroppedImg(
               resolve(null);
               return;
             }
-            const file = new File([blob], 'cropped-profile.jpg', {
+            const file = new File([blob], 'cropped-image.jpg', {
               type: 'image/jpeg',
               lastModified: Date.now(),
             });
@@ -78,4 +74,3 @@ export async function getCroppedImg(
     return null;
   }
 }
-

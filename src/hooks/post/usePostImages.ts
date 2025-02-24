@@ -11,17 +11,65 @@ export const usePostImages = (
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('post-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        return null;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('post-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error in uploadImage:', error);
+      return null;
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
-    const imageUrls = Array.from(files).map((file) =>
-      URL.createObjectURL(file)
-    );
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...imageUrls],
-    }));
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const imageUrl = await uploadImage(file);
+      return imageUrl;
+    });
+
+    try {
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const validUrls = uploadedUrls.filter((url): url is string => url !== null);
+
+      if (validUrls.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, ...validUrls],
+        }));
+      } else {
+        toast({
+          title: "Upload failed",
+          description: "Could not upload one or more images. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error handling image upload:', error);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload images. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const analyzeImage = async (imageUrl: string) => {

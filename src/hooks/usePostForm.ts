@@ -47,32 +47,25 @@ export const usePostForm = () => {
 
   // Fetch user's profile address on mount
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchProfileAddress() {
+    const fetchProfileAddress = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
         const { data: profile } = await supabase
           .from('profiles')
           .select('address')
-          .eq('id', user.id)
           .single();
 
-        if (!profile?.address || !isMounted) return;
-
-        sessionStorage.setItem('profile_address', profile.address);
+        if (profile?.address) {
+          sessionStorage.setItem('profile_address', profile.address);
+        }
       } catch (error) {
         console.error('Error fetching profile address:', error);
       }
-    }
-
-    fetchProfileAddress();
-    return () => {
-      isMounted = false;
     };
-  }, []);
+
+    if (session?.user) {
+      fetchProfileAddress();
+    }
+  }, [session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +84,15 @@ export const usePostForm = () => {
       toast({
         title: "Missing location",
         description: "Please enter and verify a valid address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.images.length === 0) {
+      toast({
+        title: "Missing images",
+        description: "Please upload at least one image.",
         variant: "destructive",
       });
       return;
