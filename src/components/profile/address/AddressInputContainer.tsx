@@ -28,23 +28,29 @@ export function AddressInputContainer({
     suggestions,
     showMap,
     coordinates,
+    isLoadingSuggestions,
     setSuggestions,
     handleAddressChange,
     handleUseCurrentLocation,
     handleShowMap,
-  } = useAddress(mapToken, (address: string, coords?: { lat: number; lng: number }) => {
-    console.log("Address selected in container:", { address, coords });
-    onChange(address, coords);
-  });
+  } = useAddress(mapToken, onChange);
 
-  const handleAddressInput = async (input: string) => {
+  const handleAddressInput = (input: string) => {
     console.log("handleAddressInput called with:", input);
     handleAddressChange(input);
-    if (input.length > 3) {
-      const coords = await handleShowMap(input);
-      onChange(input, coords);
-    } else {
-      onChange(input, undefined);
+  };
+
+  const handleSuggestionSelect = async (suggestion: string) => {
+    console.log("Suggestion selected:", suggestion);
+    setSuggestions([]); // Clear immediately
+    const coords = await handleShowMap(suggestion);
+    onChange(suggestion, coords);
+  };
+
+  const handleMapButtonClick = async () => {
+    if (value) {
+      const coords = await handleShowMap(value);
+      onChange(value, coords);
     }
   };
 
@@ -70,21 +76,19 @@ export function AddressInputContainer({
           <Button
             type="button"
             variant="outline"
-            onClick={() => handleShowMap(value)}
+            onClick={handleMapButtonClick}
           >
             {mapButtonLabel}
           </Button>
         </div>
       )}
 
-      <AddressSuggestions
-        suggestions={suggestions}
-        onSelect={(suggestion) => {
-          console.log("Suggestion selected:", suggestion);
-          handleAddressInput(suggestion);
-          setSuggestions([]);
-        }}
-      />
+      {suggestions.length > 0 && !isLoadingSuggestions && (
+        <AddressSuggestions
+          suggestions={suggestions}
+          onSelect={handleSuggestionSelect}
+        />
+      )}
 
       {showMap && coordinates && (
         <AddressMap

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import debounce from "lodash/debounce";
 
@@ -12,35 +12,52 @@ export const useAddress = (
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Debounced function for fetching address suggestions
   const debouncedFetchSuggestions = useCallback(
     debounce(async (address: string) => {
-      if (address.length > 3) {
-        setIsLoadingSuggestions(true);
-        try {
-          const response = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-              address
-            )}.json?access_token=${mapToken}&country=SE&language=sv&types=address`
-          );
-          const data = await response.json();
-          setSuggestions(
-            data.features.map((feature: any) => feature.place_name).slice(0, 5)
-          );
-        } catch (error) {
-          console.error("Error fetching address suggestions:", error);
-        } finally {
-          setIsLoadingSuggestions(false);
-        }
-      } else {
+      if (address.length <= 3) {
         setSuggestions([]);
+        return;
+      }
+
+      // Cancel any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+            address
+          )}.json?access_token=${mapToken}&country=SE&language=sv&types=address`,
+          { signal: abortControllerRef.current.signal }
+        );
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        setSuggestions(
+          data.features.map((feature: any) => feature.place_name).slice(0, 5)
+        );
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error("Error fetching address suggestions:", error);
+          setSuggestions([]);
+        }
+      } finally {
+        setIsLoadingSuggestions(false);
       }
     }, 300),
     [mapToken]
   );
 
-  const handleAddressChange = async (address: string) => {
+  const handleAddressChange = (address: string) => {
     console.log("useAddress.handleAddressChange:", address);
     onAddressChange(address);
     debouncedFetchSuggestions(address);
@@ -86,32 +103,33 @@ export const useAddress = (
 
   const handleShowMap = async (address: string): Promise<{ lat: number; lng: number } | undefined> => {
     console.log("useAddress.handleShowMap:", address);
-    if (address) {
-      try {
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapToken}&country=SE&language=sv&types=address`
-        );
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          const [lng, lat] = data.features[0].center;
-          const newCoords = { lat, lng };
-          setCoordinates(newCoords);
-          setShowMap(true);
-          setSuggestions([]); // Clear suggestions after showing map
-          return newCoords;
-        }
-      } catch (error) {
-        console.error("Error geocoding address:", error);
-        toast({
-          title: "Error",
-          description: "Could not locate the address on the map. Please verify the address.",
-          variant: "destructive",
-        });
-      }
-    } else {
+    if (!address) {
       toast({
         title: "Error",
         description: "Please enter an address first.",
+        variant: "destructive",
+      });
+      return undefined;
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapToken}&country=SE&language=sv&types=address`
+      );
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const [lng, lat] = data.features[0].center;
+        const newCoords = { lat, lng };
+        setCoordinates(newCoords);
+        setShowMap(true);
+        setSuggestions([]); // Clear suggestions after showing map
+        return newCoords;
+      }
+    } catch (error) {
+      console.error("Error geocoding address:", error);
+      toast({
+        title: "Error",
+        description: "Could not locate the address on the map. Please verify the address.",
         variant: "destructive",
       });
     }
