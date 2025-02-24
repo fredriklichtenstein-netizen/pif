@@ -15,6 +15,7 @@ interface PostFormContainerProps {
   onImagesChange: (newImages: string[]) => void;
   onMeasurementChange: (field: string, value: string) => void;
   setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
+  onAddressSelect: (address: string, coordinates?: { lat: number; lng: number }) => void;
 }
 
 export function PostFormContainer({
@@ -26,6 +27,7 @@ export function PostFormContainer({
   onImagesChange,
   onMeasurementChange,
   setFormData,
+  onAddressSelect,
 }: PostFormContainerProps) {
   const navigate = useNavigate();
 
@@ -51,6 +53,7 @@ export function PostFormContainer({
           onImagesChange={onImagesChange}
           onMeasurementChange={onMeasurementChange}
           setFormData={setFormData}
+          onAddressSelect={onAddressSelect}
         />
 
         <Button
