@@ -1,67 +1,101 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { imageUrl } = await req.json()
+    const { imageUrl } = await req.json();
+    console.log("Analyzing image:", imageUrl);
 
-    // Call OpenAI's GPT-4 Vision model for better image analysis
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    if (!imageUrl) {
+      throw new Error("No image URL provided");
+    }
+
+    // Add a timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Analysis timed out")), 30000);
+    });
+
+    const analysisPromise = fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: "You are an expert at analyzing images of furniture and household items. Focus on identifying the main item, its category, and visible condition. Respond with a JSON object containing title (brief item name), category (furniture/electronics/clothing/etc), condition (like new/good/fair), and a brief description focusing on notable features. Do not include measurements or specific dimensions in the description as these are handled separately."
+            content: "You are a helpful assistant that analyzes images of items being given away. Extract key information about the item."
           },
           {
             role: "user",
             content: [
               {
-                type: "text",
-                text: "What is this item? Describe it in detail but focus only on what you can see."
+                type: "image_url",
+                image_url: imageUrl,
               },
               {
-                type: "image_url",
-                image_url: imageUrl
+                type: "text",
+                text: "Analyze this image and provide a title, description, category (Furniture, Clothing, Electronics, etc), and condition (New, Good, Fair, Poor) for this item. Format your response as JSON."
               }
             ]
           }
-        ]
+        ],
+        max_tokens: 500
       })
-    })
+    });
 
-    const result = await response.json()
-    const content = result.choices[0].message.content
+    // Race between the analysis and the timeout
+    const response = await Promise.race([analysisPromise, timeoutPromise]);
+    const data = await response.json();
 
-    // Parse the JSON response
-    const analysisResult = JSON.parse(content)
+    if (!data.choices || !data.choices[0]) {
+      throw new Error("Invalid response from OpenAI");
+    }
 
-    return new Response(
-      JSON.stringify(analysisResult),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    console.log("Analysis completed successfully");
+    
+    let parsedContent;
+    try {
+      parsedContent = JSON.parse(data.choices[0].message.content);
+    } catch (e) {
+      console.error("Error parsing AI response:", e);
+      // If parsing fails, try to extract information using a more lenient approach
+      const content = data.choices[0].message.content;
+      parsedContent = {
+        title: content.match(/title["']?\s*:?\s*["']([^"']+)["']/)?.[1] || "",
+        description: content.match(/description["']?\s*:?\s*["']([^"']+)["']/)?.[1] || "",
+        category: content.match(/category["']?\s*:?\s*["']([^"']+)["']/)?.[1] || "",
+        condition: content.match(/condition["']?\s*:?\s*["']([^"']+)["']/)?.[1] || ""
+      };
+    }
+
+    return new Response(JSON.stringify(parsedContent), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
   } catch (error) {
-    console.error('Error:', error)
+    console.error("Error in analyze-image function:", error);
     return new Response(
-      JSON.stringify({ error: 'Failed to analyze image', details: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "An unknown error occurred",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
-})
+});

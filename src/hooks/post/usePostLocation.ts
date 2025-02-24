@@ -36,6 +36,7 @@ export const usePostLocation = (
         lng: geocodeResult.lng
       });
       
+      // Update form data in a single operation to prevent race conditions
       setFormData(prev => ({ 
         ...prev, 
         coordinates,
@@ -52,12 +53,14 @@ export const usePostLocation = (
       }
     } catch (error) {
       console.error("Geocoding error:", error);
-      setFormData(prev => ({ 
-        ...prev, 
-        coordinates: null
-      }));
       
+      // Don't clear coordinates immediately on profile address fetch
       if (!isInitialLoad) {
+        setFormData(prev => ({ 
+          ...prev, 
+          coordinates: null
+        }));
+        
         toast({
           title: "Invalid address",
           description: error instanceof Error ? error.message : "Please enter a complete Swedish address.",

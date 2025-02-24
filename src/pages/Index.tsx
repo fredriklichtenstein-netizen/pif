@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Post, CreatePostInput } from "@/types/post";
@@ -38,7 +39,7 @@ export const getPosts = async (): Promise<Post[]> => {
     description: item.description || '',
     category: item.category || '',
     condition: item.condition || '',
-    measurements: {}, // Initialize with empty object if not present
+    measurements: item.measurements || {}, // Handle null measurements
     images: item.images || [],
     location: item.location || '',
     coordinates: item.coordinates as string | null,
@@ -60,6 +61,9 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
     throw new Error("Must be logged in to create a post");
   }
 
+  const user_id = session.data.session.user.id;
+  console.log("Creating post with user_id:", user_id); // Debug log
+
   const { data, error } = await supabase
     .from('items')
     .insert([{
@@ -71,7 +75,7 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
       images: post.images,
       location: post.location,
       coordinates: post.coordinates,
-      user_id: session.data.session.user.id,
+      user_id: user_id, // Pass user_id directly as a string
       status: post.status || 'available'
     }])
     .select(`
