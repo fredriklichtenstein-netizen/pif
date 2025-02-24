@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./images/ImageUpload";
 import { Trash2, Crop, Star } from "lucide-react";
 import type { CreatePostInput } from "@/types/post";
+import { usePostImages } from "@/hooks/post/usePostImages";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostFormImagesProps {
   images: string[];
@@ -13,60 +15,27 @@ interface PostFormImagesProps {
 
 export function PostFormImages({ 
   images, 
-  isAnalyzing, 
+  isAnalyzing,
   onImageUpload 
 }: PostFormImagesProps) {
-  const isPrimaryImageRequired = images.length === 0;
-  const [primaryImageIndex, setPrimaryImageIndex] = React.useState(0);
-
-  const handleDeleteImage = (index: number) => {
-    const remainingImages = images.filter((_, i) => i !== index);
-    
-    // If we delete the primary image, set the next image as primary
-    if (index === primaryImageIndex) {
-      setPrimaryImageIndex(0);
-    } else if (index < primaryImageIndex) {
-      setPrimaryImageIndex(primaryImageIndex - 1);
+  const { toast } = useToast();
+  const { 
+    primaryImageIndex,
+    handleDeleteImage,
+    handleSetPrimaryImage,
+    handleCropImage
+  } = usePostImages({
+    images,
+    onImagesChange: (newImages) => {
+      // Use the onImageUpload prop to update parent state
+      const syntheticEvent = {
+        target: { value: newImages }
+      } as any;
+      onImageUpload(syntheticEvent);
     }
+  });
 
-    // Create a change event with the remaining images
-    const changeEvent = new CustomEvent('imagechange', {
-      detail: { images: remainingImages }
-    });
-    window.dispatchEvent(changeEvent);
-
-    // Update the form data
-    const mockEvent = {
-      target: {
-        value: remainingImages
-      }
-    } as any;
-    onImageUpload(mockEvent);
-  };
-
-  const handleSetPrimaryImage = (index: number) => {
-    if (index === primaryImageIndex) return;
-    
-    // Reorder images to put the primary image first
-    const newImages = [...images];
-    const [movedImage] = newImages.splice(index, 1);
-    newImages.unshift(movedImage);
-    setPrimaryImageIndex(0);
-    
-    // Create a change event with the reordered images
-    const changeEvent = new CustomEvent('imagechange', {
-      detail: { images: newImages }
-    });
-    window.dispatchEvent(changeEvent);
-
-    // Update the form data
-    const mockEvent = {
-      target: {
-        value: newImages
-      }
-    } as any;
-    onImageUpload(mockEvent);
-  };
+  const isPrimaryImageRequired = images.length === 0;
 
   return (
     <div className="space-y-4">
@@ -113,7 +82,7 @@ export function PostFormImages({
                       size="icon"
                       variant="ghost"
                       className="text-white hover:text-white hover:bg-primary/50"
-                      onClick={() => {/* Implement crop action */}}
+                      onClick={() => handleCropImage(index)}
                       aria-label="Crop image"
                     >
                       <Crop className="h-4 w-4" />
