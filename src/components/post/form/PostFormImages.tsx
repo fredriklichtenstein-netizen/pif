@@ -2,6 +2,8 @@
 import React from "react";
 import { ImagePreview } from "./images/ImagePreview";
 import { ImageUpload } from "./images/ImageUpload";
+import { Button } from "@/components/ui/button";
+import { Trash2, Crop, Star } from "lucide-react";
 
 interface PostFormImagesProps {
   images: string[];
@@ -15,20 +17,101 @@ export function PostFormImages({
   onImageUpload 
 }: PostFormImagesProps) {
   const isPrimaryImageRequired = images.length === 0;
+  const [primaryImageIndex, setPrimaryImageIndex] = React.useState(0);
+
+  const handleDeleteImage = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    // If we delete the primary image, set the next image as primary
+    if (index === primaryImageIndex) {
+      setPrimaryImageIndex(0);
+    } else if (index < primaryImageIndex) {
+      setPrimaryImageIndex(primaryImageIndex - 1);
+    }
+  };
+
+  const handleSetPrimaryImage = (index: number) => {
+    setPrimaryImageIndex(index);
+  };
 
   return (
-    <div className="space-y-2">
-      <label htmlFor="images" className="text-sm font-medium">
-        {isPrimaryImageRequired ? "Upload Primary Image (Required)" : "Add More Images"}
-        {isAnalyzing && <span className="text-muted-foreground ml-2">(Analyzing...)</span>}
-      </label>
-      <div className="grid grid-cols-2 gap-4 mt-2">
-        <ImagePreview images={images} />
-        <ImageUpload
-          isAnalyzing={isAnalyzing}
-          onImageUpload={onImageUpload}
-          isPrimaryImageRequired={isPrimaryImageRequired}
-        />
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label htmlFor="images" className="text-sm font-medium">
+          {isPrimaryImageRequired ? "Upload Primary Image (Required)" : "Images"}
+          {isAnalyzing && <span className="text-muted-foreground ml-2">(Analyzing...)</span>}
+        </label>
+
+        {/* Main image upload area */}
+        {isPrimaryImageRequired && (
+          <div className="mt-2">
+            <ImageUpload
+              isAnalyzing={isAnalyzing}
+              onImageUpload={onImageUpload}
+              isPrimaryImageRequired={true}
+              variant="primary"
+            />
+          </div>
+        )}
+
+        {/* Image preview grid with actions */}
+        {images.length > 0 && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {images.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={image}
+                    alt={`Image ${index + 1}`}
+                    className="w-full aspect-square object-cover rounded-lg"
+                  />
+                  {/* Image actions overlay */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-white hover:text-white hover:bg-primary/50"
+                      onClick={() => handleDeleteImage(index)}
+                      aria-label="Delete image"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-white hover:text-white hover:bg-primary/50"
+                      onClick={() => {/* Implement crop action */}}
+                      aria-label="Crop image"
+                    >
+                      <Crop className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={`text-white hover:text-white hover:bg-primary/50 ${index === primaryImageIndex ? 'text-yellow-400' : ''}`}
+                      onClick={() => handleSetPrimaryImage(index)}
+                      aria-label="Set as primary image"
+                    >
+                      <Star className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {index === primaryImageIndex && (
+                    <div className="absolute top-2 left-2 bg-primary text-white px-2 py-1 rounded-md text-xs">
+                      Primary
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {/* Additional image upload button */}
+              <ImageUpload
+                isAnalyzing={isAnalyzing}
+                onImageUpload={onImageUpload}
+                isPrimaryImageRequired={false}
+                variant="secondary"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

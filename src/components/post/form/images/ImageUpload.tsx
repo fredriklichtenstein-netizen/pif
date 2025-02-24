@@ -6,33 +6,54 @@ interface ImageUploadProps {
   isAnalyzing?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isPrimaryImageRequired?: boolean;
+  variant: 'primary' | 'secondary';
 }
 
 export function ImageUpload({ 
   isAnalyzing, 
   onImageUpload, 
-  isPrimaryImageRequired 
+  isPrimaryImageRequired,
+  variant
 }: ImageUploadProps) {
+  const isPrimary = variant === 'primary';
+
   return (
-    <label className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-40 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-      {isAnalyzing ? (
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      ) : (
-        <>
-          <ImagePlus className="h-8 w-8 mb-2 text-gray-400" />
-          <span className="text-sm text-gray-500">
-            {isPrimaryImageRequired ? "Add primary photo" : "Add more photos"}
-          </span>
-        </>
-      )}
+    <label className={`
+      relative block border-2 border-dashed rounded-lg cursor-pointer 
+      transition-colors
+      ${isPrimary 
+        ? 'h-60 border-primary hover:bg-primary/5' 
+        : 'h-40 aspect-square border-gray-300 hover:border-primary'
+      }
+    `}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+        {isAnalyzing ? (
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        ) : (
+          <>
+            <ImagePlus className={`mb-2 ${isPrimary ? 'h-10 w-10 text-primary' : 'h-8 w-8 text-gray-400'}`} />
+            <span className={`text-sm text-center ${isPrimary ? 'text-primary font-medium' : 'text-gray-500'}`}>
+              {isPrimaryImageRequired 
+                ? "Upload primary photo (Required)" 
+                : "Add more photos"}
+            </span>
+            {isPrimary && (
+              <span className="text-xs text-muted-foreground mt-1">
+                Click or drag and drop
+              </span>
+            )}
+          </>
+        )}
+      </div>
       <input
         type="file"
         accept="image/*"
-        multiple
+        multiple={!isPrimaryImageRequired}
         className="hidden"
         onChange={onImageUpload}
         disabled={isAnalyzing}
         required={isPrimaryImageRequired}
+        aria-label={isPrimaryImageRequired ? "Upload primary image" : "Upload additional images"}
       />
     </label>
   );
