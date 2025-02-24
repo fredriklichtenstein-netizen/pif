@@ -12,7 +12,6 @@ export function PostForm() {
     isAnalyzing,
     setFormData,
     handleImageUpload,
-    handleAnalyzeImages,
     handleMeasurementChange,
     handleSubmit,
   } = usePostForm();
