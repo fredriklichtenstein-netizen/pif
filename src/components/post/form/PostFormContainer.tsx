@@ -29,7 +29,15 @@ export function PostFormContainer({
 }: PostFormContainerProps) {
   return (
     <form onSubmit={onFormSubmit} className="space-y-8 max-w-2xl mx-auto p-4">
-      <PostFormHeader isSubmitting={isSubmitting} />
+      <PostFormHeader
+        title={formData.title}
+        category={formData.category}
+        condition={formData.condition}
+        onTitleChange={(value) => setFormData({ ...formData, title: value })}
+        onCategoryChange={(value) => setFormData({ ...formData, category: value })}
+        onConditionChange={(value) => setFormData({ ...formData, condition: value })}
+        isSubmitting={isSubmitting}
+      />
       <PostFormSteps
         formData={formData}
         isAnalyzing={isAnalyzing}
@@ -42,4 +50,3 @@ export function PostFormContainer({
     </form>
   );
 }
-
