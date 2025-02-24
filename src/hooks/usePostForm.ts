@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { CreatePostInput } from "@/types/post";
 import { addPost } from "@/pages/Index";
 import { supabase } from "@/integrations/supabase/client";
-import { usePostImages } from "./post/usePostImages";
 import { usePostLocation } from "./post/usePostLocation";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -52,6 +50,11 @@ export const usePostForm = () => {
     }
     
     setIsAnalyzing(false);
+  };
+
+  // New function to handle image array updates
+  const handleImagesChange = (newImages: string[]) => {
+    setFormData(prev => ({ ...prev, images: newImages }));
   };
 
   // Fetch user's profile address on mount
@@ -153,6 +156,7 @@ export const usePostForm = () => {
     isAnalyzing,
     setFormData,
     handleImageUpload,
+    handleImagesChange,
     handleMeasurementChange,
     handleSubmit,
   };

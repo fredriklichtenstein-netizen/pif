@@ -12,6 +12,7 @@ export function PostForm() {
     isAnalyzing,
     setFormData,
     handleImageUpload,
+    handleImagesChange,
     handleMeasurementChange,
     handleSubmit,
   } = usePostForm();
@@ -27,6 +28,7 @@ export function PostForm() {
       isAnalyzing={isAnalyzing}
       onFormSubmit={handleSubmit}
       onImageUpload={handleImageUpload}
+      onImagesChange={handleImagesChange}
       onMeasurementChange={handleMeasurementChange}
       setFormData={setFormData}
     />

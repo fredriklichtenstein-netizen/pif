@@ -11,12 +11,14 @@ interface PostFormImagesProps {
   images: string[];
   isAnalyzing?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImagesChange: (newImages: string[]) => void;
 }
 
 export function PostFormImages({ 
   images, 
   isAnalyzing,
-  onImageUpload 
+  onImageUpload,
+  onImagesChange
 }: PostFormImagesProps) {
   const { toast } = useToast();
   const { 
@@ -26,13 +28,7 @@ export function PostFormImages({
     handleCropImage
   } = usePostImages({
     images,
-    onImagesChange: (newImages) => {
-      // Use the onImageUpload prop to update parent state
-      const syntheticEvent = {
-        target: { value: newImages }
-      } as any;
-      onImageUpload(syntheticEvent);
-    }
+    onImagesChange // Now we pass the proper handler directly
   });
 
   const isPrimaryImageRequired = images.length === 0;
