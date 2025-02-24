@@ -23,6 +23,7 @@ export function PostFormContainer({
   formData,
   isSubmitting,
   isGeocoding,
+  isAnalyzing,
   onFormSubmit,
   onGeocodeAddress,
   onImageUpload,
@@ -47,6 +48,8 @@ export function PostFormContainer({
       <form onSubmit={onFormSubmit} className="space-y-8 max-w-2xl mx-auto">
         <PostFormSteps
           formData={formData}
+          isAnalyzing={isAnalyzing}
+          isGeocoding={isGeocoding}
           onImageUpload={onImageUpload}
           onGeocodeAddress={onGeocodeAddress}
           onMeasurementChange={onMeasurementChange}

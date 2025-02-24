@@ -7,6 +7,8 @@ import { PostFormLocation } from "./PostFormLocation";
 
 interface PostFormStepsProps {
   formData: CreatePostInput;
+  isAnalyzing?: boolean;
+  isGeocoding?: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGeocodeAddress: () => Promise<void>;
   onMeasurementChange: (field: string, value: string) => void;
@@ -15,6 +17,8 @@ interface PostFormStepsProps {
 
 export function PostFormSteps({
   formData,
+  isAnalyzing,
+  isGeocoding,
   onImageUpload,
   onGeocodeAddress,
   onMeasurementChange,
@@ -27,7 +31,7 @@ export function PostFormSteps({
         <PostFormImages 
           images={formData.images} 
           onImageUpload={onImageUpload}
-          setFormData={setFormData}
+          isAnalyzing={isAnalyzing}
         />
       </div>
 
@@ -44,12 +48,10 @@ export function PostFormSteps({
         <h2 className="text-lg font-semibold">3. Location</h2>
         <PostFormLocation
           location={formData.location}
-          onChange={(address) => {
-            setFormData(prev => ({ ...prev, location: address }));
-            if (address) {
-              onGeocodeAddress();
-            }
-          }}
+          coordinates={formData.coordinates}
+          isGeocoding={isGeocoding || false}
+          onLocationChange={(address) => setFormData(prev => ({ ...prev, location: address }))}
+          onGeocodeAddress={onGeocodeAddress}
         />
       </div>
     </>

@@ -2,8 +2,10 @@
 import React from "react";
 import { PostFormContainer } from "./form/PostFormContainer";
 import { usePostForm } from "@/hooks/usePostForm";
+import { useMapbox } from "@/hooks/useMapbox";
 
 export function PostForm() {
+  const { mapToken } = useMapbox();
   const {
     formData,
     isSubmitting,
@@ -17,6 +19,10 @@ export function PostForm() {
     handleSubmit,
   } = usePostForm();
 
+  if (!mapToken) {
+    return <div>Loading map configuration...</div>;
+  }
+
   return (
     <PostFormContainer
       formData={formData}
@@ -24,7 +30,7 @@ export function PostForm() {
       isGeocoding={isGeocoding}
       isAnalyzing={isAnalyzing}
       onFormSubmit={handleSubmit}
-      onGeocodeAddress={handleGeocodeAddress}
+      onGeocodeAddress={() => handleGeocodeAddress(mapToken)}
       onImageUpload={handleImageUpload}
       onMeasurementChange={handleMeasurementChange}
       setFormData={setFormData}
