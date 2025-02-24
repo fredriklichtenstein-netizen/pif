@@ -1,10 +1,13 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Post } from "@/types/post";
+import type { Post, CreatePostInput } from "@/types/post";
 import { ItemCard } from "@/components/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProfileData = Database["public"]["Tables"]["profiles"]["Row"];
 
 export const getPosts = async (): Promise<Post[]> => {
   const { data, error } = await supabase
@@ -36,13 +39,13 @@ export const getPosts = async (): Promise<Post[]> => {
     measurements: {}, // Initialize with empty object if not present
     images: item.images || [],
     location: item.location || '',
-    coordinates: item.coordinates,
+    coordinates: item.coordinates as string | null,
     status: item.status || 'available',
     createdAt: item.created_at,
     postedBy: {
       id: item.postedBy?.id || '',
-      name: item.postedBy?.profiles?.[0]?.first_name 
-        ? `${item.postedBy.profiles[0].first_name} ${item.postedBy.profiles[0].last_name || ''}`
+      name: item.postedBy?.profiles?.[0]
+        ? `${item.postedBy.profiles[0].first_name || ''} ${item.postedBy.profiles[0].last_name || ''}`
         : 'Anonymous',
       avatar: item.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
     }
@@ -91,13 +94,13 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
     measurements: data.measurements || {},
     images: data.images || [],
     location: data.location || '',
-    coordinates: data.coordinates,
+    coordinates: data.coordinates as string | null,
     status: data.status || 'available',
     createdAt: data.created_at,
     postedBy: {
       id: data.postedBy?.id || '',
-      name: data.postedBy?.profiles?.[0]?.first_name 
-        ? `${data.postedBy.profiles[0].first_name} ${data.postedBy.profiles[0].last_name || ''}`
+      name: data.postedBy?.profiles?.[0]
+        ? `${data.postedBy.profiles[0].first_name || ''} ${data.postedBy.profiles[0].last_name || ''}`
         : 'Anonymous',
       avatar: data.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
     }

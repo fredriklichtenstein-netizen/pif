@@ -10,7 +10,7 @@ export interface Post {
   };
   images: string[];
   location: string;
-  coordinates: string | null; // PostgreSQL point type is stored as string "(x,y)"
+  coordinates: string | null;
   postedBy: {
     id: string;
     name: string;
@@ -20,9 +20,10 @@ export interface Post {
   status: string;
 }
 
-export type CreatePostInput = Omit<Post, "id" | "postedBy" | "createdAt">;
+export type CreatePostInput = Omit<Post, "id" | "postedBy" | "createdAt"> & {
+  user_id?: string;
+};
 
-// Helper type for coordinate handling
 export interface Coordinates {
   lat: number;
   lng: number;

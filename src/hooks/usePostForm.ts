@@ -16,7 +16,7 @@ export const usePostForm = () => {
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<CreatePostInput & { user_id?: string }>({
+  const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     description: "",
     category: "",
@@ -26,6 +26,7 @@ export const usePostForm = () => {
     location: "",
     coordinates: null,
     status: "available",
+    user_id: undefined,
   });
 
   // Image-related functionality
@@ -61,7 +62,6 @@ export const usePostForm = () => {
 
         if (!profile?.address || !isMounted) return;
 
-        // Store the address in sessionStorage for quick access
         sessionStorage.setItem('profile_address', profile.address);
       } catch (error) {
         console.error('Error fetching profile address:', error);
