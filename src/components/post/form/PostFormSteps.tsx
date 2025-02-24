@@ -12,7 +12,7 @@ interface PostFormStepsProps {
   onImagesChange: (newImages: string[]) => void;
   onMeasurementChange: (field: string, value: string) => void;
   setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
-  onAddressSelect?: (address: string, coordinates: { lat: number; lng: number } | undefined) => void;
+  onAddressSelect: (address: string, coordinates?: { lat: number; lng: number }) => void;
 }
 
 export function PostFormSteps({
@@ -53,9 +53,7 @@ export function PostFormSteps({
           </label>
           <AddressInput
             value={formData.location}
-            onChange={(address, coordinates) => {
-              onAddressSelect?.(address, coordinates);
-            }}
+            onChange={onAddressSelect}
           />
         </div>
       </div>
