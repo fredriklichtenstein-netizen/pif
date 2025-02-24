@@ -51,7 +51,6 @@ export function ImageUpload({
         multiple={!isPrimaryImageRequired}
         className="hidden"
         onChange={onImageUpload}
-        disabled={isAnalyzing}
         required={isPrimaryImageRequired}
         aria-label={isPrimaryImageRequired ? "Upload primary image" : "Upload additional images"}
       />
