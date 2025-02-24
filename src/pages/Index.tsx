@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Post, CreatePostInput } from "@/types/post";
@@ -8,13 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type ItemWithProfile = Database['public']['Tables']['items']['Row'] & {
-  postedBy: {
-    id: string;
-    profiles: Array<{
-      first_name: string | null;
-      last_name: string | null;
-      avatar_url: string | null;
-    }>;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
   } | null;
 };
 
@@ -23,13 +19,10 @@ export const getPosts = async (): Promise<Post[]> => {
     .from('items')
     .select(`
       *,
-      postedBy:user_id (
-        id,
-        profiles (
-          first_name,
-          last_name,
-          avatar_url
-        )
+      profiles!fk_user_profile (
+        first_name,
+        last_name,
+        avatar_url
       )
     `)
     .order('created_at', { ascending: false });
@@ -52,11 +45,11 @@ export const getPosts = async (): Promise<Post[]> => {
     status: item.status || 'available',
     createdAt: item.created_at,
     postedBy: {
-      id: item.postedBy?.id || '',
-      name: item.postedBy?.profiles?.[0]
-        ? `${item.postedBy.profiles[0].first_name || ''} ${item.postedBy.profiles[0].last_name || ''}`
+      id: item.user_id || '',
+      name: item.profiles
+        ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`
         : 'Anonymous',
-      avatar: item.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+      avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
     }
   }));
 };
@@ -83,13 +76,10 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
     }])
     .select(`
       *,
-      postedBy:user_id (
-        id,
-        profiles (
-          first_name,
-          last_name,
-          avatar_url
-        )
+      profiles!fk_user_profile (
+        first_name,
+        last_name,
+        avatar_url
       )
     `)
     .single();
@@ -114,11 +104,11 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
     status: itemWithProfile.status || 'available',
     createdAt: itemWithProfile.created_at,
     postedBy: {
-      id: itemWithProfile.postedBy?.id || '',
-      name: itemWithProfile.postedBy?.profiles?.[0]
-        ? `${itemWithProfile.postedBy.profiles[0].first_name || ''} ${itemWithProfile.postedBy.profiles[0].last_name || ''}`
+      id: itemWithProfile.user_id || '',
+      name: itemWithProfile.profiles
+        ? `${itemWithProfile.profiles.first_name || ''} ${itemWithProfile.profiles.last_name || ''}`
         : 'Anonymous',
-      avatar: itemWithProfile.postedBy?.profiles?.[0]?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+      avatar: itemWithProfile.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
     }
   };
 };
