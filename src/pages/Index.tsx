@@ -39,7 +39,7 @@ export const getPosts = async (): Promise<Post[]> => {
     description: item.description || '',
     category: item.category || '',
     condition: item.condition || '',
-    measurements: item.measurements || {}, // Handle null measurements
+    measurements: item.measurements as Record<string, string> || {},
     images: item.images || [],
     location: item.location || '',
     coordinates: item.coordinates as string | null,
@@ -62,7 +62,7 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
   }
 
   const user_id = session.data.session.user.id;
-  console.log("Creating post with user_id:", user_id); // Debug log
+  console.log("Creating post with user_id:", user_id);
 
   const { data, error } = await supabase
     .from('items')
@@ -71,11 +71,11 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
       description: post.description,
       category: post.category,
       condition: post.condition,
-      measurements: post.measurements || {}, // Ensure measurements is always an object
+      measurements: post.measurements || {},
       images: post.images,
       location: post.location,
       coordinates: post.coordinates,
-      user_id: user_id, // Pass user_id directly as a string
+      user_id: user_id,
       status: post.status || 'available'
     }])
     .select(`
@@ -101,7 +101,7 @@ export const addPost = async (post: CreatePostInput): Promise<Post> => {
     description: itemWithProfile.description || '',
     category: itemWithProfile.category || '',
     condition: itemWithProfile.condition || '',
-    measurements: post.measurements || {}, // Use the measurements from the input
+    measurements: itemWithProfile.measurements as Record<string, string> || {},
     images: itemWithProfile.images || [],
     location: itemWithProfile.location || '',
     coordinates: itemWithProfile.coordinates as string | null,
