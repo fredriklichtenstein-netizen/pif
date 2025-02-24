@@ -20,7 +20,7 @@ export function PostFormImages({
   const [primaryImageIndex, setPrimaryImageIndex] = React.useState(0);
 
   const handleDeleteImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
+    const remainingImages = images.filter((_, i) => i !== index);
     // If we delete the primary image, set the next image as primary
     if (index === primaryImageIndex) {
       setPrimaryImageIndex(0);
@@ -64,7 +64,7 @@ export function PostFormImages({
                     alt={`Image ${index + 1}`}
                     className="w-full aspect-square object-cover rounded-lg"
                   />
-                  {/* Image actions overlay */}
+                  {/* Image actions overlay - removed disabled states */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
                     <Button
                       size="icon"
