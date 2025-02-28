@@ -55,6 +55,9 @@ export function PostFormSteps({
             value={formData.location}
             onChange={onAddressSelect}
           />
+          <p className="text-sm text-muted-foreground mt-1">
+            For privacy reasons, only the general area will be shown on the map and in the feed.
+          </p>
         </div>
       </div>
     </>
