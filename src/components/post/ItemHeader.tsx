@@ -18,6 +18,7 @@ interface ItemHeaderProps {
     name: string;
     avatar: string;
   };
+  measurements?: Record<string, string>;
 }
 
 export function ItemHeader({
@@ -28,9 +29,13 @@ export function ItemHeader({
   title,
   description,
   postedBy,
+  measurements = {},
 }: ItemHeaderProps) {
   const navigate = useNavigate();
   const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "Location unknown");
+  const [showMeasurements, setShowMeasurements] = useState(false);
+  
+  const hasMeasurements = Object.keys(measurements).length > 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -97,6 +102,10 @@ export function ItemHeader({
     navigate(`/map?location=${encodeURIComponent(location)}`);
   };
 
+  const toggleMeasurements = () => {
+    setShowMeasurements(!showMeasurements);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
@@ -116,6 +125,29 @@ export function ItemHeader({
       </div>
       <h3 className="text-lg font-semibold mb-1">{title}</h3>
       <p className="text-gray-600 text-sm mb-3">{description}</p>
+      
+      {hasMeasurements && (
+        <div className="mb-3">
+          <button 
+            onClick={toggleMeasurements}
+            className="text-sm text-primary hover:underline font-medium"
+          >
+            {showMeasurements ? "Hide measurements" : "Show measurements"}
+          </button>
+          
+          {showMeasurements && (
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {Object.entries(measurements).map(([key, value]) => (
+                <div key={key} className="flex justify-between text-sm border-b border-gray-100 pb-1">
+                  <span className="text-gray-600">{key}:</span>
+                  <span className="font-medium">{value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      
       <Link
         to={`/profile/${postedBy.name}`}
         className="flex items-center"

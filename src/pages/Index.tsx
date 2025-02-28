@@ -142,10 +142,12 @@ const IndexPage = () => {
             title={post.title}
             description={post.description}
             image={post.images[0]}
+            images={post.images}
             location={post.location}
             coordinates={post.coordinates ? parseCoordinatesFromDB(post.coordinates) : undefined}
             category={post.category}
             condition={post.condition}
+            measurements={post.measurements}
             postedBy={post.postedBy}
           />
         ))}
