@@ -1,3 +1,4 @@
+
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,16 +14,24 @@ import { ActionMenuItems } from "./ActionMenuItems";
 
 interface SecondaryActionsProps {
   isBookmarked: boolean;
+  isOwner?: boolean;
+  isDeleting?: boolean;
   onBookmarkToggle: () => void;
   onShare: () => void;
   onReport: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export function SecondaryActions({
   isBookmarked,
+  isOwner = false,
+  isDeleting = false,
   onBookmarkToggle,
   onShare,
   onReport,
+  onEdit,
+  onDelete,
 }: SecondaryActionsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -67,9 +76,13 @@ export function SecondaryActions({
         <DropdownMenuContent align="end" className="w-48">
           <ActionMenuItems
             isBookmarked={isBookmarked}
+            isOwner={isOwner}
+            isDeleting={isDeleting}
             onBookmarkToggle={onBookmarkToggle}
             onShare={onShare}
             onReportClick={handleReportClick}
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
         </DropdownMenuContent>
       </DropdownMenu>

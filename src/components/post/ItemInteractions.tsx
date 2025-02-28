@@ -4,7 +4,6 @@ import { PrimaryActions } from "./interactions/PrimaryActions";
 import { SecondaryActions } from "./interactions/SecondaryActions";
 import { InterestButton } from "./interactions/InterestButton";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -88,29 +87,6 @@ export function ItemInteractions({
 
   return (
     <div className="flex flex-col px-4 py-2 border-t border-gray-100">
-      {isOwner && (
-        <div className="mb-3 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleEdit}
-            className="flex items-center gap-2"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
-        </div>
-      )}
       <div className="flex items-center justify-between">
         <PrimaryActions
           isLiked={isLiked}
@@ -127,9 +103,13 @@ export function ItemInteractions({
           />
           <SecondaryActions
             isBookmarked={isBookmarked}
+            isOwner={isOwner}
             onBookmarkToggle={onBookmarkToggle}
             onShare={onShare}
             onReport={onReport}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isDeleting={isDeleting}
           />
         </div>
       </div>
