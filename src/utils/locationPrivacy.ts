@@ -1,4 +1,3 @@
-
 import mapboxgl, { Point } from "mapbox-gl";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -86,7 +85,7 @@ const coordinateCache = new Map<string, [number, number]>();
 
 /**
  * Adds intentional variance to coordinates for privacy
- * Uses smaller radius in urban areas (+-50m) and larger in rural areas (+-300m)
+ * Uses smaller radius in urban areas (+-100m) and larger in rural areas (+-5km)
  */
 export const addLocationPrivacy = async (lng: number, lat: number): Promise<[number, number]> => {
   // Check cache first
@@ -98,8 +97,8 @@ export const addLocationPrivacy = async (lng: number, lat: number): Promise<[num
   }
 
   // Define radii in degrees (approximate conversion)
-  const URBAN_RADIUS = 0.0003; // ~50m at these latitudes
-  const RURAL_RADIUS = 0.003; // ~300m
+  const URBAN_RADIUS = 0.0005; // ~100m at these latitudes
+  const RURAL_RADIUS = 0.045; // ~5km
   
   const isUrbanLocation = await isUrbanArea(lat, lng);
   const radius = isUrbanLocation ? URBAN_RADIUS : RURAL_RADIUS;
