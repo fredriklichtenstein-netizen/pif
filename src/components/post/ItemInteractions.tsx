@@ -58,7 +58,7 @@ export function ItemInteractions({
       const { error } = await supabase
         .from('items')
         .delete()
-        .eq('id', id);
+        .eq('id', parseInt(id, 10)); // Convert string id to number
 
       if (error) throw error;
 
