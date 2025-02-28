@@ -5,7 +5,7 @@ import { ItemImage } from "./post/ItemImage";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { CommentSection } from "./post/CommentSection";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ItemCardProps {
@@ -46,8 +46,18 @@ export function ItemCard({
   const isOwner = session?.user?.id === postedBy.id;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
-  // Use the provided images array if available, otherwise create an array with just the main image
-  const allImages = images.length > 0 ? images : (image ? [image] : []);
+  // Process the images array to ensure all images are valid and non-empty strings
+  const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
+  
+  // Use the provided images array if it has valid entries, otherwise create an array with just the main image
+  const allImages = validImages.length > 0 ? validImages : (image ? [image] : []);
+  
+  // Reset currentImageIndex if it goes out of bounds
+  useEffect(() => {
+    if (currentImageIndex >= allImages.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [allImages.length, currentImageIndex]);
   
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -58,6 +68,10 @@ export function ItemCard({
     e.stopPropagation();
     setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
   };
+
+  console.log(`Item ${id} - Images:`, images);
+  console.log(`Item ${id} - Valid images:`, validImages);
+  console.log(`Item ${id} - All images:`, allImages);
   
   const {
     isLiked,
