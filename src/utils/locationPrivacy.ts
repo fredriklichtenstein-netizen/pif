@@ -1,3 +1,4 @@
+
 import mapboxgl, { Point } from "mapbox-gl";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -97,11 +98,16 @@ export const addLocationPrivacy = async (lng: number, lat: number): Promise<[num
   }
 
   // Define radii in degrees (approximate conversion)
-  const URBAN_RADIUS = 0.0005; // ~100m at these latitudes
-  const RURAL_RADIUS = 0.045; // ~5km
+  // The issue was here - conversion from meters to degrees was incorrect
+  // At Sweden's latitude, 0.001 degrees is roughly 70-90 meters
+  // For 100m privacy in urban areas, we need approximately 0.001-0.0014 degrees
+  const URBAN_RADIUS = 0.0014; // ~100m at these latitudes
+  const RURAL_RADIUS = 0.045; // ~5km (unchanged)
   
   const isUrbanLocation = await isUrbanArea(lat, lng);
   const radius = isUrbanLocation ? URBAN_RADIUS : RURAL_RADIUS;
+  
+  console.log(`Privacy radius for [${lng}, ${lat}]: ${isUrbanLocation ? 'urban' : 'rural'} = ${radius} degrees`);
   
   // Generate a deterministic offset based on the coordinates
   // This ensures the same coordinates always get the same offset
@@ -119,7 +125,7 @@ export const addLocationPrivacy = async (lng: number, lat: number): Promise<[num
 
   // Cache the result
   coordinateCache.set(cacheKey, result);
-  console.log('Cached new privacy coordinates for:', cacheKey);
+  console.log('Cached new privacy coordinates for:', cacheKey, 'Original:', [lng, lat], 'Adjusted:', result);
   
   return result;
 };
