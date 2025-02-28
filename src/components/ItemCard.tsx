@@ -4,6 +4,7 @@ import { ItemHeader } from "./post/ItemHeader";
 import { ItemImage } from "./post/ItemImage";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { CommentSection } from "./post/CommentSection";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ItemCardProps {
   id: string;
@@ -18,6 +19,7 @@ interface ItemCardProps {
   category: string;
   condition?: string;
   postedBy: {
+    id?: string;
     name: string;
     avatar: string;
   };
@@ -34,6 +36,9 @@ export function ItemCard({
   condition,
   postedBy,
 }: ItemCardProps) {
+  const { session } = useAuth();
+  const isOwner = session?.user?.id === postedBy.id;
+  
   const {
     isLiked,
     showComments,
@@ -71,6 +76,7 @@ export function ItemCard({
             showComments={showComments}
             isBookmarked={isBookmarked}
             showInterest={showInterest}
+            isOwner={isOwner}
             onLikeToggle={handleLike}
             onCommentToggle={handleCommentToggle}
             onShowInterest={handleShowInterest}

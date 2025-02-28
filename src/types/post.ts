@@ -12,7 +12,7 @@ export interface Post {
   location: string;
   coordinates: string | null;
   postedBy: {
-    id: string;
+    id?: string;
     name: string;
     avatar: string;
   };
