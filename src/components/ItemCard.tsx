@@ -1,4 +1,3 @@
-
 import { useItemCard } from "@/hooks/useItemCard";
 import { ItemHeader } from "./post/ItemHeader";
 import { CommentSection } from "./post/CommentSection";
@@ -53,7 +52,6 @@ export function ItemCard({
   const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
-  // Handle resize events to detect mobile/desktop
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -63,7 +61,6 @@ export function ItemCard({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Calculate distance from user's location
   useEffect(() => {
     let isMounted = true;
 
@@ -118,11 +115,9 @@ export function ItemCard({
     };
   }, [coordinates]);
   
-  // Process the images array to ensure all images are valid
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : (image ? [image] : []);
   
-  // Reset currentImageIndex if it goes out of bounds
   useEffect(() => {
     if (currentImageIndex >= allImages.length) {
       setCurrentImageIndex(0);
@@ -163,7 +158,6 @@ export function ItemCard({
 
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
-      {/* Header with User Info and Menu */}
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center">
           <Avatar className="h-8 w-8 mr-2">
@@ -199,7 +193,6 @@ export function ItemCard({
         </DropdownMenu>
       </div>
       
-      {/* Image with title and category overlay */}
       <div className="relative">
         {allImages.length > 0 ? (
           <div className="relative">
@@ -212,7 +205,6 @@ export function ItemCard({
               }}
             />
             
-            {/* Overlay with title and category */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
               <div className="text-white">
                 <h3 className="text-xl font-bold">{title}</h3>
@@ -220,7 +212,6 @@ export function ItemCard({
               </div>
             </div>
             
-            {/* Image navigation */}
             {allImages.length > 1 && (
               <>
                 <button 
@@ -256,7 +247,22 @@ export function ItemCard({
       </div>
       
       <div className="p-3">
-        {/* Interactions (like, comment, interest, etc.) */}
+        {isMobile && (
+          <div className="flex justify-end -mt-1 mb-2">
+            <button 
+              onClick={toggleExpanded}
+              className="text-xs text-gray-600 flex items-center"
+            >
+              <span>{expanded ? "Show less" : "Show more"}</span>
+              {expanded ? (
+                <ChevronUp size={14} className="ml-1" />
+              ) : (
+                <ChevronDown size={14} className="ml-1" />
+              )}
+            </button>
+          </div>
+        )}
+      
         <ItemInteractions
           id={id}
           postedBy={postedBy}
@@ -274,23 +280,10 @@ export function ItemCard({
           onReport={handleReport}
         />
         
-        {/* Mobile: expandable section for description and measurements */}
         {isMobile ? (
           <>
-            <button 
-              onClick={toggleExpanded}
-              className="mt-2 flex items-center justify-between w-full text-sm text-gray-600"
-            >
-              <span>Show {expanded ? "less" : "more"}</span>
-              {expanded ? (
-                <ChevronUp size={16} className="ml-2 flex-shrink-0" />
-              ) : (
-                <ChevronDown size={16} className="ml-2 flex-shrink-0" />
-              )}
-            </button>
-            
             {expanded && (
-              <div className="mt-2 space-y-2">
+              <div className="mt-3 space-y-2">
                 {description && (
                   <p className="text-sm text-gray-600">{description}</p>
                 )}
@@ -308,10 +301,9 @@ export function ItemCard({
             )}
           </>
         ) : (
-          /* Desktop: always show description and measurements */
           <>
             {description && (
-              <p className="mt-2 text-sm text-gray-600">{description}</p>
+              <p className="mt-3 text-sm text-gray-600">{description}</p>
             )}
             
             {hasMeasurements && (
@@ -326,7 +318,6 @@ export function ItemCard({
           </>
         )}
         
-        {/* Comments Section */}
         {showComments && (
           <CommentSection
             comments={comments}
