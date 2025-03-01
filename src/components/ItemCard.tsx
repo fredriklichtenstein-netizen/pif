@@ -4,6 +4,7 @@ import { CommentSection } from "./post/CommentSection";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { calculateDistance, formatDistance } from "@/utils/distance";
+import { ChevronUp, ChevronDown } from "lucide-react"; // Added missing imports
 import { ItemCardHeader } from "./post/ItemCardHeader";
 import { ItemCardGallery } from "./post/ItemCardGallery";
 import { ItemCardContent } from "./post/ItemCardContent";
