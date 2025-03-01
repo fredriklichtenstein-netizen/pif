@@ -199,7 +199,7 @@ export function ItemCard({
         </DropdownMenu>
       </div>
       
-      {/* Image with category and title overlay */}
+      {/* Image with title and category overlay */}
       <div className="relative">
         {allImages.length > 0 ? (
           <div className="relative">
@@ -212,11 +212,11 @@ export function ItemCard({
               }}
             />
             
-            {/* Overlay with category and title */}
+            {/* Overlay with title and category */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
               <div className="text-white">
-                <div className="text-xs uppercase tracking-wider mb-1">{category}</div>
                 <h3 className="text-xl font-bold">{title}</h3>
+                <div className="text-xs uppercase tracking-wider mt-1">{category}</div>
               </div>
             </div>
             
@@ -277,22 +277,24 @@ export function ItemCard({
         {/* Mobile: expandable section for description and measurements */}
         {isMobile ? (
           <>
-            {description && (
-              <button 
-                onClick={toggleExpanded}
-                className="mt-2 flex items-center justify-between w-full text-sm text-gray-600"
-              >
-                <span className={expanded ? "" : "line-clamp-1"}>{description}</span>
-                {expanded ? (
-                  <ChevronUp size={16} className="ml-2 flex-shrink-0" />
-                ) : (
-                  <ChevronDown size={16} className="ml-2 flex-shrink-0" />
-                )}
-              </button>
-            )}
+            <button 
+              onClick={toggleExpanded}
+              className="mt-2 flex items-center justify-between w-full text-sm text-gray-600"
+            >
+              <span>Show {expanded ? "less" : "more"}</span>
+              {expanded ? (
+                <ChevronUp size={16} className="ml-2 flex-shrink-0" />
+              ) : (
+                <ChevronDown size={16} className="ml-2 flex-shrink-0" />
+              )}
+            </button>
             
             {expanded && (
               <div className="mt-2 space-y-2">
+                {description && (
+                  <p className="text-sm text-gray-600">{description}</p>
+                )}
+                
                 {hasMeasurements && (
                   <div className="text-xs text-gray-500 flex flex-wrap gap-2">
                     {Object.entries(measurements).map(([key, value]) => (
