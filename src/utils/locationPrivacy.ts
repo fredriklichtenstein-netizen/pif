@@ -134,9 +134,35 @@ export const isWaterLocation = async (lng: number, lat: number, map?: mapboxgl.M
 const coordinateCache = new Map<string, [number, number]>();
 
 /**
+ * Converts a distance in meters to degrees at a specific latitude
+ * This is necessary because the length of a degree of longitude varies with latitude
+ */
+export const metersToDegreesAtLatitude = (meters: number, latitude: number): { latDegrees: number, lngDegrees: number } => {
+  // Earth's radius in meters
+  const earthRadius = 6378137;
+  
+  // Convert latitude from degrees to radians
+  const latRad = latitude * Math.PI / 180;
+  
+  // Calculate meters per degree of latitude (roughly constant)
+  // 111,000 meters per degree at the equator, slightly less at higher latitudes
+  const metersPerLatDegree = 111320; // This is an approximation
+  
+  // Calculate meters per degree of longitude (varies with latitude)
+  // At the equator it's also about 111,000m, but shrinks to 0 at the poles
+  const metersPerLngDegree = Math.cos(latRad) * earthRadius * (Math.PI / 180);
+  
+  // Convert meters to degrees
+  const latDegrees = meters / metersPerLatDegree;
+  const lngDegrees = meters / metersPerLngDegree;
+  
+  return { latDegrees, lngDegrees };
+};
+
+/**
  * Adds intentional variance to coordinates for privacy
  * Uses smaller radius in urban areas and larger in rural areas
- * Values expressed directly in degrees to avoid conversion errors
+ * Accurately converts meters to degrees based on latitude
  */
 export const addLocationPrivacy = async (lng: number, lat: number, map?: mapboxgl.Map): Promise<[number, number]> => {
   // Check cache first
@@ -147,17 +173,17 @@ export const addLocationPrivacy = async (lng: number, lat: number, map?: mapboxg
     return cachedValue;
   }
 
-  // Define radii directly in degrees with higher precision
-  // In Stockholm (59.33° N): 
-  // - 0.001° longitude ≈ 55m
-  // - 0.001° latitude ≈ 111m
-  const URBAN_RADIUS_DEG = 0.0006; // ~60-70m actual distance at Swedish latitudes
-  const RURAL_RADIUS_DEG = 0.0045; // ~500m, reduced for better accuracy
+  // Define privacy radii in meters
+  const URBAN_RADIUS_METERS = 100;  // 100 meters in urban areas
+  const RURAL_RADIUS_METERS = 1500; // 1.5 km in rural areas
   
   const isUrbanLocation = await isUrbanArea(lat, lng, undefined, map);
-  const radius = isUrbanLocation ? URBAN_RADIUS_DEG : RURAL_RADIUS_DEG;
+  const radiusMeters = isUrbanLocation ? URBAN_RADIUS_METERS : RURAL_RADIUS_METERS;
   
-  console.log(`Privacy radius for [${lng}, ${lat}]: ${isUrbanLocation ? 'urban' : 'rural'} = ${radius} degrees`);
+  console.log(`Privacy radius for [${lng}, ${lat}]: ${isUrbanLocation ? 'urban' : 'rural'} = ${radiusMeters} meters`);
+  
+  // Convert meters to degrees at this latitude
+  const { latDegrees, lngDegrees } = metersToDegreesAtLatitude(radiusMeters, lat);
   
   // Generate deterministic offset
   const maxAttempts = 10;
@@ -165,10 +191,13 @@ export const addLocationPrivacy = async (lng: number, lat: number, map?: mapboxg
     // Generate a seed that depends on the coordinates but varies with the attempt number
     const seed = Math.sin((lat * lng) + (attempt * 0.1)) * 10000;
     const angle = seed * Math.PI * 2;
-    const distance = Math.abs(Math.cos(seed)) * radius;
     
-    const offsetLng = distance * Math.cos(angle);
-    const offsetLat = distance * Math.sin(angle);
+    // Use the angle to determine direction, but scale the distance based on lat/lng degrees
+    const distance = Math.abs(Math.cos(seed)); // Value between 0 and 1
+    
+    // Apply the offset with proper scaling for lat/lng
+    const offsetLng = distance * lngDegrees * Math.cos(angle);
+    const offsetLat = distance * latDegrees * Math.sin(angle);
     
     const privateLng = lng + offsetLng;
     const privateLat = lat + offsetLat;
@@ -185,7 +214,8 @@ export const addLocationPrivacy = async (lng: number, lat: number, map?: mapboxg
       console.log('Cached new privacy coordinates for:', cacheKey, 
                   'Original:', [lng, lat], 
                   'Adjusted:', result, 
-                  'Attempt:', attempt + 1);
+                  'Attempt:', attempt + 1,
+                  'Approx distance (m):', distance * radiusMeters);
       
       return result;
     } else {
@@ -193,14 +223,17 @@ export const addLocationPrivacy = async (lng: number, lat: number, map?: mapboxg
     }
   }
   
-  // If we couldn't find a non-water location after max attempts, use the original location
-  // with minimal offset for privacy
+  // If we couldn't find a non-water location after max attempts, use a minimal offset
+  const minimalRadius = URBAN_RADIUS_METERS * 0.5;
+  const { latDegrees: minLatDegrees, lngDegrees: minLngDegrees } = 
+    metersToDegreesAtLatitude(minimalRadius, lat);
+  
   const minimalSeed = Math.sin(lat * lng) * 10000;
   const minimalAngle = minimalSeed * Math.PI * 2;
-  const minimalDistance = Math.abs(Math.cos(minimalSeed)) * (URBAN_RADIUS_DEG * 0.5);
+  const minimalDistance = Math.abs(Math.cos(minimalSeed));
   
-  const minimalOffsetLng = minimalDistance * Math.cos(minimalAngle);
-  const minimalOffsetLat = minimalDistance * Math.sin(minimalAngle);
+  const minimalOffsetLng = minimalDistance * minLngDegrees * Math.cos(minimalAngle);
+  const minimalOffsetLat = minimalDistance * minLatDegrees * Math.sin(minimalAngle);
   
   const result: [number, number] = [lng + minimalOffsetLng, lat + minimalOffsetLat];
   

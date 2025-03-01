@@ -22,15 +22,15 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
 
   // Set fixed-size popup content with minimal padding
   popup.setHTML(`
-    <div class="map-popup-container" style="width: 140px; height: 130px; overflow: hidden;">
-      <div style="width: 140px; height: 100px; overflow: hidden;">
+    <div class="map-popup-container" style="width: 140px; height: 130px; overflow: hidden; box-sizing: border-box;">
+      <div style="width: 140px; height: 100px; overflow: hidden; box-sizing: border-box;">
         <img 
           src="${post.images[0]}" 
           alt="${post.title}" 
-          style="width: 100%; height: 100%; object-fit: cover;"
+          style="width: 100%; height: 100%; object-fit: cover; display: block;"
         />
       </div>
-      <div style="height: 30px; display: flex; align-items: center; padding: 0 4px; background: white;">
+      <div style="height: 30px; display: flex; align-items: center; padding: 0 4px; background: white; box-sizing: border-box;">
         <h3 style="margin: 0; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
           ${post.title}
         </h3>
