@@ -14,8 +14,12 @@ export function CommentSection({ comments, setComments }: CommentSectionProps) {
   const { session } = useAuth();
   
   const currentUser = {
-    name: session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || "User",
-    avatar: session?.user?.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session?.user?.id}`,
+    name: session?.user?.user_metadata?.full_name || 
+          session?.user?.user_metadata?.name || 
+          session?.user?.email?.split('@')[0] || 
+          "User",
+    avatar: session?.user?.user_metadata?.avatar_url || 
+           `https://i.pravatar.cc/150?u=${session?.user?.id}`,
     id: session?.user?.id
   };
 

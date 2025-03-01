@@ -12,6 +12,8 @@ import {
 } from "../ui/dropdown-menu";
 import { CommentInput } from "./CommentInput";
 import { useToast } from "@/hooks/use-toast";
+import { formatRelativeTime } from "@/utils/formatDate";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 interface CommentCardProps {
   comment: Comment;
@@ -64,17 +66,20 @@ export function CommentCard({
     <div className="space-y-4">
       <div className={`bg-gray-50 p-3 rounded-lg ${level > 0 ? 'ml-8' : ''}`}>
         <div className="flex items-start gap-2">
-          <img
-            src={comment.author.avatar}
-            alt={comment.author.name}
-            className="w-8 h-8 rounded-full object-cover"
-          />
+          <Avatar className="w-8 h-8">
+            <AvatarImage 
+              src={comment.author.avatar} 
+              alt={comment.author.name} 
+              className="rounded-full object-cover"
+            />
+            <AvatarFallback>{comment.author.name.charAt(0)}</AvatarFallback>
+          </Avatar>
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="font-medium">{comment.author.name}</span>
                 <span className="text-sm text-gray-500">
-                  {new Date(comment.createdAt).toLocaleDateString()}
+                  {formatRelativeTime(new Date(comment.createdAt))}
                 </span>
               </div>
               <DropdownMenu>
