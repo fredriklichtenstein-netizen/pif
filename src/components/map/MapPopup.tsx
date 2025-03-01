@@ -21,7 +21,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
     className: 'map-item-popup',
   });
 
-  // Create HTML content with precise alignment and containment
+  // Create HTML content with a unified design (no separate borders/shadows between image and title)
   popup.setHTML(`
     <div style="
       width: 140px; 
@@ -34,6 +34,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
       left: 50%;
       position: relative;
       margin: 0 auto;
+      background: white;
     ">
       <div style="
         width: 140px; 
@@ -41,7 +42,6 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
         overflow: hidden; 
         box-sizing: border-box;
         position: relative;
-        background: #f5f5f5;
       ">
         <img 
           src="${post.images[0]}" 
@@ -57,11 +57,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
       </div>
       <div style="
         width: 140px; 
-        height: 30px; 
-        display: flex; 
-        align-items: center; 
-        padding: 0 8px; 
-        background: white; 
+        padding: 8px 8px; 
         box-sizing: border-box;
       ">
         <h3 style="
@@ -73,6 +69,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
           overflow: hidden; 
           text-overflow: ellipsis; 
           width: 100%;
+          color: #333;
         ">
           ${post.title}
         </h3>
