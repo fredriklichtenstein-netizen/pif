@@ -3,7 +3,7 @@ import { useItemCard } from "@/hooks/useItemCard";
 import { CommentSection } from "./post/CommentSection";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
-import { calculateDistance, formatDistance } from "@/utils/distance";
+import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
 import { ItemCardHeader } from "./post/ItemCardHeader";
 import { ItemCardGallery } from "./post/ItemCardGallery";
 import { ItemCardContent } from "./post/ItemCardContent";
@@ -45,7 +45,7 @@ export function ItemCard({
 }: ItemCardProps) {
   const { session } = useAuth();
   const isOwner = session?.user?.id === postedBy.id;
-  const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "");
+  const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   useEffect(() => {
@@ -56,60 +56,6 @@ export function ItemCard({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
-  useEffect(() => {
-    let isMounted = true;
-
-    const updateDistance = () => {
-      if (!coordinates) {
-        if (isMounted) setDistanceText("");
-        return;
-      }
-
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            if (!isMounted || !coordinates) return;
-
-            try {
-              const distance = calculateDistance(
-                position.coords.latitude,
-                position.coords.longitude,
-                coordinates.lat,
-                coordinates.lng
-              );
-              
-              if (isMounted) {
-                setDistanceText(formatDistance(distance));
-              }
-            } catch (error) {
-              console.error("Error calculating distance:", error);
-              if (isMounted) {
-                setDistanceText("");
-              }
-            }
-          },
-          (error) => {
-            console.error("Error getting location:", error);
-            if (isMounted) {
-              setDistanceText("");
-            }
-          },
-          {
-            enableHighAccuracy: false,
-            timeout: 5000,
-            maximumAge: 30000
-          }
-        );
-      }
-    };
-
-    updateDistance();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [coordinates]);
   
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : (image ? [image] : []);
