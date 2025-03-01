@@ -1,7 +1,9 @@
+
 import { useState } from "react";
 import type { Comment } from "@/types/comment";
 import { CommentInput } from "../comments/CommentInput";
 import { CommentCard } from "../comments/CommentCard";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CommentSectionProps {
   comments: Comment[];
@@ -9,13 +11,22 @@ interface CommentSectionProps {
 }
 
 export function CommentSection({ comments, setComments }: CommentSectionProps) {
+  const { session } = useAuth();
+  
+  const currentUser = {
+    name: session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || "User",
+    avatar: session?.user?.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session?.user?.id}`,
+    id: session?.user?.id
+  };
+
   const handleAddComment = (text: string) => {
     const comment = {
       id: Date.now().toString(),
       text,
       author: {
-        name: "Current User",
-        avatar: "https://i.pravatar.cc/150?img=3",
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        id: currentUser.id
       },
       likes: 0,
       isLiked: false,
@@ -56,8 +67,9 @@ export function CommentSection({ comments, setComments }: CommentSectionProps) {
       id: Date.now().toString(),
       text,
       author: {
-        name: "Current User",
-        avatar: "https://i.pravatar.cc/150?img=3",
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        id: currentUser.id
       },
       likes: 0,
       isLiked: false,
@@ -82,7 +94,7 @@ export function CommentSection({ comments, setComments }: CommentSectionProps) {
 
   return (
     <div className="mt-4 space-y-4">
-      <CommentInput onSubmit={handleAddComment} />
+      <CommentInput onSubmit={handleAddComment} placeholder="Write a comment..." />
       <div className="space-y-4">
         {comments.map((comment) => (
           <CommentCard
@@ -93,7 +105,7 @@ export function CommentSection({ comments, setComments }: CommentSectionProps) {
             onEdit={handleEditComment}
             onReply={handleReplyToComment}
             onReport={handleReportComment}
-            currentUser="Current User"
+            currentUser={currentUser.id}
           />
         ))}
       </div>

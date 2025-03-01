@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ThumbsUp, Reply, Trash2, Pencil, MoreHorizontal, Flag } from "lucide-react";
 import type { Comment } from "@/types/comment";
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { CommentInput } from "./CommentInput";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommentCardProps {
   comment: Comment;
@@ -29,13 +31,16 @@ export function CommentCard({
   onEdit,
   onReply,
   onReport,
-  currentUser = "Current User",
+  currentUser = "",
   level = 0,
 }: CommentCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(comment.text);
   const [showReplyInput, setShowReplyInput] = useState(false);
   const maxReplyLevel = 3;
+  const { toast } = useToast();
+  
+  const isCurrentUserAuthor = currentUser === comment.author.id;
 
   const handleSaveEdit = () => {
     onEdit(comment.id, editedText);
@@ -47,6 +52,14 @@ export function CommentCard({
     setShowReplyInput(false);
   };
 
+  const handleReport = () => {
+    onReport(comment.id);
+    toast({
+      title: "Comment reported",
+      description: "Thank you for helping keep our community safe.",
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className={`bg-gray-50 p-3 rounded-lg ${level > 0 ? 'ml-8' : ''}`}>
@@ -54,7 +67,7 @@ export function CommentCard({
           <img
             src={comment.author.avatar}
             alt={comment.author.name}
-            className="w-8 h-8 rounded-full"
+            className="w-8 h-8 rounded-full object-cover"
           />
           <div className="flex-1">
             <div className="flex items-center justify-between">
@@ -71,7 +84,7 @@ export function CommentCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {comment.author.name === currentUser && (
+                  {isCurrentUserAuthor && (
                     <>
                       <DropdownMenuItem onClick={() => setIsEditing(true)}>
                         <Pencil className="mr-2 h-4 w-4" />
@@ -83,10 +96,12 @@ export function CommentCard({
                       </DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuItem onClick={() => onReport(comment.id)}>
-                    <Flag className="mr-2 h-4 w-4" />
-                    Report
-                  </DropdownMenuItem>
+                  {!isCurrentUserAuthor && (
+                    <DropdownMenuItem onClick={handleReport}>
+                      <Flag className="mr-2 h-4 w-4" />
+                      Report
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
