@@ -5,7 +5,12 @@ import { CommentSection } from "./post/CommentSection";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, MapPin, MoreVertical } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { calculateDistance, formatDistance } from "@/utils/distance";
+import { Button } from "./ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "./ui/dropdown-menu";
+import { ActionMenuItems } from "./post/interactions/ActionMenuItems";
 
 interface ItemCardProps {
   id: string;
@@ -44,11 +49,77 @@ export function ItemCard({
   const { session } = useAuth();
   const isOwner = session?.user?.id === postedBy.id;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
-  // Process the images array to ensure all images are valid and non-empty strings
+  // Handle resize events to detect mobile/desktop
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Calculate distance from user's location
+  useEffect(() => {
+    let isMounted = true;
+
+    const updateDistance = () => {
+      if (!coordinates) {
+        if (isMounted) setDistanceText("");
+        return;
+      }
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (!isMounted || !coordinates) return;
+
+            try {
+              const distance = calculateDistance(
+                position.coords.latitude,
+                position.coords.longitude,
+                coordinates.lat,
+                coordinates.lng
+              );
+              
+              if (isMounted) {
+                setDistanceText(formatDistance(distance));
+              }
+            } catch (error) {
+              console.error("Error calculating distance:", error);
+              if (isMounted) {
+                setDistanceText("");
+              }
+            }
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            if (isMounted) {
+              setDistanceText("");
+            }
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 30000
+          }
+        );
+      }
+    };
+
+    updateDistance();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [coordinates]);
+  
+  // Process the images array to ensure all images are valid
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
-  
-  // Use the provided images array if it has valid entries, otherwise create an array with just the main image
   const allImages = validImages.length > 0 ? validImages : (image ? [image] : []);
   
   // Reset currentImageIndex if it goes out of bounds
@@ -68,6 +139,10 @@ export function ItemCard({
     setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
   };
   
+  const toggleExpanded = () => {
+    setExpanded(!expanded);
+  };
+  
   const {
     isLiked,
     showComments,
@@ -84,24 +159,63 @@ export function ItemCard({
     setComments,
   } = useItemCard(id);
 
+  const hasMeasurements = Object.keys(measurements).length > 0;
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
+      {/* Header with User Info and Menu */}
+      <div className="p-3 flex items-center justify-between">
+        <div className="flex items-center">
+          <Avatar className="h-8 w-8 mr-2">
+            <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
+            <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="text-sm font-medium">{postedBy.name}</div>
+            {distanceText && (
+              <div className="text-xs text-gray-500 flex items-center">
+                <MapPin size={12} className="mr-1" />
+                {distanceText}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <ActionMenuItems
+              isBookmarked={isBookmarked}
+              isOwner={isOwner}
+              onBookmarkToggle={handleBookmark}
+              onShare={handleShare}
+              onReportClick={handleReport}
+            />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      
+      {/* Image with category and title overlay */}
       <div className="relative">
         {allImages.length > 0 ? (
           <div className="relative">
             <img
               src={allImages[currentImageIndex] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"}
               alt={title}
-              className="w-full h-[220px] object-cover"
+              className="w-full h-[240px] object-cover"
               onError={(e) => {
                 e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
               }}
             />
             
-            {/* Overlay with title and category */}
+            {/* Overlay with category and title */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
               <div className="text-white">
-                <div className="text-sm uppercase mb-1">{category}</div>
+                <div className="text-xs uppercase tracking-wider mb-1">{category}</div>
                 <h3 className="text-xl font-bold">{title}</h3>
               </div>
             </div>
@@ -135,67 +249,82 @@ export function ItemCard({
             )}
           </div>
         ) : (
-          <div className="w-full h-[220px] bg-gray-200 flex items-center justify-center">
+          <div className="w-full h-[240px] bg-gray-200 flex items-center justify-center">
             <span className="text-gray-400">No image available</span>
           </div>
         )}
       </div>
       
       <div className="p-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <img
-              src={postedBy.avatar}
-              alt={postedBy.name}
-              className="w-7 h-7 rounded-full mr-2"
-            />
-            <div>
-              <div className="text-sm font-medium">{postedBy.name}</div>
-              {coordinates && (
-                <div className="text-xs text-gray-500">
-                  {location}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Interactions (like, comment, interest, etc.) */}
+        <ItemInteractions
+          id={id}
+          postedBy={postedBy}
+          isLiked={isLiked}
+          showComments={showComments}
+          isBookmarked={isBookmarked}
+          showInterest={showInterest}
+          isOwner={isOwner}
+          onLikeToggle={handleLike}
+          onCommentToggle={handleCommentToggle}
+          onShowInterest={handleShowInterest}
+          onBookmarkToggle={handleBookmark}
+          onMessage={handleMessage}
+          onShare={handleShare}
+          onReport={handleReport}
+        />
         
-        <div className="mt-1">
-          <p className="text-sm text-gray-600 line-clamp-2 mb-3">{description}</p>
-          
-          {Object.keys(measurements).length > 0 && (
-            <div className="mb-2 text-xs text-gray-500">
-              {Object.entries(measurements).slice(0, 2).map(([key, value], i) => (
-                <span key={key} className="mr-2">
-                  {key}: {value}{i < Math.min(2, Object.keys(measurements).length) - 1 ? ', ' : ''}
-                </span>
-              ))}
-              {Object.keys(measurements).length > 2 && (
-                <span>+{Object.keys(measurements).length - 2} more</span>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Mobile: expandable section for description and measurements */}
+        {isMobile ? (
+          <>
+            {description && (
+              <button 
+                onClick={toggleExpanded}
+                className="mt-2 flex items-center justify-between w-full text-sm text-gray-600"
+              >
+                <span className={expanded ? "" : "line-clamp-1"}>{description}</span>
+                {expanded ? (
+                  <ChevronUp size={16} className="ml-2 flex-shrink-0" />
+                ) : (
+                  <ChevronDown size={16} className="ml-2 flex-shrink-0" />
+                )}
+              </button>
+            )}
+            
+            {expanded && (
+              <div className="mt-2 space-y-2">
+                {hasMeasurements && (
+                  <div className="text-xs text-gray-500 flex flex-wrap gap-2">
+                    {Object.entries(measurements).map(([key, value]) => (
+                      <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
+                        {key}: {value}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          /* Desktop: always show description and measurements */
+          <>
+            {description && (
+              <p className="mt-2 text-sm text-gray-600">{description}</p>
+            )}
+            
+            {hasMeasurements && (
+              <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
+                {Object.entries(measurements).map(([key, value]) => (
+                  <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
+                    {key}: {value}
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
         
-        <div className="mt-2">
-          <ItemInteractions
-            id={id}
-            postedBy={postedBy}
-            isLiked={isLiked}
-            showComments={showComments}
-            isBookmarked={isBookmarked}
-            showInterest={showInterest}
-            isOwner={isOwner}
-            onLikeToggle={handleLike}
-            onCommentToggle={handleCommentToggle}
-            onShowInterest={handleShowInterest}
-            onBookmarkToggle={handleBookmark}
-            onMessage={handleMessage}
-            onShare={handleShare}
-            onReport={handleReport}
-          />
-        </div>
-        
+        {/* Comments Section */}
         {showComments && (
           <CommentSection
             comments={comments}
