@@ -33,7 +33,20 @@ export function useNotificationPreferences() {
       }
       
       if (userProfile?.notification_preferences) {
-        setPreferences(userProfile.notification_preferences as NotificationPreferences);
+        // Type check the notification_preferences to ensure it's a valid object
+        const notificationPrefs = userProfile.notification_preferences as Record<string, boolean>;
+        
+        // Create a new preferences object that matches our NotificationPreferences type
+        const typedPreferences: NotificationPreferences = {
+          email_messages: Boolean(notificationPrefs.email_messages),
+          email_mentions: Boolean(notificationPrefs.email_mentions),
+          email_item_updates: Boolean(notificationPrefs.email_item_updates),
+          push_messages: Boolean(notificationPrefs.push_messages),
+          push_mentions: Boolean(notificationPrefs.push_mentions),
+          push_item_updates: Boolean(notificationPrefs.push_item_updates),
+        };
+        
+        setPreferences(typedPreferences);
       }
     } catch (error) {
       console.error("Error in fetchNotificationPreferences:", error);
