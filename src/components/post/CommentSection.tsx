@@ -13,15 +13,21 @@ interface CommentSectionProps {
 export function CommentSection({ comments, setComments }: CommentSectionProps) {
   const { session } = useAuth();
   
+  // Let's ensure we're using the correct user metadata fields from Supabase
   const currentUser = {
     name: session?.user?.user_metadata?.full_name || 
-          session?.user?.user_metadata?.name || 
+          session?.user?.user_metadata?.name ||
           session?.user?.email?.split('@')[0] || 
           "User",
     avatar: session?.user?.user_metadata?.avatar_url || 
-           `https://i.pravatar.cc/150?u=${session?.user?.id}`,
+           `https://i.pravatar.cc/150?u=${session?.user?.id || "default"}`,
     id: session?.user?.id
   };
+
+  // For debugging - let's log what's coming from session
+  console.log("Session user:", session?.user);
+  console.log("User metadata:", session?.user?.user_metadata);
+  console.log("Current user object:", currentUser);
 
   const handleAddComment = (text: string) => {
     const comment = {

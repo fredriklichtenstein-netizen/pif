@@ -62,6 +62,9 @@ export function CommentCard({
     });
   };
 
+  // Add a debug log to check what's coming in
+  console.log("Comment author:", comment.author);
+
   return (
     <div className="space-y-4">
       <div className={`bg-gray-50 p-3 rounded-lg ${level > 0 ? 'ml-8' : ''}`}>
@@ -72,7 +75,7 @@ export function CommentCard({
               alt={comment.author.name} 
               className="rounded-full object-cover"
             />
-            <AvatarFallback>{comment.author.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{comment.author.name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center justify-between">
