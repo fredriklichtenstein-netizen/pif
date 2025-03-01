@@ -41,7 +41,7 @@ export function ItemCardContent({
   }
   
   return (
-    <div className="flex flex-col w-full">
+    <div className="w-full flex flex-col">
       <button 
         onClick={toggleExpanded}
         className="text-xs text-gray-600 flex items-center self-end"
@@ -55,7 +55,7 @@ export function ItemCardContent({
       </button>
       
       {expanded && (
-        <div className="mt-2 w-full">
+        <div className="mt-2 w-full px-0">
           {description && (
             <p className="text-sm text-gray-600 w-full">{description}</p>
           )}
