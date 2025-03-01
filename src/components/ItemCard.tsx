@@ -1,5 +1,4 @@
 import { useItemCard } from "@/hooks/useItemCard";
-import { ItemHeader } from "./post/ItemHeader";
 import { CommentSection } from "./post/CommentSection";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { useAuth } from "@/hooks/useAuth";
@@ -247,8 +246,45 @@ export function ItemCard({
       </div>
       
       <div className="p-3">
-        {isMobile && (
-          <div className="flex justify-end -mt-1 mb-2">
+        {/* New layout: Like/Comment buttons and Show more at same level */}
+        <div className="flex justify-between items-center -mt-1 mb-2">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={handleLike}
+              className={`flex items-center space-x-1 ${isLiked ? 'text-primary' : 'text-gray-500'}`}
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill={isLiked ? "currentColor" : "none"}
+                stroke="currentColor" 
+                strokeWidth="2" 
+                className="h-5 w-5"
+              >
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+            
+            <button 
+              onClick={handleCommentToggle}
+              className="flex items-center space-x-1 text-gray-500"
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                className="h-5 w-5"
+              >
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+            </button>
+          </div>
+          
+          {isMobile && (
             <button 
               onClick={toggleExpanded}
               className="text-xs text-gray-600 flex items-center"
@@ -260,25 +296,21 @@ export function ItemCard({
                 <ChevronDown size={14} className="ml-1" />
               )}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       
-        <ItemInteractions
-          id={id}
-          postedBy={postedBy}
-          isLiked={isLiked}
-          showComments={showComments}
-          isBookmarked={isBookmarked}
-          showInterest={showInterest}
-          isOwner={isOwner}
-          onLikeToggle={handleLike}
-          onCommentToggle={handleCommentToggle}
-          onShowInterest={handleShowInterest}
-          onBookmarkToggle={handleBookmark}
-          onMessage={handleMessage}
-          onShare={handleShare}
-          onReport={handleReport}
-        />
+        {!isOwner && (
+          <button 
+            onClick={handleShowInterest}
+            className={`py-1.5 px-3 rounded-full text-xs font-medium ${
+              showInterest 
+                ? 'bg-primary text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {showInterest ? 'Intresserad' : 'Visa intresse'}
+          </button>
+        )}
         
         {isMobile ? (
           <>
