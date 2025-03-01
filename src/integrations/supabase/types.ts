@@ -210,6 +210,7 @@ export type Database = {
           id: string
           last_name: string | null
           location: string | null
+          notification_preferences: Json | null
           onboarding_completed: boolean
           phone: string
           updated_at: string | null
@@ -225,6 +226,7 @@ export type Database = {
           id: string
           last_name?: string | null
           location?: string | null
+          notification_preferences?: Json | null
           onboarding_completed?: boolean
           phone: string
           updated_at?: string | null
@@ -240,6 +242,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           location?: string | null
+          notification_preferences?: Json | null
           onboarding_completed?: boolean
           phone?: string
           updated_at?: string | null

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -29,54 +28,32 @@ export function NotificationSettings() {
   });
 
   useEffect(() => {
-    const fetchNotificationPreferences = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        // First, check if the notification_preferences column exists
-        const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          return;
-        }
-        
-        // Check if the profile has notification_preferences
-        if (userProfile && userProfile.notification_preferences) {
-          setPreferences(userProfile.notification_preferences);
-        } else {
-          // If not, we'll use our default values from state
-          console.log("Using default notification preferences");
-          
-          // Try to add the notification_preferences to the profile
-          try {
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ 
-                notification_preferences: preferences,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', user.id);
-              
-            if (updateError) {
-              console.error("Error updating notification preferences:", updateError);
-            }
-          } catch (err) {
-            console.error("Failed to update profile with notification preferences:", err);
-          }
-        }
-      } catch (error) {
-        console.error("Error in fetchNotificationPreferences:", error);
-      }
-    };
-
     fetchNotificationPreferences();
   }, []);
+
+  const fetchNotificationPreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('notification_preferences')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        return;
+      }
+      
+      if (userProfile && userProfile.notification_preferences) {
+        setPreferences(userProfile.notification_preferences);
+      }
+    } catch (error) {
+      console.error("Error in fetchNotificationPreferences:", error);
+    }
+  };
 
   const handleToggle = (key: keyof NotificationPreferences) => {
     setPreferences(prev => ({
@@ -101,8 +78,6 @@ export function NotificationSettings() {
 
       if (error) {
         console.error("Error updating notification preferences:", error);
-        // If there's an error about the column not existing, we would need to alter the table
-        // but that's typically done in migrations rather than client code
         throw error;
       }
 
