@@ -112,25 +112,30 @@ export function ItemCard({
                 onShowInterest={handleShowInterest}
               />
               
-              {/* Show more button when content is not expanded */}
-              {!contentExpanded && (
-                <ItemCardContent
-                  isMobile={isMobile}
-                  expanded={contentExpanded}
-                  onToggleExpand={toggleContentExpanded}
-                />
-              )}
-            </div>
-            
-            {/* Expanded content appears below actions when expanded */}
-            {contentExpanded && (
               <ItemCardContent
-                description={description}
-                measurements={measurements}
                 isMobile={isMobile}
                 expanded={contentExpanded}
                 onToggleExpand={toggleContentExpanded}
               />
+            </div>
+            
+            {/* Expanded content appears here */}
+            {contentExpanded && (
+              <div id="expandable-content" className="w-full mt-2">
+                {description && (
+                  <p className="text-sm text-gray-600 w-full">{description}</p>
+                )}
+                
+                {Object.keys(measurements).length > 0 && (
+                  <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
+                    {Object.entries(measurements).map(([key, value]) => (
+                      <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
+                        {key}: {value}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

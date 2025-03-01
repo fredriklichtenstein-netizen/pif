@@ -1,3 +1,4 @@
+
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
@@ -29,6 +30,7 @@ export function ItemCardContent({
     }
   };
   
+  // For desktop view
   if (!isMobile) {
     return (
       <>
@@ -49,6 +51,7 @@ export function ItemCardContent({
     );
   }
   
+  // For mobile view - just the toggle button
   if (isMobile && !isExpanded) {
     return (
       <button 
@@ -62,38 +65,21 @@ export function ItemCardContent({
       </button>
     );
   }
+
+  // For mobile view - Show less button (just the button)
+  if (isMobile && isExpanded) {
+    return (
+      <button 
+        onClick={toggleExpanded}
+        className="text-xs text-gray-600 flex items-center"
+        aria-expanded={isExpanded}
+        aria-controls="expandable-content"
+      >
+        <span>Show less</span>
+        <ChevronUp size={14} className="ml-1" />
+      </button>
+    );
+  }
   
-  return (
-    <>
-      {isMobile && (
-        <div className="w-full flex flex-col">
-          <button 
-            onClick={toggleExpanded}
-            className="text-xs text-gray-600 flex items-center self-end mb-2"
-            aria-expanded={isExpanded}
-            aria-controls="expandable-content"
-          >
-            <span>Show less</span>
-            <ChevronUp size={14} className="ml-1" />
-          </button>
-          
-          <div id="expandable-content" className="w-full">
-            {description && (
-              <p className="text-sm text-gray-600 w-full">{description}</p>
-            )}
-            
-            {hasMeasurements && (
-              <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
-                {Object.entries(measurements).map(([key, value]) => (
-                  <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
-                    {key}: {value}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </>
-  );
+  return null;
 }
