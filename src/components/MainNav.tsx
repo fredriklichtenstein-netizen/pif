@@ -1,5 +1,5 @@
 
-import { Home, Map, MessageSquare, PlusCircle, User as UserIcon, LogOut } from "lucide-react";
+import { Home, Map, MessageSquare, PlusCircle, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,20 +29,6 @@ export function MainNav() {
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
-
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      navigate("/auth");
-    } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!user) {
@@ -96,22 +82,13 @@ export function MainNav() {
       <Link
         to="/profile"
         className={`flex flex-col items-center ${
-          isActive("/profile") ? "text-primary" : "text-gray-500"
+          isActive("/profile") || isActive("/account-settings") ? "text-primary" : "text-gray-500"
         }`}
         onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
       >
         <UserIcon size={24} />
         <span className="text-xs mt-1">Profile</span>
       </Link>
-      {user && (
-        <button
-          onClick={handleSignOut}
-          className="flex flex-col items-center text-gray-500"
-        >
-          <LogOut size={24} />
-          <span className="text-xs mt-1">Sign Out</span>
-        </button>
-      )}
     </nav>
   );
 }

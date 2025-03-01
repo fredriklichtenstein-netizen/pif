@@ -5,6 +5,7 @@ import Map from "@/pages/Map";
 import Messages from "@/pages/Messages";
 import Post from "@/pages/Post";
 import Profile from "@/pages/Profile";
+import AccountSettings from "@/pages/AccountSettings";
 import Auth from "@/pages/Auth";
 import EmailConfirmation from "@/pages/EmailConfirmation";
 import CreateProfile from "@/pages/CreateProfile";
@@ -31,6 +32,10 @@ export const privateRoutes = [
   { 
     path: "/profile", 
     element: <PrivateRoute><Profile /></PrivateRoute>
+  },
+  { 
+    path: "/account-settings", 
+    element: <PrivateRoute><AccountSettings /></PrivateRoute>
   },
   { 
     path: "/create-profile", 

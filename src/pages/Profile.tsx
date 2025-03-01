@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { UnsavedChangesDialog } from "@/components/profile/UnsavedChangesDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProfileManagement } from "@/hooks/profile/useProfileManagement";
+import { Settings } from "lucide-react";
 import type { ProfileFormData } from "@/hooks/profile/useProfileManagement";
 
 const Profile = () => {
@@ -81,14 +82,20 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 pb-24">
       <div className="max-w-3xl mx-auto space-y-8">
-        <div className="text-center">
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">
             Edit Profile
           </h1>
-          <p className="mt-2 text-gray-600">
-            Update your profile information
-          </p>
+          <Link to="/account-settings">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Settings size={16} />
+              <span>Account Settings</span>
+            </Button>
+          </Link>
         </div>
+        <p className="mt-2 text-gray-600">
+          Update your profile information
+        </p>
 
         <form onSubmit={handleFormSubmit} className="space-y-6">
           <Card>
