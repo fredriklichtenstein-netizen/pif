@@ -47,10 +47,11 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             [privateLng, privateLat] = cachedCoords;
             console.log("Using cached coordinates for post:", post.id);
           } else {
-            // Calculate new privacy-adjusted coordinates
+            // Calculate new privacy-adjusted coordinates, passing the map for water detection
             [privateLng, privateLat] = await addLocationPrivacy(
               coords.lng,
-              coords.lat
+              coords.lat,
+              map
             );
             console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
             processedCoordinates.current.set(post.id, [privateLng, privateLat]);

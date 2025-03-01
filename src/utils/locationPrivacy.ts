@@ -81,6 +81,55 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
   return data.length > 0;
 };
 
+/**
+ * Checks if coordinates are on water (sea, lake, river, etc.)
+ */
+export const isWaterLocation = async (lng: number, lat: number, map?: mapboxgl.Map): Promise<boolean> => {
+  // If map object is provided, use it to check water features
+  if (map && map.isStyleLoaded()) {
+    try {
+      // Convert lat/lng to pixel coordinates for querying features
+      const point = map.project([lng, lat]);
+      
+      // Query for water features at the exact point
+      const features = map.queryRenderedFeatures(point, {
+        layers: [
+          'water',
+          'waterway',
+          'water-area',
+          'water-name',
+          'water-point'
+        ]
+      });
+
+      // If any water features are found, consider it a water location
+      const isWater = features.some(f => 
+        f.sourceLayer === 'water' || 
+        f.layer.id.includes('water') ||
+        (f.properties && 
+          (f.properties.class === 'water' || 
+           f.properties.type === 'water' ||
+           f.properties.natural === 'water' ||
+           f.properties.natural === 'sea' ||
+           f.properties.natural === 'lake')
+        )
+      );
+
+      if (isWater) {
+        console.log(`Water detected at [${lng}, ${lat}]`);
+      }
+      
+      return isWater;
+    } catch (error) {
+      console.error("Error determining water location:", error);
+      return false;
+    }
+  }
+  
+  // No map available, return false to be safe
+  return false;
+};
+
 // Cache for privacy-adjusted coordinates
 const coordinateCache = new Map<string, [number, number]>();
 
@@ -89,7 +138,7 @@ const coordinateCache = new Map<string, [number, number]>();
  * Uses smaller radius in urban areas and larger in rural areas
  * Values expressed directly in degrees to avoid conversion errors
  */
-export const addLocationPrivacy = async (lng: number, lat: number): Promise<[number, number]> => {
+export const addLocationPrivacy = async (lng: number, lat: number, map?: mapboxgl.Map): Promise<[number, number]> => {
   // Check cache first
   const cacheKey = `${lng},${lat}`;
   const cachedValue = coordinateCache.get(cacheKey);
@@ -98,34 +147,68 @@ export const addLocationPrivacy = async (lng: number, lat: number): Promise<[num
     return cachedValue;
   }
 
-  // Define radii directly in degrees with no conversion
-  // For Scandinavia (59-60° N), 0.001° longitude ≈ 55m, 0.001° latitude ≈ 111m
-  // Targeting 100m radius in urban areas
-  const URBAN_RADIUS_DEG = 0.0009; // ~100m at Swedish latitudes
-  const RURAL_RADIUS_DEG = 0.015;  // ~1.5km, reduced from 5km for more accuracy
+  // Define radii directly in degrees with higher precision
+  // In Stockholm (59.33° N): 
+  // - 0.001° longitude ≈ 55m
+  // - 0.001° latitude ≈ 111m
+  const URBAN_RADIUS_DEG = 0.0006; // ~60-70m actual distance at Swedish latitudes
+  const RURAL_RADIUS_DEG = 0.0045; // ~500m, reduced for better accuracy
   
-  const isUrbanLocation = await isUrbanArea(lat, lng);
+  const isUrbanLocation = await isUrbanArea(lat, lng, undefined, map);
   const radius = isUrbanLocation ? URBAN_RADIUS_DEG : RURAL_RADIUS_DEG;
   
   console.log(`Privacy radius for [${lng}, ${lat}]: ${isUrbanLocation ? 'urban' : 'rural'} = ${radius} degrees`);
   
-  // Generate a deterministic offset based on the coordinates
-  // This ensures the same coordinates always get the same offset
-  const seed = Math.sin(lat * lng) * 10000;
-  const angle = seed * Math.PI * 2;
-  const distance = Math.abs(Math.cos(seed)) * radius;
-  
-  const offsetLng = distance * Math.cos(angle);
-  const offsetLat = distance * Math.sin(angle);
-  
-  const result: [number, number] = [
-    lng + offsetLng,
-    lat + offsetLat
-  ];
+  // Generate deterministic offset
+  const maxAttempts = 10;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    // Generate a seed that depends on the coordinates but varies with the attempt number
+    const seed = Math.sin((lat * lng) + (attempt * 0.1)) * 10000;
+    const angle = seed * Math.PI * 2;
+    const distance = Math.abs(Math.cos(seed)) * radius;
+    
+    const offsetLng = distance * Math.cos(angle);
+    const offsetLat = distance * Math.sin(angle);
+    
+    const privateLng = lng + offsetLng;
+    const privateLat = lat + offsetLat;
 
+    // Check if the new location is on water
+    const isWater = map ? await isWaterLocation(privateLng, privateLat, map) : false;
+    
+    if (!isWater) {
+      // Not on water, we can use this location
+      const result: [number, number] = [privateLng, privateLat];
+      
+      // Cache the result
+      coordinateCache.set(cacheKey, result);
+      console.log('Cached new privacy coordinates for:', cacheKey, 
+                  'Original:', [lng, lat], 
+                  'Adjusted:', result, 
+                  'Attempt:', attempt + 1);
+      
+      return result;
+    } else {
+      console.log(`Rejected water location at [${privateLng}, ${privateLat}], attempt ${attempt + 1}`);
+    }
+  }
+  
+  // If we couldn't find a non-water location after max attempts, use the original location
+  // with minimal offset for privacy
+  const minimalSeed = Math.sin(lat * lng) * 10000;
+  const minimalAngle = minimalSeed * Math.PI * 2;
+  const minimalDistance = Math.abs(Math.cos(minimalSeed)) * (URBAN_RADIUS_DEG * 0.5);
+  
+  const minimalOffsetLng = minimalDistance * Math.cos(minimalAngle);
+  const minimalOffsetLat = minimalDistance * Math.sin(minimalAngle);
+  
+  const result: [number, number] = [lng + minimalOffsetLng, lat + minimalOffsetLat];
+  
   // Cache the result
   coordinateCache.set(cacheKey, result);
-  console.log('Cached new privacy coordinates for:', cacheKey, 'Original:', [lng, lat], 'Adjusted:', result);
+  console.log('Using minimal privacy offset after water detection failed:', 
+              'Original:', [lng, lat], 
+              'Adjusted:', result);
   
   return result;
 };

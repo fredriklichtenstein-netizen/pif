@@ -13,21 +13,28 @@ interface MapPopupProps {
 
 export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): mapboxgl.Popup => {
   const popup = new mapboxgl.Popup({
-    offset: 15, // Reduced from 25
+    offset: 12,
     closeButton: false,
     anchor: 'bottom',
-    maxWidth: '160px', // Reduced from 200px
+    maxWidth: '140px', // Fixed maximum width
+    className: 'map-item-popup', // Add a custom class for additional styling
   });
 
-  // Set ultra-compact popup content
+  // Set fixed-size popup content with minimal padding
   popup.setHTML(`
-    <div class="p-0 max-w-[160px]">
-      <img 
-        src="${post.images[0]}" 
-        alt="${post.title}" 
-        class="w-full h-20 object-cover mb-0.5"
-      />
-      <h3 class="text-xs font-semibold truncate px-1">${post.title}</h3>
+    <div class="map-popup-container" style="width: 140px; height: 130px; overflow: hidden;">
+      <div style="width: 140px; height: 100px; overflow: hidden;">
+        <img 
+          src="${post.images[0]}" 
+          alt="${post.title}" 
+          style="width: 100%; height: 100%; object-fit: cover;"
+        />
+      </div>
+      <div style="height: 30px; display: flex; align-items: center; padding: 0 4px; background: white;">
+        <h3 style="margin: 0; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+          ${post.title}
+        </h3>
+      </div>
     </div>
   `);
 
