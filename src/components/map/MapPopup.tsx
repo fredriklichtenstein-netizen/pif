@@ -12,33 +12,72 @@ interface MapPopupProps {
 }
 
 export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): mapboxgl.Popup => {
+  // Create a popup with specific configuration
   const popup = new mapboxgl.Popup({
     offset: 12,
     closeButton: false,
     anchor: 'bottom',
-    maxWidth: '140px', // Fixed maximum width
-    className: 'map-item-popup', // Add a custom class for additional styling
+    maxWidth: '140px',
+    className: 'map-item-popup',
   });
 
-  // Set fixed-size popup content with proper containment
+  // Create HTML content with proper containment
+  // The key fix is ensuring consistent width constraints and explicit overflow handling
   popup.setHTML(`
-    <div class="map-popup-container" style="width: 140px; height: 130px; overflow: hidden; box-sizing: border-box; padding: 0; margin: 0; border-radius: 4px;">
-      <div style="width: 140px; height: 100px; overflow: hidden; box-sizing: border-box; position: relative;">
+    <div style="
+      width: 140px; 
+      max-width: 140px; 
+      overflow: hidden; 
+      box-sizing: border-box; 
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    ">
+      <div style="
+        width: 140px; 
+        height: 100px; 
+        overflow: hidden; 
+        box-sizing: border-box;
+        position: relative;
+        background: #f5f5f5;
+      ">
         <img 
           src="${post.images[0]}" 
           alt="${post.title}" 
-          style="width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0;"
+          style="
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            box-sizing: border-box;
+            display: block;
+          "
         />
       </div>
-      <div style="height: 30px; display: flex; align-items: center; padding: 0 4px; background: white; box-sizing: border-box; width: 140px;">
-        <h3 style="margin: 0; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+      <div style="
+        width: 140px; 
+        height: 30px; 
+        display: flex; 
+        align-items: center; 
+        padding: 0 8px; 
+        background: white; 
+        box-sizing: border-box;
+      ">
+        <h3 style="
+          margin: 0; 
+          padding: 0;
+          font-size: 11px; 
+          font-weight: 600; 
+          white-space: nowrap; 
+          overflow: hidden; 
+          text-overflow: ellipsis; 
+          width: 100%;
+        ">
           ${post.title}
         </h3>
       </div>
     </div>
   `);
 
-  // Use privacy-adjusted coordinates for map display
+  // Set the popup location to the privacy-adjusted coordinates
   popup.setLngLat([displayCoordinates.lng, displayCoordinates.lat]);
 
   return popup;
