@@ -57,9 +57,9 @@ export function ItemCardContent({
       </div>
       
       {expanded && (
-        <div className="w-full bg-white p-3 z-10 mt-2 shadow-md rounded-md">
+        <div className="w-full mt-2 text-left">
           {description && (
-            <p className="text-sm text-gray-600 text-left">{description}</p>
+            <p className="text-sm text-gray-600">{description}</p>
           )}
           
           {hasMeasurements && (
