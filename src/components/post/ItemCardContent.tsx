@@ -41,7 +41,7 @@ export function ItemCardContent({
   }
   
   return (
-    <div className="w-full">
+    <div className="w-full mt-2">
       <div className="flex justify-end w-full">
         <button 
           onClick={toggleExpanded}
@@ -57,9 +57,9 @@ export function ItemCardContent({
       </div>
       
       {expanded && (
-        <div className="w-full mt-2">
+        <div className="w-full mt-2 px-0">
           {description && (
-            <p className="text-sm text-gray-600 w-full">{description}</p>
+            <p className="text-sm text-gray-600 w-full text-left">{description}</p>
           )}
           
           {hasMeasurements && (
