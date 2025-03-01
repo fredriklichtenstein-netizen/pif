@@ -47,6 +47,7 @@ export function ItemCard({
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [contentExpanded, setContentExpanded] = useState(false);
   
   useEffect(() => {
     const handleResize = () => {
@@ -75,6 +76,10 @@ export function ItemCard({
     handleBookmark,
     setComments,
   } = useItemCard(id);
+  
+  const toggleContentExpanded = () => {
+    setContentExpanded(!contentExpanded);
+  };
 
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
@@ -97,26 +102,36 @@ export function ItemCard({
       <div className="p-3">
         {isMobile && (
           <div className="w-full">
-            <div className="flex justify-between items-start w-full mb-2">
-              <div className="flex">
-                <ItemCardActions
-                  isLiked={isLiked}
-                  showInterest={showInterest}
-                  isOwner={isOwner}
-                  onLike={handleLike}
-                  onCommentToggle={handleCommentToggle}
-                  onShowInterest={handleShowInterest}
-                />
-              </div>
+            <div className="flex justify-between items-center w-full mb-2">
+              <ItemCardActions
+                isLiked={isLiked}
+                showInterest={showInterest}
+                isOwner={isOwner}
+                onLike={handleLike}
+                onCommentToggle={handleCommentToggle}
+                onShowInterest={handleShowInterest}
+              />
               
-              <div className="flex-1 flex justify-end">
+              {/* Show more button when content is not expanded */}
+              {!contentExpanded && (
                 <ItemCardContent
-                  description={description}
-                  measurements={measurements}
                   isMobile={isMobile}
+                  expanded={contentExpanded}
+                  onToggleExpand={toggleContentExpanded}
                 />
-              </div>
+              )}
             </div>
+            
+            {/* Expanded content appears below actions when expanded */}
+            {contentExpanded && (
+              <ItemCardContent
+                description={description}
+                measurements={measurements}
+                isMobile={isMobile}
+                expanded={contentExpanded}
+                onToggleExpand={toggleContentExpanded}
+              />
+            )}
           </div>
         )}
         
