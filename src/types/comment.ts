@@ -12,3 +12,12 @@ export interface Comment {
   replies: Comment[];
   createdAt: Date;
 }
+
+export interface PostAction {
+  icon: React.ReactNode;
+  label?: string;
+  onClick?: (e: React.MouseEvent) => void;
+  to?: string;
+  active?: boolean;
+  component?: React.ComponentType<any>;
+}
