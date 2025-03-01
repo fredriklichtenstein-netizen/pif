@@ -13,21 +13,21 @@ interface MapPopupProps {
 
 export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): mapboxgl.Popup => {
   const popup = new mapboxgl.Popup({
-    offset: 25,
+    offset: 15, // Reduced from 25
     closeButton: false,
     anchor: 'bottom',
-    maxWidth: '200px', // Limit popup width
+    maxWidth: '160px', // Reduced from 200px
   });
 
-  // Set simplified popup content immediately
+  // Set ultra-compact popup content
   popup.setHTML(`
-    <div class="p-1 max-w-[180px]">
+    <div class="p-0 max-w-[160px]">
       <img 
         src="${post.images[0]}" 
         alt="${post.title}" 
-        class="w-full h-24 object-cover rounded mb-1"
+        class="w-full h-20 object-cover mb-0.5"
       />
-      <h3 class="font-semibold text-sm truncate">${post.title}</h3>
+      <h3 class="text-xs font-semibold truncate px-1">${post.title}</h3>
     </div>
   `);
 

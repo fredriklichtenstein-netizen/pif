@@ -86,7 +86,8 @@ const coordinateCache = new Map<string, [number, number]>();
 
 /**
  * Adds intentional variance to coordinates for privacy
- * Uses smaller radius in urban areas (+-100m) and larger in rural areas (+-5km)
+ * Uses smaller radius in urban areas and larger in rural areas
+ * Values expressed directly in degrees to avoid conversion errors
  */
 export const addLocationPrivacy = async (lng: number, lat: number): Promise<[number, number]> => {
   // Check cache first
@@ -97,15 +98,14 @@ export const addLocationPrivacy = async (lng: number, lat: number): Promise<[num
     return cachedValue;
   }
 
-  // Define radii in degrees (approximate conversion)
-  // The issue was here - conversion from meters to degrees was incorrect
-  // At Sweden's latitude, 0.001 degrees is roughly 70-90 meters
-  // For 100m privacy in urban areas, we need approximately 0.001-0.0014 degrees
-  const URBAN_RADIUS = 0.0014; // ~100m at these latitudes
-  const RURAL_RADIUS = 0.045; // ~5km (unchanged)
+  // Define radii directly in degrees with no conversion
+  // For Scandinavia (59-60° N), 0.001° longitude ≈ 55m, 0.001° latitude ≈ 111m
+  // Targeting 100m radius in urban areas
+  const URBAN_RADIUS_DEG = 0.0009; // ~100m at Swedish latitudes
+  const RURAL_RADIUS_DEG = 0.015;  // ~1.5km, reduced from 5km for more accuracy
   
   const isUrbanLocation = await isUrbanArea(lat, lng);
-  const radius = isUrbanLocation ? URBAN_RADIUS : RURAL_RADIUS;
+  const radius = isUrbanLocation ? URBAN_RADIUS_DEG : RURAL_RADIUS_DEG;
   
   console.log(`Privacy radius for [${lng}, ${lat}]: ${isUrbanLocation ? 'urban' : 'rural'} = ${radius} degrees`);
   
