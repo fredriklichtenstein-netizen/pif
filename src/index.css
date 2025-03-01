@@ -113,3 +113,15 @@
   border-top-color: rgba(255,255,255,0.9) !important;
   border-bottom-color: rgba(255,255,255,0.9) !important;
 }
+
+/* New card-related styles */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-fade-gradient {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+}
