@@ -12,7 +12,7 @@ interface MapPopupProps {
 }
 
 export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): mapboxgl.Popup => {
-  // Create a popup with specific configuration
+  // Create a popup with precise configuration
   const popup = new mapboxgl.Popup({
     offset: 12,
     closeButton: false,
@@ -21,16 +21,19 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
     className: 'map-item-popup',
   });
 
-  // Create HTML content with proper containment
-  // The key fix is ensuring consistent width constraints and explicit overflow handling
+  // Create HTML content with precise alignment and containment
   popup.setHTML(`
     <div style="
       width: 140px; 
       max-width: 140px; 
       overflow: hidden; 
       box-sizing: border-box; 
-      border-radius: 4px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transform: translateX(-50%);
+      left: 50%;
+      position: relative;
+      margin: 0 auto;
     ">
       <div style="
         width: 140px; 
