@@ -97,17 +97,15 @@ export function ItemCard({
       <div className="p-3">
         {isMobile && (
           <div className="w-full">
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center">
-                <ItemCardActions
-                  isLiked={isLiked}
-                  showInterest={showInterest}
-                  isOwner={isOwner}
-                  onLike={handleLike}
-                  onCommentToggle={handleCommentToggle}
-                  onShowInterest={handleShowInterest}
-                />
-              </div>
+            <div className="flex justify-between items-start w-full mb-2">
+              <ItemCardActions
+                isLiked={isLiked}
+                showInterest={showInterest}
+                isOwner={isOwner}
+                onLike={handleLike}
+                onCommentToggle={handleCommentToggle}
+                onShowInterest={handleShowInterest}
+              />
               
               <ItemCardContent
                 description={description}

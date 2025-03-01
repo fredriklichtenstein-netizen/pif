@@ -41,10 +41,10 @@ export function ItemCardContent({
   }
   
   return (
-    <div className="flex items-center">
+    <div className="flex flex-col w-full">
       <button 
         onClick={toggleExpanded}
-        className="text-xs text-gray-600 flex items-center ml-auto"
+        className="text-xs text-gray-600 flex items-center self-end"
       >
         <span>{expanded ? "Show less" : "Show more"}</span>
         {expanded ? (
@@ -55,9 +55,9 @@ export function ItemCardContent({
       </button>
       
       {expanded && (
-        <div className="absolute left-0 right-0 top-full mt-2 px-3 bg-white w-full">
+        <div className="mt-2 w-full">
           {description && (
-            <p className="text-sm text-gray-600 w-full text-left">{description}</p>
+            <p className="text-sm text-gray-600 w-full">{description}</p>
           )}
           
           {hasMeasurements && (
