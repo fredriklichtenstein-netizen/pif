@@ -45,7 +45,7 @@ export function ItemCardContent({
       <div className="flex justify-end w-full">
         <button 
           onClick={toggleExpanded}
-          className="text-xs text-gray-600 flex items-center"
+          className="text-xs text-gray-600 flex items-center ml-auto"
         >
           <span>{expanded ? "Show less" : "Show more"}</span>
           {expanded ? (
@@ -57,13 +57,13 @@ export function ItemCardContent({
       </div>
       
       {expanded && (
-        <div className="w-full mt-2 text-left">
+        <div className="w-full mt-2">
           {description && (
-            <p className="text-sm text-gray-600">{description}</p>
+            <p className="text-sm text-gray-600 w-full">{description}</p>
           )}
           
           {hasMeasurements && (
-            <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
+            <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2 w-full">
               {Object.entries(measurements).map(([key, value]) => (
                 <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
                   {key}: {value}
