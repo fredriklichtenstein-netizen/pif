@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 interface NotificationPreferences {
   email_messages: boolean;
@@ -33,19 +34,44 @@ export function NotificationSettings() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data, error } = await supabase
+        // First, check if the notification_preferences column exists
+        const { data: userProfile, error: profileError } = await supabase
           .from('profiles')
-          .select('notification_preferences')
+          .select('*')
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return;
+        }
         
-        if (data?.notification_preferences) {
-          setPreferences(data.notification_preferences);
+        // Check if the profile has notification_preferences
+        if (userProfile && userProfile.notification_preferences) {
+          setPreferences(userProfile.notification_preferences);
+        } else {
+          // If not, we'll use our default values from state
+          console.log("Using default notification preferences");
+          
+          // Try to add the notification_preferences to the profile
+          try {
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ 
+                notification_preferences: preferences,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', user.id);
+              
+            if (updateError) {
+              console.error("Error updating notification preferences:", updateError);
+            }
+          } catch (err) {
+            console.error("Failed to update profile with notification preferences:", err);
+          }
         }
       } catch (error) {
-        console.error("Error fetching notification preferences:", error);
+        console.error("Error in fetchNotificationPreferences:", error);
       }
     };
 
@@ -73,7 +99,12 @@ export function NotificationSettings() {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating notification preferences:", error);
+        // If there's an error about the column not existing, we would need to alter the table
+        // but that's typically done in migrations rather than client code
+        throw error;
+      }
 
       toast({
         title: "Preferences updated",
@@ -130,6 +161,8 @@ export function NotificationSettings() {
         </div>
       </div>
 
+      <Separator />
+
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Push Notifications</h3>
         <div className="space-y-3">
@@ -171,7 +204,7 @@ export function NotificationSettings() {
       <Button
         onClick={savePreferences}
         disabled={loading}
-        className="w-full"
+        className="w-full mt-4"
       >
         {loading ? "Saving..." : "Save Preferences"}
       </Button>
