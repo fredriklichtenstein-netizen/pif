@@ -97,8 +97,8 @@ export function ItemCard({
       <div className="p-3">
         {isMobile && (
           <div className="w-full">
-            <div className="flex flex-col w-full">
-              <div className="flex items-start">
+            <div className="flex justify-between items-center w-full">
+              <div className="flex items-center">
                 <ItemCardActions
                   isLiked={isLiked}
                   showInterest={showInterest}

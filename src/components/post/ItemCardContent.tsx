@@ -41,23 +41,21 @@ export function ItemCardContent({
   }
   
   return (
-    <div className="w-full mt-2">
-      <div className="flex justify-end w-full">
-        <button 
-          onClick={toggleExpanded}
-          className="text-xs text-gray-600 flex items-center ml-auto"
-        >
-          <span>{expanded ? "Show less" : "Show more"}</span>
-          {expanded ? (
-            <ChevronUp size={14} className="ml-1" />
-          ) : (
-            <ChevronDown size={14} className="ml-1" />
-          )}
-        </button>
-      </div>
+    <div className="flex items-center">
+      <button 
+        onClick={toggleExpanded}
+        className="text-xs text-gray-600 flex items-center ml-auto"
+      >
+        <span>{expanded ? "Show less" : "Show more"}</span>
+        {expanded ? (
+          <ChevronUp size={14} className="ml-1" />
+        ) : (
+          <ChevronDown size={14} className="ml-1" />
+        )}
+      </button>
       
       {expanded && (
-        <div className="w-full mt-2 px-0">
+        <div className="absolute left-0 right-0 top-full mt-2 px-3 bg-white w-full">
           {description && (
             <p className="text-sm text-gray-600 w-full text-left">{description}</p>
           )}
