@@ -13,20 +13,27 @@ interface CommentSectionProps {
 export function CommentSection({ comments, setComments }: CommentSectionProps) {
   const { session } = useAuth();
   
-  // Let's ensure we're using the correct user metadata fields from Supabase
+  // Debug logs to see what's in the session
+  console.log("Session user:", session?.user);
+  console.log("User metadata:", session?.user?.user_metadata);
+  
+  // Extract user information with better fallbacks
   const currentUser = {
+    // Get user name with enhanced priority order
     name: session?.user?.user_metadata?.full_name || 
           session?.user?.user_metadata?.name ||
           session?.user?.email?.split('@')[0] || 
-          "User",
+          "Anonymous User",
+    // Use a proper avatar or fallback to an initial-based one
     avatar: session?.user?.user_metadata?.avatar_url || 
-           `https://i.pravatar.cc/150?u=${session?.user?.id || "default"}`,
+           (session?.user?.id ? `https://ui-avatars.com/api/?name=${
+             (session?.user?.user_metadata?.full_name || 
+              session?.user?.user_metadata?.name || 
+              session?.user?.email?.split('@')[0] || "User").split(' ').map(n => n[0]).join('')
+           }&background=random` : "https://ui-avatars.com/api/?name=U&background=random"),
     id: session?.user?.id
   };
-
-  // For debugging - let's log what's coming from session
-  console.log("Session user:", session?.user);
-  console.log("User metadata:", session?.user?.user_metadata);
+  
   console.log("Current user object:", currentUser);
 
   const handleAddComment = (text: string) => {
