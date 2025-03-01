@@ -41,33 +41,25 @@ export function ItemCardContent({
   }
   
   return (
-    <>
-      <div className="flex justify-between items-center -mt-1 mb-2">
-        <div className="flex items-center space-x-4">
-          {/* Placeholder for buttons that will be added by parent */}
-        </div>
-        
-        <button 
-          onClick={toggleExpanded}
-          className="text-xs text-gray-600 flex items-center"
-        >
-          <span>{expanded ? "Show less" : "Show more"}</span>
-          {expanded ? (
-            <ChevronUp size={14} className="ml-1" />
-          ) : (
-            <ChevronDown size={14} className="ml-1" />
-          )}
-        </button>
-      </div>
-        
+    <button 
+      onClick={toggleExpanded}
+      className="text-xs text-gray-600 flex items-center"
+    >
+      <span>{expanded ? "Show less" : "Show more"}</span>
+      {expanded ? (
+        <ChevronUp size={14} className="ml-1" />
+      ) : (
+        <ChevronDown size={14} className="ml-1" />
+      )}
+      
       {expanded && (
-        <div className="mt-3 space-y-2">
+        <div className="absolute top-full left-0 right-0 bg-white p-3 z-10 mt-2 shadow-md rounded-md">
           {description && (
-            <p className="text-sm text-gray-600">{description}</p>
+            <p className="text-sm text-gray-600 text-left">{description}</p>
           )}
           
           {hasMeasurements && (
-            <div className="text-xs text-gray-500 flex flex-wrap gap-2">
+            <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
               {Object.entries(measurements).map(([key, value]) => (
                 <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
                   {key}: {value}
@@ -77,6 +69,6 @@ export function ItemCardContent({
           )}
         </div>
       )}
-    </>
+    </button>
   );
 }

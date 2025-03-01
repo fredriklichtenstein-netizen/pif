@@ -1,4 +1,6 @@
 
+import { Heart, MessageSquare } from "lucide-react";
+
 interface ItemCardActionsProps {
   isLiked: boolean;
   showInterest: boolean;
@@ -17,42 +19,42 @@ export function ItemCardActions({
   onShowInterest
 }: ItemCardActionsProps) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center space-x-4">
-        <button 
-          onClick={onLike}
-          className={`flex items-center space-x-1 ${isLiked ? 'text-primary' : 'text-gray-500'}`}
+    <div className="flex items-center space-x-4">
+      <button 
+        onClick={onLike}
+        className={`flex items-center space-x-1 ${isLiked ? 'text-primary' : 'text-gray-500'}`}
+        aria-label={isLiked ? "Unlike" : "Like"}
+      >
+        <svg 
+          width="24" 
+          height="24" 
+          viewBox="0 0 24 24" 
+          fill={isLiked ? "currentColor" : "none"}
+          stroke="currentColor" 
+          strokeWidth="2" 
+          className="h-5 w-5"
         >
-          <svg 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            fill={isLiked ? "currentColor" : "none"}
-            stroke="currentColor" 
-            strokeWidth="2" 
-            className="h-5 w-5"
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-          </svg>
-        </button>
-        
-        <button 
-          onClick={onCommentToggle}
-          className="flex items-center space-x-1 text-gray-500"
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </button>
+      
+      <button 
+        onClick={onCommentToggle}
+        className="flex items-center space-x-1 text-gray-500"
+        aria-label="Toggle comments"
+      >
+        <svg 
+          width="24" 
+          height="24" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          className="h-5 w-5"
         >
-          <svg 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            className="h-5 w-5"
-          >
-            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-          </svg>
-        </button>
-      </div>
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+        </svg>
+      </button>
 
       {!isOwner && (
         <button 
