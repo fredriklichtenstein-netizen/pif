@@ -6,9 +6,11 @@ import { EmailPasswordSettings } from "@/components/settings/EmailPasswordSettin
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { DangerZone } from "@/components/settings/DangerZone";
+import { SignOutButton } from "@/components/settings/SignOutButton";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 const AccountSettings = () => {
   const [activeTab, setActiveTab] = useState("account");
@@ -46,6 +48,18 @@ const AccountSettings = () => {
               </CardHeader>
               <CardContent>
                 <EmailPasswordSettings />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Sign Out</CardTitle>
+                <CardDescription>
+                  Sign out from your current session
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SignOutButton />
               </CardContent>
             </Card>
           </TabsContent>

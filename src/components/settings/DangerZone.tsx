@@ -2,12 +2,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { SignOutButton } from "./SignOutButton";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,16 +62,6 @@ export function DangerZone() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Sign Out</h3>
-        <p className="text-sm text-gray-500">
-          Sign out from your current session
-        </p>
-        <SignOutButton />
-      </div>
-
-      <Separator className="my-6" />
-
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-destructive">Delete Account</h3>
         <p className="text-sm text-gray-500">
