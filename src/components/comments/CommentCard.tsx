@@ -72,6 +72,12 @@ export function CommentCard({
     .join('')
     .toUpperCase() || 'U';
 
+  // Handle avatar loading errors by falling back to initials
+  const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.log("Avatar failed to load, using fallback");
+    e.currentTarget.style.display = 'none';
+  };
+
   return (
     <div className="space-y-4">
       <div className={`bg-gray-50 p-3 rounded-lg ${level > 0 ? 'ml-8' : ''}`}>
@@ -79,8 +85,9 @@ export function CommentCard({
           <Avatar className="w-8 h-8">
             <AvatarImage 
               src={comment.author.avatar} 
-              alt={comment.author.name} 
+              alt={comment.author.name}
               className="rounded-full object-cover"
+              onError={handleAvatarError}
             />
             <AvatarFallback>{authorInitials}</AvatarFallback>
           </Avatar>
