@@ -42,10 +42,10 @@ export function MainNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 z-50">
-      <div className="max-w-screen-xl mx-auto flex items-center justify-between relative">
-        {/* Left side links */}
-        <div className="flex-1 flex justify-evenly w-full">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 z-50">
+      <div className="w-full px-4 mx-auto flex items-center justify-between">
+        {/* Left side links - evenly spaced */}
+        <div className="flex-1 flex justify-between max-w-[40%]">
           <Link
             to="/"
             className={`flex flex-col items-center ${
@@ -67,7 +67,7 @@ export function MainNav() {
         </div>
         
         {/* Centered Post button */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-4">
+        <div className="flex items-center justify-center">
           <Link
             to="/post"
             className="flex flex-col items-center text-primary bg-white rounded-full p-2 shadow-md"
@@ -78,8 +78,8 @@ export function MainNav() {
           </Link>
         </div>
         
-        {/* Right side links */}
-        <div className="flex-1 flex justify-evenly w-full">
+        {/* Right side links - evenly spaced */}
+        <div className="flex-1 flex justify-between max-w-[40%]">
           <Link
             to="/messages"
             className={`flex flex-col items-center ${
