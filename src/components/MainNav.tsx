@@ -43,33 +43,29 @@ export function MainNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 z-50">
-      <div className="relative w-full mx-auto px-4">
-        {/* Left side navigation items */}
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-[calc(20vw-48px)]">
-            <Link
-              to="/"
-              className={`flex flex-col items-center ${
-                isActive("/") ? "text-primary" : "text-gray-500"
-              }`}
-            >
-              <Home size={24} />
-              <span className="text-xs mt-1">Home</span>
-            </Link>
-            
-            <Link
-              to="/map"
-              className={`flex flex-col items-center ${
-                isActive("/map") ? "text-primary" : "text-gray-500"
-              }`}
-            >
-              <Map size={24} />
-              <span className="text-xs mt-1">Map</span>
-            </Link>
-          </div>
+      <div className="container max-w-md mx-auto px-4">
+        <div className="grid grid-cols-5 items-center relative">
+          <Link
+            to="/"
+            className={`flex flex-col items-center ${
+              isActive("/") ? "text-primary" : "text-gray-500"
+            }`}
+          >
+            <Home size={24} />
+            <span className="text-xs mt-1">Home</span>
+          </Link>
           
-          {/* Center Post button */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <Link
+            to="/map"
+            className={`flex flex-col items-center ${
+              isActive("/map") ? "text-primary" : "text-gray-500"
+            }`}
+          >
+            <Map size={24} />
+            <span className="text-xs mt-1">Map</span>
+          </Link>
+          
+          <div className="flex justify-center">
             <Link
               to="/post"
               className="flex flex-col items-center text-primary bg-white rounded-full p-2 shadow-md"
@@ -80,30 +76,27 @@ export function MainNav() {
             </Link>
           </div>
           
-          {/* Right side navigation items */}
-          <div className="flex space-x-[calc(20vw-48px)]">
-            <Link
-              to="/messages"
-              className={`flex flex-col items-center ${
-                isActive("/messages") ? "text-primary" : "text-gray-500"
-              }`}
-              onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
-            >
-              <MessageSquare size={24} />
-              <span className="text-xs mt-1">Messages</span>
-            </Link>
-            
-            <Link
-              to="/profile"
-              className={`flex flex-col items-center ${
-                isActive("/profile") || isActive("/account-settings") ? "text-primary" : "text-gray-500"
-              }`}
-              onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
-            >
-              <UserIcon size={24} />
-              <span className="text-xs mt-1">Profile</span>
-            </Link>
-          </div>
+          <Link
+            to="/messages"
+            className={`flex flex-col items-center ${
+              isActive("/messages") ? "text-primary" : "text-gray-500"
+            }`}
+            onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
+          >
+            <MessageSquare size={24} />
+            <span className="text-xs mt-1">Messages</span>
+          </Link>
+          
+          <Link
+            to="/profile"
+            className={`flex flex-col items-center ${
+              isActive("/profile") || isActive("/account-settings") ? "text-primary" : "text-gray-500"
+            }`}
+            onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
+          >
+            <UserIcon size={24} />
+            <span className="text-xs mt-1">Profile</span>
+          </Link>
         </div>
       </div>
     </nav>
