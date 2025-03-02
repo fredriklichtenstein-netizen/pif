@@ -42,53 +42,66 @@ export function MainNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 flex justify-around items-center z-50">
-      <Link
-        to="/"
-        className={`flex flex-col items-center ${
-          isActive("/") ? "text-primary" : "text-gray-500"
-        }`}
-      >
-        <Home size={24} />
-        <span className="text-xs mt-1">Home</span>
-      </Link>
-      <Link
-        to="/map"
-        className={`flex flex-col items-center ${
-          isActive("/map") ? "text-primary" : "text-gray-500"
-        }`}
-      >
-        <Map size={24} />
-        <span className="text-xs mt-1">Map</span>
-      </Link>
-      <Link
-        to="/post"
-        className="flex flex-col items-center text-primary"
-        onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
-      >
-        <PlusCircle size={32} />
-        <span className="text-xs mt-1">Post</span>
-      </Link>
-      <Link
-        to="/messages"
-        className={`flex flex-col items-center ${
-          isActive("/messages") ? "text-primary" : "text-gray-500"
-        }`}
-        onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
-      >
-        <MessageSquare size={24} />
-        <span className="text-xs mt-1">Messages</span>
-      </Link>
-      <Link
-        to="/profile"
-        className={`flex flex-col items-center ${
-          isActive("/profile") || isActive("/account-settings") ? "text-primary" : "text-gray-500"
-        }`}
-        onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
-      >
-        <UserIcon size={24} />
-        <span className="text-xs mt-1">Profile</span>
-      </Link>
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 z-50">
+      <div className="max-w-screen-xl mx-auto flex items-center relative">
+        {/* Left side links */}
+        <div className="flex-1 flex justify-around">
+          <Link
+            to="/"
+            className={`flex flex-col items-center ${
+              isActive("/") ? "text-primary" : "text-gray-500"
+            }`}
+          >
+            <Home size={24} />
+            <span className="text-xs mt-1">Home</span>
+          </Link>
+          <Link
+            to="/map"
+            className={`flex flex-col items-center ${
+              isActive("/map") ? "text-primary" : "text-gray-500"
+            }`}
+          >
+            <Map size={24} />
+            <span className="text-xs mt-1">Map</span>
+          </Link>
+        </div>
+        
+        {/* Centered Post button */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-4">
+          <Link
+            to="/post"
+            className="flex flex-col items-center text-primary bg-white rounded-full p-2 shadow-md"
+            onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
+          >
+            <PlusCircle size={36} />
+            <span className="text-xs mt-1">Post</span>
+          </Link>
+        </div>
+        
+        {/* Right side links */}
+        <div className="flex-1 flex justify-around">
+          <Link
+            to="/messages"
+            className={`flex flex-col items-center ${
+              isActive("/messages") ? "text-primary" : "text-gray-500"
+            }`}
+            onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
+          >
+            <MessageSquare size={24} />
+            <span className="text-xs mt-1">Messages</span>
+          </Link>
+          <Link
+            to="/profile"
+            className={`flex flex-col items-center ${
+              isActive("/profile") || isActive("/account-settings") ? "text-primary" : "text-gray-500"
+            }`}
+            onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
+          >
+            <UserIcon size={24} />
+            <span className="text-xs mt-1">Profile</span>
+          </Link>
+        </div>
+      </div>
     </nav>
   );
 }

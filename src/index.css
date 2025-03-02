@@ -98,6 +98,8 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Add padding to prevent content from being hidden behind the navigation bar */
+    padding-bottom: 70px;
   }
 }
 
