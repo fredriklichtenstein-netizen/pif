@@ -1,3 +1,4 @@
+
 import { Home, Map, MessageSquare, PlusCircle, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,9 +43,8 @@ export function MainNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 z-50">
-      <div className="w-full px-2 mx-auto flex items-center justify-between">
-        {/* All navigation items in a single flex container with equal spacing */}
-        <div className="w-full flex justify-between items-center">
+      <div className="w-full mx-auto px-6">
+        <div className="flex justify-between items-center">
           <Link
             to="/"
             className={`flex flex-col items-center ${
