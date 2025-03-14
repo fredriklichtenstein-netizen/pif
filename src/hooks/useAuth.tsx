@@ -56,9 +56,16 @@ export function useAuth() {
   }, []);
 
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
+    console.log("Auth initiated with:", { email, password, phone, countryCode });
     setLoading(true);
     try {
       if (isSignUp) {
+        if (!phone || !countryCode) {
+          console.error("Phone and country code are required for signup");
+          setLoading(false);
+          return;
+        }
+        console.log("Signup with phone:", { phone, countryCode });
         await handleSignUp(email, password, phone, countryCode);
       } else {
         await handleSignIn(email, password);

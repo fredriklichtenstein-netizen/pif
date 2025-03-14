@@ -10,6 +10,8 @@ export function useSignUp() {
 
   const handleSignUp = async (email: string, password: string, phone?: string, countryCode?: string) => {
     try {
+      console.log("Starting signup process with:", { email, phone, countryCode });
+      
       // First, check if a user with this email already exists
       const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
         email,
@@ -26,23 +28,25 @@ export function useSignUp() {
         return false;
       }
 
-      // Format phone number with country code
+      // Format phone number with country code - ensure this is never null or undefined
       const formattedPhone = phone && countryCode ? `${countryCode}${phone}` : "+1234567890";
+      console.log("Formatted phone:", formattedPhone);
 
-      // Proceed with signup - Including phone number in metadata
+      // Store phone in metadata and user_metadata to ensure it's available
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin + '/email-confirmation',
           data: {
-            // Add phone as user metadata so the trigger can use it
-            phone: formattedPhone
+            phone: formattedPhone,
+            phone_number: formattedPhone, // Add redundancy
           }
         },
       });
 
       if (error) {
+        console.error("Signup error:", error);
         toast({
           title: "Sign up failed",
           description: error.message,
@@ -52,46 +56,36 @@ export function useSignUp() {
       }
 
       if (data.user) {
-        // Ensure profile has the required phone field
+        console.log("User created:", data.user);
         
-        // Wait a moment for the database trigger to run
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Check if a profile was created with phone
+        // Immediately create profile to ensure phone is saved
         if (data.user.id) {
-          const { data: profileData, error: profileCheckError } = await supabase
-            .from('profiles')
-            .select('id, phone')
-            .eq('id', data.user.id)
-            .maybeSingle();
+          // Create comprehensive profile data with required phone field
+          const completeProfileData = {
+            id: data.user.id,
+            username: email.split('@')[0],
+            phone: formattedPhone,
+            onboarding_completed: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
           
-          // If no profile exists or phone is missing, we need to create/update it
-          if (profileCheckError || !profileData || !profileData.phone) {
-            console.log("Creating/updating profile with required phone field");
+          console.log("Creating profile with data:", completeProfileData);
+          
+          // Use upsert to handle both creation and update scenarios
+          const { error: upsertError, data: profileData } = await supabase
+            .from('profiles')
+            .upsert(completeProfileData);
             
-            // Create comprehensive profile data with all required fields
-            const completeProfileData = {
-              id: data.user.id,
-              username: email.split('@')[0],
-              phone: formattedPhone,
-              onboarding_completed: false,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-            
-            // Use upsert to handle both creation and update scenarios
-            const { error: upsertError } = await supabase
-              .from('profiles')
-              .upsert(completeProfileData);
-              
-            if (upsertError) {
-              console.error("Profile upsert error:", upsertError);
-              toast({
-                title: "Account created but profile setup failed",
-                description: "Please complete your profile setup after signing in.",
-                variant: "destructive",
-              });
-            }
+          if (upsertError) {
+            console.error("Profile creation error:", upsertError);
+            toast({
+              title: "Account created but profile setup failed",
+              description: "Please complete your profile setup after signing in.",
+              variant: "destructive",
+            });
+          } else {
+            console.log("Profile created successfully:", profileData);
           }
         }
 

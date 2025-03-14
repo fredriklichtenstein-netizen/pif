@@ -17,17 +17,40 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+46"); // Default to Sweden
+  const [formError, setFormError] = useState("");
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
     setEmail("");
     setPassword("");
     setPhone("");
+    setFormError("");
   }, [isSignUp]);
+
+  const validateForm = () => {
+    if (!email || !password) {
+      setFormError("Email and password are required");
+      return false;
+    }
+    
+    if (isSignUp && !phone) {
+      setFormError("Phone number is required for signup");
+      return false;
+    }
+    
+    setFormError("");
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     if (isSignUp) {
+      console.log("Submitting signup with:", { email, password, phone, countryCode });
       await onSubmit(email, password, phone, countryCode);
     } else {
       await onSubmit(email, password);
@@ -39,12 +62,16 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
     setEmail("");
     setPassword("");
     setPhone("");
+    setFormError("");
     onToggleMode();
   };
 
   const handlePhoneChange = (newPhone: string, newCountryCode: string) => {
     setPhone(newPhone);
     setCountryCode(newCountryCode);
+    if (formError && newPhone) {
+      setFormError("");
+    }
   };
 
   return (
@@ -59,6 +86,12 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
             : "Welcome back to PIF"}
         </p>
       </div>
+      
+      {formError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{formError}</span>
+        </div>
+      )}
       
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="rounded-md shadow-sm space-y-4">
@@ -95,7 +128,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
           
           {isSignUp && (
             <div>
-              <Label htmlFor="phone">Phone number</Label>
+              <Label htmlFor="phone">Phone number (required)</Label>
               <PhoneInput
                 value={phone}
                 countryCode={countryCode}
