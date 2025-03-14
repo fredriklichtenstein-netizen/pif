@@ -40,18 +40,32 @@ export function useSignUp() {
       if (data.user) {
         // Create a minimal profile entry with required fields
         if (data.user.id) {
-          const { error: profileError } = await supabase
+          // First check if a profile already exists for this user
+          const { data: existingProfile } = await supabase
             .from('profiles')
-            .insert({
-              id: data.user.id,
-              username: email.split('@')[0],
-              phone: "+1234567890", // Adding default phone value since it's required
-              onboarding_completed: false
-            });
+            .select('id')
+            .eq('id', data.user.id)
+            .single();
             
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-            // Don't block sign up if profile creation fails
+          // Only insert a profile if one doesn't already exist
+          if (!existingProfile) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                username: email.split('@')[0],
+                phone: "+1234567890", // Default phone value until user updates in profile
+                onboarding_completed: false
+              });
+              
+            if (profileError) {
+              console.error("Error creating profile:", profileError);
+              toast({
+                title: "Account created but profile setup failed",
+                description: "Please complete your profile setup after signing in.",
+                variant: "destructive",
+              });
+            }
           }
         }
 

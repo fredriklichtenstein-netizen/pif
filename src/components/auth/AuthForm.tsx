@@ -26,6 +26,13 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
     await onSubmit(email, password);
   };
 
+  const handleToggle = () => {
+    // Clear form fields before toggling mode
+    setEmail("");
+    setPassword("");
+    onToggleMode();
+  };
+
   return (
     <div className="max-w-md w-full space-y-8">
       <div>
@@ -91,7 +98,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
         <Button
           type="button"
           variant="link"
-          onClick={onToggleMode}
+          onClick={handleToggle}
         >
           {isSignUp
             ? "Already have an account? Sign in"
