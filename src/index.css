@@ -92,7 +92,7 @@
 
   body {
     @apply bg-background text-foreground;
-    padding-bottom: 75px;
+    padding-bottom: 60px; /* Reduced from 75px to 60px */
   }
 }
 
@@ -146,7 +146,7 @@
 
 .pif-nav-icon-container {
   position: relative;
-  margin-top: -20px; /* Moves the icon upward */
+  margin-top: -25px; /* Adjusted from -20px to -25px to position higher */
 }
 
 .pif-nav-icon {
@@ -154,11 +154,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px; /* Increased size */
-  height: 56px; /* Increased size */
+  width: 56px;
+  height: 56px;
   background-color: #00D1A0;
   border-radius: 50%;
   color: white;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Add subtle shadow for depth */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }

@@ -132,7 +132,7 @@ const IndexPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-36">
+    <div className="container mx-auto px-4 py-6 pb-24">
       <h1 className="text-2xl font-bold mb-6">Posts</h1>
       <div className="space-y-5">
         {posts?.map((post) => (
