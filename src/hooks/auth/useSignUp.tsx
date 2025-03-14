@@ -10,11 +10,32 @@ export function useSignUp() {
 
   const handleSignUp = async (email: string, password: string) => {
     try {
+      // First, check if a user with this email already exists
+      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'CheckUserExistsOnly', // We're just checking if user exists, not trying to log in
+      });
+      
+      // If no error occurs, user exists, or the error is something other than invalid credentials
+      if (!checkError || (checkError && !checkError.message.includes("Invalid login credentials"))) {
+        toast({
+          title: "Account already exists",
+          description: "An account with this email already exists. Please sign in instead.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Proceed with signup
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin + '/email-confirmation',
+          data: {
+            // Add phone as user metadata so the trigger can use it
+            phone: "+1234567890" // Default phone value
+          }
         },
       });
 
@@ -27,45 +48,41 @@ export function useSignUp() {
         return false;
       }
 
-      // Check if user already exists (Supabase returns a user with empty identities array)
-      if (data?.user?.identities?.length === 0) {
-        toast({
-          title: "Account already exists",
-          description: "An account with this email already exists. Please sign in instead.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
       if (data.user) {
-        // Create a minimal profile entry with required fields
+        // We need to handle the case where the profile might not be created by the trigger
+        // or might be created without the required phone field
+        
+        // Wait a moment for the database trigger to run
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check if a profile was created and update it if needed
         if (data.user.id) {
-          // First check if a profile already exists for this user
           const { data: existingProfile, error: checkError } = await supabase
             .from('profiles')
-            .select('id')
+            .select('id, phone')
             .eq('id', data.user.id)
             .maybeSingle();
             
           if (checkError) {
             console.error("Error checking existing profile:", checkError);
           }
+          
+          // If no profile exists or it exists but has no phone, update it
+          if (!existingProfile || !existingProfile.phone) {
+            const profileData = {
+              id: data.user.id,
+              username: email.split('@')[0],
+              phone: "+1234567890", // Default phone value
+              onboarding_completed: false
+            };
             
-          // Only insert a profile if one doesn't already exist
-          if (!existingProfile) {
-            // Add required phone field with a default value
+            // Use upsert to either insert a new profile or update an existing one
             const { error: profileError } = await supabase
               .from('profiles')
-              .insert({
-                id: data.user.id,
-                username: email.split('@')[0],
-                phone: "+1234567890", // Default phone value until user updates in profile
-                onboarding_completed: false
-              });
+              .upsert(profileData);
               
             if (profileError) {
-              console.error("Error creating profile:", profileError);
-              // If profile creation fails, still show success but with a warning
+              console.error("Error updating profile:", profileError);
               toast({
                 title: "Account created but profile setup failed",
                 description: "Please complete your profile setup after signing in.",
