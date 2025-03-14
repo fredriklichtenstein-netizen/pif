@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -12,10 +13,10 @@
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em rgba(0, 0, 0, 0.5));
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.logo.pif:hover {
+  filter: drop-shadow(0 0 2em rgba(0, 0, 0, 0.5));
 }
 
 @keyframes logo-spin {
@@ -38,5 +39,25 @@
 }
 
 .read-the-docs {
-  color: #888;
+  color: #333;
+}
+
+/* Brand logo styling */
+.pif-logo {
+  display: flex;
+  align-items: center;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.pif-logo-symbol {
+  position: relative;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.pif-logo-text {
+  font-size: 1.7em;
+  letter-spacing: -0.03em;
 }

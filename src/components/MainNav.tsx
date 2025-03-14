@@ -71,7 +71,14 @@ export function MainNav() {
               className="flex flex-col items-center text-primary bg-white rounded-full p-2 shadow-md"
               onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
             >
-              <PlusCircle size={36} />
+              <div className="logo-icon">
+                <div className="relative">
+                  <span className="text-xl font-bold">&#x276F;</span>
+                  <div className="logo-dot"></div>
+                  <div className="logo-arc logo-arc-top-right"></div>
+                  <div className="logo-arc logo-arc-bottom-left"></div>
+                </div>
+              </div>
               <span className="text-xs mt-1">Post</span>
             </Link>
           </div>

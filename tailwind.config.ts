@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,19 +26,19 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#2F5233",
-          hover: "#243F27",
+          DEFAULT: "#000000", // Black primary color based on logo
+          hover: "#333333", // Slightly lighter black for hover
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#94A187",
-          hover: "#7A8770",
-          foreground: "#FFFFFF",
+          DEFAULT: "#CCCCCC", // Light gray secondary color from logo
+          hover: "#AAAAAA", // Darker gray for hover
+          foreground: "#000000",
         },
         accent: {
-          DEFAULT: "#E6D5B8",
-          hover: "#D9C4A3",
-          foreground: "#2F5233",
+          DEFAULT: "#E6E6E6", // Very light gray accent
+          hover: "#D9D9D9", // Slightly darker gray for hover
+          foreground: "#000000",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
