@@ -58,12 +58,12 @@ export function useAuth() {
   const handleAuth = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const success = isSignUp
-        ? await handleSignUp(email, password)
-        : await handleSignIn(email, password);
-        
+      if (isSignUp) {
+        await handleSignUp(email, password);
+      } else {
+        await handleSignIn(email, password);
+      }
       // We don't auto-toggle to sign-in anymore on failure
-      // This avoids the confusing UX issue
     } catch (error: any) {
       console.error('Auth error:', error);
     } finally {

@@ -41,14 +41,19 @@ export function useSignUp() {
         // Create a minimal profile entry with required fields
         if (data.user.id) {
           // First check if a profile already exists for this user
-          const { data: existingProfile } = await supabase
+          const { data: existingProfile, error: checkError } = await supabase
             .from('profiles')
             .select('id')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
+            
+          if (checkError) {
+            console.error("Error checking existing profile:", checkError);
+          }
             
           // Only insert a profile if one doesn't already exist
           if (!existingProfile) {
+            // Add required phone field with a default value
             const { error: profileError } = await supabase
               .from('profiles')
               .insert({
@@ -60,6 +65,7 @@ export function useSignUp() {
               
             if (profileError) {
               console.error("Error creating profile:", profileError);
+              // If profile creation fails, still show success but with a warning
               toast({
                 title: "Account created but profile setup failed",
                 description: "Please complete your profile setup after signing in.",
