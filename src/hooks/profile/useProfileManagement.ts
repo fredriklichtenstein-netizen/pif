@@ -2,6 +2,10 @@
 import { useState, useEffect } from "react";
 import { useProfileAvatar } from "./useProfileAvatar";
 import { useProfileData } from "./useProfileData";
+import { useProfileSubmit } from "./useProfileSubmit";
+import { useUnsavedChanges } from "./useUnsavedChanges";
+import { useProfileInitialization } from "./useProfileInitialization";
+import { useAvatarEffect } from "./useAvatarEffect";
 import { ProfileFormData } from "./types";
 
 export type { ProfileFormData } from "./types";
@@ -35,51 +39,22 @@ export const useProfileManagement = () => {
   // Debug log to track the lifecycle
   console.log("useProfileManagement hook running");
 
-  // Load profile data on initial mount
-  useEffect(() => {
-    console.log("useProfileManagement: Initial profile load effect running");
-    const loadProfile = async () => {
-      console.log("useProfileManagement: Loading profile data");
-      const profileData = await fetchProfile();
-      if (profileData?.avatarUrl) {
-        setAvatarUrl(profileData.avatarUrl);
-      }
-    };
-    loadProfile();
-  }, []);
+  // Initialize profile data
+  useProfileInitialization(fetchProfile, setAvatarUrl);
 
-  // Handle avatar update when avatar changes
-  useEffect(() => {
-    if (avatar) {
-      handleAvatarUpdate();
-    }
-  }, [avatar]);
+  // Handle avatar updates
+  useAvatarEffect(avatar, handleAvatarUpdate);
 
-  /**
-   * Handle profile form submission
-   * @param {React.FormEvent} e - Form event
-   * @returns {Promise<void>}
-   */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Safely log form data with date validation
-    const formDataLog = {
-      ...formData,
-      dateOfBirth: formData.dateOfBirth instanceof Date && !isNaN(formData.dateOfBirth.getTime()) 
-        ? formData.dateOfBirth.toISOString() 
-        : undefined
-    };
-    
-    console.log("useProfileManagement: Form submitted with data:", formDataLog);
-    
-    await saveProfile();
-  };
+  // Track unsaved changes
+  const { hasUnsavedChanges } = useUnsavedChanges(formData, initialFormData);
 
-  // Use combined loading state from both hooks
+  // Handle form submission
+  const { submitting, handleSubmit } = useProfileSubmit(saveProfile);
+
+  // Use combined loading state from all hooks
   useEffect(() => {
-    setLoading(avatarLoading || profileLoading);
-  }, [avatarLoading, profileLoading]);
+    setLoading(avatarLoading || profileLoading || submitting);
+  }, [avatarLoading, profileLoading, submitting]);
 
   return {
     loading,
@@ -88,6 +63,7 @@ export const useProfileManagement = () => {
     avatarUrl,
     setAvatar,
     setFormData,
+    hasUnsavedChanges,
     handleSubmit,
   };
 };
