@@ -38,13 +38,7 @@ export function useAuth() {
     
     try {
       if (isSignUp) {
-        if (!phone || !countryCode) {
-          console.error("Phone and country code are required for signup");
-          setLoading(false);
-          return;
-        }
-        
-        console.log("Signup with phone:", { phone, countryCode });
+        console.log("Signup with email:", email);
         return await handleSignUp(email, password, phone, countryCode);
       } else {
         return await handleSignIn(email, password);

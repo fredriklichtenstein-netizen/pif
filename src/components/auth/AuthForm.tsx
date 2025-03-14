@@ -47,11 +47,6 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
       return false;
     }
     
-    if (isSignUp && !phone) {
-      setFormError("Phone number is required for signup");
-      return false;
-    }
-    
     setFormError("");
     return true;
   };
@@ -142,7 +137,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
           
           {isSignUp && (
             <div>
-              <Label htmlFor="phone">Phone number (required)</Label>
+              <Label htmlFor="phone">Phone number (optional)</Label>
               <PhoneInput
                 value={phone}
                 countryCode={countryCode}
@@ -151,7 +146,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
                   setCountryCode(newCountryCode);
                   setFormError("");
                 }}
-                required={true}
+                required={false}
               />
             </div>
           )}

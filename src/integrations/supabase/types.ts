@@ -212,7 +212,7 @@ export type Database = {
           location: string | null
           notification_preferences: Json | null
           onboarding_completed: boolean
-          phone: string
+          phone: string | null
           updated_at: string | null
           username: string
         }
@@ -228,7 +228,7 @@ export type Database = {
           location?: string | null
           notification_preferences?: Json | null
           onboarding_completed?: boolean
-          phone: string
+          phone?: string | null
           updated_at?: string | null
           username: string
         }
@@ -244,7 +244,7 @@ export type Database = {
           location?: string | null
           notification_preferences?: Json | null
           onboarding_completed?: boolean
-          phone?: string
+          phone?: string | null
           updated_at?: string | null
           username?: string
         }

@@ -9,13 +9,13 @@ export function useSignUp() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async (email: string, password: string, phone: string, countryCode: string) => {
+  const handleSignUp = async (email: string, password: string, phone?: string, countryCode?: string) => {
     setLoading(true);
     try {
       console.log("Starting signup process with:", { email, phone, countryCode });
       
-      // Format phone number with country code
-      const formattedPhone = `${countryCode}${phone}`;
+      // Format phone number with country code if provided
+      const formattedPhone = phone && countryCode ? `${countryCode}${phone}` : null;
       console.log("Formatted phone:", formattedPhone);
 
       // Create the user with metadata
@@ -44,37 +44,8 @@ export function useSignUp() {
       if (data.user) {
         console.log("User created:", data.user);
         
-        // Create user profile immediately
-        try {
-          const profile = {
-            id: data.user.id,
-            username: email.split('@')[0],
-            phone: formattedPhone, // This is the key part - ensuring phone is properly set
-            onboarding_completed: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          
-          console.log("Creating profile with data:", profile);
-          
-          // Use upsert to handle both creation and update scenarios
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert(profile);
-            
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-            toast({
-              title: "Account created but profile setup failed",
-              description: "Please complete your profile after confirming your email.",
-              variant: "destructive",
-            });
-          } else {
-            console.log("Profile created successfully");
-          }
-        } catch (profileErr) {
-          console.error("Error during profile creation:", profileErr);
-        }
+        // We don't need to create a profile here anymore since the database trigger will handle it
+        // The phone is now optional in the profiles table
 
         toast({
           title: "Account created successfully!",
