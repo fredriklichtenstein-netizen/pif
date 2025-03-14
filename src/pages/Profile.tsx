@@ -48,20 +48,36 @@ const Profile = () => {
 
   useEffect(() => {
     try {
-      // Use JSON.stringify with a replacer to handle Date objects
-      const replacer = (key: string, value: any) => {
-        if (key === 'dateOfBirth' && value instanceof Date) {
-          return value instanceof Date && !isNaN(value.getTime())
-            ? value.toISOString()
-            : undefined;
+      // Custom comparison function for dates
+      const areEqual = (a: ProfileFormData, b: ProfileFormData): boolean => {
+        // Compare simple properties
+        if (a.firstName !== b.firstName ||
+            a.lastName !== b.lastName ||
+            a.gender !== b.gender ||
+            a.phone !== b.phone ||
+            a.address !== b.address ||
+            a.countryCode !== b.countryCode) {
+          return false;
         }
-        return value;
+        
+        // Handle date comparison specially
+        const aDate = a.dateOfBirth instanceof Date && !isNaN(a.dateOfBirth.getTime()) ? a.dateOfBirth : null;
+        const bDate = b.dateOfBirth instanceof Date && !isNaN(b.dateOfBirth.getTime()) ? b.dateOfBirth : null;
+        
+        // If both dates are null/undefined, they're equal
+        if (!aDate && !bDate) return true;
+        // If only one is null/undefined, they're not equal
+        if (!aDate || !bDate) return false;
+        
+        // Compare year, month, and day (ignore time)
+        return (
+          aDate.getFullYear() === bDate.getFullYear() &&
+          aDate.getMonth() === bDate.getMonth() &&
+          aDate.getDate() === bDate.getDate()
+        );
       };
       
-      const formStr = JSON.stringify(formData, replacer);
-      const initialStr = JSON.stringify(initialFormData, replacer);
-      
-      const hasChanges = formStr !== initialStr;
+      const hasChanges = !areEqual(formData, initialFormData);
       console.log("Checking for unsaved changes:", { hasChanges });
       setHasUnsavedChanges(hasChanges);
     } catch (e) {

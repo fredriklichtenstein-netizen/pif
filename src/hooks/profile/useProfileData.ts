@@ -60,13 +60,22 @@ export const useProfileData = () => {
         if (profile.date_of_birth) {
           console.log("Raw date_of_birth from database:", profile.date_of_birth);
           try {
-            dateOfBirth = new Date(profile.date_of_birth);
-            // Ensure it's a valid date
-            if (isNaN(dateOfBirth.getTime())) {
-              console.error("Invalid date format received:", profile.date_of_birth);
-              dateOfBirth = undefined;
-            } else {
-              console.log("Parsed dateOfBirth:", dateOfBirth);
+            // Create a new date with the specific format to avoid timezone issues
+            const dateParts = profile.date_of_birth.split('-');
+            if (dateParts.length === 3) {
+              const year = parseInt(dateParts[0], 10);
+              const month = parseInt(dateParts[1], 10) - 1; // JS months are 0-indexed
+              const day = parseInt(dateParts[2], 10);
+              
+              dateOfBirth = new Date(year, month, day);
+              
+              // Ensure it's a valid date
+              if (isNaN(dateOfBirth.getTime())) {
+                console.error("Invalid date format received:", profile.date_of_birth);
+                dateOfBirth = undefined;
+              } else {
+                console.log("Parsed dateOfBirth:", dateOfBirth);
+              }
             }
           } catch (error) {
             console.error("Error parsing date:", error);
@@ -99,7 +108,7 @@ export const useProfileData = () => {
         };
         
         setFormData(profileData);
-        setInitialFormData(profileData);
+        setInitialFormData({...profileData});
         
         return {
           avatarUrl: profile.avatar_url,
@@ -143,7 +152,11 @@ export const useProfileData = () => {
         try {
           // Ensure we have a valid date object
           if (formData.dateOfBirth instanceof Date && !isNaN(formData.dateOfBirth.getTime())) {
-            formattedDateOfBirth = formData.dateOfBirth.toISOString().split('T')[0];
+            // Format as YYYY-MM-DD for PostgreSQL date type
+            const year = formData.dateOfBirth.getFullYear();
+            const month = String(formData.dateOfBirth.getMonth() + 1).padStart(2, '0'); // Add 1 as JS months are 0-indexed
+            const day = String(formData.dateOfBirth.getDate()).padStart(2, '0');
+            formattedDateOfBirth = `${year}-${month}-${day}`;
             console.log("Formatted date for database storage:", formattedDateOfBirth);
           } else {
             console.error("Invalid date object:", formData.dateOfBirth);

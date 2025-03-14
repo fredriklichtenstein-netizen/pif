@@ -16,10 +16,21 @@ interface MapContainerProps {
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
   const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
+  const [isStyleLoaded, setIsStyleLoaded] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
 
   useEffect(() => {
     if (isMapReady && map) {
+      // Set up style loaded event
+      if (map.isStyleLoaded()) {
+        setIsStyleLoaded(true);
+      } else {
+        map.once('style.load', () => {
+          console.log("Map style fully loaded");
+          setIsStyleLoaded(true);
+        });
+      }
+      
       setIsMapVisible(true);
     }
   }, [isMapReady, map]);
@@ -44,11 +55,13 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
       )}
       {isMapReady && (
         <>
-          <MapMarkersLayer 
-            map={map}
-            posts={posts}
-            onPostClick={onPostClick}
-          />
+          {isStyleLoaded && (
+            <MapMarkersLayer 
+              map={map}
+              posts={posts}
+              onPostClick={onPostClick}
+            />
+          )}
           <Button
             onClick={locationTracking.toggleLocationTracking}
             className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"

@@ -12,7 +12,13 @@ export const isWaterLocation = async (lng: number, lat: number, map?: mapboxgl.M
       const point = map.project([lng, lat]);
       
       // Get available layers first
-      const availableLayers = map.getStyle().layers.map(layer => layer.id);
+      const style = map.getStyle();
+      if (!style || !style.layers) {
+        console.log("Map style not fully loaded yet");
+        return false;
+      }
+      
+      const availableLayers = style.layers.map(layer => layer.id);
       
       // Filter water-related layers that exist in the current style
       const waterLayers = [
