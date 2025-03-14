@@ -40,6 +40,9 @@ export const useProfileData = () => {
       if (userError) throw userError;
       if (!user) throw new Error("No user found");
 
+      // Log the user to debug
+      console.log("Fetching profile for user:", user.id);
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -48,14 +51,21 @@ export const useProfileData = () => {
 
       if (profileError) throw profileError;
 
+      // Log the retrieved profile data
+      console.log("Retrieved profile data:", profile);
+
       if (profile) {
         // Properly parse date of birth if it exists
         let dateOfBirth: Date | undefined = undefined;
         if (profile.date_of_birth) {
+          console.log("Raw date_of_birth from database:", profile.date_of_birth);
           dateOfBirth = new Date(profile.date_of_birth);
           // Ensure it's a valid date
           if (isNaN(dateOfBirth.getTime())) {
+            console.error("Invalid date format received:", profile.date_of_birth);
             dateOfBirth = undefined;
+          } else {
+            console.log("Parsed dateOfBirth:", dateOfBirth);
           }
         }
         
@@ -109,13 +119,28 @@ export const useProfileData = () => {
       }
 
       // Format date of birth for database storage
-      const formattedDateOfBirth = formData.dateOfBirth 
-        ? formData.dateOfBirth.toISOString().split('T')[0] 
-        : null;
+      let formattedDateOfBirth = null;
+      if (formData.dateOfBirth) {
+        // Ensure we have a valid date object
+        if (formData.dateOfBirth instanceof Date && !isNaN(formData.dateOfBirth.getTime())) {
+          formattedDateOfBirth = formData.dateOfBirth.toISOString().split('T')[0];
+          console.log("Formatted date for database storage:", formattedDateOfBirth);
+        } else {
+          console.error("Invalid date object:", formData.dateOfBirth);
+        }
+      }
 
-      console.log("Saving date of birth:", formattedDateOfBirth);
+      // Log what we're saving to the database
+      console.log("Saving profile with data:", {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        gender: formData.gender,
+        phone: formattedPhone,
+        address: formData.address,
+        date_of_birth: formattedDateOfBirth,
+      });
 
-      const { error: updateError } = await supabase
+      const { error: updateError, data: updatedData } = await supabase
         .from('profiles')
         .update({
           first_name: formData.firstName,
@@ -129,6 +154,8 @@ export const useProfileData = () => {
         .eq('id', user.id);
 
       if (updateError) throw updateError;
+
+      console.log("Profile update response:", updatedData);
 
       // Update the initial form data to reflect the current state
       setInitialFormData({ 

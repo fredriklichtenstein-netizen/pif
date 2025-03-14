@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 
 interface DateOfBirthSelectorProps {
   dateOfBirth?: Date;
@@ -23,6 +22,8 @@ const months = [
 ];
 
 export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelectorProps) {
+  console.log("DateOfBirthSelector rendering with dateOfBirth:", dateOfBirth);
+  
   const [selectedYear, setSelectedYear] = useState<number | null>(
     dateOfBirth ? dateOfBirth.getFullYear() : null
   );
@@ -33,6 +34,26 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
     dateOfBirth ? dateOfBirth.getDate() : null
   );
   const [daysInMonth, setDaysInMonth] = useState<number[]>([]);
+
+  // Initialize state when dateOfBirth prop changes
+  useEffect(() => {
+    console.log("dateOfBirth prop changed:", dateOfBirth);
+    if (dateOfBirth && dateOfBirth instanceof Date && !isNaN(dateOfBirth.getTime())) {
+      console.log("Setting date from prop:", {
+        year: dateOfBirth.getFullYear(),
+        month: dateOfBirth.getMonth(),
+        day: dateOfBirth.getDate()
+      });
+      setSelectedYear(dateOfBirth.getFullYear());
+      setSelectedMonth(dateOfBirth.getMonth());
+      setSelectedDay(dateOfBirth.getDate());
+    } else if (dateOfBirth === undefined) {
+      // Reset if dateOfBirth is explicitly undefined
+      setSelectedYear(null);
+      setSelectedMonth(null);
+      setSelectedDay(null);
+    }
+  }, [dateOfBirth]);
 
   // Update days in month when year or month changes
   useEffect(() => {
@@ -53,24 +74,31 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
 
   // Update the date whenever any part changes
   useEffect(() => {
+    console.log("Date parts changed:", { selectedYear, selectedMonth, selectedDay });
+    
     if (selectedYear !== null && selectedMonth !== null && selectedDay !== null) {
       const newDate = new Date(selectedYear, selectedMonth, selectedDay);
+      console.log("Created new date object:", newDate);
       onChange(newDate);
     } else if (selectedYear === null && selectedMonth === null && selectedDay === null) {
       // Only clear if all values are null
+      console.log("Clearing date selection");
       onChange(undefined);
     }
   }, [selectedYear, selectedMonth, selectedDay, onChange]);
 
   const handleYearChange = (year: number) => {
+    console.log("Year changed to:", year);
     setSelectedYear(year);
   };
 
   const handleMonthChange = (month: number) => {
+    console.log("Month changed to:", month);
     setSelectedMonth(month);
   };
 
   const handleDayChange = (day: number) => {
+    console.log("Day changed to:", day);
     setSelectedDay(day);
   };
 

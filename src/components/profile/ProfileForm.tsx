@@ -24,11 +24,26 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ formData, onChange }: ProfileFormProps) {
+  // Log the formData to debug
+  console.log("ProfileForm rendering with formData:", {
+    ...formData,
+    dateOfBirth: formData.dateOfBirth ? 
+      `${formData.dateOfBirth.toISOString()} (valid: ${!isNaN(formData.dateOfBirth.getTime())})` : 
+      undefined
+  });
+
   const handleChange = (updates: Partial<ProfileFormData>) => {
+    // Log what's being updated
+    console.log("Updating form data with:", updates);
     onChange({
       ...formData,
       ...updates
     });
+  };
+
+  const handleDateOfBirthChange = (date: Date | undefined) => {
+    console.log("Date of birth changed to:", date);
+    handleChange({ dateOfBirth: date });
   };
 
   return (
@@ -62,7 +77,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
 
             <DateOfBirthSelector
               dateOfBirth={formData.dateOfBirth}
-              onChange={(dateOfBirth) => handleChange({ dateOfBirth })}
+              onChange={handleDateOfBirthChange}
             />
 
             <div className="space-y-2">

@@ -41,9 +41,14 @@ export const useProfileManagement = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // Debug log to track the lifecycle
+  console.log("useProfileManagement hook running");
+
   // Load profile data on initial mount
   useEffect(() => {
+    console.log("useProfileManagement: Initial profile load effect running");
     const loadProfile = async () => {
+      console.log("useProfileManagement: Loading profile data");
       const profileData = await fetchProfile();
       if (profileData?.avatarUrl) {
         setAvatarUrl(profileData.avatarUrl);
@@ -66,6 +71,14 @@ export const useProfileManagement = () => {
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log("useProfileManagement: Form submitted with data:", {
+      ...formData,
+      dateOfBirth: formData.dateOfBirth ? 
+        `${formData.dateOfBirth.toISOString()} (valid: ${!isNaN(formData.dateOfBirth.getTime())})` : 
+        undefined
+    });
+    
     await saveProfile();
   };
 

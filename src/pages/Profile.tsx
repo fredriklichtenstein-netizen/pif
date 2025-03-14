@@ -26,8 +26,24 @@ const Profile = () => {
     handleSubmit,
   } = useProfileManagement();
 
+  // Debug log
+  console.log("Profile page rendering with formData:", {
+    ...formData,
+    dateOfBirth: formData.dateOfBirth ? 
+      `${formData.dateOfBirth.toISOString()} (valid: ${!isNaN(formData.dateOfBirth.getTime())})` : 
+      undefined
+  });
+  
+  console.log("initialFormData:", {
+    ...initialFormData,
+    dateOfBirth: initialFormData.dateOfBirth ? 
+      `${initialFormData.dateOfBirth.toISOString()} (valid: ${!isNaN(initialFormData.dateOfBirth.getTime())})` : 
+      undefined
+  });
+
   useEffect(() => {
     const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    console.log("Checking for unsaved changes:", { hasChanges });
     setHasUnsavedChanges(hasChanges);
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -59,6 +75,12 @@ const Profile = () => {
     if (e) {
       e.preventDefault();
     }
+    console.log("Form submit handler called with data:", {
+      ...formData,
+      dateOfBirth: formData.dateOfBirth ? 
+        `${formData.dateOfBirth.toISOString()} (valid: ${!isNaN(formData.dateOfBirth.getTime())})` : 
+        undefined
+    });
     await handleSubmit(e as React.FormEvent);
   };
 
@@ -76,6 +98,12 @@ const Profile = () => {
   };
 
   const handleFormChange = (newData: ProfileFormData) => {
+    console.log("Form change handler called with data:", {
+      ...newData,
+      dateOfBirth: newData.dateOfBirth ? 
+        `${newData.dateOfBirth.toISOString()} (valid: ${!isNaN(newData.dateOfBirth.getTime())})` : 
+        undefined
+    });
     setFormData(newData);
   };
 
