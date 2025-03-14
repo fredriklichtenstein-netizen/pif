@@ -54,7 +54,15 @@ export const useProfileManagement = () => {
       if (profileError) throw profileError;
 
       if (profile) {
-        const dateOfBirth = profile.date_of_birth ? new Date(profile.date_of_birth) : undefined;
+        // Properly parse date of birth if it exists
+        let dateOfBirth: Date | undefined = undefined;
+        if (profile.date_of_birth) {
+          dateOfBirth = new Date(profile.date_of_birth);
+          // Ensure it's a valid date
+          if (isNaN(dateOfBirth.getTime())) {
+            dateOfBirth = undefined;
+          }
+        }
         
         setFormData({
           firstName: profile.first_name || "",
@@ -155,6 +163,13 @@ export const useProfileManagement = () => {
         formattedPhone = formattedPhone.substring(1);
       }
 
+      // Format date of birth for database storage
+      const formattedDateOfBirth = formData.dateOfBirth 
+        ? formData.dateOfBirth.toISOString().split('T')[0] 
+        : null;
+
+      console.log("Saving date of birth:", formattedDateOfBirth);
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -163,7 +178,7 @@ export const useProfileManagement = () => {
           gender: formData.gender,
           phone: formattedPhone,
           address: formData.address,
-          date_of_birth: formData.dateOfBirth?.toISOString().split('T')[0] || null,
+          date_of_birth: formattedDateOfBirth,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);

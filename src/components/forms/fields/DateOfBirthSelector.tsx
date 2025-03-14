@@ -1,11 +1,6 @@
 
-import { useState } from "react";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -34,29 +29,59 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
   const [selectedMonth, setSelectedMonth] = useState<number | null>(
     dateOfBirth ? dateOfBirth.getMonth() : null
   );
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number | null>(
+    dateOfBirth ? dateOfBirth.getDate() : null
+  );
+  const [daysInMonth, setDaysInMonth] = useState<number[]>([]);
+
+  // Update days in month when year or month changes
+  useEffect(() => {
+    if (selectedYear !== null && selectedMonth !== null) {
+      // Get number of days in the selected month
+      const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+      const days = Array.from({ length: lastDay }, (_, i) => i + 1);
+      setDaysInMonth(days);
+      
+      // If currently selected day is invalid for the new month, reset it
+      if (selectedDay !== null && selectedDay > lastDay) {
+        setSelectedDay(null);
+      }
+    } else {
+      setDaysInMonth([]);
+    }
+  }, [selectedYear, selectedMonth, selectedDay]);
+
+  // Update the date whenever any part changes
+  useEffect(() => {
+    if (selectedYear !== null && selectedMonth !== null && selectedDay !== null) {
+      const newDate = new Date(selectedYear, selectedMonth, selectedDay);
+      onChange(newDate);
+    } else if (selectedYear === null && selectedMonth === null && selectedDay === null) {
+      // Only clear if all values are null
+      onChange(undefined);
+    }
+  }, [selectedYear, selectedMonth, selectedDay, onChange]);
 
   const handleYearChange = (year: number) => {
     setSelectedYear(year);
-    if (selectedMonth !== null) {
-      const newDate = new Date(year, selectedMonth, 1);
-      onChange(newDate);
-    }
   };
 
   const handleMonthChange = (month: number) => {
     setSelectedMonth(month);
-    if (selectedYear !== null) {
-      const newDate = new Date(selectedYear, month, 1);
-      onChange(newDate);
-    }
+  };
+
+  const handleDayChange = (day: number) => {
+    setSelectedDay(day);
   };
 
   return (
     <div className="space-y-2">
       <Label>Date of birth (optional)</Label>
-      <div className="grid grid-cols-2 gap-4">
-        <Select value={selectedYear?.toString()} onValueChange={(value) => handleYearChange(parseInt(value))}>
+      <div className="grid grid-cols-3 gap-4">
+        <Select 
+          value={selectedYear?.toString()} 
+          onValueChange={(value) => handleYearChange(parseInt(value))}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Year" />
           </SelectTrigger>
@@ -84,39 +109,24 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
             ))}
           </SelectContent>
         </Select>
+
+        <Select 
+          value={selectedDay?.toString()}
+          onValueChange={(value) => handleDayChange(parseInt(value))}
+          disabled={selectedYear === null || selectedMonth === null}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Day" />
+          </SelectTrigger>
+          <SelectContent>
+            {daysInMonth.map((day) => (
+              <SelectItem key={day} value={day.toString()}>
+                {day}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      {selectedYear && selectedMonth !== null && (
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !dateOfBirth && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateOfBirth ? (
-                format(dateOfBirth, "PPP")
-              ) : (
-                <span>Pick a day</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dateOfBirth}
-              onSelect={(date) => {
-                onChange(date);
-                setCalendarOpen(false);
-              }}
-              defaultMonth={new Date(selectedYear, selectedMonth)}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      )}
     </div>
   );
 }
