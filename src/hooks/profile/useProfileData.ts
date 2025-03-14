@@ -73,14 +73,28 @@ export const useProfileData = () => {
             dateOfBirth = undefined;
           }
         }
+
+        // Extract country code from phone if exists
+        let countryCode = "+46"; // Default country code
+        let phoneNumber = profile.phone || "";
+        
+        // Check if phone number contains a country code (starts with +)
+        if (phoneNumber && phoneNumber.startsWith('+')) {
+          const match = phoneNumber.match(/^\+(\d+)/);
+          if (match && match[0]) {
+            countryCode = match[0];
+            // Remove country code from phone number
+            phoneNumber = phoneNumber.substring(match[0].length);
+          }
+        }
         
         const profileData = {
           firstName: profile.first_name || "",
           lastName: profile.last_name || "",
           gender: profile.gender || "",
-          phone: profile.phone || "",
+          phone: phoneNumber,
           address: profile.address || "",
-          countryCode: profile.country_code || "+46", // Default country code if not stored
+          countryCode: countryCode,
           dateOfBirth: dateOfBirth,
         };
         
@@ -139,12 +153,17 @@ export const useProfileData = () => {
         }
       }
 
+      // Combine country code and phone number for storage
+      // Only include country code if phone is not empty
+      const fullPhoneNumber = formData.phone ? 
+        `${formData.countryCode}${formattedPhone}` : '';
+
       // Log what we're saving to the database
       console.log("Saving profile with data:", {
         first_name: formData.firstName,
         last_name: formData.lastName,
         gender: formData.gender,
-        phone: formattedPhone,
+        phone: fullPhoneNumber,
         address: formData.address,
         date_of_birth: formattedDateOfBirth,
       });
@@ -155,10 +174,9 @@ export const useProfileData = () => {
           first_name: formData.firstName,
           last_name: formData.lastName,
           gender: formData.gender,
-          phone: formattedPhone,
+          phone: fullPhoneNumber,
           address: formData.address,
           date_of_birth: formattedDateOfBirth,
-          country_code: formData.countryCode,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
