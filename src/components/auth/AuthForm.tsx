@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,12 @@ interface AuthFormProps {
 export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Clear form fields when toggling between signup and signin modes
+  useEffect(() => {
+    setEmail("");
+    setPassword("");
+  }, [isSignUp]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

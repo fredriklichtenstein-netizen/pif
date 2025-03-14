@@ -61,10 +61,9 @@ export function useAuth() {
       const success = isSignUp
         ? await handleSignUp(email, password)
         : await handleSignIn(email, password);
-
-      if (!success && isSignUp) {
-        setIsSignUp(false);
-      }
+        
+      // We don't auto-toggle to sign-in anymore on failure
+      // This avoids the confusing UX issue
     } catch (error: any) {
       console.error('Auth error:', error);
     } finally {
