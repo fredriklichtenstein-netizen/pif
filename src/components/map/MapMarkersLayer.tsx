@@ -18,15 +18,6 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
   const processedCoordinates = useRef<Map<string, [number, number]>>(new Map());
 
   useEffect(() => {
-    console.log("MapMarkersLayer - effect running with posts:", posts?.length);
-    
-    // Ensure map and posts exist
-    if (!map || !posts || posts.length === 0) {
-      console.log("Map or posts not available");
-      return;
-    }
-
-    // Wait for the map style to be fully loaded before adding markers
     const createMarkers = async () => {
       console.log("Creating markers for posts:", posts.length);
       
@@ -34,16 +25,13 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
       markers.current.forEach(marker => marker.remove());
       markers.current = [];
       
-      // Process posts with coordinates
-      const postsWithCoordinates = posts.filter(post => post.coordinates);
-      console.log(`Found ${postsWithCoordinates.length} posts with coordinates`);
-      
-      if (postsWithCoordinates.length === 0) {
-        return;
-      }
-      
       // Process all posts
-      for (const post of postsWithCoordinates) {
+      for (const post of posts) {
+        if (!post.coordinates) {
+          console.log("Skipping post without coordinates:", post.id);
+          continue;
+        }
+
         try {
           const coords = parseCoordinatesFromDB(post.coordinates);
           if (!coords) {
@@ -59,20 +47,13 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             [privateLng, privateLat] = cachedCoords;
             console.log("Using cached coordinates for post:", post.id);
           } else {
-            // Calculate new privacy-adjusted coordinates
-            const adjustedCoords = await addLocationPrivacy(
+            // Calculate new privacy-adjusted coordinates, passing the map for water detection
+            [privateLng, privateLat] = await addLocationPrivacy(
               coords.lng,
               coords.lat,
               map
             );
-            
-            if (!adjustedCoords || adjustedCoords.length !== 2) {
-              console.log("Failed to get privacy-adjusted coordinates for post:", post.id);
-              continue;
-            }
-            
-            [privateLng, privateLat] = adjustedCoords;
-            console.log("Generated new private coordinates for post:", post.id);
+            console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
             processedCoordinates.current.set(post.id, [privateLng, privateLat]);
           }
 
@@ -125,41 +106,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
       }
     };
 
-    // Create markers if style is loaded, otherwise wait for it
-    if (map.isStyleLoaded()) {
-      console.log("Map style already loaded, creating markers");
-      createMarkers();
-    } else {
-      console.log("Waiting for map style to load before creating markers");
-      const checkStyleLoaded = () => {
-        if (map.isStyleLoaded()) {
-          console.log("Style now loaded, creating markers");
-          createMarkers();
-          return true;
-        }
-        return false;
-      };
-      
-      // Try immediately
-      if (!checkStyleLoaded()) {
-        // Set up event listener
-        map.once('style.load', () => {
-          console.log("Style load event fired, creating markers");
-          createMarkers();
-        });
-        
-        // Set a timeout as fallback
-        setTimeout(() => {
-          console.log("Style load timeout, trying to create markers anyway");
-          createMarkers();
-        }, 3000);
-      }
-    }
-
-    return () => {
-      // Clean up markers on unmount
-      markers.current.forEach(marker => marker.remove());
-    };
+    createMarkers();
   }, [posts, map, onPostClick]);
 
   return null;

@@ -9,12 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useProfileManagement } from "@/hooks/profile/useProfileManagement";
 import { Settings } from "lucide-react";
 import type { ProfileFormData } from "@/hooks/profile/useProfileManagement";
-import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [navigationPath, setNavigationPath] = useState<string | null>(null);
 
   const {
@@ -24,29 +23,23 @@ const Profile = () => {
     avatarUrl,
     setAvatar,
     setFormData,
-    hasUnsavedChanges,
     handleSubmit,
   } = useProfileManagement();
 
-  // Safe logging function to handle potential invalid dates
-  const safeLogFormData = (data: ProfileFormData) => {
-    try {
-      const logData = {
-        ...data,
-        dateOfBirth: data.dateOfBirth instanceof Date && !isNaN(data.dateOfBirth.getTime())
-          ? data.dateOfBirth.toISOString().split('T')[0]
-          : "Invalid or missing date"
-      };
-      return logData;
-    } catch (e) {
-      console.error("Error logging form data:", e);
-      return { ...data, dateOfBirth: "Error in date" };
-    }
-  };
+  useEffect(() => {
+    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    setHasUnsavedChanges(hasChanges);
 
-  // Debug log
-  console.log("Profile page rendering with formData:", safeLogFormData(formData));
-  console.log("initialFormData:", safeLogFormData(initialFormData));
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, initialFormData]);
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -62,52 +55,16 @@ const Profile = () => {
     return () => window.removeEventListener('popstate', handleNavigation);
   }, [hasUnsavedChanges]);
 
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
   const handleFormSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
-    
-    try {
-      console.log("Form submit handler called with data:", safeLogFormData(formData));
-      const success = await handleSubmit(e as React.FormEvent);
-      
-      if (success) {
-        toast({
-          title: "Profile updated",
-          description: "Your profile has been successfully updated",
-        });
-      } else {
-        toast({
-          title: "Update failed",
-          description: "There was a problem updating your profile",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
+    await handleSubmit(e as React.FormEvent);
   };
 
   const handleConfirmNavigation = () => {
     setShowUnsavedChangesDialog(false);
+    setHasUnsavedChanges(false);
     if (navigationPath) {
       navigate(navigationPath);
     }
@@ -119,7 +76,6 @@ const Profile = () => {
   };
 
   const handleFormChange = (newData: ProfileFormData) => {
-    console.log("Form change handler called with data:", safeLogFormData(newData));
     setFormData(newData);
   };
 

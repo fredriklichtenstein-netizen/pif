@@ -16,51 +16,13 @@ interface MapContainerProps {
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
   const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
-  const [isStyleLoaded, setIsStyleLoaded] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
 
   useEffect(() => {
     if (isMapReady && map) {
-      console.log("Map is ready, checking style loaded state");
-      
-      // Check if style is already loaded
-      if (map.isStyleLoaded()) {
-        console.log("Map style is already loaded");
-        setIsStyleLoaded(true);
-      } else {
-        console.log("Waiting for map style to load");
-        
-        // Set up style loaded event listener
-        const checkStyleLoaded = () => {
-          if (map.isStyleLoaded()) {
-            console.log("Map style loaded via check");
-            setIsStyleLoaded(true);
-            return true;
-          }
-          return false;
-        };
-        
-        // Try immediately
-        if (!checkStyleLoaded()) {
-          // If not loaded, set up event listener
-          map.once('style.load', () => {
-            console.log("Map style loaded via event");
-            setIsStyleLoaded(true);
-          });
-          
-          // Also set a timeout as a fallback
-          setTimeout(() => {
-            if (!isStyleLoaded) {
-              console.log("Style load timeout - forcing loaded state");
-              setIsStyleLoaded(true);
-            }
-          }, 3000);
-        }
-      }
-      
       setIsMapVisible(true);
     }
-  }, [isMapReady, map, isStyleLoaded]);
+  }, [isMapReady, map]);
 
   return (
     <div className="h-full rounded-lg overflow-hidden relative bg-gray-50">
@@ -82,13 +44,11 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
       )}
       {isMapReady && (
         <>
-          {isStyleLoaded && posts && posts.length > 0 && (
-            <MapMarkersLayer 
-              map={map}
-              posts={posts}
-              onPostClick={onPostClick}
-            />
-          )}
+          <MapMarkersLayer 
+            map={map}
+            posts={posts}
+            onPostClick={onPostClick}
+          />
           <Button
             onClick={locationTracking.toggleLocationTracking}
             className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
