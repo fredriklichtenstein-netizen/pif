@@ -1,4 +1,3 @@
-
 import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,17 +67,16 @@ export function MainNav() {
           <div className="flex justify-center">
             <Link
               to="/post"
-              className="flex flex-col items-center"
+              className="flex items-center"
               onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
             >
               <div className="pif-nav-icon">
                 <img 
                   src="/lovable-uploads/53620c2b-b959-4ef7-9b15-68f286e62757.png" 
                   alt="Pay it Forward" 
-                  className="w-6 h-6"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <span className="text-xs mt-1 text-gray-800">Pay it Forward</span>
             </Link>
           </div>
           
