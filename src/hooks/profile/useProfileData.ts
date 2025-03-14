@@ -1,24 +1,15 @@
 
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { ProfileFormData } from "./types";
+import { useProfileLoader } from "./useProfileLoader";
+import { useProfileSaver } from "./useProfileSaver";
 
 /**
  * Hook for managing profile data operations
  * 
  * @returns Object containing profile state and methods
- * @property {boolean} loading - Indicates if a profile operation is in progress
- * @property {ProfileFormData} formData - Current profile form data
- * @property {ProfileFormData} initialFormData - Initial profile form data for comparison
- * @property {Function} setFormData - Set the form data
- * @property {Function} setInitialFormData - Set the initial form data
- * @property {Function} fetchProfile - Fetch profile data from the database
- * @property {Function} saveProfile - Save profile data to the database
  */
 export const useProfileData = () => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<ProfileFormData>({
     firstName: "",
     lastName: "",
@@ -29,195 +20,35 @@ export const useProfileData = () => {
   });
   const [initialFormData, setInitialFormData] = useState({ ...formData });
 
+  const { loading: loadingProfile, fetchProfile } = useProfileLoader();
+  const { loading: savingProfile, saveProfile } = useProfileSaver();
+  
+  // Combined loading state
+  const loading = loadingProfile || savingProfile;
+
   /**
-   * Fetches user profile data from the database
-   * @returns {Promise<{avatarUrl: string, profileData: ProfileFormData} | null>} Profile data or null if error
+   * Fetch profile wrapper that updates state
    */
-  const fetchProfile = async () => {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!user) throw new Error("No user found");
-
-      // Log the user to debug
-      console.log("Fetching profile for user:", user.id);
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Log the retrieved profile data
-      console.log("Retrieved profile data:", profile);
-
-      if (profile) {
-        // Properly parse date of birth if it exists
-        let dateOfBirth: Date | undefined = undefined;
-        if (profile.date_of_birth) {
-          console.log("Raw date_of_birth from database:", profile.date_of_birth);
-          try {
-            // Create a new date with the specific format to avoid timezone issues
-            const dateParts = profile.date_of_birth.split('-');
-            if (dateParts.length === 3) {
-              const year = parseInt(dateParts[0], 10);
-              const month = parseInt(dateParts[1], 10) - 1; // JS months are 0-indexed
-              const day = parseInt(dateParts[2], 10);
-              
-              dateOfBirth = new Date(year, month, day);
-              
-              // Ensure it's a valid date
-              if (isNaN(dateOfBirth.getTime())) {
-                console.error("Invalid date format received:", profile.date_of_birth);
-                dateOfBirth = undefined;
-              } else {
-                console.log("Parsed dateOfBirth:", dateOfBirth);
-              }
-            }
-          } catch (error) {
-            console.error("Error parsing date:", error);
-            dateOfBirth = undefined;
-          }
-        }
-
-        // Extract country code from phone if exists
-        let countryCode = "+46"; // Default country code
-        let phoneNumber = profile.phone || "";
-        
-        // Check if phone number contains a country code (starts with +)
-        if (phoneNumber && phoneNumber.startsWith('+')) {
-          const match = phoneNumber.match(/^\+(\d+)/);
-          if (match && match[0]) {
-            countryCode = match[0];
-            // Remove country code from phone number
-            phoneNumber = phoneNumber.substring(match[0].length);
-          }
-        }
-        
-        const profileData = {
-          firstName: profile.first_name || "",
-          lastName: profile.last_name || "",
-          gender: profile.gender || "",
-          phone: phoneNumber,
-          address: profile.address || "",
-          countryCode: countryCode,
-          dateOfBirth: dateOfBirth,
-        };
-        
-        setFormData(profileData);
-        setInitialFormData({...profileData});
-        
-        return {
-          avatarUrl: profile.avatar_url,
-          profileData
-        };
-      }
-      return null;
-    } catch (error: any) {
-      console.error("Error fetching profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
-      });
-      return null;
+  const fetchProfileData = async () => {
+    const result = await fetchProfile();
+    if (result) {
+      setFormData(result.profileData);
+      setInitialFormData({...result.profileData});
+      return result;
     }
+    return null;
   };
 
   /**
-   * Saves profile data to the database
-   * @returns {Promise<boolean>} Success status
+   * Save profile wrapper
    */
-  const saveProfile = async () => {
-    setLoading(true);
-
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!user) throw new Error("No user found");
-
-      // Format phone to remove leading zero
-      let formattedPhone = formData.phone;
-      if (formattedPhone.startsWith('0')) {
-        formattedPhone = formattedPhone.substring(1);
-      }
-
-      // Format date of birth for database storage
-      let formattedDateOfBirth = null;
-      if (formData.dateOfBirth) {
-        try {
-          // Ensure we have a valid date object
-          if (formData.dateOfBirth instanceof Date && !isNaN(formData.dateOfBirth.getTime())) {
-            // Format as YYYY-MM-DD for PostgreSQL date type
-            const year = formData.dateOfBirth.getFullYear();
-            const month = String(formData.dateOfBirth.getMonth() + 1).padStart(2, '0'); // Add 1 as JS months are 0-indexed
-            const day = String(formData.dateOfBirth.getDate()).padStart(2, '0');
-            formattedDateOfBirth = `${year}-${month}-${day}`;
-            console.log("Formatted date for database storage:", formattedDateOfBirth);
-          } else {
-            console.error("Invalid date object:", formData.dateOfBirth);
-          }
-        } catch (error) {
-          console.error("Error formatting date:", error);
-        }
-      }
-
-      // Combine country code and phone number for storage
-      // Only include country code if phone is not empty
-      const fullPhoneNumber = formData.phone ? 
-        `${formData.countryCode}${formattedPhone}` : '';
-
-      // Log what we're saving to the database
-      console.log("Saving profile with data:", {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        gender: formData.gender,
-        phone: fullPhoneNumber,
-        address: formData.address,
-        date_of_birth: formattedDateOfBirth,
-      });
-
-      const { error: updateError, data: updatedData } = await supabase
-        .from('profiles')
-        .update({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          gender: formData.gender,
-          phone: fullPhoneNumber,
-          address: formData.address,
-          date_of_birth: formattedDateOfBirth,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      console.log("Profile update response:", updatedData);
-
+  const saveProfileData = async () => {
+    const success = await saveProfile(formData);
+    if (success) {
       // Update the initial form data to reflect the current state
       setInitialFormData({ ...formData });
-      
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setLoading(false);
     }
+    return success;
   };
 
   return {
@@ -226,7 +57,7 @@ export const useProfileData = () => {
     initialFormData,
     setFormData,
     setInitialFormData,
-    fetchProfile,
-    saveProfile
+    fetchProfile: fetchProfileData,
+    saveProfile: saveProfileData
   };
 };
