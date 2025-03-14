@@ -9,11 +9,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useProfileManagement } from "@/hooks/profile/useProfileManagement";
 import { Settings } from "lucide-react";
 import type { ProfileFormData } from "@/hooks/profile/useProfileManagement";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [navigationPath, setNavigationPath] = useState<string | null>(null);
 
   const {
@@ -23,6 +24,7 @@ const Profile = () => {
     avatarUrl,
     setAvatar,
     setFormData,
+    hasUnsavedChanges,
     handleSubmit,
   } = useProfileManagement();
 
@@ -32,69 +34,19 @@ const Profile = () => {
       const logData = {
         ...data,
         dateOfBirth: data.dateOfBirth instanceof Date && !isNaN(data.dateOfBirth.getTime())
-          ? data.dateOfBirth.toISOString()
-          : undefined
+          ? data.dateOfBirth.toISOString().split('T')[0]
+          : "Invalid or missing date"
       };
       return logData;
     } catch (e) {
       console.error("Error logging form data:", e);
-      return { ...data, dateOfBirth: "Invalid Date" };
+      return { ...data, dateOfBirth: "Error in date" };
     }
   };
 
   // Debug log
   console.log("Profile page rendering with formData:", safeLogFormData(formData));
   console.log("initialFormData:", safeLogFormData(initialFormData));
-
-  useEffect(() => {
-    try {
-      // Custom comparison function for dates
-      const areEqual = (a: ProfileFormData, b: ProfileFormData): boolean => {
-        // Compare simple properties
-        if (a.firstName !== b.firstName ||
-            a.lastName !== b.lastName ||
-            a.gender !== b.gender ||
-            a.phone !== b.phone ||
-            a.address !== b.address ||
-            a.countryCode !== b.countryCode) {
-          return false;
-        }
-        
-        // Handle date comparison specially
-        const aDate = a.dateOfBirth instanceof Date && !isNaN(a.dateOfBirth.getTime()) ? a.dateOfBirth : null;
-        const bDate = b.dateOfBirth instanceof Date && !isNaN(b.dateOfBirth.getTime()) ? b.dateOfBirth : null;
-        
-        // If both dates are null/undefined, they're equal
-        if (!aDate && !bDate) return true;
-        // If only one is null/undefined, they're not equal
-        if (!aDate || !bDate) return false;
-        
-        // Compare year, month, and day (ignore time)
-        return (
-          aDate.getFullYear() === bDate.getFullYear() &&
-          aDate.getMonth() === bDate.getMonth() &&
-          aDate.getDate() === bDate.getDate()
-        );
-      };
-      
-      const hasChanges = !areEqual(formData, initialFormData);
-      console.log("Checking for unsaved changes:", { hasChanges });
-      setHasUnsavedChanges(hasChanges);
-    } catch (e) {
-      console.error("Error comparing form data:", e);
-      setHasUnsavedChanges(false);
-    }
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [formData, initialFormData]);
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -110,6 +62,19 @@ const Profile = () => {
     return () => window.removeEventListener('popstate', handleNavigation);
   }, [hasUnsavedChanges]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   const handleFormSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
@@ -117,15 +82,32 @@ const Profile = () => {
     
     try {
       console.log("Form submit handler called with data:", safeLogFormData(formData));
-      await handleSubmit(e as React.FormEvent);
+      const success = await handleSubmit(e as React.FormEvent);
+      
+      if (success) {
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated",
+        });
+      } else {
+        toast({
+          title: "Update failed",
+          description: "There was a problem updating your profile",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
   };
 
   const handleConfirmNavigation = () => {
     setShowUnsavedChangesDialog(false);
-    setHasUnsavedChanges(false);
     if (navigationPath) {
       navigate(navigationPath);
     }

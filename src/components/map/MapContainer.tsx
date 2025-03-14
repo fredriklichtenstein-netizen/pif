@@ -21,19 +21,46 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
 
   useEffect(() => {
     if (isMapReady && map) {
-      // Set up style loaded event
+      console.log("Map is ready, checking style loaded state");
+      
+      // Check if style is already loaded
       if (map.isStyleLoaded()) {
+        console.log("Map style is already loaded");
         setIsStyleLoaded(true);
       } else {
-        map.once('style.load', () => {
-          console.log("Map style fully loaded");
-          setIsStyleLoaded(true);
-        });
+        console.log("Waiting for map style to load");
+        
+        // Set up style loaded event listener
+        const checkStyleLoaded = () => {
+          if (map.isStyleLoaded()) {
+            console.log("Map style loaded via check");
+            setIsStyleLoaded(true);
+            return true;
+          }
+          return false;
+        };
+        
+        // Try immediately
+        if (!checkStyleLoaded()) {
+          // If not loaded, set up event listener
+          map.once('style.load', () => {
+            console.log("Map style loaded via event");
+            setIsStyleLoaded(true);
+          });
+          
+          // Also set a timeout as a fallback
+          setTimeout(() => {
+            if (!isStyleLoaded) {
+              console.log("Style load timeout - forcing loaded state");
+              setIsStyleLoaded(true);
+            }
+          }, 3000);
+        }
       }
       
       setIsMapVisible(true);
     }
-  }, [isMapReady, map]);
+  }, [isMapReady, map, isStyleLoaded]);
 
   return (
     <div className="h-full rounded-lg overflow-hidden relative bg-gray-50">
@@ -55,7 +82,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
       )}
       {isMapReady && (
         <>
-          {isStyleLoaded && (
+          {isStyleLoaded && posts && posts.length > 0 && (
             <MapMarkersLayer 
               map={map}
               posts={posts}

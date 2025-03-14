@@ -12,10 +12,14 @@ export const useProfileInitialization = (
   useEffect(() => {
     console.log("useProfileInitialization: Initial profile load effect running");
     const loadProfile = async () => {
-      console.log("useProfileInitialization: Loading profile data");
-      const profileData = await fetchProfile();
-      if (profileData?.avatarUrl) {
-        setAvatarUrl(profileData.avatarUrl);
+      try {
+        console.log("useProfileInitialization: Loading profile data");
+        const profileData = await fetchProfile();
+        if (profileData?.avatarUrl) {
+          setAvatarUrl(profileData.avatarUrl);
+        }
+      } catch (error) {
+        console.error("Error in useProfileInitialization:", error);
       }
     };
     loadProfile();

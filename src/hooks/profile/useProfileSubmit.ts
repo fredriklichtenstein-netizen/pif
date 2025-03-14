@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { ProfileFormData } from "./types";
 
 /**
  * Hook for handling profile form submission
@@ -14,7 +13,9 @@ export const useProfileSubmit = (saveProfile: () => Promise<boolean>) => {
    * @returns {Promise<boolean>} Success status
    */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     
     // Safe logging of form data is handled by the caller
     console.log("useProfileSubmit: Form submitted");
@@ -23,6 +24,9 @@ export const useProfileSubmit = (saveProfile: () => Promise<boolean>) => {
     try {
       const result = await saveProfile();
       return result;
+    } catch (error) {
+      console.error("Error submitting profile:", error);
+      return false;
     } finally {
       setSubmitting(false);
     }

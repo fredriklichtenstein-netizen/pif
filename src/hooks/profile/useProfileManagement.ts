@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useProfileAvatar } from "./useProfileAvatar";
 import { useProfileData } from "./useProfileData";
 import { useProfileSubmit } from "./useProfileSubmit";
@@ -39,11 +39,20 @@ export const useProfileManagement = () => {
   // Debug log to track the lifecycle
   console.log("useProfileManagement hook running");
 
+  // Safe version of handleAvatarUpdate that catches errors
+  const handleAvatarUpdateSafe = useCallback(async () => {
+    try {
+      await handleAvatarUpdate();
+    } catch (error) {
+      console.error("Error in handleAvatarUpdateSafe:", error);
+    }
+  }, [handleAvatarUpdate]);
+
   // Initialize profile data
   useProfileInitialization(fetchProfile, setAvatarUrl);
 
   // Handle avatar updates
-  useAvatarEffect(avatar, handleAvatarUpdate);
+  useAvatarEffect(avatar, handleAvatarUpdateSafe);
 
   // Track unsaved changes
   const { hasUnsavedChanges } = useUnsavedChanges(formData, initialFormData);

@@ -11,7 +11,11 @@ export const useAvatarEffect = (
   // Handle avatar update when avatar changes
   useEffect(() => {
     if (avatar) {
-      handleAvatarUpdate();
+      try {
+        handleAvatarUpdate();
+      } catch (error) {
+        console.error("Error in avatar update effect:", error);
+      }
     }
   }, [avatar, handleAvatarUpdate]);
 };

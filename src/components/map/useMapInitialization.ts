@@ -46,78 +46,89 @@ export const useMapInitialization = (mapboxToken: string) => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
     
-    const initializeMap = () => {
-      try {
-        mapboxgl.accessToken = mapboxToken;
-        const initialState = getInitialMapState();
-        
-        const newMap = new mapboxgl.Map({
-          container: mapContainer.current!,
-          style: "mapbox://styles/mapbox/light-v11",
-          center: initialState.center,
-          zoom: initialState.zoom,
-          minZoom: 9,
-          maxZoom: 16,
-          attributionControl: false,
-          preserveDrawingBuffer: false,
-          renderWorldCopies: false,
-          antialias: true,
-        });
+    try {
+      console.log("Initializing map with token:", mapboxToken ? "Token exists" : "No token");
+      
+      mapboxgl.accessToken = mapboxToken;
+      const initialState = getInitialMapState();
+      
+      console.log("Creating map with initial state:", initialState);
+      
+      const newMap = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/light-v11",
+        center: initialState.center,
+        zoom: initialState.zoom,
+        minZoom: 9,
+        maxZoom: 16,
+        attributionControl: false,
+        preserveDrawingBuffer: false,
+        renderWorldCopies: false,
+        antialias: true,
+      });
 
-        newMap.on('load', () => {
-          newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
-          newMap.addControl(
-            new mapboxgl.ScaleControl({
-              maxWidth: 150,
-              unit: 'metric'
-            }),
-            'bottom-left'
-          );
-          
+      newMap.on('load', () => {
+        console.log("Map load event fired");
+        
+        newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+        newMap.addControl(
+          new mapboxgl.ScaleControl({
+            maxWidth: 150,
+            unit: 'metric'
+          }),
+          'bottom-left'
+        );
+        
+        map.current = newMap;
+        setIsMapReady(true);
+      });
+
+      // Save map state when user moves or zooms
+      newMap.on('moveend', () => {
+        if (!newMap || !newMap.getCenter()) return;
+        saveMapState(
+          [newMap.getCenter().lng, newMap.getCenter().lat],
+          newMap.getZoom()
+        );
+      });
+
+      newMap.on('error', (e) => {
+        console.error('Map error:', e);
+      });
+
+      // Set a timeout to check if the map is ready
+      const timeoutId = setTimeout(() => {
+        if (!isMapReady && newMap) {
+          console.log("Map load timeout - forcing ready state");
           map.current = newMap;
           setIsMapReady(true);
-        });
-
-        // Save map state when user moves or zooms
-        newMap.on('moveend', () => {
-          if (!newMap || !newMap.getCenter()) return;
-          saveMapState(
-            [newMap.getCenter().lng, newMap.getCenter().lat],
-            newMap.getZoom()
-          );
-        });
-
-        newMap.on('error', (e) => {
-          console.error('Map error:', e);
-          setIsMapReady(false);
-        });
-
-      } catch (error) {
-        console.error('Error initializing map:', error);
-        setIsMapReady(false);
-      }
-    };
-
-    initializeMap();
-
-    return () => {
-      if (map.current) {
-        // Save final state before unmounting
-        try {
-          saveMapState(
-            [map.current.getCenter().lng, map.current.getCenter().lat],
-            map.current.getZoom()
-          );
-        } catch (error) {
-          console.error('Error saving final map state:', error);
         }
-        
-        map.current.remove();
-        map.current = null;
-        setIsMapReady(false);
-      }
-    };
-  }, [mapboxToken]);
+      }, 3000);
+
+      return () => {
+        clearTimeout(timeoutId);
+        if (map.current) {
+          // Save final state before unmounting
+          try {
+            saveMapState(
+              [map.current.getCenter().lng, map.current.getCenter().lat],
+              map.current.getZoom()
+            );
+          } catch (error) {
+            console.error('Error saving final map state:', error);
+          }
+          
+          map.current.remove();
+          map.current = null;
+          setIsMapReady(false);
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      setIsMapReady(false);
+      return () => {};
+    }
+  }, [mapboxToken, isMapReady]);
 
   return { mapContainer, map: map.current, isMapReady };
 };
