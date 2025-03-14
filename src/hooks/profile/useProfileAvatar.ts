@@ -3,12 +3,27 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+/**
+ * Hook for managing profile avatar functionality
+ * 
+ * @returns Object containing avatar state and methods
+ * @property {boolean} loading - Indicates if an avatar operation is in progress
+ * @property {File|null} avatar - The avatar file being processed
+ * @property {string|null} avatarUrl - URL of the current avatar
+ * @property {Function} setAvatar - Set the avatar file
+ * @property {Function} setAvatarUrl - Set the avatar URL directly
+ * @property {Function} handleAvatarUpdate - Upload and update the avatar in storage and database
+ */
 export const useProfileAvatar = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
+  /**
+   * Uploads the avatar to storage and updates the profile in the database
+   * @returns {Promise<void>}
+   */
   const handleAvatarUpdate = async () => {
     if (!avatar) return;
     

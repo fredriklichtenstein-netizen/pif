@@ -4,6 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileFormData } from "./types";
 
+/**
+ * Hook for managing profile data operations
+ * 
+ * @returns Object containing profile state and methods
+ * @property {boolean} loading - Indicates if a profile operation is in progress
+ * @property {ProfileFormData} formData - Current profile form data
+ * @property {ProfileFormData} initialFormData - Initial profile form data for comparison
+ * @property {Function} setFormData - Set the form data
+ * @property {Function} setInitialFormData - Set the initial form data
+ * @property {Function} fetchProfile - Fetch profile data from the database
+ * @property {Function} saveProfile - Save profile data to the database
+ */
 export const useProfileData = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -17,6 +29,10 @@ export const useProfileData = () => {
   });
   const [initialFormData, setInitialFormData] = useState({ ...formData });
 
+  /**
+   * Fetches user profile data from the database
+   * @returns {Promise<{avatarUrl: string, profileData: ProfileFormData} | null>} Profile data or null if error
+   */
   const fetchProfile = async () => {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -73,6 +89,10 @@ export const useProfileData = () => {
     }
   };
 
+  /**
+   * Saves profile data to the database
+   * @returns {Promise<boolean>} Success status
+   */
   const saveProfile = async () => {
     setLoading(true);
 
