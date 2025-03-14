@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/profile/PhoneInput";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface AuthFormProps {
   isSignUp: boolean;
   loading: boolean;
-  onSubmit: (email: string, password: string, phone?: string, countryCode?: string) => Promise<void>;
+  onSubmit: (email: string, password: string, phone?: string, countryCode?: string) => Promise<boolean | void>;
   onToggleMode: () => void;
 }
 
@@ -18,6 +20,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+46"); // Default to Sweden
   const [formError, setFormError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
@@ -25,11 +28,22 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
     setPassword("");
     setPhone("");
     setFormError("");
+    setSubmitError("");
   }, [isSignUp]);
 
   const validateForm = () => {
-    if (!email || !password) {
-      setFormError("Email and password are required");
+    if (!email) {
+      setFormError("Email is required");
+      return false;
+    }
+    
+    if (!password) {
+      setFormError("Password is required");
+      return false;
+    }
+    
+    if (password.length < 6) {
+      setFormError("Password must be at least 6 characters");
       return false;
     }
     
@@ -44,33 +58,23 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError("");
     
     if (!validateForm()) {
       return;
     }
     
-    if (isSignUp) {
-      console.log("Submitting signup with:", { email, password, phone, countryCode });
-      await onSubmit(email, password, phone, countryCode);
-    } else {
-      await onSubmit(email, password);
-    }
-  };
-
-  const handleToggle = () => {
-    // Clear form fields before toggling mode
-    setEmail("");
-    setPassword("");
-    setPhone("");
-    setFormError("");
-    onToggleMode();
-  };
-
-  const handlePhoneChange = (newPhone: string, newCountryCode: string) => {
-    setPhone(newPhone);
-    setCountryCode(newCountryCode);
-    if (formError && newPhone) {
-      setFormError("");
+    try {
+      const result = isSignUp
+        ? await onSubmit(email, password, phone, countryCode)
+        : await onSubmit(email, password);
+      
+      if (result === false) {
+        setSubmitError("Authentication failed. Please check your details and try again.");
+      }
+    } catch (error: any) {
+      console.error("Auth form submission error:", error);
+      setSubmitError(error.message || "Authentication failed. Please try again.");
     }
   };
 
@@ -87,10 +91,14 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
         </p>
       </div>
       
-      {formError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <span className="block sm:inline">{formError}</span>
-        </div>
+      {(formError || submitError) && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {formError || submitError}
+          </AlertDescription>
+        </Alert>
       )}
       
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -104,7 +112,10 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
               autoComplete="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setFormError("");
+              }}
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
               placeholder="Enter your email"
             />
@@ -119,9 +130,12 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
               autoComplete={isSignUp ? "new-password" : "current-password"}
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setFormError("");
+              }}
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-              placeholder={isSignUp ? "Create a password" : "Enter your password"}
+              placeholder={isSignUp ? "Create a password (min 6 characters)" : "Enter your password"}
               minLength={6}
             />
           </div>
@@ -132,7 +146,11 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
               <PhoneInput
                 value={phone}
                 countryCode={countryCode}
-                onPhoneChange={handlePhoneChange}
+                onPhoneChange={(newPhone, newCountryCode) => {
+                  setPhone(newPhone);
+                  setCountryCode(newCountryCode);
+                  setFormError("");
+                }}
                 required={true}
               />
             </div>
@@ -142,11 +160,11 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
         <div>
           <Button
             type="submit"
-            className="w-full flex justify-center py-2 px-4"
+            className="w-full flex justify-center py-2 px-4 bg-green-500 hover:bg-green-600"
             disabled={loading}
           >
             {loading
-              ? "Loading..."
+              ? "Processing..."
               : isSignUp
               ? "Create account"
               : "Sign in"}
@@ -158,7 +176,8 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
         <Button
           type="button"
           variant="link"
-          onClick={handleToggle}
+          onClick={onToggleMode}
+          className="text-green-600 hover:text-green-700"
         >
           {isSignUp
             ? "Already have an account? Sign in"

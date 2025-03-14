@@ -9,23 +9,10 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  const { handleSignUp } = useSignUp();
+  const { handleSignUp, loading: signUpLoading } = useSignUp();
   const { handleSignIn } = useSignIn();
 
   useEffect(() => {
-    // Initialize session from localStorage if available
-    const savedSession = localStorage.getItem('supabase.auth.token');
-    if (savedSession) {
-      try {
-        const parsed = JSON.parse(savedSession);
-        if (parsed?.currentSession) {
-          setSession(parsed.currentSession);
-        }
-      } catch (e) {
-        console.error('Error parsing saved session:', e);
-      }
-    }
-
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -38,16 +25,6 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
-
-      // Update localStorage when session changes
-      if (session) {
-        localStorage.setItem('supabase.auth.token', JSON.stringify({
-          currentSession: session,
-          expiresAt: session.expires_at
-        }));
-      } else {
-        localStorage.removeItem('supabase.auth.token');
-      }
     });
 
     return () => {
@@ -58,6 +35,7 @@ export function useAuth() {
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
     console.log("Auth initiated with:", { email, password, phone, countryCode });
     setLoading(true);
+    
     try {
       if (isSignUp) {
         if (!phone || !countryCode) {
@@ -65,13 +43,15 @@ export function useAuth() {
           setLoading(false);
           return;
         }
+        
         console.log("Signup with phone:", { phone, countryCode });
-        await handleSignUp(email, password, phone, countryCode);
+        return await handleSignUp(email, password, phone, countryCode);
       } else {
-        await handleSignIn(email, password);
+        return await handleSignIn(email, password);
       }
     } catch (error: any) {
       console.error('Auth error:', error);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -82,7 +62,7 @@ export function useAuth() {
   };
 
   return {
-    loading,
+    loading: loading || signUpLoading,
     isSignUp,
     session,
     handleAuth,
