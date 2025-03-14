@@ -68,15 +68,15 @@ export function MainNav() {
           <div className="flex justify-center">
             <Link
               to="/post"
-              className="flex flex-col items-center text-white"
+              className="flex flex-col items-center"
               onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
             >
               <div className="pif-nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 7.5V4.5C8 3.12 9.12 2 10.5 2H13.5C14.88 2 16 3.12 16 4.5V7.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16.5 10.5L12 15L7.5 10.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 22V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <img 
+                  src="/lovable-uploads/53620c2b-b959-4ef7-9b15-68f286e62757.png" 
+                  alt="Pay it Forward" 
+                  className="w-6 h-6"
+                />
               </div>
               <span className="text-xs mt-1 text-gray-800">Pay it Forward</span>
             </Link>
