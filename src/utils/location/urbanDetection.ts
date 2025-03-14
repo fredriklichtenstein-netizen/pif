@@ -18,13 +18,29 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
       const sw: Point = new Point(point.x - 100, point.y + 100);
       const ne: Point = new Point(point.x + 100, point.y - 100);
 
+      // Get available layers first
+      const availableLayers = map.getStyle().layers.map(layer => layer.id);
+      
+      // Filter to only query layers that actually exist
+      const queryLayers = [
+        'building',   // Building footprints
+        'landuse'     // Land use classifications
+      ].filter(layerId => availableLayers.includes(layerId));
+      
+      // Add road-related layers that exist
+      const roadLayers = availableLayers.filter(id => id.includes('road'));
+      queryLayers.push(...roadLayers);
+
+      // Don't continue if we found no matching layers
+      if (queryLayers.length === 0) {
+        console.log("No matching layers found in map style, falling back to database check");
+        // Fall back to database check
+        return fallbackUrbanCheck(lat, lng);
+      }
+
       // Get all relevant features within the bounding box
       const features = map.queryRenderedFeatures([sw, ne], {
-        layers: [
-          'building',          // Building footprints
-          'road',             // Road networks
-          'landuse'           // Land use classifications
-        ]
+        layers: queryLayers
       });
 
       // Count buildings
@@ -60,10 +76,16 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
     } catch (error) {
       console.error("Error determining urban area:", error);
       // Fall back to database check
+      return fallbackUrbanCheck(lat, lng);
     }
   }
   
-  // Fallback: Check against database of Swedish urban areas
+  // Fallback to database check
+  return fallbackUrbanCheck(lat, lng);
+};
+
+// Helper function to check against database
+async function fallbackUrbanCheck(lat: number, lng: number): Promise<boolean> {
   const { data, error } = await supabase
     .from('swedish_urban_areas')
     .select('id')
@@ -79,4 +101,4 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
   }
 
   return data.length > 0;
-};
+}

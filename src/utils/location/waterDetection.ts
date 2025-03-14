@@ -11,15 +11,33 @@ export const isWaterLocation = async (lng: number, lat: number, map?: mapboxgl.M
       // Convert lat/lng to pixel coordinates for querying features
       const point = map.project([lng, lat]);
       
+      // Get available layers first
+      const availableLayers = map.getStyle().layers.map(layer => layer.id);
+      
+      // Filter water-related layers that exist in the current style
+      const waterLayers = [
+        'water',
+        'waterway'
+      ].filter(id => availableLayers.includes(id));
+      
+      // Add any other water-related layers
+      const additionalWaterLayers = availableLayers.filter(id => 
+        id.includes('water') || 
+        id.includes('ocean') || 
+        id.includes('sea') || 
+        id.includes('lake')
+      );
+      waterLayers.push(...additionalWaterLayers);
+      
+      // If no water layers found, return false as we can't check
+      if (waterLayers.length === 0) {
+        console.log("No water layers found in map style");
+        return false;
+      }
+
       // Query for water features at the exact point
       const features = map.queryRenderedFeatures(point, {
-        layers: [
-          'water',
-          'waterway',
-          'water-area',
-          'water-name',
-          'water-point'
-        ]
+        layers: waterLayers
       });
 
       // If any water features are found, consider it a water location

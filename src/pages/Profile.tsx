@@ -26,28 +26,51 @@ const Profile = () => {
     handleSubmit,
   } = useProfileManagement();
 
+  // Safe logging function to handle potential invalid dates
+  const safeLogFormData = (data: ProfileFormData) => {
+    try {
+      const logData = {
+        ...data,
+        dateOfBirth: data.dateOfBirth instanceof Date && !isNaN(data.dateOfBirth.getTime())
+          ? data.dateOfBirth.toISOString()
+          : undefined
+      };
+      return logData;
+    } catch (e) {
+      console.error("Error logging form data:", e);
+      return { ...data, dateOfBirth: "Invalid Date" };
+    }
+  };
+
   // Debug log
-  console.log("Profile page rendering with formData:", {
-    ...formData,
-    dateOfBirth: formData.dateOfBirth ? 
-      `${formData.dateOfBirth.toISOString()} (valid: ${!isNaN(formData.dateOfBirth.getTime())})` : 
-      undefined
-  });
-  
-  console.log("initialFormData:", {
-    ...initialFormData,
-    dateOfBirth: initialFormData.dateOfBirth ? 
-      `${initialFormData.dateOfBirth.toISOString()} (valid: ${!isNaN(initialFormData.dateOfBirth.getTime())})` : 
-      undefined
-  });
+  console.log("Profile page rendering with formData:", safeLogFormData(formData));
+  console.log("initialFormData:", safeLogFormData(initialFormData));
 
   useEffect(() => {
-    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
-    console.log("Checking for unsaved changes:", { hasChanges });
-    setHasUnsavedChanges(hasChanges);
+    try {
+      // Use JSON.stringify with a replacer to handle Date objects
+      const replacer = (key: string, value: any) => {
+        if (key === 'dateOfBirth' && value instanceof Date) {
+          return value instanceof Date && !isNaN(value.getTime())
+            ? value.toISOString()
+            : undefined;
+        }
+        return value;
+      };
+      
+      const formStr = JSON.stringify(formData, replacer);
+      const initialStr = JSON.stringify(initialFormData, replacer);
+      
+      const hasChanges = formStr !== initialStr;
+      console.log("Checking for unsaved changes:", { hasChanges });
+      setHasUnsavedChanges(hasChanges);
+    } catch (e) {
+      console.error("Error comparing form data:", e);
+      setHasUnsavedChanges(false);
+    }
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasChanges) {
+      if (hasUnsavedChanges) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -75,13 +98,13 @@ const Profile = () => {
     if (e) {
       e.preventDefault();
     }
-    console.log("Form submit handler called with data:", {
-      ...formData,
-      dateOfBirth: formData.dateOfBirth ? 
-        `${formData.dateOfBirth.toISOString()} (valid: ${!isNaN(formData.dateOfBirth.getTime())})` : 
-        undefined
-    });
-    await handleSubmit(e as React.FormEvent);
+    
+    try {
+      console.log("Form submit handler called with data:", safeLogFormData(formData));
+      await handleSubmit(e as React.FormEvent);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   };
 
   const handleConfirmNavigation = () => {
@@ -98,12 +121,7 @@ const Profile = () => {
   };
 
   const handleFormChange = (newData: ProfileFormData) => {
-    console.log("Form change handler called with data:", {
-      ...newData,
-      dateOfBirth: newData.dateOfBirth ? 
-        `${newData.dateOfBirth.toISOString()} (valid: ${!isNaN(newData.dateOfBirth.getTime())})` : 
-        undefined
-    });
+    console.log("Form change handler called with data:", safeLogFormData(newData));
     setFormData(newData);
   };
 

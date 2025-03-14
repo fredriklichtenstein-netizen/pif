@@ -72,12 +72,15 @@ export const useProfileManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("useProfileManagement: Form submitted with data:", {
+    // Safely log form data with date validation
+    const formDataLog = {
       ...formData,
-      dateOfBirth: formData.dateOfBirth ? 
-        `${formData.dateOfBirth.toISOString()} (valid: ${!isNaN(formData.dateOfBirth.getTime())})` : 
-        undefined
-    });
+      dateOfBirth: formData.dateOfBirth instanceof Date && !isNaN(formData.dateOfBirth.getTime()) 
+        ? formData.dateOfBirth.toISOString() 
+        : undefined
+    };
+    
+    console.log("useProfileManagement: Form submitted with data:", formDataLog);
     
     await saveProfile();
   };

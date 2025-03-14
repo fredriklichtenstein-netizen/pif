@@ -59,13 +59,18 @@ export const useProfileData = () => {
         let dateOfBirth: Date | undefined = undefined;
         if (profile.date_of_birth) {
           console.log("Raw date_of_birth from database:", profile.date_of_birth);
-          dateOfBirth = new Date(profile.date_of_birth);
-          // Ensure it's a valid date
-          if (isNaN(dateOfBirth.getTime())) {
-            console.error("Invalid date format received:", profile.date_of_birth);
+          try {
+            dateOfBirth = new Date(profile.date_of_birth);
+            // Ensure it's a valid date
+            if (isNaN(dateOfBirth.getTime())) {
+              console.error("Invalid date format received:", profile.date_of_birth);
+              dateOfBirth = undefined;
+            } else {
+              console.log("Parsed dateOfBirth:", dateOfBirth);
+            }
+          } catch (error) {
+            console.error("Error parsing date:", error);
             dateOfBirth = undefined;
-          } else {
-            console.log("Parsed dateOfBirth:", dateOfBirth);
           }
         }
         
@@ -75,7 +80,7 @@ export const useProfileData = () => {
           gender: profile.gender || "",
           phone: profile.phone || "",
           address: profile.address || "",
-          countryCode: "+46", // Default country code if not stored
+          countryCode: profile.country_code || "+46", // Default country code if not stored
           dateOfBirth: dateOfBirth,
         };
         
@@ -121,12 +126,16 @@ export const useProfileData = () => {
       // Format date of birth for database storage
       let formattedDateOfBirth = null;
       if (formData.dateOfBirth) {
-        // Ensure we have a valid date object
-        if (formData.dateOfBirth instanceof Date && !isNaN(formData.dateOfBirth.getTime())) {
-          formattedDateOfBirth = formData.dateOfBirth.toISOString().split('T')[0];
-          console.log("Formatted date for database storage:", formattedDateOfBirth);
-        } else {
-          console.error("Invalid date object:", formData.dateOfBirth);
+        try {
+          // Ensure we have a valid date object
+          if (formData.dateOfBirth instanceof Date && !isNaN(formData.dateOfBirth.getTime())) {
+            formattedDateOfBirth = formData.dateOfBirth.toISOString().split('T')[0];
+            console.log("Formatted date for database storage:", formattedDateOfBirth);
+          } else {
+            console.error("Invalid date object:", formData.dateOfBirth);
+          }
+        } catch (error) {
+          console.error("Error formatting date:", error);
         }
       }
 
@@ -149,6 +158,7 @@ export const useProfileData = () => {
           phone: formattedPhone,
           address: formData.address,
           date_of_birth: formattedDateOfBirth,
+          country_code: formData.countryCode,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -158,10 +168,7 @@ export const useProfileData = () => {
       console.log("Profile update response:", updatedData);
 
       // Update the initial form data to reflect the current state
-      setInitialFormData({ 
-        ...formData,
-        phone: formattedPhone
-      });
+      setInitialFormData({ ...formData });
       
       toast({
         title: "Success",

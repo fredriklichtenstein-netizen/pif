@@ -18,7 +18,22 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
   const processedCoordinates = useRef<Map<string, [number, number]>>(new Map());
 
   useEffect(() => {
-    const createMarkers = async () => {
+    // Wait for the map style to be fully loaded before adding markers
+    if (!map.isStyleLoaded()) {
+      const checkStyleLoaded = () => {
+        if (map.isStyleLoaded()) {
+          createMarkers();
+        } else {
+          // Try again in a moment
+          setTimeout(checkStyleLoaded, 100);
+        }
+      };
+      checkStyleLoaded();
+    } else {
+      createMarkers();
+    }
+
+    async function createMarkers() {
       console.log("Creating markers for posts:", posts.length);
       
       // Clear existing markers
@@ -104,9 +119,12 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
           console.error("Error fitting bounds:", error);
         }
       }
-    };
+    }
 
-    createMarkers();
+    return () => {
+      // Clean up markers on unmount
+      markers.current.forEach(marker => marker.remove());
+    };
   }, [posts, map, onPostClick]);
 
   return null;
