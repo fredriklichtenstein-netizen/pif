@@ -1,5 +1,5 @@
 
-import { Home, Map, MessageSquare, PlusCircle, User as UserIcon } from "lucide-react";
+import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,7 @@ export function MainNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 z-50">
       <div className="container max-w-md mx-auto px-4">
-        <div className="grid grid-cols-5 items-center relative">
+        <div className="grid grid-cols-5 items-center">
           <Link
             to="/"
             className={`flex flex-col items-center ${
@@ -68,18 +68,17 @@ export function MainNav() {
           <div className="flex justify-center">
             <Link
               to="/post"
-              className="flex flex-col items-center text-primary bg-white rounded-full p-2 shadow-md"
+              className="flex flex-col items-center text-white"
               onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
             >
-              <div className="logo-icon">
-                <div className="relative">
-                  <span className="text-xl font-bold">&#x276F;</span>
-                  <div className="logo-dot"></div>
-                  <div className="logo-arc logo-arc-top-right"></div>
-                  <div className="logo-arc logo-arc-bottom-left"></div>
-                </div>
+              <div className="pif-nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 7.5V4.5C8 3.12 9.12 2 10.5 2H13.5C14.88 2 16 3.12 16 4.5V7.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16.5 10.5L12 15L7.5 10.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 22V15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <span className="text-xs mt-1">Post</span>
+              <span className="text-xs mt-1 text-gray-800">Pay it Forward</span>
             </Link>
           </div>
           

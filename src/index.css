@@ -14,74 +14,74 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 0%;
+    --primary: 168 100% 41%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 80%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 165 79% 55%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 95%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 0 0% 90%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 166 100% 95%;
+    --accent-foreground: 170 100% 22%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 80%;
-    --input: 0 0% 80%;
-    --ring: 0 0% 0%;
+    --border: 168 40% 90%;
+    --input: 168 40% 90%;
+    --ring: 168 60% 40%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 0 0% 0%;
+    --sidebar-background: 168 100% 98%;
+    --sidebar-foreground: 168 100% 20%;
+    --sidebar-primary: 168 100% 41%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 0 0% 95%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 0 0% 60%;
+    --sidebar-accent: 168 100% 95%;
+    --sidebar-accent-foreground: 168 100% 10%;
+    --sidebar-border: 168 40% 90%;
+    --sidebar-ring: 168 60% 60%;
   }
 
   .dark {
-    --background: 0 0% 10%;
-    --foreground: 0 0% 95%;
+    --background: 168 50% 10%;
+    --foreground: 168 20% 95%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 168 50% 10%;
+    --card-foreground: 168 20% 95%;
 
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 168 50% 10%;
+    --popover-foreground: 168 20% 95%;
 
-    --primary: 0 0% 95%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 168 100% 41%;
+    --primary-foreground: 168 50% 10%;
 
-    --secondary: 0 0% 30%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 165 79% 30%;
+    --secondary-foreground: 168 20% 95%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 168 30% 20%;
+    --muted-foreground: 168 20% 65%;
 
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 168 30% 20%;
+    --accent-foreground: 168 20% 95%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 95%;
+    --destructive-foreground: 168 20% 95%;
 
-    --border: 0 0% 25%;
-    --input: 0 0% 25%;
-    --ring: 0 0% 85%;
+    --border: 168 30% 25%;
+    --input: 168 30% 25%;
+    --ring: 168 40% 65%;
 
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 0 0% 80%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 0% 60%;
+    --sidebar-background: 168 50% 10%;
+    --sidebar-foreground: 168 20% 95%;
+    --sidebar-primary: 168 100% 41%;
+    --sidebar-primary-foreground: 168 50% 10%;
+    --sidebar-accent: 168 30% 15%;
+    --sidebar-accent-foreground: 168 20% 95%;
+    --sidebar-border: 168 30% 20%;
+    --sidebar-ring: 168 40% 60%;
   }
 }
 
@@ -122,47 +122,42 @@
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
 }
 
-/* Logo styles */
-.logo-container {
+/* Pay it Forward Logo styles */
+.pif-logo {
   display: inline-flex;
   align-items: center;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #00D1A0;
 }
 
-.logo-icon {
+.pif-logo-icon {
   position: relative;
   display: inline-block;
+  width: 32px;
+  height: 32px;
+  background-color: #00D1A0;
+  border-radius: 8px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.logo-arc {
-  position: absolute;
-  border: 2px solid #CCCCCC;
-  border-radius: 50%;
+.pif-nav-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #00D1A0;
+  border-radius: 10px;
+  color: white;
 }
 
-.logo-arc-top-right {
-  top: 0;
-  right: 0;
-  width: 16px;
-  height: 16px;
-  border-left: transparent;
-  border-bottom: transparent;
-}
-
-.logo-arc-bottom-left {
-  bottom: 0;
-  left: 0;
-  width: 16px;
-  height: 16px;
-  border-right: transparent;
-  border-top: transparent;
-}
-
-.logo-dot {
-  position: absolute;
-  top: 4px;
-  right: 20px;
-  width: 6px;
-  height: 6px;
-  background-color: #000000;
-  border-radius: 50%;
+.pif-logo-text {
+  font-size: 1.7em;
+  letter-spacing: -0.03em;
 }

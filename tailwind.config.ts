@@ -26,19 +26,19 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#000000", // Black primary color based on logo
-          hover: "#333333", // Slightly lighter black for hover
+          DEFAULT: "#00D1A0", // Teal primary color from PiF logo
+          hover: "#00BD90", // Slightly darker teal for hover
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#CCCCCC", // Light gray secondary color from logo
-          hover: "#AAAAAA", // Darker gray for hover
-          foreground: "#000000",
+          DEFAULT: "#36E5BA", // Lighter teal secondary color
+          hover: "#20D1A7", // Slightly darker for hover
+          foreground: "#FFFFFF",
         },
         accent: {
-          DEFAULT: "#E6E6E6", // Very light gray accent
-          hover: "#D9D9D9", // Slightly darker gray for hover
-          foreground: "#000000",
+          DEFAULT: "#E6FFF9", // Very light teal accent
+          hover: "#D0F5EE", // Slightly darker for hover
+          foreground: "#00725A",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
