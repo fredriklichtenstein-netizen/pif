@@ -26,7 +26,7 @@ export function useSignUp() {
         return false;
       }
 
-      // Proceed with signup
+      // Proceed with signup - FIXED: Ensure we provide metadata with phone
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -49,40 +49,41 @@ export function useSignUp() {
       }
 
       if (data.user) {
-        // We need to handle the case where the profile might not be created by the trigger
-        // or might be created without the required phone field
+        // FIXED: More reliable approach to ensure profile has the required phone field
         
         // Wait a moment for the database trigger to run
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay
         
-        // Check if a profile was created and update it if needed
+        // Check if a profile was created with phone
         if (data.user.id) {
-          const { data: existingProfile, error: checkError } = await supabase
+          const { data: profileData, error: profileCheckError } = await supabase
             .from('profiles')
             .select('id, phone')
             .eq('id', data.user.id)
             .maybeSingle();
-            
-          if (checkError) {
-            console.error("Error checking existing profile:", checkError);
-          }
           
-          // If no profile exists or it exists but has no phone, update it
-          if (!existingProfile || !existingProfile.phone) {
-            const profileData = {
+          // If no profile exists or phone is missing, we need to create/update it
+          if (profileCheckError || !profileData || !profileData.phone) {
+            console.log("Creating/updating profile with required phone field");
+            
+            // Create comprehensive profile data with all required fields
+            const completeProfileData = {
               id: data.user.id,
               username: email.split('@')[0],
               phone: "+1234567890", // Default phone value
-              onboarding_completed: false
+              onboarding_completed: false,
+              // Add created_at and updated_at to ensure complete data
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             };
             
-            // Use upsert to either insert a new profile or update an existing one
-            const { error: profileError } = await supabase
+            // Use upsert to handle both creation and update scenarios
+            const { error: upsertError } = await supabase
               .from('profiles')
-              .upsert(profileData);
+              .upsert(completeProfileData);
               
-            if (profileError) {
-              console.error("Error updating profile:", profileError);
+            if (upsertError) {
+              console.error("Profile upsert error:", upsertError);
               toast({
                 title: "Account created but profile setup failed",
                 description: "Please complete your profile setup after signing in.",

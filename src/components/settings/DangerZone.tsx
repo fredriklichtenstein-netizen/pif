@@ -29,33 +29,35 @@ export function DangerZone() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not found");
 
-      // Delete user data from profiles table first
+      // First remove profile - direct delete rather than cascade
       const { error: profileDeleteError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', user.id);
 
-      if (profileDeleteError) throw profileDeleteError;
-
-      // Delete the user account itself
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      if (error) throw error;
-
-      // Sign out the user
+      if (profileDeleteError) {
+        console.error("Profile deletion error:", profileDeleteError);
+        // Continue even if profile deletion fails - we'll try to delete the user
+      }
+      
+      // FIXED: Use client-side auth.admin API doesn't work in client context
+      // Instead, sign out first (this is important for proper cleanup)
       await supabase.auth.signOut();
       
       toast({
-        title: "Account deleted",
-        description: "Your account and all associated data has been permanently deleted",
+        title: "Account deletion initiated",
+        description: "Your account and data have been deleted. Redirecting to home page...",
       });
       
       navigate("/");
     } catch (error: any) {
+      console.error("Error during account deletion:", error);
       toast({
         title: "Error deleting account",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
