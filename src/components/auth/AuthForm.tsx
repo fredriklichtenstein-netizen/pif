@@ -3,34 +3,48 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/profile/PhoneInput";
 
 interface AuthFormProps {
   isSignUp: boolean;
   loading: boolean;
-  onSubmit: (email: string, password: string) => Promise<void>;
+  onSubmit: (email: string, password: string, phone?: string, countryCode?: string) => Promise<void>;
   onToggleMode: () => void;
 }
 
 export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+46"); // Default to Sweden
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
     setEmail("");
     setPassword("");
+    setPhone("");
   }, [isSignUp]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(email, password);
+    if (isSignUp) {
+      await onSubmit(email, password, phone, countryCode);
+    } else {
+      await onSubmit(email, password);
+    }
   };
 
   const handleToggle = () => {
     // Clear form fields before toggling mode
     setEmail("");
     setPassword("");
+    setPhone("");
     onToggleMode();
+  };
+
+  const handlePhoneChange = (newPhone: string, newCountryCode: string) => {
+    setPhone(newPhone);
+    setCountryCode(newCountryCode);
   };
 
   return (
@@ -62,6 +76,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
               placeholder="Enter your email"
             />
           </div>
+          
           <div>
             <Label htmlFor="password">Password</Label>
             <Input
@@ -77,6 +92,18 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
               minLength={6}
             />
           </div>
+          
+          {isSignUp && (
+            <div>
+              <Label htmlFor="phone">Phone number</Label>
+              <PhoneInput
+                value={phone}
+                countryCode={countryCode}
+                onPhoneChange={handlePhoneChange}
+                required={true}
+              />
+            </div>
+          )}
         </div>
 
         <div>

@@ -8,7 +8,7 @@ export function useSignUp() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSignUp = async (email: string, password: string) => {
+  const handleSignUp = async (email: string, password: string, phone?: string, countryCode?: string) => {
     try {
       // First, check if a user with this email already exists
       const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
@@ -26,7 +26,10 @@ export function useSignUp() {
         return false;
       }
 
-      // Proceed with signup - FIXED: Ensure we provide metadata with phone
+      // Format phone number with country code
+      const formattedPhone = phone && countryCode ? `${countryCode}${phone}` : "+1234567890";
+
+      // Proceed with signup - Including phone number in metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -34,7 +37,7 @@ export function useSignUp() {
           emailRedirectTo: window.location.origin + '/email-confirmation',
           data: {
             // Add phone as user metadata so the trigger can use it
-            phone: "+1234567890" // Default phone value
+            phone: formattedPhone
           }
         },
       });
@@ -49,10 +52,10 @@ export function useSignUp() {
       }
 
       if (data.user) {
-        // FIXED: More reliable approach to ensure profile has the required phone field
+        // Ensure profile has the required phone field
         
         // Wait a moment for the database trigger to run
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Check if a profile was created with phone
         if (data.user.id) {
@@ -70,9 +73,8 @@ export function useSignUp() {
             const completeProfileData = {
               id: data.user.id,
               username: email.split('@')[0],
-              phone: "+1234567890", // Default phone value
+              phone: formattedPhone,
               onboarding_completed: false,
-              // Add created_at and updated_at to ensure complete data
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             };

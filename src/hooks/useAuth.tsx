@@ -55,15 +55,14 @@ export function useAuth() {
     };
   }, []);
 
-  const handleAuth = async (email: string, password: string) => {
+  const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
     setLoading(true);
     try {
       if (isSignUp) {
-        await handleSignUp(email, password);
+        await handleSignUp(email, password, phone, countryCode);
       } else {
         await handleSignIn(email, password);
       }
-      // We don't auto-toggle to sign-in anymore on failure
     } catch (error: any) {
       console.error('Auth error:', error);
     } finally {
