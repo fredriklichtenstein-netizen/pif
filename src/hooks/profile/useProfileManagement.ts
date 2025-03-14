@@ -34,7 +34,7 @@ export const useProfileManagement = () => {
 
   useEffect(() => {
     if (avatar) {
-      handleProfileUpdate();
+      handleAvatarUpdate();
     }
   }, [avatar]);
 
@@ -54,14 +54,16 @@ export const useProfileManagement = () => {
       if (profileError) throw profileError;
 
       if (profile) {
+        const dateOfBirth = profile.date_of_birth ? new Date(profile.date_of_birth) : undefined;
+        
         setFormData({
           firstName: profile.first_name || "",
           lastName: profile.last_name || "",
           gender: profile.gender || "",
           phone: profile.phone || "",
           address: profile.address || "",
-          countryCode: "+46",
-          dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : undefined,
+          countryCode: "+46", // Default country code if not stored
+          dateOfBirth: dateOfBirth,
         });
         setInitialFormData({
           firstName: profile.first_name || "",
@@ -70,7 +72,7 @@ export const useProfileManagement = () => {
           phone: profile.phone || "",
           address: profile.address || "",
           countryCode: "+46",
-          dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : undefined,
+          dateOfBirth: dateOfBirth,
         });
         setAvatarUrl(profile.avatar_url);
       }
@@ -84,7 +86,9 @@ export const useProfileManagement = () => {
     }
   };
 
-  const handleProfileUpdate = async () => {
+  const handleAvatarUpdate = async () => {
+    if (!avatar) return;
+    
     setLoading(true);
 
     try {
@@ -93,40 +97,38 @@ export const useProfileManagement = () => {
       if (userError) throw userError;
       if (!user) throw new Error("No user found");
 
-      let avatarPath = avatarUrl;
-      if (avatar) {
-        const fileExt = avatar.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('profile-photos')
-          .upload(fileName, avatar);
+      const fileExt = avatar.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, avatar);
 
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(fileName);
-        
-        avatarPath = publicUrl;
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+      
+      // Update the UI immediately with the new avatar URL
+      setAvatarUrl(publicUrl);
 
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            avatar_url: avatarPath,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
 
-        if (updateError) throw updateError;
+      if (updateError) throw updateError;
 
-        toast({
-          title: "Success",
-          description: "Profile picture updated successfully",
-        });
-      }
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      console.error("Error updating profile picture:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -147,13 +149,19 @@ export const useProfileManagement = () => {
       if (userError) throw userError;
       if (!user) throw new Error("No user found");
 
+      // Format phone to remove leading zero
+      let formattedPhone = formData.phone;
+      if (formattedPhone.startsWith('0')) {
+        formattedPhone = formattedPhone.substring(1);
+      }
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
           first_name: formData.firstName,
           last_name: formData.lastName,
           gender: formData.gender,
-          phone: formData.phone,
+          phone: formattedPhone,
           address: formData.address,
           date_of_birth: formData.dateOfBirth?.toISOString().split('T')[0] || null,
           updated_at: new Date().toISOString()
@@ -162,7 +170,12 @@ export const useProfileManagement = () => {
 
       if (updateError) throw updateError;
 
-      setInitialFormData({ ...formData });
+      // Update the initial form data to reflect the current state
+      setInitialFormData({ 
+        ...formData,
+        phone: formattedPhone
+      });
+      
       toast({
         title: "Success",
         description: "Profile updated successfully",

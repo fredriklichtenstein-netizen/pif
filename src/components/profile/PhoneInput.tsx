@@ -23,6 +23,15 @@ const countryCodes = [
 ];
 
 export function PhoneInput({ value, countryCode, onPhoneChange, required }: PhoneInputProps) {
+  // Handle phone number input change
+  const handlePhoneChange = (newPhone: string) => {
+    // If the phone number starts with a leading zero, remove it
+    if (newPhone.startsWith('0')) {
+      newPhone = newPhone.substring(1);
+    }
+    onPhoneChange(newPhone, countryCode);
+  };
+
   return (
     <div className="flex gap-2">
       <Select
@@ -44,7 +53,7 @@ export function PhoneInput({ value, countryCode, onPhoneChange, required }: Phon
       <Input
         type="tel"
         value={value}
-        onChange={(e) => onPhoneChange(e.target.value, countryCode)}
+        onChange={(e) => handlePhoneChange(e.target.value)}
         placeholder="Phone number"
         required={required}
         className="flex-1"
