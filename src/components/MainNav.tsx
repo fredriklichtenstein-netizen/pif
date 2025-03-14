@@ -1,3 +1,4 @@
+
 import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,7 +68,7 @@ export function MainNav() {
           <div className="flex justify-center">
             <Link
               to="/post"
-              className="flex items-center"
+              className="flex items-center pif-nav-icon-container"
               onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
             >
               <div className="pif-nav-icon">

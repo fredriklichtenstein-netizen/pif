@@ -144,15 +144,21 @@
   justify-content: center;
 }
 
+.pif-nav-icon-container {
+  position: relative;
+  margin-top: -20px; /* Moves the icon upward */
+}
+
 .pif-nav-icon {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 56px; /* Increased size */
+  height: 56px; /* Increased size */
   background-color: #00D1A0;
   border-radius: 50%;
   color: white;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Add subtle shadow for depth */
 }
