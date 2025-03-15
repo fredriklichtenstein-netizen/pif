@@ -1,0 +1,91 @@
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { Conversation } from "@/types/messaging";
+
+export function useConversations() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch all conversations where the current user is a participant
+        const { data: participantData, error: participantError } = await supabase
+          .from('conversation_participants')
+          .select(`
+            conversation_id
+          `)
+          .eq('user_id', (await supabase.auth.getSession()).data.session?.user.id);
+
+        if (participantError) throw participantError;
+
+        if (!participantData || participantData.length === 0) {
+          setConversations([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Get unique conversation IDs
+        const conversationIds = participantData.map(p => p.conversation_id);
+
+        // Fetch conversation details with related data
+        const { data: conversationsData, error: conversationsError } = await supabase
+          .from('conversations')
+          .select(`
+            *,
+            participants:conversation_participants(
+              *,
+              profile:profiles(id, username, avatar_url)
+            ),
+            item:items(id, title, images)
+          `)
+          .in('id', conversationIds)
+          .order('updated_at', { ascending: false });
+
+        if (conversationsError) throw conversationsError;
+
+        setConversations(conversationsData);
+      } catch (err) {
+        console.error('Error fetching conversations:', err);
+        setError(err as Error);
+        toast({
+          variant: "destructive",
+          title: "Failed to load conversations",
+          description: (err as Error).message,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchConversations();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('public:conversations')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'conversations' 
+        }, 
+        (payload) => {
+          // Refresh conversations when changes occur
+          fetchConversations();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [toast]);
+
+  return { conversations, isLoading, error };
+}

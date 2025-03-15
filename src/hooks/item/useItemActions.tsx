@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -36,12 +37,34 @@ export const useItemActions = () => {
     return true;
   };
 
-  const handleMessage = async (e: React.MouseEvent) => {
+  const handleMessage = async (e: React.MouseEvent, itemId: string, ownerId: string) => {
     if (!await checkAuth("message the owner")) {
       e.preventDefault();
       return;
     }
-    navigate(`/messages`);
+    
+    try {
+      // Create or get existing conversation
+      const { data, error } = await supabase.rpc(
+        'create_conversation',
+        { 
+          item_id_param: parseInt(itemId, 10),
+          receiver_id_param: ownerId
+        }
+      );
+      
+      if (error) throw error;
+      
+      // Navigate to the conversation
+      navigate(`/messages?conversation=${data}`);
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleShare = async () => {

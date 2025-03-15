@@ -42,6 +42,7 @@ export function ItemInteractions({
   onReport,
 }: ItemInteractionsProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isMessaging, setIsMessaging] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -81,6 +82,49 @@ export function ItemInteractions({
     navigate(`/post/edit/${id}`);
   };
 
+  const handleStartConversation = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    try {
+      setIsMessaging(true);
+      
+      if (!postedBy.id) {
+        throw new Error("Cannot message this user");
+      }
+      
+      // Check if user is authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        navigate('/auth');
+        return;
+      }
+      
+      // Create or get existing conversation
+      const { data, error } = await supabase.rpc(
+        'create_conversation',
+        { 
+          item_id_param: parseInt(id, 10),
+          receiver_id_param: postedBy.id
+        }
+      );
+      
+      if (error) throw error;
+      
+      // Navigate to the conversation
+      navigate(`/messages?conversation=${data}`);
+      
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMessaging(false);
+    }
+  };
+
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between">
@@ -118,6 +162,27 @@ export function ItemInteractions({
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
             </svg>
           </button>
+          
+          {!isOwner && (
+            <button 
+              onClick={handleStartConversation}
+              disabled={isMessaging}
+              className="flex items-center space-x-1 text-gray-500 ml-2"
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                className="h-5 w-5"
+              >
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </button>
+          )}
         </div>
 
         {!isOwner && (
