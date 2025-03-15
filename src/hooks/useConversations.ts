@@ -51,7 +51,39 @@ export function useConversations() {
 
         if (conversationsError) throw conversationsError;
 
-        setConversations(conversationsData);
+        if (conversationsData) {
+          // Transform the data to match our Conversation type
+          const transformedConversations = conversationsData.map(conv => {
+            return {
+              id: conv.id,
+              created_at: conv.created_at,
+              updated_at: conv.updated_at,
+              item_id: conv.item_id,
+              last_message_text: conv.last_message_text,
+              participants: conv.participants,
+              item: conv.item ? {
+                id: conv.item.id,
+                title: conv.item.title,
+                description: "",  // Default value
+                category: "",     // Default value
+                condition: "",    // Default value
+                measurements: {}, // Default value
+                images: conv.item.images || [],
+                location: "",     // Default value
+                coordinates: null,
+                postedBy: {
+                  id: "",         // Will be populated if needed
+                  name: "User",   // Default value
+                  avatar: ""      // Default value
+                },
+                createdAt: "",    // Default value
+                status: ""        // Default value
+              } : undefined
+            };
+          });
+          
+          setConversations(transformedConversations);
+        }
       } catch (err) {
         console.error('Error fetching conversations:', err);
         setError(err as Error);

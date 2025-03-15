@@ -43,19 +43,70 @@ export function useConversationDetails(conversationId: string | null) {
 
         if (conversationError) throw conversationError;
 
-        setConversation(data);
-        
-        // Find the other participant (not the current user)
-        if (data?.participants) {
-          const other = data.participants.find(
-            p => p.user_id !== currentUserId
-          ) || null;
+        // Transform the data to match our Conversation type
+        if (data) {
+          const transformedConversation: Conversation = {
+            id: data.id,
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+            item_id: data.item_id,
+            last_message_text: data.last_message_text,
+            participants: data.participants,
+            item: data.item ? {
+              id: data.item.id,
+              title: data.item.title,
+              description: data.item.description || "",
+              category: data.item.category || "",
+              condition: data.item.condition || "",
+              measurements: data.item.measurements || {},
+              images: data.item.images || [],
+              location: data.item.location || "",
+              coordinates: data.item.coordinates,
+              postedBy: {
+                id: data.item.user_id,
+                name: "User", // This will be populated from profile info
+                avatar: ""    // Default empty avatar
+              },
+              createdAt: data.item.created_at,
+              status: data.item.status || ""
+            } : undefined
+          };
           
-          setOtherParticipant(other);
+          setConversation(transformedConversation);
+          
+          // Find the other participant (not the current user)
+          if (data.participants) {
+            const other = data.participants.find(
+              p => p.user_id !== currentUserId
+            ) || null;
+            
+            setOtherParticipant(other);
+          }
+          
+          // Set item details (transformed to match Post type)
+          if (data.item) {
+            const transformedItem: Post = {
+              id: data.item.id,
+              title: data.item.title,
+              description: data.item.description || "",
+              category: data.item.category || "",
+              condition: data.item.condition || "",
+              measurements: data.item.measurements || {},
+              images: data.item.images || [],
+              location: data.item.location || "",
+              coordinates: data.item.coordinates,
+              postedBy: {
+                id: data.item.user_id,
+                name: "User", // This will be populated from profile info
+                avatar: ""    // Default empty avatar
+              },
+              createdAt: data.item.created_at,
+              status: data.item.status || ""
+            };
+            
+            setItem(transformedItem);
+          }
         }
-        
-        // Set item details
-        setItem(data?.item || null);
       } catch (err) {
         console.error('Error fetching conversation details:', err);
         setError(err as Error);
