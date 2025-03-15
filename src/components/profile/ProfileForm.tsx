@@ -4,7 +4,6 @@ import { AddressInput } from "./address/AddressInput";
 import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "@/components/forms/fields/NameFields";
 import { GenderSelector } from "@/components/forms/fields/GenderSelector";
-import { DateOfBirthSelector } from "@/components/forms/fields/DateOfBirthSelector";
 import { Label } from "@/components/ui/label";
 import { Map } from "lucide-react";
 
@@ -59,11 +58,6 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
                 }
               />
             </div>
-
-            <DateOfBirthSelector
-              dateOfBirth={formData.dateOfBirth}
-              onChange={(dateOfBirth) => handleChange({ dateOfBirth })}
-            />
 
             <div className="space-y-2">
               <Label>Primary PIF address</Label>
