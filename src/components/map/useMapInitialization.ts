@@ -63,10 +63,10 @@ export const useMapInitialization = (mapboxToken: string) => {
         const initialState = getInitialMapState();
         console.log("Using initial map state:", initialState);
         
-        // Create the map instance
+        // Create the map instance with more stable style
         const newMap = new mapboxgl.Map({
           container: mapContainer.current!,
-          style: "mapbox://styles/mapbox/light-v11",
+          style: "mapbox://styles/mapbox/streets-v12", // Using streets-v12 which has more consistent layer naming
           center: initialState.center,
           zoom: initialState.zoom,
           minZoom: 9,
@@ -92,9 +92,23 @@ export const useMapInitialization = (mapboxToken: string) => {
             'bottom-left'
           );
           
-          console.log("Map controls added");
+          // Check that the style is fully loaded
+          if (!newMap.isStyleLoaded()) {
+            console.log("Style not fully loaded, waiting...");
+            const checkStyleLoaded = () => {
+              if (newMap.isStyleLoaded()) {
+                console.log("Style now fully loaded");
+                setIsMapReady(true);
+                newMap.off('idle', checkStyleLoaded);
+              }
+            };
+            newMap.on('idle', checkStyleLoaded);
+          } else {
+            console.log("Map controls added");
+            setIsMapReady(true);
+          }
+          
           map.current = newMap;
-          setIsMapReady(true);
         });
 
         // Save map state when user moves or zooms

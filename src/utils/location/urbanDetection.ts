@@ -11,6 +11,27 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
   // If map object is provided, use infrastructure data
   if (map && map.isStyleLoaded()) {
     try {
+      // Get all available style layers
+      const availableLayers = map.getStyle().layers?.map(layer => layer.id) || [];
+      
+      // Define infrastructure layers we want to check
+      const infrastructureLayers = [
+        'building',          // Building footprints
+        'road',             // Road networks
+        'landuse'           // Land use classifications
+      ];
+      
+      // Filter to only use layers that actually exist in current style
+      const existingLayers = infrastructureLayers.filter(layer => 
+        availableLayers.includes(layer)
+      );
+      
+      // If no valid infrastructure layers exist, fall back to database check
+      if (existingLayers.length === 0) {
+        console.log("No infrastructure layers available in current map style, falling back to database");
+        return fallbackToDatabaseCheck(lat, lng);
+      }
+      
       // Convert lat/lng to pixel coordinates for querying features
       const point = map.project([lng, lat]);
       
@@ -20,11 +41,7 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
 
       // Get all relevant features within the bounding box
       const features = map.queryRenderedFeatures([sw, ne], {
-        layers: [
-          'building',          // Building footprints
-          'road',             // Road networks
-          'landuse'           // Land use classifications
-        ]
+        layers: existingLayers
       });
 
       // Count buildings
@@ -60,23 +77,36 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
     } catch (error) {
       console.error("Error determining urban area:", error);
       // Fall back to database check
+      return fallbackToDatabaseCheck(lat, lng);
     }
   }
   
-  // Fallback: Check against database of Swedish urban areas
-  const { data, error } = await supabase
-    .from('swedish_urban_areas')
-    .select('id')
-    .gte('min_lat', lat)
-    .lte('max_lat', lat)
-    .gte('min_lng', lng)
-    .lte('max_lng', lng)
-    .limit(1);
+  // Fallback to database check
+  return fallbackToDatabaseCheck(lat, lng);
+};
 
-  if (error) {
-    console.error("Error checking urban areas database:", error);
+/**
+ * Fallback method to check against database of Swedish urban areas
+ */
+async function fallbackToDatabaseCheck(lat: number, lng: number): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('swedish_urban_areas')
+      .select('id')
+      .gte('min_lat', lat)
+      .lte('max_lat', lat)
+      .gte('min_lng', lng)
+      .lte('max_lng', lng)
+      .limit(1);
+
+    if (error) {
+      console.error("Error checking urban areas database:", error);
+      return false;
+    }
+
+    return data.length > 0;
+  } catch (error) {
+    console.error("Error in database fallback for urban detection:", error);
     return false;
   }
-
-  return data.length > 0;
-};
+}
