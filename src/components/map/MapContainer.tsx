@@ -3,7 +3,7 @@ import type { Post } from "@/types/post";
 import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
 import { Button } from "@/components/ui/button";
-import { Locate } from "lucide-react";
+import { Locate, AlertCircle } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
 
@@ -14,13 +14,18 @@ interface MapContainerProps {
 }
 
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
-  const { mapContainer, map, isMapReady } = useMapInitialization(mapboxToken);
+  const { mapContainer, map, isMapReady, error } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
 
   useEffect(() => {
     if (isMapReady && map) {
-      setIsMapVisible(true);
+      console.log("Map is ready, making it visible");
+      // Short delay to ensure styles are loaded
+      const timer = setTimeout(() => {
+        setIsMapVisible(true);
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isMapReady, map]);
 
@@ -34,7 +39,18 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
           transition: 'opacity 0.3s ease-in-out'
         }}
       />
-      {!isMapReady && (
+      
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+          <div className="text-center p-6">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-gray-700 mb-2">Error initializing map</p>
+            <p className="text-gray-500 text-sm">{error.message}</p>
+          </div>
+        </div>
+      )}
+      
+      {!isMapReady && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -42,7 +58,8 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
           </div>
         </div>
       )}
-      {isMapReady && (
+      
+      {isMapReady && !error && map && (
         <>
           <MapMarkersLayer 
             map={map}

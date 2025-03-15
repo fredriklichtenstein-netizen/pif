@@ -42,15 +42,28 @@ export const useMapInitialization = (mapboxToken: string) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // Only initialize if container exists, token exists, and map doesn't exist yet
     if (!mapContainer.current || !mapboxToken || map.current) return;
+    
+    console.log("Starting map initialization with token:", mapboxToken ? "Token exists" : "No token");
     
     const initializeMap = () => {
       try {
-        mapboxgl.accessToken = mapboxToken;
-        const initialState = getInitialMapState();
+        if (!mapboxToken) {
+          throw new Error("No Mapbox token available");
+        }
         
+        // Set access token
+        mapboxgl.accessToken = mapboxToken;
+        console.log("Mapbox access token set");
+        
+        const initialState = getInitialMapState();
+        console.log("Using initial map state:", initialState);
+        
+        // Create the map instance
         const newMap = new mapboxgl.Map({
           container: mapContainer.current!,
           style: "mapbox://styles/mapbox/light-v11",
@@ -64,7 +77,12 @@ export const useMapInitialization = (mapboxToken: string) => {
           antialias: true,
         });
 
+        console.log("Map instance created");
+
+        // Set up event listeners
         newMap.on('load', () => {
+          console.log("Map load event fired");
+          
           newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
           newMap.addControl(
             new mapboxgl.ScaleControl({
@@ -74,6 +92,7 @@ export const useMapInitialization = (mapboxToken: string) => {
             'bottom-left'
           );
           
+          console.log("Map controls added");
           map.current = newMap;
           setIsMapReady(true);
         });
@@ -89,11 +108,13 @@ export const useMapInitialization = (mapboxToken: string) => {
 
         newMap.on('error', (e) => {
           console.error('Map error:', e);
+          setError(new Error(`Map error: ${e.error?.message || 'Unknown error'}`));
           setIsMapReady(false);
         });
 
       } catch (error) {
         console.error('Error initializing map:', error);
+        setError(error instanceof Error ? error : new Error("Failed to initialize map"));
         setIsMapReady(false);
       }
     };
@@ -112,6 +133,7 @@ export const useMapInitialization = (mapboxToken: string) => {
           console.error('Error saving final map state:', error);
         }
         
+        console.log("Removing map instance");
         map.current.remove();
         map.current = null;
         setIsMapReady(false);
@@ -119,5 +141,5 @@ export const useMapInitialization = (mapboxToken: string) => {
     };
   }, [mapboxToken]);
 
-  return { mapContainer, map: map.current, isMapReady };
+  return { mapContainer, map: map.current, isMapReady, error };
 };

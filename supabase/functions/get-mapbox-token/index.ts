@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -13,8 +14,11 @@ serve(async (req) => {
 
   try {
     const token = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+    
+    console.log("Edge function: Token exists:", !!token);
+    
     if (!token) {
-      throw new Error('Mapbox token not configured');
+      throw new Error('Mapbox token not configured in environment variables');
     }
 
     return new Response(
@@ -25,7 +29,7 @@ serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error in get-mapbox-token function:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
