@@ -53,15 +53,22 @@ export function useConversationDetails(conversationId: string | null) {
             last_message_text: data.last_message_text,
             participants: data.participants,
             item: data.item ? {
-              id: data.item.id,
+              id: String(data.item.id),
               title: data.item.title,
               description: data.item.description || "",
               category: data.item.category || "",
               condition: data.item.condition || "",
-              measurements: data.item.measurements || {},
+              measurements: data.item.measurements ? 
+                (typeof data.item.measurements === 'object' ? 
+                  Object.entries(data.item.measurements).reduce((acc, [key, value]) => {
+                    acc[key] = String(value);
+                    return acc;
+                  }, {} as {[key: string]: string}) : 
+                  {}
+                ) : {},
               images: data.item.images || [],
               location: data.item.location || "",
-              coordinates: data.item.coordinates,
+              coordinates: data.item.coordinates ? String(data.item.coordinates) : null,
               postedBy: {
                 id: data.item.user_id,
                 name: "User", // This will be populated from profile info
@@ -86,15 +93,22 @@ export function useConversationDetails(conversationId: string | null) {
           // Set item details (transformed to match Post type)
           if (data.item) {
             const transformedItem: Post = {
-              id: data.item.id,
+              id: String(data.item.id),
               title: data.item.title,
               description: data.item.description || "",
               category: data.item.category || "",
               condition: data.item.condition || "",
-              measurements: data.item.measurements || {},
+              measurements: data.item.measurements ? 
+                (typeof data.item.measurements === 'object' ? 
+                  Object.entries(data.item.measurements).reduce((acc, [key, value]) => {
+                    acc[key] = String(value);
+                    return acc;
+                  }, {} as {[key: string]: string}) : 
+                  {}
+                ) : {},
               images: data.item.images || [],
               location: data.item.location || "",
-              coordinates: data.item.coordinates,
+              coordinates: data.item.coordinates ? String(data.item.coordinates) : null,
               postedBy: {
                 id: data.item.user_id,
                 name: "User", // This will be populated from profile info

@@ -62,7 +62,7 @@ export function useConversations() {
               last_message_text: conv.last_message_text,
               participants: conv.participants,
               item: conv.item ? {
-                id: conv.item.id,
+                id: String(conv.item.id),
                 title: conv.item.title,
                 description: "",  // Default value
                 category: "",     // Default value
