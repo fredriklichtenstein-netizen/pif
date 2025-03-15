@@ -31,6 +31,9 @@ export function useMessages(conversationId: string) {
         if (messagesError) throw messagesError;
 
         setMessages(data || []);
+
+        // Mark messages as read after retrieving them
+        markMessagesAsRead();
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError(err as Error);
@@ -60,6 +63,9 @@ export function useMessages(conversationId: string) {
           // Add new message to state
           const newMessage = payload.new as Message;
           setMessages(currentMessages => [...currentMessages, newMessage]);
+          
+          // Mark the new message as read if it's not from current user
+          markMessageAsRead(newMessage.id);
       })
       .subscribe();
 
@@ -67,6 +73,54 @@ export function useMessages(conversationId: string) {
       supabase.removeChannel(channel);
     };
   }, [conversationId, toast]);
+
+  // Function to mark a single message as read
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      
+      if (!userId) return;
+
+      // Only mark as read if the current user didn't send it
+      const message = messages.find(m => m.id === messageId);
+      if (message && message.sender_id !== userId && !message.read_at) {
+        await supabase
+          .from('messages')
+          .update({ read_at: new Date().toISOString() })
+          .eq('id', messageId);
+      }
+    } catch (err) {
+      console.error('Error marking message as read:', err);
+    }
+  };
+
+  // Function to mark all unread messages in the conversation as read
+  const markMessagesAsRead = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      
+      if (!userId) return;
+
+      // Update participant record to indicate the user has read the conversation
+      await supabase
+        .from('conversation_participants')
+        .update({ last_read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', userId);
+
+      // Mark all unread messages from others as read
+      await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', userId)
+        .is('read_at', null);
+    } catch (err) {
+      console.error('Error marking messages as read:', err);
+    }
+  };
 
   const sendMessage = async (content: string) => {
     if (!conversationId || !content.trim()) {
@@ -105,5 +159,5 @@ export function useMessages(conversationId: string) {
     }
   };
 
-  return { messages, isLoading, error, sendMessage };
+  return { messages, isLoading, error, sendMessage, markMessagesAsRead };
 }

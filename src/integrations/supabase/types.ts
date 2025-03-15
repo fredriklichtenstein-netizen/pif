@@ -408,6 +408,12 @@ export type Database = {
         }
         Returns: string
       }
+      is_conversation_participant: {
+        Args: {
+          conversation_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
