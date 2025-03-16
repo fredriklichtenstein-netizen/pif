@@ -16,13 +16,19 @@ export function useConversations() {
         setIsLoading(true);
         setError(null);
 
-        // Fetch all conversations where the current user is a participant
+        const session = await supabase.auth.getSession();
+        if (!session.data.session?.user) {
+          setConversations([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Get the user's conversations directly using the conversation_participants table
+        // RLS will automatically filter to only include the user's records
         const { data: participantData, error: participantError } = await supabase
           .from('conversation_participants')
-          .select(`
-            conversation_id
-          `)
-          .eq('user_id', (await supabase.auth.getSession()).data.session?.user.id);
+          .select(`conversation_id`)
+          .eq('user_id', session.data.session.user.id);
 
         if (participantError) throw participantError;
 
@@ -108,7 +114,7 @@ export function useConversations() {
           schema: 'public', 
           table: 'conversations' 
         }, 
-        (payload) => {
+        () => {
           // Refresh conversations when changes occur
           fetchConversations();
       })

@@ -22,6 +22,7 @@ export function useMessages(conversationId: string) {
         setIsLoading(true);
         setError(null);
 
+        // Our RLS policies will ensure we only get messages from conversations we participate in
         const { data, error: messagesError } = await supabase
           .from('messages')
           .select('*')
