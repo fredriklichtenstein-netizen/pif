@@ -17,6 +17,7 @@ interface ItemInteractionsProps {
   isBookmarked: boolean;
   showInterest: boolean;
   isOwner?: boolean;
+  commentsCount?: number;
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
@@ -34,6 +35,7 @@ export function ItemInteractions({
   isBookmarked,
   showInterest,
   isOwner = false,
+  commentsCount = 0,
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
@@ -47,7 +49,7 @@ export function ItemInteractions({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <LikeButton isLiked={isLiked} onLikeToggle={onLikeToggle} />
-          <CommentButton onCommentToggle={onCommentToggle} />
+          <CommentButton onCommentToggle={onCommentToggle} commentsCount={commentsCount} />
           
           {!isOwner && (
             <ConversationHandler itemId={id} receiverId={postedBy.id}>

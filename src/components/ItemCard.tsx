@@ -84,6 +84,8 @@ export function ItemCard({
     setContentExpanded(!contentExpanded);
   };
 
+  const commentsCount = comments?.length || 0;
+
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
       <ItemCardHeader
@@ -109,6 +111,7 @@ export function ItemCard({
               <ItemCardActions
                 isLiked={isLiked}
                 likesCount={likesCount}
+                commentsCount={commentsCount}
                 showInterest={showInterest}
                 interestsCount={interestsCount}
                 isOwner={isOwner}
@@ -150,6 +153,7 @@ export function ItemCard({
               <ItemCardActions
                 isLiked={isLiked}
                 likesCount={likesCount}
+                commentsCount={commentsCount}
                 showInterest={showInterest}
                 interestsCount={interestsCount}
                 isOwner={isOwner}

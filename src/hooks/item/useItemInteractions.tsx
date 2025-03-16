@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -16,13 +15,11 @@ export const useItemInteractions = (id: string) => {
   const navigate = useNavigate();
   const { user } = useGlobalAuth();
   
-  // Fetch initial interaction state
   useEffect(() => {
     const fetchInteractions = async () => {
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) return;
       
-      // Get likes count for the item
       const { data: likesData, error: likesError } = await supabase.rpc(
         'get_item_likes_count',
         { item_id_param: numericId }
@@ -32,7 +29,6 @@ export const useItemInteractions = (id: string) => {
         setLikesCount(likesData);
       }
       
-      // Get interests count for the item
       const { data: interestsData, error: interestsError } = await supabase.rpc(
         'get_item_interests_count',
         { item_id_param: numericId }
@@ -42,7 +38,6 @@ export const useItemInteractions = (id: string) => {
         setInterestsCount(interestsData);
       }
       
-      // Check if user has liked the item
       if (user) {
         const { data: hasLiked, error: likedError } = await supabase.rpc(
           'has_user_liked_item',
@@ -53,7 +48,6 @@ export const useItemInteractions = (id: string) => {
           setIsLiked(hasLiked);
         }
         
-        // Check if user has shown interest in the item
         const { data: hasInterest, error: interestError } = await supabase.rpc(
           'has_user_shown_interest',
           { item_id_param: numericId }
@@ -63,7 +57,6 @@ export const useItemInteractions = (id: string) => {
           setShowInterest(hasInterest);
         }
         
-        // Check if user has bookmarked the item
         const { data: bookmark, error: bookmarkError } = await supabase
           .from('bookmarks')
           .select('id')
@@ -104,7 +97,6 @@ export const useItemInteractions = (id: string) => {
     
     try {
       if (showInterest) {
-        // Remove interest
         const { error } = await supabase
           .from('interests')
           .delete()
@@ -121,7 +113,6 @@ export const useItemInteractions = (id: string) => {
           description: "You will no longer receive updates about this item",
         });
       } else {
-        // Add interest
         const { error } = await supabase
           .from('interests')
           .insert([
@@ -154,9 +145,24 @@ export const useItemInteractions = (id: string) => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return;
     
+    const { data: item, error: itemError } = await supabase
+      .from('items')
+      .select('user_id')
+      .eq('id', numericId)
+      .single();
+    
+    if (itemError) {
+      console.error('Error fetching item:', itemError);
+      return;
+    }
+    
+    if (item.user_id === user.id) {
+      console.log('Cannot like your own post');
+      return;
+    }
+    
     try {
       if (isLiked) {
-        // Remove like
         const { error } = await supabase
           .from('likes')
           .delete()
@@ -168,7 +174,6 @@ export const useItemInteractions = (id: string) => {
         setIsLiked(false);
         setLikesCount(prev => Math.max(0, prev - 1));
       } else {
-        // Add like
         const { error } = await supabase
           .from('likes')
           .insert([
@@ -198,7 +203,6 @@ export const useItemInteractions = (id: string) => {
     
     try {
       if (isBookmarked) {
-        // Remove bookmark
         const { error } = await supabase
           .from('bookmarks')
           .delete()
@@ -214,7 +218,6 @@ export const useItemInteractions = (id: string) => {
           description: "This item has been removed from your saved items",
         });
       } else {
-        // Add bookmark
         const { error } = await supabase
           .from('bookmarks')
           .insert([
