@@ -23,33 +23,25 @@ export function useConversations() {
           return;
         }
 
-        // Get the user's conversations directly using the conversation_participants table
-        // RLS will automatically filter to only include the user's records
-        const { data: participantData, error: participantError } = await supabase
-          .from('conversation_participants')
-          .select(`conversation_id`)
-          .eq('user_id', session.data.session.user.id);
-
-        if (participantError) throw participantError;
-
-        if (!participantData || participantData.length === 0) {
+        const userId = session.data.session.user.id;
+        
+        // Approach 1: Use the user's conversations function to avoid RLS recursion
+        const { data: conversationIds, error: funcError } = await supabase
+          .rpc('get_user_conversation_ids');
+          
+        if (funcError) throw funcError;
+        
+        if (!conversationIds || conversationIds.length === 0) {
           setConversations([]);
           setIsLoading(false);
           return;
         }
 
-        // Get unique conversation IDs
-        const conversationIds = participantData.map(p => p.conversation_id);
-
-        // Fetch conversation details with related data
+        // Now fetch the actual conversation data with the IDs we have
         const { data: conversationsData, error: conversationsError } = await supabase
           .from('conversations')
           .select(`
             *,
-            participants:conversation_participants(
-              *,
-              profile:profiles(id, username, avatar_url)
-            ),
             item:items(id, title, images)
           `)
           .in('id', conversationIds)
@@ -57,7 +49,28 @@ export function useConversations() {
 
         if (conversationsError) throw conversationsError;
 
+        // Separately fetch participants to avoid nesting issues
+        const { data: participantsData, error: participantsError } = await supabase
+          .from('conversation_participants')
+          .select(`
+            *,
+            profile:profiles(id, username, avatar_url)
+          `)
+          .in('conversation_id', conversationIds);
+
+        if (participantsError) throw participantsError;
+
+        // Now combine the data
         if (conversationsData) {
+          // Map participants to their conversations
+          const participantsByConversation = participantsData?.reduce((acc, participant) => {
+            if (!acc[participant.conversation_id]) {
+              acc[participant.conversation_id] = [];
+            }
+            acc[participant.conversation_id].push(participant);
+            return acc;
+          }, {} as Record<string, typeof participantsData>);
+
           // Transform the data to match our Conversation type
           const transformedConversations = conversationsData.map(conv => {
             return {
@@ -66,7 +79,7 @@ export function useConversations() {
               updated_at: conv.updated_at,
               item_id: conv.item_id,
               last_message_text: conv.last_message_text,
-              participants: conv.participants,
+              participants: participantsByConversation[conv.id] || [],
               item: conv.item ? {
                 id: String(conv.item.id),
                 title: conv.item.title,

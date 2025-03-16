@@ -22,7 +22,17 @@ export function useMessages(conversationId: string) {
         setIsLoading(true);
         setError(null);
 
-        // Our RLS policies will ensure we only get messages from conversations we participate in
+        // Check that the user has access to this conversation first
+        const { data: isParticipant, error: accessError } = await supabase
+          .rpc('is_conversation_participant', { conversation_id: conversationId });
+          
+        if (accessError) throw accessError;
+        
+        if (!isParticipant) {
+          throw new Error("You don't have access to this conversation");
+        }
+
+        // Fetch messages once access is confirmed
         const { data, error: messagesError } = await supabase
           .from('messages')
           .select('*')
