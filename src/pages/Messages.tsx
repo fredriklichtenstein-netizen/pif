@@ -1,25 +1,18 @@
 
-import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationView } from "@/components/messaging/ConversationView";
 import { MessageSquare } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
-import { useNavigate } from "react-router-dom";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 const Messages = () => {
-  const { session } = useAuth();
-  const navigate = useNavigate();
+  const { user, isLoading: authLoading } = useGlobalAuth();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const { conversations, isLoading, error } = useConversations();
-
-  useEffect(() => {
-    // Redirect to auth page if not authenticated
-    if (!session) {
-      navigate('/auth');
-    }
-  }, [session, navigate]);
+  const { conversations, isLoading: conversationsLoading, error } = useConversations();
+  
+  const isLoading = authLoading || conversationsLoading;
 
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">

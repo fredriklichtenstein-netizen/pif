@@ -5,30 +5,22 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainNav } from "./components/MainNav";
-import { PrivateRoute } from "./components/auth/PrivateRoute";
 import { publicRoutes, privateRoutes } from "./routes/routes";
 import { useEffect } from "react";
-import { supabase } from "./integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { initializeAuth } from "./hooks/useGlobalAuth";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const navigate = useNavigate();
-
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/auth');
-      }
-    });
-
+    // Initialize global auth state
+    const subscription = initializeAuth();
+    
     // Cleanup subscription
     return () => {
-      subscription.unsubscribe();
+      subscription?.then(sub => sub.unsubscribe());
     };
-  }, [navigate]);
+  }, []);
 
   return (
     <>
@@ -37,11 +29,7 @@ const AppContent = () => {
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
         {privateRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={<PrivateRoute>{route.element}</PrivateRoute>}
-          />
+          <Route key={route.path} path={route.path} element={route.element} />
         ))}
       </Routes>
       <MainNav />

@@ -1,40 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSignUp } from "./auth/useSignUp";
 import { useSignIn } from "./auth/useSignIn";
-import { supabase } from "@/integrations/supabase/client";
+import { useGlobalAuth } from "./useGlobalAuth";
 import type { Session } from "@supabase/supabase-js";
 
 export function useAuth() {
-  const [loading, setLoading] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
+  const { session, isLoading } = useGlobalAuth();
   const { handleSignUp, loading: signUpLoading } = useSignUp();
   const { handleSignIn } = useSignIn();
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
     console.log("Auth initiated with:", { email, password, phone, countryCode });
-    setLoading(true);
     
     try {
       if (isSignUp) {
@@ -46,8 +24,6 @@ export function useAuth() {
     } catch (error: any) {
       console.error('Auth error:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -56,7 +32,7 @@ export function useAuth() {
   };
 
   return {
-    loading: loading || signUpLoading,
+    loading: isLoading || signUpLoading,
     isSignUp,
     session,
     handleAuth,

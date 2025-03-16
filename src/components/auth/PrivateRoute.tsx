@@ -1,82 +1,25 @@
 
 import { Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useGlobalAuth, initializeAuth } from "@/hooks/useGlobalAuth";
 
 export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [profileCompleted, setProfileCompleted] = useState<boolean | null>(null);
+  const { user, profileCompleted, isLoading, initialized } = useGlobalAuth();
+  const [localLoading, setLocalLoading] = useState(!initialized);
 
   useEffect(() => {
-    let mounted = true;
-
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        if (session?.user) {
-          setUser(session.user);
-          
-          // Check if the profile is completed
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .single();
-
-          if (error) throw error;
-          if (mounted) {
-            setProfileCompleted(profile?.onboarding_completed ?? false);
-          }
-        } else {
-          setUser(null);
-          setProfileCompleted(null);
-        }
-      } catch (error) {
-        console.error('Error checking auth state:', error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+    const init = async () => {
+      if (!initialized) {
+        await initializeAuth();
       }
+      setLocalLoading(false);
     };
 
-    checkSession();
+    init();
+  }, [initialized]);
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-      
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .single();
-        
-        setProfileCompleted(profile?.onboarding_completed ?? false);
-      } else {
-        setProfileCompleted(null);
-      }
-      
-      setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  if (loading) {
+  if (isLoading || localLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -96,4 +39,3 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
-

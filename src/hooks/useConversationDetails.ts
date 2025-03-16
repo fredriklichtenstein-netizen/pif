@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import type { Conversation, ConversationParticipant } from "@/types/messaging";
 import type { Post } from "@/types/post";
@@ -12,9 +11,9 @@ export function useConversationDetails(conversationId: string | null) {
   const [item, setItem] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { session } = useAuth();
+  const { user } = useGlobalAuth();
   const { toast } = useToast();
-  const currentUserId = session?.user?.id;
+  const currentUserId = user?.id;
 
   useEffect(() => {
     if (!conversationId || !currentUserId) {

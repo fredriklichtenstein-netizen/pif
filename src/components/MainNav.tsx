@@ -1,32 +1,14 @@
 
 import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export function MainNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user } = useGlobalAuth();
 
   const isActive = (path: string) => location.pathname === path;
 

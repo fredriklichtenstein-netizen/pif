@@ -1,6 +1,5 @@
-
 import { formatDistanceToNow } from "date-fns";
-import { useAuth } from "@/hooks/useAuth";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import type { Conversation } from "@/types/messaging";
 
 interface ConversationListProps {
@@ -14,8 +13,8 @@ export function ConversationList({
   activeConversationId, 
   onSelectConversation 
 }: ConversationListProps) {
-  const { session } = useAuth();
-  const currentUserId = session?.user?.id;
+  const { user } = useGlobalAuth();
+  const currentUserId = user?.id;
 
   return (
     <div className="h-full overflow-y-auto">
