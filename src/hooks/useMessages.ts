@@ -22,7 +22,7 @@ export function useMessages(conversationId: string) {
         setIsLoading(true);
         setError(null);
 
-        // Check that the user has access to this conversation first
+        // Using a database function to safely check permissions
         const { data: isParticipant, error: accessError } = await supabase
           .rpc('is_conversation_participant', { conversation_id: conversationId });
           

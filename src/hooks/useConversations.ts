@@ -25,7 +25,7 @@ export function useConversations() {
 
         const userId = session.data.session.user.id;
         
-        // Approach 1: Use the user's conversations function to avoid RLS recursion
+        // Use the security definer function to get conversation IDs
         const { data: conversationIds, error: funcError } = await supabase
           .rpc('get_user_conversation_ids');
           
@@ -37,7 +37,7 @@ export function useConversations() {
           return;
         }
 
-        // Now fetch the actual conversation data with the IDs we have
+        // Fetch conversations data
         const { data: conversationsData, error: conversationsError } = await supabase
           .from('conversations')
           .select(`
@@ -49,7 +49,7 @@ export function useConversations() {
 
         if (conversationsError) throw conversationsError;
 
-        // Separately fetch participants to avoid nesting issues
+        // Fetch participants separately to avoid nesting issues
         const { data: participantsData, error: participantsError } = await supabase
           .from('conversation_participants')
           .select(`
@@ -60,9 +60,9 @@ export function useConversations() {
 
         if (participantsError) throw participantsError;
 
-        // Now combine the data
+        // Combine the data
         if (conversationsData) {
-          // Map participants to their conversations
+          // Group participants by conversation
           const participantsByConversation = participantsData?.reduce((acc, participant) => {
             if (!acc[participant.conversation_id]) {
               acc[participant.conversation_id] = [];
@@ -71,7 +71,7 @@ export function useConversations() {
             return acc;
           }, {} as Record<string, typeof participantsData>);
 
-          // Transform the data to match our Conversation type
+          // Transform to match our Conversation type
           const transformedConversations = conversationsData.map(conv => {
             return {
               id: conv.id,
