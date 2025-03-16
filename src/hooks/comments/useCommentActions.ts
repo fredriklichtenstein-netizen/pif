@@ -1,9 +1,14 @@
 
 import { useAuth } from "@/hooks/useAuth";
-import type { Comment } from "@/types/comment";
+import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 
-export function useCommentActions(itemId: string, comments: Comment[], setComments: (comments: Comment[]) => void, currentUser: { name: string, avatar: string, id?: string }) {
+export function useCommentActions(
+  itemId: string, 
+  comments: Comment[], 
+  setComments: (comments: Comment[]) => void, 
+  currentUser: { name: string, avatar: string, id?: string }
+) {
   const { session } = useAuth();
 
   const handleAddComment = async (text: string) => {

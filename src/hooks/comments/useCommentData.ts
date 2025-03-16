@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import type { Comment } from "@/types/comment";
+import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 

@@ -3,6 +3,7 @@ import { CommentInput } from "../comments/CommentInput";
 import { CommentList } from "../comments/CommentList";
 import { useCommentData } from "@/hooks/comments/useCommentData";
 import { useCommentActions } from "@/hooks/comments/useCommentActions";
+import { Comment } from "@/types/comment";
 
 interface CommentSectionProps {
   itemId: string;

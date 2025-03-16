@@ -1,4 +1,3 @@
-
 import { useItemCard } from "@/hooks/useItemCard";
 import { CommentSection } from "./post/CommentSection";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +7,7 @@ import { ItemCardHeader } from "./post/ItemCardHeader";
 import { ItemCardGallery } from "./post/ItemCardGallery";
 import { ItemCardContent } from "./post/ItemCardContent";
 import { ItemCardActions } from "./post/ItemCardActions";
+import { Comment } from "@/types/comment";
 
 interface ItemCardProps {
   id: string;
@@ -123,7 +123,6 @@ export function ItemCard({
               />
             </div>
             
-            {/* Expanded content appears here */}
             {contentExpanded && (
               <div id="expandable-content" className="w-full mt-2">
                 {description && (
@@ -170,8 +169,8 @@ export function ItemCard({
         {showComments && (
           <CommentSection
             itemId={id}
-            comments={comments}
-            setComments={setComments}
+            comments={comments as Comment[]}
+            setComments={(newComments: Comment[]) => setComments(newComments)}
           />
         )}
       </div>
