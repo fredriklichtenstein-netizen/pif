@@ -33,6 +33,13 @@ export type Database = {
             foreignKeyName: "bookmarks_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "bookmarks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
           },
@@ -71,6 +78,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "comments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
           {
             foreignKeyName: "comments_item_id_fkey"
             columns: ["item_id"]
@@ -160,6 +174,13 @@ export type Database = {
             foreignKeyName: "conversations_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "conversations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
           },
@@ -191,6 +212,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "interests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
           {
             foreignKeyName: "interests_item_id_fkey"
             columns: ["item_id"]
@@ -266,6 +294,42 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      likes: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "likes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
             referencedColumns: ["id"]
           },
         ]
@@ -398,7 +462,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      item_interactions: {
+        Row: {
+          comments_count: number | null
+          interests_count: number | null
+          item_id: number | null
+          likes_count: number | null
+        }
+        Insert: {
+          comments_count?: never
+          interests_count?: never
+          item_id?: number | null
+          likes_count?: never
+        }
+        Update: {
+          comments_count?: never
+          interests_count?: never
+          item_id?: number | null
+          likes_count?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_conversation: {
@@ -408,9 +492,33 @@ export type Database = {
         }
         Returns: string
       }
+      get_item_interests_count: {
+        Args: {
+          item_id_param: number
+        }
+        Returns: number
+      }
+      get_item_likes_count: {
+        Args: {
+          item_id_param: number
+        }
+        Returns: number
+      }
       get_user_conversation_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
+      }
+      has_user_liked_item: {
+        Args: {
+          item_id_param: number
+        }
+        Returns: boolean
+      }
+      has_user_shown_interest: {
+        Args: {
+          item_id_param: number
+        }
+        Returns: boolean
       }
       is_conversation_participant: {
         Args: {

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useItemActions } from "./item/useItemActions";
 import { useComments } from "./item/useComments";
@@ -6,7 +7,9 @@ import { useComments } from "./item/useComments";
 export const useItemCard = (id: string) => {
   const {
     isLiked,
+    likesCount,
     showInterest,
+    interestsCount,
     isBookmarked,
     handleShowInterest,
     handleLike,
@@ -28,9 +31,11 @@ export const useItemCard = (id: string) => {
 
   return {
     isLiked,
+    likesCount,
     showComments,
     comments,
     showInterest,
+    interestsCount,
     isBookmarked,
     handleShowInterest,
     handleLike,

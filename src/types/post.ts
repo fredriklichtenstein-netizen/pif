@@ -18,9 +18,12 @@ export interface Post {
   };
   createdAt: string;
   status: string;
+  likesCount?: number;
+  interestsCount?: number;
+  commentsCount?: number;
 }
 
-export type CreatePostInput = Omit<Post, "id" | "postedBy" | "createdAt"> & {
+export type CreatePostInput = Omit<Post, "id" | "postedBy" | "createdAt" | "likesCount" | "interestsCount" | "commentsCount"> & {
   user_id?: string;
 };
 

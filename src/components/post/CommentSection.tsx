@@ -7,17 +7,74 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CommentSectionProps {
+  itemId: string;
   comments: Comment[];
   setComments: (comments: Comment[]) => void;
 }
 
-export function CommentSection({ comments, setComments }: CommentSectionProps) {
+export function CommentSection({ itemId, comments, setComments }: CommentSectionProps) {
   const { session } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Debug logs to see what's in the session
-  console.log("Session user:", session?.user);
-  console.log("User metadata:", session?.user?.user_metadata);
+  // Fetch comments when component mounts
+  useEffect(() => {
+    const fetchComments = async () => {
+      setIsLoading(true);
+      try {
+        const numericId = parseInt(itemId, 10);
+        if (isNaN(numericId)) return;
+        
+        // Fetch comments for this item
+        const { data: commentsData, error } = await supabase
+          .from('comments')
+          .select(`
+            id,
+            content,
+            created_at,
+            user_id,
+            profiles:user_id (
+              first_name,
+              last_name,
+              avatar_url
+            )
+          `)
+          .eq('item_id', numericId)
+          .is('parent_id', null)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Transform database comments into our Comment type
+        const formattedComments: Comment[] = commentsData.map(comment => {
+          const profile = comment.profiles || {};
+          const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous';
+          
+          return {
+            id: comment.id.toString(),
+            text: comment.content,
+            author: {
+              id: comment.user_id,
+              name: fullName,
+              avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+            },
+            likes: 0, // We'll implement comment likes later
+            isLiked: false,
+            replies: [], // We'll implement replies later
+            createdAt: new Date(comment.created_at)
+          };
+        });
+        
+        setComments(formattedComments);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchComments();
+  }, [itemId, setComments]);
   
   // Fetch profile data from the profiles table
   useEffect(() => {
@@ -66,27 +123,64 @@ export function CommentSection({ comments, setComments }: CommentSectionProps) {
            }&background=random` : "https://ui-avatars.com/api/?name=U&background=random"),
     id: session?.user?.id
   };
-  
-  console.log("Current user object:", currentUser);
 
-  const handleAddComment = (text: string) => {
-    const comment = {
-      id: Date.now().toString(),
-      text,
-      author: {
-        name: currentUser.name,
-        avatar: currentUser.avatar,
-        id: currentUser.id
-      },
-      likes: 0,
-      isLiked: false,
-      replies: [],
-      createdAt: new Date(),
-    };
-    setComments([comment, ...comments]);
+  const handleAddComment = async (text: string) => {
+    if (!session?.user) return;
+    
+    try {
+      const numericId = parseInt(itemId, 10);
+      if (isNaN(numericId)) return;
+      
+      // Add comment to database
+      const { data, error } = await supabase
+        .from('comments')
+        .insert([
+          { 
+            content: text,
+            item_id: numericId,
+            user_id: session.user.id
+          }
+        ])
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          profiles:user_id (
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .single();
+      
+      if (error) throw error;
+      
+      // Create comment object
+      const profile = data.profiles || {};
+      const newComment: Comment = {
+        id: data.id.toString(),
+        text: data.content,
+        author: {
+          id: data.user_id,
+          name: currentUser.name,
+          avatar: currentUser.avatar
+        },
+        likes: 0,
+        isLiked: false,
+        replies: [],
+        createdAt: new Date(data.created_at)
+      };
+      
+      // Add to local state
+      setComments([newComment, ...comments]);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   const handleLikeComment = (commentId: string) => {
+    // We'll implement comment likes later
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
         return {
@@ -99,20 +193,53 @@ export function CommentSection({ comments, setComments }: CommentSectionProps) {
     }));
   };
 
-  const handleEditComment = (commentId: string, newText: string) => {
-    setComments(comments.map(comment => {
-      if (comment.id === commentId) {
-        return { ...comment, text: newText };
-      }
-      return comment;
-    }));
+  const handleEditComment = async (commentId: string, newText: string) => {
+    if (!session?.user) return;
+    
+    try {
+      // Update comment in database
+      const { error } = await supabase
+        .from('comments')
+        .update({ content: newText })
+        .eq('id', commentId)
+        .eq('user_id', session.user.id);
+      
+      if (error) throw error;
+      
+      // Update in local state
+      setComments(comments.map(comment => {
+        if (comment.id === commentId) {
+          return { ...comment, text: newText };
+        }
+        return comment;
+      }));
+    } catch (error) {
+      console.error('Error updating comment:', error);
+    }
   };
 
-  const handleDeleteComment = (commentId: string) => {
-    setComments(comments.filter(comment => comment.id !== commentId));
+  const handleDeleteComment = async (commentId: string) => {
+    if (!session?.user) return;
+    
+    try {
+      // Delete from database
+      const { error } = await supabase
+        .from('comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', session.user.id);
+      
+      if (error) throw error;
+      
+      // Remove from local state
+      setComments(comments.filter(comment => comment.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
   };
 
   const handleReplyToComment = (commentId: string, text: string) => {
+    // We'll implement nested comments later
     const reply = {
       id: Date.now().toString(),
       text,
@@ -142,22 +269,30 @@ export function CommentSection({ comments, setComments }: CommentSectionProps) {
     // This is handled by the toast in the CommentCard component
   };
 
+  if (isLoading) {
+    return <div className="mt-4 py-4 text-center text-gray-500">Loading comments...</div>;
+  }
+
   return (
     <div className="mt-4 space-y-4">
       <CommentInput onSubmit={handleAddComment} placeholder="Write a comment..." />
       <div className="space-y-4">
-        {comments.map((comment) => (
-          <CommentCard
-            key={comment.id}
-            comment={comment}
-            onLike={handleLikeComment}
-            onDelete={handleDeleteComment}
-            onEdit={handleEditComment}
-            onReply={handleReplyToComment}
-            onReport={handleReportComment}
-            currentUser={currentUser.id}
-          />
-        ))}
+        {comments.length === 0 ? (
+          <div className="py-4 text-center text-gray-500">No comments yet. Be the first to comment!</div>
+        ) : (
+          comments.map((comment) => (
+            <CommentCard
+              key={comment.id}
+              comment={comment}
+              onLike={handleLikeComment}
+              onDelete={handleDeleteComment}
+              onEdit={handleEditComment}
+              onReply={handleReplyToComment}
+              onReport={handleReportComment}
+              currentUser={currentUser.id}
+            />
+          ))
+        )}
       </div>
     </div>
   );

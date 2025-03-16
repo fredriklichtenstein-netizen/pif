@@ -3,7 +3,9 @@ import { Heart, MessageSquare } from "lucide-react";
 
 interface ItemCardActionsProps {
   isLiked: boolean;
+  likesCount?: number;
   showInterest: boolean;
+  interestsCount?: number;
   isOwner: boolean;
   onLike: () => void;
   onCommentToggle: () => void;
@@ -12,7 +14,9 @@ interface ItemCardActionsProps {
 
 export function ItemCardActions({
   isLiked,
+  likesCount = 0,
   showInterest,
+  interestsCount = 0,
   isOwner,
   onLike,
   onCommentToggle,
@@ -36,6 +40,9 @@ export function ItemCardActions({
         >
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
         </svg>
+        {likesCount > 0 && (
+          <span className="text-xs font-medium">{likesCount}</span>
+        )}
       </button>
       
       <button 
@@ -59,13 +66,20 @@ export function ItemCardActions({
       {!isOwner && (
         <button 
           onClick={onShowInterest}
-          className={`py-1.5 px-3 rounded-full text-xs font-medium ${
+          className={`py-1.5 px-3 rounded-full text-xs font-medium flex items-center ${
             showInterest 
               ? 'bg-primary text-white' 
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
           {showInterest ? 'Intresserad' : 'Visa intresse'}
+          {interestsCount > 0 && (
+            <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+              showInterest ? 'bg-white text-primary' : 'bg-gray-200 text-gray-700'
+            }`}>
+              {interestsCount}
+            </span>
+          )}
         </button>
       )}
     </div>

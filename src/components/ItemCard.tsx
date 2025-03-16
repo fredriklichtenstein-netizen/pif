@@ -63,9 +63,11 @@ export function ItemCard({
   
   const {
     isLiked,
+    likesCount,
     showComments,
     comments,
     showInterest,
+    interestsCount,
     isBookmarked,
     handleShowInterest,
     handleLike,
@@ -105,7 +107,9 @@ export function ItemCard({
             <div className="flex justify-between items-center w-full mb-2">
               <ItemCardActions
                 isLiked={isLiked}
+                likesCount={likesCount}
                 showInterest={showInterest}
+                interestsCount={interestsCount}
                 isOwner={isOwner}
                 onLike={handleLike}
                 onCommentToggle={handleCommentToggle}
@@ -145,7 +149,9 @@ export function ItemCard({
             <div className="flex justify-between items-center -mt-1 mb-2">
               <ItemCardActions
                 isLiked={isLiked}
+                likesCount={likesCount}
                 showInterest={showInterest}
+                interestsCount={interestsCount}
                 isOwner={isOwner}
                 onLike={handleLike}
                 onCommentToggle={handleCommentToggle}
@@ -163,6 +169,7 @@ export function ItemCard({
         
         {showComments && (
           <CommentSection
+            itemId={id}
             comments={comments}
             setComments={setComments}
           />

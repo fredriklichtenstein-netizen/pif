@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Post, CreatePostInput } from "@/types/post";
@@ -33,26 +32,53 @@ export const getPosts = async (): Promise<Post[]> => {
     throw error;
   }
 
-  return (data as ItemWithProfile[]).map(item => ({
-    id: item.id.toString(),
-    title: item.title,
-    description: item.description || '',
-    category: item.category || '',
-    condition: item.condition || '',
-    measurements: item.measurements as Record<string, string> || {},
-    images: item.images || [],
-    location: item.location || '',
-    coordinates: item.coordinates as string | null,
-    status: item.status || 'available',
-    createdAt: item.created_at,
-    postedBy: {
-      id: item.user_id || '',
-      name: item.profiles
-        ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`
-        : 'Anonymous',
-      avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+  // Get interaction stats for each item
+  const itemsWithStats = await Promise.all((data as ItemWithProfile[]).map(async (item) => {
+    // Get likes count
+    const { data: likesCount, error: likesError } = await supabase.rpc(
+      'get_item_likes_count',
+      { item_id_param: item.id }
+    );
+    
+    if (likesError) {
+      console.error("Error fetching likes count:", likesError);
     }
+    
+    // Get interests count
+    const { data: interestsCount, error: interestsError } = await supabase.rpc(
+      'get_item_interests_count',
+      { item_id_param: item.id }
+    );
+    
+    if (interestsError) {
+      console.error("Error fetching interests count:", interestsError);
+    }
+    
+    return {
+      id: item.id.toString(),
+      title: item.title,
+      description: item.description || '',
+      category: item.category || '',
+      condition: item.condition || '',
+      measurements: item.measurements as Record<string, string> || {},
+      images: item.images || [],
+      location: item.location || '',
+      coordinates: item.coordinates as string | null,
+      status: item.status || 'available',
+      createdAt: item.created_at,
+      likesCount: likesCount || 0,
+      interestsCount: interestsCount || 0,
+      postedBy: {
+        id: item.user_id || '',
+        name: item.profiles
+          ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`
+          : 'Anonymous',
+        avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+      }
+    };
   }));
+
+  return itemsWithStats;
 };
 
 export const addPost = async (post: CreatePostInput): Promise<Post> => {
