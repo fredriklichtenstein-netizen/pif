@@ -408,6 +408,10 @@ export type Database = {
         }
         Returns: string
       }
+      get_user_conversation_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       is_conversation_participant: {
         Args: {
           conversation_id: string
