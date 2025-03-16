@@ -21,9 +21,26 @@ export function useCommentData(itemId: string) {
     const fetchComments = async () => {
       setIsLoading(true);
       try {
-        // Convert itemId to a number
-        const numericId = parseInt(itemId, 10);
-        if (isNaN(numericId)) return;
+        // Convert itemId to a number, handling different formats
+        let numericId: number;
+        
+        // Check if itemId is already a number
+        if (typeof itemId === 'number') {
+          numericId = itemId;
+        } else {
+          // If it's a string, try to parse it
+          numericId = parseInt(itemId, 10);
+        }
+        
+        // If conversion fails, log and return empty array
+        if (isNaN(numericId)) {
+          console.error(`Invalid item ID format: ${itemId}`);
+          setComments([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log(`Fetching comments for item ID: ${numericId}`);
         
         // Fetch comments for this item
         const { data: commentsData, error } = await supabase
@@ -69,6 +86,7 @@ export function useCommentData(itemId: string) {
         console.log('Fetched comments:', formattedComments);
       } catch (error) {
         console.error('Error fetching comments:', error);
+        setComments([]);
       } finally {
         setIsLoading(false);
       }

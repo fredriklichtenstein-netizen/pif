@@ -26,7 +26,7 @@ export const useItemCard = (id: string) => {
 
   const {
     showComments,
-    comments,
+    comments: localComments,
     handleCommentToggle,
     setComments,
   } = useComments();
@@ -37,15 +37,16 @@ export const useItemCard = (id: string) => {
   // Update local comments state when fetched comments change
   useEffect(() => {
     if (fetchedComments && fetchedComments.length > 0) {
+      console.log(`Setting ${fetchedComments.length} comments in useItemCard for item ${id}`);
       setComments(fetchedComments);
     }
-  }, [fetchedComments, setComments]);
+  }, [fetchedComments, setComments, id]);
 
   return {
     isLiked,
     likesCount,
     showComments,
-    comments,
+    comments: localComments, // Explicitly use localComments to be clear
     commentsLoading,
     showInterest,
     interestsCount,
