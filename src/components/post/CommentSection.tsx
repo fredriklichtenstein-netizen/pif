@@ -12,9 +12,15 @@ interface CommentSectionProps {
   setComments: (comments: Comment[]) => void;
 }
 
+interface ProfileData {
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+}
+
 export function CommentSection({ itemId, comments, setComments }: CommentSectionProps) {
   const { session } = useAuth();
-  const [profileData, setProfileData] = useState<any>(null);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Fetch comments when component mounts
@@ -22,6 +28,7 @@ export function CommentSection({ itemId, comments, setComments }: CommentSection
     const fetchComments = async () => {
       setIsLoading(true);
       try {
+        // Convert itemId to a number
         const numericId = parseInt(itemId, 10);
         if (isNaN(numericId)) return;
         
@@ -47,7 +54,7 @@ export function CommentSection({ itemId, comments, setComments }: CommentSection
         
         // Transform database comments into our Comment type
         const formattedComments: Comment[] = commentsData.map(comment => {
-          const profile = comment.profiles || {};
+          const profile = comment.profiles as ProfileData || {};
           const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous';
           
           return {
@@ -137,7 +144,7 @@ export function CommentSection({ itemId, comments, setComments }: CommentSection
         .insert([
           { 
             content: text,
-            item_id: numericId,
+            item_id: numericId, // Use numericId instead of itemId
             user_id: session.user.id
           }
         ])
@@ -157,7 +164,7 @@ export function CommentSection({ itemId, comments, setComments }: CommentSection
       if (error) throw error;
       
       // Create comment object
-      const profile = data.profiles || {};
+      const profile = data.profiles as ProfileData || {};
       const newComment: Comment = {
         id: data.id.toString(),
         text: data.content,
@@ -201,7 +208,7 @@ export function CommentSection({ itemId, comments, setComments }: CommentSection
       const { error } = await supabase
         .from('comments')
         .update({ content: newText })
-        .eq('id', commentId)
+        .eq('id', parseInt(commentId, 10))  // Convert commentId to number
         .eq('user_id', session.user.id);
       
       if (error) throw error;
@@ -226,7 +233,7 @@ export function CommentSection({ itemId, comments, setComments }: CommentSection
       const { error } = await supabase
         .from('comments')
         .delete()
-        .eq('id', commentId)
+        .eq('id', parseInt(commentId, 10))  // Convert commentId to number
         .eq('user_id', session.user.id);
       
       if (error) throw error;
