@@ -1,5 +1,3 @@
-import { ThumbsUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface InterestButtonProps {
   showInterest: boolean;
@@ -8,16 +6,15 @@ interface InterestButtonProps {
 
 export function InterestButton({ showInterest, onShowInterest }: InterestButtonProps) {
   return (
-    <Button
-      variant={showInterest ? "default" : "secondary"}
-      size="sm"
+    <button 
       onClick={onShowInterest}
-      className={`font-semibold ${
-        showInterest ? "bg-accent hover:bg-accent-hover text-accent-foreground" : ""
+      className={`py-1.5 px-3 rounded-full text-xs font-medium ${
+        showInterest 
+          ? 'bg-primary text-white' 
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
       }`}
     >
-      <ThumbsUp size={16} className="mr-2" />
-      {showInterest ? "Interested" : "Show Interest"}
-    </Button>
+      {showInterest ? 'Intresserad' : 'Visa intresse'}
+    </button>
   );
 }
