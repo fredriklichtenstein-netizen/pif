@@ -66,6 +66,7 @@ export function useCommentData(itemId: string) {
         });
         
         setComments(formattedComments);
+        console.log('Fetched comments:', formattedComments);
       } catch (error) {
         console.error('Error fetching comments:', error);
       } finally {

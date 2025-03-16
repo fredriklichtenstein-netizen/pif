@@ -66,6 +66,7 @@ export function ItemCard({
     likesCount,
     showComments,
     comments,
+    commentsLoading,
     showInterest,
     interestsCount,
     isBookmarked,
