@@ -34,41 +34,46 @@ export function CommentButton({
 }: CommentButtonProps) {
   const [showDetailedPopover, setShowDetailedPopover] = useState(false);
   
-  const handleButtonClick = (e: React.MouseEvent) => {
-    if (commentsCount > 0) {
-      e.stopPropagation();
-      setShowDetailedPopover(!showDetailedPopover);
-    } else {
-      onCommentToggle();
-    }
+  const handleCommentClick = () => {
+    onCommentToggle();
+  };
+  
+  const handleCommentersClick = (e: React.MouseEvent) => {
+    if (commentsCount === 0) return;
+    e.stopPropagation();
+    setShowDetailedPopover(!showDetailedPopover);
   };
   
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={300}>
       <Popover open={showDetailedPopover} onOpenChange={setShowDetailedPopover}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <button 
-                onClick={handleButtonClick}
-                className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors"
-                aria-label="Toggle comments"
-              >
-                <MessageCircle className="h-5 w-5" />
-                {commentsCount > 0 && (
-                  <span className="text-xs font-medium">{commentsCount}</span>
-                )}
-              </button>
-            </PopoverTrigger>
+            <button 
+              onClick={handleCommentClick}
+              className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors"
+              aria-label="Toggle comments"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </button>
           </TooltipTrigger>
           
-          {commenters.length > 0 && (
-            <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
-              <p>Comments from: {commenters.slice(0, 3).map(c => c.name).join(', ')}
-              {commenters.length > 3 ? ` and ${commenters.length - 3} more` : ''}</p>
-            </TooltipContent>
-          )}
+          <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
+            <p>Comment</p>
+          </TooltipContent>
         </Tooltip>
+        
+        {commentsCount > 0 && (
+          <PopoverTrigger asChild>
+            <button 
+              onClick={handleCommentersClick}
+              className="text-xs font-medium ml-1"
+              aria-label="Show commenters"
+            >
+              {commentsCount}
+            </button>
+          </PopoverTrigger>
+        )}
         
         {commenters.length > 0 && (
           <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg" side="top">

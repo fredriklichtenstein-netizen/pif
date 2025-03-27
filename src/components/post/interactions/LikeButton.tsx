@@ -1,4 +1,5 @@
 
+import { Heart } from "lucide-react";
 import { 
   Tooltip,
   TooltipContent,
@@ -37,54 +38,58 @@ export function LikeButton({
 }: LikeButtonProps) {
   const [showDetailedPopover, setShowDetailedPopover] = useState(false);
   
-  const handleButtonClick = (e: React.MouseEvent) => {
+  const handleLikeClick = (e: React.MouseEvent) => {
     if (disabled) return;
-    
-    if (likesCount > 0) {
-      e.stopPropagation();
-      setShowDetailedPopover(!showDetailedPopover);
-    } else {
-      onLikeToggle();
-    }
+    onLikeToggle();
+  };
+  
+  const handleLikersClick = (e: React.MouseEvent) => {
+    if (disabled || likesCount === 0) return;
+    e.stopPropagation();
+    setShowDetailedPopover(!showDetailedPopover);
   };
   
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={300}>
       <Popover open={showDetailedPopover} onOpenChange={setShowDetailedPopover}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <button 
-                onClick={handleButtonClick}
-                className={`flex items-center space-x-1 ${isLiked ? 'text-primary' : 'text-gray-500'} hover:text-gray-700 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                aria-label={isLiked ? "Unlike" : "Like"}
-                disabled={disabled}
+            <button 
+              onClick={handleLikeClick}
+              className={`flex items-center space-x-1 ${isLiked ? 'text-primary' : 'text-gray-500'} hover:text-gray-700 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label={isLiked ? "Unlike" : "Like"}
+              disabled={disabled}
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill={isLiked ? "currentColor" : "none"}
+                stroke="currentColor" 
+                strokeWidth="2" 
+                className="h-5 w-5"
               >
-                <svg 
-                  width="24" 
-                  height="24" 
-                  viewBox="0 0 24 24" 
-                  fill={isLiked ? "currentColor" : "none"}
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  className="h-5 w-5"
-                >
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-                {likesCount > 0 && (
-                  <span className="text-xs font-medium">{likesCount}</span>
-                )}
-              </button>
-            </PopoverTrigger>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
           </TooltipTrigger>
           
-          {likers.length > 0 && !disabled && (
-            <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
-              <p>Liked by: {likers.slice(0, 3).map(l => l.name).join(', ')}
-              {likers.length > 3 ? ` and ${likers.length - 3} more` : ''}</p>
-            </TooltipContent>
-          )}
+          <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
+            <p>{isLiked ? "Unlike" : "Like"}</p>
+          </TooltipContent>
         </Tooltip>
+        
+        {likesCount > 0 && (
+          <PopoverTrigger asChild>
+            <button 
+              onClick={handleLikersClick}
+              className="text-xs font-medium ml-1"
+              aria-label="Show likers"
+            >
+              {likesCount}
+            </button>
+          </PopoverTrigger>
+        )}
         
         {likers.length > 0 && !disabled && (
           <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg" side="top">

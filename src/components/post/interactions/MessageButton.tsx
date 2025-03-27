@@ -1,4 +1,12 @@
 
+import { Mail } from "lucide-react";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 interface MessageButtonProps {
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
@@ -6,24 +14,22 @@ interface MessageButtonProps {
 
 export function MessageButton({ onClick, disabled = false }: MessageButtonProps) {
   return (
-    <button 
-      onClick={onClick}
-      disabled={disabled}
-      className="flex items-center space-x-1 text-gray-500 ml-2"
-      aria-label="Message user"
-    >
-      <svg 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        className="h-5 w-5"
-      >
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-        <polyline points="22,6 12,13 2,6"></polyline>
-      </svg>
-    </button>
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button 
+            onClick={onClick}
+            disabled={disabled}
+            className={`flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-label="Send message"
+          >
+            <Mail className="h-5 w-5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
+          <p>Message</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
