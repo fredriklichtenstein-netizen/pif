@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useItemInteractions, User } from "./item/useItemInteractions";
+import { useItemInteractions } from "./item/useItemInteractions";
 import { useComments } from "./item/useComments";
 import { useItemActions } from "./item/useItemActions";
 import { Comment } from "@/types/comment";
@@ -26,7 +26,7 @@ export const useItemCard = (itemId: string) => {
     fetchLikers,
   } = useItemInteractions(itemId);
 
-  const { handleMessage, handleShare, handleReport } = useItemActions(itemId);
+  const { handleMessage, handleShare, handleReport } = useItemActions();
 
   // Comments management
   const {
@@ -117,3 +117,4 @@ export const useItemCard = (itemId: string) => {
     setComments,
   };
 };
+
