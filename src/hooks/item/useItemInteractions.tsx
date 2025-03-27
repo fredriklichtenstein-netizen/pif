@@ -105,13 +105,26 @@ export const useItemInteractions = (id: string) => {
       }
       
       return data.map(like => {
+        // Ensure profiles exists and is properly typed
         const profile = like.profiles || {};
-        const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous';
+        
+        // Safely access properties with fallbacks
+        const firstName = typeof profile === 'object' && profile !== null ? (profile.first_name || '') : '';
+        const lastName = typeof profile === 'object' && profile !== null ? (profile.last_name || '') : '';
+        const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Anonymous';
+        
+        // Safely get the ID, falling back to user_id if profile.id is not available
+        const id = typeof profile === 'object' && profile !== null && 'id' in profile ? profile.id : like.user_id;
+        
+        // Safely get avatar URL or generate a default one
+        const avatarUrl = typeof profile === 'object' && profile !== null && 'avatar_url' in profile
+          ? profile.avatar_url
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
         
         return {
-          id: profile.id || like.user_id,
+          id: id as string,
           name: fullName,
-          avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+          avatar: avatarUrl as string
         };
       });
     } catch (error) {
