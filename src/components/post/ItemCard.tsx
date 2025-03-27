@@ -63,12 +63,19 @@ export function ItemCard({
     handleShowInterest,
     handleLike,
     handleCommentToggle,
-    handleMessage,
+    handleMessage: itemCardHandleMessage,
     handleShare,
     handleReport,
     handleBookmark,
     setComments,
   } = useItemCard(id.toString());
+
+  // Create a wrapper function that adapts the signature
+  const handleMessage = (e: React.MouseEvent) => {
+    if (postedBy.id) {
+      itemCardHandleMessage(e, id.toString(), postedBy.id);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this post?")) {

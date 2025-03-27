@@ -9,7 +9,9 @@ export const useItemActions = () => {
   const navigate = useNavigate();
   const { checkAuth } = useAuthCheck();
 
-  const handleMessage = async (e: React.MouseEvent, itemId: string, ownerId: string) => {
+  // Modified to accept all parameters but maintain compatibility with callers
+  // that might only pass the event
+  const handleMessage = async (e: React.MouseEvent, itemId?: string, ownerId?: string) => {
     if (!await checkAuth("message the owner")) {
       e.preventDefault();
       return;
