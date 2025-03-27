@@ -46,26 +46,35 @@ export function CommentButton({
   
   return (
     <div className="flex items-center">
-      <button 
-        onClick={handleCommentClick}
-        className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
-        aria-label="Toggle comments"
-      >
-        <MessageCircle className="h-5 w-5" />
-      </button>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button 
+              onClick={handleCommentClick}
+              className="flex items-center text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+              aria-label="Toggle comments"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
+            <p>Comments</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
       {commentsCount > 0 && (
         <Popover open={showDetailedPopover} onOpenChange={setShowDetailedPopover}>
           <PopoverTrigger asChild>
             <button 
               onClick={handleCommentersClick}
-              className="text-xs font-medium ml-1"
+              className="text-xs font-medium ml-1 cursor-pointer"
               aria-label="Show commenters"
             >
               <TooltipProvider delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span>{commentsCount}</span>
+                    <span className="cursor-pointer">{commentsCount}</span>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
                     <p>{`${commentsCount} ${commentsCount === 1 ? 'comment' : 'comments'}`}</p>
@@ -76,7 +85,7 @@ export function CommentButton({
           </PopoverTrigger>
           
           {commenters.length > 0 && (
-            <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg" side="top">
+            <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg z-50" side="top">
               <div className="p-3 font-medium border-b">
                 <h3>Comments ({commentsCount})</h3>
               </div>

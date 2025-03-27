@@ -52,29 +52,38 @@ export function LikeButton({
   
   return (
     <div className="flex items-center">
-      <button 
-        onClick={handleLikeClick}
-        className={`flex items-center ${
-          isLiked ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
-        } transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-        disabled={disabled}
-        aria-label={isLiked ? "Unlike" : "Like"}
-      >
-        <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-      </button>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button 
+              onClick={handleLikeClick}
+              className={`flex items-center ${
+                isLiked ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+              } transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              disabled={disabled}
+              aria-label={isLiked ? "Unlike" : "Like"}
+            >
+              <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
+            <p>{isLiked ? "Unlike" : "Like"}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
       {likesCount > 0 && (
         <Popover open={showDetailedPopover} onOpenChange={setShowDetailedPopover}>
           <PopoverTrigger asChild>
             <button 
               onClick={handleLikersClick}
-              className="text-xs font-medium ml-1"
+              className="text-xs font-medium ml-1 cursor-pointer"
               aria-label="Show likers"
             >
               <TooltipProvider delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span>{likesCount}</span>
+                    <span className="cursor-pointer">{likesCount}</span>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
                     <p>{`${likesCount} ${likesCount === 1 ? 'like' : 'likes'}`}</p>
@@ -85,7 +94,7 @@ export function LikeButton({
           </PopoverTrigger>
           
           {likers.length > 0 && (
-            <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg" side="top">
+            <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg z-50" side="top">
               <div className="p-3 font-medium border-b">
                 <h3>Likes ({likesCount})</h3>
               </div>

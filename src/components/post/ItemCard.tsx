@@ -10,6 +10,7 @@ import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "./CommentSection";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
+import { useItemCard } from "@/hooks/useItemCard";
 
 interface ItemCardProps {
   id: number; // Changed from string to number to match the database type
@@ -46,6 +47,28 @@ export function ItemCard({
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const isOwner = session?.user?.id === postedBy.id;
+  
+  const {
+    isLiked,
+    likesCount,
+    showComments,
+    comments,
+    commentsCount,
+    commentsLoading,
+    showInterest,
+    interestsCount,
+    isBookmarked,
+    likers,
+    commenters,
+    handleShowInterest,
+    handleLike,
+    handleCommentToggle,
+    handleMessage,
+    handleShare,
+    handleReport,
+    handleBookmark,
+    setComments,
+  } = useItemCard(id.toString());
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this post?")) {
@@ -119,19 +142,24 @@ export function ItemCard({
         )}
         <div className="mt-4">
           <ItemInteractions
-            id={id.toString()} // Convert number to string for ItemInteractions
+            id={id.toString()}
             postedBy={postedBy}
-            isLiked={false}
-            showComments={false}
-            isBookmarked={false}
-            showInterest={false}
-            onLikeToggle={() => {}}
-            onCommentToggle={() => {}}
-            onShowInterest={() => {}}
-            onBookmarkToggle={() => {}}
-            onMessage={() => {}}
-            onShare={() => {}}
-            onReport={() => {}}
+            isLiked={isLiked}
+            showComments={showComments}
+            isBookmarked={isBookmarked}
+            showInterest={showInterest}
+            isOwner={isOwner}
+            commentsCount={commentsCount}
+            likesCount={likesCount}
+            likers={likers}
+            commenters={commenters}
+            onLikeToggle={handleLike}
+            onCommentToggle={handleCommentToggle}
+            onShowInterest={handleShowInterest}
+            onBookmarkToggle={handleBookmark}
+            onMessage={handleMessage}
+            onShare={handleShare}
+            onReport={handleReport}
           />
         </div>
       </div>
