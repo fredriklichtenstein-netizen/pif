@@ -109,22 +109,30 @@ export const useItemInteractions = (id: string) => {
         const profile = like.profiles || {};
         
         // Safely access properties with fallbacks
-        const firstName = typeof profile === 'object' && profile !== null ? (profile.first_name || '') : '';
-        const lastName = typeof profile === 'object' && profile !== null ? (profile.last_name || '') : '';
+        const firstName = typeof profile === 'object' && profile !== null && 'first_name' in profile 
+          ? (profile.first_name as string || '') 
+          : '';
+          
+        const lastName = typeof profile === 'object' && profile !== null && 'last_name' in profile 
+          ? (profile.last_name as string || '') 
+          : '';
+          
         const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Anonymous';
         
         // Safely get the ID, falling back to user_id if profile.id is not available
-        const id = typeof profile === 'object' && profile !== null && 'id' in profile ? profile.id : like.user_id;
+        const id = typeof profile === 'object' && profile !== null && 'id' in profile 
+          ? profile.id as string 
+          : like.user_id;
         
         // Safely get avatar URL or generate a default one
         const avatarUrl = typeof profile === 'object' && profile !== null && 'avatar_url' in profile
-          ? profile.avatar_url
+          ? profile.avatar_url as string
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
         
         return {
           id: id as string,
           name: fullName,
-          avatar: avatarUrl as string
+          avatar: avatarUrl
         };
       });
     } catch (error) {
