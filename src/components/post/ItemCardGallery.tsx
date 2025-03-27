@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   Carousel,
   CarouselContent,
@@ -8,6 +7,7 @@ import {
   CarouselNext,
   CarouselPrevious
 } from "@/components/ui/carousel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -18,6 +18,7 @@ interface ItemCardGalleryProps {
 export function ItemCardGallery({ images, title, category }: ItemCardGalleryProps) {
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : [];
+  const isMobile = useIsMobile();
   
   if (allImages.length === 0) {
     return (
@@ -84,7 +85,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
           {allImages.map((_, index) => (
             <span 
               key={index} 
-              className={`block h-1.5 rounded-full w-1.5 bg-white/60`}
+              className="block h-1.5 rounded-full w-1.5 bg-white/60"
             />
           ))}
         </div>

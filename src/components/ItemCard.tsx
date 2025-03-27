@@ -10,6 +10,7 @@ import { ItemCardContent } from "./post/ItemCardContent";
 import { ItemCardActions } from "./post/ItemCardActions";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { Comment } from "@/types/comment";
+
 interface ItemCardProps {
   id: string;
   title: string;
@@ -30,6 +31,7 @@ interface ItemCardProps {
     avatar: string;
   };
 }
+
 export function ItemCard({
   id,
   title,
@@ -46,6 +48,7 @@ export function ItemCard({
   const {
     session
   } = useAuth();
+  
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -92,17 +95,54 @@ export function ItemCard({
     fetchItemComments();
   }, [id, fetchItemComments]);
 
-  return <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
-      <ItemCardHeader postedBy={postedBy} distanceText={distanceText} isOwner={isOwner} isBookmarked={isBookmarked} handleBookmark={handleBookmark} handleShare={handleShare} handleReport={handleReport} />
+  return (
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
+      <ItemCardHeader 
+        postedBy={postedBy} 
+        distanceText={distanceText} 
+        isOwner={isOwner} 
+        isBookmarked={isBookmarked} 
+        handleBookmark={handleBookmark} 
+        handleShare={handleShare} 
+        handleReport={handleReport} 
+      />
       
       <ItemCardGallery images={allImages} title={title} category={category} />
       
       <div className="p-3 py-[5px]">
-        <ItemInteractions id={id} postedBy={postedBy} isLiked={isLiked} showComments={showComments} isBookmarked={isBookmarked} showInterest={showInterest} isOwner={isOwner} commentsCount={commentsCount} likesCount={likesCount} interestsCount={interestsCount} likers={likers} interestedUsers={interestedUsers} commenters={commenters} onLikeToggle={handleLike} onCommentToggle={handleCommentToggle} onShowInterest={handleShowInterest} onBookmarkToggle={handleBookmark} onMessage={handleMessage} onShare={handleShare} onReport={handleReport} />
+        <ItemInteractions 
+          id={id} 
+          postedBy={postedBy} 
+          isLiked={isLiked} 
+          showComments={showComments} 
+          isBookmarked={isBookmarked} 
+          showInterest={showInterest} 
+          isOwner={isOwner} 
+          commentsCount={commentsCount} 
+          likesCount={likesCount} 
+          interestsCount={interestsCount} 
+          likers={likers} 
+          interestedUsers={interestedUsers} 
+          commenters={commenters} 
+          onLikeToggle={handleLike} 
+          onCommentToggle={handleCommentToggle} 
+          onShowInterest={handleShowInterest} 
+          onBookmarkToggle={handleBookmark} 
+          onMessage={handleMessage} 
+          onShare={handleShare} 
+          onReport={handleReport} 
+        />
         
-        {showComments && <CommentSection itemId={id} comments={comments as Comment[]} setComments={(newComments: Comment[]) => setComments(newComments)} />}
+        {showComments && (
+          <CommentSection 
+            itemId={id} 
+            comments={comments as Comment[]} 
+            setComments={(newComments: Comment[]) => setComments(newComments)} 
+          />
+        )}
         
         <ItemCardContent description={description} measurements={measurements} />
       </div>
-    </div>;
+    </div>
+  );
 }
