@@ -20,5 +20,6 @@ export interface PostAction {
   onClick?: (e: React.MouseEvent) => void;
   to?: string;
   active?: boolean;
+  disabled?: boolean; // Added this property
   component?: React.ComponentType<any>;
 }

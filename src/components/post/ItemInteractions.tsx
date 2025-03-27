@@ -29,6 +29,7 @@ interface ItemInteractionsProps {
   likesCount?: number;
   interestsCount?: number;
   likers?: User[];
+  interestedUsers?: User[];
   commenters?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
@@ -51,6 +52,7 @@ export function ItemInteractions({
   likesCount = 0,
   interestsCount = 0,
   likers = [],
+  interestedUsers = [],
   commenters = [],
   onLikeToggle,
   onCommentToggle,
