@@ -3,7 +3,6 @@ import { LikeButton } from "./interactions/LikeButton";
 import { CommentButton } from "./interactions/CommentButton";
 import { MessageButton } from "./interactions/MessageButton";
 import { InterestButton } from "./interactions/InterestButton";
-import { ItemOwnerActions } from "./interactions/ItemOwnerActions";
 import { ConversationHandler } from "./interactions/ConversationHandler";
 
 type User = {
@@ -59,8 +58,8 @@ export function ItemInteractions({
   onReport,
 }: ItemInteractionsProps) {
   return (
-    <div className="flex flex-col space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
         <LikeButton 
           isLiked={isLiked} 
           onLikeToggle={onLikeToggle} 
@@ -80,17 +79,17 @@ export function ItemInteractions({
             )}
           </ConversationHandler>
         )}
-        
-        {!isOwner && (
-          <div className="ml-auto">
-            <InterestButton 
-              showInterest={showInterest} 
-              onShowInterest={onShowInterest} 
-              interestsCount={interestsCount}
-            />
-          </div>
-        )}
       </div>
+      
+      {!isOwner && (
+        <div className="mt-2">
+          <InterestButton 
+            showInterest={showInterest} 
+            onShowInterest={onShowInterest} 
+            interestsCount={interestsCount}
+          />
+        </div>
+      )}
     </div>
   );
 }
