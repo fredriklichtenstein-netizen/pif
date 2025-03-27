@@ -1,55 +1,43 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ItemCardContentProps {
   title?: string;
   description?: string;
   measurements?: Record<string, string>;
-  isMobile?: boolean;
-  expanded?: boolean;
-  onToggleExpand?: () => void;
 }
 
 export function ItemCardContent({
-  title,
   description,
-  measurements = {},
-  isMobile = false,
-  expanded = false,
-  onToggleExpand
+  measurements = {}
 }: ItemCardContentProps) {
   const hasMeasurements = Object.keys(measurements).length > 0;
+  const hasContent = description || hasMeasurements;
+  
+  if (!hasContent) return null;
   
   return (
-    <div className="space-y-2">
-      {title && (
-        <h3 className="text-lg font-semibold">{title}</h3>
-      )}
-      {description && (
-        <p className="text-sm text-gray-600">{description}</p>
-      )}
-      
-      {hasMeasurements && (
-        <>
-          <button 
-            onClick={onToggleExpand}
-            className="flex items-center gap-1 text-gray-600 text-sm mt-2"
-          >
-            <span>{expanded ? 'Hide details' : 'Show details'}</span>
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-          
-          {expanded && (
-            <div className="text-xs text-gray-500 flex flex-wrap gap-2 pt-2">
-              {Object.entries(measurements).map(([key, value]) => (
-                <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
-                  {key}: {value}
-                </span>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
+    <Collapsible className="w-full mt-2">
+      <CollapsibleTrigger className="w-full flex items-center justify-center gap-1 py-2 text-sm text-gray-600 border-t border-gray-200">
+        <span>Show details</span>
+        <ChevronDown className="h-4 w-4" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-3 space-y-3">
+        {description && (
+          <p className="text-sm text-gray-600">{description}</p>
+        )}
+        
+        {hasMeasurements && (
+          <div className="text-xs text-gray-500 flex flex-wrap gap-2">
+            {Object.entries(measurements).map(([key, value]) => (
+              <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
+                {key}: {value}
+              </span>
+            ))}
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

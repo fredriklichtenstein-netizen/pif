@@ -8,6 +8,7 @@ import { ItemCardHeader } from "./post/ItemCardHeader";
 import { ItemCardGallery } from "./post/ItemCardGallery";
 import { ItemCardContent } from "./post/ItemCardContent";
 import { ItemCardActions } from "./post/ItemCardActions";
+import { ItemInteractions } from "./post/ItemInteractions";
 import { Comment } from "@/types/comment";
 
 interface ItemCardProps {
@@ -48,7 +49,6 @@ export function ItemCard({
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [contentExpanded, setContentExpanded] = useState(false);
   
   useEffect(() => {
     const handleResize = () => {
@@ -84,10 +84,6 @@ export function ItemCard({
     handleBookmark,
     setComments,
   } = useItemCard(id);
-  
-  const toggleContentExpanded = () => {
-    setContentExpanded(!contentExpanded);
-  };
 
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
@@ -108,30 +104,33 @@ export function ItemCard({
       />
       
       <div className="p-3">
-        <ItemCardContent
-          title={title}
-          description={description}
-          measurements={measurements}
-          expanded={contentExpanded}
-          onToggleExpand={toggleContentExpanded}
+        <ItemInteractions
+          id={id}
+          postedBy={postedBy}
+          isLiked={isLiked}
+          showComments={showComments}
+          isBookmarked={isBookmarked}
+          showInterest={showInterest}
+          isOwner={isOwner}
+          commentsCount={commentsCount}
+          likesCount={likesCount}
+          interestsCount={interestsCount}
+          likers={likers}
+          interestedUsers={interestedUsers}
+          commenters={commenters}
+          onLikeToggle={handleLike}
+          onCommentToggle={handleCommentToggle}
+          onShowInterest={handleShowInterest}
+          onBookmarkToggle={handleBookmark}
+          onMessage={handleMessage}
+          onShare={handleShare}
+          onReport={handleReport}
         />
         
-        <div className="mt-1">
-          <ItemCardActions
-            isLiked={isLiked}
-            likesCount={likesCount}
-            commentsCount={commentsCount}
-            showInterest={showInterest}
-            interestsCount={interestsCount}
-            isOwner={isOwner}
-            likers={likers}
-            interestedUsers={interestedUsers}
-            onLike={handleLike}
-            onCommentToggle={handleCommentToggle}
-            onShowInterest={handleShowInterest}
-            onShare={handleShare}
-          />
-        </div>
+        <ItemCardContent
+          description={description}
+          measurements={measurements}
+        />
         
         {showComments && (
           <CommentSection

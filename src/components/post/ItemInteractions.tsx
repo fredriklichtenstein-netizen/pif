@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ThumbsUp, MessageCircle, Info } from "lucide-react";
+import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { InteractionsList } from "./interactions/InteractionsList";
@@ -126,16 +126,20 @@ export function ItemInteractions({
       
       {/* Action buttons row */}
       <div className="flex items-center justify-between border-b border-gray-200 py-1">
-        <button 
-          onClick={onLikeToggle}
-          className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
-            isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-          disabled={isOwner}
-        >
-          <ThumbsUp className={`h-5 w-5 mr-2 ${isLiked ? 'fill-primary' : ''}`} />
-          <span className="font-medium">Like</span>
-        </button>
+        {/* Hide Like button for own posts but maintain the layout */}
+        {isOwner ? (
+          <div className="flex-1"></div>
+        ) : (
+          <button 
+            onClick={onLikeToggle}
+            className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
+              isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <ThumbsUp className={`h-5 w-5 mr-2 ${isLiked ? 'fill-primary' : ''}`} />
+            <span className="font-medium">Like</span>
+          </button>
+        )}
         
         <button 
           onClick={onCommentToggle}
@@ -145,16 +149,20 @@ export function ItemInteractions({
           <span className="font-medium">Comment</span>
         </button>
         
-        <button 
-          onClick={onShowInterest}
-          className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
-            showInterest ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-          disabled={isOwner}
-        >
-          <Info className={`h-5 w-5 mr-2 ${showInterest ? 'fill-primary' : ''}`} />
-          <span className="font-medium">{showInterest ? 'Interested' : 'Interest'}</span>
-        </button>
+        {/* Hide Interest button for own posts but maintain the layout */}
+        {isOwner ? (
+          <div className="flex-1"></div>
+        ) : (
+          <button 
+            onClick={onShowInterest}
+            className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
+              showInterest ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Heart className={`h-5 w-5 mr-2 ${showInterest ? 'fill-primary' : ''}`} />
+            <span className="font-medium">{showInterest ? 'Interested' : 'Interest'}</span>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 
-import { ThumbsUp, MessageCircle, Mail } from "lucide-react";
+import { ThumbsUp, MessageCircle, Mail, Heart } from "lucide-react";
 import { PostActions } from "../PostActions";
 import type { PostAction } from "@/types/comment";
 
@@ -35,9 +35,10 @@ export function PrimaryActions({
       active: showComments,
     },
     {
-      icon: <Mail size={20} />,
-      label: "Message",
+      icon: <Heart size={20} />,
+      label: "Interest",
       onClick: onMessage,
+      disabled: isOwner,
     },
   ];
 

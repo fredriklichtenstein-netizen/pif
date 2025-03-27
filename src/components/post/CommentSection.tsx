@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { CommentInput } from "../comments/CommentInput";
 import { CommentList } from "../comments/CommentList";
 import { useCommentData } from "@/hooks/comments/useCommentData";
@@ -23,13 +24,16 @@ export function CommentSection({ itemId, comments, setComments }: CommentSection
     handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser);
 
+  // Add this debug log to check comments data
+  console.log("CommentSection rendered", { itemId, commentsCount: comments?.length, comments });
+
   return (
     <div className="mt-4 space-y-4">
       <CommentInput onSubmit={handleAddComment} placeholder="Write a comment..." />
       <CommentList
-        comments={comments}
+        comments={comments || []}
         isLoading={isLoading}
-        currentUserId={currentUser.id}
+        currentUserId={currentUser?.id}
         onLike={handleLikeComment}
         onDelete={handleDeleteComment}
         onEdit={handleEditComment}
