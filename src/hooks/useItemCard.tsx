@@ -4,6 +4,7 @@ import { useItemInteractions } from "./item/useItemInteractions";
 import { useComments } from "./item/useComments";
 import { useItemActions } from "./item/useItemActions";
 import { Comment } from "@/types/comment";
+import type { User } from "./item/utils/userUtils";
 
 export const useItemCard = (itemId: string) => {
   const [showComments, setShowComments] = useState(false);
@@ -117,4 +118,3 @@ export const useItemCard = (itemId: string) => {
     setComments,
   };
 };
-
