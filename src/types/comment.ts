@@ -11,6 +11,7 @@ export interface Comment {
   isLiked: boolean;
   replies: Comment[];
   createdAt: Date;
+  isOwn?: boolean; // Added this property
 }
 
 export interface PostAction {
