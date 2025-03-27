@@ -1,9 +1,16 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useGlobalAuth } from "../useGlobalAuth";
+
+type User = {
+  id: string;
+  name: string;
+  avatar?: string;
+};
 
 export const useItemInteractions = (id: string) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -72,6 +79,46 @@ export const useItemInteractions = (id: string) => {
     
     fetchInteractions();
   }, [id, user]);
+
+  const fetchLikers = useCallback(async (): Promise<User[]> => {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('likes')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .eq('item_id', numericId)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching likers:', error);
+        return [];
+      }
+      
+      return data.map(like => {
+        const profile = like.profiles || {};
+        const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous';
+        
+        return {
+          id: profile.id || like.user_id,
+          name: fullName,
+          avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching likers:', error);
+      return [];
+    }
+  }, [id]);
 
   const checkAuth = async (action: string) => {
     if (!user) {
@@ -252,5 +299,6 @@ export const useItemInteractions = (id: string) => {
     handleShowInterest,
     handleLike,
     handleBookmark,
+    fetchLikers,
   };
 };

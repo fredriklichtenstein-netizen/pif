@@ -1,3 +1,4 @@
+
 import { useItemCard } from "@/hooks/useItemCard";
 import { CommentSection } from "./post/CommentSection";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,6 +72,8 @@ export function ItemCard({
     showInterest,
     interestsCount,
     isBookmarked,
+    likers,
+    commenters,
     handleShowInterest,
     handleLike,
     handleCommentToggle,
