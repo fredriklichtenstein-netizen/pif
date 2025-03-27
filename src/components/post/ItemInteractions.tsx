@@ -5,7 +5,6 @@ import { MessageButton } from "./interactions/MessageButton";
 import { InterestButton } from "./interactions/InterestButton";
 import { ItemOwnerActions } from "./interactions/ItemOwnerActions";
 import { ConversationHandler } from "./interactions/ConversationHandler";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 type User = {
   id: string;
@@ -58,37 +57,35 @@ export function ItemInteractions({
   onReport,
 }: ItemInteractionsProps) {
   return (
-    <TooltipProvider>
-      <div className="flex flex-col">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <LikeButton 
-              isLiked={isLiked} 
-              onLikeToggle={onLikeToggle} 
-              likesCount={likesCount}
-              likers={likers}
-              disabled={isOwner}
-            />
-            <CommentButton 
-              onCommentToggle={onCommentToggle} 
-              commentsCount={commentsCount}
-              commenters={commenters} 
-            />
-            
-            {!isOwner && (
-              <ConversationHandler itemId={id} receiverId={postedBy.id}>
-                {({ handleClick, isLoading }) => (
-                  <MessageButton onClick={handleClick} disabled={isLoading} />
-                )}
-              </ConversationHandler>
-            )}
-          </div>
-
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <LikeButton 
+            isLiked={isLiked} 
+            onLikeToggle={onLikeToggle} 
+            likesCount={likesCount}
+            likers={likers}
+            disabled={isOwner}
+          />
+          <CommentButton 
+            onCommentToggle={onCommentToggle} 
+            commentsCount={commentsCount}
+            commenters={commenters} 
+          />
+          
           {!isOwner && (
-            <InterestButton showInterest={showInterest} onShowInterest={onShowInterest} />
+            <ConversationHandler itemId={id} receiverId={postedBy.id}>
+              {({ handleClick, isLoading }) => (
+                <MessageButton onClick={handleClick} disabled={isLoading} />
+              )}
+            </ConversationHandler>
           )}
         </div>
+
+        {!isOwner && (
+          <InterestButton showInterest={showInterest} onShowInterest={onShowInterest} />
+        )}
       </div>
-    </TooltipProvider>
+    </div>
   );
 }
