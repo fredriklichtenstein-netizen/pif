@@ -66,6 +66,7 @@ export function ItemCard({
     likesCount,
     showComments,
     comments,
+    commentsCount,
     commentsLoading,
     showInterest,
     interestsCount,
@@ -83,8 +84,6 @@ export function ItemCard({
   const toggleContentExpanded = () => {
     setContentExpanded(!contentExpanded);
   };
-
-  const commentsCount = comments?.length || 0;
 
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>

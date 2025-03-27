@@ -46,7 +46,8 @@ export const useItemCard = (id: string) => {
     isLiked,
     likesCount,
     showComments,
-    comments: localComments, // Explicitly use localComments to be clear
+    comments: localComments,
+    commentsCount: localComments.length,
     commentsLoading,
     showInterest,
     interestsCount,

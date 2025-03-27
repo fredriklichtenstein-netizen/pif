@@ -24,17 +24,21 @@ export function useCommentData(itemId: string) {
         // Convert itemId to a number, handling different formats
         let numericId: number;
         
-        // Check if itemId is already a number
         if (typeof itemId === 'number') {
           numericId = itemId;
-        } else {
+        } else if (typeof itemId === 'string') {
           // If it's a string, try to parse it
           numericId = parseInt(itemId, 10);
-        }
-        
-        // If conversion fails, log and return empty array
-        if (isNaN(numericId)) {
-          console.error(`Invalid item ID format: ${itemId}`);
+          
+          // If conversion fails, log error and return
+          if (isNaN(numericId)) {
+            console.error(`Invalid item ID format: ${itemId}`);
+            setComments([]);
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          console.error(`Unsupported item ID type: ${typeof itemId}`);
           setComments([]);
           setIsLoading(false);
           return;
@@ -60,7 +64,17 @@ export function useCommentData(itemId: string) {
           .is('parent_id', null)
           .order('created_at', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error from Supabase:', error);
+          throw error;
+        }
+        
+        if (!commentsData) {
+          console.log('No comments data returned');
+          setComments([]);
+          setIsLoading(false);
+          return;
+        }
         
         // Transform database comments into our Comment type
         const formattedComments: Comment[] = commentsData.map(comment => {
