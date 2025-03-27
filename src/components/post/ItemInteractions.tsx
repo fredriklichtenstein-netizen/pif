@@ -1,9 +1,14 @@
 
+import { useState } from "react";
 import { LikeButton } from "./interactions/LikeButton";
 import { CommentButton } from "./interactions/CommentButton";
 import { MessageButton } from "./interactions/MessageButton";
 import { InterestButton } from "./interactions/InterestButton";
 import { ConversationHandler } from "./interactions/ConversationHandler";
+import { InteractionsList } from "./interactions/InteractionsList";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
 
 type User = {
   id: string;
@@ -57,6 +62,9 @@ export function ItemInteractions({
   onShare,
   onReport,
 }: ItemInteractionsProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const hasInteractions = likesCount > 0 || interestsCount > 0;
+  
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -78,6 +86,30 @@ export function ItemInteractions({
               <MessageButton onClick={handleClick} disabled={isLoading} />
             )}
           </ConversationHandler>
+        )}
+        
+        {hasInteractions && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-auto flex items-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                <span>View Interactions</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Post Interactions</DialogTitle>
+              </DialogHeader>
+              <InteractionsList 
+                likers={likers} 
+                interested={likers.length > 0 || interestsCount > 0 ? likers : []} 
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
       

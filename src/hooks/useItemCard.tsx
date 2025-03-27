@@ -23,6 +23,7 @@ export const useItemCard = (itemId: string) => {
     handleShowInterest,
     handleBookmark,
     fetchLikers,
+    fetchInterestedUsers,
   } = useItemInteractions(itemId);
 
   const { handleMessage, handleShare, handleReport } = useItemActions();
@@ -35,7 +36,13 @@ export const useItemCard = (itemId: string) => {
   } = useComments(itemId);
 
   // Users who interacted with the item
-  const { likers, commenters } = useItemUsers(comments, fetchLikers, likesCount);
+  const { likers, commenters, interestedUsers } = useItemUsers(
+    comments, 
+    fetchLikers, 
+    likesCount,
+    fetchInterestedUsers,
+    interestsCount
+  );
 
   // Toggle showing comments
   const handleCommentToggle = () => {
@@ -83,6 +90,7 @@ export const useItemCard = (itemId: string) => {
     isBookmarked,
     likers,
     commenters,
+    interestedUsers,
     
     // Actions
     handleLike,

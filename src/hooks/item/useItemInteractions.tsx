@@ -14,7 +14,7 @@ export const useItemInteractions = (id: string) => {
 
   // Individual interaction hooks
   const { isLiked, likesCount, handleLike, fetchLikers } = useLikes(id, userId);
-  const { showInterest, interestsCount, handleShowInterest } = useInterests(id, userId);
+  const { showInterest, interestsCount, handleShowInterest, fetchInterestedUsers } = useInterests(id, userId);
   const { isBookmarked, handleBookmark } = useBookmarks(id, userId);
 
   return {
@@ -30,6 +30,7 @@ export const useItemInteractions = (id: string) => {
     handleLike,
     handleBookmark,
     fetchLikers,
+    fetchInterestedUsers,
   };
 };
 

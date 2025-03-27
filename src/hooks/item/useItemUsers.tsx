@@ -4,11 +4,18 @@ import { Comment } from "@/types/comment";
 import type { User } from "./utils/userUtils";
 
 /**
- * Hook for managing users who interact with an item (likers and commenters)
+ * Hook for managing users who interact with an item (likers, commenters, and interested users)
  */
-export const useItemUsers = (comments: Comment[], fetchLikers: () => Promise<User[]>, likesCount: number) => {
+export const useItemUsers = (
+  comments: Comment[], 
+  fetchLikers: () => Promise<User[]>, 
+  likesCount: number,
+  fetchInterested?: () => Promise<User[]>,
+  interestsCount?: number
+) => {
   const [likers, setLikers] = useState<User[]>([]);
   const [commenters, setCommenters] = useState<User[]>([]);
+  const [interestedUsers, setInterestedUsers] = useState<User[]>([]);
   
   // Extract unique commenters from comments
   useEffect(() => {
@@ -39,7 +46,6 @@ export const useItemUsers = (comments: Comment[], fetchLikers: () => Promise<Use
       if (likesCount > 0) {
         try {
           const fetchedLikers = await fetchLikers();
-          console.log("Fetched likers:", fetchedLikers);
           setLikers(fetchedLikers);
         } catch (error) {
           console.error("Error fetching likers in useItemUsers:", error);
@@ -53,8 +59,30 @@ export const useItemUsers = (comments: Comment[], fetchLikers: () => Promise<Use
     getLikers();
   }, [likesCount, fetchLikers]);
 
+  // Fetch interested users when interestsCount changes
+  useEffect(() => {
+    const getInterestedUsers = async () => {
+      if (interestsCount && interestsCount > 0 && fetchInterested) {
+        try {
+          const fetchedInterested = await fetchInterested();
+          setInterestedUsers(fetchedInterested);
+        } catch (error) {
+          console.error("Error fetching interested users in useItemUsers:", error);
+          setInterestedUsers([]);
+        }
+      } else {
+        setInterestedUsers([]);
+      }
+    };
+    
+    if (fetchInterested) {
+      getInterestedUsers();
+    }
+  }, [interestsCount, fetchInterested]);
+
   return {
     likers,
-    commenters
+    commenters,
+    interestedUsers
   };
 };

@@ -60,6 +60,7 @@ export function ItemCard({
     isBookmarked,
     likers,
     commenters,
+    interestedUsers,
     handleShowInterest,
     handleLike,
     handleCommentToggle,
@@ -158,6 +159,7 @@ export function ItemCard({
             isOwner={isOwner}
             commentsCount={commentsCount}
             likesCount={likesCount}
+            interestsCount={interestsCount}
             likers={likers}
             commenters={commenters}
             onLikeToggle={handleLike}

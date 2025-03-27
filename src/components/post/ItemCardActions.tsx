@@ -1,4 +1,10 @@
 
+import { Users } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { InteractionsList } from "./interactions/InteractionsList";
+import { useState } from "react";
+import type { User } from "@/hooks/item/useItemInteractions";
+
 interface ItemCardActionsProps {
   isLiked: boolean;
   likesCount?: number;
@@ -6,6 +12,8 @@ interface ItemCardActionsProps {
   showInterest: boolean;
   interestsCount?: number;
   isOwner: boolean;
+  likers?: User[];
+  interestedUsers?: User[];
   onLike: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
@@ -18,10 +26,15 @@ export function ItemCardActions({
   showInterest,
   interestsCount = 0,
   isOwner,
+  likers = [],
+  interestedUsers = [],
   onLike,
   onCommentToggle,
   onShowInterest
 }: ItemCardActionsProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const hasInteractions = likesCount > 0 || interestsCount > 0;
+  
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button 
@@ -86,6 +99,29 @@ export function ItemCardActions({
             </span>
           )}
         </button>
+      )}
+      
+      {hasInteractions && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <button 
+              className="ml-auto flex items-center gap-2 px-3 py-2 rounded-md text-gray-600 bg-gray-100 hover:bg-gray-200"
+              aria-label="View interactions"
+            >
+              <Users className="h-5 w-5" />
+              <span className="text-sm">Interactions</span>
+            </button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Post Interactions</DialogTitle>
+            </DialogHeader>
+            <InteractionsList 
+              likers={likers} 
+              interested={interestedUsers} 
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
