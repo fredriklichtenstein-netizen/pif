@@ -40,21 +40,18 @@ export const useLikes = (id: string, userId?: string | null) => {
     fetchLikes();
   }, [id, userId]);
 
+  // Fixed query to properly fetch profiles data
   const fetchLikers = useCallback(async (): Promise<User[]> => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
     
     try {
+      // Use a direct join query instead of relying on foreign key relationships
       const { data, error } = await supabase
         .from('likes')
         .select(`
           user_id,
-          profiles:user_id (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          )
+          profiles:profiles!inner(id, first_name, last_name, avatar_url)
         `)
         .eq('item_id', numericId)
         .order('created_at', { ascending: false });
@@ -64,10 +61,17 @@ export const useLikes = (id: string, userId?: string | null) => {
         return [];
       }
       
+      if (!data || data.length === 0) {
+        return [];
+      }
+      
       return data.map(like => {
-        // Ensure profiles exists and is properly typed
-        const profile = like.profiles || {};
-        return extractUserFromProfile(profile, like.user_id);
+        const profile = like.profiles;
+        return {
+          id: profile.id,
+          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+          avatar: profile.avatar_url
+        };
       });
     } catch (error) {
       console.error('Error fetching likers:', error);

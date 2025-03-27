@@ -37,7 +37,7 @@ export function LikeButton({
 }: LikeButtonProps) {
   const [showDetailedPopover, setShowDetailedPopover] = useState(false);
   
-  const handleLikeClick = (e: React.MouseEvent) => {
+  const handleLikeClick = () => {
     if (disabled) return;
     onLikeToggle();
   };

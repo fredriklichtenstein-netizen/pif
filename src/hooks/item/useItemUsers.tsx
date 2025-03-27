@@ -13,18 +13,23 @@ export const useItemUsers = (comments: Comment[], fetchLikers: () => Promise<Use
   // Extract unique commenters from comments
   useEffect(() => {
     if (comments && comments.length > 0) {
-      const uniqueCommenters = Array.from(new Map(
-        comments.map(comment => [
-          comment.author.id,
-          {
+      // Create a Map to ensure unique commenters by ID
+      const uniqueCommentersMap = new Map();
+      
+      comments.forEach(comment => {
+        if (comment.author && comment.author.id) {
+          uniqueCommentersMap.set(comment.author.id, {
             id: comment.author.id,
             name: comment.author.name,
             avatar: comment.author.avatar
-          }
-        ])
-      ).values());
+          });
+        }
+      });
       
+      const uniqueCommenters = Array.from(uniqueCommentersMap.values());
       setCommenters(uniqueCommenters);
+    } else {
+      setCommenters([]);
     }
   }, [comments]);
   
@@ -32,8 +37,16 @@ export const useItemUsers = (comments: Comment[], fetchLikers: () => Promise<Use
   useEffect(() => {
     const getLikers = async () => {
       if (likesCount > 0) {
-        const fetchedLikers = await fetchLikers();
-        setLikers(fetchedLikers);
+        try {
+          const fetchedLikers = await fetchLikers();
+          console.log("Fetched likers:", fetchedLikers);
+          setLikers(fetchedLikers);
+        } catch (error) {
+          console.error("Error fetching likers in useItemUsers:", error);
+          setLikers([]);
+        }
+      } else {
+        setLikers([]);
       }
     };
     
