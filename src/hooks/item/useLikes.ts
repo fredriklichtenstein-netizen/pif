@@ -40,39 +40,42 @@ export const useLikes = (id: string, userId?: string | null) => {
     fetchLikes();
   }, [id, userId]);
 
-  // Fixed query to properly fetch profiles data
+  // Fixed query to correctly fetch profiles data
   const fetchLikers = useCallback(async (): Promise<User[]> => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
     
     try {
-      // Use a direct join query instead of relying on foreign key relationships
-      const { data, error } = await supabase
+      // First get the user_ids of people who liked the item
+      const { data: likesData, error: likesError } = await supabase
         .from('likes')
-        .select(`
-          user_id,
-          profiles:profiles!inner(id, first_name, last_name, avatar_url)
-        `)
+        .select('user_id')
         .eq('item_id', numericId)
         .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error('Error fetching likers:', error);
+      if (likesError || !likesData || likesData.length === 0) {
+        console.error('Error fetching likes data:', likesError);
         return [];
       }
       
-      if (!data || data.length === 0) {
+      // Then fetch the profiles for those user_ids
+      const userIds = likesData.map(like => like.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', userIds);
+        
+      if (profilesError || !profilesData) {
+        console.error('Error fetching profiles data:', profilesError);
         return [];
       }
       
-      return data.map(like => {
-        const profile = like.profiles;
-        return {
-          id: profile.id,
-          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
-          avatar: profile.avatar_url
-        };
-      });
+      // Map profile data to User objects
+      return profilesData.map(profile => ({
+        id: profile.id,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous',
+        avatar: profile.avatar_url
+      }));
     } catch (error) {
       console.error('Error fetching likers:', error);
       return [];
