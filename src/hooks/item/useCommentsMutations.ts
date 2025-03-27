@@ -1,0 +1,93 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { Comment } from "@/types/comment";
+import { useToast } from "../use-toast";
+import { useGlobalAuth } from "../useGlobalAuth";
+import { useAuthCheck } from "./utils/authCheck";
+import { formatCommentFromDB } from "./utils/commentFormatters";
+
+export const useCommentsMutations = (itemId: string) => {
+  const { toast } = useToast();
+  const { user } = useGlobalAuth();
+  const { checkAuth } = useAuthCheck();
+  
+  // Add a comment to an item
+  const addComment = async (content: string): Promise<Comment | null> => {
+    if (!itemId || !content.trim()) return null;
+    
+    // Check if user is authenticated
+    const isAuthenticated = await checkAuth("add a comment");
+    if (!isAuthenticated) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          item_id: parseInt(itemId),
+          user_id: user?.id,
+          content: content.trim()
+        })
+        .select(`
+          id, 
+          content, 
+          created_at, 
+          user_id,
+          profiles:user_id (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .single();
+      
+      if (error) throw error;
+      
+      if (!data) return null;
+      
+      return formatCommentFromDB(data, true);
+    } catch (error: any) {
+      console.error("Error adding comment:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+  
+  // Delete a comment
+  const deleteComment = async (commentId: string): Promise<boolean> => {
+    if (!commentId) return false;
+    
+    // Check if user is authenticated
+    const isAuthenticated = await checkAuth("delete a comment");
+    if (!isAuthenticated) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('comments')
+        .delete()
+        .eq('id', parseInt(commentId))
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error deleting comment:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  return {
+    addComment,
+    deleteComment
+  };
+};
