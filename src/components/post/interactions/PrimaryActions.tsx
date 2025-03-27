@@ -6,6 +6,7 @@ import type { PostAction } from "@/types/comment";
 interface PrimaryActionsProps {
   isLiked: boolean;
   showComments: boolean;
+  isOwner: boolean;
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onMessage: (e: React.MouseEvent) => void;
@@ -14,6 +15,7 @@ interface PrimaryActionsProps {
 export function PrimaryActions({
   isLiked,
   showComments,
+  isOwner,
   onLikeToggle,
   onCommentToggle,
   onMessage,
@@ -24,6 +26,7 @@ export function PrimaryActions({
       label: "Like",
       onClick: onLikeToggle,
       active: isLiked,
+      disabled: isOwner,
     },
     {
       icon: <MessageCircle size={20} />,

@@ -1,8 +1,22 @@
 
-import { ThumbsUp, MessageCircle, Share2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ThumbsUp, MessageCircle, Info } from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import { InteractionsList } from "./interactions/InteractionsList";
 import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card } from "@/components/ui/card";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface ItemCardActionsProps {
@@ -31,26 +45,39 @@ export function ItemCardActions({
   interestedUsers = [],
   onLike,
   onCommentToggle,
-  onShowInterest,
-  onShare
+  onShowInterest
 }: ItemCardActionsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const hasInteractions = likesCount > 0 || interestsCount > 0;
   
   return (
     <div className="w-full flex flex-col">
       {/* Counts row */}
-      {(likesCount > 0 || commentsCount > 0) && (
+      {(likesCount > 0 || commentsCount > 0 || interestsCount > 0) && (
         <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-2 border-b border-gray-200">
           {likesCount > 0 && (
-            <div className="flex items-center gap-1">
-              <div className="bg-primary w-5 h-5 rounded-full flex items-center justify-center">
-                <ThumbsUp className="h-3 w-3 text-white" />
-              </div>
-              <span>
-                {likesCount}
-              </span>
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="flex items-center gap-1 hover:underline">
+                  <div className="bg-primary w-5 h-5 rounded-full flex items-center justify-center">
+                    <ThumbsUp className="h-3 w-3 text-white" />
+                  </div>
+                  <span>{likesCount}</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="start">
+                <div className="max-h-[200px] overflow-y-auto space-y-2">
+                  {likers.map(user => (
+                    <div key={user.id} className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{user.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
           
           <div className="ml-auto flex gap-2">
@@ -63,21 +90,18 @@ export function ItemCardActions({
               </button>
             )}
             
-            {hasInteractions && (
+            {interestsCount > 0 && (
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <button className="hover:underline">
-                    View all
+                    {interestsCount} interested
                   </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Post Interactions</DialogTitle>
+                    <DialogTitle>People Interested</DialogTitle>
                   </DialogHeader>
-                  <InteractionsList 
-                    likers={likers} 
-                    interested={interestedUsers} 
-                  />
+                  <InteractionsList interested={interestedUsers} />
                 </DialogContent>
               </Dialog>
             )}
@@ -107,22 +131,16 @@ export function ItemCardActions({
         </button>
         
         <button 
-          onClick={onShare}
-          className="flex-1 flex items-center justify-center py-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+          onClick={onShowInterest}
+          className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
+            showInterest ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+          disabled={isOwner}
         >
-          <Share2 className="h-5 w-5 mr-2" />
-          <span className="font-medium">Share</span>
+          <Info className={`h-5 w-5 mr-2 ${showInterest ? 'fill-primary' : ''}`} />
+          <span className="font-medium">{showInterest ? 'Interested' : 'Interest'}</span>
         </button>
       </div>
-      
-      {!isOwner && showInterest && (
-        <button 
-          onClick={onShowInterest}
-          className="text-xs text-primary mt-1 hover:underline self-start"
-        >
-          I'm interested in this item
-        </button>
-      )}
     </div>
   );
 }

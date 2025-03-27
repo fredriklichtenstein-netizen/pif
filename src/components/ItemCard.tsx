@@ -112,7 +112,6 @@ export function ItemCard({
           title={title}
           description={description}
           measurements={measurements}
-          isMobile={isMobile}
           expanded={contentExpanded}
           onToggleExpand={toggleContentExpanded}
         />
