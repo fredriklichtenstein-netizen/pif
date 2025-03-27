@@ -1,25 +1,17 @@
 
 import { Heart } from "lucide-react";
 
-type User = {
-  id: string;
-  name: string;
-  avatar?: string;
-};
-
 interface LikeButtonProps {
   isLiked: boolean;
   onLikeToggle: () => void;
   likesCount?: number;
-  likers?: User[];
   disabled?: boolean;
 }
 
 export function LikeButton({ 
   isLiked, 
   onLikeToggle, 
-  likesCount = 0, 
-  likers = [],
+  likesCount = 0,
   disabled = false
 }: LikeButtonProps) {
   

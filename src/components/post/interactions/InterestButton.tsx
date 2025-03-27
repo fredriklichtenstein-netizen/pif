@@ -17,7 +17,7 @@ export function InterestButton({
         showInterest 
           ? 'bg-primary text-white' 
           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-      }`}
+      } cursor-pointer`}
       aria-label={showInterest ? "Remove interest" : "Show interest"}
     >
       {showInterest ? 'Intresserad' : 'Visa intresse'}

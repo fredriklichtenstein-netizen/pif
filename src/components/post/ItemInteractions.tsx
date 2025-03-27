@@ -25,6 +25,7 @@ interface ItemInteractionsProps {
   isOwner?: boolean;
   commentsCount?: number;
   likesCount?: number;
+  interestsCount?: number;
   likers?: User[];
   commenters?: User[];
   onLikeToggle: () => void;
@@ -46,6 +47,7 @@ export function ItemInteractions({
   isOwner = false,
   commentsCount = 0,
   likesCount = 0,
+  interestsCount = 0,
   likers = [],
   commenters = [],
   onLikeToggle,
@@ -64,7 +66,6 @@ export function ItemInteractions({
             isLiked={isLiked} 
             onLikeToggle={onLikeToggle} 
             likesCount={likesCount}
-            likers={likers}
             disabled={isOwner}
           />
           <CommentButton 

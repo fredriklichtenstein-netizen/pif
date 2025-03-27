@@ -1,16 +1,9 @@
 
 import { MessageCircle } from "lucide-react";
 
-type Commenter = {
-  id: string;
-  name: string;
-  avatar?: string;
-};
-
 interface CommentButtonProps {
   onCommentToggle: () => void;
   commentsCount?: number;
-  commenters?: Commenter[];
 }
 
 export function CommentButton({ 
