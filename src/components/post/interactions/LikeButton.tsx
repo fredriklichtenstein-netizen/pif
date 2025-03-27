@@ -1,5 +1,4 @@
 
-import { Heart } from "lucide-react";
 import { 
   Tooltip,
   TooltipContent,
@@ -49,6 +48,31 @@ export function LikeButton({
     setShowDetailedPopover(!showDetailedPopover);
   };
   
+  // Create tooltip content based on likers
+  const getTooltipContent = () => {
+    if (likesCount === 0) {
+      return isLiked ? "Unlike" : "Like";
+    }
+    
+    if (likers.length === 0) {
+      return `${likesCount} ${likesCount === 1 ? 'person' : 'people'} liked this`;
+    }
+    
+    if (likers.length === 1) {
+      return `${likers[0].name} liked this`;
+    }
+    
+    if (likers.length === 2) {
+      return `${likers[0].name} and ${likers[1].name} liked this`;
+    }
+    
+    if (likers.length === 3) {
+      return `${likers[0].name}, ${likers[1].name}, and ${likers[2].name} liked this`;
+    }
+    
+    return `${likers[0].name}, ${likers[1].name}, and ${likesCount - 2} others liked this`;
+  };
+  
   return (
     <TooltipProvider delayDuration={300}>
       <Popover open={showDetailedPopover} onOpenChange={setShowDetailedPopover}>
@@ -75,7 +99,7 @@ export function LikeButton({
           </TooltipTrigger>
           
           <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
-            <p>{isLiked ? "Unlike" : "Like"}</p>
+            <p>{getTooltipContent()}</p>
           </TooltipContent>
         </Tooltip>
         

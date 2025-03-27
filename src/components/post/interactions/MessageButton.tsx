@@ -27,7 +27,7 @@ export function MessageButton({ onClick, disabled = false }: MessageButtonProps)
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
-          <p>Message</p>
+          <p>Send a message</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

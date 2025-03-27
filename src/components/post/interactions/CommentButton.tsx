@@ -44,6 +44,31 @@ export function CommentButton({
     setShowDetailedPopover(!showDetailedPopover);
   };
   
+  // Create tooltip content based on commenters
+  const getTooltipContent = () => {
+    if (commentsCount === 0) {
+      return "Comment";
+    }
+    
+    if (commenters.length === 0) {
+      return `${commentsCount} ${commentsCount === 1 ? 'comment' : 'comments'}`;
+    }
+    
+    if (commenters.length === 1) {
+      return `${commenters[0].name} commented on this`;
+    }
+    
+    if (commenters.length === 2) {
+      return `${commenters[0].name} and ${commenters[1].name} commented on this`;
+    }
+    
+    if (commenters.length === 3) {
+      return `${commenters[0].name}, ${commenters[1].name}, and ${commenters[2].name} commented on this`;
+    }
+    
+    return `${commenters[0].name}, ${commenters[1].name}, and ${commentsCount - 2} others commented on this`;
+  };
+  
   return (
     <TooltipProvider delayDuration={300}>
       <Popover open={showDetailedPopover} onOpenChange={setShowDetailedPopover}>
@@ -59,7 +84,7 @@ export function CommentButton({
           </TooltipTrigger>
           
           <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
-            <p>Comment</p>
+            <p>{getTooltipContent()}</p>
           </TooltipContent>
         </Tooltip>
         

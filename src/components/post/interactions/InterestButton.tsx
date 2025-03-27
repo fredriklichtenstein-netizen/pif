@@ -17,6 +17,19 @@ export function InterestButton({
   onShowInterest,
   interestsCount = 0
 }: InterestButtonProps) {
+  // Create tooltip content based on interest status
+  const getTooltipContent = () => {
+    if (showInterest) {
+      return interestsCount > 1 
+        ? `You and ${interestsCount - 1} others are interested` 
+        : "You are interested";
+    } else {
+      return interestsCount > 0 
+        ? `${interestsCount} people are interested` 
+        : "Show interest";
+    }
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
       <Tooltip>
@@ -41,7 +54,7 @@ export function InterestButton({
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
-          <p>{showInterest ? 'Remove interest' : 'Show interest'}</p>
+          <p>{getTooltipContent()}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
