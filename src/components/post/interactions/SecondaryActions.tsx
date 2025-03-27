@@ -69,11 +69,16 @@ export function SecondaryActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 w-9 p-0 rounded-full bg-gray-100 hover:bg-gray-200"
+          >
             <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">More options</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-56 p-2">
           <ActionMenuItems
             isBookmarked={isBookmarked}
             isOwner={isOwner}

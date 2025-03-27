@@ -59,35 +59,36 @@ export function ItemInteractions({
   onReport,
 }: ItemInteractionsProps) {
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <LikeButton 
-            isLiked={isLiked} 
-            onLikeToggle={onLikeToggle} 
-            likesCount={likesCount}
-            disabled={isOwner}
-          />
-          <CommentButton 
-            onCommentToggle={onCommentToggle} 
-            commentsCount={commentsCount}
-          />
-          
-          {!isOwner && (
-            <ConversationHandler itemId={id} receiverId={postedBy.id}>
-              {({ handleClick, isLoading }) => (
-                <MessageButton onClick={handleClick} disabled={isLoading} />
-              )}
-            </ConversationHandler>
-          )}
-        </div>
-
+    <div className="flex flex-col space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <LikeButton 
+          isLiked={isLiked} 
+          onLikeToggle={onLikeToggle} 
+          likesCount={likesCount}
+          disabled={isOwner}
+        />
+        
+        <CommentButton 
+          onCommentToggle={onCommentToggle} 
+          commentsCount={commentsCount}
+        />
+        
         {!isOwner && (
-          <InterestButton 
-            showInterest={showInterest} 
-            onShowInterest={onShowInterest} 
-            interestsCount={interestsCount}
-          />
+          <ConversationHandler itemId={id} receiverId={postedBy.id}>
+            {({ handleClick, isLoading }) => (
+              <MessageButton onClick={handleClick} disabled={isLoading} />
+            )}
+          </ConversationHandler>
+        )}
+        
+        {!isOwner && (
+          <div className="ml-auto">
+            <InterestButton 
+              showInterest={showInterest} 
+              onShowInterest={onShowInterest} 
+              interestsCount={interestsCount}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -16,20 +16,15 @@ export function CommentButton({
   };
   
   return (
-    <div className="flex items-center">
-      <button 
-        onClick={handleCommentClick}
-        className="flex items-center text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
-        aria-label="Toggle comments"
-      >
-        <MessageCircle className="h-5 w-5" />
-      </button>
-      
-      {commentsCount > 0 && (
-        <span className="text-xs font-medium ml-1">
-          {commentsCount}
-        </span>
-      )}
-    </div>
+    <button 
+      onClick={handleCommentClick}
+      className="flex items-center gap-1.5 rounded-md px-2 py-1 text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+      aria-label="Toggle comments"
+    >
+      <MessageCircle className="h-4 w-4" />
+      <span className="text-xs font-medium">
+        {commentsCount > 0 ? `Comments (${commentsCount})` : 'Comment'}
+      </span>
+    </button>
   );
 }
