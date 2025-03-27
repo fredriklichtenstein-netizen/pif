@@ -70,7 +70,6 @@ export function ItemInteractions({
           <CommentButton 
             onCommentToggle={onCommentToggle} 
             commentsCount={commentsCount}
-            commenters={commenters} 
           />
           
           {!isOwner && (
@@ -83,7 +82,11 @@ export function ItemInteractions({
         </div>
 
         {!isOwner && (
-          <InterestButton showInterest={showInterest} onShowInterest={onShowInterest} />
+          <InterestButton 
+            showInterest={showInterest} 
+            onShowInterest={onShowInterest} 
+            interestsCount={interestsCount}
+          />
         )}
       </div>
     </div>
