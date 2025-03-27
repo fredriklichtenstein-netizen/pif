@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/popover";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { FollowButton } from "./FollowButton";
 
 type Commenter = {
   id: string;
@@ -90,9 +90,7 @@ export function CommentButton({
                       </Avatar>
                       <span className="font-medium">{commenter.name}</span>
                     </div>
-                    <Button variant="outline" size="sm" className="text-xs">
-                      Follow
-                    </Button>
+                    <FollowButton userId={commenter.id} />
                   </div>
                 ))}
               </div>

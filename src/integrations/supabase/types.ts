@@ -186,6 +186,27 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       interests: {
         Row: {
           created_at: string | null
@@ -492,6 +513,18 @@ export type Database = {
         }
         Returns: string
       }
+      get_follower_count: {
+        Args: {
+          user_id: string
+        }
+        Returns: number
+      }
+      get_following_count: {
+        Args: {
+          user_id: string
+        }
+        Returns: number
+      }
       get_item_interests_count: {
         Args: {
           item_id_param: number
@@ -523,6 +556,13 @@ export type Database = {
       is_conversation_participant: {
         Args: {
           conversation_id: string
+        }
+        Returns: boolean
+      }
+      is_following: {
+        Args: {
+          follower: string
+          following: string
         }
         Returns: boolean
       }

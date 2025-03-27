@@ -1,4 +1,5 @@
 
+import { Heart } from "lucide-react";
 import { 
   Tooltip,
   TooltipContent,
@@ -12,9 +13,9 @@ import {
 } from "@/components/ui/popover";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { FollowButton } from "./FollowButton";
 
-type Liker = {
+type User = {
   id: string;
   name: string;
   avatar?: string;
@@ -24,49 +25,42 @@ interface LikeButtonProps {
   isLiked: boolean;
   onLikeToggle: () => void;
   likesCount?: number;
-  likers?: Liker[];
+  likers?: User[];
   disabled?: boolean;
 }
 
 export function LikeButton({ 
   isLiked, 
   onLikeToggle, 
-  likesCount = 0,
+  likesCount = 0, 
   likers = [],
   disabled = false
 }: LikeButtonProps) {
   const [showDetailedPopover, setShowDetailedPopover] = useState(false);
   
   const handleLikeClick = () => {
-    if (disabled) return;
-    onLikeToggle();
+    if (!disabled) {
+      onLikeToggle();
+    }
   };
   
   const handleLikersClick = (e: React.MouseEvent) => {
-    if (disabled || likesCount === 0) return;
+    if (likesCount === 0) return;
     e.stopPropagation();
     setShowDetailedPopover(!showDetailedPopover);
   };
-
+  
   return (
     <div className="flex items-center">
       <button 
         onClick={handleLikeClick}
-        className={`flex items-center ${isLiked ? 'text-primary' : 'text-gray-500'} hover:text-gray-700 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-        aria-label={isLiked ? "Unlike" : "Like"}
+        className={`flex items-center ${
+          isLiked ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+        } transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         disabled={disabled}
+        aria-label={isLiked ? "Unlike" : "Like"}
       >
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill={isLiked ? "currentColor" : "none"}
-          stroke="currentColor" 
-          strokeWidth="2" 
-          className="h-5 w-5"
-        >
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
+        <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
       </button>
       
       {likesCount > 0 && (
@@ -83,24 +77,14 @@ export function LikeButton({
                     <span>{likesCount}</span>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-black/75 text-white border-none text-xs p-2">
-                    {likers.length === 0 ? (
-                      <p>{`${likesCount} ${likesCount === 1 ? 'person' : 'people'} liked this`}</p>
-                    ) : likers.length === 1 ? (
-                      <p>{`${likers[0].name} liked this`}</p>
-                    ) : likers.length === 2 ? (
-                      <p>{`${likers[0].name} and ${likers[1].name} liked this`}</p>
-                    ) : likers.length === 3 ? (
-                      <p>{`${likers[0].name}, ${likers[1].name}, and ${likers[2].name} liked this`}</p>
-                    ) : (
-                      <p>{`${likers[0].name}, ${likers[1].name}, and ${likesCount - 2} others liked this`}</p>
-                    )}
+                    <p>{`${likesCount} ${likesCount === 1 ? 'like' : 'likes'}`}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </button>
           </PopoverTrigger>
           
-          {likers.length > 0 && !disabled && (
+          {likers.length > 0 && (
             <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg" side="top">
               <div className="p-3 font-medium border-b">
                 <h3>Likes ({likesCount})</h3>
@@ -115,9 +99,7 @@ export function LikeButton({
                       </Avatar>
                       <span className="font-medium">{liker.name}</span>
                     </div>
-                    <Button variant="outline" size="sm" className="text-xs">
-                      Follow
-                    </Button>
+                    <FollowButton userId={liker.id} />
                   </div>
                 ))}
               </div>
