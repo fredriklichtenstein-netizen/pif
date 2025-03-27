@@ -3,15 +3,13 @@ import { useState, useEffect } from "react";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useComments } from "./item/useComments";
 import { useItemActions } from "./item/useItemActions";
+import { useItemUsers } from "./item/useItemUsers";
 import { Comment } from "@/types/comment";
-import type { User } from "./item/utils/userUtils";
 
 export const useItemCard = (itemId: string) => {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsCount, setCommentsCount] = useState(0);
-  const [likers, setLikers] = useState<User[]>([]);
-  const [commenters, setCommenters] = useState<User[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
 
   // Get individual interaction hooks
@@ -35,6 +33,9 @@ export const useItemCard = (itemId: string) => {
     fetchCommentsCount,
     fetchCommenters,
   } = useComments(itemId);
+
+  // Users who interacted with the item
+  const { likers, commenters } = useItemUsers(comments, fetchLikers, likesCount);
 
   // Toggle showing comments
   const handleCommentToggle = () => {
@@ -67,31 +68,7 @@ export const useItemCard = (itemId: string) => {
     };
     
     getCommentsCount();
-  }, [itemId]);
-  
-  // Fetch likers when component mounts or when like count changes
-  useEffect(() => {
-    const getLikers = async () => {
-      if (likesCount > 0) {
-        const users = await fetchLikers();
-        setLikers(users);
-      }
-    };
-    
-    getLikers();
-  }, [likesCount]);
-  
-  // Fetch commenters when component mounts or when comments count changes
-  useEffect(() => {
-    const getCommenters = async () => {
-      if (commentsCount > 0) {
-        const users = await fetchCommenters();
-        setCommenters(users);
-      }
-    };
-    
-    getCommenters();
-  }, [commentsCount]);
+  }, [itemId, fetchCommentsCount]);
 
   return {
     // States
