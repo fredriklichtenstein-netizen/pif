@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../use-toast";
-import { authCheck } from "./utils/authCheck";
+import { useAuthCheck } from "./utils/authCheck";
 
 export interface User {
   id: string;
@@ -16,6 +16,7 @@ export const useLikes = (itemId: string, userId?: string) => {
   const [likesCount, setLikesCount] = useState(0);
   const [likers, setLikers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const { checkAuth } = useAuthCheck();
 
   // Check if item is liked by current user and get likes count
   useEffect(() => {
@@ -51,8 +52,12 @@ export const useLikes = (itemId: string, userId?: string) => {
   }, [itemId, userId]);
 
   // Toggle like status
-  const handleLike = authCheck(async () => {
+  const handleLike = async () => {
     if (!itemId || loading) return;
+    
+    // Check if user is authenticated
+    const isAuthenticated = await checkAuth("like this item");
+    if (!isAuthenticated) return;
 
     setLoading(true);
     try {
@@ -90,7 +95,7 @@ export const useLikes = (itemId: string, userId?: string) => {
     } finally {
       setLoading(false);
     }
-  });
+  };
 
   // Fetch users who liked the item
   const fetchLikers = async (): Promise<User[]> => {

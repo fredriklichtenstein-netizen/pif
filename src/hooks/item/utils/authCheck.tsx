@@ -2,6 +2,7 @@
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Utility function to check if a user is authenticated before performing actions
@@ -11,7 +12,7 @@ export const useAuthCheck = () => {
   const navigate = useNavigate();
 
   const checkAuth = async (action: string) => {
-    const { data: { session } } = await import("@/integrations/supabase/client").then(({ supabase }) => supabase.auth.getSession());
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast({
         title: "Authentication required",

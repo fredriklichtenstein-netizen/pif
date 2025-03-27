@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../use-toast";
 import { Comment } from "@/types/comment";
 import { useGlobalAuth } from "../useGlobalAuth";
-import { authCheck } from "./utils/authCheck";
+import { useAuthCheck } from "./utils/authCheck";
 import { User } from "./useLikes";
 
 export const useComments = (itemId: string) => {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { checkAuth } = useAuthCheck();
   
   // Fetch comments for an item
   const fetchComments = async (): Promise<Comment[]> => {
@@ -39,13 +40,16 @@ export const useComments = (itemId: string) => {
       // Transform data to match Comment type
       return data.map(comment => ({
         id: comment.id.toString(),
-        content: comment.content,
-        createdAt: comment.created_at,
-        user: {
+        text: comment.content,
+        createdAt: new Date(comment.created_at),
+        author: {
           id: comment.profiles.id,
           name: `${comment.profiles.first_name || ''} ${comment.profiles.last_name || ''}`.trim() || 'User',
           avatar: comment.profiles.avatar_url
         },
+        isLiked: false,
+        likes: 0,
+        replies: [],
         isOwn: comment.user_id === user?.id
       }));
     } catch (error: any) {
@@ -60,8 +64,12 @@ export const useComments = (itemId: string) => {
   };
   
   // Add a comment to an item
-  const addComment = authCheck(async (content: string): Promise<Comment | null> => {
+  const addComment = async (content: string): Promise<Comment | null> => {
     if (!itemId || !content.trim()) return null;
+    
+    // Check if user is authenticated
+    const isAuthenticated = await checkAuth("add a comment");
+    if (!isAuthenticated) return null;
     
     try {
       const { data, error } = await supabase
@@ -81,13 +89,16 @@ export const useComments = (itemId: string) => {
       // Create a new comment object
       const newComment: Comment = {
         id: data.id.toString(),
-        content: content.trim(),
-        createdAt: data.created_at,
-        user: {
+        text: content.trim(),
+        createdAt: new Date(data.created_at),
+        author: {
           id: user!.id,
-          name: 'You', // This is a placeholder, should be replaced with actual user name
+          name: user?.id === user!.id ? 'You' : 'User', // This is a placeholder, should be replaced with actual user name
           avatar: null // This is a placeholder, should be replaced with actual user avatar
         },
+        isLiked: false,
+        likes: 0,
+        replies: [],
         isOwn: true
       };
       
@@ -101,11 +112,15 @@ export const useComments = (itemId: string) => {
       });
       return null;
     }
-  });
+  };
   
   // Delete a comment
-  const deleteComment = authCheck(async (commentId: string): Promise<boolean> => {
+  const deleteComment = async (commentId: string): Promise<boolean> => {
     if (!commentId) return false;
+    
+    // Check if user is authenticated
+    const isAuthenticated = await checkAuth("delete a comment");
+    if (!isAuthenticated) return false;
     
     try {
       const { error } = await supabase
@@ -126,7 +141,7 @@ export const useComments = (itemId: string) => {
       });
       return false;
     }
-  });
+  };
   
   // Get comments count
   const fetchCommentsCount = async (): Promise<number> => {
