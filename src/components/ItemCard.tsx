@@ -108,75 +108,31 @@ export function ItemCard({
       />
       
       <div className="p-3">
-        {isMobile && (
-          <div className="w-full">
-            <div className="flex justify-between items-center w-full mb-2">
-              <ItemCardActions
-                isLiked={isLiked}
-                likesCount={likesCount}
-                commentsCount={commentsCount}
-                showInterest={showInterest}
-                interestsCount={interestsCount}
-                isOwner={isOwner}
-                likers={likers}
-                interestedUsers={interestedUsers}
-                onLike={handleLike}
-                onCommentToggle={handleCommentToggle}
-                onShowInterest={handleShowInterest}
-              />
-              
-              <ItemCardContent
-                isMobile={isMobile}
-                expanded={contentExpanded}
-                onToggleExpand={toggleContentExpanded}
-              />
-            </div>
-            
-            {contentExpanded && (
-              <div id="expandable-content" className="w-full mt-2">
-                {description && (
-                  <p className="text-sm text-gray-600 w-full">{description}</p>
-                )}
-                
-                {Object.keys(measurements).length > 0 && (
-                  <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
-                    {Object.entries(measurements).map(([key, value]) => (
-                      <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
-                        {key}: {value}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <ItemCardContent
+          title={title}
+          description={description}
+          measurements={measurements}
+          isMobile={isMobile}
+          expanded={contentExpanded}
+          onToggleExpand={toggleContentExpanded}
+        />
         
-        {!isMobile && (
-          <>
-            <div className="flex justify-between items-center -mt-1 mb-2">
-              <ItemCardActions
-                isLiked={isLiked}
-                likesCount={likesCount}
-                commentsCount={commentsCount}
-                showInterest={showInterest}
-                interestsCount={interestsCount}
-                isOwner={isOwner}
-                likers={likers}
-                interestedUsers={interestedUsers}
-                onLike={handleLike}
-                onCommentToggle={handleCommentToggle}
-                onShowInterest={handleShowInterest}
-              />
-            </div>
-            
-            <ItemCardContent
-              description={description}
-              measurements={measurements}
-              isMobile={isMobile}
-            />
-          </>
-        )}
+        <div className="mt-1">
+          <ItemCardActions
+            isLiked={isLiked}
+            likesCount={likesCount}
+            commentsCount={commentsCount}
+            showInterest={showInterest}
+            interestsCount={interestsCount}
+            isOwner={isOwner}
+            likers={likers}
+            interestedUsers={interestedUsers}
+            onLike={handleLike}
+            onCommentToggle={handleCommentToggle}
+            onShowInterest={handleShowInterest}
+            onShare={handleShare}
+          />
+        </div>
         
         {showComments && (
           <CommentSection

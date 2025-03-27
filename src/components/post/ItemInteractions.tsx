@@ -1,14 +1,10 @@
 
 import { useState } from "react";
-import { LikeButton } from "./interactions/LikeButton";
-import { CommentButton } from "./interactions/CommentButton";
-import { MessageButton } from "./interactions/MessageButton";
-import { InterestButton } from "./interactions/InterestButton";
-import { ConversationHandler } from "./interactions/ConversationHandler";
-import { InteractionsList } from "./interactions/InteractionsList";
+import { ThumbsUp, MessageCircle, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { InteractionsList } from "./interactions/InteractionsList";
 import { Button } from "@/components/ui/button";
-import { Users } from "lucide-react";
+import { ConversationHandler } from "./interactions/ConversationHandler";
 
 type User = {
   id: string;
@@ -66,61 +62,85 @@ export function ItemInteractions({
   const hasInteractions = likesCount > 0 || interestsCount > 0;
   
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <LikeButton 
-          isLiked={isLiked} 
-          onLikeToggle={onLikeToggle} 
-          likesCount={likesCount}
-          disabled={isOwner}
-        />
-        
-        <CommentButton 
-          onCommentToggle={onCommentToggle} 
-          commentsCount={commentsCount}
-        />
-        
-        {!isOwner && (
-          <ConversationHandler itemId={id} receiverId={postedBy.id}>
-            {({ handleClick, isLoading }) => (
-              <MessageButton onClick={handleClick} disabled={isLoading} />
-            )}
-          </ConversationHandler>
-        )}
-        
-        {hasInteractions && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-auto flex items-center gap-2"
+    <div className="flex flex-col space-y-2">
+      {/* Counts row */}
+      {(likesCount > 0 || commentsCount > 0) && (
+        <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-2 border-b border-gray-200">
+          {likesCount > 0 && (
+            <div className="flex items-center gap-1">
+              <div className="bg-primary w-5 h-5 rounded-full flex items-center justify-center">
+                <ThumbsUp className="h-3 w-3 text-white" />
+              </div>
+              <span>
+                {likesCount} {likesCount === 1 ? 'like' : 'likes'}
+              </span>
+            </div>
+          )}
+          
+          <div className="ml-auto flex gap-2">
+            {commentsCount > 0 && (
+              <button 
+                onClick={onCommentToggle}
+                className="hover:underline"
               >
-                <Users className="h-4 w-4" />
-                <span>View Interactions</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Post Interactions</DialogTitle>
-              </DialogHeader>
-              <InteractionsList 
-                likers={likers} 
-                interested={likers.length > 0 || interestsCount > 0 ? likers : []} 
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+                {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Action buttons row */}
+      <div className="flex items-center justify-between border-b border-gray-200 py-1">
+        <button 
+          onClick={onLikeToggle}
+          className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
+            isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+          disabled={isOwner}
+        >
+          <ThumbsUp className={`h-5 w-5 mr-2 ${isLiked ? 'fill-primary' : ''}`} />
+          <span className="font-medium">Like</span>
+        </button>
+        
+        <button 
+          onClick={onCommentToggle}
+          className="flex-1 flex items-center justify-center py-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <MessageCircle className="h-5 w-5 mr-2" />
+          <span className="font-medium">Comment</span>
+        </button>
+        
+        <button 
+          onClick={onShare}
+          className="flex-1 flex items-center justify-center py-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <Share2 className="h-5 w-5 mr-2" />
+          <span className="font-medium">Share</span>
+        </button>
       </div>
       
-      {!isOwner && (
-        <div className="mt-2">
-          <InterestButton 
-            showInterest={showInterest} 
-            onShowInterest={onShowInterest} 
-            interestsCount={interestsCount}
-          />
-        </div>
+      {hasInteractions && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs text-gray-600 mt-1 hover:underline hover:bg-transparent hover:text-gray-800"
+            >
+              View all interactions
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Post Interactions</DialogTitle>
+            </DialogHeader>
+            <InteractionsList 
+              likers={likers} 
+              interested={likers.length > 0 || interestsCount > 0 ? likers : []} 
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

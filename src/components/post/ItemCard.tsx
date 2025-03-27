@@ -171,6 +171,14 @@ export function ItemCard({
             onReport={handleReport}
           />
         </div>
+        
+        {showComments && (
+          <CommentSection
+            itemId={id.toString()}
+            comments={comments}
+            setComments={setComments}
+          />
+        )}
       </div>
     </div>
   );

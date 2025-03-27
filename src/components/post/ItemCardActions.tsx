@@ -1,5 +1,5 @@
 
-import { Users } from "lucide-react";
+import { ThumbsUp, MessageCircle, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InteractionsList } from "./interactions/InteractionsList";
 import { useState } from "react";
@@ -17,6 +17,7 @@ interface ItemCardActionsProps {
   onLike: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
+  onShare?: () => void;
 }
 
 export function ItemCardActions({
@@ -30,98 +31,97 @@ export function ItemCardActions({
   interestedUsers = [],
   onLike,
   onCommentToggle,
-  onShowInterest
+  onShowInterest,
+  onShare
 }: ItemCardActionsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const hasInteractions = likesCount > 0 || interestsCount > 0;
   
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <button 
-        onClick={onLike}
-        className={`flex items-center space-x-2 px-3 py-2 rounded-md ${isLiked ? 'text-primary bg-primary/10' : 'text-gray-500 bg-gray-100'} ${isOwner ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-        aria-label={isLiked ? "Unlike" : "Like"}
-        disabled={isOwner}
-      >
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill={isLiked ? "currentColor" : "none"}
-          stroke="currentColor" 
-          strokeWidth="2" 
-          className="h-5 w-5"
-        >
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
-        <span className="text-sm font-medium">
-          {likesCount > 0 ? `${likesCount}` : 'Like'}
-        </span>
-      </button>
-      
-      <button 
-        onClick={onCommentToggle}
-        className="flex items-center space-x-2 px-3 py-2 rounded-md text-gray-500 bg-gray-100 hover:bg-gray-200"
-        aria-label="Toggle comments"
-      >
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          className="h-5 w-5"
-        >
-          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-        </svg>
-        <span className="text-sm font-medium">
-          {commentsCount > 0 ? `${commentsCount}` : 'Comment'}
-        </span>
-      </button>
-
-      {!isOwner && (
-        <button 
-          onClick={onShowInterest}
-          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium ${
-            showInterest 
-              ? 'bg-primary text-white' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-          aria-label={showInterest ? "Remove interest" : "Show interest"}
-        >
-          <span>{showInterest ? 'Interested' : 'Show interest'}</span>
-          {interestsCount > 0 && (
-            <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
-              showInterest ? 'bg-white text-primary' : 'bg-gray-200 text-gray-700'
-            }`}>
-              {interestsCount}
-            </span>
+    <div className="w-full flex flex-col">
+      {/* Counts row */}
+      {(likesCount > 0 || commentsCount > 0) && (
+        <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-2 border-b border-gray-200">
+          {likesCount > 0 && (
+            <div className="flex items-center gap-1">
+              <div className="bg-primary w-5 h-5 rounded-full flex items-center justify-center">
+                <ThumbsUp className="h-3 w-3 text-white" />
+              </div>
+              <span>
+                {likesCount}
+              </span>
+            </div>
           )}
-        </button>
+          
+          <div className="ml-auto flex gap-2">
+            {commentsCount > 0 && (
+              <button 
+                onClick={onCommentToggle}
+                className="hover:underline"
+              >
+                {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}
+              </button>
+            )}
+            
+            {hasInteractions && (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <button className="hover:underline">
+                    View all
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Post Interactions</DialogTitle>
+                  </DialogHeader>
+                  <InteractionsList 
+                    likers={likers} 
+                    interested={interestedUsers} 
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </div>
       )}
       
-      {hasInteractions && (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <button 
-              className="ml-auto flex items-center gap-2 px-3 py-2 rounded-md text-gray-600 bg-gray-100 hover:bg-gray-200"
-              aria-label="View interactions"
-            >
-              <Users className="h-5 w-5" />
-              <span className="text-sm">Interactions</span>
-            </button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Post Interactions</DialogTitle>
-            </DialogHeader>
-            <InteractionsList 
-              likers={likers} 
-              interested={interestedUsers} 
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Action buttons row */}
+      <div className="flex items-center justify-between border-b border-gray-200 py-1">
+        <button 
+          onClick={onLike}
+          className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
+            isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+          disabled={isOwner}
+        >
+          <ThumbsUp className={`h-5 w-5 mr-2 ${isLiked ? 'fill-primary' : ''}`} />
+          <span className="font-medium">Like</span>
+        </button>
+        
+        <button 
+          onClick={onCommentToggle}
+          className="flex-1 flex items-center justify-center py-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <MessageCircle className="h-5 w-5 mr-2" />
+          <span className="font-medium">Comment</span>
+        </button>
+        
+        <button 
+          onClick={onShare}
+          className="flex-1 flex items-center justify-center py-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <Share2 className="h-5 w-5 mr-2" />
+          <span className="font-medium">Share</span>
+        </button>
+      </div>
+      
+      {!isOwner && showInterest && (
+        <button 
+          onClick={onShowInterest}
+          className="text-xs text-primary mt-1 hover:underline self-start"
+        >
+          I'm interested in this item
+        </button>
       )}
     </div>
   );
