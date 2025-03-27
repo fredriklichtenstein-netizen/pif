@@ -1,21 +1,13 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useItemActions } from "./item/useItemActions";
 import { useComments } from "./item/useComments";
 import { useCommentData } from "./comments/useCommentData";
-import { Comment } from "@/types/comment";
-
-type User = {
-  id: string;
-  name: string;
-  avatar?: string;
-};
+import { useItemUsers } from "./item/useItemUsers";
 
 export const useItemCard = (id: string) => {
-  const [likers, setLikers] = useState<User[]>([]);
-  const [commenters, setCommenters] = useState<User[]>([]);
-  
+  // Core item interactions (likes, interests, bookmarks)
   const {
     isLiked,
     likesCount,
@@ -28,12 +20,14 @@ export const useItemCard = (id: string) => {
     fetchLikers,
   } = useItemInteractions(id);
 
+  // Item actions (message, share, report)
   const {
     handleMessage,
     handleShare,
     handleReport,
   } = useItemActions();
 
+  // Comments state and toggle
   const {
     showComments,
     comments: localComments,
@@ -41,10 +35,10 @@ export const useItemCard = (id: string) => {
     setComments,
   } = useComments();
 
-  // Fetch comments from the database
+  // Fetch comments from database
   const { comments: fetchedComments, isLoading: commentsLoading } = useCommentData(id);
   
-  // Update local comments state when fetched comments change
+  // Update local comments when fetched comments change
   useEffect(() => {
     if (fetchedComments && fetchedComments.length > 0) {
       console.log(`Setting ${fetchedComments.length} comments in useItemCard for item ${id}`);
@@ -52,37 +46,11 @@ export const useItemCard = (id: string) => {
     }
   }, [fetchedComments, setComments, id]);
   
-  // Extract unique commenters from comments
-  useEffect(() => {
-    if (localComments && localComments.length > 0) {
-      const uniqueCommenters = Array.from(new Map(
-        localComments.map(comment => [
-          comment.author.id,
-          {
-            id: comment.author.id,
-            name: comment.author.name,
-            avatar: comment.author.avatar
-          }
-        ])
-      ).values());
-      
-      setCommenters(uniqueCommenters);
-    }
-  }, [localComments]);
-  
-  // Fetch likers when the component mounts or likesCount changes
-  useEffect(() => {
-    const getLikers = async () => {
-      if (likesCount > 0) {
-        const fetchedLikers = await fetchLikers();
-        setLikers(fetchedLikers);
-      }
-    };
-    
-    getLikers();
-  }, [likesCount, fetchLikers, id]);
+  // Manage users who interacted with the item
+  const { likers, commenters } = useItemUsers(localComments, fetchLikers, likesCount);
 
   return {
+    // States
     isLiked,
     likesCount,
     showComments,
@@ -94,6 +62,8 @@ export const useItemCard = (id: string) => {
     isBookmarked,
     likers,
     commenters,
+    
+    // Actions
     handleShowInterest,
     handleLike,
     handleCommentToggle,
