@@ -1,3 +1,4 @@
+
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 interface ItemCardContentProps {
@@ -13,7 +14,7 @@ export function ItemCardContent({
   const hasContent = description || hasMeasurements;
   if (!hasContent) return null;
   return <Collapsible className="w-full mt-2">
-      <CollapsibleTrigger className="w-full flex items-center justify-center gap-1 text-sm text-gray-600 border-t border-gray-200 py-px">
+      <CollapsibleTrigger className="w-full flex items-center justify-center gap-1 text-sm text-gray-600 py-px">
         <span>Show details</span>
         <ChevronDown className="h-4 w-4" />
       </CollapsibleTrigger>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -105,8 +106,8 @@ export function ItemInteractions({
           </div>
         </div>}
       
-      {/* Action buttons row */}
-      <div className="flex items-center justify-between border-b border-gray-200 py-[5px]">
+      {/* Action buttons row - removed border-b border-gray-200 */}
+      <div className="flex items-center justify-between py-[5px]">
         {/* Hide Like button for own posts but maintain the layout */}
         {isOwner ? <div className="flex-1"></div> : <button onClick={onLikeToggle} className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'}`}>
             <ThumbsUp className={`h-5 w-5 mr-2 ${isLiked ? 'fill-primary' : ''}`} />

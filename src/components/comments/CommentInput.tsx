@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -41,7 +42,7 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment..." }: C
           onChange={(e) => setText(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
-          className="min-h-[60px] pr-10"
+          className="min-h-[50px] py-2 pr-10 resize-none"
         />
         <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
           <PopoverTrigger asChild>
@@ -49,7 +50,7 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment..." }: C
               className="absolute right-2 bottom-2 text-gray-400 hover:text-gray-600"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             >
-              <Smile size={20} />
+              <Smile size={18} />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
@@ -61,7 +62,13 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment..." }: C
           </PopoverContent>
         </Popover>
       </div>
-      <Button onClick={handleSubmit}>Post</Button>
+      <Button 
+        onClick={handleSubmit} 
+        size="sm" 
+        className="self-end whitespace-nowrap h-9"
+      >
+        Post
+      </Button>
     </div>
   );
 }
