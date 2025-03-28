@@ -10,12 +10,14 @@ interface AuthState {
   isLoading: boolean;
   initialized: boolean;
   error: Error | null;
+  networkError: boolean;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setProfileCompleted: (completed: boolean | null) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
   setError: (error: Error | null) => void;
+  setNetworkError: (hasError: boolean) => void;
   clearAuth: () => void;
 }
 
@@ -26,17 +28,20 @@ export const useGlobalAuth = create<AuthState>((set) => ({
   isLoading: true,
   initialized: false,
   error: null,
+  networkError: false,
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   setProfileCompleted: (completed) => set({ profileCompleted: completed }),
   setLoading: (loading) => set({ isLoading: loading }),
   setInitialized: (initialized) => set({ initialized }),
   setError: (error) => set({ error }),
+  setNetworkError: (hasError) => set({ networkError: hasError }),
   clearAuth: () => set({ 
     user: null, 
     session: null, 
     profileCompleted: null, 
-    error: null 
+    error: null,
+    networkError: false
   }),
 }));
 
@@ -48,12 +53,31 @@ export const initializeAuth = async () => {
     console.log('Initializing auth state...');
     auth.setLoading(true);
     auth.setError(null);
+    auth.setNetworkError(false);
+    
+    // Set a timeout to detect if the request is taking too long
+    const timeoutId = setTimeout(() => {
+      console.log('Auth initialization is taking longer than expected - possible network issues');
+      auth.setError(new Error('Connection issue. Please check your internet and try again.'));
+      auth.setNetworkError(true);
+      auth.setLoading(false);
+      auth.setInitialized(true);
+    }, 10000); // 10 seconds timeout
     
     // First get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
+    // Clear the timeout as we got a response
+    clearTimeout(timeoutId);
+    
     if (sessionError) {
       console.error('Error getting session:', sessionError);
+      
+      // Check if it's a network error
+      if (sessionError.message?.includes('Load failed') || sessionError.message?.includes('fetch failed')) {
+        auth.setNetworkError(true);
+      }
+      
       auth.setError(sessionError);
       auth.setLoading(false);
       auth.setInitialized(true);
@@ -67,11 +91,19 @@ export const initializeAuth = async () => {
       
       try {
         // Check if profile is completed
-        const { data: profile, error: profileError } = await supabase
+        const profilePromise = supabase
           .from('profiles')
           .select('onboarding_completed')
           .eq('id', session.user.id)
           .maybeSingle();
+          
+        // Set a timeout for profile fetch
+        const profileTimeoutId = setTimeout(() => {
+          console.log('Profile fetch is taking longer than expected');
+        }, 5000);
+        
+        const { data: profile, error: profileError } = await profilePromise;
+        clearTimeout(profileTimeoutId);
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
@@ -90,6 +122,13 @@ export const initializeAuth = async () => {
     }
   } catch (error) {
     console.error('Error initializing auth:', error);
+    
+    // Check if it's a network error
+    if (error instanceof Error && 
+        (error.message.includes('Load failed') || error.message.includes('fetch failed'))) {
+      auth.setNetworkError(true);
+    }
+    
     auth.setError(error instanceof Error ? error : new Error('Unknown error during auth initialization'));
   } finally {
     auth.setLoading(false);
@@ -135,4 +174,31 @@ export const initializeAuth = async () => {
   );
 
   return subscription;
+};
+
+// Add a helper to check network connection
+export const checkNetworkConnection = async (): Promise<boolean> => {
+  if (!navigator.onLine) {
+    return false;
+  }
+  
+  try {
+    // Try to make a minimal request to Supabase
+    const startTime = Date.now();
+    await supabase.auth.getSession();
+    const endTime = Date.now();
+    
+    console.log(`Network ping time: ${endTime - startTime}ms`);
+    
+    // If the request takes too long, consider it a network issue
+    if (endTime - startTime > 5000) {
+      console.warn('Network connection is very slow');
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Network connection check failed:', error);
+    return false;
+  }
 };

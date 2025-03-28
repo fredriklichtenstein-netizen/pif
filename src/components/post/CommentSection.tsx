@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CommentInput } from "../comments/CommentInput";
 import { CommentList } from "../comments/CommentList";
 import { useCommentData } from "@/hooks/comments/useCommentData";
@@ -25,6 +25,7 @@ export function CommentSection({
   error = null
 }: CommentSectionProps) {
   const { isLoading: dataLoading, currentUser } = useCommentData(itemId);
+  const [errorShown, setErrorShown] = useState(false);
   
   const {
     handleAddComment,
@@ -45,13 +46,17 @@ export function CommentSection({
     error 
   });
 
-  // Attempt to refresh comments if there's an error when component mounts
+  // Track when we've shown the error to prevent multiple error displays
   useEffect(() => {
-    if (error) {
-      console.log("Attempting to auto-refresh comments due to error");
-      refreshComments();
+    if (error && !errorShown) {
+      setErrorShown(true);
+      setTimeout(() => {
+        refreshComments();
+      }, 5000); // Auto-retry after 5 seconds
+    } else if (!error) {
+      setErrorShown(false);
     }
-  }, [error, refreshComments]);
+  }, [error, errorShown, refreshComments]);
 
   return (
     <div className="mt-4 space-y-4">
@@ -61,7 +66,7 @@ export function CommentSection({
         disabled={isLoading}
       />
       
-      {error && (
+      {error && !errorShown && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -71,9 +76,12 @@ export function CommentSection({
               variant="outline" 
               size="sm" 
               className="w-fit flex items-center gap-1"
-              onClick={() => refreshComments()}
+              onClick={() => {
+                refreshComments();
+                setErrorShown(true);
+              }}
             >
-              <RefreshCw className="h-3 w-3" /> Try again
+              <RefreshCw className="h-3 w-4" /> Try again
             </Button>
           </AlertDescription>
         </Alert>

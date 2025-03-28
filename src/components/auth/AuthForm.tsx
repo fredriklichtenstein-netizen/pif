@@ -34,6 +34,7 @@ export function AuthForm({
   const [submitting, setSubmitting] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
+  const [requestTimeout, setRequestTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
@@ -43,14 +44,29 @@ export function AuthForm({
     setFormError("");
     setSubmitError("");
     setSubmitting(false);
+    // Clear any existing timeouts
+    if (requestTimeout) {
+      clearTimeout(requestTimeout);
+      setRequestTimeout(null);
+    }
   }, [isSignUp]);
 
   // Update submit error when parent error changes
   useEffect(() => {
     if (error) {
       setSubmitError(error);
+      setSubmitting(false);
     }
   }, [error]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (requestTimeout) {
+        clearTimeout(requestTimeout);
+      }
+    };
+  }, [requestTimeout]);
 
   const validateForm = () => {
     if (!email) {
@@ -84,21 +100,34 @@ export function AuthForm({
       return;
     }
     
+    // Set a local timeout to detect if the request is taking too long
+    const timeout = setTimeout(() => {
+      console.log("Request is taking longer than expected");
+      setSubmitError("Request is taking longer than expected. Network may be slow.");
+      // Don't set submitting to false here to prevent multiple submissions
+    }, 5000);
+    
+    setRequestTimeout(timeout);
+    
     try {
       console.log("Attempting authentication...");
       const result = isSignUp
         ? await onSubmit(email, password, phone, countryCode)
         : await onSubmit(email, password);
       
+      clearTimeout(timeout);
+      setRequestTimeout(null);
       console.log("Authentication result:", result);
       
       if (result === false) {
         // Error is now handled by the parent component and passed via props
+        setSubmitting(false);
       }
     } catch (error: any) {
+      clearTimeout(timeout);
+      setRequestTimeout(null);
       console.error("Auth form submission error:", error);
       setSubmitError(error.message || "Authentication failed. Please try again.");
-    } finally {
       setSubmitting(false);
     }
   };
@@ -117,6 +146,9 @@ export function AuthForm({
 
   // Combined loading state - either from parent or local submitting state
   const isLoading = loading || submitting;
+  const buttonText = isLoading 
+    ? "Processing..." 
+    : (isSignUp ? "Create account" : "Sign in");
 
   return (
     <div className="max-w-md w-full space-y-8">
@@ -223,10 +255,10 @@ export function AuthForm({
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                {buttonText}
               </>
             ) : (
-              isSignUp ? "Create account" : "Sign in"
+              buttonText
             )}
           </Button>
         </div>

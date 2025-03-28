@@ -16,16 +16,19 @@ export function useSignIn() {
       setSigningIn(true);
       setAuthError(null);
       
-      // Clear any previous timeouts to prevent issues
+      // Set a timeout to detect if the sign-in is taking too long
       const timeoutId = setTimeout(() => {
-        console.log("Sign in is taking longer than expected...");
-      }, 5000);
+        console.log("Sign in is taking longer than expected - possible network issues");
+        setAuthError("Connection issue. Please check your internet and try again.");
+        setSigningIn(false);
+      }, 10000); // 10 seconds timeout
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      // Clear the timeout as we got a response
       clearTimeout(timeoutId);
       console.log("Sign in response:", { data: data ? "data received" : "no data", error });
 
@@ -44,9 +47,11 @@ export function useSignIn() {
           return false;
         }
         
-        // Set a specific error message for invalid credentials
+        // Better error message for invalid credentials
         if (error.message.includes("Invalid login credentials")) {
           setAuthError("Invalid login credentials. Please check your email and password.");
+        } else if (error.message.includes("Load failed")) {
+          setAuthError("Connection error. Please check your internet and try again.");
         } else {
           setAuthError(error.message);
         }
@@ -136,13 +141,27 @@ export function useSignIn() {
       setSigningIn(true);
       setAuthError(null);
       
+      // Set a timeout for reset password request too
+      const timeoutId = setTimeout(() => {
+        setAuthError("Request is taking longer than expected. Please try again.");
+        setSigningIn(false);
+      }, 10000);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/reset-password',
       });
       
+      clearTimeout(timeoutId);
+      
       if (error) {
         console.error("Password reset error:", error);
-        setAuthError(error.message);
+        
+        if (error.message.includes("Load failed")) {
+          setAuthError("Connection error. Please check your internet connection and try again.");
+        } else {
+          setAuthError(error.message);
+        }
+        
         toast({
           title: "Password reset failed",
           description: error.message,
@@ -160,6 +179,7 @@ export function useSignIn() {
       return true;
     } catch (error) {
       console.error("Unexpected error during password reset:", error);
+      
       setAuthError("An unexpected error occurred. Please try again.");
       toast({
         title: "Password reset failed",
