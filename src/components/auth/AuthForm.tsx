@@ -53,16 +53,21 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Auth form submitted", { email, password, isSignUp });
     setSubmitError("");
     
     if (!validateForm()) {
+      console.log("Form validation failed");
       return;
     }
     
     try {
+      console.log("Attempting authentication...");
       const result = isSignUp
         ? await onSubmit(email, password, phone, countryCode)
         : await onSubmit(email, password);
+      
+      console.log("Authentication result:", result);
       
       if (result === false) {
         setSubmitError("Authentication failed. Please check your details and try again.");
