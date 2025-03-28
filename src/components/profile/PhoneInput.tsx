@@ -13,6 +13,7 @@ interface PhoneInputProps {
   countryCode: string;
   onPhoneChange: (phone: string, countryCode: string) => void;
   required?: boolean;
+  disabled?: boolean; // Add the disabled prop
 }
 
 const countryCodes = [
@@ -22,7 +23,7 @@ const countryCodes = [
   { code: "+358", country: "Finland" },
 ];
 
-export function PhoneInput({ value, countryCode, onPhoneChange, required }: PhoneInputProps) {
+export function PhoneInput({ value, countryCode, onPhoneChange, required, disabled }: PhoneInputProps) {
   // Handle phone number input change
   const handlePhoneChange = (newPhone: string) => {
     // If the phone number starts with a leading zero, remove it
@@ -38,6 +39,7 @@ export function PhoneInput({ value, countryCode, onPhoneChange, required }: Phon
         value={countryCode}
         onValueChange={(code) => onPhoneChange(value, code)}
         required={required}
+        disabled={disabled}
       >
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="Country code" />
@@ -56,6 +58,7 @@ export function PhoneInput({ value, countryCode, onPhoneChange, required }: Phon
         onChange={(e) => handlePhoneChange(e.target.value)}
         placeholder="Phone number"
         required={required}
+        disabled={disabled}
         className="flex-1"
       />
     </div>
