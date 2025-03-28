@@ -10,6 +10,7 @@ import { ItemCardContent } from "./post/ItemCardContent";
 import { ItemCardActions } from "./post/ItemCardActions";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { Comment } from "@/types/comment";
+import { Skeleton } from "./ui/skeleton";
 
 interface ItemCardProps {
   id: string;
@@ -71,6 +72,8 @@ export function ItemCard({
     comments,
     commentsCount,
     commentsLoading,
+    commentsError,
+    interactionsLoading,
     showInterest,
     interestsCount,
     isBookmarked,
@@ -88,7 +91,7 @@ export function ItemCard({
     fetchItemComments
   } = useItemCard(id);
 
-  // Pre-fetch comments for better performance
+  // Pre-fetch comments data for better performance
   useEffect(() => {
     // Immediately fetch comments data to have it ready when user clicks
     console.log(`Pre-fetching comments for item ${id}`);
@@ -110,34 +113,48 @@ export function ItemCard({
       <ItemCardGallery images={allImages} title={title} category={category} />
       
       <div className="p-3 py-[5px]">
-        <ItemInteractions 
-          id={id} 
-          postedBy={postedBy} 
-          isLiked={isLiked} 
-          showComments={showComments} 
-          isBookmarked={isBookmarked} 
-          showInterest={showInterest} 
-          isOwner={isOwner} 
-          commentsCount={commentsCount} 
-          likesCount={likesCount} 
-          interestsCount={interestsCount} 
-          likers={likers} 
-          interestedUsers={interestedUsers} 
-          commenters={commenters} 
-          onLikeToggle={handleLike} 
-          onCommentToggle={handleCommentToggle} 
-          onShowInterest={handleShowInterest} 
-          onBookmarkToggle={handleBookmark} 
-          onMessage={handleMessage} 
-          onShare={handleShare} 
-          onReport={handleReport} 
-        />
+        {interactionsLoading ? (
+          // Loading state for interactions
+          <div className="py-3 space-y-2">
+            <Skeleton className="h-5 w-full max-w-[180px]" />
+            <div className="flex justify-between gap-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        ) : (
+          <ItemInteractions 
+            id={id} 
+            postedBy={postedBy} 
+            isLiked={isLiked} 
+            showComments={showComments} 
+            isBookmarked={isBookmarked} 
+            showInterest={showInterest} 
+            isOwner={isOwner} 
+            commentsCount={commentsCount} 
+            likesCount={likesCount} 
+            interestsCount={interestsCount} 
+            likers={likers} 
+            interestedUsers={interestedUsers} 
+            commenters={commenters} 
+            onLikeToggle={handleLike} 
+            onCommentToggle={handleCommentToggle} 
+            onShowInterest={handleShowInterest} 
+            onBookmarkToggle={handleBookmark} 
+            onMessage={handleMessage} 
+            onShare={handleShare} 
+            onReport={handleReport} 
+          />
+        )}
         
         {showComments && (
           <CommentSection 
             itemId={id} 
             comments={comments as Comment[]} 
-            setComments={(newComments: Comment[]) => setComments(newComments)} 
+            setComments={(newComments: Comment[]) => setComments(newComments)}
+            isLoading={commentsLoading}
+            error={commentsError} 
           />
         )}
         

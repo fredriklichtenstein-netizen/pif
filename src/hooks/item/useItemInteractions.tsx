@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { useGlobalAuth } from "../useGlobalAuth";
 import { useLikes } from "./useLikes";
 import { useInterests } from "./useInterests";
@@ -11,11 +12,18 @@ import type { User } from "./utils/userUtils";
 export const useItemInteractions = (id: string) => {
   const { user } = useGlobalAuth();
   const userId = user?.id;
+  const [loading, setLoading] = useState(true);
 
   // Individual interaction hooks
-  const { isLiked, likesCount, handleLike, fetchLikers } = useLikes(id, userId);
-  const { showInterest, interestsCount, handleShowInterest, fetchInterestedUsers } = useInterests(id, userId);
-  const { isBookmarked, handleBookmark } = useBookmarks(id, userId);
+  const { isLiked, likesCount, handleLike, fetchLikers, loading: likesLoading } = useLikes(id, userId);
+  const { showInterest, interestsCount, handleShowInterest, fetchInterestedUsers, loading: interestsLoading } = useInterests(id, userId);
+  const { isBookmarked, handleBookmark, loading: bookmarksLoading } = useBookmarks(id, userId);
+
+  // Combine loading states
+  useEffect(() => {
+    const isStillLoading = likesLoading || interestsLoading || bookmarksLoading;
+    setLoading(isStillLoading);
+  }, [likesLoading, interestsLoading, bookmarksLoading]);
 
   return {
     // States
@@ -24,6 +32,7 @@ export const useItemInteractions = (id: string) => {
     showInterest,
     interestsCount,
     isBookmarked,
+    loading,
     
     // Actions
     handleShowInterest,

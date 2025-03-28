@@ -9,6 +9,7 @@ import type { User } from "./utils/userUtils";
 export const useInterests = (id: string, userId?: string | null) => {
   const [showInterest, setShowInterest] = useState(false);
   const [interestsCount, setInterestsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
 
@@ -17,24 +18,31 @@ export const useInterests = (id: string, userId?: string | null) => {
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) return;
       
-      const { data: interestsData, error: interestsError } = await supabase.rpc(
-        'get_item_interests_count',
-        { item_id_param: numericId }
-      );
-      
-      if (!interestsError && interestsData !== null) {
-        setInterestsCount(interestsData);
-      }
-      
-      if (userId) {
-        const { data: hasInterest, error: interestError } = await supabase.rpc(
-          'has_user_shown_interest',
+      setLoading(true);
+      try {
+        const { data: interestsData, error: interestsError } = await supabase.rpc(
+          'get_item_interests_count',
           { item_id_param: numericId }
         );
         
-        if (!interestError && hasInterest !== null) {
-          setShowInterest(hasInterest);
+        if (!interestsError && interestsData !== null) {
+          setInterestsCount(interestsData);
         }
+        
+        if (userId) {
+          const { data: hasInterest, error: interestError } = await supabase.rpc(
+            'has_user_shown_interest',
+            { item_id_param: numericId }
+          );
+          
+          if (!interestError && hasInterest !== null) {
+            setShowInterest(hasInterest);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching interests:", error);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -47,6 +55,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
     
+    setLoading(true);
     try {
       if (showInterest) {
         const { error } = await supabase
@@ -88,6 +97,8 @@ export const useInterests = (id: string, userId?: string | null) => {
         description: "Failed to update your interest. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,6 +144,7 @@ export const useInterests = (id: string, userId?: string | null) => {
   return {
     showInterest,
     interestsCount,
+    loading,
     handleShowInterest,
     fetchInterestedUsers
   };

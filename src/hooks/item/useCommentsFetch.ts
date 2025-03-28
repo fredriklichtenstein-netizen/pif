@@ -5,15 +5,22 @@ import { useGlobalAuth } from "../useGlobalAuth";
 import { formatCommentFromDB } from "./utils/commentFormatters";
 import { useToast } from "../use-toast";
 import type { User } from "./utils/userUtils";
+import { useState } from "react";
 
 export const useCommentsFetch = (itemId: string) => {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchComments = async (): Promise<Comment[]> => {
     if (!itemId) return [];
     
+    setIsLoading(true);
+    setError(null);
+    
     try {
+      console.log(`Fetching comments for item ${itemId}`);
       const { data, error } = await supabase
         .from('comments')
         .select(`
@@ -41,12 +48,15 @@ export const useCommentsFetch = (itemId: string) => {
       );
     } catch (error: any) {
       console.error("Error fetching comments:", error);
+      setError(error);
       toast({
         title: "Error",
         description: "Failed to load comments",
         variant: "destructive",
       });
       return [];
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -56,14 +66,13 @@ export const useCommentsFetch = (itemId: string) => {
     
     try {
       const { data, error } = await supabase
-        .from('item_interactions')
-        .select('comments_count')
-        .eq('item_id', parseInt(itemId))
-        .single();
+        .from('comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('item_id', parseInt(itemId));
       
       if (error) throw error;
       
-      return data?.comments_count || 0;
+      return data?.length || 0;
     } catch (error) {
       console.error("Error fetching comments count:", error);
       return 0;
@@ -111,6 +120,8 @@ export const useCommentsFetch = (itemId: string) => {
   return {
     fetchComments,
     fetchCommentsCount,
-    fetchCommenters
+    fetchCommenters,
+    isLoading,
+    error
   };
 };

@@ -15,13 +15,14 @@ export const useLikes = (itemId: string, userId?: string) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [likers, setLikers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { checkAuth } = useAuthCheck();
 
   // Check if item is liked by current user and get likes count
   useEffect(() => {
     const checkLikeStatus = async () => {
       if (!itemId) return;
+      setLoading(true);
 
       try {
         // Get likes count
@@ -45,6 +46,8 @@ export const useLikes = (itemId: string, userId?: string) => {
         }
       } catch (error) {
         console.error("Error checking like status:", error);
+      } finally {
+        setLoading(false);
       }
     };
 

@@ -6,23 +6,34 @@ import { useAuthCheck } from "./utils/authCheck";
 
 export const useBookmarks = (id: string, userId?: string | null) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
 
   useEffect(() => {
     const fetchBookmarks = async () => {
       const numericId = parseInt(id, 10);
-      if (isNaN(numericId) || !userId) return;
+      if (isNaN(numericId) || !userId) {
+        setLoading(false);
+        return;
+      }
       
-      const { data: bookmark, error: bookmarkError } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('item_id', numericId)
-        .maybeSingle();
-        
-      if (!bookmarkError) {
-        setIsBookmarked(!!bookmark);
+      setLoading(true);
+      try {
+        const { data: bookmark, error: bookmarkError } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('item_id', numericId)
+          .maybeSingle();
+          
+        if (!bookmarkError) {
+          setIsBookmarked(!!bookmark);
+        }
+      } catch (error) {
+        console.error("Error fetching bookmark status:", error);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -35,6 +46,7 @@ export const useBookmarks = (id: string, userId?: string | null) => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
     
+    setLoading(true);
     try {
       if (isBookmarked) {
         const { error } = await supabase
@@ -74,11 +86,14 @@ export const useBookmarks = (id: string, userId?: string | null) => {
         description: "Failed to update your bookmarks. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
     isBookmarked,
+    loading,
     handleBookmark,
   };
 };

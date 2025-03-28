@@ -11,7 +11,9 @@ export const useItemCard = (itemId: string) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsCount, setCommentsCount] = useState(0);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState<Error | null>(null);
   const [commentsFetched, setCommentsFetched] = useState(false);
+  const [interactionsLoading, setInteractionsLoading] = useState(true);
 
   // Get individual interaction hooks
   const {
@@ -25,6 +27,7 @@ export const useItemCard = (itemId: string) => {
     handleBookmark,
     fetchLikers,
     fetchInterestedUsers,
+    loading: interactionsHookLoading
   } = useItemInteractions(itemId);
 
   const { handleMessage, handleShare, handleReport } = useItemActions();
@@ -34,7 +37,20 @@ export const useItemCard = (itemId: string) => {
     fetchComments,
     fetchCommentsCount,
     fetchCommenters,
+    isLoading: commentsHookLoading,
+    error: commentsHookError
   } = useComments(itemId);
+
+  // Update loading and error states from hooks
+  useEffect(() => {
+    setCommentsLoading(commentsHookLoading);
+    if (commentsHookError) setCommentsError(commentsHookError);
+  }, [commentsHookLoading, commentsHookError]);
+
+  // Update interactions loading state
+  useEffect(() => {
+    setInteractionsLoading(interactionsHookLoading);
+  }, [interactionsHookLoading]);
 
   // Users who interacted with the item
   const { likers, commenters, interestedUsers } = useItemUsers(
@@ -45,36 +61,7 @@ export const useItemCard = (itemId: string) => {
     interestsCount
   );
 
-  // Fetch comments for the item - memoize with useCallback to prevent infinite loops
-  const fetchItemComments = useCallback(async () => {
-    if (commentsFetched) return;
-    
-    console.log(`Fetching comments for item ${itemId}`);
-    setCommentsLoading(true);
-    try {
-      const fetchedComments = await fetchComments();
-      console.log(`Fetched ${fetchedComments.length} comments for item ${itemId}`);
-      setComments(fetchedComments);
-      setCommentsFetched(true);
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-    } finally {
-      setCommentsLoading(false);
-    }
-  }, [itemId, fetchComments, commentsFetched]);
-
-  // Toggle showing comments
-  const handleCommentToggle = useCallback(() => {
-    console.log(`Toggling comments for item ${itemId}`);
-    setShowComments(!showComments);
-    
-    // Make sure we have comments when opening the section
-    if (!showComments && !commentsFetched) {
-      fetchItemComments();
-    }
-  }, [showComments, commentsFetched, fetchItemComments, itemId]);
-
-  // Fetch comments count
+  // Fetch comments count more efficiently
   useEffect(() => {
     const getCommentsCount = async () => {
       try {
@@ -87,7 +74,44 @@ export const useItemCard = (itemId: string) => {
     };
     
     getCommentsCount();
-  }, [itemId, fetchCommentsCount]);
+  }, [itemId, fetchCommentsCount, comments.length]);  // Add comments.length to dependencies
+
+  // Fetch comments for the item - memoize with useCallback to prevent infinite loops
+  const fetchItemComments = useCallback(async () => {
+    if (commentsFetched && !commentsError) return;
+    
+    console.log(`Fetching comments for item ${itemId}`);
+    setCommentsLoading(true);
+    try {
+      const fetchedComments = await fetchComments();
+      console.log(`Fetched ${fetchedComments.length} comments for item ${itemId}`);
+      setComments(fetchedComments);
+      setCommentsFetched(true);
+      setCommentsError(null);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      setCommentsError(error instanceof Error ? error : new Error('Unknown error fetching comments'));
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [itemId, fetchComments, commentsFetched, commentsError]);
+
+  // Toggle showing comments
+  const handleCommentToggle = useCallback(() => {
+    console.log(`Toggling comments for item ${itemId}`);
+    setShowComments(!showComments);
+    
+    // Make sure we have comments when opening the section
+    if (!showComments) {
+      fetchItemComments();
+    }
+  }, [showComments, fetchItemComments, itemId]);
+
+  // Allow forcing a refresh of comments (for error recovery)
+  const refreshComments = useCallback(() => {
+    setCommentsFetched(false);
+    fetchItemComments();
+  }, [fetchItemComments]);
 
   return {
     // States
@@ -97,6 +121,8 @@ export const useItemCard = (itemId: string) => {
     comments,
     commentsCount,
     commentsLoading,
+    commentsError,
+    interactionsLoading,
     showInterest,
     interestsCount,
     isBookmarked,
@@ -114,5 +140,6 @@ export const useItemCard = (itemId: string) => {
     handleBookmark,
     setComments,
     fetchItemComments,
+    refreshComments,
   };
 };

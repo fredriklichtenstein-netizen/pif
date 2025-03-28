@@ -1,19 +1,41 @@
 
+import { useState } from "react";
 import { useCommentsFetch } from "./useCommentsFetch";
 import { useCommentsMutations } from "./useCommentsMutations";
 import type { User } from "./utils/userUtils";
 import type { Comment } from "@/types/comment";
 
 export const useComments = (itemId: string) => {
-  const { fetchComments, fetchCommentsCount, fetchCommenters } = useCommentsFetch(itemId);
-  const { addComment, deleteComment } = useCommentsMutations(itemId);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const { 
+    fetchComments, 
+    fetchCommentsCount, 
+    fetchCommenters,
+    isLoading: isFetchLoading,
+    error: fetchError
+  } = useCommentsFetch(itemId);
+  
+  const { 
+    addComment, 
+    deleteComment 
+  } = useCommentsMutations(itemId);
+  
+  // Update loading and error states based on fetchComments states
+  useState(() => {
+    setIsLoading(isFetchLoading);
+    if (fetchError) setError(fetchError);
+  });
   
   return {
     fetchComments,
     addComment,
     deleteComment,
     fetchCommentsCount,
-    fetchCommenters
+    fetchCommenters,
+    isLoading,
+    error
   };
 };
 
