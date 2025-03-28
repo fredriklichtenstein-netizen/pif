@@ -7,6 +7,7 @@ export const useProfileData = () => {
     formData,
     initialFormData,
     avatarUrl,
+    error,
     setFormData,
     setInitialFormData,
     fetchProfile
@@ -17,6 +18,7 @@ export const useProfileData = () => {
     formData,
     initialFormData,
     avatarUrl,
+    error,
     setFormData,
     setInitialFormData,
     fetchProfile

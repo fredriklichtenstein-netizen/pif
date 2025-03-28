@@ -13,6 +13,7 @@ export const useProfileManagement = () => {
     formData,
     initialFormData,
     avatarUrl,
+    error,
     setFormData,
     setInitialFormData
   } = useProfileData();
@@ -36,6 +37,7 @@ export const useProfileManagement = () => {
     formData,
     initialFormData,
     avatarUrl,
+    error,
     setFormData,
     setInitialFormData,
     setAvatar,
