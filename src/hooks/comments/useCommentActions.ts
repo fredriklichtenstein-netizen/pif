@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from "uuid";
 
 interface CommentUser {
   id?: string;
@@ -89,11 +88,11 @@ export const useCommentActions = (
   // Delete a comment
   const handleDeleteComment = async (commentId: string) => {
     try {
-      // Call the Supabase API
+      // Call the Supabase API - convert string ID to number for Supabase
       const { error } = await supabase
         .from('comments')
         .delete()
-        .eq('id', commentId);
+        .eq('id', parseInt(commentId));
         
       if (error) throw error;
       
@@ -115,11 +114,11 @@ export const useCommentActions = (
     if (!newText.trim()) return;
     
     try {
-      // Call the Supabase API
+      // Call the Supabase API - convert string ID to number for Supabase
       const { error } = await supabase
         .from('comments')
         .update({ content: newText })
-        .eq('id', commentId);
+        .eq('id', parseInt(commentId));
         
       if (error) throw error;
       
@@ -149,8 +148,11 @@ export const useCommentActions = (
     // Find the parent comment and add the reply
     const updatedComments = comments.map(comment => {
       if (comment.id === commentId) {
+        // Generate a unique ID for the comment since we're not using uuid
+        const newId = Date.now().toString();
+        
         const newReply: Comment = {
-          id: uuidv4(),
+          id: newId,
           text,
           author: {
             id: currentUser.id,

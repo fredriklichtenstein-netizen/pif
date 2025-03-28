@@ -10,14 +10,15 @@ import Picker from '@emoji-mart/react';
 interface CommentInputProps {
   onSubmit: (text: string) => void;
   placeholder?: string;
+  disabled?: boolean; // Add the missing disabled prop
 }
 
-export function CommentInput({ onSubmit, placeholder = "Write a comment..." }: CommentInputProps) {
+export function CommentInput({ onSubmit, placeholder = "Write a comment...", disabled = false }: CommentInputProps) {
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleSubmit = () => {
-    if (!text.trim()) return;
+    if (!text.trim() || disabled) return;
     onSubmit(text);
     setText("");
   };
@@ -43,12 +44,14 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment..." }: C
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
           className="min-h-[50px] py-2 pr-10 resize-none"
+          disabled={disabled}
         />
-        <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+        <Popover open={showEmojiPicker && !disabled} onOpenChange={setShowEmojiPicker}>
           <PopoverTrigger asChild>
             <button 
               className="absolute right-2 bottom-2 text-gray-400 hover:text-gray-600"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              disabled={disabled}
             >
               <Smile size={18} />
             </button>
@@ -66,6 +69,7 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment..." }: C
         onClick={handleSubmit} 
         size="sm" 
         className="self-end whitespace-nowrap h-9"
+        disabled={disabled}
       >
         Post
       </Button>
