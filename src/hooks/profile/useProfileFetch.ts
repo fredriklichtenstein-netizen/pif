@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileFormData } from "./types";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export const useProfileFetch = () => {
   const { toast } = useToast();
+  const { user, isLoading: authLoading } = useGlobalAuth();
   const [loading, setLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -17,24 +19,37 @@ export const useProfileFetch = () => {
     countryCode: "+46",
   });
   const [initialFormData, setInitialFormData] = useState({ ...formData });
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchProfile = async () => {
-    setLoading(true);
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!user) throw new Error("No user found");
+    // Don't attempt to fetch if auth is still loading or user is not authenticated
+    if (authLoading || !user) {
+      if (!authLoading && !user) {
+        setError(new Error("You must be signed in to view your profile"));
+      }
+      return;
+    }
 
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log("Fetching profile for user:", user.id);
+      
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        throw profileError;
+      }
 
       if (profile) {
+        console.log("Profile data retrieved:", profile);
+        
         // Properly parse date of birth if it exists
         let dateOfBirth: Date | undefined = undefined;
         if (profile.date_of_birth) {
@@ -61,9 +76,10 @@ export const useProfileFetch = () => {
       }
     } catch (error: any) {
       console.error("Error fetching profile:", error);
+      setError(error);
       toast({
         title: "Error",
-        description: "Failed to load profile",
+        description: "Failed to load profile: " + (error.message || "Unknown error"),
         variant: "destructive",
       });
     } finally {
@@ -71,16 +87,17 @@ export const useProfileFetch = () => {
     }
   };
 
-  // Fetch profile on mount
+  // Fetch profile on mount or when user changes
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [user, authLoading]);
 
   return {
     loading,
     formData,
     initialFormData,
     avatarUrl,
+    error,
     setFormData,
     setInitialFormData,
     fetchProfile
