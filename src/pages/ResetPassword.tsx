@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,15 +15,57 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [tokenVerified, setTokenVerified] = useState<boolean | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
+  // Check if we have the access token in the URL
   useEffect(() => {
-    // Check if we have the access token in the URL (from email link)
-    const hash = window.location.hash;
-    if (!hash || !hash.includes("access_token")) {
-      setError("Invalid or expired password reset link. Please request a new one.");
-    }
+    const checkToken = async () => {
+      const hash = window.location.hash;
+      
+      if (!hash || !hash.includes("access_token")) {
+        console.error("Invalid or missing token in URL:", window.location.href);
+        setTokenVerified(false);
+        setError("Invalid or expired password reset link. Please request a new one.");
+        return;
+      }
+      
+      try {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        
+        if (!accessToken) {
+          throw new Error("No access token found in URL");
+        }
+        
+        // Verify the token by trying to set the session
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: hashParams.get('refresh_token') || '',
+        });
+        
+        if (error) {
+          console.error("Error verifying token:", error);
+          throw error;
+        }
+        
+        if (!data.session) {
+          throw new Error("No session returned when verifying token");
+        }
+        
+        console.log("Token verified successfully");
+        setTokenVerified(true);
+        
+      } catch (err: any) {
+        console.error("Token verification failed:", err);
+        setTokenVerified(false);
+        setError(err.message || "Invalid or expired password reset link. Please request a new one.");
+      }
+    };
+    
+    checkToken();
   }, []);
 
   const validateForm = () => {
@@ -76,17 +118,33 @@ export default function ResetPassword() {
     }
   };
 
-  if (error && !loading && !success) {
+  // Loading state while token verification is in progress
+  if (tokenVerified === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+          </div>
+          <h2 className="text-2xl font-bold">Verifying your reset link</h2>
+          <p className="text-gray-600">Please wait while we verify your password reset link.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state for invalid or expired token
+  if (tokenVerified === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTitle>Link expired or invalid</AlertTitle>
+            <AlertDescription>{error || "Your password reset link is invalid or has expired. Please request a new one."}</AlertDescription>
           </Alert>
           <div className="flex justify-center">
-            <Button onClick={() => navigate("/auth")}>
+            <Button onClick={() => navigate("/auth")} className="bg-green-500 hover:bg-green-600">
               Back to Login
             </Button>
           </div>
@@ -106,7 +164,7 @@ export default function ResetPassword() {
           <p className="text-gray-600">
             Your password has been updated. You will be redirected to the login page shortly.
           </p>
-          <Button onClick={() => navigate("/auth")}>
+          <Button onClick={() => navigate("/auth")} className="bg-green-500 hover:bg-green-600">
             Go to Login
           </Button>
         </div>

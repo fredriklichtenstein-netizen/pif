@@ -147,8 +147,12 @@ export function useSignIn() {
         setSigningIn(false);
       }, 10000);
       
+      // Use absolute URL for reset password to ensure correct redirect
+      const resetRedirectUrl = new URL("/reset-password", window.location.origin).toString();
+      console.log("Using reset redirect URL:", resetRedirectUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password',
+        redirectTo: resetRedirectUrl,
       });
       
       clearTimeout(timeoutId);
@@ -173,7 +177,7 @@ export function useSignIn() {
       
       toast({
         title: "Password reset email sent",
-        description: "Check your email for a link to reset your password.",
+        description: "Check your email for a link to reset your password. The link is valid for 10 minutes.",
       });
       setSigningIn(false);
       return true;
