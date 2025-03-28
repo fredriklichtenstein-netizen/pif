@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PhoneInput } from "@/components/profile/PhoneInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
+import { FormFields } from "./FormFields";
+import { validateAuthForm } from "./FormValidation";
+import { AuthButtonFooter } from "./AuthButtonFooter";
 
 interface AuthFormProps {
   isSignUp: boolean;
@@ -68,25 +68,7 @@ export function AuthForm({
     };
   }, [requestTimeout]);
 
-  const validateForm = () => {
-    if (!email) {
-      setFormError("Email is required");
-      return false;
-    }
-    
-    if (!password) {
-      setFormError("Password is required");
-      return false;
-    }
-    
-    if (password.length < 6) {
-      setFormError("Password must be at least 6 characters");
-      return false;
-    }
-    
-    setFormError("");
-    return true;
-  };
+  const clearFormError = () => setFormError("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,8 +76,10 @@ export function AuthForm({
     setSubmitError("");
     setSubmitting(true);
     
-    if (!validateForm()) {
+    const validation = validateAuthForm(email, password);
+    if (!validation.isValid) {
       console.log("Form validation failed");
+      setFormError(validation.error);
       setSubmitting(false);
       return;
     }
@@ -146,9 +130,6 @@ export function AuthForm({
 
   // Combined loading state - either from parent or local submitting state
   const isLoading = loading || submitting;
-  const buttonText = isLoading 
-    ? "Processing..." 
-    : (isSignUp ? "Create account" : "Sign in");
 
   return (
     <div className="max-w-md w-full space-y-8">
@@ -174,63 +155,22 @@ export function AuthForm({
       )}
       
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-md shadow-sm space-y-4">
-          <div>
-            <Label htmlFor="email">Email address</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setFormError("");
-              }}
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-              placeholder="Enter your email"
-              disabled={isLoading}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              required
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setFormError("");
-              }}
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-              placeholder={isSignUp ? "Create a password (min 6 characters)" : "Enter your password"}
-              minLength={6}
-              disabled={isLoading}
-            />
-          </div>
-          
-          {isSignUp && (
-            <div>
-              <Label htmlFor="phone">Phone number (optional)</Label>
-              <PhoneInput
-                value={phone}
-                countryCode={countryCode}
-                onPhoneChange={(newPhone, newCountryCode) => {
-                  setPhone(newPhone);
-                  setCountryCode(newCountryCode);
-                  setFormError("");
-                }}
-                required={false}
-                disabled={isLoading}
-              />
-            </div>
-          )}
-        </div>
+        <FormFields 
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          phone={phone}
+          countryCode={countryCode}
+          onPhoneChange={(newPhone, newCountryCode) => {
+            setPhone(newPhone);
+            setCountryCode(newCountryCode);
+            setFormError("");
+          }}
+          isSignUp={isSignUp}
+          disabled={isLoading}
+          clearFormError={clearFormError}
+        />
 
         {!isSignUp && onPasswordReset && (
           <div className="flex justify-end">
@@ -246,37 +186,13 @@ export function AuthForm({
           </div>
         )}
 
-        <div>
-          <Button
-            type="submit"
-            className="w-full flex justify-center py-2 px-4 bg-green-500 hover:bg-green-600"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {buttonText}
-              </>
-            ) : (
-              buttonText
-            )}
-          </Button>
-        </div>
-      </form>
-
-      <div className="text-center">
-        <Button
-          type="button"
-          variant="link"
-          onClick={onToggleMode}
-          className="text-green-600 hover:text-green-700"
+        <AuthButtonFooter 
+          isSignUp={isSignUp}
+          isLoading={isLoading}
+          onToggleMode={onToggleMode}
           disabled={isLoading}
-        >
-          {isSignUp
-            ? "Already have an account? Sign in"
-            : "Need an account? Sign up"}
-        </Button>
-      </div>
+        />
+      </form>
 
       {onPasswordReset && (
         <ForgotPasswordDialog
