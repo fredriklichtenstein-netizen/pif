@@ -45,6 +45,14 @@ export function CommentSection({
     error 
   });
 
+  // Attempt to refresh comments if there's an error when component mounts
+  useEffect(() => {
+    if (error) {
+      console.log("Attempting to auto-refresh comments due to error");
+      refreshComments();
+    }
+  }, [error, refreshComments]);
+
   return (
     <div className="mt-4 space-y-4">
       <CommentInput 

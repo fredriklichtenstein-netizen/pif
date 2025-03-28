@@ -1,28 +1,35 @@
 
 import { Comment } from "@/types/comment";
 
-/**
- * Formats raw comment data from Supabase into the Comment type
- */
-export const formatCommentFromDB = (
-  comment: any,
-  isCurrentUser: boolean = false
-): Comment => {
-  const profile = comment.profiles || {};
-  const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
+interface RawComment {
+  id: number;
+  content: string;
+  created_at: string;
+  user_id: string;
+  profiles?: {
+    id?: string;
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+  };
+}
+
+export const formatCommentFromDB = (data: RawComment, isOwn = false): Comment => {
+  const profile = data.profiles || {};
+  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'User';
   
   return {
-    id: comment.id.toString(),
-    text: comment.content,
+    id: data.id.toString(),
+    text: data.content,
     author: {
-      id: comment.user_id,
+      id: data.user_id,
       name: fullName,
       avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
     },
+    likes: 0, // We'll implement comment likes later
     isLiked: false,
-    likes: 0,
-    replies: [],
-    createdAt: new Date(comment.created_at),
-    isOwn: isCurrentUser
+    replies: [], // We'll implement replies later
+    createdAt: new Date(data.created_at),
+    isOwn
   };
 };

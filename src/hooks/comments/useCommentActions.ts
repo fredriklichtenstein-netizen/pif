@@ -25,10 +25,16 @@ export const useCommentActions = (
     
     setIsLoading(true);
     try {
+      // Parse the itemId to ensure it's a number
+      const numericItemId = parseInt(itemId);
+      if (isNaN(numericItemId)) {
+        throw new Error(`Invalid item ID: ${itemId}`);
+      }
+      
       const { data, error } = await supabase
         .from('comments')
         .insert({
-          item_id: parseInt(itemId),
+          item_id: numericItemId,
           user_id: currentUser.id,
           content: text
         })
@@ -193,6 +199,12 @@ export const useCommentActions = (
   const refreshComments = async () => {
     setIsLoading(true);
     try {
+      // Parse the itemId to ensure it's a number
+      const numericItemId = parseInt(itemId);
+      if (isNaN(numericItemId)) {
+        throw new Error(`Invalid item ID: ${itemId}`);
+      }
+      
       const { data, error } = await supabase
         .from('comments')
         .select(`
@@ -207,7 +219,7 @@ export const useCommentActions = (
             avatar_url
           )
         `)
-        .eq('item_id', parseInt(itemId))
+        .eq('item_id', numericItemId)
         .order('created_at', { ascending: true });
       
       if (error) throw error;

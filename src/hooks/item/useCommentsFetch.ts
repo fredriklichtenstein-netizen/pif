@@ -20,7 +20,13 @@ export const useCommentsFetch = (itemId: string) => {
     setError(null);
     
     try {
-      console.log(`Fetching comments for item ${itemId}`);
+      // Parse the itemId to ensure it's a number
+      const numericItemId = parseInt(itemId);
+      if (isNaN(numericItemId)) {
+        throw new Error(`Invalid item ID: ${itemId}`);
+      }
+      
+      console.log(`Fetching comments for item ${numericItemId}`);
       const { data, error } = await supabase
         .from('comments')
         .select(`
@@ -35,12 +41,14 @@ export const useCommentsFetch = (itemId: string) => {
             avatar_url
           )
         `)
-        .eq('item_id', parseInt(itemId))
+        .eq('item_id', numericItemId)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
       
       if (!data) return [];
+      
+      console.log('Comments data received:', data);
       
       // Transform data to match Comment type
       return data.map(comment => 
@@ -48,7 +56,7 @@ export const useCommentsFetch = (itemId: string) => {
       );
     } catch (error: any) {
       console.error("Error fetching comments:", error);
-      setError(error);
+      setError(error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error",
         description: "Failed to load comments",
@@ -65,14 +73,20 @@ export const useCommentsFetch = (itemId: string) => {
     if (!itemId) return 0;
     
     try {
-      const { data, error } = await supabase
+      // Parse the itemId to ensure it's a number
+      const numericItemId = parseInt(itemId);
+      if (isNaN(numericItemId)) {
+        throw new Error(`Invalid item ID: ${itemId}`);
+      }
+      
+      const { data, error, count } = await supabase
         .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('item_id', parseInt(itemId));
+        .select('id', { count: 'exact' })
+        .eq('item_id', numericItemId);
       
       if (error) throw error;
       
-      return data?.length || 0;
+      return count || 0;
     } catch (error) {
       console.error("Error fetching comments count:", error);
       return 0;
@@ -84,11 +98,17 @@ export const useCommentsFetch = (itemId: string) => {
     if (!itemId) return [];
     
     try {
+      // Parse the itemId to ensure it's a number
+      const numericItemId = parseInt(itemId);
+      if (isNaN(numericItemId)) {
+        throw new Error(`Invalid item ID: ${itemId}`);
+      }
+      
       // First get the unique user IDs from comments
       const { data: commentsData, error: commentsError } = await supabase
         .from('comments')
         .select('user_id')
-        .eq('item_id', parseInt(itemId));
+        .eq('item_id', numericItemId);
       
       if (commentsError) throw commentsError;
       if (!commentsData || commentsData.length === 0) return [];

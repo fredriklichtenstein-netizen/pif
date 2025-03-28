@@ -61,7 +61,7 @@ export const useItemCard = (itemId: string) => {
     interestsCount
   );
 
-  // Fetch comments count more efficiently
+  // Fetch comments count
   useEffect(() => {
     const getCommentsCount = async () => {
       try {
@@ -73,12 +73,14 @@ export const useItemCard = (itemId: string) => {
       }
     };
     
-    getCommentsCount();
-  }, [itemId, fetchCommentsCount, comments.length]);  // Add comments.length to dependencies
+    if (itemId) {
+      getCommentsCount();
+    }
+  }, [itemId, fetchCommentsCount, comments.length]);
 
-  // Fetch comments for the item - memoize with useCallback to prevent infinite loops
+  // Fetch comments for the item - memoize with useCallback
   const fetchItemComments = useCallback(async () => {
-    if (commentsFetched && !commentsError) return;
+    if (!itemId || (commentsFetched && !commentsError)) return;
     
     console.log(`Fetching comments for item ${itemId}`);
     setCommentsLoading(true);

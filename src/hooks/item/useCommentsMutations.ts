@@ -20,10 +20,16 @@ export const useCommentsMutations = (itemId: string) => {
     if (!isAuthenticated) return null;
     
     try {
+      // Parse the itemId to ensure it's a number
+      const numericItemId = parseInt(itemId);
+      if (isNaN(numericItemId)) {
+        throw new Error(`Invalid item ID: ${itemId}`);
+      }
+      
       const { data, error } = await supabase
         .from('comments')
         .insert({
-          item_id: parseInt(itemId),
+          item_id: numericItemId,
           user_id: user?.id,
           content: content.trim()
         })
