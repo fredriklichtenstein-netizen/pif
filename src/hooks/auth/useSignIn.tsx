@@ -14,12 +14,18 @@ export function useSignIn() {
       console.log("Starting sign in process for:", email);
       setSigningIn(true);
       
+      // Clear any previous timeouts to prevent issues
+      const timeoutId = setTimeout(() => {
+        console.log("Sign in is taking longer than expected...");
+      }, 5000);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log("Sign in response:", { data, error });
+      clearTimeout(timeoutId);
+      console.log("Sign in response:", { data: data ? "data received" : "no data", error });
 
       if (error) {
         console.error("Sign in error:", error);
@@ -44,50 +50,63 @@ export function useSignIn() {
         return false;
       }
 
-      if (data.user) {
-        console.log("User signed in successfully:", data.user);
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', data.user.id)
-            .maybeSingle();
+      if (!data || !data.user) {
+        console.error("Sign in failed: No user data returned");
+        toast({
+          title: "Sign in failed",
+          description: "Authentication failed but no error was returned. Please try again.",
+          variant: "destructive",
+        });
+        setSigningIn(false);
+        return false;
+      }
 
-          console.log("Profile check result:", { profile, profileError });
+      console.log("User signed in successfully:", data.user.id);
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', data.user.id)
+          .maybeSingle();
 
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-          }
+        console.log("Profile check result:", { profile, profileError });
 
-          if (!profile || !profile.onboarding_completed) {
-            toast({
-              title: "Complete your profile",
-              description: "Let's set up your profile to get started.",
-            });
-            navigate("/create-profile");
-          } else {
-            toast({
-              title: "Welcome back!",
-              description: "Successfully signed in.",
-            });
-            navigate("/");
-          }
-          setSigningIn(false);
-          return true;
-        } catch (profileError) {
-          console.error("Error in profile check:", profileError);
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
           toast({
             title: "Welcome back!",
-            description: "Successfully signed in, but we couldn't check your profile status.",
+            description: "Successfully signed in, but couldn't check your profile status.",
           });
           navigate("/");
           setSigningIn(false);
           return true;
         }
-      }
 
-      setSigningIn(false);
-      return false;
+        if (!profile || !profile.onboarding_completed) {
+          toast({
+            title: "Complete your profile",
+            description: "Let's set up your profile to get started.",
+          });
+          navigate("/create-profile");
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "Successfully signed in.",
+          });
+          navigate("/");
+        }
+        setSigningIn(false);
+        return true;
+      } catch (profileError) {
+        console.error("Error in profile check:", profileError);
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in, but we couldn't check your profile status.",
+        });
+        navigate("/");
+        setSigningIn(false);
+        return true;
+      }
     } catch (error) {
       console.error("Unexpected error during sign in:", error);
       toast({

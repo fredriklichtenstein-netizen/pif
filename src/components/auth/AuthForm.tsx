@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/profile/PhoneInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 interface AuthFormProps {
   isSignUp: boolean;
@@ -21,6 +21,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
   const [countryCode, setCountryCode] = useState("+46"); // Default to Sweden
   const [formError, setFormError] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
@@ -29,6 +30,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
     setPhone("");
     setFormError("");
     setSubmitError("");
+    setSubmitting(false);
   }, [isSignUp]);
 
   const validateForm = () => {
@@ -55,9 +57,11 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
     e.preventDefault();
     console.log("Auth form submitted", { email, password, isSignUp });
     setSubmitError("");
+    setSubmitting(true);
     
     if (!validateForm()) {
       console.log("Form validation failed");
+      setSubmitting(false);
       return;
     }
     
@@ -75,8 +79,13 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
     } catch (error: any) {
       console.error("Auth form submission error:", error);
       setSubmitError(error.message || "Authentication failed. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  // Combined loading state - either from parent or local submitting state
+  const isLoading = loading || submitting;
 
   return (
     <div className="max-w-md w-full space-y-8">
@@ -118,6 +127,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
               }}
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
               placeholder="Enter your email"
+              disabled={isLoading}
             />
           </div>
           
@@ -137,6 +147,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
               placeholder={isSignUp ? "Create a password (min 6 characters)" : "Enter your password"}
               minLength={6}
+              disabled={isLoading}
             />
           </div>
           
@@ -152,6 +163,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
                   setFormError("");
                 }}
                 required={false}
+                disabled={isLoading}
               />
             </div>
           )}
@@ -161,13 +173,16 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
           <Button
             type="submit"
             className="w-full flex justify-center py-2 px-4 bg-green-500 hover:bg-green-600"
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading
-              ? "Processing..."
-              : isSignUp
-              ? "Create account"
-              : "Sign in"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              isSignUp ? "Create account" : "Sign in"
+            )}
           </Button>
         </div>
       </form>
@@ -178,6 +193,7 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
           variant="link"
           onClick={onToggleMode}
           className="text-green-600 hover:text-green-700"
+          disabled={isLoading}
         >
           {isSignUp
             ? "Already have an account? Sign in"

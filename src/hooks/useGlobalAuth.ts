@@ -16,6 +16,7 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
   setError: (error: Error | null) => void;
+  clearAuth: () => void;
 }
 
 export const useGlobalAuth = create<AuthState>((set) => ({
@@ -31,6 +32,12 @@ export const useGlobalAuth = create<AuthState>((set) => ({
   setLoading: (loading) => set({ isLoading: loading }),
   setInitialized: (initialized) => set({ initialized }),
   setError: (error) => set({ error }),
+  clearAuth: () => set({ 
+    user: null, 
+    session: null, 
+    profileCompleted: null, 
+    error: null 
+  }),
 }));
 
 export const initializeAuth = async () => {
@@ -42,6 +49,7 @@ export const initializeAuth = async () => {
     auth.setLoading(true);
     auth.setError(null);
     
+    // First get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
@@ -78,6 +86,7 @@ export const initializeAuth = async () => {
       }
     } else {
       console.log('No active session found');
+      auth.clearAuth();
     }
   } catch (error) {
     console.error('Error initializing auth:', error);
@@ -92,6 +101,11 @@ export const initializeAuth = async () => {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
+      
+      if (event === 'SIGNED_OUT') {
+        auth.clearAuth();
+        return;
+      }
       
       auth.setUser(session?.user ?? null);
       auth.setSession(session);

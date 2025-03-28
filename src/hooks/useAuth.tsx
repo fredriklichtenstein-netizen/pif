@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useSignUp } from "./auth/useSignUp";
 import { useSignIn } from "./auth/useSignIn";
 import { useGlobalAuth } from "./useGlobalAuth";
-import type { Session } from "@supabase/supabase-js";
 
 export function useAuth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -12,7 +11,7 @@ export function useAuth() {
   const { handleSignIn, loading: signInLoading } = useSignIn();
 
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
-    console.log("Auth initiated with:", { email, password, phone, countryCode, isSignUp });
+    console.log("Auth initiated with:", { email, isSignUp });
     
     try {
       if (isSignUp) {
