@@ -8,7 +8,7 @@ export function useAuth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const { session, isLoading: authStateLoading } = useGlobalAuth();
   const { handleSignUp, loading: signUpLoading } = useSignUp();
-  const { handleSignIn, loading: signInLoading } = useSignIn();
+  const { handleSignIn, handlePasswordReset, loading: signInLoading, error: signInError } = useSignIn();
 
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
     console.log("Auth initiated with:", { email, isSignUp });
@@ -27,6 +27,11 @@ export function useAuth() {
     }
   };
 
+  const handleResetPassword = async (email: string) => {
+    console.log("Password reset requested for:", email);
+    return await handlePasswordReset(email);
+  };
+
   const toggleMode = () => {
     console.log("Toggling auth mode from", isSignUp ? "signup" : "signin", "to", !isSignUp ? "signup" : "signin");
     setIsSignUp(!isSignUp);
@@ -40,14 +45,17 @@ export function useAuth() {
     authStateLoading, 
     signUpLoading, 
     signInLoading, 
-    hasSession: !!session 
+    hasSession: !!session,
+    error: signInError
   });
 
   return {
     loading,
     isSignUp,
     session,
+    error: signInError,
     handleAuth,
+    handleResetPassword,
     toggleMode,
   };
 }

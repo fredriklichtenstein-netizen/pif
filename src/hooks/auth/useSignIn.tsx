@@ -8,11 +8,13 @@ export function useSignIn() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [signingIn, setSigningIn] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const handleSignIn = async (email: string, password: string) => {
     try {
       console.log("Starting sign in process for:", email);
       setSigningIn(true);
+      setAuthError(null);
       
       // Clear any previous timeouts to prevent issues
       const timeoutId = setTimeout(() => {
@@ -38,12 +40,20 @@ export function useSignIn() {
           });
           navigate("/email-confirmation?email=" + encodeURIComponent(email));
           setSigningIn(false);
+          setAuthError("Email not confirmed");
           return false;
         }
         
+        // Set a specific error message for invalid credentials
+        if (error.message.includes("Invalid login credentials")) {
+          setAuthError("Invalid login credentials. Please check your email and password.");
+        } else {
+          setAuthError(error.message);
+        }
+        
         toast({
-          title: "Invalid credentials",
-          description: "Please check your email and password and try again.",
+          title: "Authentication failed",
+          description: error.message,
           variant: "destructive",
         });
         setSigningIn(false);
@@ -52,6 +62,7 @@ export function useSignIn() {
 
       if (!data || !data.user) {
         console.error("Sign in failed: No user data returned");
+        setAuthError("Authentication failed but no error was returned. Please try again.");
         toast({
           title: "Sign in failed",
           description: "Authentication failed but no error was returned. Please try again.",
@@ -109,6 +120,7 @@ export function useSignIn() {
       }
     } catch (error) {
       console.error("Unexpected error during sign in:", error);
+      setAuthError("An unexpected error occurred. Please try again.");
       toast({
         title: "Sign in failed",
         description: "An unexpected error occurred. Please try again.",
@@ -119,5 +131,50 @@ export function useSignIn() {
     }
   };
 
-  return { handleSignIn, loading: signingIn };
+  const handlePasswordReset = async (email: string) => {
+    try {
+      setSigningIn(true);
+      setAuthError(null);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      
+      if (error) {
+        console.error("Password reset error:", error);
+        setAuthError(error.message);
+        toast({
+          title: "Password reset failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setSigningIn(false);
+        return false;
+      }
+      
+      toast({
+        title: "Password reset email sent",
+        description: "Check your email for a link to reset your password.",
+      });
+      setSigningIn(false);
+      return true;
+    } catch (error) {
+      console.error("Unexpected error during password reset:", error);
+      setAuthError("An unexpected error occurred. Please try again.");
+      toast({
+        title: "Password reset failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+      setSigningIn(false);
+      return false;
+    }
+  };
+
+  return { 
+    handleSignIn, 
+    handlePasswordReset,
+    loading: signingIn, 
+    error: authError 
+  };
 }

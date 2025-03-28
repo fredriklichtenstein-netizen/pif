@@ -8,6 +8,7 @@ import Profile from "@/pages/Profile";
 import AccountSettings from "@/pages/AccountSettings";
 import Auth from "@/pages/Auth";
 import EmailConfirmation from "@/pages/EmailConfirmation";
+import ResetPassword from "@/pages/ResetPassword";
 import CreateProfile from "@/pages/CreateProfile";
 import NotFound from "@/pages/NotFound";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
@@ -17,6 +18,7 @@ export const publicRoutes = [
   { path: "/map", element: <Map /> },
   { path: "/auth", element: <Auth /> },
   { path: "/email-confirmation", element: <EmailConfirmation /> },
+  { path: "/reset-password", element: <ResetPassword /> },
   { path: "*", element: <NotFound /> },
 ];
 

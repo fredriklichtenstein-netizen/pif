@@ -6,15 +6,25 @@ import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/profile/PhoneInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 
 interface AuthFormProps {
   isSignUp: boolean;
   loading: boolean;
+  error?: string | null;
   onSubmit: (email: string, password: string, phone?: string, countryCode?: string) => Promise<boolean | void>;
   onToggleMode: () => void;
+  onPasswordReset?: (email: string) => Promise<boolean>;
 }
 
-export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthFormProps) {
+export function AuthForm({ 
+  isSignUp, 
+  loading, 
+  error,
+  onSubmit, 
+  onToggleMode, 
+  onPasswordReset 
+}: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -22,6 +32,8 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
   const [formError, setFormError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
@@ -32,6 +44,13 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
     setSubmitError("");
     setSubmitting(false);
   }, [isSignUp]);
+
+  // Update submit error when parent error changes
+  useEffect(() => {
+    if (error) {
+      setSubmitError(error);
+    }
+  }, [error]);
 
   const validateForm = () => {
     if (!email) {
@@ -74,13 +93,25 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
       console.log("Authentication result:", result);
       
       if (result === false) {
-        setSubmitError("Authentication failed. Please check your details and try again.");
+        // Error is now handled by the parent component and passed via props
       }
     } catch (error: any) {
       console.error("Auth form submission error:", error);
       setSubmitError(error.message || "Authentication failed. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePasswordReset = async (resetEmail: string) => {
+    setResetError(null);
+    if (!onPasswordReset) return false;
+    
+    try {
+      return await onPasswordReset(resetEmail);
+    } catch (error: any) {
+      setResetError(error.message || "Failed to send reset email. Please try again.");
+      return false;
     }
   };
 
@@ -169,6 +200,20 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
           )}
         </div>
 
+        {!isSignUp && onPasswordReset && (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="link"
+              className="text-green-600 hover:text-green-700 p-0 h-auto"
+              onClick={() => setShowForgotPassword(true)}
+              disabled={isLoading}
+            >
+              Forgot password?
+            </Button>
+          </div>
+        )}
+
         <div>
           <Button
             type="submit"
@@ -200,6 +245,16 @@ export function AuthForm({ isSignUp, loading, onSubmit, onToggleMode }: AuthForm
             : "Need an account? Sign up"}
         </Button>
       </div>
+
+      {onPasswordReset && (
+        <ForgotPasswordDialog
+          isOpen={showForgotPassword}
+          onClose={() => setShowForgotPassword(false)}
+          onSubmit={handlePasswordReset}
+          loading={loading}
+          error={resetError}
+        />
+      )}
     </div>
   );
 }
