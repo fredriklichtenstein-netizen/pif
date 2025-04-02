@@ -51,8 +51,9 @@ export function useAuth() {
 
   const loading = authStateLoading || signUpLoading || signInLoading;
   
-  // Use network error if present, otherwise use signin error
-  const error = networkError || signInError;
+  // Use signInError as the primary error to display
+  // Only use networkError if there's no specific auth error
+  const error = signInError || networkError;
   
   console.log("Auth hook state:", { 
     loading, 

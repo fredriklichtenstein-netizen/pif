@@ -6,13 +6,10 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
   
   try {
     // Try to make a minimal request to check connectivity
-    const startTime = Date.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     
-    // First try to fetch from a reliable service
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
       const response = await fetch('https://www.google.com/generate_204', { 
         method: 'HEAD',
         mode: 'no-cors',
@@ -26,13 +23,17 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
       return true;
     } catch (e) {
       console.log('External connectivity check failed, trying Supabase');
+      // Continue with Supabase check
     }
     
-    // Fallback to Supabase
+    // Fallback to Supabase ping
+    const startTime = Date.now();
     const { supabase } = await import('@/integrations/supabase/client');
-    await supabase.auth.getSession();
-    const endTime = Date.now();
     
+    // Just ping the service with a simple health check instead of auth
+    const { error } = await supabase.from('profiles').select('id').limit(1);
+    
+    const endTime = Date.now();
     console.log(`Network ping time (Supabase): ${endTime - startTime}ms`);
     
     // If the request takes too long, consider it a network issue

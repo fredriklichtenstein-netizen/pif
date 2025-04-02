@@ -34,8 +34,8 @@ export default function Auth() {
     // Check connection on mount
     checkConnection();
     
-    // Check connection every 30 seconds
-    const interval = setInterval(checkConnection, 30000);
+    // Check connection less frequently (60 seconds)
+    const interval = setInterval(checkConnection, 60000);
     
     return () => clearInterval(interval);
   }, [toast]);
@@ -57,12 +57,15 @@ export default function Auth() {
     window.location.reload();
   };
 
+  // Only show network error alert if both checks fail
+  const showNetworkAlert = networkError || !connectionStatus;
+
   console.log("Auth page rendered with state:", { loading, isSignUp, error, networkError, connectionStatus });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
-        {(networkError || !connectionStatus) && (
+        {showNetworkAlert && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Connection Issue</AlertTitle>

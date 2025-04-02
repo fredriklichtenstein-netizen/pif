@@ -23,7 +23,10 @@ export function useNetworkMonitor() {
       if (!isConnected && !networkError) {
         setNetworkError("Network connection issue. Please check your internet connection.");
       } else if (isConnected && networkError) {
-        setNetworkError(null);
+        // Only clear the network error if it was specifically about connection issues
+        if (networkError.includes("connection") || networkError.includes("internet")) {
+          setNetworkError(null);
+        }
       }
     };
     
@@ -38,7 +41,10 @@ export function useNetworkMonitor() {
 
   const handleOnline = () => {
     console.log("Network connection restored");
-    setNetworkError(null);
+    // Only clear the network error if it was specifically about connection issues
+    if (networkError && (networkError.includes("connection") || networkError.includes("internet"))) {
+      setNetworkError(null);
+    }
     setConnectionStatus(true);
   };
 
@@ -56,7 +62,7 @@ export function useNetworkMonitor() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [networkError]);
 
   const clearNetworkError = () => {
     setNetworkError(null);

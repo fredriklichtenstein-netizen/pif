@@ -4,12 +4,7 @@ export function getAuthErrorMessage(error: any): string {
   
   if (error.message?.includes("Invalid login credentials")) {
     return "Invalid email or password. Please check your credentials and try again.";
-  } else if (
-    error.message?.includes("Load failed") || 
-    error.message?.includes("fetch failed") ||
-    error.message?.includes("Failed to fetch") ||
-    error.message?.includes("Network Error")
-  ) {
+  } else if (isNetworkError(error)) {
     return "Connection error. Please check your internet and try again.";
   } else if (error.message?.includes("Email not confirmed")) {
     return "Email not confirmed. Please check your inbox and confirm your email before signing in.";
@@ -25,6 +20,8 @@ export function isNetworkError(error: any): boolean {
     error.message.includes("Load failed") || 
     error.message.includes("fetch failed") ||
     error.message.includes("Failed to fetch") ||
-    error.message.includes("Network Error")
+    error.message.includes("Network Error") ||
+    error.message.includes("timeout") ||
+    error.message.includes("connection")?.toLowerCase()
   );
 }

@@ -19,12 +19,12 @@ export function useSignIn() {
       setSigningIn(true);
       setAuthError(null);
       
-      // Set a timeout to detect if the sign-in is taking too long
+      // Use a shorter timeout for sign in - 10 seconds is sufficient
       const timeoutId = setTimeout(() => {
         console.log("Sign in is taking longer than expected - possible network issues");
-        setAuthError("Connection issue. Please check your internet and try again.");
-        setSigningIn(false);
-      }, 15000);
+        // Don't automatically set error or stop signin process yet,
+        // just log the warning
+      }, 10000);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -50,14 +50,32 @@ export function useSignIn() {
           return false;
         }
         
-        // Set error message using our utility
-        setAuthError(getAuthErrorMessage(error));
+        // Check if it's specifically an invalid credentials error before 
+        // setting the error message
+        if (error.message.includes("Invalid login credentials")) {
+          setAuthError("Invalid email or password. Please check your credentials and try again.");
+          toast({
+            title: "Authentication failed",
+            description: "Invalid email or password. Please check your credentials and try again.",
+            variant: "destructive",
+          });
+        } else if (isNetworkError(error)) {
+          setAuthError("Connection issue. Please check your internet and try again.");
+          toast({
+            title: "Connection issue",
+            description: "Please check your internet and try again.",
+            variant: "destructive",
+          });
+        } else {
+          // Use the error message utility for other errors
+          setAuthError(getAuthErrorMessage(error));
+          toast({
+            title: "Authentication failed",
+            description: getAuthErrorMessage(error),
+            variant: "destructive",
+          });
+        }
         
-        toast({
-          title: "Authentication failed",
-          description: getAuthErrorMessage(error),
-          variant: "destructive",
-        });
         setSigningIn(false);
         return false;
       }
