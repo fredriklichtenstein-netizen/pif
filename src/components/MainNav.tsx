@@ -1,4 +1,3 @@
-
 import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -24,13 +23,37 @@ export function MainNav() {
     }
   };
 
-  // Get user initials or fallback for avatar
+  // Get user initials for display
   const getUserInitials = () => {
-    if (!user) return "?";
+    if (!user) return "";
     
-    // Try to get email prefix as fallback
-    const emailPrefix = user.email ? user.email.split('@')[0] : "";
-    return emailPrefix.slice(0, 2).toUpperCase();
+    // First try to get initials from profile metadata if available
+    const firstName = user.user_metadata?.first_name || "";
+    const lastName = user.user_metadata?.last_name || "";
+    
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    
+    if (firstName) {
+      return firstName.charAt(0).toUpperCase();
+    }
+    
+    // If no name is available, use email
+    if (user.email) {
+      const parts = user.email.split('@');
+      if (parts[0]) {
+        // Try to get initials from email prefix (e.g., "john.doe" -> "JD")
+        const nameParts = parts[0].split(/[._-]/);
+        if (nameParts.length > 1) {
+          return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+        }
+        // Otherwise just use first two letters of email prefix
+        return parts[0].slice(0, 2).toUpperCase();
+      }
+    }
+    
+    return "?";
   };
 
   return (
@@ -100,7 +123,7 @@ export function MainNav() {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs mt-1 max-w-[60px] truncate">
-                  {user.email ? user.email.split('@')[0] : "Profile"}
+                  {getUserInitials()}
                 </span>
               </>
             ) : (

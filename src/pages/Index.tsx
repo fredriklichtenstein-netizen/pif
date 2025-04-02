@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { ItemCard } from "@/components/ItemCard";
 import { useToast } from "@/hooks/use-toast";
-import { AuthStatus } from "@/components/auth/AuthStatus";
 
 export default function Index() {
   const { toast } = useToast();
@@ -74,12 +73,9 @@ export default function Index() {
 
   return (
     <div className="container max-w-md mx-auto px-4 py-8 pb-24">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">PIF Community</h1>
-          <p className="text-sm text-gray-500">Sustainable sharing in your neighborhood</p>
-        </div>
-        <AuthStatus showName={false} />
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">PIF Community</h1>
+        <p className="text-sm text-gray-500">Sustainable sharing in your neighborhood</p>
       </div>
 
       {/* Category filters */}
