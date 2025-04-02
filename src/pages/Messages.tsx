@@ -24,7 +24,6 @@ const Messages = () => {
 
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
-      <h1 className="text-2xl font-bold mb-4">Messages</h1>
       
       {isLoading ? (
         <div className="space-y-4">
