@@ -29,8 +29,7 @@ const MapView = () => {
 
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
-      <h1 className="text-2xl font-bold mb-4">Map View</h1>
-      <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden relative">
+      <div className="h-[calc(100vh-170px)] rounded-lg overflow-hidden relative">
         {error ? (
           <div className="w-full h-full bg-gray-50 flex items-center justify-center">
             <div className="text-center p-6">

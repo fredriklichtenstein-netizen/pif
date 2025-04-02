@@ -35,8 +35,7 @@ export function PostFormContainer({
 
   return (
     <div className="container mx-auto px-4 pb-32 pt-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold" tabIndex={0}>Create Post</h1>
+      <div className="flex justify-end items-center mb-6">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
