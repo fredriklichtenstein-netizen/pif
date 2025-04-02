@@ -1,3 +1,4 @@
+
 import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ export function MainNav() {
   const { avatarUrl } = useProfileData();
 
   const isActive = (path: string) => location.pathname === path;
+  const isProfileActive = isActive("/profile") || isActive("/account-settings");
 
   const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!user) {
@@ -113,13 +115,13 @@ export function MainNav() {
           <Link
             to="/profile"
             className={`flex flex-col items-center ${
-              isActive("/profile") || isActive("/account-settings") ? "text-primary" : "text-gray-500"
+              isProfileActive ? "text-primary" : "text-gray-500"
             }`}
             onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
           >
             {user ? (
               <>
-                <Avatar className="h-6 w-6 border border-primary">
+                <Avatar className={`h-6 w-6 ${isProfileActive ? "border border-primary" : ""}`}>
                   <AvatarImage src={avatarUrl || user.user_metadata?.avatar_url} />
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                     {getUserInitials()}
