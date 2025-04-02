@@ -1,185 +1,117 @@
-
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import type { Post, CreatePostInput } from "@/types/post";
+import { useState } from "react";
 import { ItemCard } from "@/components/ItemCard";
-import { parseCoordinatesFromDB } from "@/types/post";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import { useToast } from "@/hooks/use-toast";
+import { AuthStatus } from "@/components/auth/AuthStatus";
 
-type ItemWithProfile = Database['public']['Tables']['items']['Row'] & {
-  profiles: {
-    first_name: string | null;
-    last_name: string | null;
-    avatar_url: string | null;
-  } | null;
-};
-
-export const getPosts = async (): Promise<Post[]> => {
-  const { data, error } = await supabase
-    .from('items')
-    .select(`
-      *,
-      profiles!fk_user_profile (
-        first_name,
-        last_name,
-        avatar_url
-      )
-    `)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error("Error fetching posts:", error);
-    throw error;
-  }
-
-  // Get interaction stats for each item
-  const itemsWithStats = await Promise.all((data as ItemWithProfile[]).map(async (item) => {
-    // Get likes count
-    const { data: likesCount, error: likesError } = await supabase.rpc(
-      'get_item_likes_count',
-      { item_id_param: item.id }
-    );
-    
-    if (likesError) {
-      console.error("Error fetching likes count:", likesError);
-    }
-    
-    // Get interests count
-    const { data: interestsCount, error: interestsError } = await supabase.rpc(
-      'get_item_interests_count',
-      { item_id_param: item.id }
-    );
-    
-    if (interestsError) {
-      console.error("Error fetching interests count:", interestsError);
-    }
-    
-    return {
-      id: item.id.toString(),
-      title: item.title,
-      description: item.description || '',
-      category: item.category || '',
-      condition: item.condition || '',
-      measurements: item.measurements as Record<string, string> || {},
-      images: item.images || [],
-      location: item.location || '',
-      coordinates: item.coordinates as string | null,
-      status: item.status || 'available',
-      createdAt: item.created_at,
-      likesCount: likesCount || 0,
-      interestsCount: interestsCount || 0,
-      postedBy: {
-        id: item.user_id || '',
-        name: item.profiles
-          ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`
-          : 'Anonymous',
-        avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+export default function Index() {
+  const { toast } = useToast();
+  const [filter, setFilter] = useState("all");
+  
+  // Placeholder items data
+  const items = [
+    {
+      id: 1,
+      title: "Vintage Chair",
+      description: "A beautiful vintage chair in great condition.",
+      image: "https://images.unsplash.com/photo-1549187774-b4e9b0445b41?q=80&w=2574&auto=format&fit=crop",
+      location: "Stockholm",
+      distance: "2.3 km",
+      user: {
+        name: "Anna L",
+        avatar: "https://randomuser.me/api/portraits/women/44.jpg"
       }
-    };
-  }));
-
-  return itemsWithStats;
-};
-
-export const addPost = async (post: CreatePostInput): Promise<Post> => {
-  const session = await supabase.auth.getSession();
-  if (!session.data.session?.user) {
-    throw new Error("Must be logged in to create a post");
-  }
-
-  const user_id = session.data.session.user.id;
-  console.log("Creating post with user_id:", user_id);
-
-  const { data, error } = await supabase
-    .from('items')
-    .insert([{
-      title: post.title,
-      description: post.description,
-      category: post.category,
-      condition: post.condition,
-      measurements: post.measurements || {},
-      images: post.images,
-      location: post.location,
-      coordinates: post.coordinates,
-      user_id: user_id,
-      status: post.status || 'available'
-    }])
-    .select(`
-      *,
-      profiles!fk_user_profile (
-        first_name,
-        last_name,
-        avatar_url
-      )
-    `)
-    .single();
-
-  if (error) {
-    console.error("Error adding post:", error);
-    throw error;
-  }
-
-  const itemWithProfile = data as ItemWithProfile;
-
-  return {
-    id: itemWithProfile.id.toString(),
-    title: itemWithProfile.title,
-    description: itemWithProfile.description || '',
-    category: itemWithProfile.category || '',
-    condition: itemWithProfile.condition || '',
-    measurements: itemWithProfile.measurements as Record<string, string> || {},
-    images: itemWithProfile.images || [],
-    location: itemWithProfile.location || '',
-    coordinates: itemWithProfile.coordinates as string | null,
-    status: itemWithProfile.status || 'available',
-    createdAt: itemWithProfile.created_at,
-    postedBy: {
-      id: itemWithProfile.user_id || '',
-      name: itemWithProfile.profiles
-        ? `${itemWithProfile.profiles.first_name || ''} ${itemWithProfile.profiles.last_name || ''}`
-        : 'Anonymous',
-      avatar: itemWithProfile.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=123'
+    },
+    {
+      id: 2,
+      title: "Coffee Table",
+      description: "Wooden coffee table, some minor scratches but sturdy.",
+      image: "https://images.unsplash.com/photo-1565191999001-c2a4e5a71b7a?q=80&w=2574&auto=format&fit=crop",
+      location: "Uppsala",
+      distance: "5.1 km",
+      user: {
+        name: "Johan K",
+        avatar: "https://randomuser.me/api/portraits/men/32.jpg"
+      }
+    },
+    {
+      id: 3,
+      title: "Bookshelf",
+      description: "IKEA bookshelf, 3 years old but in good condition.",
+      image: "https://images.unsplash.com/photo-1588279102920-d50c358b3618?q=80&w=2574&auto=format&fit=crop",
+      location: "Stockholm",
+      distance: "1.8 km",
+      user: {
+        name: "Maria S",
+        avatar: "https://randomuser.me/api/portraits/women/22.jpg"
+      }
     }
-  };
-};
+  ];
 
-const IndexPage = () => {
-  const { data: posts, isLoading } = useQuery({
-    queryKey: ["posts"],
-    queryFn: getPosts
+  const filteredItems = items.filter(item => {
+    if (filter === "all") return true;
+    // Add other filter logic here
+    return true;
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto px-4 py-6 pb-24">
-      <div className="space-y-5">
-        {posts?.map((post) => (
-          <ItemCard
-            key={post.id}
-            id={post.id}
-            title={post.title}
-            description={post.description}
-            image={post.images[0]}
-            images={post.images}
-            location={post.location}
-            coordinates={post.coordinates ? parseCoordinatesFromDB(post.coordinates) : undefined}
-            category={post.category}
-            condition={post.condition}
-            measurements={post.measurements}
-            postedBy={post.postedBy}
+    <div className="container max-w-md mx-auto px-4 py-8 pb-24">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">PIF Community</h1>
+          <p className="text-sm text-gray-500">Sustainable sharing in your neighborhood</p>
+        </div>
+        <AuthStatus showName={false} />
+      </div>
+
+      {/* Category filters */}
+      <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
+        <button 
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'all' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('all')}
+        >
+          All Items
+        </button>
+        <button 
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'furniture' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('furniture')}
+        >
+          Furniture
+        </button>
+        <button 
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'electronics' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('electronics')}
+        >
+          Electronics
+        </button>
+        <button 
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'clothing' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('clothing')}
+        >
+          Clothing
+        </button>
+        <button 
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'books' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('books')}
+        >
+          Books
+        </button>
+      </div>
+
+      {/* Items list */}
+      <div className="space-y-6">
+        {filteredItems.map(item => (
+          <ItemCard 
+            key={item.id}
+            item={item}
+            onShare={() => {
+              toast({
+                title: "Shared!",
+                description: "Item has been shared with your contacts."
+              });
+            }}
           />
         ))}
       </div>
     </div>
   );
 }
-
-export default IndexPage;

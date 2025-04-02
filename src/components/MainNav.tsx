@@ -3,6 +3,7 @@ import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function MainNav() {
   const location = useLocation();
@@ -21,6 +22,15 @@ export function MainNav() {
         description: "Please sign in to access this feature",
       });
     }
+  };
+
+  // Get user initials or fallback for avatar
+  const getUserInitials = () => {
+    if (!user) return "?";
+    
+    // Try to get email prefix as fallback
+    const emailPrefix = user.email ? user.email.split('@')[0] : "";
+    return emailPrefix.slice(0, 2).toUpperCase();
   };
 
   return (
@@ -81,8 +91,24 @@ export function MainNav() {
             }`}
             onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
           >
-            <UserIcon size={24} />
-            <span className="text-xs mt-1">Profile</span>
+            {user ? (
+              <>
+                <Avatar className="h-6 w-6 border border-primary">
+                  <AvatarImage src={user.user_metadata?.avatar_url} />
+                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs mt-1 max-w-[60px] truncate">
+                  {user.email ? user.email.split('@')[0] : "Profile"}
+                </span>
+              </>
+            ) : (
+              <>
+                <UserIcon size={24} />
+                <span className="text-xs mt-1">Sign In</span>
+              </>
+            )}
           </Link>
         </div>
       </div>
