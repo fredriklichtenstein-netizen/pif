@@ -4,39 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfileData } from "@/hooks/profile/useProfileData";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export function MainNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useGlobalAuth();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  // If user is logged in, fetch profile data to get avatar URL
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (user) {
-        try {
-          // Use the existing user_metadata.avatar_url if available
-          if (user.user_metadata?.avatar_url) {
-            setAvatarUrl(user.user_metadata.avatar_url);
-          } else {
-            // We need to fetch from profiles table
-            const response = await fetch('/api/profile');
-            const profileData = await response.json();
-            if (profileData?.avatar_url) {
-              setAvatarUrl(profileData.avatar_url);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching avatar:", error);
-        }
-      }
-    };
-    
-    fetchProfileData();
-  }, [user]);
+  const { avatarUrl } = useProfileData();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -145,7 +120,7 @@ export function MainNav() {
             {user ? (
               <>
                 <Avatar className="h-6 w-6 border border-primary">
-                  <AvatarImage src={user.user_metadata?.avatar_url || avatarUrl} />
+                  <AvatarImage src={avatarUrl || user.user_metadata?.avatar_url} />
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                     {getUserInitials()}
                   </AvatarFallback>
