@@ -21,7 +21,7 @@ export function useSignIn() {
         console.log("Sign in is taking longer than expected - possible network issues");
         setAuthError("Connection issue. Please check your internet and try again.");
         setSigningIn(false);
-      }, 10000); // 10 seconds timeout
+      }, 15000); // Increased timeout to 15 seconds
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -49,8 +49,8 @@ export function useSignIn() {
         
         // Better error message for invalid credentials
         if (error.message.includes("Invalid login credentials")) {
-          setAuthError("Invalid login credentials. Please check your email and password.");
-        } else if (error.message.includes("Load failed")) {
+          setAuthError("Invalid email or password. Please check your credentials and try again.");
+        } else if (error.message.includes("Load failed") || error.message.includes("fetch failed")) {
           setAuthError("Connection error. Please check your internet and try again.");
         } else {
           setAuthError(error.message);
@@ -145,11 +145,13 @@ export function useSignIn() {
       const timeoutId = setTimeout(() => {
         setAuthError("Request is taking longer than expected. Please try again.");
         setSigningIn(false);
-      }, 10000);
+      }, 15000); // Increased timeout to 15 seconds
       
       // Use absolute URL for reset password to ensure correct redirect
-      const resetRedirectUrl = new URL("/reset-password", window.location.origin).toString();
+      const siteUrl = window.location.origin;
+      const resetRedirectUrl = new URL("/reset-password", siteUrl).toString();
       console.log("Using reset redirect URL:", resetRedirectUrl);
+      console.log("Site URL:", siteUrl);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: resetRedirectUrl,
@@ -160,7 +162,7 @@ export function useSignIn() {
       if (error) {
         console.error("Password reset error:", error);
         
-        if (error.message.includes("Load failed")) {
+        if (error.message.includes("Load failed") || error.message.includes("fetch failed")) {
           setAuthError("Connection error. Please check your internet connection and try again.");
         } else {
           setAuthError(error.message);
@@ -177,7 +179,7 @@ export function useSignIn() {
       
       toast({
         title: "Password reset email sent",
-        description: "Check your email for a link to reset your password. The link is valid for 10 minutes.",
+        description: "Check your email for a link to reset your password. The link is valid for 1 hour.",
       });
       setSigningIn(false);
       return true;

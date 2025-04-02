@@ -62,7 +62,7 @@ export const initializeAuth = async () => {
       auth.setNetworkError(true);
       auth.setLoading(false);
       auth.setInitialized(true);
-    }, 10000); // 10 seconds timeout
+    }, 15000); // Increased timeout to 15 seconds
     
     // First get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -74,7 +74,8 @@ export const initializeAuth = async () => {
       console.error('Error getting session:', sessionError);
       
       // Check if it's a network error
-      if (sessionError.message?.includes('Load failed') || sessionError.message?.includes('fetch failed')) {
+      if (sessionError.message?.includes('Load failed') || sessionError.message?.includes('fetch failed') || 
+          sessionError.message?.includes('Failed to fetch') || sessionError.message?.includes('Network Error')) {
         auth.setNetworkError(true);
       }
       
@@ -100,7 +101,7 @@ export const initializeAuth = async () => {
         // Set a timeout for profile fetch
         const profileTimeoutId = setTimeout(() => {
           console.log('Profile fetch is taking longer than expected');
-        }, 5000);
+        }, 8000);
         
         const { data: profile, error: profileError } = await profilePromise;
         clearTimeout(profileTimeoutId);
@@ -125,7 +126,8 @@ export const initializeAuth = async () => {
     
     // Check if it's a network error
     if (error instanceof Error && 
-        (error.message.includes('Load failed') || error.message.includes('fetch failed'))) {
+        (error.message.includes('Load failed') || error.message.includes('fetch failed') ||
+         error.message.includes('Failed to fetch') || error.message.includes('Network Error'))) {
       auth.setNetworkError(true);
     }
     
@@ -185,13 +187,30 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
   try {
     // Try to make a minimal request to Supabase
     const startTime = Date.now();
+    
+    // First try to fetch from a reliable service
+    try {
+      const response = await fetch('https://www.google.com/generate_204', { 
+        method: 'HEAD',
+        mode: 'no-cors',
+        cache: 'no-cache',
+        credentials: 'omit',
+        timeout: 5000
+      });
+      console.log('Network ping time (external):', Date.now() - startTime, 'ms');
+      return true;
+    } catch (e) {
+      console.log('External connectivity check failed, trying Supabase');
+    }
+    
+    // Fallback to Supabase
     await supabase.auth.getSession();
     const endTime = Date.now();
     
-    console.log(`Network ping time: ${endTime - startTime}ms`);
+    console.log(`Network ping time (Supabase): ${endTime - startTime}ms`);
     
     // If the request takes too long, consider it a network issue
-    if (endTime - startTime > 5000) {
+    if (endTime - startTime > 7000) {
       console.warn('Network connection is very slow');
       return false;
     }
