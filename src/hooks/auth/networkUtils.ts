@@ -9,6 +9,9 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
+    // Define startTime at the beginning so it's available throughout the function
+    const startTime = Date.now();
+    
     try {
       const response = await fetch('https://www.google.com/generate_204', { 
         method: 'HEAD',
@@ -27,7 +30,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     }
     
     // Fallback to Supabase ping
-    const startTime = Date.now();
+    // Use the startTime already defined above
     const { supabase } = await import('@/integrations/supabase/client');
     
     // Just ping the service with a simple health check instead of auth
