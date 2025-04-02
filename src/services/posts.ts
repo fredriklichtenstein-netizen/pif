@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import type { CreatePostInput } from "@/types/post";
+import type { CreatePostInput, Post, parseCoordinatesFromDB } from "@/types/post";
 
 /**
  * Add a new post to the database
@@ -22,7 +22,7 @@ export const addPost = async (postData: CreatePostInput) => {
 /**
  * Get all posts from the database
  */
-export const getPosts = async () => {
+export const getPosts = async (): Promise<Post[]> => {
   const { data, error } = await supabase
     .from('items')
     .select('*, profiles(first_name, last_name, avatar_url)')
@@ -32,7 +32,28 @@ export const getPosts = async () => {
     throw error;
   }
 
-  return data || [];
+  // Transform data to match the Post type
+  return (data || []).map(item => ({
+    id: item.id.toString(),
+    title: item.title,
+    description: item.description || '',
+    category: item.category || '',
+    condition: item.condition || '',
+    measurements: item.measurements || {},
+    images: item.images || [],
+    location: item.location || '',
+    coordinates: item.coordinates,
+    postedBy: {
+      id: item.user_id,
+      name: item.profiles ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() : 'Unknown',
+      avatar: item.profiles?.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg'
+    },
+    createdAt: item.created_at || '',
+    status: item.status || '',
+    likesCount: 0,
+    interestsCount: 0, 
+    commentsCount: 0
+  }));
 };
 
 /**
