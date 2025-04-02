@@ -14,7 +14,7 @@ export function useAuth() {
   const { session, isLoading: authStateLoading } = useGlobalAuth();
   const { handleSignUp, loading: signUpLoading } = useSignUp();
   const { handleSignIn, handlePasswordReset, loading: signInLoading, error: signInError } = useSignIn();
-  const { networkError, clearNetworkError } = useNetworkMonitor();
+  const { networkError, clearNetworkError, connectionStatus } = useNetworkMonitor();
 
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
     console.log("Auth initiated with:", { email, isSignUp });
@@ -51,9 +51,9 @@ export function useAuth() {
 
   const loading = authStateLoading || signUpLoading || signInLoading;
   
-  // Use signInError as the primary error to display
-  // Only use networkError if there's no specific auth error
-  const error = signInError || networkError;
+  // CRITICAL FIX: Only use networkError if there's no specific auth error AND we have a confirmed network issue
+  // This ensures specific auth errors (like wrong password) take precedence over generic network errors
+  const error = signInError || (connectionStatus === false ? networkError : null);
   
   console.log("Auth hook state:", { 
     loading, 
@@ -62,7 +62,10 @@ export function useAuth() {
     signUpLoading, 
     signInLoading, 
     hasSession: !!session,
-    error
+    error,
+    networkStatus: connectionStatus,
+    signInError,
+    networkError
   });
 
   return {

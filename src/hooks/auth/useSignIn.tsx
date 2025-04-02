@@ -51,7 +51,8 @@ export function useSignIn() {
         }
         
         // Check if it's specifically an invalid credentials error before 
-        // setting the error message
+        // setting the error message - this is a CRITICAL check to ensure
+        // auth errors aren't mistaken for network errors
         if (error.message.includes("Invalid login credentials")) {
           setAuthError("Invalid email or password. Please check your credentials and try again.");
           toast({
@@ -68,10 +69,11 @@ export function useSignIn() {
           });
         } else {
           // Use the error message utility for other errors
-          setAuthError(getAuthErrorMessage(error));
+          const errorMsg = getAuthErrorMessage(error);
+          setAuthError(errorMsg);
           toast({
             title: "Authentication failed",
-            description: getAuthErrorMessage(error),
+            description: errorMsg,
             variant: "destructive",
           });
         }

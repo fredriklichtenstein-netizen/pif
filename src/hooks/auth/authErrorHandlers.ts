@@ -22,6 +22,6 @@ export function isNetworkError(error: any): boolean {
     error.message.includes("Failed to fetch") ||
     error.message.includes("Network Error") ||
     error.message.includes("timeout") ||
-    error.message.includes("connection")?.toLowerCase()
+    error.message.toLowerCase().includes("connection")
   );
 }
