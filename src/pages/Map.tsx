@@ -1,31 +1,42 @@
-
-import { useQuery } from "@tanstack/react-query";
-import { getPosts } from "./Index";
+import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
-import { supabase } from "@/integrations/supabase/client";
+import { getPosts } from "@/services/posts";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/toaster";
 import { useMapbox } from "@/hooks/useMapbox";
 import { AlertCircle } from "lucide-react";
 
-const MapView = () => {
+export default function Map() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = searchParams.get("location");
   const { mapToken, isLoading: isTokenLoading, error: tokenError } = useMapbox();
+  const toast = useToast();
 
-  const { data: posts, isLoading: isLoadingPosts, error: postsError } = useQuery({
-    queryKey: ["posts"],
-    queryFn: getPosts,
+  const { data: posts = [], isLoading, error } = useQuery({
+    queryKey: ['map-posts'],
+    queryFn: getPosts
   });
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error loading items",
+        description: "Could not load items. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const handlePostClick = (postId: string) => {
     navigate(`/?post=${postId}`);
   };
 
-  const isLoading = isTokenLoading || isLoadingPosts;
-  const error = tokenError || postsError;
+  const isLoading = isTokenLoading || isLoading;
+  const error = tokenError || error;
 
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
@@ -44,7 +55,7 @@ const MapView = () => {
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-gray-600">Loading map...</p>
               {isTokenLoading && <p className="text-xs text-gray-400 mt-2">Retrieving map credentials...</p>}
-              {isLoadingPosts && <p className="text-xs text-gray-400 mt-2">Loading location data...</p>}
+              {isLoading && <p className="text-xs text-gray-400 mt-2">Loading location data...</p>}
             </div>
           </div>
         ) : (
@@ -58,6 +69,4 @@ const MapView = () => {
       <Toaster />
     </div>
   );
-};
-
-export default MapView;
+}

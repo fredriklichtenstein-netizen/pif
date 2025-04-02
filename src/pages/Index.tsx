@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ItemCard } from "@/components/ItemCard";
 import { useToast } from "@/hooks/use-toast";
@@ -10,37 +11,55 @@ export default function Index() {
   // Placeholder items data
   const items = [
     {
-      id: 1,
+      id: "1",
       title: "Vintage Chair",
       description: "A beautiful vintage chair in great condition.",
       image: "https://images.unsplash.com/photo-1549187774-b4e9b0445b41?q=80&w=2574&auto=format&fit=crop",
+      images: ["https://images.unsplash.com/photo-1549187774-b4e9b0445b41?q=80&w=2574&auto=format&fit=crop"],
       location: "Stockholm",
-      distance: "2.3 km",
-      user: {
+      coordinates: {
+        lat: 59.334591,
+        lng: 18.063240
+      },
+      category: "furniture",
+      condition: "good",
+      postedBy: {
         name: "Anna L",
         avatar: "https://randomuser.me/api/portraits/women/44.jpg"
       }
     },
     {
-      id: 2,
+      id: "2",
       title: "Coffee Table",
       description: "Wooden coffee table, some minor scratches but sturdy.",
       image: "https://images.unsplash.com/photo-1565191999001-c2a4e5a71b7a?q=80&w=2574&auto=format&fit=crop",
+      images: ["https://images.unsplash.com/photo-1565191999001-c2a4e5a71b7a?q=80&w=2574&auto=format&fit=crop"],
       location: "Uppsala",
-      distance: "5.1 km",
-      user: {
+      coordinates: {
+        lat: 59.858562,
+        lng: 17.638927
+      },
+      category: "furniture",
+      condition: "used",
+      postedBy: {
         name: "Johan K",
         avatar: "https://randomuser.me/api/portraits/men/32.jpg"
       }
     },
     {
-      id: 3,
+      id: "3",
       title: "Bookshelf",
       description: "IKEA bookshelf, 3 years old but in good condition.",
       image: "https://images.unsplash.com/photo-1588279102920-d50c358b3618?q=80&w=2574&auto=format&fit=crop",
+      images: ["https://images.unsplash.com/photo-1588279102920-d50c358b3618?q=80&w=2574&auto=format&fit=crop"],
       location: "Stockholm",
-      distance: "1.8 km",
-      user: {
+      coordinates: {
+        lat: 59.329323,
+        lng: 18.068581
+      },
+      category: "furniture",
+      condition: "good",
+      postedBy: {
         name: "Maria S",
         avatar: "https://randomuser.me/api/portraits/women/22.jpg"
       }
@@ -50,7 +69,7 @@ export default function Index() {
   const filteredItems = items.filter(item => {
     if (filter === "all") return true;
     // Add other filter logic here
-    return true;
+    return item.category === filter;
   });
 
   return (
@@ -102,7 +121,16 @@ export default function Index() {
         {filteredItems.map(item => (
           <ItemCard 
             key={item.id}
-            item={item}
+            id={item.id}
+            title={item.title}
+            description={item.description}
+            image={item.image}
+            images={item.images}
+            location={item.location}
+            coordinates={item.coordinates}
+            category={item.category}
+            condition={item.condition}
+            postedBy={item.postedBy}
             onShare={() => {
               toast({
                 title: "Shared!",

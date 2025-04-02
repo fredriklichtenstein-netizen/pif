@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CreatePostInput } from "@/types/post";
-import { addPost } from "@/pages/Index";
+import { addPost } from "@/services/posts";
 import { supabase } from "@/integrations/supabase/client";
 import { usePostLocation } from "./post/usePostLocation";
 import { useAuth } from "@/hooks/useAuth";
