@@ -19,8 +19,10 @@ export function useSignIn() {
       setSigningIn(true);
       setAuthError(null);
       
+      let timeoutId: NodeJS.Timeout | null = null;
+      
       // Use a shorter timeout for sign in - 10 seconds is sufficient
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         console.log("Sign in is taking longer than expected - possible network issues");
         // Don't automatically set error or stop signin process yet,
         // just log the warning
@@ -32,7 +34,11 @@ export function useSignIn() {
       });
 
       // Clear the timeout as we got a response
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      
       console.log("Sign in response:", { data: data ? "data received" : "no data", error });
 
       if (error) {
@@ -110,6 +116,9 @@ export function useSignIn() {
 
   const handleSuccessfulSignIn = async (userId: string) => {
     try {
+      // Clear any previous error state
+      setAuthError(null);
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('onboarding_completed')

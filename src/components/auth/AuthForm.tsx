@@ -35,6 +35,7 @@ export function AuthForm({
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [requestTimeout, setRequestTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [timeoutWarning, setTimeoutWarning] = useState<string | null>(null);
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
@@ -44,6 +45,7 @@ export function AuthForm({
     setFormError("");
     setSubmitError("");
     setSubmitting(false);
+    setTimeoutWarning(null);
     // Clear any existing timeouts
     if (requestTimeout) {
       clearTimeout(requestTimeout);
@@ -56,6 +58,8 @@ export function AuthForm({
     if (error) {
       setSubmitError(error);
       setSubmitting(false);
+      // Clear timeout warning when we have a real error
+      setTimeoutWarning(null);
     }
   }, [error]);
 
@@ -75,6 +79,7 @@ export function AuthForm({
     console.log("Auth form submitted", { email, password, isSignUp });
     setSubmitError("");
     setSubmitting(true);
+    setTimeoutWarning(null);
     
     const validation = validateAuthForm(email, password);
     if (!validation.isValid) {
@@ -87,7 +92,7 @@ export function AuthForm({
     // Set a local timeout to detect if the request is taking too long
     const timeout = setTimeout(() => {
       console.log("Request is taking longer than expected");
-      setSubmitError("Request is taking longer than expected. Network may be slow.");
+      setTimeoutWarning("Request is taking longer than expected. Network may be slow.");
       // Don't set submitting to false here to prevent multiple submissions
     }, 5000);
     
@@ -99,8 +104,11 @@ export function AuthForm({
         ? await onSubmit(email, password, phone, countryCode)
         : await onSubmit(email, password);
       
+      // Clear the timeout and its warning if we got a result
       clearTimeout(timeout);
       setRequestTimeout(null);
+      setTimeoutWarning(null);
+      
       console.log("Authentication result:", result);
       
       if (result === false) {
@@ -110,6 +118,7 @@ export function AuthForm({
     } catch (error: any) {
       clearTimeout(timeout);
       setRequestTimeout(null);
+      setTimeoutWarning(null);
       console.error("Auth form submission error:", error);
       setSubmitError(error.message || "Authentication failed. Please try again.");
       setSubmitting(false);
@@ -131,6 +140,9 @@ export function AuthForm({
   // Combined loading state - either from parent or local submitting state
   const isLoading = loading || submitting;
 
+  // Display both errors or the timeout warning, but errors take priority
+  const displayError = formError || submitError || timeoutWarning;
+
   return (
     <div className="max-w-md w-full space-y-8">
       <div>
@@ -144,12 +156,12 @@ export function AuthForm({
         </p>
       </div>
       
-      {(formError || submitError) && (
-        <Alert variant="destructive">
+      {displayError && (
+        <Alert variant={timeoutWarning ? "default" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{timeoutWarning ? "Notice" : "Error"}</AlertTitle>
           <AlertDescription>
-            {formError || submitError}
+            {displayError}
           </AlertDescription>
         </Alert>
       )}

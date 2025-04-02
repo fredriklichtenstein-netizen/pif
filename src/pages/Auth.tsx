@@ -57,9 +57,9 @@ export default function Auth() {
     window.location.reload();
   };
 
-  // Only show network alert when we're certain there's a network issue
+  // Only show network alert when we're absolutely certain there's a genuine network issue
   // and there isn't a more specific auth error to display
-  const showNetworkAlert = (!error && !connectionStatus) || (!error && networkError);
+  const showNetworkAlert = (!error && !connectionStatus);
 
   console.log("Auth page rendered with state:", { loading, isSignUp, error, networkError, connectionStatus, showNetworkAlert });
 
