@@ -1,4 +1,3 @@
-
 import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +23,8 @@ export function MainNav() {
             setAvatarUrl(user.user_metadata.avatar_url);
           } else {
             // We need to fetch from profiles table
-            const { data: profileData } = await fetch('/api/profile');
+            const response = await fetch('/api/profile');
+            const profileData = await response.json();
             if (profileData?.avatar_url) {
               setAvatarUrl(profileData.avatar_url);
             }
