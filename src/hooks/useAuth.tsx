@@ -1,47 +1,26 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSignUp } from "./auth/useSignUp";
 import { useSignIn } from "./auth/useSignIn";
 import { useGlobalAuth } from "./useGlobalAuth";
+import { useAuthModeToggle } from "./auth/useAuthModeToggle";
+import { useNetworkMonitor } from "./auth/useNetworkMonitor";
 
+/**
+ * Main authentication hook that combines various authentication functionality
+ */
 export function useAuth() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const { isSignUp, toggleMode } = useAuthModeToggle();
   const { session, isLoading: authStateLoading } = useGlobalAuth();
   const { handleSignUp, loading: signUpLoading } = useSignUp();
   const { handleSignIn, handlePasswordReset, loading: signInLoading, error: signInError } = useSignIn();
-  const [networkError, setNetworkError] = useState<string | null>(null);
-
-  // Reset network error on component mount
-  useEffect(() => {
-    setNetworkError(null);
-  }, []);
-
-  // Monitor for network issues
-  useEffect(() => {
-    const handleOnline = () => {
-      console.log("Network connection restored");
-      setNetworkError(null);
-    };
-
-    const handleOffline = () => {
-      console.log("Network connection lost");
-      setNetworkError("Network connection lost. Please check your internet connection.");
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  const { networkError, clearNetworkError } = useNetworkMonitor();
 
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
     console.log("Auth initiated with:", { email, isSignUp });
     
     // Clear network error first
-    setNetworkError(null);
+    clearNetworkError();
     
     try {
       if (isSignUp) {
@@ -53,9 +32,6 @@ export function useAuth() {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      if (error.message?.includes('Load failed') || error.message?.includes('fetch failed')) {
-        setNetworkError("Network error. Please check your internet connection and try again.");
-      }
       return false;
     }
   };
@@ -63,22 +39,14 @@ export function useAuth() {
   const handleResetPassword = async (email: string) => {
     console.log("Password reset requested for:", email);
     // Clear network error first
-    setNetworkError(null);
+    clearNetworkError();
     
     try {
       return await handlePasswordReset(email);
     } catch (error: any) {
       console.error('Password reset error:', error);
-      if (error.message?.includes('Load failed') || error.message?.includes('fetch failed')) {
-        setNetworkError("Network error. Please check your internet connection and try again.");
-      }
       return false;
     }
-  };
-
-  const toggleMode = () => {
-    console.log("Toggling auth mode from", isSignUp ? "signup" : "signin", "to", !isSignUp ? "signup" : "signin");
-    setIsSignUp(!isSignUp);
   };
 
   const loading = authStateLoading || signUpLoading || signInLoading;
