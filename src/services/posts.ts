@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import type { CreatePostInput, Post, parseCoordinatesFromDB } from "@/types/post";
+import type { CreatePostInput, Post } from "@/types/post";
 
 /**
  * Add a new post to the database
@@ -25,7 +25,7 @@ export const addPost = async (postData: CreatePostInput) => {
 export const getPosts = async (): Promise<Post[]> => {
   const { data, error } = await supabase
     .from('items')
-    .select('*, profiles(first_name, last_name, avatar_url)')
+    .select('*, profiles:user_id(first_name, last_name, avatar_url)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -39,7 +39,9 @@ export const getPosts = async (): Promise<Post[]> => {
     description: item.description || '',
     category: item.category || '',
     condition: item.condition || '',
-    measurements: item.measurements || {},
+    measurements: (typeof item.measurements === 'object' && item.measurements !== null) 
+      ? item.measurements as { [key: string]: string }
+      : {},
     images: item.images || [],
     location: item.location || '',
     coordinates: item.coordinates,
