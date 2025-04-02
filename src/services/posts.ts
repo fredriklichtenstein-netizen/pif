@@ -7,7 +7,7 @@ import type { CreatePostInput } from "@/types/post";
  */
 export const addPost = async (postData: CreatePostInput) => {
   const { data, error } = await supabase
-    .from('posts')
+    .from('items')
     .insert(postData)
     .select()
     .single();
@@ -24,7 +24,7 @@ export const addPost = async (postData: CreatePostInput) => {
  */
 export const getPosts = async () => {
   const { data, error } = await supabase
-    .from('posts')
+    .from('items')
     .select('*, profiles(first_name, last_name, avatar_url)')
     .order('created_at', { ascending: false });
 

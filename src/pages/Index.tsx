@@ -131,12 +131,6 @@ export default function Index() {
             category={item.category}
             condition={item.condition}
             postedBy={item.postedBy}
-            onShare={() => {
-              toast({
-                title: "Shared!",
-                description: "Item has been shared with your contacts."
-              });
-            }}
           />
         ))}
       </div>
