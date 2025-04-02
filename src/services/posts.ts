@@ -25,7 +25,7 @@ export const addPost = async (postData: CreatePostInput) => {
 export const getPosts = async (): Promise<Post[]> => {
   const { data, error } = await supabase
     .from('items')
-    .select('*, profiles:user_id(first_name, last_name, avatar_url)')
+    .select('*, profiles!items_user_id_fkey(first_name, last_name, avatar_url)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -44,7 +44,7 @@ export const getPosts = async (): Promise<Post[]> => {
       : {},
     images: item.images || [],
     location: item.location || '',
-    coordinates: item.coordinates,
+    coordinates: item.coordinates ? String(item.coordinates) : null,
     postedBy: {
       id: item.user_id,
       name: item.profiles ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() : 'Unknown',
