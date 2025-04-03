@@ -18,7 +18,13 @@ const updateFaviconLinks = () => {
   links.forEach(link => {
     const href = link.getAttribute('href');
     if (href && !href.includes('?v=')) {
-      link.setAttribute('href', `${href}?v=${Date.now()}`);
+      try {
+        // Make sure we're using encodeURI to handle any special characters
+        const encodedHref = encodeURI(href);
+        link.setAttribute('href', `${encodedHref}?v=${Date.now()}`);
+      } catch (error) {
+        console.error("Error updating favicon link:", error);
+      }
     }
   });
 };
