@@ -1,9 +1,17 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileFormData } from "./types";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+
+// Add a cache mechanism for profile data with a 5-minute TTL
+const profileCache = new Map<string, {
+  data: ProfileFormData;
+  timestamp: number;
+  avatarUrl: string | null;
+}>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export const useProfileFetch = () => {
   const { toast } = useToast();
@@ -20,6 +28,7 @@ export const useProfileFetch = () => {
   });
   const [initialFormData, setInitialFormData] = useState({ ...formData });
   const [error, setError] = useState<Error | null>(null);
+  const abortController = useRef<AbortController | null>(null);
 
   const fetchProfile = async () => {
     // Don't attempt to fetch if auth is still loading or user is not authenticated
@@ -30,17 +39,45 @@ export const useProfileFetch = () => {
       return;
     }
 
+    // Check cache first
+    const cachedProfile = profileCache.get(user.id);
+    const now = Date.now();
+    if (cachedProfile && (now - cachedProfile.timestamp) < CACHE_TTL) {
+      console.log("Using cached profile data");
+      setFormData(cachedProfile.data);
+      setInitialFormData(cachedProfile.data);
+      setAvatarUrl(cachedProfile.avatarUrl);
+      return;
+    }
+
+    // Abort any in-flight request
+    if (abortController.current) {
+      abortController.current.abort();
+    }
+    abortController.current = new AbortController();
+
     setLoading(true);
     setError(null);
     
     try {
       console.log("Fetching profile for user:", user.id);
       
-      const { data: profile, error: profileError } = await supabase
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Profile fetch timeout")), 8000);
+      });
+      
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
+        .abortSignal(abortController.current.signal)
         .single();
+        
+      // Race between fetch and timeout
+      const { data: profile, error: profileError } = await Promise.race([
+        fetchPromise,
+        timeoutPromise.then(() => { throw new Error("Profile fetch timeout"); })
+      ]) as any;
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
@@ -48,7 +85,7 @@ export const useProfileFetch = () => {
       }
 
       if (profile) {
-        console.log("Profile data retrieved:", profile);
+        console.log("Profile data retrieved");
         
         // Properly parse date of birth if it exists
         let dateOfBirth: Date | undefined = undefined;
@@ -70,13 +107,26 @@ export const useProfileFetch = () => {
           dateOfBirth: dateOfBirth,
         };
         
+        // Update cache
+        profileCache.set(user.id, {
+          data: newFormData,
+          timestamp: now,
+          avatarUrl: profile.avatar_url
+        });
+        
         setFormData(newFormData);
         setInitialFormData(newFormData);
         setAvatarUrl(profile.avatar_url);
       }
     } catch (error: any) {
+      // Don't show error if request was aborted
+      if (error.name === 'AbortError') {
+        console.log('Profile fetch aborted');
+        return;
+      }
+      
       console.error("Error fetching profile:", error);
-      setError(error);
+      setError(error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error",
         description: "Failed to load profile: " + (error.message || "Unknown error"),
@@ -87,10 +137,26 @@ export const useProfileFetch = () => {
     }
   };
 
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (abortController.current) {
+        abortController.current.abort();
+      }
+    };
+  }, []);
+
   // Fetch profile on mount or when user changes
   useEffect(() => {
     fetchProfile();
   }, [user, authLoading]);
+  
+  // Clear cache when profile is updated
+  const clearCache = () => {
+    if (user) {
+      profileCache.delete(user.id);
+    }
+  };
 
   return {
     loading,
@@ -100,6 +166,7 @@ export const useProfileFetch = () => {
     error,
     setFormData,
     setInitialFormData,
-    fetchProfile
+    fetchProfile,
+    clearCache
   };
 };

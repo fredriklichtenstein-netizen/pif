@@ -10,7 +10,8 @@ export const useProfileData = () => {
     error,
     setFormData,
     setInitialFormData,
-    fetchProfile
+    fetchProfile,
+    clearCache
   } = useProfileFetch();
 
   return {
@@ -21,6 +22,7 @@ export const useProfileData = () => {
     error,
     setFormData,
     setInitialFormData,
-    fetchProfile
+    fetchProfile,
+    clearCache
   };
 };

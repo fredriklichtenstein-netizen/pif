@@ -6,14 +6,20 @@ import { ProfileFormData } from "./types";
 
 export const useProfileSubmit = (
   formData: ProfileFormData,
-  setInitialFormData: (data: ProfileFormData) => void
+  setInitialFormData: (data: ProfileFormData) => void,
+  clearCache?: () => void
 ) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<Error | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSubmitError(null);
+    
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
 
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -23,7 +29,7 @@ export const useProfileSubmit = (
 
       // Format phone to remove leading zero
       let formattedPhone = formData.phone;
-      if (formattedPhone.startsWith('0')) {
+      if (formattedPhone && formattedPhone.startsWith('0')) {
         formattedPhone = formattedPhone.substring(1);
       }
 
@@ -31,8 +37,6 @@ export const useProfileSubmit = (
       const formattedDateOfBirth = formData.dateOfBirth 
         ? formData.dateOfBirth.toISOString().split('T')[0] 
         : null;
-
-      console.log("Saving date of birth:", formattedDateOfBirth);
 
       const { error: updateError } = await supabase
         .from('profiles')
@@ -45,15 +49,23 @@ export const useProfileSubmit = (
           date_of_birth: formattedDateOfBirth,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .abortSignal(abortController.signal);
 
       if (updateError) throw updateError;
 
       // Update the initial form data to reflect the current state
-      setInitialFormData({ 
+      const updatedFormData = { 
         ...formData,
         phone: formattedPhone
-      });
+      };
+      
+      setInitialFormData(updatedFormData);
+      
+      // Clear the cache if function is provided
+      if (clearCache) {
+        clearCache();
+      }
       
       toast({
         title: "Success",
@@ -61,18 +73,32 @@ export const useProfileSubmit = (
       });
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      
+      // Handle timeout errors nicely
+      if (error.name === 'AbortError') {
+        setSubmitError(new Error("The request timed out. Please try again."));
+        toast({
+          title: "Error",
+          description: "The request timed out. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        setSubmitError(error);
+        toast({
+          title: "Error",
+          description: error.message || "An error occurred while updating your profile",
+          variant: "destructive",
+        });
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
 
   return {
     loading,
+    error: submitError,
     handleSubmit
   };
 };

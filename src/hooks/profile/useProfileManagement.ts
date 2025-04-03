@@ -15,12 +15,14 @@ export const useProfileManagement = () => {
     avatarUrl,
     error,
     setFormData,
-    setInitialFormData
+    setInitialFormData,
+    clearCache
   } = useProfileData();
 
-  const { loading: submitLoading, handleSubmit } = useProfileSubmit(
+  const { loading: submitLoading, error: submitError, handleSubmit } = useProfileSubmit(
     formData,
-    setInitialFormData
+    setInitialFormData,
+    clearCache
   );
 
   const {
@@ -32,12 +34,15 @@ export const useProfileManagement = () => {
   // Combine loading states
   const loading = dataLoading || submitLoading || avatarLoading;
 
+  // Combine errors
+  const combinedError = error || submitError || null;
+
   return {
     loading,
     formData,
     initialFormData,
     avatarUrl,
-    error,
+    error: combinedError,
     setFormData,
     setInitialFormData,
     setAvatar,

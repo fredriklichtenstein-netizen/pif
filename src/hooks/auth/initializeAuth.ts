@@ -12,27 +12,38 @@ export const initializeAuth = async () => {
     auth.setError(null);
     auth.setNetworkError(false);
     
-    // Set a timeout to detect if the request is taking too long
+    // Set a more reasonable timeout
     const timeoutId = setTimeout(() => {
-      console.log('Auth initialization is taking longer than expected - possible network issues');
+      console.log('Auth initialization timed out - possible network issues');
       auth.setError(new Error('Connection issue. Please check your internet and try again.'));
       auth.setNetworkError(true);
       auth.setLoading(false);
       auth.setInitialized(true);
-    }, 15000); // Increased timeout to 15 seconds
+    }, 10000); // Reduced from 15000ms
     
-    // First get the current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Use Promise.race to enforce timeout
+    const sessionResult = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout getting session')), 8000)
+      )
+    ]);
     
     // Clear the timeout as we got a response
     clearTimeout(timeoutId);
+    
+    // Type assertion for the successful case
+    const { data: { session }, error: sessionError } = sessionResult as Awaited<ReturnType<typeof supabase.auth.getSession>>;
     
     if (sessionError) {
       console.error('Error getting session:', sessionError);
       
       // Check if it's a network error
-      if (sessionError.message?.includes('Load failed') || sessionError.message?.includes('fetch failed') || 
-          sessionError.message?.includes('Failed to fetch') || sessionError.message?.includes('Network Error')) {
+      if (sessionError.message?.includes('Load failed') || 
+          sessionError.message?.includes('fetch failed') || 
+          sessionError.message?.includes('Failed to fetch') || 
+          sessionError.message?.includes('Network Error') ||
+          sessionError.message?.includes('Timeout')) {
         auth.setNetworkError(true);
       }
       
@@ -48,31 +59,30 @@ export const initializeAuth = async () => {
       auth.setSession(session);
       
       try {
-        // Check if profile is completed
-        const profilePromise = supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .maybeSingle();
-          
-        // Set a timeout for profile fetch
-        const profileTimeoutId = setTimeout(() => {
-          console.log('Profile fetch is taking longer than expected');
-        }, 8000);
+        // Use a simpler query with timeout
+        const profilePromise = Promise.race([
+          supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .maybeSingle(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout fetching profile')), 5000)
+          )
+        ]);
         
-        const { data: profile, error: profileError } = await profilePromise;
-        clearTimeout(profileTimeoutId);
+        const { data: profile, error: profileError } = await profilePromise as any;
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
           auth.setError(profileError);
         } else {
-          console.log('Profile data:', profile);
           auth.setProfileCompleted(profile?.onboarding_completed ?? false);
         }
       } catch (error) {
         console.error('Error in profile check:', error);
-        auth.setError(error instanceof Error ? error : new Error('Unknown error during profile check'));
+        // Don't fail the whole auth process for profile check errors
+        auth.setProfileCompleted(false);
       }
     } else {
       console.log('No active session found');
@@ -83,8 +93,11 @@ export const initializeAuth = async () => {
     
     // Check if it's a network error
     if (error instanceof Error && 
-        (error.message.includes('Load failed') || error.message.includes('fetch failed') ||
-         error.message.includes('Failed to fetch') || error.message.includes('Network Error'))) {
+        (error.message.includes('Load failed') || 
+         error.message.includes('fetch failed') ||
+         error.message.includes('Failed to fetch') || 
+         error.message.includes('Network Error') ||
+         error.message.includes('Timeout'))) {
       auth.setNetworkError(true);
     }
     
@@ -98,7 +111,7 @@ export const initializeAuth = async () => {
   // Set up auth listener
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
+      console.log('Auth state changed:', event);
       
       if (event === 'SIGNED_OUT') {
         auth.clearAuth();
@@ -110,21 +123,17 @@ export const initializeAuth = async () => {
       
       if (session?.user) {
         try {
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', session.user.id)
             .maybeSingle();
           
-          if (profileError) {
-            console.error('Error fetching profile on auth change:', profileError);
-            auth.setError(profileError);
-          } else {
-            auth.setProfileCompleted(profile?.onboarding_completed ?? false);
-          }
+          auth.setProfileCompleted(profile?.onboarding_completed ?? false);
         } catch (error) {
           console.error('Error in profile check on auth change:', error);
-          auth.setError(error instanceof Error ? error : new Error('Unknown error during profile check'));
+          // Don't fail the auth process for profile issues
+          auth.setProfileCompleted(false);
         }
       } else {
         auth.setProfileCompleted(null);

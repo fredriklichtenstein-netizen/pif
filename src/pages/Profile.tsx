@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { useProfileManagement } from "@/hooks/profile/useProfileManagement";
 import { Settings, AlertCircle, Loader2 } from "lucide-react";
 import type { ProfileFormData } from "@/hooks/profile/useProfileManagement";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const Profile = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [navigationPath, setNavigationPath] = useState<string | null>(null);
   const { isLoading: authLoading, user } = useGlobalAuth();
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
   const {
     loading,
@@ -30,6 +31,23 @@ const Profile = () => {
   } = useProfileManagement();
 
   const isLoading = loading || authLoading;
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      timeoutId = setTimeout(() => {
+        if (isLoading) {
+          setLoadingTimedOut(true);
+        }
+      }, 5000);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isLoading]);
 
   useEffect(() => {
     const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
@@ -84,12 +102,57 @@ const Profile = () => {
     setFormData(newData);
   };
 
+  const handleRetry = () => {
+    window.location.reload();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto space-y-8 flex flex-col items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-gray-500">Loading your profile...</p>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48 mt-2" />
+            </div>
+            <Skeleton className="h-10 w-36" />
+          </div>
+          
+          <Card>
+            <CardContent className="p-8 flex justify-center">
+              <Skeleton className="h-24 w-24 rounded-full" />
+            </CardContent>
+          </Card>
+          
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <Skeleton className="h-4 w-32" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+            
+            <Skeleton className="h-10 w-full" />
+          </div>
+          
+          <div className="flex flex-col items-center mt-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <p className="text-gray-500">Loading your profile...</p>
+            
+            {loadingTimedOut && (
+              <div className="mt-4 text-center">
+                <p className="text-amber-600 mb-2">This is taking longer than usual.</p>
+                <Button variant="outline" size="sm" onClick={handleRetry}>
+                  Refresh page
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -103,7 +166,7 @@ const Profile = () => {
             <AlertCircle className="h-12 w-12 text-red-500" />
             <h1 className="text-xl font-semibold text-red-600">Error Loading Profile</h1>
             <p className="text-gray-600">{error.message || "An unexpected error occurred"}</p>
-            <Button onClick={() => window.location.reload()}>
+            <Button onClick={handleRetry}>
               Try Again
             </Button>
           </div>
