@@ -11,7 +11,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     let timeoutId: number | undefined;
     
     try {
-      timeoutId = window.setTimeout(() => controller.abort(), 3000); // Reduced from 5000ms
+      timeoutId = window.setTimeout(() => controller.abort(), 3000);
       
       const startTime = Date.now();
       
@@ -23,7 +23,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
         signal: controller.signal
       });
       
-      window.clearTimeout(timeoutId);
+      if (timeoutId) window.clearTimeout(timeoutId);
       return true;
     } catch (e) {
       // Fall through to Supabase check

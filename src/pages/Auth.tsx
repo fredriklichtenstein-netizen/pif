@@ -3,11 +3,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGlobalAuth, checkNetworkConnection } from "@/hooks/useGlobalAuth";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Import this function directly to avoid dynamic import issues
+import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
 
 export default function Auth() {
   const { loading, isSignUp, error, handleAuth, handleResetPassword, toggleMode } = useAuth();
@@ -18,16 +21,29 @@ export default function Auth() {
   
   // Check for network connection on mount and periodically
   useEffect(() => {
+    let isMounted = true;
+    
     const checkConnection = async () => {
-      const isConnected = await checkNetworkConnection();
-      setConnectionStatus(isConnected);
+      if (!isMounted) return;
       
-      if (!isConnected) {
-        toast({
-          title: "Connection issue",
-          description: "Please check your internet connection and try again.",
-          variant: "destructive",
-        });
+      try {
+        const isConnected = await checkNetworkConnection();
+        if (isMounted) {
+          setConnectionStatus(isConnected);
+          
+          if (!isConnected) {
+            toast({
+              title: "Connection issue",
+              description: "Please check your internet connection and try again.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking network connection:", error);
+        if (isMounted) {
+          setConnectionStatus(false);
+        }
       }
     };
     
@@ -37,7 +53,10 @@ export default function Auth() {
     // Check connection less frequently (60 seconds)
     const interval = setInterval(checkConnection, 60000);
     
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [toast]);
   
   // If user is already authenticated, redirect to the appropriate page
@@ -60,8 +79,6 @@ export default function Auth() {
   // Only show network alert when we're absolutely certain there's a genuine network issue
   // and there isn't a more specific auth error to display
   const showNetworkAlert = (!error && !connectionStatus);
-
-  console.log("Auth page rendered with state:", { loading, isSignUp, error, networkError, connectionStatus, showNetworkAlert });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
