@@ -1,4 +1,6 @@
 
+import { optimizeImageUrl } from "@/utils/imageProcessing";
+
 interface ItemImageProps {
   image: string;
   title: string;
@@ -10,12 +12,16 @@ export function ItemImage({ image, title }: ItemImageProps) {
     e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
   };
 
+  // Use optimized image URL
+  const optimizedImage = image ? optimizeImageUrl(image, 480) : "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+
   return (
     <img
-      src={image || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"}
+      src={optimizedImage}
       alt={title}
       className="w-full h-48 object-cover rounded-t-lg"
       onError={handleImageError}
+      loading="lazy"
     />
   );
 }

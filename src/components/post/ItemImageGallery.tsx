@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { optimizeImageUrl } from "@/utils/imageProcessing";
 
 interface ItemImageGalleryProps {
   images: string[];
@@ -10,6 +11,7 @@ interface ItemImageGalleryProps {
 
 export function ItemImageGallery({ images, title, category }: ItemImageGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([]);
   
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : [];
@@ -17,6 +19,16 @@ export function ItemImageGallery({ images, title, category }: ItemImageGalleryPr
   useEffect(() => {
     if (currentImageIndex >= allImages.length) {
       setCurrentImageIndex(0);
+    }
+    
+    // Initialize image loading states
+    setImagesLoaded(new Array(allImages.length).fill(false));
+    
+    // Preload next image
+    if (allImages.length > 1) {
+      const nextIndex = (currentImageIndex + 1) % allImages.length;
+      const img = new Image();
+      img.src = optimizeImageUrl(allImages[nextIndex], 800);
     }
   }, [allImages.length, currentImageIndex]);
   
@@ -30,6 +42,14 @@ export function ItemImageGallery({ images, title, category }: ItemImageGalleryPr
     setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
   };
 
+  const handleImageLoad = (index: number) => {
+    setImagesLoaded(prev => {
+      const newState = [...prev];
+      newState[index] = true;
+      return newState;
+    });
+  };
+
   if (allImages.length === 0) {
     return (
       <div className="w-full h-[240px] bg-gray-200 flex items-center justify-center">
@@ -38,12 +58,16 @@ export function ItemImageGallery({ images, title, category }: ItemImageGalleryPr
     );
   }
 
+  // Get optimized version of the current image
+  const currentImage = optimizeImageUrl(allImages[currentImageIndex], 800);
+
   return (
     <div className="relative">
       <img
-        src={allImages[currentImageIndex] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"}
+        src={currentImage}
         alt={title}
         className="w-full h-[240px] object-cover"
+        onLoad={() => handleImageLoad(currentImageIndex)}
         onError={(e) => {
           e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
         }}

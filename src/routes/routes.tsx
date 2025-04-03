@@ -1,46 +1,64 @@
 
 import { Navigate } from "react-router-dom";
-import Index from "@/pages/Index";
-import Map from "@/pages/Map";
-import Messages from "@/pages/Messages";
-import Post from "@/pages/Post";
-import Profile from "@/pages/Profile";
-import AccountSettings from "@/pages/AccountSettings";
-import Auth from "@/pages/Auth";
-import EmailConfirmation from "@/pages/EmailConfirmation";
-import ResetPassword from "@/pages/ResetPassword";
-import CreateProfile from "@/pages/CreateProfile";
-import NotFound from "@/pages/NotFound";
+import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 
+// Lazy load components
+const Index = lazy(() => import("@/pages/Index"));
+const Map = lazy(() => import("@/pages/Map"));
+const Messages = lazy(() => import("@/pages/Messages"));
+const Post = lazy(() => import("@/pages/Post"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
+const Auth = lazy(() => import("@/pages/Auth"));
+const EmailConfirmation = lazy(() => import("@/pages/EmailConfirmation"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const CreateProfile = lazy(() => import("@/pages/CreateProfile"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+
+// Wrap component with suspense
+const withSuspense = (Component: React.ComponentType) => (
+  <Suspense fallback={<LoadingFallback />}>
+    <Component />
+  </Suspense>
+);
+
 export const publicRoutes = [
-  { path: "/", element: <Index /> },
-  { path: "/map", element: <Map /> },
-  { path: "/auth", element: <Auth /> },
-  { path: "/email-confirmation", element: <EmailConfirmation /> },
-  { path: "/reset-password", element: <ResetPassword /> },
-  { path: "*", element: <NotFound /> },
+  { path: "/", element: withSuspense(Index) },
+  { path: "/map", element: withSuspense(Map) },
+  { path: "/auth", element: withSuspense(Auth) },
+  { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
+  { path: "/reset-password", element: withSuspense(ResetPassword) },
+  { path: "*", element: withSuspense(NotFound) },
 ];
 
 export const privateRoutes = [
   { 
     path: "/messages", 
-    element: <PrivateRoute><Messages /></PrivateRoute>
+    element: <PrivateRoute>{withSuspense(Messages)}</PrivateRoute>
   },
   { 
     path: "/post", 
-    element: <PrivateRoute><Post /></PrivateRoute>
+    element: <PrivateRoute>{withSuspense(Post)}</PrivateRoute>
   },
   { 
     path: "/profile", 
-    element: <PrivateRoute><Profile /></PrivateRoute>
+    element: <PrivateRoute>{withSuspense(Profile)}</PrivateRoute>
   },
   { 
     path: "/account-settings", 
-    element: <PrivateRoute><AccountSettings /></PrivateRoute>
+    element: <PrivateRoute>{withSuspense(AccountSettings)}</PrivateRoute>
   },
   { 
     path: "/create-profile", 
-    element: <PrivateRoute><CreateProfile /></PrivateRoute>
+    element: <PrivateRoute>{withSuspense(CreateProfile)}</PrivateRoute>
   },
 ];

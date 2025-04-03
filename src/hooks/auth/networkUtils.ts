@@ -8,11 +8,13 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
   try {
     // Use a faster, lighter endpoint for connectivity check
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced from 5000ms
-    
-    const startTime = Date.now();
+    let timeoutId: number | undefined;
     
     try {
+      timeoutId = window.setTimeout(() => controller.abort(), 3000); // Reduced from 5000ms
+      
+      const startTime = Date.now();
+      
       // Try a faster HEAD request to a lightweight endpoint
       const response = await fetch('https://www.gstatic.com/generate_204', { 
         method: 'HEAD',
@@ -21,10 +23,11 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
         signal: controller.signal
       });
       
-      clearTimeout(timeoutId);
+      window.clearTimeout(timeoutId);
       return true;
     } catch (e) {
       // Fall through to Supabase check
+      if (timeoutId) window.clearTimeout(timeoutId);
     }
     
     // Use a simplified Supabase ping that's faster
@@ -44,8 +47,5 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     return false;
-  } finally {
-    // Always clean up timers
-    if (timeoutId) clearTimeout(timeoutId);
   }
 };

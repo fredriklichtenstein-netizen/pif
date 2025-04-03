@@ -8,6 +8,7 @@ import {
   CarouselPrevious
 } from "@/components/ui/carousel";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { optimizeImageUrl } from "@/utils/imageProcessing";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -30,12 +31,15 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
 
   // Single image doesn't need a carousel
   if (allImages.length === 1) {
+    const optimizedImage = optimizeImageUrl(allImages[0], 600);
+    
     return (
       <div className="relative">
         <img
-          src={allImages[0]}
+          src={optimizedImage}
           alt={title}
           className="w-full h-[240px] object-cover"
+          loading="lazy"
           onError={(e) => {
             e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
           }}
@@ -56,29 +60,35 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     <div className="relative">
       <Carousel className="w-full">
         <CarouselContent>
-          {allImages.map((image, index) => (
-            <CarouselItem key={index}>
-              <div className="relative">
-                <img
-                  src={image}
-                  alt={`${title} - image ${index + 1}`}
-                  className="w-full h-[240px] object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
-                  }}
-                />
-                
-                {index === 0 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                    <div className="text-white">
-                      <h3 className="text-xl font-bold">{title}</h3>
-                      <div className="text-xs uppercase tracking-wider mt-1">{category}</div>
+          {allImages.map((image, index) => {
+            // Optimize each image
+            const optimizedImage = optimizeImageUrl(image, 600);
+            
+            return (
+              <CarouselItem key={index}>
+                <div className="relative">
+                  <img
+                    src={optimizedImage}
+                    alt={`${title} - image ${index + 1}`}
+                    className="w-full h-[240px] object-cover"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    onError={(e) => {
+                      e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+                    }}
+                  />
+                  
+                  {index === 0 && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
+                      <div className="text-white">
+                        <h3 className="text-xl font-bold">{title}</h3>
+                        <div className="text-xs uppercase tracking-wider mt-1">{category}</div>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </CarouselItem>
-          ))}
+                  )}
+                </div>
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
         
         <div className="absolute z-10 bottom-2 left-1/2 -translate-x-1/2 flex space-x-1">

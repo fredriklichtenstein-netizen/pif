@@ -65,7 +65,7 @@ export async function getCroppedImg(
             resolve(file);
           },
           'image/jpeg',
-          1
+          0.85 // Reduced quality for better performance
         );
       } catch (err) {
         console.error('Canvas toBlob error:', err);
@@ -77,3 +77,70 @@ export async function getCroppedImg(
     return null;
   }
 }
+
+// New image optimization functions
+export const optimizeImageUrl = (url: string, width: number = 600): string => {
+  // Return original URL if it's not a valid URL
+  if (!url || typeof url !== 'string') {
+    return url;
+  }
+  
+  try {
+    // Handle different image sources differently
+    if (url.includes('unsplash.com')) {
+      // For Unsplash, use their image API
+      const baseUrl = url.split('?')[0];
+      return `${baseUrl}?w=${width}&q=80&auto=format`;
+    } 
+    else if (url.includes('supabase.co') || url.includes('.supabase.')) {
+      // For Supabase Storage URLs
+      if (url.includes('?')) {
+        return `${url}&width=${width}&quality=80`;
+      } else {
+        return `${url}?width=${width}&quality=80`;
+      }
+    }
+    else if (url.includes('dicebear.com')) {
+      // DiceBear avatars already optimized
+      return url;
+    }
+    
+    // Default case - return original
+    return url;
+  } catch (error) {
+    console.warn('Failed to optimize image URL:', error);
+    return url;
+  }
+};
+
+// Progressive image loading utility
+export const loadImageProgressively = (
+  url: string,
+  onProgress?: (progress: number) => void
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    let loaded = false;
+    
+    image.onload = () => {
+      if (onProgress) onProgress(100);
+      loaded = true;
+      resolve(url);
+    };
+    
+    image.onerror = () => {
+      reject(new Error(`Failed to load image: ${url}`));
+    };
+    
+    // Set a timeout to detect slow loading
+    setTimeout(() => {
+      if (!loaded && onProgress) {
+        onProgress(50); // Indicate partial progress
+      }
+    }, 200);
+    
+    // Try with a cache buster to avoid stale cache
+    const cacheBuster = `${url}${url.includes('?') ? '&' : '?'}cache=${Date.now()}`;
+    image.src = cacheBuster;
+  });
+};
