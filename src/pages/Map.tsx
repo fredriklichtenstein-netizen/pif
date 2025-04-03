@@ -8,22 +8,26 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/toaster";
 import { useMapbox } from "@/hooks/useMapbox";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Map() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = searchParams.get("location");
-  const { mapToken, isLoading: isTokenLoading, error: tokenError } = useMapbox();
+  const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
   const { toast } = useToast();
 
-  const { data: posts = [], isLoading: isPostsLoading, error: postsError } = useQuery({
+  const { data: posts = [], isLoading: isPostsLoading, error: postsError, refetch: refetchPosts } = useQuery({
     queryKey: ['map-posts'],
-    queryFn: getPosts
+    queryFn: getPosts,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
 
   useEffect(() => {
     if (postsError) {
+      console.error("Error loading posts:", postsError);
       toast({
         title: "Error loading items",
         description: "Could not load items. Please try again later.",
@@ -35,6 +39,16 @@ export default function Map() {
   const handlePostClick = (postId: string) => {
     navigate(`/?post=${postId}`);
   };
+  
+  // Handle retry for both token and posts
+  const handleRetry = () => {
+    if (tokenError) {
+      retryFetchToken();
+    }
+    if (postsError) {
+      refetchPosts();
+    }
+  };
 
   // Combine loading states and errors
   const isLoading = isTokenLoading || isPostsLoading;
@@ -45,10 +59,19 @@ export default function Map() {
       <div className="h-[calc(100vh-170px)] rounded-lg overflow-hidden relative">
         {error ? (
           <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-            <div className="text-center p-6">
+            <div className="text-center p-6 max-w-md">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <p className="text-gray-700 mb-2">Failed to load map</p>
-              <p className="text-gray-500 text-sm">{error.message}</p>
+              <p className="text-gray-700 mb-2 text-lg font-medium">Failed to load map</p>
+              <p className="text-gray-500 text-sm mb-6">
+                {tokenError ? "Failed to send a request to the Edge Function" : error.message}
+              </p>
+              <Button 
+                onClick={handleRetry} 
+                className="flex items-center gap-2"
+                variant="default"
+              >
+                <RefreshCw className="h-4 w-4" /> Try again
+              </Button>
             </div>
           </div>
         ) : isLoading || !mapToken || !posts ? (

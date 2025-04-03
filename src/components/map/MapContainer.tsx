@@ -3,7 +3,7 @@ import type { Post } from "@/types/post";
 import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
 import { Button } from "@/components/ui/button";
-import { Locate, AlertCircle } from "lucide-react";
+import { Locate, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
 
@@ -14,7 +14,7 @@ interface MapContainerProps {
 }
 
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
-  const { mapContainer, map, isMapReady, error } = useMapInitialization(mapboxToken);
+  const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
 
@@ -44,8 +44,15 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
           <div className="text-center p-6">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-gray-700 mb-2">Error initializing map</p>
-            <p className="text-gray-500 text-sm">{error.message}</p>
+            <p className="text-gray-700 mb-2 font-medium">Error initializing map</p>
+            <p className="text-gray-500 text-sm mb-6">{error.message}</p>
+            <Button 
+              onClick={retryInitialization} 
+              className="flex items-center gap-2"
+              variant="default"
+            >
+              <RefreshCw className="h-4 w-4" /> Retry
+            </Button>
           </div>
         </div>
       )}
