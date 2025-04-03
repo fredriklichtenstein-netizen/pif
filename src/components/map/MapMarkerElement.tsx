@@ -1,3 +1,4 @@
+
 interface MapMarkerElementProps {
   onClick?: () => void;
   onMouseEnter?: () => void;
