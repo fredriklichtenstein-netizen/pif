@@ -31,13 +31,20 @@ export function InteractionCounts({
   getInterestedUsers
 }: InteractionCountsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   
   // Trigger interested users fetch when dialog opens
   useEffect(() => {
-    if (dialogOpen && getInterestedUsers) {
+    if (dialogOpen && getInterestedUsers && !hasAttemptedFetch) {
+      setHasAttemptedFetch(true);
       getInterestedUsers();
     }
-  }, [dialogOpen, getInterestedUsers]);
+    
+    // Reset hasAttemptedFetch when dialog closes
+    if (!dialogOpen) {
+      setHasAttemptedFetch(false);
+    }
+  }, [dialogOpen, getInterestedUsers, hasAttemptedFetch]);
   
   // Don't render if no counts to show
   if (likesCount === 0 && commentsCount === 0 && interestsCount === 0) {
@@ -62,7 +69,7 @@ export function InteractionCounts({
                 likers.map(user => (
                   <div key={user.id} className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={user.avatar} />
+                      <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <span className="text-sm">{user.name}</span>
@@ -98,6 +105,7 @@ export function InteractionCounts({
                 interested={interestedUsers} 
                 isLoading={isLoadingInterested}
                 error={interestedError} 
+                onRetry={getInterestedUsers}
               />
             </DialogContent>
           </Dialog>

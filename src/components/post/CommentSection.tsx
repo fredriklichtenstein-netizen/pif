@@ -39,17 +39,10 @@ export function CommentSection({
     isLoading: actionLoading
   } = useCommentActions(itemId, comments, setComments, currentUser);
 
-  // Add this debug log to check comments data
-  console.log("CommentSection rendered", { 
-    itemId, 
-    commentsCount: comments?.length, 
-    comments,
-    isLoading,
-    error 
-  });
-
   // Handle manual refresh with debouncing
   const handleRefresh = () => {
+    if (actionLoading) return; // Prevent multiple clicks
+    
     setErrorShown(true);
     setRefreshCount((prev) => prev + 1);
     refreshComments();
@@ -92,7 +85,7 @@ export function CommentSection({
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Comments Loading Error</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             <p>{error.message || "Failed to load comments"}</p>
             <Button 
