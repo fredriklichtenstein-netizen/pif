@@ -7,11 +7,13 @@ import { InteractionsList } from "./interactions/InteractionsList";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConversationHandler } from "./interactions/ConversationHandler";
+
 type User = {
   id: string;
   name: string;
   avatar?: string;
 };
+
 interface ItemInteractionsProps {
   id: string;
   postedBy: {
@@ -37,6 +39,7 @@ interface ItemInteractionsProps {
   onShare: () => void;
   onReport: () => void;
 }
+
 export function ItemInteractions({
   id,
   postedBy,
@@ -60,10 +63,14 @@ export function ItemInteractions({
   onReport
 }: ItemInteractionsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  return <div className="flex flex-col space-y-2">
+  
+  return (
+    <div className="flex flex-col space-y-2">
       {/* Counts row */}
-      {(likesCount > 0 || commentsCount > 0 || interestsCount > 0) && <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-2 border-b border-gray-200">
-          {likesCount > 0 && <Popover>
+      {(likesCount > 0 || commentsCount > 0 || interestsCount > 0) && (
+        <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-2 border-b border-gray-200">
+          {likesCount > 0 && (
+            <Popover>
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-1 hover:underline">
                   <div className="bg-primary w-5 h-5 rounded-full flex items-center justify-center">
@@ -74,23 +81,33 @@ export function ItemInteractions({
               </PopoverTrigger>
               <PopoverContent className="w-64 p-2" align="start">
                 <div className="max-h-[200px] overflow-y-auto space-y-2">
-                  {likers.map(user => <div key={user.id} className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{user.name}</span>
-                    </div>)}
+                  {likers.length > 0 ? (
+                    likers.map(user => (
+                      <div key={user.id} className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={user.avatar} />
+                          <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{user.name}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-2 text-gray-500">No likes yet</div>
+                  )}
                 </div>
               </PopoverContent>
-            </Popover>}
+            </Popover>
+          )}
           
           <div className="ml-auto flex gap-2">
-            {commentsCount > 0 && <button onClick={onCommentToggle} className="hover:underline">
+            {commentsCount > 0 && (
+              <button onClick={onCommentToggle} className="hover:underline">
                 {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}
-              </button>}
+              </button>
+            )}
             
-            {interestsCount > 0 && <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            {interestsCount > 0 && (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <button className="hover:underline">
                     {interestsCount} interested
@@ -102,28 +119,54 @@ export function ItemInteractions({
                   </DialogHeader>
                   <InteractionsList interested={interestedUsers} />
                 </DialogContent>
-              </Dialog>}
+              </Dialog>
+            )}
           </div>
-        </div>}
+        </div>
+      )}
       
-      {/* Action buttons row - removed border-b border-gray-200 */}
+      {/* Action buttons row */}
       <div className="flex items-center justify-between py-[5px]">
         {/* Hide Like button for own posts but maintain the layout */}
-        {isOwner ? <div className="flex-1"></div> : <button onClick={onLikeToggle} className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'}`}>
+        {isOwner ? (
+          <div className="flex-1"></div>
+        ) : (
+          <button 
+            onClick={onLikeToggle}
+            className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
+              isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
             <ThumbsUp className={`h-5 w-5 mr-2 ${isLiked ? 'fill-primary' : ''}`} />
             <span className="font-medium">Like</span>
-          </button>}
+          </button>
+        )}
         
-        <button onClick={onCommentToggle} className="flex-1 flex items-center justify-center py-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors">
+        <button 
+          onClick={onCommentToggle}
+          className={`flex-1 flex items-center justify-center py-2 rounded-md ${
+            showComments ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+          } transition-colors`}
+        >
           <MessageCircle className="h-5 w-5 mr-2" />
           <span className="font-medium">Comment</span>
         </button>
         
         {/* Hide Interest button for own posts but maintain the layout */}
-        {isOwner ? <div className="flex-1"></div> : <button onClick={onShowInterest} className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${showInterest ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'}`}>
+        {isOwner ? (
+          <div className="flex-1"></div>
+        ) : (
+          <button 
+            onClick={onShowInterest}
+            className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
+              showInterest ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
             <Heart className={`h-5 w-5 mr-2 ${showInterest ? 'fill-primary' : ''}`} />
             <span className="font-medium">{showInterest ? 'Interested' : 'Interest'}</span>
-          </button>}
+          </button>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 }

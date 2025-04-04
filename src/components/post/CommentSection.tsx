@@ -6,7 +6,7 @@ import { useCommentData } from "@/hooks/comments/useCommentData";
 import { useCommentActions } from "@/hooks/comments/useCommentActions";
 import { Comment } from "@/types/comment";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CommentSectionProps {
@@ -63,7 +63,7 @@ export function CommentSection({
       <CommentInput 
         onSubmit={handleAddComment} 
         placeholder="Write a comment..." 
-        disabled={isLoading}
+        disabled={isLoading || dataLoading}
       />
       
       {error && !errorShown && (
@@ -87,16 +87,23 @@ export function CommentSection({
         </Alert>
       )}
       
-      <CommentList
-        comments={comments || []}
-        isLoading={isLoading || dataLoading}
-        currentUserId={currentUser?.id}
-        onLike={handleLikeComment}
-        onDelete={handleDeleteComment}
-        onEdit={handleEditComment}
-        onReply={handleReplyToComment}
-        onReport={handleReportComment}
-      />
+      {isLoading || dataLoading ? (
+        <div className="flex flex-col items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          <p className="text-gray-500">Loading comments...</p>
+        </div>
+      ) : (
+        <CommentList
+          comments={comments || []}
+          isLoading={false}
+          currentUserId={currentUser?.id}
+          onLike={handleLikeComment}
+          onDelete={handleDeleteComment}
+          onEdit={handleEditComment}
+          onReply={handleReplyToComment}
+          onReport={handleReportComment}
+        />
+      )}
     </div>
   );
 }

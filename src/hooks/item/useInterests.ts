@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthCheck } from "./utils/authCheck";
-import { extractUserFromProfile } from "./utils/userUtils";
 import type { User } from "./utils/userUtils";
 
 export const useInterests = (id: string, userId?: string | null) => {
@@ -13,31 +12,39 @@ export const useInterests = (id: string, userId?: string | null) => {
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
 
+  // Initial fetch of interests
   useEffect(() => {
     const fetchInterests = async () => {
       const numericId = parseInt(id, 10);
-      if (isNaN(numericId)) return;
+      if (isNaN(numericId)) {
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       try {
-        const { data: interestsData, error: interestsError } = await supabase.rpc(
-          'get_item_interests_count',
-          { item_id_param: numericId }
-        );
-        
-        if (!interestsError && interestsData !== null) {
-          setInterestsCount(interestsData);
+        // Check if current user has shown interest in this item
+        if (userId) {
+          const { data: userInterest, error: userInterestError } = await supabase
+            .from('interests')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('item_id', numericId)
+            .maybeSingle();
+            
+          if (!userInterestError) {
+            setShowInterest(!!userInterest);
+          }
         }
         
-        if (userId) {
-          const { data: hasInterest, error: interestError } = await supabase.rpc(
-            'has_user_shown_interest',
-            { item_id_param: numericId }
-          );
-          
-          if (!interestError && hasInterest !== null) {
-            setShowInterest(hasInterest);
-          }
+        // Get total interests count
+        const { count, error: countError } = await supabase
+          .from('interests')
+          .select('id', { count: 'exact' })
+          .eq('item_id', numericId);
+        
+        if (!countError) {
+          setInterestsCount(count || 0);
         }
       } catch (error) {
         console.error("Error fetching interests:", error);
@@ -50,7 +57,7 @@ export const useInterests = (id: string, userId?: string | null) => {
   }, [id, userId]);
 
   const handleShowInterest = async () => {
-    if (!await checkAuth("show interest")) return;
+    if (!await checkAuth("show interest in this item")) return;
     
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
@@ -58,6 +65,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     setLoading(true);
     try {
       if (showInterest) {
+        // Remove interest
         const { error } = await supabase
           .from('interests')
           .delete()
@@ -71,9 +79,10 @@ export const useInterests = (id: string, userId?: string | null) => {
         
         toast({
           title: "Interest removed",
-          description: "You will no longer receive updates about this item",
+          description: "You are no longer interested in this item",
         });
       } else {
+        // Add interest
         const { error } = await supabase
           .from('interests')
           .insert([
@@ -86,54 +95,52 @@ export const useInterests = (id: string, userId?: string | null) => {
         setInterestsCount(prev => prev + 1);
         
         toast({
-          title: "Interest shown!",
-          description: "The owner will be notified of your interest",
+          title: "Interest shown",
+          description: "You've shown interest in this item",
         });
       }
     } catch (error) {
       console.error('Error toggling interest:', error);
       toast({
         title: "Error",
-        description: "Failed to update your interest. Please try again.",
+        description: "Failed to update interest status. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
-
-  // Fetch users who have shown interest
+  
+  // Fetch users who are interested in this item
   const fetchInterestedUsers = async (): Promise<User[]> => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
     
     try {
-      // Get the IDs of users who have shown interest
-      const { data: interests, error: interestsError } = await supabase
+      // Get user IDs who showed interest in this item
+      const { data: interestsData, error: interestsError } = await supabase
         .from('interests')
         .select('user_id')
         .eq('item_id', numericId);
         
-      if (interestsError) throw interestsError;
-      if (!interests || interests.length === 0) return [];
+      if (interestsError || !interestsData || interestsData.length === 0) return [];
       
-      // Get user IDs
-      const userIds = interests.map(interest => interest.user_id);
+      // Get unique user IDs
+      const userIds = [...new Set(interestsData.map(interest => interest.user_id))];
       
       // Fetch user profiles
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url')
         .in('id', userIds);
         
-      if (profilesError) throw profilesError;
-      if (!profiles) return [];
+      if (profilesError || !profilesData) return [];
       
-      // Map to User objects
-      return profiles.map(profile => ({
+      // Map to User type
+      return profilesData.map(profile => ({
         id: profile.id,
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
-        avatar: profile.avatar_url
+        avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
       }));
     } catch (error) {
       console.error('Error fetching interested users:', error);

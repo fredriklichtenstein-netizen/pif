@@ -26,6 +26,7 @@ export const addPost = async (postData: CreatePostInput) => {
 export const getPosts = async (): Promise<Post[]> => {
   try {
     console.log("Fetching posts from database...");
+    // First, get the base post data
     const { data, error } = await supabase
       .from('items')
       .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
@@ -41,7 +42,55 @@ export const getPosts = async (): Promise<Post[]> => {
       return [];
     }
 
-    console.log("Raw posts data from DB:", data);
+    // Get all item IDs to fetch interaction counts
+    const itemIds = data.map(item => item.id);
+    
+    // Fetch likes counts for these items
+    const { data: likesCountData, error: likesError } = await supabase
+      .from('likes')
+      .select('item_id, count')
+      .in('item_id', itemIds)
+      .select('item_id, count(*)', { count: 'exact' })
+      .group('item_id');
+      
+    // Fetch interests counts
+    const { data: interestsCountData, error: interestsError } = await supabase
+      .from('interests')
+      .select('item_id, count')
+      .in('item_id', itemIds)
+      .select('item_id, count(*)', { count: 'exact' })
+      .group('item_id');
+      
+    // Fetch comments counts
+    const { data: commentsCountData, error: commentsError } = await supabase
+      .from('comments')
+      .select('item_id, count')
+      .in('item_id', itemIds)
+      .select('item_id, count(*)', { count: 'exact' })
+      .group('item_id');
+    
+    // Create maps for easier lookup
+    const likesMap = new Map();
+    const interestsMap = new Map();
+    const commentsMap = new Map();
+    
+    if (likesCountData) {
+      likesCountData.forEach(item => {
+        likesMap.set(item.item_id, parseInt(item.count));
+      });
+    }
+    
+    if (interestsCountData) {
+      interestsCountData.forEach(item => {
+        interestsMap.set(item.item_id, parseInt(item.count));
+      });
+    }
+    
+    if (commentsCountData) {
+      commentsCountData.forEach(item => {
+        commentsMap.set(item.item_id, parseInt(item.count));
+      });
+    }
 
     // Transform data to match the Post type
     const transformedData = data.map(item => {
@@ -82,9 +131,9 @@ export const getPosts = async (): Promise<Post[]> => {
         },
         createdAt: item.created_at || '',
         status: item.status || '',
-        likesCount: 0,
-        interestsCount: 0, 
-        commentsCount: 0
+        likesCount: likesMap.get(item.id) || 0,
+        interestsCount: interestsMap.get(item.id) || 0,
+        commentsCount: commentsMap.get(item.id) || 0
       } as Post;
     });
 

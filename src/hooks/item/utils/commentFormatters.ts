@@ -1,7 +1,7 @@
 
 import { Comment } from "@/types/comment";
 
-interface RawComment {
+interface DBComment {
   id: number;
   content: string;
   created_at: string;
@@ -14,22 +14,31 @@ interface RawComment {
   };
 }
 
-export const formatCommentFromDB = (data: RawComment, isOwn = false): Comment => {
-  const profile = data.profiles || {};
-  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'User';
+export const formatCommentFromDB = (dbComment: DBComment, isOwnComment: boolean): Comment => {
+  // Get the profile object or default to empty object
+  const profile = dbComment.profiles || {};
+  
+  // Create a name from the profile fields
+  const fullName = [profile.first_name, profile.last_name]
+    .filter(Boolean)
+    .join(' ') || 'Anonymous';
+  
+  // Generate avatar URL if not provided
+  const avatarUrl = profile.avatar_url || 
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
   
   return {
-    id: data.id.toString(),
-    text: data.content,
+    id: dbComment.id.toString(),
+    text: dbComment.content,
     author: {
-      id: data.user_id,
+      id: dbComment.user_id,
       name: fullName,
-      avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+      avatar: avatarUrl
     },
-    likes: 0, // We'll implement comment likes later
+    likes: 0, // We'll implement this in a future update
     isLiked: false,
-    replies: [], // We'll implement replies later
-    createdAt: new Date(data.created_at),
-    isOwn
+    replies: [],
+    createdAt: new Date(dbComment.created_at),
+    isOwn: isOwnComment
   };
 };

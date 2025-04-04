@@ -51,9 +51,11 @@ export const useCommentsFetch = (itemId: string) => {
       console.log('Comments data received:', data);
       
       // Transform data to match Comment type
-      return data.map(comment => 
+      const comments = data.map(comment => 
         formatCommentFromDB(comment, comment.user_id === user?.id)
       );
+      
+      return comments;
     } catch (error: any) {
       console.error("Error fetching comments:", error);
       setError(error instanceof Error ? error : new Error(String(error)));

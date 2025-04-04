@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useComments } from "./item/useComments";
@@ -79,7 +80,7 @@ export const useItemCard = (itemId: string) => {
 
   // Fetch comments for the item - memoize with useCallback
   const fetchItemComments = useCallback(async () => {
-    if (!itemId || (commentsFetched && !commentsError)) return;
+    if (!itemId) return;
     
     console.log(`Fetching comments for item ${itemId}`);
     setCommentsLoading(true);
@@ -95,7 +96,7 @@ export const useItemCard = (itemId: string) => {
     } finally {
       setCommentsLoading(false);
     }
-  }, [itemId, fetchComments, commentsFetched, commentsError]);
+  }, [itemId, fetchComments]);
 
   // Toggle showing comments
   const handleCommentToggle = useCallback(() => {
