@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Comment } from "@/types/comment";
 import { useCommentsFetch } from "@/hooks/item/useCommentsFetch";
 import { useToast } from "@/hooks/use-toast";
@@ -16,9 +16,19 @@ export const useCommentRefresh = (
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { fetchComments } = useCommentsFetch(itemId);
   const { toast } = useToast();
+  const lastRefreshTime = useRef<number>(0);
+  const minRefreshInterval = 2000; // Minimum 2 seconds between refreshes
 
   const refreshComments = useCallback(async () => {
     if (!itemId) return;
+    
+    // Prevent too frequent refreshes
+    const now = Date.now();
+    if (now - lastRefreshTime.current < minRefreshInterval) {
+      console.log("Refresh rate limited, skipping this request");
+      return;
+    }
+    lastRefreshTime.current = now;
     
     setIsRefreshing(true);
     try {

@@ -81,6 +81,7 @@ export function ItemCard({
     commenters,
     interestedUsers,
     isLoadingInterested,
+    interestedError,
     handleShowInterest,
     handleLike,
     handleCommentToggle,
@@ -139,6 +140,7 @@ export function ItemCard({
           onReport={handleReport}
           interactionsLoading={interactionsLoading}
           isLoadingInterested={isLoadingInterested}
+          interestedError={interestedError}
           getInterestedUsers={getInterestedUsers}
         />
         

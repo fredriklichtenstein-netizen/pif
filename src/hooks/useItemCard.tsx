@@ -27,7 +27,8 @@ export const useItemCard = (itemId: string) => {
     handleBookmark,
     fetchLikers,
     fetchInterestedUsers,
-    loading: interactionsHookLoading
+    loading: interactionsHookLoading,
+    interestedUsersError
   } = useItemInteractions(itemId);
 
   const { handleMessage, handleShare, handleReport } = useItemActions();
@@ -58,7 +59,8 @@ export const useItemCard = (itemId: string) => {
     commenters, 
     interestedUsers, 
     getInterestedUsers, 
-    isLoadingInterested 
+    isLoadingInterested,
+    interestedError
   } = useItemUsers(
     comments, 
     fetchLikers, 
@@ -139,6 +141,7 @@ export const useItemCard = (itemId: string) => {
     commenters,
     interestedUsers,
     isLoadingInterested,
+    interestedError,
     
     // Actions
     handleLike,

@@ -29,6 +29,8 @@ export const useProfileFetch = () => {
   const [initialFormData, setInitialFormData] = useState({ ...formData });
   const [error, setError] = useState<Error | null>(null);
   const abortController = useRef<AbortController | null>(null);
+  const fetchAttempts = useRef<number>(0);
+  const maxFetchAttempts = 3;
 
   const fetchProfile = async () => {
     // Don't attempt to fetch if auth is still loading or user is not authenticated
@@ -54,30 +56,37 @@ export const useProfileFetch = () => {
     if (abortController.current) {
       abortController.current.abort();
     }
+    
+    // Create a new abort controller with a longer timeout for subsequent attempts
     abortController.current = new AbortController();
-
-    setLoading(true);
+    
+    // Don't show loading state for quick refreshes to avoid UI flicker
+    if (!cachedProfile) {
+      setLoading(true);
+    }
     setError(null);
     
     try {
-      console.log("Fetching profile for user:", user.id);
+      console.log(`Fetching profile for user ${user.id} (attempt ${fetchAttempts.current + 1}/${maxFetchAttempts})`);
       
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Profile fetch timeout")), 8000);
-      });
+      // Use a more reliable timeout mechanism
+      const timeoutMs = 8000 + (fetchAttempts.current * 2000); // Increase timeout with each attempt
+      const timeoutId = setTimeout(() => {
+        if (abortController.current) {
+          console.log(`Profile fetch timeout after ${timeoutMs}ms`);
+          abortController.current.abort();
+        }
+      }, timeoutMs);
       
-      const fetchPromise = supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .abortSignal(abortController.current.signal)
         .single();
-        
-      // Race between fetch and timeout
-      const { data: profile, error: profileError } = await Promise.race([
-        fetchPromise,
-        timeoutPromise.then(() => { throw new Error("Profile fetch timeout"); })
-      ]) as any;
+      
+      // Clear the timeout since the request completed
+      clearTimeout(timeoutId);
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
@@ -85,7 +94,8 @@ export const useProfileFetch = () => {
       }
 
       if (profile) {
-        console.log("Profile data retrieved");
+        console.log("Profile data retrieved successfully");
+        fetchAttempts.current = 0; // Reset attempts counter on success
         
         // Properly parse date of birth if it exists
         let dateOfBirth: Date | undefined = undefined;
@@ -119,14 +129,36 @@ export const useProfileFetch = () => {
         setAvatarUrl(profile.avatar_url);
       }
     } catch (error: any) {
-      // Don't show error if request was aborted
+      // Don't show error if request was aborted (which we might do deliberately)
       if (error.name === 'AbortError') {
         console.log('Profile fetch aborted');
+        
+        // Retry with exponential backoff, but only up to max attempts
+        if (fetchAttempts.current < maxFetchAttempts - 1) {
+          fetchAttempts.current++;
+          const backoffDelay = Math.min(1000 * Math.pow(2, fetchAttempts.current), 10000);
+          console.log(`Retrying profile fetch in ${backoffDelay}ms (attempt ${fetchAttempts.current + 1}/${maxFetchAttempts})`);
+          
+          setTimeout(() => {
+            fetchProfile();
+          }, backoffDelay);
+        } else {
+          console.error("Max profile fetch attempts reached");
+          fetchAttempts.current = 0; // Reset for next time
+          setError(new Error("Failed to load profile after multiple attempts"));
+          toast({
+            title: "Error",
+            description: "Could not load your profile. Please try again later.",
+            variant: "destructive",
+          });
+        }
         return;
       }
       
       console.error("Error fetching profile:", error);
       setError(error instanceof Error ? error : new Error(String(error)));
+      
+      // Only show toast for non-aborted errors
       toast({
         title: "Error",
         description: "Failed to load profile: " + (error.message || "Unknown error"),
@@ -148,8 +180,10 @@ export const useProfileFetch = () => {
 
   // Fetch profile on mount or when user changes
   useEffect(() => {
-    fetchProfile();
-  }, [user, authLoading]);
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
   
   // Clear cache when profile is updated
   const clearCache = () => {

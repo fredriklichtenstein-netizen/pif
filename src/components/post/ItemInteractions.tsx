@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
+import { ThumbsUp, MessageCircle, Heart, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { InteractionsList } from "./interactions/InteractionsList";
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConversationHandler } from "./interactions/ConversationHandler";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 
 type User = {
   id: string;
@@ -42,6 +43,7 @@ interface ItemInteractionsProps {
   onReport: () => void;
   interactionsLoading?: boolean;
   isLoadingInterested?: boolean;
+  interestedError?: Error | null;
   getInterestedUsers?: () => void;
 }
 
@@ -68,6 +70,7 @@ export function ItemInteractions({
   onReport,
   interactionsLoading = false,
   isLoadingInterested = false,
+  interestedError = null,
   getInterestedUsers
 }: ItemInteractionsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -149,14 +152,11 @@ export function ItemInteractions({
                   <DialogHeader>
                     <DialogTitle>People Interested</DialogTitle>
                   </DialogHeader>
-                  {isLoadingInterested ? (
-                    <div className="flex flex-col items-center justify-center py-6">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                      <p className="text-gray-500">Loading interested users...</p>
-                    </div>
-                  ) : (
-                    <InteractionsList interested={interestedUsers} />
-                  )}
+                  <InteractionsList 
+                    interested={interestedUsers} 
+                    isLoading={isLoadingInterested}
+                    error={interestedError} 
+                  />
                 </DialogContent>
               </Dialog>
             )}

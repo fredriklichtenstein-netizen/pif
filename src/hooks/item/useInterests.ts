@@ -9,6 +9,7 @@ export const useInterests = (id: string, userId?: string | null) => {
   const [showInterest, setShowInterest] = useState(false);
   const [interestsCount, setInterestsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [interestedUsersError, setInterestedUsersError] = useState<Error | null>(null);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
 
@@ -40,7 +41,7 @@ export const useInterests = (id: string, userId?: string | null) => {
         // Get total interests count
         const { count, error: countError } = await supabase
           .from('interests')
-          .select('id', { count: 'exact' })
+          .select('id', { count: 'exact', head: true })
           .eq('item_id', numericId);
         
         if (!countError) {
@@ -120,20 +121,34 @@ export const useInterests = (id: string, userId?: string | null) => {
   
   // Fetch users who are interested in this item
   const fetchInterestedUsers = async (): Promise<User[]> => {
+    // Reset error state when starting a new fetch
+    setInterestedUsersError(null);
+    
     const numericId = parseInt(id, 10);
-    if (isNaN(numericId)) return [];
+    if (isNaN(numericId)) {
+      setInterestedUsersError(new Error("Invalid item ID"));
+      return [];
+    }
     
     try {
       console.log(`Fetching interested users for item ${numericId}`);
+      
+      // Add a timeout to the Supabase query
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
       // Get user IDs who showed interest in this item
       const { data: interestsData, error: interestsError } = await supabase
         .from('interests')
         .select('user_id')
-        .eq('item_id', numericId);
+        .eq('item_id', numericId)
+        .abortSignal(controller.signal);
+      
+      clearTimeout(timeoutId);
         
       if (interestsError) {
         console.error('Error fetching interest data:', interestsError);
+        setInterestedUsersError(new Error(interestsError.message));
         return [];
       }
       
@@ -148,13 +163,20 @@ export const useInterests = (id: string, userId?: string | null) => {
       const userIds = [...new Set(interestsData.map(interest => interest.user_id))];
       
       // Fetch user profiles
+      const controller2 = new AbortController();
+      const timeoutId2 = setTimeout(() => controller2.abort(), 10000); // 10 second timeout
+      
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url')
-        .in('id', userIds);
+        .in('id', userIds)
+        .abortSignal(controller2.signal);
+      
+      clearTimeout(timeoutId2);
         
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
+        setInterestedUsersError(new Error(profilesError.message));
         return [];
       }
       
@@ -171,8 +193,15 @@ export const useInterests = (id: string, userId?: string | null) => {
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
         avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching interested users:', error);
+      
+      // Set a more user-friendly error message
+      const errorMessage = error.name === 'AbortError' 
+        ? 'Request timed out. Please try again.' 
+        : error.message || 'Failed to load interested users';
+      
+      setInterestedUsersError(new Error(errorMessage));
       return [];
     }
   };
@@ -181,6 +210,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     showInterest,
     interestsCount,
     loading,
+    interestedUsersError,
     handleShowInterest,
     fetchInterestedUsers
   };

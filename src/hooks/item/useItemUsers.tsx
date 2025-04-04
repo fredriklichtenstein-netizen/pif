@@ -17,6 +17,7 @@ export const useItemUsers = (
   const [commenters, setCommenters] = useState<User[]>([]);
   const [interestedUsers, setInterestedUsers] = useState<User[]>([]);
   const [isLoadingInterested, setIsLoadingInterested] = useState(false);
+  const [interestedError, setInterestedError] = useState<Error | null>(null);
   
   // Extract unique commenters from comments
   useEffect(() => {
@@ -60,52 +61,60 @@ export const useItemUsers = (
     getLikers();
   }, [likesCount, fetchLikers]);
 
-  // Prefetch interested users for better UX
-  const prefetchInterestedUsers = useCallback(async () => {
-    if (interestsCount && interestsCount > 0 && fetchInterested) {
-      console.log("Prefetching interested users...");
-      setIsLoadingInterested(true);
-      try {
-        const fetchedInterested = await fetchInterested();
-        console.log(`Prefetched ${fetchedInterested.length} interested users`);
-        setInterestedUsers(fetchedInterested);
-      } catch (error) {
-        console.error("Error prefetching interested users:", error);
+  // Fetch interested users when interestsCount changes
+  useEffect(() => {
+    const getInterested = async () => {
+      if (interestsCount && interestsCount > 0 && fetchInterested) {
+        console.log(`Auto-fetching interested users due to interestsCount change: ${interestsCount}`);
+        setIsLoadingInterested(true);
+        setInterestedError(null);
+        
+        try {
+          const result = await fetchInterested();
+          console.log(`Auto-fetched ${result.length} interested users`);
+          setInterestedUsers(result);
+        } catch (error) {
+          console.error("Error auto-fetching interested users:", error);
+          setInterestedError(error instanceof Error ? error : new Error('Unknown error'));
+          setInterestedUsers([]);
+        } finally {
+          setIsLoadingInterested(false);
+        }
+      } else if (interestsCount === 0) {
         setInterestedUsers([]);
-      } finally {
-        setIsLoadingInterested(false);
       }
-    }
+    };
+    
+    getInterested();
   }, [interestsCount, fetchInterested]);
 
-  // Prefetch interested users when the component mounts or interestsCount changes
-  useEffect(() => {
-    prefetchInterestedUsers();
-  }, [prefetchInterestedUsers]);
-
-  // Actual fetch for interested users (will use cached data if already prefetched)
+  // Actual fetch for interested users (will use cached data if already fetched)
   const getInterestedUsers = useCallback(async () => {
-    if (interestsCount && interestsCount > 0 && fetchInterested && interestedUsers.length === 0) {
-      console.log("Fetching interested users on demand...");
+    if (fetchInterested) {
+      console.log("Explicitly fetching interested users on demand...");
       setIsLoadingInterested(true);
+      setInterestedError(null);
+      
       try {
         const fetchedInterested = await fetchInterested();
         console.log(`Fetched ${fetchedInterested.length} interested users on demand`);
         setInterestedUsers(fetchedInterested);
       } catch (error) {
         console.error("Error fetching interested users on demand:", error);
+        setInterestedError(error instanceof Error ? error : new Error('Unknown error'));
         setInterestedUsers([]);
       } finally {
         setIsLoadingInterested(false);
       }
     }
-  }, [interestsCount, fetchInterested, interestedUsers.length]);
+  }, [fetchInterested]);
 
   return {
     likers,
     commenters,
     interestedUsers,
     isLoadingInterested,
+    interestedError,
     getInterestedUsers
   };
 };
