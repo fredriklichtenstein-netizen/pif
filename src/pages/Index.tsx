@@ -20,7 +20,7 @@ export default function Index() {
         setLoading(true);
         const data = await getPosts();
         console.log("Fetched posts:", data);
-        setPosts(data);
+        setPosts(data || []);
       } catch (err) {
         console.error("Error fetching posts:", err);
         setError("Failed to load items. Please try again later.");
@@ -40,7 +40,7 @@ export default function Index() {
   // Filter posts based on selected category
   const filteredPosts = posts.filter(post => {
     if (filter === "all") return true;
-    return post.category.toLowerCase() === filter.toLowerCase();
+    return post.category?.toLowerCase() === filter.toLowerCase();
   });
 
   return (
@@ -100,7 +100,7 @@ export default function Index() {
             onClick={() => window.location.reload()} 
             className="bg-primary text-white px-4 py-2 rounded-full text-sm"
           >
-            Try again
+            Try Again
           </button>
         </div>
       )}
@@ -108,7 +108,9 @@ export default function Index() {
       {/* Empty state */}
       {!loading && !error && filteredPosts.length === 0 && (
         <div className="text-center py-10">
-          <p className="text-gray-500">No items found in this category.</p>
+          <p className="text-gray-500">
+            {filter === 'all' ? 'No items found. Be the first to share something!' : 'No items found in this category.'}
+          </p>
         </div>
       )}
 

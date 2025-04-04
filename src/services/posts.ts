@@ -41,7 +41,7 @@ export const getPosts = async (): Promise<Post[]> => {
       return [];
     }
 
-    console.log("Raw posts data:", data);
+    console.log("Raw posts data from DB:", data);
 
     // Transform data to match the Post type
     const transformedData = data.map(item => {
@@ -76,7 +76,7 @@ export const getPosts = async (): Promise<Post[]> => {
         postedBy: {
           id: item.user_id,
           name: item.profiles 
-            ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() 
+            ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Unknown User'
             : 'Unknown User',
           avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
         },

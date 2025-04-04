@@ -3,7 +3,6 @@ import { Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
-import { withLazySuspense } from "@/utils/code-splitting";
 
 // Improved loading fallback component
 const LoadingFallback = () => (
@@ -13,35 +12,42 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Lazy load components
-const Index = lazy(() => import("@/pages/Index"));
-const Map = lazy(() => import("@/pages/Map"));
-const Messages = lazy(() => import("@/pages/Messages"));
-const Post = lazy(() => 
-  import("@/pages/Post")
-    .catch(error => {
-      console.error("Failed to load Post component:", error);
-      return { default: () => <Navigate to="/404" /> };
-    })
+// Error fallback component
+const ErrorFallback = () => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+    <p className="text-red-500 font-semibold mb-2">Failed to load the page</p>
+    <button 
+      onClick={() => window.location.reload()}
+      className="mt-2 px-4 py-2 bg-primary text-white rounded"
+    >
+      Try Again
+    </button>
+  </div>
 );
-const Profile = lazy(() => import("@/pages/Profile"));
-const AccountSettings = lazy(() => 
-  import("@/pages/AccountSettings")
-    .catch(error => {
-      console.error("Failed to load AccountSettings component:", error);
-      return { default: () => <Navigate to="/404" /> };
-    })
-);
-const Auth = lazy(() => 
-  import("@/pages/Auth").catch(error => {
-    console.error("Failed to load Auth component:", error);
-    return import("@/pages/NotFound");
-  })
-);
-const EmailConfirmation = lazy(() => import("@/pages/EmailConfirmation"));
-const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
-const CreateProfile = lazy(() => import("@/pages/CreateProfile"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
+
+// Enhanced lazy loading with error handling
+const enhancedLazy = (importFn: () => Promise<any>) => {
+  return lazy(() => 
+    importFn()
+      .catch(error => {
+        console.error("Failed to load component:", error);
+        return { default: ErrorFallback };
+      })
+  );
+};
+
+// Lazy load components with enhanced error handling
+const Index = enhancedLazy(() => import("@/pages/Index"));
+const Map = enhancedLazy(() => import("@/pages/Map"));
+const Messages = enhancedLazy(() => import("@/pages/Messages"));
+const Post = enhancedLazy(() => import("@/pages/Post"));
+const Profile = enhancedLazy(() => import("@/pages/Profile"));
+const AccountSettings = enhancedLazy(() => import("@/pages/AccountSettings"));
+const Auth = enhancedLazy(() => import("@/pages/Auth"));
+const EmailConfirmation = enhancedLazy(() => import("@/pages/EmailConfirmation"));
+const ResetPassword = enhancedLazy(() => import("@/pages/ResetPassword"));
+const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
+const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 
 // Wrap component with suspense
 const withSuspense = (Component: React.ComponentType) => (

@@ -9,31 +9,44 @@ import { publicRoutes, privateRoutes } from "./routes/routes";
 import { useEffect } from "react";
 import { initializeAuth } from "./hooks/useGlobalAuth";
 
-const queryClient = new QueryClient();
+// Create a new QueryClient instance with better error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
 
 const AppContent = () => {
   useEffect(() => {
     // Initialize global auth state
-    let cleanupSubscription: Promise<{ unsubscribe: () => void }> | undefined;
+    let unsubscribe: (() => void) | undefined;
     
     try {
-      cleanupSubscription = initializeAuth();
+      // Initialize auth and get unsubscribe function
+      initializeAuth()
+        .then(sub => {
+          if (sub && typeof sub.unsubscribe === 'function') {
+            unsubscribe = sub.unsubscribe;
+          }
+        })
+        .catch(error => {
+          console.error("Error initializing auth:", error);
+        });
     } catch (error) {
       console.error("Error initializing auth:", error);
     }
     
-    // Cleanup subscription
+    // Cleanup subscription on unmount
     return () => {
-      if (cleanupSubscription) {
-        cleanupSubscription
-          .then(sub => {
-            if (sub && typeof sub.unsubscribe === 'function') {
-              sub.unsubscribe();
-            }
-          })
-          .catch(error => {
-            console.error("Error unsubscribing from auth:", error);
-          });
+      if (unsubscribe) {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error("Error unsubscribing from auth:", error);
+        }
       }
     };
   }, []);
