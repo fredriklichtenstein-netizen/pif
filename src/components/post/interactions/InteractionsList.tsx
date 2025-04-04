@@ -10,7 +10,7 @@ interface InteractionsListProps {
 export function InteractionsList({ interested = [] }: InteractionsListProps) {
   return (
     <div className="w-full space-y-4 max-h-[300px] overflow-y-auto">
-      {interested.length > 0 ? (
+      {interested && interested.length > 0 ? (
         <div className="space-y-3">
           {interested.map((user) => (
             <div key={user.id} className="flex items-center gap-3">

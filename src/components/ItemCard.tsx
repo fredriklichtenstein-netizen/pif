@@ -80,6 +80,7 @@ export function ItemCard({
     likers,
     commenters,
     interestedUsers,
+    isLoadingInterested,
     handleShowInterest,
     handleLike,
     handleCommentToggle,
@@ -89,7 +90,8 @@ export function ItemCard({
     handleBookmark,
     setComments,
     fetchItemComments,
-    refreshComments
+    refreshComments,
+    getInterestedUsers
   } = useItemCard(id);
 
   // Pre-fetch comments data for better performance
@@ -136,6 +138,8 @@ export function ItemCard({
           onShare={handleShare} 
           onReport={handleReport}
           interactionsLoading={interactionsLoading}
+          isLoadingInterested={isLoadingInterested}
+          getInterestedUsers={getInterestedUsers}
         />
         
         {showComments && (

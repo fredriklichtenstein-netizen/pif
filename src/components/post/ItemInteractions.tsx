@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConversationHandler } from "./interactions/ConversationHandler";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
 type User = {
   id: string;
@@ -40,6 +41,8 @@ interface ItemInteractionsProps {
   onShare: () => void;
   onReport: () => void;
   interactionsLoading?: boolean;
+  isLoadingInterested?: boolean;
+  getInterestedUsers?: () => void;
 }
 
 export function ItemInteractions({
@@ -63,9 +66,18 @@ export function ItemInteractions({
   onMessage,
   onShare,
   onReport,
-  interactionsLoading = false
+  interactionsLoading = false,
+  isLoadingInterested = false,
+  getInterestedUsers
 }: ItemInteractionsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Trigger interested users fetch when dialog opens
+  useEffect(() => {
+    if (dialogOpen && getInterestedUsers) {
+      getInterestedUsers();
+    }
+  }, [dialogOpen, getInterestedUsers]);
 
   // If interactions are loading, show skeleton placeholders
   if (interactionsLoading) {
@@ -137,7 +149,14 @@ export function ItemInteractions({
                   <DialogHeader>
                     <DialogTitle>People Interested</DialogTitle>
                   </DialogHeader>
-                  <InteractionsList interested={interestedUsers} />
+                  {isLoadingInterested ? (
+                    <div className="flex flex-col items-center justify-center py-6">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                      <p className="text-gray-500">Loading interested users...</p>
+                    </div>
+                  ) : (
+                    <InteractionsList interested={interestedUsers} />
+                  )}
                 </DialogContent>
               </Dialog>
             )}

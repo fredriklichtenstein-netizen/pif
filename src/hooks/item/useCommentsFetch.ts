@@ -44,9 +44,15 @@ export const useCommentsFetch = (itemId: string) => {
         .eq('item_id', numericItemId)
         .order('created_at', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error in supabase query:", error);
+        throw error;
+      }
       
-      if (!data) return [];
+      if (!data) {
+        console.log("No comments data returned");
+        return [];
+      }
       
       console.log('Comments data received:', data);
       
@@ -81,12 +87,15 @@ export const useCommentsFetch = (itemId: string) => {
         throw new Error(`Invalid item ID: ${itemId}`);
       }
       
-      const { data, error, count } = await supabase
+      const { count, error } = await supabase
         .from('comments')
-        .select('id', { count: 'exact' })
+        .select('id', { count: 'exact', head: true })
         .eq('item_id', numericItemId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching comments count:", error);
+        throw error;
+      }
       
       return count || 0;
     } catch (error) {

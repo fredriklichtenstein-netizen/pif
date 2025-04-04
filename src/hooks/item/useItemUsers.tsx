@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Comment } from "@/types/comment";
 import type { User } from "./utils/userUtils";
 
@@ -16,6 +16,7 @@ export const useItemUsers = (
   const [likers, setLikers] = useState<User[]>([]);
   const [commenters, setCommenters] = useState<User[]>([]);
   const [interestedUsers, setInterestedUsers] = useState<User[]>([]);
+  const [isLoadingInterested, setIsLoadingInterested] = useState(false);
   
   // Extract unique commenters from comments
   useEffect(() => {
@@ -59,30 +60,52 @@ export const useItemUsers = (
     getLikers();
   }, [likesCount, fetchLikers]);
 
-  // Fetch interested users when interestsCount changes
-  useEffect(() => {
-    const getInterestedUsers = async () => {
-      if (interestsCount && interestsCount > 0 && fetchInterested) {
-        try {
-          const fetchedInterested = await fetchInterested();
-          setInterestedUsers(fetchedInterested);
-        } catch (error) {
-          console.error("Error fetching interested users in useItemUsers:", error);
-          setInterestedUsers([]);
-        }
-      } else {
+  // Prefetch interested users for better UX
+  const prefetchInterestedUsers = useCallback(async () => {
+    if (interestsCount && interestsCount > 0 && fetchInterested) {
+      console.log("Prefetching interested users...");
+      setIsLoadingInterested(true);
+      try {
+        const fetchedInterested = await fetchInterested();
+        console.log(`Prefetched ${fetchedInterested.length} interested users`);
+        setInterestedUsers(fetchedInterested);
+      } catch (error) {
+        console.error("Error prefetching interested users:", error);
         setInterestedUsers([]);
+      } finally {
+        setIsLoadingInterested(false);
       }
-    };
-    
-    if (fetchInterested) {
-      getInterestedUsers();
     }
   }, [interestsCount, fetchInterested]);
+
+  // Prefetch interested users when the component mounts or interestsCount changes
+  useEffect(() => {
+    prefetchInterestedUsers();
+  }, [prefetchInterestedUsers]);
+
+  // Actual fetch for interested users (will use cached data if already prefetched)
+  const getInterestedUsers = useCallback(async () => {
+    if (interestsCount && interestsCount > 0 && fetchInterested && interestedUsers.length === 0) {
+      console.log("Fetching interested users on demand...");
+      setIsLoadingInterested(true);
+      try {
+        const fetchedInterested = await fetchInterested();
+        console.log(`Fetched ${fetchedInterested.length} interested users on demand`);
+        setInterestedUsers(fetchedInterested);
+      } catch (error) {
+        console.error("Error fetching interested users on demand:", error);
+        setInterestedUsers([]);
+      } finally {
+        setIsLoadingInterested(false);
+      }
+    }
+  }, [interestsCount, fetchInterested, interestedUsers.length]);
 
   return {
     likers,
     commenters,
-    interestedUsers
+    interestedUsers,
+    isLoadingInterested,
+    getInterestedUsers
   };
 };

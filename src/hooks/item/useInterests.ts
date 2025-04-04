@@ -124,13 +124,25 @@ export const useInterests = (id: string, userId?: string | null) => {
     if (isNaN(numericId)) return [];
     
     try {
+      console.log(`Fetching interested users for item ${numericId}`);
+      
       // Get user IDs who showed interest in this item
       const { data: interestsData, error: interestsError } = await supabase
         .from('interests')
         .select('user_id')
         .eq('item_id', numericId);
         
-      if (interestsError || !interestsData || interestsData.length === 0) return [];
+      if (interestsError) {
+        console.error('Error fetching interest data:', interestsError);
+        return [];
+      }
+      
+      if (!interestsData || interestsData.length === 0) {
+        console.log('No interested users found');
+        return [];
+      }
+      
+      console.log(`Found ${interestsData.length} interested users`);
       
       // Get unique user IDs
       const userIds = [...new Set(interestsData.map(interest => interest.user_id))];
@@ -141,7 +153,17 @@ export const useInterests = (id: string, userId?: string | null) => {
         .select('id, first_name, last_name, avatar_url')
         .in('id', userIds);
         
-      if (profilesError || !profilesData) return [];
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return [];
+      }
+      
+      if (!profilesData || profilesData.length === 0) {
+        console.log('No profile data found for interested users');
+        return [];
+      }
+      
+      console.log(`Retrieved ${profilesData.length} profiles for interested users`);
       
       // Map to User type
       return profilesData.map(profile => ({

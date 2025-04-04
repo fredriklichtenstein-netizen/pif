@@ -53,7 +53,13 @@ export const useItemCard = (itemId: string) => {
   }, [interactionsHookLoading]);
 
   // Users who interacted with the item
-  const { likers, commenters, interestedUsers } = useItemUsers(
+  const { 
+    likers, 
+    commenters, 
+    interestedUsers, 
+    getInterestedUsers, 
+    isLoadingInterested 
+  } = useItemUsers(
     comments, 
     fetchLikers, 
     likesCount,
@@ -84,12 +90,13 @@ export const useItemCard = (itemId: string) => {
     
     console.log(`Fetching comments for item ${itemId}`);
     setCommentsLoading(true);
+    setCommentsError(null);
+    
     try {
       const fetchedComments = await fetchComments();
       console.log(`Fetched ${fetchedComments.length} comments for item ${itemId}`);
       setComments(fetchedComments);
       setCommentsFetched(true);
-      setCommentsError(null);
     } catch (error) {
       console.error("Error fetching comments:", error);
       setCommentsError(error instanceof Error ? error : new Error('Unknown error fetching comments'));
@@ -131,6 +138,7 @@ export const useItemCard = (itemId: string) => {
     likers,
     commenters,
     interestedUsers,
+    isLoadingInterested,
     
     // Actions
     handleLike,
@@ -143,5 +151,6 @@ export const useItemCard = (itemId: string) => {
     setComments,
     fetchItemComments,
     refreshComments,
+    getInterestedUsers,
   };
 };
