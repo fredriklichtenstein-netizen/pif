@@ -33,8 +33,12 @@ export const useItemUsers = (
     const uniqueCommenters: { [key: string]: User } = {};
     
     comments.forEach(comment => {
-      if (comment.user && !uniqueCommenters[comment.user.id]) {
-        uniqueCommenters[comment.user.id] = comment.user;
+      if (comment.author && !uniqueCommenters[comment.author.id || '']) {
+        uniqueCommenters[comment.author.id || ''] = {
+          id: comment.author.id || '',
+          name: comment.author.name,
+          avatar: comment.author.avatar
+        };
       }
     });
     
