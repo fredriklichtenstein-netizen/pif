@@ -32,6 +32,7 @@ interface ItemInteractionsProps {
   isLoadingInterested?: boolean;
   interestedError?: Error | null;
   getInterestedUsers?: () => void;
+  isRealtimeSubscribed?: boolean;
 }
 
 export function ItemInteractions({
@@ -58,7 +59,8 @@ export function ItemInteractions({
   interactionsLoading = false,
   isLoadingInterested = false,
   interestedError = null,
-  getInterestedUsers
+  getInterestedUsers,
+  isRealtimeSubscribed = false
 }: ItemInteractionsProps) {
   // If interactions are loading, show skeleton placeholders
   if (interactionsLoading) {
@@ -84,6 +86,7 @@ export function ItemInteractions({
         showComments={showComments}
         showInterest={showInterest}
         isOwner={isOwner}
+        isRealtimeSubscribed={isRealtimeSubscribed}
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}

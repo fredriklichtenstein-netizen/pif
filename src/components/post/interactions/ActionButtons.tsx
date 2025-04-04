@@ -1,84 +1,73 @@
 
-import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
+import { ThumbsUp, MessageCircle, HandWaving } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ActionButtonsProps {
   isLiked: boolean;
   showComments: boolean;
   showInterest: boolean;
   isOwner: boolean;
+  isRealtimeSubscribed?: boolean;
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
 }
 
-export function ActionButtons({
-  isLiked,
-  showComments,
-  showInterest,
-  isOwner,
-  onLikeToggle,
-  onCommentToggle,
-  onShowInterest
+export function ActionButtons({ 
+  isLiked, 
+  showComments, 
+  showInterest, 
+  isOwner, 
+  isRealtimeSubscribed = false,
+  onLikeToggle, 
+  onCommentToggle, 
+  onShowInterest 
 }: ActionButtonsProps) {
-  // Prevent event propagation to ensure actions don't conflict
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onLikeToggle();
-  };
-
-  const handleComment = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onCommentToggle();
-  };
-
-  const handleInterest = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onShowInterest();
-  };
-
   return (
-    <div className="flex items-center justify-between py-[5px]">
-      {/* Hide Like button for own posts but maintain the layout */}
-      {isOwner ? (
-        <div className="flex-1"></div>
-      ) : (
-        <button 
-          onClick={handleLike}
-          className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
-            isLiked ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-          aria-label={isLiked ? "Unlike this post" : "Like this post"}
+    <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+      <div className="flex gap-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onLikeToggle}
+          className={`flex items-center gap-1 ${isLiked ? 'text-primary' : 'text-gray-600'}`}
         >
-          <ThumbsUp className={`h-5 w-5 mr-2 ${isLiked ? 'fill-primary' : ''}`} />
-          <span className="font-medium">Like</span>
-        </button>
-      )}
-      
-      <button 
-        onClick={handleComment}
-        className={`flex-1 flex items-center justify-center py-2 rounded-md ${
-          showComments ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
-        } transition-colors`}
-        aria-label={showComments ? "Hide comments" : "Show comments"}
-      >
-        <MessageCircle className="h-5 w-5 mr-2" />
-        <span className="font-medium">Comment</span>
-      </button>
-      
-      {/* Hide Interest button for own posts but maintain the layout */}
-      {isOwner ? (
-        <div className="flex-1"></div>
-      ) : (
-        <button 
-          onClick={handleInterest}
-          className={`flex-1 flex items-center justify-center py-2 rounded-md transition-colors ${
-            showInterest ? 'text-primary' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-          aria-label={showInterest ? "Remove interest" : "Show interest"}
+          <ThumbsUp size={18} />
+          <span>{isLiked ? 'Liked' : 'Like'}</span>
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onCommentToggle}
+          className={`flex items-center gap-1 ${showComments ? 'text-primary' : 'text-gray-600'}`}
         >
-          <Heart className={`h-5 w-5 mr-2 ${showInterest ? 'fill-primary' : ''}`} />
-          <span className="font-medium">{showInterest ? 'Interested' : 'Interest'}</span>
-        </button>
+          <MessageCircle size={18} />
+          <span>Comment</span>
+        </Button>
+        
+        {!isOwner && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onShowInterest}
+            className={`flex items-center gap-1 ${showInterest ? 'text-primary' : 'text-gray-600'}`}
+            disabled={showInterest}
+          >
+            <HandWaving size={18} />
+            <span>{showInterest ? 'Interested' : 'Show Interest'}</span>
+          </Button>
+        )}
+      </div>
+      
+      {isRealtimeSubscribed && (
+        <div className="text-xs text-green-600 font-medium flex items-center gap-1">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+          Live
+        </div>
       )}
     </div>
   );

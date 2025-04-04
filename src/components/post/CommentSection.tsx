@@ -4,10 +4,12 @@ import { CommentInput } from "../comments/CommentInput";
 import { CommentList } from "../comments/CommentList";
 import { useCommentData } from "@/hooks/comments/useCommentData";
 import { useCommentActions } from "@/hooks/comments/useCommentActions";
+import { useCommentRealtime } from "@/hooks/comments/useCommentRealtime";
 import { Comment } from "@/types/comment";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw, Loader2, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface CommentSectionProps {
   itemId: string;
@@ -27,6 +29,9 @@ export function CommentSection({
   const { isLoading: dataLoading, currentUser } = useCommentData(itemId);
   const [errorShown, setErrorShown] = useState(false);
   const [refreshCount, setRefreshCount] = useState(0);
+  
+  // Add real-time subscription
+  const { isSubscribed, error: realtimeError } = useCommentRealtime(itemId, comments, setComments);
   
   const {
     handleAddComment,
@@ -76,18 +81,28 @@ export function CommentSection({
 
   return (
     <div className="mt-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">Comments</h3>
+        {isSubscribed && (
+          <Badge variant="outline" className="flex items-center gap-1 text-xs bg-green-50 text-green-700 border-green-200">
+            <Wifi className="h-3 w-3" />
+            Live
+          </Badge>
+        )}
+      </div>
+      
       <CommentInput 
         onSubmit={handleAddComment} 
         placeholder="Write a comment..." 
         disabled={isLoadingComments}
       />
       
-      {error && (
+      {(error || realtimeError) && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Comments Loading Error</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
-            <p>{error.message || "Failed to load comments"}</p>
+            <p>{(error || realtimeError)?.message || "Failed to load comments"}</p>
             <Button 
               variant="outline" 
               size="sm" 

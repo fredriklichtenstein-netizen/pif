@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useComments } from "./item/useComments";
 import { useItemActions } from "./item/useItemActions";
 import { useItemUsers } from "./item/useItemUsers";
 import { Comment } from "@/types/comment";
+import { useItemRealtimeUpdates } from "./item/useItemRealtimeUpdates";
 
 export const useItemCard = (itemId: string) => {
   const [showComments, setShowComments] = useState(false);
@@ -14,8 +14,8 @@ export const useItemCard = (itemId: string) => {
   const [commentsError, setCommentsError] = useState<Error | null>(null);
   const [commentsFetched, setCommentsFetched] = useState(false);
   const [interactionsLoading, setInteractionsLoading] = useState(true);
+  const [isRealtimeSubscribed, setIsRealtimeSubscribed] = useState(false);
 
-  // Get individual interaction hooks
   const {
     isLiked,
     likesCount,
@@ -33,7 +33,6 @@ export const useItemCard = (itemId: string) => {
 
   const { handleMessage, handleShare, handleReport } = useItemActions();
 
-  // Comments management
   const {
     fetchComments,
     fetchCommentsCount,
@@ -42,18 +41,15 @@ export const useItemCard = (itemId: string) => {
     error: commentsHookError
   } = useComments(itemId);
 
-  // Update loading and error states from hooks
   useEffect(() => {
     setCommentsLoading(commentsHookLoading);
     if (commentsHookError) setCommentsError(commentsHookError);
   }, [commentsHookLoading, commentsHookError]);
 
-  // Update interactions loading state
   useEffect(() => {
     setInteractionsLoading(interactionsHookLoading);
   }, [interactionsHookLoading]);
 
-  // Users who interacted with the item
   const { 
     likers, 
     commenters, 
@@ -69,7 +65,6 @@ export const useItemCard = (itemId: string) => {
     interestsCount
   );
 
-  // Fetch comments count
   useEffect(() => {
     const getCommentsCount = async () => {
       try {
@@ -86,7 +81,6 @@ export const useItemCard = (itemId: string) => {
     }
   }, [itemId, fetchCommentsCount, comments.length]);
 
-  // Fetch comments for the item - memoize with useCallback
   const fetchItemComments = useCallback(async () => {
     if (!itemId) return;
     
@@ -107,25 +101,48 @@ export const useItemCard = (itemId: string) => {
     }
   }, [itemId, fetchComments]);
 
-  // Toggle showing comments
   const handleCommentToggle = useCallback(() => {
     console.log(`Toggling comments for item ${itemId}`);
     setShowComments(!showComments);
     
-    // Make sure we have comments when opening the section
     if (!showComments) {
       fetchItemComments();
     }
   }, [showComments, fetchItemComments, itemId]);
 
-  // Allow forcing a refresh of comments (for error recovery)
   const refreshComments = useCallback(() => {
     setCommentsFetched(false);
     fetchItemComments();
   }, [fetchItemComments]);
 
+  const refreshItemData = useCallback(() => {
+    fetchLikers()
+      .then(() => console.log('Refreshed likes data'))
+      .catch(err => console.error('Error refreshing likes:', err));
+    
+    fetchInterestedUsers()
+      .then(() => console.log('Refreshed interests data'))
+      .catch(err => console.error('Error refreshing interests:', err));
+    
+    fetchCommentsCount(itemId)
+      .then(count => {
+        console.log(`Item ${itemId} has ${count} comments`);
+        setCommentsCount(count);
+      })
+      .catch(err => console.error('Error refreshing comments count:', err));
+    
+    if (showComments) {
+      fetchItemComments();
+    }
+  }, [itemId, fetchLikers, fetchInterestedUsers, fetchCommentsCount, showComments, fetchItemComments]);
+
+  const { isSubscribed, error: realtimeError } = useItemRealtimeUpdates(itemId, refreshItemData);
+
+  useEffect(() => {
+    setIsRealtimeSubscribed(isSubscribed);
+  }, [isSubscribed]);
+
   return {
-    // States
     isLiked,
     likesCount,
     showComments,
@@ -142,8 +159,6 @@ export const useItemCard = (itemId: string) => {
     interestedUsers,
     isLoadingInterested,
     interestedError,
-    
-    // Actions
     handleLike,
     handleCommentToggle,
     handleShowInterest,
@@ -155,5 +170,8 @@ export const useItemCard = (itemId: string) => {
     fetchItemComments,
     refreshComments,
     getInterestedUsers,
+    isRealtimeSubscribed,
+    realtimeError,
+    refreshItemData
   };
 };

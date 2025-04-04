@@ -1,14 +1,8 @@
-
-import { useItemCard } from "@/hooks/useItemCard";
-import { CommentSection } from "./post/CommentSection";
-import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
-import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
-import { ItemCardHeader } from "./post/ItemCardHeader";
-import { ItemCardGallery } from "./post/ItemCardGallery";
-import { ItemCardContent } from "./post/ItemCardContent";
-import { ItemCardActions } from "./post/ItemCardActions";
-import { ItemInteractions } from "./post/ItemInteractions";
+import { useState, useEffect, useCallback } from "react";
+import { useItemInteractions } from "@/hooks/item/useItemInteractions";
+import { useComments } from "@/hooks/item/useComments";
+import { useItemActions } from "./item/useItemActions";
+import { useItemUsers } from "./item/useItemUsers";
 import { Comment } from "@/types/comment";
 import { Skeleton } from "./ui/skeleton";
 
@@ -85,15 +79,15 @@ export function ItemCard({
     handleShowInterest,
     handleLike,
     handleCommentToggle,
-    handleMessage,
+    handleMessage: itemCardHandleMessage,
     handleShare,
     handleReport,
     handleBookmark,
     setComments,
     fetchItemComments,
     refreshComments,
-    getInterestedUsers
-  } = useItemCard(id);
+    getInterestedUsers,
+  } = useItemCard(id.toString());
 
   // Pre-fetch comments data for better performance
   useEffect(() => {
