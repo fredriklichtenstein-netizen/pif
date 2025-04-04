@@ -73,7 +73,7 @@ export const useItemCard = (itemId: string) => {
   useEffect(() => {
     const getCommentsCount = async () => {
       try {
-        const count = await fetchCommentsCount();
+        const count = await fetchCommentsCount(itemId);
         console.log(`Item ${itemId} has ${count} comments`);
         setCommentsCount(count);
       } catch (error) {
