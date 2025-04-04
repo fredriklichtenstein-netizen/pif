@@ -48,26 +48,23 @@ export const getPosts = async (): Promise<Post[]> => {
     // Fetch likes counts for these items
     const { data: likesCountData, error: likesError } = await supabase
       .from('likes')
-      .select('item_id, count')
+      .select('item_id, count', { count: 'exact', head: false })
       .in('item_id', itemIds)
-      .select('item_id, count(*)', { count: 'exact' })
-      .group('item_id');
+      .count();
       
     // Fetch interests counts
     const { data: interestsCountData, error: interestsError } = await supabase
       .from('interests')
-      .select('item_id, count')
+      .select('item_id, count', { count: 'exact', head: false })
       .in('item_id', itemIds)
-      .select('item_id, count(*)', { count: 'exact' })
-      .group('item_id');
+      .count();
       
     // Fetch comments counts
     const { data: commentsCountData, error: commentsError } = await supabase
       .from('comments')
-      .select('item_id, count')
+      .select('item_id, count', { count: 'exact', head: false })
       .in('item_id', itemIds)
-      .select('item_id, count(*)', { count: 'exact' })
-      .group('item_id');
+      .count();
     
     // Create maps for easier lookup
     const likesMap = new Map();
