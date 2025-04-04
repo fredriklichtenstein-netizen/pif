@@ -25,7 +25,13 @@ const Post = lazy(() =>
     })
 );
 const Profile = lazy(() => import("@/pages/Profile"));
-const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
+const AccountSettings = lazy(() => 
+  import("@/pages/AccountSettings")
+    .catch(error => {
+      console.error("Failed to load AccountSettings component:", error);
+      return { default: () => <Navigate to="/404" /> };
+    })
+);
 const Auth = lazy(() => 
   import("@/pages/Auth").catch(error => {
     console.error("Failed to load Auth component:", error);

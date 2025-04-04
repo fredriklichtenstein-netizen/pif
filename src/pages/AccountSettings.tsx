@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmailPasswordSettings } from "@/components/settings/EmailPasswordSettings";
@@ -11,6 +11,17 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Fallback component for lazy-loaded content
+const SettingsSkeleton = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-6 w-2/3 mb-2" />
+    <Skeleton className="h-10 w-full" />
+    <Skeleton className="h-10 w-full" />
+    <Skeleton className="h-10 w-full" />
+  </div>
+);
 
 const AccountSettings = () => {
   const [activeTab, setActiveTab] = useState("account");
@@ -47,7 +58,9 @@ const AccountSettings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <EmailPasswordSettings />
+                <Suspense fallback={<SettingsSkeleton />}>
+                  <EmailPasswordSettings />
+                </Suspense>
               </CardContent>
             </Card>
             
@@ -73,7 +86,9 @@ const AccountSettings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <NotificationSettings />
+                <Suspense fallback={<SettingsSkeleton />}>
+                  <NotificationSettings />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -87,7 +102,9 @@ const AccountSettings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PrivacySettings />
+                <Suspense fallback={<SettingsSkeleton />}>
+                  <PrivacySettings />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -101,7 +118,9 @@ const AccountSettings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <DangerZone />
+                <Suspense fallback={<SettingsSkeleton />}>
+                  <DangerZone />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>

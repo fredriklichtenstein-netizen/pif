@@ -11,11 +11,11 @@ export function withLazySuspense<P extends object>(
   options: LazyProps = {}
 ) {
   const LazyComponent = React.lazy(() => 
-    Promise.resolve({ default: Component })
+    Promise.resolve({ default: Component as unknown as React.ComponentType<P> })
       .catch(error => {
         console.error("Error loading component:", error);
         return { 
-          default: (props: any) => (
+          default: ((props: any) => (
             <div className="p-4 text-center">
               <p className="text-red-500">Failed to load component</p>
               <button 
@@ -25,7 +25,7 @@ export function withLazySuspense<P extends object>(
                 Try Again
               </button>
             </div>
-          ) 
+          )) as unknown as React.ComponentType<P>
         };
       })
   );
@@ -47,7 +47,7 @@ export function lazyImport<
   T extends React.ComponentType<any>,
   I extends { [K2 in K]: T },
   K extends keyof I
->(factory: () => Promise<I>, name: K) {
+>(factory: () => Promise<I>, name: K): React.LazyExoticComponent<React.ComponentType<React.ComponentProps<T>>> {
   return React.lazy(() => 
     factory()
       .then((module) => ({ default: module[name] as unknown as React.ComponentType<any> }))
@@ -67,5 +67,5 @@ export function lazyImport<
           )) as unknown as React.ComponentType<any>
         };
       })
-  );
+  ) as React.LazyExoticComponent<React.ComponentType<React.ComponentProps<T>>>;
 }

@@ -14,11 +14,27 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   useEffect(() => {
     // Initialize global auth state
-    const subscription = initializeAuth();
+    let cleanupSubscription: Promise<{ unsubscribe: () => void }> | undefined;
+    
+    try {
+      cleanupSubscription = initializeAuth();
+    } catch (error) {
+      console.error("Error initializing auth:", error);
+    }
     
     // Cleanup subscription
     return () => {
-      subscription?.then(sub => sub.unsubscribe());
+      if (cleanupSubscription) {
+        cleanupSubscription
+          .then(sub => {
+            if (sub && typeof sub.unsubscribe === 'function') {
+              sub.unsubscribe();
+            }
+          })
+          .catch(error => {
+            console.error("Error unsubscribing from auth:", error);
+          });
+      }
     };
   }, []);
 

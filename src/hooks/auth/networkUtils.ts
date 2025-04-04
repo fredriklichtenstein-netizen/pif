@@ -32,7 +32,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     
     // Use a simplified Supabase ping that's faster
     const { supabase } = await import('@/integrations/supabase/client');
-    const startTime = Date.now();
+    const pingStartTime = Date.now();
     
     // Just check if connection to Supabase is available - use a simple query
     // instead of specific RPC which might not be available
@@ -41,7 +41,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     const endTime = Date.now();
     
     // If the request takes too long, consider it a network issue
-    if (endTime - startTime > 4000) { // Reduced from 7000ms
+    if (endTime - pingStartTime > 4000) { // Reduced from 7000ms
       console.warn('Network connection is very slow');
       return false;
     }
