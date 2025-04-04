@@ -3,13 +3,11 @@ interface MapMarkerElementProps {
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  highlighted?: boolean;
 }
 
-export const createMarkerElement = ({
-  onClick,
-  onMouseEnter,
-  onMouseLeave,
-}: MapMarkerElementProps): HTMLDivElement => {
+// Create and cache element templates to improve performance
+const createElementTemplate = (): HTMLDivElement => {
   const el = document.createElement("div");
   el.className = "cursor-pointer";
   
@@ -42,29 +40,69 @@ export const createMarkerElement = ({
   pulse.style.backgroundColor = "rgba(47, 82, 51, 0.2)";
   pulse.style.animation = "pulse 2s infinite";
   
-  // Add the pulse animation keyframes
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-        opacity: 0.8;
-      }
-      70% {
-        transform: scale(1.3);
-        opacity: 0;
-      }
-      100% {
-        transform: scale(1.3);
-        opacity: 0;
-      }
-    }
-  `;
-  document.head.appendChild(style);
-  
   markerContainer.appendChild(pulse);
   markerContainer.appendChild(markerDot);
   el.appendChild(markerContainer);
+  
+  return el;
+};
+
+// Create a single style element for animations instead of creating one per marker
+const ensureAnimationStyles = (() => {
+  let initialized = false;
+  
+  return () => {
+    if (!initialized) {
+      const style = document.createElement("style");
+      style.textContent = `
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          70% {
+            transform: scale(1.3);
+            opacity: 0;
+          }
+          100% {
+            transform: scale(1.3);
+            opacity: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      initialized = true;
+    }
+  };
+})();
+
+// Element template cache
+let elementTemplate: HTMLDivElement | null = null;
+
+export const createMarkerElement = ({
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+  highlighted = false,
+}: MapMarkerElementProps): HTMLDivElement => {
+  // Ensure animation styles are added to the document
+  ensureAnimationStyles();
+  
+  // Create or clone from template
+  if (!elementTemplate) {
+    elementTemplate = createElementTemplate();
+  }
+  
+  const el = elementTemplate.cloneNode(true) as HTMLDivElement;
+  
+  // Apply highlighting if needed
+  if (highlighted) {
+    const markerDot = el.querySelector('div > div:nth-child(2)') as HTMLDivElement;
+    if (markerDot) {
+      markerDot.style.backgroundColor = "#FF5722";
+      markerDot.style.transform = "scale(1.1)";
+    }
+  }
 
   if (onClick) el.addEventListener("click", onClick);
   if (onMouseEnter) el.addEventListener("mouseenter", onMouseEnter);
