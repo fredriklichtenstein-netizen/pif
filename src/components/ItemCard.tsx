@@ -1,10 +1,19 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useItemInteractions } from "@/hooks/item/useItemInteractions";
 import { useComments } from "@/hooks/item/useComments";
-import { useItemActions } from "./item/useItemActions";
-import { useItemUsers } from "./item/useItemUsers";
+import { useItemActions } from "@/hooks/item/useItemActions";
+import { useItemUsers } from "@/hooks/item/useItemUsers";
+import { useItemCard } from "@/hooks/useItemCard";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
 import { Comment } from "@/types/comment";
 import { Skeleton } from "./ui/skeleton";
+import { ItemCardHeader } from "./post/ItemCardHeader";
+import { ItemCardGallery } from "./post/ItemCardGallery";
+import { ItemInteractions } from "./post/ItemInteractions";
+import { CommentSection } from "./post/CommentSection";
+import { ItemCardContent } from "./post/ItemCardContent";
 
 interface ItemCardProps {
   id: string;
@@ -42,7 +51,7 @@ export function ItemCard({
 }: ItemCardProps) {
   const {
     session
-  } = useAuth();
+  } = useGlobalAuth();
   
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
@@ -79,7 +88,7 @@ export function ItemCard({
     handleShowInterest,
     handleLike,
     handleCommentToggle,
-    handleMessage: itemCardHandleMessage,
+    handleMessage,
     handleShare,
     handleReport,
     handleBookmark,
@@ -87,6 +96,7 @@ export function ItemCard({
     fetchItemComments,
     refreshComments,
     getInterestedUsers,
+    isRealtimeSubscribed
   } = useItemCard(id.toString());
 
   // Pre-fetch comments data for better performance
@@ -136,6 +146,7 @@ export function ItemCard({
           isLoadingInterested={isLoadingInterested}
           interestedError={interestedError}
           getInterestedUsers={getInterestedUsers}
+          isRealtimeSubscribed={isRealtimeSubscribed}
         />
         
         {showComments && (

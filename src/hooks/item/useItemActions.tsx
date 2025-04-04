@@ -2,7 +2,7 @@
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useAuthCheck } from "./utils/authCheck";
+import { useAuthCheck } from "../item/utils/authCheck";
 
 export const useItemActions = () => {
   const { toast } = useToast();

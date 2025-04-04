@@ -1,41 +1,57 @@
 
+import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
 
 interface ItemCardContentProps {
-  title?: string;
-  description?: string;
+  description: string;
   measurements?: Record<string, string>;
 }
 
-export function ItemCardContent({
-  description,
-  measurements = {}
-}: ItemCardContentProps) {
-  const hasMeasurements = Object.keys(measurements).length > 0;
-  const hasContent = description || hasMeasurements;
+export function ItemCardContent({ description, measurements = {} }: ItemCardContentProps) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMoreDetails = Object.keys(measurements).length > 0;
   
-  if (!hasContent) return null;
+  // Truncate description if it's too long and not expanded
+  const shouldTruncate = description.length > 150 && !expanded;
+  const displayDescription = shouldTruncate 
+    ? description.substring(0, 150) + "..." 
+    : description;
   
   return (
-    <>
-      <Separator className="my-2" />
-      <Collapsible className="w-full">
-        <CollapsibleTrigger className="w-full flex items-center justify-center gap-1 text-sm text-gray-600 py-px">
-          <span>Show details</span>
-          <ChevronDown className="h-4 w-4" />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-3 space-y-3">
-          {description && <p className="text-sm text-gray-600">{description}</p>}
-          
-          {hasMeasurements && <div className="text-xs text-gray-500 flex flex-wrap gap-2">
-              {Object.entries(measurements).map(([key, value]) => <span key={key} className="bg-gray-100 px-2 py-1 rounded-full">
-                  {key}: {value}
-                </span>)}
-            </div>}
-        </CollapsibleContent>
-      </Collapsible>
-    </>
+    <div className="mt-2">
+      <p className="text-sm text-gray-700">{displayDescription}</p>
+      
+      {shouldTruncate && (
+        <button 
+          className="text-xs text-primary mt-1 flex items-center"
+          onClick={() => setExpanded(true)}
+        >
+          Read more <ChevronDown className="h-3 w-3 ml-1" />
+        </button>
+      )}
+      
+      {expanded && (
+        <button 
+          className="text-xs text-primary mt-1 flex items-center"
+          onClick={() => setExpanded(false)}
+        >
+          Show less <ChevronUp className="h-3 w-3 ml-1" />
+        </button>
+      )}
+      
+      {hasMoreDetails && expanded && (
+        <div className="mt-2 text-sm text-gray-600">
+          <h4 className="font-medium mb-1">Details:</h4>
+          <ul className="space-y-1">
+            {Object.entries(measurements).map(([key, value]) => (
+              <li key={key} className="flex">
+                <span className="font-medium mr-2">{key}:</span>
+                <span>{value}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 
-import { ThumbsUp, MessageCircle, HandWaving } from "lucide-react";
+import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ActionButtonsProps {
@@ -54,7 +54,7 @@ export function ActionButtons({
             className={`flex items-center gap-1 ${showInterest ? 'text-primary' : 'text-gray-600'}`}
             disabled={showInterest}
           >
-            <HandWaving size={18} />
+            <Heart size={18} />
             <span>{showInterest ? 'Interested' : 'Show Interest'}</span>
           </Button>
         )}

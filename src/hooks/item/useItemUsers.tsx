@@ -3,118 +3,93 @@ import { useState, useEffect, useCallback } from "react";
 import { Comment } from "@/types/comment";
 import type { User } from "./utils/userUtils";
 
-/**
- * Hook for managing users who interact with an item (likers, commenters, and interested users)
- */
+interface UserCacheState {
+  likers: User[];
+  commenters: User[];
+  interestedUsers: User[];
+  isLoadingInterested: boolean;
+  interestedError: Error | null;
+}
+
 export const useItemUsers = (
-  comments: Comment[], 
-  fetchLikers: () => Promise<User[]>, 
+  comments: Comment[],
+  fetchLikers: () => Promise<User[]>,
   likesCount: number,
-  fetchInterested?: () => Promise<User[]>,
-  interestsCount?: number
+  fetchInterestedUsers: () => Promise<User[]>,
+  interestsCount: number
 ) => {
-  const [likers, setLikers] = useState<User[]>([]);
-  const [commenters, setCommenters] = useState<User[]>([]);
-  const [interestedUsers, setInterestedUsers] = useState<User[]>([]);
-  const [isLoadingInterested, setIsLoadingInterested] = useState(false);
-  const [interestedError, setInterestedError] = useState<Error | null>(null);
-  
+  const [state, setState] = useState<UserCacheState>({
+    likers: [],
+    commenters: [],
+    interestedUsers: [],
+    isLoadingInterested: false,
+    interestedError: null
+  });
+
   // Extract unique commenters from comments
   useEffect(() => {
-    if (comments && comments.length > 0) {
-      // Create a Map to ensure unique commenters by ID
-      const uniqueCommentersMap = new Map();
-      
-      comments.forEach(comment => {
-        if (comment.author && comment.author.id) {
-          uniqueCommentersMap.set(comment.author.id, {
-            id: comment.author.id,
-            name: comment.author.name,
-            avatar: comment.author.avatar
-          });
-        }
-      });
-      
-      const uniqueCommenters = Array.from(uniqueCommentersMap.values());
-      setCommenters(uniqueCommenters);
-    } else {
-      setCommenters([]);
-    }
+    if (!comments || comments.length === 0) return;
+    
+    const uniqueCommenters: { [key: string]: User } = {};
+    
+    comments.forEach(comment => {
+      if (comment.user && !uniqueCommenters[comment.user.id]) {
+        uniqueCommenters[comment.user.id] = comment.user;
+      }
+    });
+    
+    setState(prev => ({
+      ...prev,
+      commenters: Object.values(uniqueCommenters)
+    }));
   }, [comments]);
-  
+
   // Fetch likers when likesCount changes
   useEffect(() => {
-    const getLikers = async () => {
-      if (likesCount > 0) {
-        try {
-          const fetchedLikers = await fetchLikers();
-          setLikers(fetchedLikers);
-        } catch (error) {
-          console.error("Error fetching likers in useItemUsers:", error);
-          setLikers([]);
-        }
-      } else {
-        setLikers([]);
-      }
-    };
-    
-    getLikers();
-  }, [likesCount, fetchLikers]);
-
-  // Fetch interested users when interestsCount changes
-  useEffect(() => {
-    const getInterested = async () => {
-      if (interestsCount && interestsCount > 0 && fetchInterested) {
-        console.log(`Auto-fetching interested users due to interestsCount change: ${interestsCount}`);
-        setIsLoadingInterested(true);
-        setInterestedError(null);
-        
-        try {
-          const result = await fetchInterested();
-          console.log(`Auto-fetched ${result.length} interested users`);
-          setInterestedUsers(result);
-        } catch (error) {
-          console.error("Error auto-fetching interested users:", error);
-          setInterestedError(error instanceof Error ? error : new Error('Unknown error'));
-          setInterestedUsers([]);
-        } finally {
-          setIsLoadingInterested(false);
-        }
-      } else if (interestsCount === 0) {
-        setInterestedUsers([]);
-      }
-    };
-    
-    getInterested();
-  }, [interestsCount, fetchInterested]);
-
-  // Actual fetch for interested users (will use cached data if already fetched)
-  const getInterestedUsers = useCallback(async () => {
-    if (fetchInterested) {
-      console.log("Explicitly fetching interested users on demand...");
-      setIsLoadingInterested(true);
-      setInterestedError(null);
-      
-      try {
-        const fetchedInterested = await fetchInterested();
-        console.log(`Fetched ${fetchedInterested.length} interested users on demand`);
-        setInterestedUsers(fetchedInterested);
-      } catch (error) {
-        console.error("Error fetching interested users on demand:", error);
-        setInterestedError(error instanceof Error ? error : new Error('Unknown error'));
-        setInterestedUsers([]);
-      } finally {
-        setIsLoadingInterested(false);
-      }
+    if (likesCount > 0 && state.likers.length === 0) {
+      fetchLikers()
+        .then(users => {
+          setState(prev => ({
+            ...prev,
+            likers: users
+          }));
+        })
+        .catch(error => {
+          console.error("Error fetching likers:", error);
+        });
     }
-  }, [fetchInterested]);
+  }, [likesCount, fetchLikers, state.likers.length]);
+
+  // Function to fetch interested users on demand
+  const getInterestedUsers = useCallback(() => {
+    if (state.interestedUsers.length > 0 || interestsCount === 0) return;
+    
+    setState(prev => ({
+      ...prev,
+      isLoadingInterested: true,
+      interestedError: null
+    }));
+    
+    fetchInterestedUsers()
+      .then(users => {
+        setState(prev => ({
+          ...prev,
+          interestedUsers: users,
+          isLoadingInterested: false
+        }));
+      })
+      .catch(error => {
+        console.error("Error fetching interested users:", error);
+        setState(prev => ({
+          ...prev,
+          isLoadingInterested: false,
+          interestedError: error instanceof Error ? error : new Error('Unknown error fetching interested users')
+        }));
+      });
+  }, [interestsCount, fetchInterestedUsers, state.interestedUsers.length]);
 
   return {
-    likers,
-    commenters,
-    interestedUsers,
-    isLoadingInterested,
-    interestedError,
+    ...state,
     getInterestedUsers
   };
 };
