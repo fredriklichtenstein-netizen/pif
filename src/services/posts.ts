@@ -45,49 +45,52 @@ export const getPosts = async (): Promise<Post[]> => {
     // Get all item IDs to fetch interaction counts
     const itemIds = data.map(item => item.id);
     
-    // Fetch likes counts for these items
-    const { data: likesCountData, error: likesError } = await supabase
-      .from('likes')
-      .select('item_id, count', { count: 'exact', head: false })
-      .in('item_id', itemIds)
-      .count();
-      
-    // Fetch interests counts
-    const { data: interestsCountData, error: interestsError } = await supabase
-      .from('interests')
-      .select('item_id, count', { count: 'exact', head: false })
-      .in('item_id', itemIds)
-      .count();
-      
-    // Fetch comments counts
-    const { data: commentsCountData, error: commentsError } = await supabase
-      .from('comments')
-      .select('item_id, count', { count: 'exact', head: false })
-      .in('item_id', itemIds)
-      .count();
+    // For counting likes, interests, and comments, we need to fetch each item individually
+    // since the count method doesn't work as expected
     
-    // Create maps for easier lookup
+    // Initialize counters for likes, interests, and comments
     const likesMap = new Map();
     const interestsMap = new Map();
     const commentsMap = new Map();
     
-    if (likesCountData) {
-      likesCountData.forEach(item => {
-        likesMap.set(item.item_id, parseInt(item.count));
-      });
-    }
-    
-    if (interestsCountData) {
-      interestsCountData.forEach(item => {
-        interestsMap.set(item.item_id, parseInt(item.count));
-      });
-    }
-    
-    if (commentsCountData) {
-      commentsCountData.forEach(item => {
-        commentsMap.set(item.item_id, parseInt(item.count));
-      });
-    }
+    // Fetch counts for each item in parallel
+    await Promise.all([
+      // Fetch likes counts
+      ...itemIds.map(async (itemId) => {
+        const { count, error } = await supabase
+          .from('likes')
+          .select('*', { count: 'exact', head: true })
+          .eq('item_id', itemId);
+          
+        if (!error && count !== null) {
+          likesMap.set(itemId, count);
+        }
+      }),
+      
+      // Fetch interests counts
+      ...itemIds.map(async (itemId) => {
+        const { count, error } = await supabase
+          .from('interests')
+          .select('*', { count: 'exact', head: true })
+          .eq('item_id', itemId);
+          
+        if (!error && count !== null) {
+          interestsMap.set(itemId, count);
+        }
+      }),
+      
+      // Fetch comments counts
+      ...itemIds.map(async (itemId) => {
+        const { count, error } = await supabase
+          .from('comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('item_id', itemId);
+          
+        if (!error && count !== null) {
+          commentsMap.set(itemId, count);
+        }
+      })
+    ]);
 
     // Transform data to match the Post type
     const transformedData = data.map(item => {
