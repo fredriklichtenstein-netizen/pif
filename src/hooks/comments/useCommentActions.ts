@@ -21,7 +21,7 @@ export const useCommentActions = (
 
   // Import individual comment action hooks
   const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser);
-  const { handleDeleteComment } = useCommentDelete(comments, setComments);
+  const { deleteComment: handleDeleteComment } = useCommentDelete();
   const { handleEditComment } = useCommentEdit(comments, setComments);
   const { handleLikeComment, handleReplyToComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
   const { refreshComments, isRefreshing } = useCommentRefresh(itemId, setComments, currentUser);

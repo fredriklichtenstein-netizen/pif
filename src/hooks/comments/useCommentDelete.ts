@@ -4,7 +4,7 @@ import { useToast } from "../use-toast";
 import { useGlobalAuth } from "../useGlobalAuth";
 import { useAuthCheck } from "./utils/authCheck";
 
-export const useCommentRemove = () => {
+export const useCommentDelete = () => {
   const { toast } = useToast();
   const { user } = useGlobalAuth();
   const { checkAuth } = useAuthCheck();
@@ -40,3 +40,6 @@ export const useCommentRemove = () => {
 
   return { deleteComment };
 };
+
+// For backward compatibility
+export const useCommentRemove = useCommentDelete;
