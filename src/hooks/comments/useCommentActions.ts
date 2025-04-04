@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Comment } from "@/types/comment";
 import { useCommentCreate } from "./useCommentCreate";
 import { useCommentDelete } from "./useCommentDelete";
@@ -27,9 +27,9 @@ export const useCommentActions = (
   const { refreshComments, isRefreshing } = useCommentRefresh(itemId, setComments, currentUser);
 
   // Update the loading state based on the refreshing state
-  useState(() => {
+  useEffect(() => {
     setIsLoading(isRefreshing);
-  });
+  }, [isRefreshing]);
 
   return {
     handleAddComment,

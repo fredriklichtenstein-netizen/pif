@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCommentsFetch } from "./useCommentsFetch";
 import { useCommentsMutations } from "./useCommentsMutations";
 import type { User } from "./utils/userUtils";
@@ -23,10 +23,10 @@ export const useComments = (itemId: string) => {
   } = useCommentsMutations(itemId);
   
   // Update loading and error states based on fetchComments states
-  useState(() => {
+  useEffect(() => {
     setIsLoading(isFetchLoading);
     if (fetchError) setError(fetchError);
-  });
+  }, [isFetchLoading, fetchError]);
   
   return {
     fetchComments,

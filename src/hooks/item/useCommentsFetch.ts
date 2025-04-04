@@ -5,7 +5,7 @@ import { useGlobalAuth } from "../useGlobalAuth";
 import { formatCommentFromDB } from "./utils/commentFormatters";
 import { useToast } from "../use-toast";
 import type { User } from "./utils/userUtils";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 export const useCommentsFetch = (itemId: string) => {
   const { user } = useGlobalAuth();
