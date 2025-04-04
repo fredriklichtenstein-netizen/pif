@@ -2,34 +2,39 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/hooks/item/useItemInteractions";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface InteractionsListProps {
   interested: User[];
   isLoading?: boolean;
   error?: Error | null;
+  title?: string;
 }
 
 export function InteractionsList({ 
   interested = [], 
   isLoading = false,
-  error = null
+  error = null,
+  title = "People Interested"
 }: InteractionsListProps) {
   if (isLoading) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-        <p className="text-gray-500">Loading interested users...</p>
+        <p className="text-gray-500">Loading {title.toLowerCase()}...</p>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="w-full py-4 text-center">
-        <p className="text-red-500 mb-2">Failed to load user data</p>
-        <p className="text-sm text-gray-500">{error.message}</p>
-      </div>
+      <Alert variant="destructive" className="my-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load user data: {error.message}
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -50,7 +55,7 @@ export function InteractionsList({
           ))}
         </div>
       ) : (
-        <p className="text-center text-gray-500 py-4">No one interested yet</p>
+        <p className="text-center text-gray-500 py-4">No one {title.toLowerCase()} yet</p>
       )}
     </div>
   );
