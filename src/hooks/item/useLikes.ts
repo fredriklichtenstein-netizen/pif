@@ -12,7 +12,7 @@ export const useLikes = (id: string, userId?: string | null) => {
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
 
-  // Initial fetch of likes
+  // Initial fetch of like status and count
   useEffect(() => {
     const fetchLikes = async () => {
       const numericId = parseInt(id, 10);
@@ -20,29 +20,29 @@ export const useLikes = (id: string, userId?: string | null) => {
         setLoading(false);
         return;
       }
-      
+
       setLoading(true);
       try {
-        // Check if current user has liked this item
+        // Check if user has liked this item
         if (userId) {
-          const { data: userLike, error: userLikeError } = await supabase
+          const { data: likeData, error: likeError } = await supabase
             .from('likes')
             .select('id')
             .eq('user_id', userId)
             .eq('item_id', numericId)
             .maybeSingle();
-            
-          if (!userLikeError) {
-            setIsLiked(!!userLike);
+
+          if (!likeError) {
+            setIsLiked(!!likeData);
           }
         }
-        
+
         // Get total likes count
         const { count, error: countError } = await supabase
           .from('likes')
           .select('id', { count: 'exact' })
           .eq('item_id', numericId);
-        
+
         if (!countError) {
           setLikesCount(count || 0);
         }
@@ -52,7 +52,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         setLoading(false);
       }
     };
-    
+
     fetchLikes();
   }, [id, userId]);
 
@@ -62,9 +62,16 @@ export const useLikes = (id: string, userId?: string | null) => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
     
-    setLoading(true);
+    // Create a local copy of the current state before making updates
+    const wasLiked = isLiked;
+    const previousCount = likesCount;
+    
+    // Optimistically update UI
+    setIsLiked(!wasLiked);
+    setLikesCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
+    
     try {
-      if (isLiked) {
+      if (wasLiked) {
         // Remove like
         const { error } = await supabase
           .from('likes')
@@ -73,9 +80,6 @@ export const useLikes = (id: string, userId?: string | null) => {
           .eq('item_id', numericId);
           
         if (error) throw error;
-        
-        setIsLiked(false);
-        setLikesCount(prev => Math.max(0, prev - 1));
       } else {
         // Add like
         const { error } = await supabase
@@ -85,19 +89,19 @@ export const useLikes = (id: string, userId?: string | null) => {
           ]);
           
         if (error) throw error;
-        
-        setIsLiked(true);
-        setLikesCount(prev => prev + 1);
       }
     } catch (error) {
       console.error('Error toggling like:', error);
+      
+      // Revert optimistic updates on error
+      setIsLiked(wasLiked);
+      setLikesCount(previousCount);
+      
       toast({
         title: "Error",
         description: "Failed to update like status. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
   

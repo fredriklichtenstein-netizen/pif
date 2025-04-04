@@ -62,9 +62,16 @@ export const useInterests = (id: string, userId?: string | null) => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
     
-    setLoading(true);
+    // Create a local copy of the current state before making updates
+    const wasInterested = showInterest;
+    const previousCount = interestsCount;
+    
+    // Optimistically update UI
+    setShowInterest(!wasInterested);
+    setInterestsCount(prev => wasInterested ? Math.max(0, prev - 1) : prev + 1);
+    
     try {
-      if (showInterest) {
+      if (wasInterested) {
         // Remove interest
         const { error } = await supabase
           .from('interests')
@@ -72,10 +79,9 @@ export const useInterests = (id: string, userId?: string | null) => {
           .eq('user_id', userId)
           .eq('item_id', numericId);
           
-        if (error) throw error;
-        
-        setShowInterest(false);
-        setInterestsCount(prev => Math.max(0, prev - 1));
+        if (error) {
+          throw error;
+        }
         
         toast({
           title: "Interest removed",
@@ -89,10 +95,9 @@ export const useInterests = (id: string, userId?: string | null) => {
             { user_id: userId, item_id: numericId }
           ]);
           
-        if (error) throw error;
-        
-        setShowInterest(true);
-        setInterestsCount(prev => prev + 1);
+        if (error) {
+          throw error;
+        }
         
         toast({
           title: "Interest shown",
@@ -101,13 +106,15 @@ export const useInterests = (id: string, userId?: string | null) => {
       }
     } catch (error) {
       console.error('Error toggling interest:', error);
+      // Revert optimistic updates on error
+      setShowInterest(wasInterested);
+      setInterestsCount(previousCount);
+      
       toast({
         title: "Error",
         description: "Failed to update interest status. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
   

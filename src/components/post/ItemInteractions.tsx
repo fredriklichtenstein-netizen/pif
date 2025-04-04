@@ -7,6 +7,7 @@ import { InteractionsList } from "./interactions/InteractionsList";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConversationHandler } from "./interactions/ConversationHandler";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type User = {
   id: string;
@@ -38,6 +39,7 @@ interface ItemInteractionsProps {
   onMessage: (e: React.MouseEvent) => void;
   onShare: () => void;
   onReport: () => void;
+  interactionsLoading?: boolean;
 }
 
 export function ItemInteractions({
@@ -60,9 +62,27 @@ export function ItemInteractions({
   onBookmarkToggle,
   onMessage,
   onShare,
-  onReport
+  onReport,
+  interactionsLoading = false
 }: ItemInteractionsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // If interactions are loading, show skeleton placeholders
+  if (interactionsLoading) {
+    return (
+      <div className="flex flex-col space-y-2">
+        <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-2 border-b border-gray-200">
+          <Skeleton className="h-5 w-10" />
+          <Skeleton className="h-5 w-24 ml-auto" />
+        </div>
+        <div className="flex items-center justify-between py-[5px]">
+          <Skeleton className="h-10 flex-1 mx-1" />
+          <Skeleton className="h-10 flex-1 mx-1" />
+          <Skeleton className="h-10 flex-1 mx-1" />
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col space-y-2">

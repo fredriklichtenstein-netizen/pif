@@ -88,7 +88,8 @@ export function ItemCard({
     handleReport,
     handleBookmark,
     setComments,
-    fetchItemComments
+    fetchItemComments,
+    refreshComments
   } = useItemCard(id);
 
   // Pre-fetch comments data for better performance
@@ -113,40 +114,29 @@ export function ItemCard({
       <ItemCardGallery images={allImages} title={title} category={category} />
       
       <div className="p-3 py-[5px]">
-        {interactionsLoading ? (
-          // Loading state for interactions
-          <div className="py-3 space-y-2">
-            <Skeleton className="h-5 w-full max-w-[180px]" />
-            <div className="flex justify-between gap-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          </div>
-        ) : (
-          <ItemInteractions 
-            id={id} 
-            postedBy={postedBy} 
-            isLiked={isLiked} 
-            showComments={showComments} 
-            isBookmarked={isBookmarked} 
-            showInterest={showInterest} 
-            isOwner={isOwner} 
-            commentsCount={commentsCount} 
-            likesCount={likesCount} 
-            interestsCount={interestsCount} 
-            likers={likers} 
-            interestedUsers={interestedUsers} 
-            commenters={commenters} 
-            onLikeToggle={handleLike} 
-            onCommentToggle={handleCommentToggle} 
-            onShowInterest={handleShowInterest} 
-            onBookmarkToggle={handleBookmark} 
-            onMessage={handleMessage} 
-            onShare={handleShare} 
-            onReport={handleReport} 
-          />
-        )}
+        <ItemInteractions 
+          id={id} 
+          postedBy={postedBy} 
+          isLiked={isLiked} 
+          showComments={showComments} 
+          isBookmarked={isBookmarked} 
+          showInterest={showInterest} 
+          isOwner={isOwner} 
+          commentsCount={commentsCount} 
+          likesCount={likesCount} 
+          interestsCount={interestsCount} 
+          likers={likers} 
+          interestedUsers={interestedUsers} 
+          commenters={commenters} 
+          onLikeToggle={handleLike} 
+          onCommentToggle={handleCommentToggle} 
+          onShowInterest={handleShowInterest} 
+          onBookmarkToggle={handleBookmark} 
+          onMessage={handleMessage} 
+          onShare={handleShare} 
+          onReport={handleReport}
+          interactionsLoading={interactionsLoading}
+        />
         
         {showComments && (
           <CommentSection 
