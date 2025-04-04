@@ -1,45 +1,42 @@
 
-import { useState } from "react";
-import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "../use-toast";
+import { useGlobalAuth } from "../useGlobalAuth";
+import { useAuthCheck } from "./utils/authCheck";
 
-export const useCommentDelete = (
-  comments: Comment[],
-  setComments: (comments: Comment[]) => void
-) => {
+export const useCommentRemove = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
+  const { user } = useGlobalAuth();
+  const { checkAuth } = useAuthCheck();
+  
   // Delete a comment
-  const handleDeleteComment = async (commentId: string) => {
-    setIsLoading(true);
+  const deleteComment = async (commentId: string): Promise<boolean> => {
+    if (!commentId) return false;
+    
+    // Check if user is authenticated
+    const isAuthenticated = await checkAuth("delete a comment");
+    if (!isAuthenticated) return false;
+    
     try {
-      // Call the Supabase API - convert string ID to number for Supabase
       const { error } = await supabase
         .from('comments')
         .delete()
-        .eq('id', parseInt(commentId));
-        
+        .eq('id', parseInt(commentId))
+        .eq('user_id', user?.id);
+      
       if (error) throw error;
       
-      // Remove the comment from the UI
-      const updatedComments = comments.filter(comment => comment.id !== commentId);
-      setComments(updatedComments);
-    } catch (error) {
+      return true;
+    } catch (error: any) {
       console.error("Error deleting comment:", error);
       toast({
         title: "Error",
-        description: "Failed to delete comment",
-        variant: "destructive"
+        description: error.message,
+        variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      return false;
     }
   };
 
-  return {
-    handleDeleteComment,
-    isDeleting: isLoading
-  };
+  return { deleteComment };
 };
