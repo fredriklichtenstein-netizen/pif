@@ -32,9 +32,11 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     
     // Use a simplified Supabase ping that's faster
     const { supabase } = await import('@/integrations/supabase/client');
+    const startTime = Date.now();
     
-    // Just check if connection to Supabase is available - lightest possible query
-    await supabase.rpc('get_server_time').maybeSingle();
+    // Just check if connection to Supabase is available - use a simple query
+    // instead of specific RPC which might not be available
+    await supabase.from('profiles').select('id').limit(1).maybeSingle();
     
     const endTime = Date.now();
     

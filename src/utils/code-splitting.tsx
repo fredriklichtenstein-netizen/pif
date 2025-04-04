@@ -15,7 +15,7 @@ export function withLazySuspense<P extends object>(
       .catch(error => {
         console.error("Error loading component:", error);
         return { 
-          default: (props: P) => (
+          default: (props: any) => (
             <div className="p-4 text-center">
               <p className="text-red-500">Failed to load component</p>
               <button 
@@ -33,7 +33,7 @@ export function withLazySuspense<P extends object>(
   return function WithSuspense(props: P) {
     return (
       <Suspense fallback={options.fallback || <DefaultFallback />}>
-        <LazyComponent {...props} />
+        <LazyComponent {...props as any} />
       </Suspense>
     );
   };
@@ -50,11 +50,11 @@ export function lazyImport<
 >(factory: () => Promise<I>, name: K) {
   return React.lazy(() => 
     factory()
-      .then((module) => ({ default: module[name] }))
+      .then((module) => ({ default: module[name] as unknown as React.ComponentType<any> }))
       .catch(error => {
         console.error(`Error loading module ${String(name)}:`, error);
         return { 
-          default: (props: React.ComponentProps<T>) => (
+          default: ((props: any) => (
             <div className="p-4 text-center">
               <p className="text-red-500">Failed to load {String(name)}</p>
               <button 
@@ -64,7 +64,7 @@ export function lazyImport<
                 Try Again
               </button>
             </div>
-          ) 
+          )) as unknown as React.ComponentType<any>
         };
       })
   );
