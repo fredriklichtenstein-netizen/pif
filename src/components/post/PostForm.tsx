@@ -5,7 +5,7 @@ import { usePostForm } from "@/hooks/usePostForm";
 import { useMapbox } from "@/hooks/useMapbox";
 import { usePostLocation } from "@/hooks/post/usePostLocation";
 
-export function PostForm() {
+const PostForm = () => {
   const { mapToken } = useMapbox();
   const {
     formData,
@@ -45,4 +45,6 @@ export function PostForm() {
       isFormValid={isFormValid}
     />
   );
-}
+};
+
+export default PostForm;
