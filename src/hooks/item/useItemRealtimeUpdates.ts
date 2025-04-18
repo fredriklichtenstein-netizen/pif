@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -10,10 +10,15 @@ export const useItemRealtimeUpdates = (
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const channelsRef = useRef<any[]>([]);
+  const setupAttemptedRef = useRef(false);
 
   // Set up real-time subscription for item interactions
   useEffect(() => {
-    if (!itemId || isSubscribed) return;
+    // Prevent multiple setup attempts for the same itemId
+    if (!itemId || isSubscribed || setupAttemptedRef.current) return;
+    
+    setupAttemptedRef.current = true;
     
     try {
       // Parse the itemId to ensure it's a number
@@ -26,7 +31,7 @@ export const useItemRealtimeUpdates = (
 
       // Subscribe to likes changes
       const likesChannel = supabase
-        .channel('item-likes-changes')
+        .channel(`item-likes-changes-${numericItemId}`)
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
@@ -39,12 +44,13 @@ export const useItemRealtimeUpdates = (
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.log('Subscribed to likes changes');
+            channelsRef.current.push(likesChannel);
           }
         });
 
       // Subscribe to interests changes
       const interestsChannel = supabase
-        .channel('item-interests-changes')
+        .channel(`item-interests-changes-${numericItemId}`)
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
@@ -57,6 +63,7 @@ export const useItemRealtimeUpdates = (
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.log('Subscribed to interests changes');
+            channelsRef.current.push(interestsChannel);
             setIsSubscribed(true);
           }
         });
@@ -64,15 +71,18 @@ export const useItemRealtimeUpdates = (
       // Clean up subscriptions when component unmounts
       return () => {
         console.log('Cleaning up real-time subscriptions');
-        supabase.removeChannel(likesChannel);
-        supabase.removeChannel(interestsChannel);
+        channelsRef.current.forEach(channel => {
+          supabase.removeChannel(channel);
+        });
+        channelsRef.current = [];
         setIsSubscribed(false);
+        setupAttemptedRef.current = false;
       };
     } catch (error) {
       console.error('Error setting up real-time subscriptions:', error);
       setError(error instanceof Error ? error : new Error('Unknown error'));
     }
-  }, [itemId, isSubscribed, refreshItemData]);
+  }, [itemId, refreshItemData]);
 
   return {
     isSubscribed,

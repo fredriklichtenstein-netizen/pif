@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useItemInteractions } from "@/hooks/item/useItemInteractions";
 import { useComments } from "@/hooks/item/useComments";
 import { useItemActions } from "@/hooks/item/useItemActions";
@@ -50,10 +50,8 @@ const ItemCard = memo(function ItemCard({
   measurements = {},
   postedBy
 }: ItemCardProps) {
-  const {
-    session
-  } = useGlobalAuth();
-  
+  const { session } = useGlobalAuth();
+  const isObservedRef = useRef(false);
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -99,15 +97,19 @@ const ItemCard = memo(function ItemCard({
     refreshComments,
     getInterestedUsers,
     isRealtimeSubscribed
-  } = useItemCard(id.toString());
+  } = useItemCard(id);
 
   // Only pre-fetch comments data when the component is visible
   useEffect(() => {
+    // Skip if we've already observed this element
+    if (isObservedRef.current) return;
+    
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           console.log(`Pre-fetching comments for item ${id} (lazy)`);
           fetchItemComments();
+          isObservedRef.current = true;
           observer.disconnect();
         }
       },

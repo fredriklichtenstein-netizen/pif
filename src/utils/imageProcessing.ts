@@ -1,3 +1,4 @@
+
 export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -91,37 +92,57 @@ export async function getCroppedImg(
 
 export const optimizeImageUrl = (url: string, width: number = 600): string => {
   // Return placeholder if URL is not valid
-  if (!url || typeof url !== 'string') {
+  if (!url || typeof url !== 'string' || url.trim() === '') {
     return "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
   }
   
   try {
-    // Handle different image sources differently
-    if (url.includes('unsplash.com')) {
-      // For Unsplash, use their image API
-      const baseUrl = url.split('?')[0];
-      return `${baseUrl}?w=${width}&q=80&auto=format`;
-    } 
-    else if (url.includes('supabase.co') || url.includes('.supabase.')) {
-      // For Supabase Storage URLs
-      if (url.includes('?')) {
-        return `${url}&width=${width}&quality=70`;
-      } else {
-        return `${url}?width=${width}&quality=70`;
-      }
-    }
-    else if (url.includes('dicebear.com')) {
-      // DiceBear avatars already optimized
+    // Check if URL is already a data URL or placeholder
+    if (url.startsWith('data:') || url.includes('dicebear.com')) {
       return url;
     }
     
-    // Default case - return original with cache timestamp to avoid stale cache
-    return url.includes('?') 
-      ? `${url}&_t=${Date.now()}` 
-      : `${url}?_t=${Date.now()}`;
+    // Make sure URL is properly encoded
+    let safeUrl = url;
+    try {
+      // Only encode the URL if it's not already encoded
+      if (decodeURIComponent(url) === url) {
+        const urlObj = new URL(url);
+        safeUrl = urlObj.toString();
+      }
+    } catch (e) {
+      // If URL parsing fails, try to use the original
+      console.warn("URL parsing failed:", e);
+    }
+    
+    // Handle different image sources differently
+    if (safeUrl.includes('unsplash.com')) {
+      // For Unsplash, use their image API
+      const baseUrl = safeUrl.split('?')[0];
+      return `${baseUrl}?w=${width}&q=80&auto=format`;
+    } 
+    else if (safeUrl.includes('supabase.co') || safeUrl.includes('.supabase.')) {
+      // For Supabase Storage URLs
+      if (safeUrl.includes('?')) {
+        return `${safeUrl}&width=${width}&quality=70`;
+      } else {
+        return `${safeUrl}?width=${width}&quality=70`;
+      }
+    }
+    else if (safeUrl.includes('dicebear.com')) {
+      // DiceBear avatars already optimized
+      return safeUrl;
+    }
+    
+    // Add a cache-busting parameter to avoid stale cache issues
+    const cacheBuster = `_t=${Date.now().toString(36)}`;
+    return safeUrl.includes('?') 
+      ? `${safeUrl}&${cacheBuster}` 
+      : `${safeUrl}?${cacheBuster}`;
   } catch (error) {
-    console.warn('Failed to optimize image URL:', error);
-    return url;
+    console.warn("Failed to optimize image URL:", error);
+    // Return the original URL if optimization fails
+    return url || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
   }
 };
 
