@@ -30,9 +30,9 @@ export const fetchMissingCounts = async (itemIds: number[]): Promise<Map<number,
   await Promise.all(
     itemIds.map(async (itemId) => {
       const [likesCount, interestsCount, commentsCount] = await Promise.all([
-        fetchCount('likes', itemId),
-        fetchCount('interests', itemId),
-        fetchCount('comments', itemId)
+        fetchLikesCount(itemId),
+        fetchInterestsCount(itemId),
+        fetchCommentsCount(itemId)
       ]);
       
       countsMap.set(itemId, {
@@ -46,9 +46,28 @@ export const fetchMissingCounts = async (itemIds: number[]): Promise<Map<number,
   return countsMap;
 };
 
-const fetchCount = async (table: string, itemId: number): Promise<number> => {
+// Fixed individual count functions to avoid the type error
+const fetchLikesCount = async (itemId: number): Promise<number> => {
   const { count, error } = await supabase
-    .from(table)
+    .from('likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('item_id', itemId);
+    
+  return error ? 0 : (count || 0);
+};
+
+const fetchInterestsCount = async (itemId: number): Promise<number> => {
+  const { count, error } = await supabase
+    .from('interests')
+    .select('*', { count: 'exact', head: true })
+    .eq('item_id', itemId);
+    
+  return error ? 0 : (count || 0);
+};
+
+const fetchCommentsCount = async (itemId: number): Promise<number> => {
+  const { count, error } = await supabase
+    .from('comments')
     .select('*', { count: 'exact', head: true })
     .eq('item_id', itemId);
     
