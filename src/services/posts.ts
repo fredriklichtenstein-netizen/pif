@@ -100,45 +100,48 @@ export const getPosts = async (): Promise<Post[]> => {
       await Promise.all([
         // Fetch likes counts in batch
         (async () => {
-          const { data: likesData } = await supabase
+          // Fix: Use .select('count') instead of .count()
+          const { data: likesData, error: likesError } = await supabase
             .from('likes')
-            .select('item_id, count')
+            .select('item_id, count(*)', { count: 'exact' })
             .in('item_id', missingItemIds)
-            .count('groupby');
+            .group('item_id');
             
-          if (likesData) {
-            likesData.forEach(item => {
-              likesMap.set(item.item_id, item.count);
+          if (likesData && !likesError) {
+            likesData.forEach((item: any) => {
+              likesMap.set(item.item_id, parseInt(item.count, 10));
             });
           }
         })(),
         
         // Fetch interests counts in batch
         (async () => {
-          const { data: interestsData } = await supabase
+          // Fix: Use .select('count') instead of .count()
+          const { data: interestsData, error: interestsError } = await supabase
             .from('interests')
-            .select('item_id, count')
+            .select('item_id, count(*)', { count: 'exact' })
             .in('item_id', missingItemIds)
-            .count('groupby');
+            .group('item_id');
             
-          if (interestsData) {
-            interestsData.forEach(item => {
-              interestsMap.set(item.item_id, item.count);
+          if (interestsData && !interestsError) {
+            interestsData.forEach((item: any) => {
+              interestsMap.set(item.item_id, parseInt(item.count, 10));
             });
           }
         })(),
         
         // Fetch comments counts in batch
         (async () => {
-          const { data: commentsData } = await supabase
+          // Fix: Use .select('count') instead of .count()
+          const { data: commentsData, error: commentsError } = await supabase
             .from('comments')
-            .select('item_id, count')
+            .select('item_id, count(*)', { count: 'exact' })
             .in('item_id', missingItemIds)
-            .count('groupby');
+            .group('item_id');
             
-          if (commentsData) {
-            commentsData.forEach(item => {
-              commentsMap.set(item.item_id, item.count);
+          if (commentsData && !commentsError) {
+            commentsData.forEach((item: any) => {
+              commentsMap.set(item.item_id, parseInt(item.count, 10));
             });
           }
         })()
@@ -220,3 +223,4 @@ export const getPostsNearby = async (lat: number, lng: number, radius = 10) => {
   // For now, we'll just return all posts as a placeholder
   return getPosts();
 };
+
