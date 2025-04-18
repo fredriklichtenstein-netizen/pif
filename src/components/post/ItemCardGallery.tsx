@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { optimizeImageUrl } from "@/utils/imageProcessing";
@@ -12,6 +12,7 @@ interface ItemCardGalleryProps {
 
 export function ItemCardGallery({ images, title, category }: ItemCardGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   
   // Handle case where images array is empty
   if (!images || images.length === 0) {
@@ -27,23 +28,32 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   
   const handleNext = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    setIsImageLoaded(false);
   };
   
   const handlePrev = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setIsImageLoaded(false);
   };
   
   // Use optimized image URL
-  const optimizedImage = optimizeImageUrl(images[currentImageIndex], 480);
+  const optimizedImage = optimizeImageUrl(images[currentImageIndex], 240); // Reduced size for better performance
   
   return (
     <div className="relative h-48">
+      {!isImageLoaded && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+      )}
+      
       <img 
         src={optimizedImage} 
         alt={title} 
-        className="w-full h-48 object-cover"
+        className={`w-full h-48 object-cover ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        style={{ transition: 'opacity 0.3s ease-in-out' }}
+        onLoad={() => setIsImageLoaded(true)}
         onError={(e) => {
           e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+          setIsImageLoaded(true);
         }}
         loading="lazy"
       />
@@ -57,12 +67,14 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
           <button 
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handlePrev}
+            aria-label="Previous image"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button 
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handleNext}
+            aria-label="Next image"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

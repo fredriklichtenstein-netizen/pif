@@ -1,66 +1,67 @@
 
-import { useRef, useCallback } from "react";
+import { useCallback, useRef } from "react";
 
-export const useCommentRetry = (maxAttempts: number = 3) => {
-  const fetchAttempts = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const abortController = useRef<AbortController | null>(null);
-  
-  // Clean up function to handle aborting requests and clearing timeouts
-  const cleanUp = useCallback(() => {
-    if (abortController.current) {
-      try {
-        abortController.current.abort();
-      } catch (e) {
-        console.log("Error aborting fetch:", e);
-      }
-      abortController.current = null;
-    }
-    
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-  }, []);
-  
-  // Reset attempt counter
-  const resetAttempts = useCallback(() => {
-    fetchAttempts.current = 0;
-  }, []);
-  
-  // Increment attempt counter
-  const incrementAttempts = useCallback(() => {
-    fetchAttempts.current++;
-    return fetchAttempts.current;
-  }, []);
-  
-  // Check if max attempts reached
-  const isMaxAttemptsReached = useCallback(() => {
-    return fetchAttempts.current >= maxAttempts;
-  }, [maxAttempts]);
-  
-  // Get current attempts
-  const getCurrentAttempts = useCallback(() => {
-    return fetchAttempts.current;
-  }, []);
-  
-  // Create a new abort controller
+export const useCommentRetry = (maxRetries: number = 3) => {
+  const attemptsRef = useRef(0);
+  const timeoutsRef = useRef<number[]>([]);
+  const abortControllersRef = useRef<AbortController[]>([]);
+
   const createAbortController = useCallback(() => {
-    cleanUp();
-    abortController.current = new AbortController();
-    return abortController.current;
-  }, [cleanUp]);
-  
-  // Set timeout for request
-  const setTimeout = useCallback((callback: () => void, ms: number) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = global.setTimeout(callback, ms);
-    return timeoutRef.current;
+    const controller = new AbortController();
+    abortControllersRef.current.push(controller);
+    return controller;
   }, []);
-  
+
+  const setTimeout = useCallback((callback: () => void, ms: number) => {
+    if (typeof window !== 'undefined') {
+      const id = window.setTimeout(() => {
+        callback();
+        // Remove this timeout ID from our tracking array
+        timeoutsRef.current = timeoutsRef.current.filter(t => t !== id);
+      }, ms);
+      timeoutsRef.current.push(id);
+      return id;
+    }
+    return null;
+  }, []);
+
+  const cleanUp = useCallback(() => {
+    // Clear all timeouts
+    if (typeof window !== 'undefined') {
+      timeoutsRef.current.forEach(id => {
+        window.clearTimeout(id);
+      });
+    }
+    timeoutsRef.current = [];
+    
+    // Abort all in-flight requests
+    abortControllersRef.current.forEach(controller => {
+      try {
+        controller.abort();
+      } catch (e) {
+        console.warn("Error aborting request:", e);
+      }
+    });
+    abortControllersRef.current = [];
+  }, []);
+
+  const resetAttempts = useCallback(() => {
+    attemptsRef.current = 0;
+  }, []);
+
+  const incrementAttempts = useCallback(() => {
+    attemptsRef.current += 1;
+    return attemptsRef.current;
+  }, []);
+
+  const isMaxAttemptsReached = useCallback(() => {
+    return attemptsRef.current >= maxRetries;
+  }, [maxRetries]);
+
+  const getCurrentAttempts = useCallback(() => {
+    return attemptsRef.current;
+  }, []);
+
   return {
     cleanUp,
     resetAttempts,
@@ -69,6 +70,6 @@ export const useCommentRetry = (maxAttempts: number = 3) => {
     getCurrentAttempts,
     createAbortController,
     setTimeout,
-    maxAttempts
+    maxAttempts: maxRetries
   };
 };

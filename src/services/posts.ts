@@ -21,16 +21,40 @@ export const addPost = async (postData: CreatePostInput) => {
 };
 
 /**
- * Get all posts from the database
+ * Get all posts from the database with optimized performance
  */
 export const getPosts = async (): Promise<Post[]> => {
   try {
     console.log("Fetching posts from database...");
+    
+    // Cache control helpers
+    const cacheKey = 'posts_cache';
+    const cacheExpiry = 5 * 60 * 1000; // 5 minutes in milliseconds
+    
+    // Check for cached data first
+    if (typeof window !== 'undefined') {
+      const cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        try {
+          const { data, timestamp } = JSON.parse(cachedData);
+          const isExpired = Date.now() - timestamp > cacheExpiry;
+          
+          if (!isExpired) {
+            console.log("Using cached posts data");
+            return data;
+          }
+        } catch (e) {
+          console.warn("Failed to parse cached data", e);
+        }
+      }
+    }
+    
     // First, get the base post data
     const { data, error } = await supabase
       .from('items')
       .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(20); // Limit to 20 most recent posts for performance
 
     if (error) {
       console.error("Supabase error:", error);
@@ -45,52 +69,81 @@ export const getPosts = async (): Promise<Post[]> => {
     // Get all item IDs to fetch interaction counts
     const itemIds = data.map(item => item.id);
     
-    // For counting likes, interests, and comments, we need to fetch each item individually
-    // since the count method doesn't work as expected
+    // Use the item_interactions table to get all counts at once if available
+    const { data: interactionData, error: interactionError } = await supabase
+      .from('item_interactions')
+      .select('*')
+      .in('item_id', itemIds);
+      
+    // Create a map for quick lookup
+    const interactionsMap = new Map();
     
-    // Initialize counters for likes, interests, and comments
+    if (!interactionError && interactionData) {
+      interactionData.forEach(item => {
+        interactionsMap.set(item.item_id, {
+          likesCount: item.likes_count || 0,
+          interestsCount: item.interests_count || 0,
+          commentsCount: item.comments_count || 0
+        });
+      });
+    }
+    
+    // If the interactions table doesn't have all items, perform individual counts
     const likesMap = new Map();
     const interestsMap = new Map();
     const commentsMap = new Map();
     
-    // Fetch counts for each item in parallel
-    await Promise.all([
-      // Fetch likes counts
-      ...itemIds.map(async (itemId) => {
-        const { count, error } = await supabase
-          .from('likes')
-          .select('*', { count: 'exact', head: true })
-          .eq('item_id', itemId);
-          
-        if (!error && count !== null) {
-          likesMap.set(itemId, count);
-        }
-      }),
-      
-      // Fetch interests counts
-      ...itemIds.map(async (itemId) => {
-        const { count, error } = await supabase
-          .from('interests')
-          .select('*', { count: 'exact', head: true })
-          .eq('item_id', itemId);
-          
-        if (!error && count !== null) {
-          interestsMap.set(itemId, count);
-        }
-      }),
-      
-      // Fetch comments counts
-      ...itemIds.map(async (itemId) => {
-        const { count, error } = await supabase
-          .from('comments')
-          .select('*', { count: 'exact', head: true })
-          .eq('item_id', itemId);
-          
-        if (!error && count !== null) {
-          commentsMap.set(itemId, count);
-        }
-      })
-    ]);
+    // For missing items, fetch counts individually and in parallel
+    const missingItemIds = itemIds.filter(id => !interactionsMap.has(id));
+    
+    if (missingItemIds.length > 0) {
+      await Promise.all([
+        // Fetch likes counts in batch
+        (async () => {
+          const { data: likesData } = await supabase
+            .from('likes')
+            .select('item_id, count')
+            .in('item_id', missingItemIds)
+            .count('groupby');
+            
+          if (likesData) {
+            likesData.forEach(item => {
+              likesMap.set(item.item_id, item.count);
+            });
+          }
+        })(),
+        
+        // Fetch interests counts in batch
+        (async () => {
+          const { data: interestsData } = await supabase
+            .from('interests')
+            .select('item_id, count')
+            .in('item_id', missingItemIds)
+            .count('groupby');
+            
+          if (interestsData) {
+            interestsData.forEach(item => {
+              interestsMap.set(item.item_id, item.count);
+            });
+          }
+        })(),
+        
+        // Fetch comments counts in batch
+        (async () => {
+          const { data: commentsData } = await supabase
+            .from('comments')
+            .select('item_id, count')
+            .in('item_id', missingItemIds)
+            .count('groupby');
+            
+          if (commentsData) {
+            commentsData.forEach(item => {
+              commentsMap.set(item.item_id, item.count);
+            });
+          }
+        })()
+      ]);
+    }
 
     // Transform data to match the Post type
     const transformedData = data.map(item => {
@@ -108,6 +161,12 @@ export const getPosts = async (): Promise<Post[]> => {
           console.error("Error parsing coordinates:", err, item.coordinates);
         }
       }
+
+      // Get counts either from interactions table or individual counts
+      const interactions = interactionsMap.get(item.id);
+      const likesCount = interactions ? interactions.likesCount : (likesMap.get(item.id) || 0);
+      const interestsCount = interactions ? interactions.interestsCount : (interestsMap.get(item.id) || 0);
+      const commentsCount = interactions ? interactions.commentsCount : (commentsMap.get(item.id) || 0);
 
       // Create the post object
       return {
@@ -131,11 +190,19 @@ export const getPosts = async (): Promise<Post[]> => {
         },
         createdAt: item.created_at || '',
         status: item.status || '',
-        likesCount: likesMap.get(item.id) || 0,
-        interestsCount: interestsMap.get(item.id) || 0,
-        commentsCount: commentsMap.get(item.id) || 0
+        likesCount,
+        interestsCount,
+        commentsCount
       } as Post;
     });
+
+    // Cache the transformed data
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: transformedData,
+        timestamp: Date.now()
+      }));
+    }
 
     console.log("Transformed posts:", transformedData);
     return transformedData;

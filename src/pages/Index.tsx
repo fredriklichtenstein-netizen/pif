@@ -1,10 +1,29 @@
 
-import { useState, useEffect } from "react";
-import { ItemCard } from "@/components/ItemCard";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getPosts } from "@/services/posts";
 import { Post } from "@/types/post";
 import { Loader2 } from "lucide-react";
+import { VirtualizedList } from "@/components/ui/virtualized-list";
+
+// Lazy-load the ItemCard component
+const ItemCard = lazy(() => import("@/components/ItemCard").then(mod => ({ default: mod.ItemCard })));
+
+// Placeholder component for lazy loading
+const ItemCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse mb-6">
+    <div className="h-48 bg-gray-200" />
+    <div className="p-4 space-y-3">
+      <div className="h-6 bg-gray-200 rounded w-3/4" />
+      <div className="h-4 bg-gray-200 rounded w-full" />
+      <div className="h-4 bg-gray-200 rounded w-5/6" />
+      <div className="flex justify-between">
+        <div className="h-8 bg-gray-200 rounded w-24" />
+        <div className="h-8 bg-gray-200 rounded w-24" />
+      </div>
+    </div>
+  </div>
+);
 
 export default function Index() {
   const { toast } = useToast();
@@ -12,29 +31,52 @@ export default function Index() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
-  // Fetch posts from database
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Fetch posts with better error handling
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    
     const fetchPosts = async () => {
       try {
         setLoading(true);
         const data = await getPosts();
-        console.log("Fetched posts:", data);
-        setPosts(data || []);
+        if (isMounted) {
+          console.log("Fetched posts:", data);
+          setPosts(data || []);
+        }
       } catch (err) {
         console.error("Error fetching posts:", err);
-        setError("Failed to load items. Please try again later.");
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load items. Please try again later.",
-        });
+        if (isMounted) {
+          setError("Failed to load items. Please try again later.");
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load items. Please try again later.",
+          });
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchPosts();
+    
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, [toast]);
 
   // Filter posts based on selected category
@@ -42,6 +84,29 @@ export default function Index() {
     if (filter === "all") return true;
     return post.category?.toLowerCase() === filter.toLowerCase();
   });
+
+  // Calculate the appropriate height for the virtualized list
+  const listHeight = isMobile ? window.innerHeight - 200 : window.innerHeight - 150;
+  const itemHeight = 450; // Approximate height of each ItemCard
+
+  const renderItem = (post: Post) => (
+    <Suspense fallback={<ItemCardSkeleton />}>
+      <ItemCard 
+        key={post.id}
+        id={post.id}
+        title={post.title}
+        description={post.description}
+        image={post.images && post.images.length > 0 ? post.images[0] : ''}
+        images={post.images}
+        location={post.location || 'Unknown location'}
+        coordinates={post.coordinates ? JSON.parse(post.coordinates) : undefined}
+        category={post.category}
+        condition={post.condition}
+        measurements={post.measurements}
+        postedBy={post.postedBy}
+      />
+    </Suspense>
+  );
 
   return (
     <div className="container max-w-md mx-auto px-4 py-8 pb-24">
@@ -114,26 +179,16 @@ export default function Index() {
         </div>
       )}
 
-      {/* Items list */}
+      {/* Items list with virtualization */}
       {!loading && !error && filteredPosts.length > 0 && (
-        <div className="space-y-6">
-          {filteredPosts.map(post => (
-            <ItemCard 
-              key={post.id}
-              id={post.id}
-              title={post.title}
-              description={post.description}
-              image={post.images && post.images.length > 0 ? post.images[0] : ''}
-              images={post.images}
-              location={post.location || 'Unknown location'}
-              coordinates={post.coordinates ? JSON.parse(post.coordinates) : undefined}
-              category={post.category}
-              condition={post.condition}
-              measurements={post.measurements}
-              postedBy={post.postedBy}
-            />
-          ))}
-        </div>
+        <VirtualizedList
+          items={filteredPosts}
+          height={listHeight}
+          itemHeight={itemHeight}
+          renderItem={renderItem}
+          className="space-y-6"
+          overscan={2}
+        />
       )}
     </div>
   );

@@ -1,9 +1,20 @@
-
 export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
-    image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', error => reject(error));
+    const timeoutId = setTimeout(() => {
+      reject(new Error("Image loading timeout"));
+    }, 10000); // 10 second timeout
+    
+    image.addEventListener('load', () => {
+      clearTimeout(timeoutId);
+      resolve(image);
+    });
+    
+    image.addEventListener('error', error => {
+      clearTimeout(timeoutId);
+      reject(error);
+    });
+    
     image.setAttribute('crossOrigin', 'anonymous');
     image.src = url;
   });
@@ -78,11 +89,10 @@ export async function getCroppedImg(
   }
 }
 
-// New image optimization functions
 export const optimizeImageUrl = (url: string, width: number = 600): string => {
-  // Return original URL if it's not a valid URL
+  // Return placeholder if URL is not valid
   if (!url || typeof url !== 'string') {
-    return url;
+    return "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
   }
   
   try {
@@ -95,9 +105,9 @@ export const optimizeImageUrl = (url: string, width: number = 600): string => {
     else if (url.includes('supabase.co') || url.includes('.supabase.')) {
       // For Supabase Storage URLs
       if (url.includes('?')) {
-        return `${url}&width=${width}&quality=80`;
+        return `${url}&width=${width}&quality=70`;
       } else {
-        return `${url}?width=${width}&quality=80`;
+        return `${url}?width=${width}&quality=70`;
       }
     }
     else if (url.includes('dicebear.com')) {
@@ -105,15 +115,16 @@ export const optimizeImageUrl = (url: string, width: number = 600): string => {
       return url;
     }
     
-    // Default case - return original
-    return url;
+    // Default case - return original with cache timestamp to avoid stale cache
+    return url.includes('?') 
+      ? `${url}&_t=${Date.now()}` 
+      : `${url}?_t=${Date.now()}`;
   } catch (error) {
     console.warn('Failed to optimize image URL:', error);
     return url;
   }
 };
 
-// Progressive image loading utility
 export const loadImageProgressively = (
   url: string,
   onProgress?: (progress: number) => void

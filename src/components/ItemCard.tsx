@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { useItemInteractions } from "@/hooks/item/useItemInteractions";
 import { useComments } from "@/hooks/item/useComments";
 import { useItemActions } from "@/hooks/item/useItemActions";
@@ -36,7 +36,8 @@ interface ItemCardProps {
   };
 }
 
-export function ItemCard({
+// Using memo to prevent unnecessary re-renders
+const ItemCard = memo(function ItemCard({
   id,
   title,
   description,
@@ -68,6 +69,7 @@ export function ItemCard({
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : image ? [image] : [];
   
+  // Lazy load comments and interactions data
   const {
     isLiked,
     likesCount,
@@ -99,15 +101,34 @@ export function ItemCard({
     isRealtimeSubscribed
   } = useItemCard(id.toString());
 
-  // Pre-fetch comments data for better performance
+  // Only pre-fetch comments data when the component is visible
   useEffect(() => {
-    // Immediately fetch comments data to have it ready when user clicks
-    console.log(`Pre-fetching comments for item ${id}`);
-    fetchItemComments();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          console.log(`Pre-fetching comments for item ${id} (lazy)`);
+          fetchItemComments();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 } // Start loading when 10% of the card is visible
+    );
+
+    const element = document.getElementById(`item-card-${id}`);
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
   }, [id, fetchItemComments]);
 
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}>
+    <div 
+      id={`item-card-${id}`}
+      className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
+    >
       <ItemCardHeader 
         postedBy={postedBy} 
         distanceText={distanceText} 
@@ -163,4 +184,6 @@ export function ItemCard({
       </div>
     </div>
   );
-}
+});
+
+export { ItemCard };
