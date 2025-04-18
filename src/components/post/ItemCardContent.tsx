@@ -3,55 +3,58 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ItemCardContentProps {
+  title?: string;
   description: string;
   measurements?: Record<string, string>;
 }
 
-export function ItemCardContent({ description, measurements = {} }: ItemCardContentProps) {
+export function ItemCardContent({ title, description, measurements = {} }: ItemCardContentProps) {
   const [expanded, setExpanded] = useState(false);
-  const hasMoreDetails = Object.keys(measurements).length > 0;
+  const hasDetails = Object.keys(measurements).length > 0;
   
-  // Truncate description if it's too long and not expanded
-  const shouldTruncate = description.length > 150 && !expanded;
-  const displayDescription = shouldTruncate 
-    ? description.substring(0, 150) + "..." 
+  // Limit description to first 150 characters if not expanded
+  const truncatedDescription = !expanded && description.length > 150 
+    ? `${description.substring(0, 150)}...` 
     : description;
   
   return (
-    <div className="mt-2">
-      <p className="text-sm text-gray-700">{displayDescription}</p>
+    <div className="mt-2 mb-4">
+      {title && <h3 className="text-lg font-semibold mb-1">{title}</h3>}
       
-      {shouldTruncate && (
-        <button 
-          className="text-xs text-primary mt-1 flex items-center"
-          onClick={() => setExpanded(true)}
-        >
-          Read more <ChevronDown className="h-3 w-3 ml-1" />
-        </button>
-      )}
-      
-      {expanded && (
-        <button 
-          className="text-xs text-primary mt-1 flex items-center"
-          onClick={() => setExpanded(false)}
-        >
-          Show less <ChevronUp className="h-3 w-3 ml-1" />
-        </button>
-      )}
-      
-      {hasMoreDetails && expanded && (
-        <div className="mt-2 text-sm text-gray-600">
-          <h4 className="font-medium mb-1">Details:</h4>
-          <ul className="space-y-1">
-            {Object.entries(measurements).map(([key, value]) => (
-              <li key={key} className="flex">
-                <span className="font-medium mr-2">{key}:</span>
-                <span>{value}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <div className="text-sm text-gray-600">
+        <p className="mb-2">{truncatedDescription}</p>
+        
+        {hasDetails && expanded && (
+          <div className="mt-2 space-y-1">
+            <p className="font-medium text-xs text-gray-500 uppercase tracking-wide">Details</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {Object.entries(measurements).map(([key, value]) => (
+                <div key={key} className="flex">
+                  <span className="font-medium mr-1">{key}:</span>
+                  <span>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {(description.length > 150 || hasDetails) && (
+          <button 
+            onClick={() => setExpanded(!expanded)} 
+            className="mt-1 flex items-center text-primary text-xs font-medium"
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="h-3 w-3 mr-1" /> Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3 w-3 mr-1" /> Show more
+              </>
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -37,7 +36,6 @@ interface ItemCardProps {
   };
 }
 
-// Using memo to prevent unnecessary re-renders
 const ItemCard = memo(function ItemCard({
   id,
   title,
@@ -59,10 +57,10 @@ const ItemCard = memo(function ItemCard({
   const [isVisible, setIsVisible] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const errorRetryCount = useRef(0);
   
-  // Handle resize for responsive layout
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -71,11 +69,9 @@ const ItemCard = memo(function ItemCard({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Prepare images array
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : image ? [image] : [];
   
-  // Use ItemCard hook to get all the data and actions
   const {
     isLiked,
     likesCount,
@@ -109,13 +105,15 @@ const ItemCard = memo(function ItemCard({
     refreshItemData
   } = useItemCard(id);
 
-  // Handle errors by showing a toast notification
   useEffect(() => {
     if (realtimeError && !hasError) {
       setHasError(true);
+      if (errorRetryCount.current >= 2) {
+        setShowErrorAlert(true);
+      }
+      
       console.error('Real-time subscription error:', realtimeError);
       
-      // Only show toast for first error to avoid spamming
       if (errorRetryCount.current === 0) {
         toast({
           variant: "destructive",
@@ -126,7 +124,6 @@ const ItemCard = memo(function ItemCard({
     }
   }, [realtimeError, toast, hasError]);
 
-  // Use intersection observer to lazy load data
   useEffect(() => {
     if (!cardRef.current) return;
     
@@ -148,7 +145,6 @@ const ItemCard = memo(function ItemCard({
     };
   }, []);
 
-  // Fetch data when card becomes visible
   useEffect(() => {
     if (isVisible && !dataFetched) {
       setDataFetched(true);
@@ -159,9 +155,19 @@ const ItemCard = memo(function ItemCard({
     }
   }, [isVisible, dataFetched, allImages]);
 
-  // Retry connection if there's an error
+  useEffect(() => {
+    if (showErrorAlert) {
+      const timeout = setTimeout(() => {
+        setShowErrorAlert(false);
+      }, 10000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [showErrorAlert]);
+
   const handleRetryConnection = useCallback(() => {
     setHasError(false);
+    setShowErrorAlert(false);
     errorRetryCount.current += 1;
     refreshItemData();
   }, [refreshItemData]);
@@ -172,7 +178,7 @@ const ItemCard = memo(function ItemCard({
       id={`item-card-${id}`}
       className={`mb-6 overflow-hidden transition-shadow hover:shadow-md ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
     >
-      {hasError && (
+      {hasError && showErrorAlert && (
         <Alert variant="destructive" className="m-2 mb-0">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex justify-between items-center">
@@ -202,6 +208,8 @@ const ItemCard = memo(function ItemCard({
       <ItemCardGallery images={allImages} title={title} category={category} />
       
       <div className="p-4">
+        <ItemCardContent title={title} description={description} measurements={measurements} />
+        
         <ItemInteractions 
           id={id} 
           postedBy={postedBy} 
@@ -229,8 +237,6 @@ const ItemCard = memo(function ItemCard({
           getInterestedUsers={getInterestedUsers}
           isRealtimeSubscribed={isRealtimeSubscribed}
         />
-        
-        <ItemCardContent description={description} measurements={measurements} />
         
         {showComments && (
           <CommentSection 

@@ -71,11 +71,10 @@ export const useItemRealtimeUpdates = (
       }
       
       numericIdRef.current = numericId;
-      console.log(`Setting up real-time subscription for interactions on item ${numericId} (attempt ${attemptCountRef.current})`);
-
-      // Subscribe to likes changes
-      const likesChannel = supabase
-        .channel(`item-likes-${numericId}-${Date.now()}`) // Unique channel name to prevent conflicts
+      
+      // Consolidated channel for all table changes
+      const combinedChannel = supabase
+        .channel(`item-combined-${numericId}-${Date.now()}`) // Unique channel name
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
@@ -85,19 +84,6 @@ export const useItemRealtimeUpdates = (
           console.log('Real-time likes change detected for item', numericId);
           debouncedRefresh();
         })
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log(`Subscribed to likes changes for item ${numericId}`);
-            channelsRef.current.push(likesChannel);
-            setIsSubscribed(true);
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error(`Channel error for likes on item ${numericId}`);
-          }
-        });
-
-      // Subscribe to interests changes
-      const interestsChannel = supabase
-        .channel(`item-interests-${numericId}-${Date.now()}`) // Unique channel name
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
@@ -107,19 +93,6 @@ export const useItemRealtimeUpdates = (
           console.log('Real-time interests change detected for item', numericId);
           debouncedRefresh();
         })
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log(`Subscribed to interests changes for item ${numericId}`);
-            channelsRef.current.push(interestsChannel);
-            setIsSubscribed(true);
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error(`Channel error for interests on item ${numericId}`);
-          }
-        });
-        
-      // Subscribe to comments changes
-      const commentsChannel = supabase
-        .channel(`item-comments-${numericId}-${Date.now()}`) // Unique channel name
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
@@ -131,11 +104,13 @@ export const useItemRealtimeUpdates = (
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log(`Subscribed to comments changes for item ${numericId}`);
-            channelsRef.current.push(commentsChannel);
+            console.log(`Subscribed to all changes for item ${numericId}`);
+            channelsRef.current.push(combinedChannel);
             setIsSubscribed(true);
+            setError(null);
           } else if (status === 'CHANNEL_ERROR') {
-            console.error(`Channel error for comments on item ${numericId}`);
+            console.error(`Channel error for item ${numericId}`);
+            // Will be handled by the error recovery mechanism
           }
         });
         

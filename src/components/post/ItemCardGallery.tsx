@@ -40,6 +40,19 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     };
   }, [images]);
   
+  useEffect(() => {
+    // Force image loaded state to true after a timeout
+    // This ensures UI doesn't get stuck in loading state
+    const loadingTimeout = setTimeout(() => {
+      if (!isImageLoaded && mountedRef.current) {
+        console.log("Force loading complete after timeout");
+        setIsImageLoaded(true);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(loadingTimeout);
+  }, [isImageLoaded]);
+  
   // Handle case where images array is empty
   if (!imageUrls || imageUrls.length === 0) {
     return (
@@ -74,7 +87,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
         imageRef.current.src = cacheBuster;
       }
     } else if (mountedRef.current) {
-      // After retries, use fallback
+      // After retries, use fallback and ensure we don't leave user in loading state
       if (imageRef.current) {
         imageRef.current.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
         setIsImageLoaded(true);
@@ -88,7 +101,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   return (
     <div className="relative h-48">
       {!isImageLoaded && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
           <span className="text-gray-400 text-sm">Loading image...</span>
         </div>
       )}
@@ -109,14 +122,14 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
         loading="lazy"
       />
       
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 z-10">
         <Badge variant="secondary" className="text-xs">{category}</Badge>
       </div>
       
       {imageUrls.length > 1 && (
         <>
           <button 
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
             onClick={handlePrev}
             aria-label="Previous image"
             type="button"
@@ -124,14 +137,14 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button 
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
             onClick={handleNext}
             aria-label="Next image"
             type="button"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
             {imageUrls.map((_, index) => (
               <div 
                 key={index}
