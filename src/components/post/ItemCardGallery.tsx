@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { optimizeImageUrl } from "@/utils/imageProcessing";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -20,7 +19,15 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   useEffect(() => {
     const validImages = images
       ?.filter(img => img && typeof img === 'string' && img.trim() !== '')
-      .map(img => optimizeImageUrl(img, 240)) || [];
+      .map(img => {
+        // Check if URL is already a data URL or placeholder
+        if (img.startsWith('data:') || img.includes('dicebear.com')) {
+          return img;
+        }
+        
+        // For external images, return the direct URL without optimization
+        return img;
+      }) || [];
       
     setImageUrls(validImages.length > 0 ? validImages : []);
     

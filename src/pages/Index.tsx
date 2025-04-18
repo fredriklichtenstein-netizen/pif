@@ -4,7 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import { getPosts } from "@/services/posts";
 import { Post } from "@/types/post";
 import { Loader2 } from "lucide-react";
-import { VirtualizedList } from "@/components/ui/virtualized-list";
 
 // Lazy-load the ItemCard component
 const ItemCard = lazy(() => import("@/components/ItemCard").then(mod => ({ default: mod.ItemCard })));
@@ -31,15 +30,7 @@ export default function Index() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
   
   // Fetch posts with better error handling
   useEffect(() => {
@@ -51,7 +42,7 @@ export default function Index() {
         setLoading(true);
         const data = await getPosts();
         if (isMounted) {
-          console.log("Fetched posts:", data);
+          console.log("Fetched posts:", data?.length);
           setPosts(data || []);
         }
       } catch (err) {
@@ -63,6 +54,16 @@ export default function Index() {
             title: "Error",
             description: "Failed to load items. Please try again later.",
           });
+          
+          // Auto-retry once if not already attempted
+          if (!hasAttemptedRefresh) {
+            setTimeout(() => {
+              if (isMounted) {
+                fetchPosts();
+                setHasAttemptedRefresh(true);
+              }
+            }, 3000);
+          }
         }
       } finally {
         if (isMounted) {
@@ -77,7 +78,7 @@ export default function Index() {
       isMounted = false;
       controller.abort();
     };
-  }, [toast]);
+  }, [toast, hasAttemptedRefresh]);
 
   // Filter posts based on selected category
   const filteredPosts = posts.filter(post => {
@@ -85,64 +86,41 @@ export default function Index() {
     return post.category?.toLowerCase() === filter.toLowerCase();
   });
 
-  // Calculate the appropriate height for the virtualized list
-  const listHeight = isMobile ? window.innerHeight - 200 : window.innerHeight - 150;
-  const itemHeight = 450; // Approximate height of each ItemCard
-
-  const renderItem = (post: Post) => (
-    <Suspense fallback={<ItemCardSkeleton />}>
-      <ItemCard 
-        key={post.id}
-        id={post.id}
-        title={post.title}
-        description={post.description}
-        image={post.images && post.images.length > 0 ? post.images[0] : ''}
-        images={post.images}
-        location={post.location || 'Unknown location'}
-        coordinates={post.coordinates ? JSON.parse(post.coordinates) : undefined}
-        category={post.category}
-        condition={post.condition}
-        measurements={post.measurements}
-        postedBy={post.postedBy}
-      />
-    </Suspense>
-  );
-
   return (
-    <div className="container max-w-md mx-auto px-4 py-8 pb-24">
+    <div className="container max-w-2xl mx-auto px-4 py-8 pb-24">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">PIF Community</h1>
+        <h1 className="text-2xl font-bold text-green-600">PIF Community</h1>
         <p className="text-sm text-gray-500">Sustainable sharing in your neighborhood</p>
       </div>
 
       {/* Category filters */}
       <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'all' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'all' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
           onClick={() => setFilter('all')}
         >
           All Items
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'furniture' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'furniture' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
           onClick={() => setFilter('furniture')}
         >
           Furniture
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'electronics' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'electronics' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
           onClick={() => setFilter('electronics')}
         >
           Electronics
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'clothing' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'clothing' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
           onClick={() => setFilter('clothing')}
         >
           Clothing
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'books' ? 'bg-primary text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'books' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
           onClick={() => setFilter('books')}
         >
           Books
@@ -152,7 +130,7 @@ export default function Index() {
       {/* Loading state */}
       {loading && (
         <div className="flex flex-col items-center justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          <Loader2 className="h-8 w-8 animate-spin text-green-500 mb-2" />
           <p className="text-gray-500">Loading items...</p>
         </div>
       )}
@@ -163,7 +141,7 @@ export default function Index() {
           <p className="text-red-500 mb-2">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-primary text-white px-4 py-2 rounded-full text-sm"
+            className="bg-green-500 text-white px-4 py-2 rounded-full text-sm"
           >
             Try Again
           </button>
@@ -179,16 +157,27 @@ export default function Index() {
         </div>
       )}
 
-      {/* Items list with virtualization */}
+      {/* Items list */}
       {!loading && !error && filteredPosts.length > 0 && (
-        <VirtualizedList
-          items={filteredPosts}
-          height={listHeight}
-          itemHeight={itemHeight}
-          renderItem={renderItem}
-          className="space-y-6"
-          overscan={2}
-        />
+        <div className="space-y-6">
+          {filteredPosts.map((post) => (
+            <Suspense key={post.id} fallback={<ItemCardSkeleton />}>
+              <ItemCard 
+                id={post.id}
+                title={post.title}
+                description={post.description}
+                image={post.images && post.images.length > 0 ? post.images[0] : ''}
+                images={post.images}
+                location={post.location || 'Unknown location'}
+                coordinates={post.coordinates ? JSON.parse(post.coordinates) : undefined}
+                category={post.category}
+                condition={post.condition}
+                measurements={post.measurements}
+                postedBy={post.postedBy}
+              />
+            </Suspense>
+          ))}
+        </div>
       )}
     </div>
   );

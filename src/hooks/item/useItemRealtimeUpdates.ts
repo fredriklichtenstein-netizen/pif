@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 export const useItemRealtimeUpdates = (
   itemId: string, 
@@ -9,9 +8,21 @@ export const useItemRealtimeUpdates = (
 ) => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
   const channelsRef = useRef<any[]>([]);
   const setupAttemptedRef = useRef(false);
+  const refreshTimeoutRef = useRef<number | null>(null);
+
+  // Debounced refresh function to prevent multiple rapid refreshes
+  const debouncedRefresh = useCallback(() => {
+    if (refreshTimeoutRef.current !== null) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+    
+    refreshTimeoutRef.current = window.setTimeout(() => {
+      refreshItemData();
+      refreshTimeoutRef.current = null;
+    }, 300) as unknown as number;
+  }, [refreshItemData]);
 
   // Set up real-time subscription for item interactions
   useEffect(() => {
@@ -39,7 +50,7 @@ export const useItemRealtimeUpdates = (
           filter: `item_id=eq.${numericItemId}`,
         }, () => {
           console.log('Real-time likes change detected');
-          refreshItemData();
+          debouncedRefresh();
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
@@ -58,7 +69,7 @@ export const useItemRealtimeUpdates = (
           filter: `item_id=eq.${numericItemId}`,
         }, () => {
           console.log('Real-time interests change detected');
-          refreshItemData();
+          debouncedRefresh();
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
@@ -71,6 +82,9 @@ export const useItemRealtimeUpdates = (
       // Clean up subscriptions when component unmounts
       return () => {
         console.log('Cleaning up real-time subscriptions');
+        if (refreshTimeoutRef.current !== null) {
+          clearTimeout(refreshTimeoutRef.current);
+        }
         channelsRef.current.forEach(channel => {
           supabase.removeChannel(channel);
         });
@@ -82,7 +96,7 @@ export const useItemRealtimeUpdates = (
       console.error('Error setting up real-time subscriptions:', error);
       setError(error instanceof Error ? error : new Error('Unknown error'));
     }
-  }, [itemId, refreshItemData]);
+  }, [itemId, debouncedRefresh]);
 
   return {
     isSubscribed,

@@ -1,14 +1,9 @@
 
 import { useState, useEffect, useCallback, memo, useRef } from "react";
-import { useItemInteractions } from "@/hooks/item/useItemInteractions";
-import { useComments } from "@/hooks/item/useComments";
-import { useItemActions } from "@/hooks/item/useItemActions";
-import { useItemUsers } from "@/hooks/item/useItemUsers";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
 import { Comment } from "@/types/comment";
-import { Skeleton } from "./ui/skeleton";
 import { ItemCardHeader } from "./post/ItemCardHeader";
 import { ItemCardGallery } from "./post/ItemCardGallery";
 import { ItemInteractions } from "./post/ItemInteractions";
@@ -51,10 +46,10 @@ const ItemCard = memo(function ItemCard({
   postedBy
 }: ItemCardProps) {
   const { session } = useGlobalAuth();
-  const isObservedRef = useRef(false);
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const dataFetchedRef = useRef(false);
   
   useEffect(() => {
     const handleResize = () => {
@@ -67,7 +62,6 @@ const ItemCard = memo(function ItemCard({
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : image ? [image] : [];
   
-  // Lazy load comments and interactions data
   const {
     isLiked,
     likesCount,
@@ -99,21 +93,16 @@ const ItemCard = memo(function ItemCard({
     isRealtimeSubscribed
   } = useItemCard(id);
 
-  // Only pre-fetch comments data when the component is visible
+  // Fetch data only once when component is visible
   useEffect(() => {
-    // Skip if we've already observed this element
-    if (isObservedRef.current) return;
-    
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          console.log(`Pre-fetching comments for item ${id} (lazy)`);
-          fetchItemComments();
-          isObservedRef.current = true;
+        if (entries[0].isIntersecting && !dataFetchedRef.current) {
+          dataFetchedRef.current = true;
           observer.disconnect();
         }
       },
-      { threshold: 0.1 } // Start loading when 10% of the card is visible
+      { threshold: 0.1 }
     );
 
     const element = document.getElementById(`item-card-${id}`);
@@ -124,12 +113,12 @@ const ItemCard = memo(function ItemCard({
     return () => {
       observer.disconnect();
     };
-  }, [id, fetchItemComments]);
+  }, [id]);
 
   return (
     <div 
       id={`item-card-${id}`}
-      className={`bg-white rounded-lg shadow-md overflow-hidden animate-fade-in ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
+      className={`bg-white rounded-lg shadow-md overflow-hidden mb-6 ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
     >
       <ItemCardHeader 
         postedBy={postedBy} 

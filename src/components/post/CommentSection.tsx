@@ -10,6 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw, Loader2, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 interface CommentSectionProps {
   itemId: string;
@@ -80,8 +81,8 @@ export function CommentSection({
   const isLoadingComments = isLoading || dataLoading || actionLoading;
 
   return (
-    <div className="mt-4 space-y-4">
-      <div className="flex items-center justify-between">
+    <Card className="mt-4 p-4 shadow-sm border-gray-100">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium">Comments</h3>
         {isSubscribed && (
           <Badge variant="outline" className="flex items-center gap-1 text-xs bg-green-50 text-green-700 border-green-200">
@@ -98,7 +99,7 @@ export function CommentSection({
       />
       
       {(error || realtimeError) && (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive" className="mt-4 mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Comments Loading Error</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
@@ -122,17 +123,19 @@ export function CommentSection({
           <p className="text-gray-500">Loading comments...</p>
         </div>
       ) : (
-        <CommentList
-          comments={comments || []}
-          isLoading={false}
-          currentUserId={currentUser?.id}
-          onLike={handleLikeComment}
-          onDelete={handleDeleteComment}
-          onEdit={handleEditComment}
-          onReply={handleReplyToComment}
-          onReport={handleReportComment}
-        />
+        <div className="mt-4">
+          <CommentList
+            comments={comments || []}
+            isLoading={false}
+            currentUserId={currentUser?.id}
+            onLike={handleLikeComment}
+            onDelete={handleDeleteComment}
+            onEdit={handleEditComment}
+            onReply={handleReplyToComment}
+            onReport={handleReportComment}
+          />
+        </div>
       )}
-    </div>
+    </Card>
   );
 }
