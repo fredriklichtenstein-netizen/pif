@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { optimizeImageUrl } from "@/utils/imageProcessing";
+import { optimizeImageUrl, preloadImages } from "@/utils/imageProcessing";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -14,7 +14,9 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const mountedRef = useRef(true);
+  const imageRef = useRef<HTMLImageElement>(null);
   
   // Filter and clean up image URLs on mount
   useEffect(() => {
@@ -22,7 +24,16 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
       ?.filter(img => img && typeof img === 'string' && img.trim() !== '')
       .map(img => optimizeImageUrl(img, 600)) || [];
       
-    setImageUrls(validImages.length > 0 ? validImages : ["https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image"]);
+    const finalImages = validImages.length > 0 
+      ? validImages 
+      : ["https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image"];
+    
+    setImageUrls(finalImages);
+    
+    // Preload next image if there are multiple images
+    if (finalImages.length > 1) {
+      preloadImages(finalImages.slice(1, 3)); // Preload the next 2 images
+    }
     
     return () => {
       mountedRef.current = false;
@@ -51,6 +62,26 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
   };
   
+  // Handle image load error with retry
+  const handleImageError = () => {
+    console.error("Error loading image:", imageUrls[currentImageIndex]);
+    
+    if (retryAttempt < 2 && mountedRef.current) {
+      // Try again with a cache buster
+      setRetryAttempt(prev => prev + 1);
+      if (imageRef.current) {
+        const cacheBuster = `${imageUrls[currentImageIndex]}${imageUrls[currentImageIndex].includes('?') ? '&' : '?'}cb=${Date.now()}`;
+        imageRef.current.src = cacheBuster;
+      }
+    } else if (mountedRef.current) {
+      // After retries, use fallback
+      if (imageRef.current) {
+        imageRef.current.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
+        setIsImageLoaded(true);
+      }
+    }
+  };
+  
   // Get the current image URL
   const currentImageUrl = imageUrls[currentImageIndex] || "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
   
@@ -63,6 +94,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
       )}
       
       <img 
+        ref={imageRef}
         src={currentImageUrl}
         alt={title} 
         className={`w-full h-48 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
@@ -70,15 +102,10 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
           if (mountedRef.current) {
             console.log("Image loaded successfully:", currentImageUrl);
             setIsImageLoaded(true);
+            setRetryAttempt(0); // Reset retry counter on successful load
           }
         }}
-        onError={(e) => {
-          console.error("Error loading image:", currentImageUrl);
-          e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
-          if (mountedRef.current) {
-            setIsImageLoaded(true);
-          }
-        }}
+        onError={handleImageError}
         loading="lazy"
       />
       
@@ -92,6 +119,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handlePrev}
             aria-label="Previous image"
+            type="button"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -99,6 +127,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handleNext}
             aria-label="Next image"
+            type="button"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

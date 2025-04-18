@@ -10,6 +10,11 @@ import { ItemInteractions } from "./post/ItemInteractions";
 import { CommentSection } from "./post/CommentSection";
 import { ItemCardContent } from "./post/ItemCardContent";
 import { Card } from "./ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "./ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "./ui/button";
+import { preloadImages } from "@/utils/imageProcessing";
 
 interface ItemCardProps {
   id: string;
@@ -46,13 +51,16 @@ const ItemCard = memo(function ItemCard({
   measurements = {},
   postedBy
 }: ItemCardProps) {
+  const { toast } = useToast();
   const { session } = useGlobalAuth();
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isVisible, setIsVisible] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const errorRetryCount = useRef(0);
   
   // Handle resize for responsive layout
   useEffect(() => {
@@ -96,11 +104,32 @@ const ItemCard = memo(function ItemCard({
     fetchItemComments,
     refreshComments,
     getInterestedUsers,
-    isRealtimeSubscribed
+    isRealtimeSubscribed,
+    realtimeError,
+    refreshItemData
   } = useItemCard(id);
+
+  // Handle errors by showing a toast notification
+  useEffect(() => {
+    if (realtimeError && !hasError) {
+      setHasError(true);
+      console.error('Real-time subscription error:', realtimeError);
+      
+      // Only show toast for first error to avoid spamming
+      if (errorRetryCount.current === 0) {
+        toast({
+          variant: "destructive",
+          title: "Connection Error",
+          description: "Live updates unavailable. Data may not be real-time.",
+        });
+      }
+    }
+  }, [realtimeError, toast, hasError]);
 
   // Use intersection observer to lazy load data
   useEffect(() => {
+    if (!cardRef.current) return;
+    
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -110,9 +139,7 @@ const ItemCard = memo(function ItemCard({
       { threshold: 0.1, rootMargin: '100px' }
     );
 
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
+    observer.observe(cardRef.current);
 
     return () => {
       if (cardRef.current) {
@@ -125,9 +152,19 @@ const ItemCard = memo(function ItemCard({
   useEffect(() => {
     if (isVisible && !dataFetched) {
       setDataFetched(true);
-      // Data loading happens through the useItemCard hook
+      
+      if (allImages.length > 0) {
+        preloadImages(allImages);
+      }
     }
-  }, [isVisible, dataFetched]);
+  }, [isVisible, dataFetched, allImages]);
+
+  // Retry connection if there's an error
+  const handleRetryConnection = useCallback(() => {
+    setHasError(false);
+    errorRetryCount.current += 1;
+    refreshItemData();
+  }, [refreshItemData]);
 
   return (
     <Card 
@@ -135,6 +172,23 @@ const ItemCard = memo(function ItemCard({
       id={`item-card-${id}`}
       className={`mb-6 overflow-hidden transition-shadow hover:shadow-md ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
     >
+      {hasError && (
+        <Alert variant="destructive" className="m-2 mb-0">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex justify-between items-center">
+            <span>Unable to get live updates</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRetryConnection}
+              className="ml-2"
+            >
+              <RefreshCw className="h-3 w-3 mr-1" /> Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <ItemCardHeader 
         postedBy={postedBy} 
         distanceText={distanceText} 

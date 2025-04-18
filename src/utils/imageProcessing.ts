@@ -94,11 +94,19 @@ export async function getCroppedImg(
   }
 }
 
-// Simplified image URL optimization function that ensures we always return a valid URL
+// Enhanced image URL optimization with better error handling and caching
+const imageCache = new Map<string, string>();
+
 export const optimizeImageUrl = (url: string, width: number = 600): string => {
   // Return placeholder for empty or invalid URLs
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
+  }
+  
+  // Check cache first
+  const cacheKey = `${url}_${width}`;
+  if (imageCache.has(cacheKey)) {
+    return imageCache.get(cacheKey)!;
   }
   
   // Directly return data URLs or placeholder images
@@ -106,20 +114,28 @@ export const optimizeImageUrl = (url: string, width: number = 600): string => {
     return url;
   }
   
-  // For relative URLs, make sure they have a leading slash
-  if (url.startsWith('./')) {
-    url = url.substring(1);
+  try {
+    // Handle relative URLs
+    let finalUrl = url;
+    if (url.startsWith('./')) {
+      finalUrl = url.substring(1);
+    }
+    
+    // Prepare the URL for caching
+    imageCache.set(cacheKey, finalUrl);
+    return finalUrl;
+  } catch (error) {
+    console.error('Error optimizing image URL:', error);
+    return "https://placehold.co/600x400/e2e8f0/94a3b8?text=Error";
   }
-  
-  return url;
 };
 
-// Load and track image loading progress
+// Load and track image loading progress with improved error handling
 export const loadImageProgressively = (
   url: string,
   onProgress?: (progress: number) => void
 ): Promise<string> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     // Handle empty URLs
     if (!url || url.trim() === '') {
       if (onProgress) onProgress(100);
@@ -127,17 +143,39 @@ export const loadImageProgressively = (
       return;
     }
     
+    // For data URLs or already cached images, resolve immediately
+    if (url.startsWith('data:') || 
+        url.includes('placehold.co') || 
+        url.includes('dicebear.com') ||
+        url.includes('ui-avatars.com')) {
+      if (onProgress) onProgress(100);
+      resolve(url);
+      return;
+    }
+    
     const image = new Image();
     let loaded = false;
+    let retried = false;
     
+    // Success handler
     image.onload = () => {
       if (onProgress) onProgress(100);
       loaded = true;
       resolve(url);
     };
     
+    // Error handler with retry
     image.onerror = () => {
       console.error(`Failed to load image: ${url}`);
+      
+      // Try once with a cache-busting parameter
+      if (!retried) {
+        retried = true;
+        const cacheBuster = `${url}${url.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+        image.src = cacheBuster;
+        return;
+      }
+      
       if (onProgress) onProgress(100);
       resolve("https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image");
     };
@@ -149,6 +187,36 @@ export const loadImageProgressively = (
       }
     }, 200);
     
+    // Start loading the image
     image.src = url;
+  });
+};
+
+// New function: preload multiple images in the background
+export const preloadImages = (urls: string[]): void => {
+  if (!urls || !urls.length) return;
+  
+  urls.filter(url => url && typeof url === 'string' && url.trim() !== '')
+    .forEach(url => {
+      const img = new Image();
+      img.src = optimizeImageUrl(url);
+    });
+};
+
+// New function: check if an image exists and is valid
+export const validateImageUrl = async (url: string): Promise<boolean> => {
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return false;
+  }
+  
+  if (url.startsWith('data:') || url.includes('placehold.co') || url.includes('dicebear.com')) {
+    return true;
+  }
+  
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
   });
 };

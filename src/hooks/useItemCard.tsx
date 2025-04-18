@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useComments } from "./item/useComments";
@@ -5,6 +6,7 @@ import { useItemActions } from "./item/useItemActions";
 import { useItemUsers } from "./item/useItemUsers";
 import { Comment } from "@/types/comment";
 import { useItemRealtimeUpdates } from "./item/useItemRealtimeUpdates";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useItemCard = (itemId: string) => {
   const [showComments, setShowComments] = useState(false);
@@ -65,14 +67,39 @@ export const useItemCard = (itemId: string) => {
     interestsCount
   );
 
+  // Improved comments count fetching with error handling and retry
   useEffect(() => {
     const getCommentsCount = async () => {
+      if (!itemId) return;
+      
       try {
-        const count = await fetchCommentsCount(itemId);
-        console.log(`Item ${itemId} has ${count} comments`);
-        setCommentsCount(count);
+        // First try direct DB count (more reliable)
+        const numericId = parseInt(itemId);
+        if (isNaN(numericId)) {
+          throw new Error(`Invalid item ID format: ${itemId}`);
+        }
+        
+        const { count, error } = await supabase
+          .from('comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('item_id', numericId);
+          
+        if (error) throw error;
+        
+        if (count !== null) {
+          console.log(`Item ${itemId} has ${count} comments`);
+          setCommentsCount(count);
+          return;
+        }
+        
+        // Fallback to the standard count function if direct count fails
+        const fallbackCount = await fetchCommentsCount(itemId);
+        setCommentsCount(fallbackCount);
+        console.log(`Item ${itemId} has ${fallbackCount} comments (fallback)`);
       } catch (error) {
         console.error("Error fetching comments count:", error);
+        // Set to 0 on error as a safe fallback
+        setCommentsCount(0);
       }
     };
     
@@ -124,17 +151,12 @@ export const useItemCard = (itemId: string) => {
       .then(() => console.log('Refreshed interests data'))
       .catch(err => console.error('Error refreshing interests:', err));
     
-    fetchCommentsCount(itemId)
-      .then(count => {
-        console.log(`Item ${itemId} has ${count} comments`);
-        setCommentsCount(count);
-      })
-      .catch(err => console.error('Error refreshing comments count:', err));
+    // Don't call fetchCommentsCount here - we already have a reliable count method
     
     if (showComments) {
       fetchItemComments();
     }
-  }, [itemId, fetchLikers, fetchInterestedUsers, fetchCommentsCount, showComments, fetchItemComments]);
+  }, [itemId, fetchLikers, fetchInterestedUsers, showComments, fetchItemComments]);
 
   const { isSubscribed, error: realtimeError } = useItemRealtimeUpdates(itemId, refreshItemData);
 

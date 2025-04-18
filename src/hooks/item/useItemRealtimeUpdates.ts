@@ -12,6 +12,8 @@ export const useItemRealtimeUpdates = (
   const setupAttemptedRef = useRef(false);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const numericIdRef = useRef<number | null>(null);
+  const attemptCountRef = useRef(0);
+  const maxAttempts = 3;
 
   // Debounced refresh function to prevent multiple rapid refreshes
   const debouncedRefresh = useCallback(() => {
@@ -28,7 +30,13 @@ export const useItemRealtimeUpdates = (
 
   // Clean up function to remove all channels
   const cleanupChannels = useCallback(() => {
+    if (channelsRef.current.length === 0) {
+      console.log(`No channels to clean up for item ${itemId}`);
+      return;
+    }
+    
     console.log(`Cleaning up ${channelsRef.current.length} channels for item ${itemId}`);
+    
     channelsRef.current.forEach(channel => {
       try {
         supabase.removeChannel(channel);
@@ -36,16 +44,24 @@ export const useItemRealtimeUpdates = (
         console.error("Error removing channel:", e);
       }
     });
+    
     channelsRef.current = [];
     setIsSubscribed(false);
+    setupAttemptedRef.current = false;
   }, [itemId]);
 
   // Set up real-time subscription for item interactions
-  useEffect(() => {
-    // Prevent multiple setup attempts for the same itemId
-    if (!itemId || isSubscribed || setupAttemptedRef.current) return;
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!itemId || isSubscribed) return;
     
-    setupAttemptedRef.current = true;
+    // Prevent excessive retry attempts
+    if (attemptCountRef.current >= maxAttempts) {
+      console.log(`Max subscription attempts (${maxAttempts}) reached for item ${itemId}`);
+      setError(new Error(`Failed to subscribe after ${maxAttempts} attempts`));
+      return;
+    }
+    
+    attemptCountRef.current++;
     
     try {
       // Parse the itemId to ensure it's a number
@@ -55,71 +71,121 @@ export const useItemRealtimeUpdates = (
       }
       
       numericIdRef.current = numericId;
-      console.log(`Setting up real-time subscription for interactions on item ${numericId}`);
+      console.log(`Setting up real-time subscription for interactions on item ${numericId} (attempt ${attemptCountRef.current})`);
 
       // Subscribe to likes changes
       const likesChannel = supabase
-        .channel(`item-likes-changes-${numericId}`)
+        .channel(`item-likes-${numericId}-${Date.now()}`) // Unique channel name to prevent conflicts
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'likes',
           filter: `item_id=eq.${numericId}`,
         }, () => {
-          console.log('Real-time likes change detected');
+          console.log('Real-time likes change detected for item', numericId);
           debouncedRefresh();
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log('Subscribed to likes changes');
+            console.log(`Subscribed to likes changes for item ${numericId}`);
             channelsRef.current.push(likesChannel);
+            setIsSubscribed(true);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error(`Channel error for likes on item ${numericId}`);
           }
         });
 
       // Subscribe to interests changes
       const interestsChannel = supabase
-        .channel(`item-interests-changes-${numericId}`)
+        .channel(`item-interests-${numericId}-${Date.now()}`) // Unique channel name
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'interests',
           filter: `item_id=eq.${numericId}`,
         }, () => {
-          console.log('Real-time interests change detected');
+          console.log('Real-time interests change detected for item', numericId);
           debouncedRefresh();
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log('Subscribed to interests changes');
+            console.log(`Subscribed to interests changes for item ${numericId}`);
             channelsRef.current.push(interestsChannel);
             setIsSubscribed(true);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error(`Channel error for interests on item ${numericId}`);
           }
         });
-
-      // Clean up subscriptions when component unmounts
-      return () => {
-        cleanupChannels();
-        setupAttemptedRef.current = false;
-      };
+        
+      // Subscribe to comments changes
+      const commentsChannel = supabase
+        .channel(`item-comments-${numericId}-${Date.now()}`) // Unique channel name
+        .on('postgres_changes', {
+          event: '*', // All events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'comments',
+          filter: `item_id=eq.${numericId}`,
+        }, () => {
+          console.log('Real-time comments change detected for item', numericId);
+          debouncedRefresh();
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`Subscribed to comments changes for item ${numericId}`);
+            channelsRef.current.push(commentsChannel);
+            setIsSubscribed(true);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error(`Channel error for comments on item ${numericId}`);
+          }
+        });
+        
+      setupAttemptedRef.current = true;
     } catch (error) {
       console.error('Error setting up real-time subscriptions:', error);
       setError(error instanceof Error ? error : new Error('Unknown error'));
+      
+      // Retry subscription after delay if not max attempts
+      if (attemptCountRef.current < maxAttempts) {
+        setTimeout(() => {
+          if (!isSubscribed) {
+            setupRealtimeSubscription();
+          }
+        }, 2000 * attemptCountRef.current); // Exponential backoff
+      }
     }
-  }, [itemId, debouncedRefresh, isSubscribed, cleanupChannels]);
+  }, [itemId, debouncedRefresh, isSubscribed]);
 
-  // Extra cleanup on unmount
+  // Setup subscription on mount
   useEffect(() => {
+    if (itemId && !isSubscribed && !setupAttemptedRef.current) {
+      setupRealtimeSubscription();
+    }
+    
     return () => {
+      cleanupChannels();
       if (refreshTimeoutRef.current !== null) {
         clearTimeout(refreshTimeoutRef.current);
       }
-      cleanupChannels();
     };
-  }, [cleanupChannels]);
+  }, [itemId, isSubscribed, setupRealtimeSubscription, cleanupChannels]);
+
+  // Reset and retry on itemId change
+  useEffect(() => {
+    return () => {
+      attemptCountRef.current = 0;
+      setupAttemptedRef.current = false;
+    };
+  }, [itemId]);
 
   return {
     isSubscribed,
     error,
-    numericId: numericIdRef.current
+    numericId: numericIdRef.current,
+    retry: useCallback(() => {
+      cleanupChannels();
+      attemptCountRef.current = 0;
+      setupAttemptedRef.current = false;
+      setupRealtimeSubscription();
+    }, [cleanupChannels, setupRealtimeSubscription])
   };
 };
