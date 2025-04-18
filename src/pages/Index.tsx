@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getPosts } from "@/services/posts";
 import { Post } from "@/types/post";
@@ -140,7 +140,10 @@ export default function Index() {
         <div className="text-center py-10">
           <p className="text-red-500 mb-2">{error}</p>
           <button 
-            onClick={() => window.location.reload()} 
+            onClick={() => {
+              setHasAttemptedRefresh(false);
+              window.location.reload();
+            }}
             className="bg-green-500 text-white px-4 py-2 rounded-full text-sm"
           >
             Try Again

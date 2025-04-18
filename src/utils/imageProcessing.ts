@@ -1,3 +1,4 @@
+
 export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -33,9 +34,11 @@ export async function getCroppedImg(
       throw new Error('No 2d context');
     }
 
+    // Set canvas dimensions
     canvas.width = pixelCrop.width;
     canvas.height = pixelCrop.height;
 
+    // Create a circular clip if shape is 'round'
     if (shape === 'round') {
       ctx.beginPath();
       ctx.arc(
@@ -49,6 +52,7 @@ export async function getCroppedImg(
       ctx.clip();
     }
 
+    // Draw the image
     ctx.drawImage(
       image,
       pixelCrop.x,
@@ -61,6 +65,7 @@ export async function getCroppedImg(
       pixelCrop.height
     );
 
+    // Convert canvas to blob/file
     return new Promise((resolve) => {
       try {
         canvas.toBlob(
@@ -89,32 +94,39 @@ export async function getCroppedImg(
   }
 }
 
+// Simplified image URL optimization function that ensures we always return a valid URL
 export const optimizeImageUrl = (url: string, width: number = 600): string => {
-  // Return placeholder if URL is not valid
+  // Return placeholder for empty or invalid URLs
   if (!url || typeof url !== 'string' || url.trim() === '') {
-    return "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+    return "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
   }
   
-  try {
-    // Check if URL is already a data URL or placeholder
-    if (url.startsWith('data:') || url.includes('dicebear.com')) {
-      return url;
-    }
-    
-    // Direct return for most URLs to avoid transformation issues
+  // Directly return data URLs or placeholder images
+  if (url.startsWith('data:') || url.includes('placehold.co') || url.includes('dicebear.com')) {
     return url;
-  } catch (error) {
-    console.warn("Failed to process image URL:", error);
-    // Return the original URL if optimization fails
-    return url || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
   }
+  
+  // For relative URLs, make sure they have a leading slash
+  if (url.startsWith('./')) {
+    url = url.substring(1);
+  }
+  
+  return url;
 };
 
+// Load and track image loading progress
 export const loadImageProgressively = (
   url: string,
   onProgress?: (progress: number) => void
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
+    // Handle empty URLs
+    if (!url || url.trim() === '') {
+      if (onProgress) onProgress(100);
+      resolve("https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image");
+      return;
+    }
+    
     const image = new Image();
     let loaded = false;
     
@@ -125,7 +137,9 @@ export const loadImageProgressively = (
     };
     
     image.onerror = () => {
-      reject(new Error(`Failed to load image: ${url}`));
+      console.error(`Failed to load image: ${url}`);
+      if (onProgress) onProgress(100);
+      resolve("https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image");
     };
     
     // Set a timeout to detect slow loading

@@ -10,7 +10,8 @@ export const useItemRealtimeUpdates = (
   const [error, setError] = useState<Error | null>(null);
   const channelsRef = useRef<any[]>([]);
   const setupAttemptedRef = useRef(false);
-  const refreshTimeoutRef = useRef<number | null>(null);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const numericIdRef = useRef<number | null>(null);
 
   // Debounced refresh function to prevent multiple rapid refreshes
   const debouncedRefresh = useCallback(() => {
@@ -18,11 +19,26 @@ export const useItemRealtimeUpdates = (
       clearTimeout(refreshTimeoutRef.current);
     }
     
-    refreshTimeoutRef.current = window.setTimeout(() => {
+    refreshTimeoutRef.current = setTimeout(() => {
+      console.log(`Refreshing data for item ${itemId} due to real-time update`);
       refreshItemData();
       refreshTimeoutRef.current = null;
-    }, 300) as unknown as number;
-  }, [refreshItemData]);
+    }, 500);
+  }, [refreshItemData, itemId]);
+
+  // Clean up function to remove all channels
+  const cleanupChannels = useCallback(() => {
+    console.log(`Cleaning up ${channelsRef.current.length} channels for item ${itemId}`);
+    channelsRef.current.forEach(channel => {
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {
+        console.error("Error removing channel:", e);
+      }
+    });
+    channelsRef.current = [];
+    setIsSubscribed(false);
+  }, [itemId]);
 
   // Set up real-time subscription for item interactions
   useEffect(() => {
@@ -33,21 +49,22 @@ export const useItemRealtimeUpdates = (
     
     try {
       // Parse the itemId to ensure it's a number
-      const numericItemId = parseInt(itemId);
-      if (isNaN(numericItemId)) {
+      const numericId = parseInt(itemId);
+      if (isNaN(numericId)) {
         throw new Error(`Invalid item ID: ${itemId}`);
       }
       
-      console.log(`Setting up real-time subscription for interactions on item ${numericItemId}`);
+      numericIdRef.current = numericId;
+      console.log(`Setting up real-time subscription for interactions on item ${numericId}`);
 
       // Subscribe to likes changes
       const likesChannel = supabase
-        .channel(`item-likes-changes-${numericItemId}`)
+        .channel(`item-likes-changes-${numericId}`)
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'likes',
-          filter: `item_id=eq.${numericItemId}`,
+          filter: `item_id=eq.${numericId}`,
         }, () => {
           console.log('Real-time likes change detected');
           debouncedRefresh();
@@ -61,12 +78,12 @@ export const useItemRealtimeUpdates = (
 
       // Subscribe to interests changes
       const interestsChannel = supabase
-        .channel(`item-interests-changes-${numericItemId}`)
+        .channel(`item-interests-changes-${numericId}`)
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'interests',
-          filter: `item_id=eq.${numericItemId}`,
+          filter: `item_id=eq.${numericId}`,
         }, () => {
           console.log('Real-time interests change detected');
           debouncedRefresh();
@@ -81,25 +98,28 @@ export const useItemRealtimeUpdates = (
 
       // Clean up subscriptions when component unmounts
       return () => {
-        console.log('Cleaning up real-time subscriptions');
-        if (refreshTimeoutRef.current !== null) {
-          clearTimeout(refreshTimeoutRef.current);
-        }
-        channelsRef.current.forEach(channel => {
-          supabase.removeChannel(channel);
-        });
-        channelsRef.current = [];
-        setIsSubscribed(false);
+        cleanupChannels();
         setupAttemptedRef.current = false;
       };
     } catch (error) {
       console.error('Error setting up real-time subscriptions:', error);
       setError(error instanceof Error ? error : new Error('Unknown error'));
     }
-  }, [itemId, debouncedRefresh]);
+  }, [itemId, debouncedRefresh, isSubscribed, cleanupChannels]);
+
+  // Extra cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current !== null) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      cleanupChannels();
+    };
+  }, [cleanupChannels]);
 
   return {
     isSubscribed,
-    error
+    error,
+    numericId: numericIdRef.current
   };
 };

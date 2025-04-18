@@ -9,6 +9,7 @@ import { ItemCardGallery } from "./post/ItemCardGallery";
 import { ItemInteractions } from "./post/ItemInteractions";
 import { CommentSection } from "./post/CommentSection";
 import { ItemCardContent } from "./post/ItemCardContent";
+import { Card } from "./ui/card";
 
 interface ItemCardProps {
   id: string;
@@ -49,8 +50,11 @@ const ItemCard = memo(function ItemCard({
   const isOwner = session?.user?.id === postedBy.id;
   const distanceText = useDistanceCalculation(coordinates);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const dataFetchedRef = useRef(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [dataFetched, setDataFetched] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   
+  // Handle resize for responsive layout
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -59,9 +63,11 @@ const ItemCard = memo(function ItemCard({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
+  // Prepare images array
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : image ? [image] : [];
   
+  // Use ItemCard hook to get all the data and actions
   const {
     isLiked,
     likesCount,
@@ -93,32 +99,41 @@ const ItemCard = memo(function ItemCard({
     isRealtimeSubscribed
   } = useItemCard(id);
 
-  // Fetch data only once when component is visible
+  // Use intersection observer to lazy load data
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !dataFetchedRef.current) {
-          dataFetchedRef.current = true;
-          observer.disconnect();
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '100px' }
     );
 
-    const element = document.getElementById(`item-card-${id}`);
-    if (element) {
-      observer.observe(element);
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
     }
 
     return () => {
-      observer.disconnect();
+      if (cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
     };
-  }, [id]);
+  }, []);
+
+  // Fetch data when card becomes visible
+  useEffect(() => {
+    if (isVisible && !dataFetched) {
+      setDataFetched(true);
+      // Data loading happens through the useItemCard hook
+    }
+  }, [isVisible, dataFetched]);
 
   return (
-    <div 
+    <Card 
+      ref={cardRef}
       id={`item-card-${id}`}
-      className={`bg-white rounded-lg shadow-md overflow-hidden mb-6 ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
+      className={`mb-6 overflow-hidden transition-shadow hover:shadow-md ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
     >
       <ItemCardHeader 
         postedBy={postedBy} 
@@ -132,7 +147,7 @@ const ItemCard = memo(function ItemCard({
       
       <ItemCardGallery images={allImages} title={title} category={category} />
       
-      <div className="p-3 py-[5px]">
+      <div className="p-4">
         <ItemInteractions 
           id={id} 
           postedBy={postedBy} 
@@ -161,19 +176,19 @@ const ItemCard = memo(function ItemCard({
           isRealtimeSubscribed={isRealtimeSubscribed}
         />
         
+        <ItemCardContent description={description} measurements={measurements} />
+        
         {showComments && (
           <CommentSection 
             itemId={id} 
             comments={comments as Comment[]} 
-            setComments={(newComments: Comment[]) => setComments(newComments)}
+            setComments={setComments}
             isLoading={commentsLoading}
             error={commentsError} 
           />
         )}
-        
-        <ItemCardContent description={description} measurements={measurements} />
       </div>
-    </div>
+    </Card>
   );
 });
 

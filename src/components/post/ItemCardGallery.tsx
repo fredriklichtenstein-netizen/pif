@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { optimizeImageUrl } from "@/utils/imageProcessing";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -19,17 +20,9 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   useEffect(() => {
     const validImages = images
       ?.filter(img => img && typeof img === 'string' && img.trim() !== '')
-      .map(img => {
-        // Check if URL is already a data URL or placeholder
-        if (img.startsWith('data:') || img.includes('dicebear.com')) {
-          return img;
-        }
-        
-        // For external images, return the direct URL without optimization
-        return img;
-      }) || [];
+      .map(img => optimizeImageUrl(img, 600)) || [];
       
-    setImageUrls(validImages.length > 0 ? validImages : []);
+    setImageUrls(validImages.length > 0 ? validImages : ["https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image"]);
     
     return () => {
       mountedRef.current = false;
@@ -59,12 +52,14 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   };
   
   // Get the current image URL
-  const currentImageUrl = imageUrls[currentImageIndex] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+  const currentImageUrl = imageUrls[currentImageIndex] || "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
   
   return (
     <div className="relative h-48">
       {!isImageLoaded && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+          <span className="text-gray-400 text-sm">Loading image...</span>
+        </div>
       )}
       
       <img 
@@ -73,11 +68,13 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
         className={`w-full h-48 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => {
           if (mountedRef.current) {
+            console.log("Image loaded successfully:", currentImageUrl);
             setIsImageLoaded(true);
           }
         }}
         onError={(e) => {
-          e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+          console.error("Error loading image:", currentImageUrl);
+          e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
           if (mountedRef.current) {
             setIsImageLoaded(true);
           }
