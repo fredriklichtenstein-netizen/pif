@@ -98,53 +98,41 @@ export const getPosts = async (): Promise<Post[]> => {
     
     if (missingItemIds.length > 0) {
       await Promise.all([
-        // Fetch likes counts in batch
-        (async () => {
-          // Fix: Use .select('count') instead of .count()
-          const { data: likesData, error: likesError } = await supabase
+        // Fetch likes counts for each item individually
+        ...missingItemIds.map(async (itemId) => {
+          const { count, error } = await supabase
             .from('likes')
-            .select('item_id, count(*)', { count: 'exact' })
-            .in('item_id', missingItemIds)
-            .group('item_id');
+            .select('*', { count: 'exact', head: true })
+            .eq('item_id', itemId);
             
-          if (likesData && !likesError) {
-            likesData.forEach((item: any) => {
-              likesMap.set(item.item_id, parseInt(item.count, 10));
-            });
+          if (count !== null && !error) {
+            likesMap.set(itemId, count);
           }
-        })(),
+        }),
         
-        // Fetch interests counts in batch
-        (async () => {
-          // Fix: Use .select('count') instead of .count()
-          const { data: interestsData, error: interestsError } = await supabase
+        // Fetch interests counts for each item individually
+        ...missingItemIds.map(async (itemId) => {
+          const { count, error } = await supabase
             .from('interests')
-            .select('item_id, count(*)', { count: 'exact' })
-            .in('item_id', missingItemIds)
-            .group('item_id');
+            .select('*', { count: 'exact', head: true })
+            .eq('item_id', itemId);
             
-          if (interestsData && !interestsError) {
-            interestsData.forEach((item: any) => {
-              interestsMap.set(item.item_id, parseInt(item.count, 10));
-            });
+          if (count !== null && !error) {
+            interestsMap.set(itemId, count);
           }
-        })(),
+        }),
         
-        // Fetch comments counts in batch
-        (async () => {
-          // Fix: Use .select('count') instead of .count()
-          const { data: commentsData, error: commentsError } = await supabase
+        // Fetch comments counts for each item individually
+        ...missingItemIds.map(async (itemId) => {
+          const { count, error } = await supabase
             .from('comments')
-            .select('item_id, count(*)', { count: 'exact' })
-            .in('item_id', missingItemIds)
-            .group('item_id');
+            .select('*', { count: 'exact', head: true })
+            .eq('item_id', itemId);
             
-          if (commentsData && !commentsError) {
-            commentsData.forEach((item: any) => {
-              commentsMap.set(item.item_id, parseInt(item.count, 10));
-            });
+          if (count !== null && !error) {
+            commentsMap.set(itemId, count);
           }
-        })()
+        })
       ]);
     }
 
@@ -223,4 +211,3 @@ export const getPostsNearby = async (lat: number, lng: number, radius = 10) => {
   // For now, we'll just return all posts as a placeholder
   return getPosts();
 };
-
