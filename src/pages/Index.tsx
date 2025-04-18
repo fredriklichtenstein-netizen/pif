@@ -89,38 +89,38 @@ export default function Index() {
   return (
     <div className="container max-w-2xl mx-auto px-4 py-8 pb-24">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-green-600">PIF Community</h1>
+        <h1 className="text-2xl font-bold text-primary">PIF Community</h1>
         <p className="text-sm text-gray-500">Sustainable sharing in your neighborhood</p>
       </div>
 
       {/* Category filters */}
       <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'all' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-gray-100'}`}
           onClick={() => setFilter('all')}
         >
           All Items
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'furniture' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'furniture' ? 'bg-primary text-primary-foreground' : 'bg-gray-100'}`}
           onClick={() => setFilter('furniture')}
         >
           Furniture
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'electronics' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'electronics' ? 'bg-primary text-primary-foreground' : 'bg-gray-100'}`}
           onClick={() => setFilter('electronics')}
         >
           Electronics
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'clothing' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'clothing' ? 'bg-primary text-primary-foreground' : 'bg-gray-100'}`}
           onClick={() => setFilter('clothing')}
         >
           Clothing
         </button>
         <button 
-          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'books' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+          className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${filter === 'books' ? 'bg-primary text-primary-foreground' : 'bg-gray-100'}`}
           onClick={() => setFilter('books')}
         >
           Books
