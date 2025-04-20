@@ -1,10 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { getPosts } from "@/services/posts";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/toaster";
 import { useMapbox } from "@/hooks/useMapbox";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -62,7 +62,7 @@ export default function Map() {
       <div
         className="absolute top-0 left-0 right-0"
         style={{
-          bottom: navHeight, // leaves room for the fixed nav bar
+          bottom: navHeight - 1, // One pixel less, so map touches nav border line exactly
         }}
       >
         {error ? (
@@ -107,3 +107,4 @@ export default function Map() {
     </div>
   );
 }
+
