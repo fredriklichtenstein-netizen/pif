@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -75,15 +74,12 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
       {/* Title and Category Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
         <div className="flex flex-col gap-2">
-          <Badge 
-            variant="secondary" 
-            className="self-start text-xs font-display tracking-wide uppercase text-primary bg-transparent hover:bg-transparent"
-          >
-            {category.toUpperCase()}
-          </Badge>
-          <h3 className="text-white text-lg font-display font-semibold tracking-wide drop-shadow-md">
-            {title}
+          <h3 className="text-white text-xs font-display font-semibold tracking-wide drop-shadow-md uppercase">
+            {category}
           </h3>
+          <h2 className="text-white text-lg font-display font-semibold tracking-wide drop-shadow-md">
+            {title}
+          </h2>
         </div>
       </div>
       
