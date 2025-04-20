@@ -8,7 +8,7 @@ import type { User } from "@/hooks/item/useItemInteractions";
 
 /** 
  * ACTIVE: turquoise (#00D1A0)
- * PASSIVE: black (#000000)
+ * PASSIVE: dark gray (#333333) - changed from black (#000000)
  */
 
 type Type = "like" | "comment" | "interest";
@@ -47,12 +47,12 @@ export function InteractionButtonWithPopup({
   const [popupUsers, setPopupUsers] = useState<User[]>(users);
   const navigate = useNavigate();
 
-  // Colors: turquoise for active, black for passive (label, border, icon)
+  // Colors: turquoise for active, dark gray for passive (label, border, icon)
   const ACTIVE_COLOR = "#00D1A0";
-  const PASSIVE_COLOR = "#000000";
+  const PASSIVE_COLOR = "#333333";
 
   const activeColorClass = "text-primary";
-  const passiveColorClass = "text-black";
+  const passiveColorClass = "text-gray-700";
 
   // Choose icon
   let IconComponent = Heart;
@@ -81,7 +81,7 @@ export function InteractionButtonWithPopup({
   function renderIcon() {
     return (
       <IconComponent
-        className={`w-6 h-6`}
+        className="w-6 h-6 flex-shrink-0"
         fill={isActive ? ACTIVE_COLOR : "none"}
         stroke={isActive ? ACTIVE_COLOR : PASSIVE_COLOR}
         strokeWidth={isActive ? 2.4 : 2}
@@ -126,56 +126,59 @@ export function InteractionButtonWithPopup({
       <button
         disabled={isOwner && (type === "like" || type === "interest")}
         aria-label={isActive ? labelActive : labelPassive}
-        className={`flex flex-col items-center px-2 py-1 rounded group 
+        className={`flex flex-col items-center rounded group
           ${isOwner && (type === "like" || type === "interest") ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
         `}
         onClick={handleButtonClick}
         tabIndex={0}
         style={{ minWidth: 64 }}
       >
-        <div className="relative">
+        <div className="flex items-center space-x-1">
           {renderIcon()}
-          {/* Counter in top-right - with increased spacing from icon */}
-          <div className="absolute -top-2 -right-3">
-            {isCounterInteractive ? (
-              <Popover open={showPopup} onOpenChange={setShowPopup}>
-                <PopoverTrigger asChild>
-                  <button
-                    onClick={handleCounterClick}
-                    className={`ml-2 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow focus:outline-none`}
-                    style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
-                  >
-                    {displayCount}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-60 p-2">
-                  <div className="font-medium text-base mb-2">
-                    {type === "like" ? "Liked by" : "Interested"}
-                  </div>
-                  {loading ? (
-                    <div className="text-sm text-gray-400 py-2">Loading...</div>
-                  ) : popupUsers.length > 0 ? (
-                    <div className="flex flex-col gap-1">
-                      {popupUsers.map(u => renderUserRow(u))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-400 py-2">No users yet</div>
-                  )}
-                </PopoverContent>
-              </Popover>
-            ) : (
-              displayCount > 0 && (
-                <span className={`ml-2 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow`}
-                  style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}>
+          {/* Counter next to icon with left margin */}
+          {isCounterInteractive ? (
+            <Popover open={showPopup} onOpenChange={setShowPopup}>
+              <PopoverTrigger asChild>
+                <button
+                  onClick={handleCounterClick}
+                  className={`text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-gray-700"} rounded-full px-2 py-0.5 shadow focus:outline-none`}
+                  style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
+                  aria-label={`${displayCount} ${type === "like" ? "likes" : "interests"}`}
+                  tabIndex={-1}
+                >
                   {displayCount}
-                </span>
-              )
-            )}
-          </div>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-60 p-2">
+                <div className="font-medium text-base mb-2">
+                  {type === "like" ? "Liked by" : "Interested"}
+                </div>
+                {loading ? (
+                  <div className="text-sm text-gray-400 py-2">Loading...</div>
+                ) : popupUsers.length > 0 ? (
+                  <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+                    {popupUsers.map(u => renderUserRow(u))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-2">No users yet</div>
+                )}
+              </PopoverContent>
+            </Popover>
+          ) : (
+            displayCount > 0 && (
+              <span
+                className={`text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-gray-700"} rounded-full px-2 py-0.5 shadow select-none`}
+                style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
+                aria-label={`${displayCount} ${type === "like" ? "likes" : "interests"}`}
+              >
+                {displayCount}
+              </span>
+            )
+          )}
         </div>
         {/* Label */}
         <span
-          className={`text-xs font-medium mt-1`}
+          className="text-xs font-medium mt-1 select-none"
           style={{
             color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR
           }}
@@ -186,3 +189,4 @@ export function InteractionButtonWithPopup({
     </div>
   );
 }
+
