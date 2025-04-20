@@ -21,7 +21,7 @@ export function ItemCardContent({ title, description, measurements = {} }: ItemC
     <div className="mt-2 mb-4">
       {title && <h3 className="text-lg font-semibold mb-1">{title}</h3>}
       
-      <div className="text-sm text-gray-600">
+      <div className="text-base text-gray-600">
         <p className="mb-2">{truncatedDescription}</p>
         
         {hasDetails && expanded && (
