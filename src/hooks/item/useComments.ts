@@ -14,7 +14,8 @@ export const useComments = (itemId: string) => {
     fetchCommentsCount, 
     fetchCommenters,
     isLoading: isFetchLoading,
-    error: fetchError
+    error: fetchError,
+    useFallbackMode
   } = useCommentsFetch(itemId);
   
   const { 
@@ -35,7 +36,8 @@ export const useComments = (itemId: string) => {
     fetchCommentsCount,
     fetchCommenters,
     isLoading,
-    error
+    error,
+    useFallbackMode
   };
 };
 

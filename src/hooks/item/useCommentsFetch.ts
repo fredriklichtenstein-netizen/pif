@@ -11,7 +11,13 @@ export const useCommentsFetch = (itemId: string) => {
   const [error, setError] = useState<Error | null>(null);
   
   // Import the specialized hooks
-  const { fetchComments, isLoading: isFetchLoading, error: fetchError } = useFetchComments(itemId);
+  const { 
+    fetchComments, 
+    isLoading: isFetchLoading, 
+    error: fetchError, 
+    useFallbackMode 
+  } = useFetchComments(itemId);
+  
   const { fetchCommentsCount } = useCommentsCount();
   const { fetchCommenters } = useCommenters();
   
@@ -26,6 +32,7 @@ export const useCommentsFetch = (itemId: string) => {
     fetchCommentsCount,
     fetchCommenters,
     isLoading,
-    error
+    error,
+    useFallbackMode
   };
 };

@@ -7,13 +7,12 @@ import { LoadingComments } from "../comments/LoadingComments";
 import { CommentsError } from "../comments/CommentsError";
 import { CommentsHeader } from "../comments/CommentsHeader";
 import { Button } from "@/components/ui/button";
-import { Comment } from "@/types/comment";
 import { useLazyComments } from "@/hooks/comments/useLazyComments";
 import { useCommentActions } from "@/hooks/comments/useCommentActions";
 import { useCommentRealtime } from "@/hooks/comments/useCommentRealtime";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { NetworkStatus } from "../common/NetworkStatus";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, MessageSquare, Wifi } from "lucide-react";
 
 interface LazyCommentsSectionProps {
   itemId: string;
@@ -34,7 +33,8 @@ export function LazyCommentsSection({
     error,
     loadComments,
     refreshComments,
-    isInitialized
+    isInitialized,
+    useFallbackMode
   } = useLazyComments(itemId);
 
   // Debug logging when component becomes visible
@@ -77,9 +77,10 @@ export function LazyCommentsSection({
       hasError: !!error,
       commentsCount: comments.length,
       isInitialized,
-      isSubscribed
+      isSubscribed,
+      useFallbackMode
     });
-  }, [comments.length, error, isInitialized, isLoading, isSubscribed, isVisible, itemId]);
+  }, [comments.length, error, isInitialized, isLoading, isSubscribed, isVisible, itemId, useFallbackMode]);
 
   if (!isVisible) {
     return null;
@@ -87,10 +88,12 @@ export function LazyCommentsSection({
 
   // Render appropriate content based on state
   const renderContent = () => {
+    // If we're loading and have no comments yet
     if (isLoading && !comments.length) {
       return <LoadingComments />;
     }
 
+    // If we have an error and no comments
     if (error && !comments.length) {
       return (
         <div className="py-6 space-y-4">
@@ -116,18 +119,26 @@ export function LazyCommentsSection({
 
     return (
       <>
+        {/* Always show the comment input unless user is not logged in */}
         <CommentInput 
           onSubmit={handleAddComment} 
           placeholder="Write a comment..." 
-          disabled={!user} // Only disable if user is not logged in
+          disabled={!user} 
         />
         
+        {/* Comments list or loading state */}
         {isLoading && !comments.length ? (
           <div className="mt-4">
             <LoadingComments />
           </div>
         ) : comments.length > 0 ? (
           <div className="mt-4">
+            {useFallbackMode && (
+              <div className="mb-4 px-3 py-2 bg-blue-50 text-blue-800 rounded-md flex items-center text-sm border border-blue-200">
+                <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span>Showing community conversation. You can still join the discussion!</span>
+              </div>
+            )}
             <CommentList
               comments={comments}
               isLoading={isLoading}
@@ -156,7 +167,7 @@ export function LazyCommentsSection({
       )}
       
       <div className="flex justify-between items-center">
-        <CommentsHeader isSubscribed={isSubscribed} />
+        <CommentsHeader isSubscribed={isSubscribed || useFallbackMode} />
         {onClose && (
           <Button 
             variant="outline" 
@@ -169,7 +180,14 @@ export function LazyCommentsSection({
         )}
       </div>
       
-      {!isSubscribed && isInitialized && !error && (
+      {useFallbackMode && (
+        <div className="mt-4 px-3 py-2 bg-blue-50 text-blue-700 rounded-md flex items-center text-sm border border-blue-200">
+          <Wifi className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span>Using local conversation mode. Your comments will be stored when connection improves.</span>
+        </div>
+      )}
+      
+      {!isSubscribed && isInitialized && !error && !useFallbackMode && (
         <div className="mt-4 px-3 py-2 bg-amber-50 text-amber-800 rounded-md flex items-center text-sm border border-amber-200">
           <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
           <span>Live updates unavailable. Comments may not refresh automatically.</span>

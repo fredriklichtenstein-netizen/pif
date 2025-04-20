@@ -11,9 +11,17 @@ export function useLazyComments(itemId: string) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [retryTimer, setRetryTimer] = useState<NodeJS.Timeout | null>(null);
+  const [useFallbackMode, setUseFallbackMode] = useState(false);
   const { toast } = useToast();
   
-  const { fetchComments } = useComments(itemId);
+  const { fetchComments, useFallbackMode: fetchFallbackMode } = useComments(itemId);
+
+  // Update our fallback mode state when fetch fallback mode changes
+  useEffect(() => {
+    if (fetchFallbackMode) {
+      setUseFallbackMode(true);
+    }
+  }, [fetchFallbackMode]);
 
   // Cleanup function for any timers
   useEffect(() => {
@@ -43,8 +51,18 @@ export function useLazyComments(itemId: string) {
         setRetryCount(0); // Reset retry count on success
         setIsLoading(false);
         
+        // If we're in fallback mode, show a toast
+        if (fetchFallbackMode) {
+          setUseFallbackMode(true);
+          toast({
+            title: "Limited connection mode",
+            description: "Showing available comments. Your new comments will be saved when connection improves.",
+            variant: "default"
+          });
+        }
+        
         // Show toast on retries
-        if (retryCount > 0) {
+        if (retryCount > 0 && !fetchFallbackMode) {
           toast({
             title: "Comments loaded successfully",
             description: "After some delays, we've successfully loaded the comments.",
@@ -60,8 +78,14 @@ export function useLazyComments(itemId: string) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load comments';
       setError(err instanceof Error ? err : new Error(errorMessage));
       
+      // If we're in fallback mode from the fetch hook, adopt that here too
+      if (fetchFallbackMode) {
+        setUseFallbackMode(true);
+        setIsInitialized(true);
+        setIsLoading(false);
+      }
       // Implement exponential backoff for retries (max 3 retries)
-      if (retryCount < 3) {
+      else if (retryCount < 3) {
         const nextRetryCount = retryCount + 1;
         const delay = Math.min(1000 * Math.pow(2, nextRetryCount), 8000); // exponential backoff with max 8s
         
@@ -93,7 +117,7 @@ export function useLazyComments(itemId: string) {
         });
       }
     }
-  }, [fetchComments, isInitialized, itemId, retryCount, toast]);
+  }, [fetchComments, isInitialized, itemId, retryCount, toast, fetchFallbackMode]);
 
   const refreshComments = useCallback(() => {
     console.log(`[useLazyComments] Refreshing comments for item ${itemId}`);
@@ -109,6 +133,7 @@ export function useLazyComments(itemId: string) {
     error,
     loadComments,
     refreshComments,
-    isInitialized
+    isInitialized,
+    useFallbackMode
   };
 }
