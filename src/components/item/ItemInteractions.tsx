@@ -1,11 +1,9 @@
 
-import { InteractionCounts } from "../post/interactions/InteractionCounts";
 import { PrimaryActions } from "../post/interactions/PrimaryActions";
 import { SecondaryActions } from "../post/interactions/SecondaryActions";
 import { InteractionsLoading } from "../post/interactions/InteractionsLoading";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { ItemInteractionsProps } from "./types";
-import { Separator } from "@/components/ui/separator";
 import type { User } from "@/hooks/item/useItemInteractions";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
@@ -66,20 +64,9 @@ export function ItemInteractions({
   const actualLikeCount = likers.length || likesCount;
   const actualInterestCount = interestedUsers.length || interestsCount;
 
+  // Render only primary and secondary actions without the old counters section
   return (
     <div className="flex flex-col space-y-1">
-      <InteractionCounts 
-        likesCount={actualLikeCount}
-        commentsCount={commentsCount}
-        interestsCount={actualInterestCount}
-        likers={likers}
-        interestedUsers={interestedUsers}
-        onCommentToggle={onCommentToggle}
-        isLoadingInterested={isLoadingInterested}
-        interestedError={interestedError}
-        getInterestedUsers={getInterestedUsers}
-      />
-      
       <PrimaryActions 
         isLiked={isLiked}
         showComments={showComments}
@@ -99,8 +86,6 @@ export function ItemInteractions({
         fetchLikers={async () => likers}
         fetchInterestedUsers={async () => interestedUsers}
       />
-
-      <Separator className="my-1" />
       
       <SecondaryActions 
         isBookmarked={isBookmarked}
