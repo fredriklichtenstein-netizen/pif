@@ -22,20 +22,34 @@ export function useFeedPosts() {
       if (error) throw error;
       
       // Transform data to match the expected format
-      const transformedData = data?.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        images: item.images,
-        location: item.location,
-        coordinates: item.coordinates,
-        category: item.category,
-        condition: item.condition,
-        measurements: item.measurements,
-        user_id: item.user_id,
-        user_name: item.profiles ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() : 'Anonymous',
-        user_avatar: item.profiles?.avatar_url || ''
-      })) || [];
+      const transformedData = data?.map(item => {
+        const firstName = item.profiles?.first_name || '';
+        const lastName = item.profiles?.last_name || '';
+        // Only include the first letter of the last name, if present
+        let displayName = '';
+        if (firstName && lastName) {
+          displayName = `${firstName} ${lastName.charAt(0)}`;
+        } else if (firstName) {
+          displayName = firstName;
+        } else {
+          displayName = 'Anonymous';
+        }
+
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          images: item.images,
+          location: item.location,
+          coordinates: item.coordinates,
+          category: item.category,
+          condition: item.condition,
+          measurements: item.measurements,
+          user_id: item.user_id,
+          user_name: displayName,
+          user_avatar: item.profiles?.avatar_url || ''
+        };
+      }) || [];
       
       setPosts(transformedData);
     } catch (err: any) {
