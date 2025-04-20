@@ -37,6 +37,13 @@ export function LazyCommentsSection({
     isInitialized
   } = useLazyComments(itemId);
 
+  // Debug logging when component becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      console.log(`LazyCommentsSection: ${isInitialized ? 'Already initialized' : 'Not initialized yet'} for item ${itemId}`);
+    }
+  }, [isVisible, isInitialized, itemId]);
+
   // Load comments when component becomes visible
   useEffect(() => {
     if (isVisible && !isInitialized) {
@@ -62,10 +69,17 @@ export function LazyCommentsSection({
     handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser);
 
-  // Debug log for comments
+  // Debug log for component
   useEffect(() => {
-    console.log(`Comments for item ${itemId}:`, comments);
-  }, [comments, itemId]);
+    console.log(`LazyCommentsSection for item ${itemId}:`, {
+      isVisible,
+      isLoading,
+      hasError: !!error,
+      commentsCount: comments.length,
+      isInitialized,
+      isSubscribed
+    });
+  }, [comments.length, error, isInitialized, isLoading, isSubscribed, isVisible, itemId]);
 
   if (!isVisible) {
     return null;
@@ -108,11 +122,15 @@ export function LazyCommentsSection({
           disabled={!user} // Only disable if user is not logged in
         />
         
-        {comments.length > 0 ? (
+        {isLoading && !comments.length ? (
+          <div className="mt-4">
+            <LoadingComments />
+          </div>
+        ) : comments.length > 0 ? (
           <div className="mt-4">
             <CommentList
               comments={comments}
-              isLoading={false}
+              isLoading={isLoading}
               currentUserId={currentUser?.id}
               onLike={handleLikeComment}
               onDelete={handleDeleteComment}

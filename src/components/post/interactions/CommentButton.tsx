@@ -18,14 +18,14 @@ export function CommentButton({
 }: CommentButtonProps) {
   
   const handleCommentClick = () => {
-    console.log(`CommentButton: Toggling comments for item ${itemId}`);
+    console.log(`CommentButton: Toggling comments for item ${itemId}, current state: ${showComments}`);
     onCommentToggle();
   };
   
   // Debug logging when component mounts or updates
   useEffect(() => {
-    console.log(`CommentButton rendered for item ${itemId}, showComments: ${showComments}`);
-  }, [itemId, showComments]);
+    console.log(`CommentButton rendered for item ${itemId}, showComments: ${showComments}, count: ${commentsCount}`);
+  }, [itemId, showComments, commentsCount]);
   
   return (
     <>
@@ -42,7 +42,7 @@ export function CommentButton({
       
       {/* We render the LazyCommentsSection only when showComments is true */}
       {showComments && (
-        <div className="mt-4">
+        <div className="mt-4" data-testid="comments-section-container">
           <LazyCommentsSection 
             itemId={itemId}
             isVisible={showComments}
