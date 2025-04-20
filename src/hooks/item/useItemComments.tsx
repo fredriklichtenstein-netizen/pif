@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useComments } from "./useComments";
 import { Comment } from "@/types/comment";
 
@@ -28,6 +28,8 @@ export const useItemComments = (itemId: string) => {
       console.log(`Fetched ${fetchedComments.length} comments for item ${itemId}`);
       setComments(fetchedComments);
       setCommentsFetched(true);
+      // Also update the count to match actual comments
+      setCommentsCount(fetchedComments.length);
     } catch (error) {
       console.error("Error fetching comments:", error);
       setCommentsError(error instanceof Error ? error : new Error('Unknown error fetching comments'));
@@ -36,14 +38,25 @@ export const useItemComments = (itemId: string) => {
     }
   }, [itemId, fetchComments]);
 
+  // Make sure we fetch comments when toggling from closed → open
   const handleCommentToggle = useCallback(() => {
-    console.log(`Toggling comments for item ${itemId}`);
-    setShowComments(!showComments);
+    console.log(`Toggling comments for item ${itemId}, current state: ${showComments}`);
+    // If we're opening comments and haven't fetched them yet (or have none)
+    const isOpening = !showComments;
+    setShowComments(isOpening);
     
-    if (!showComments) {
+    if (isOpening && (!commentsFetched || comments.length === 0)) {
       fetchItemComments();
     }
-  }, [showComments, fetchItemComments, itemId]);
+  }, [showComments, commentsFetched, comments.length, fetchItemComments, itemId]);
+
+  // Make sure comments state is preserved when reopening comments
+  useEffect(() => {
+    // Update local commentsCount when comments array changes
+    if (comments.length !== commentsCount) {
+      setCommentsCount(comments.length);
+    }
+  }, [comments, commentsCount]);
 
   return {
     showComments,

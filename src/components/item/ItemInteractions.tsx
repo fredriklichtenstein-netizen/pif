@@ -7,7 +7,7 @@ import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { ItemInteractionsProps } from "./types";
 import { Separator } from "@/components/ui/separator";
 import type { User } from "@/hooks/item/useItemInteractions";
-import { useGlobalAuth } from "@/hooks/useGlobalAuth"; // <-- Make sure to import and use this for current user
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export function ItemInteractions({
   id,
@@ -46,11 +46,15 @@ export function ItemInteractions({
     return <InteractionsLoading />;
   }
 
-  // "Active" for comment action is only if current user has commented on the post!
-  const hasCommented =
-    commenters && currentUserId
-      ? commenters.some((user) => user.id === currentUserId)
-      : false;
+  // "Active" for comment action is only if current user has commented on the post or replied to a comment!
+  // Check both direct comments and replies in all comments
+  const hasCommented = commenters && currentUserId ? (
+    commenters.some(user => user.id === currentUserId) || 
+    // Or check if the user has replied to any comment (look for author.id in all replies)
+    commenters.some(comment => 
+      comment.replies?.some(reply => reply.author.id === currentUserId)
+    )
+  ) : false;
 
   // Wrap fetchers so the signatures are correct for PrimaryActions (Promise<User[]>)
   const fetchLikersWrapper = async (): Promise<User[]> => {
@@ -116,4 +120,3 @@ export function ItemInteractions({
     </div>
   );
 }
-

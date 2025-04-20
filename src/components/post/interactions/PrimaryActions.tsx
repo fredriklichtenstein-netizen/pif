@@ -8,7 +8,7 @@ interface PrimaryActionsProps {
   showInterest: boolean;
   isOwner: boolean;
   itemId: string;
-  currentUserId?: string; // NEW: Needed for "hasCommented" logic
+  currentUserId?: string;
   hasCommented?: boolean; // True if user has posted a comment
   commentsCount?: number;
   likesCount?: number;

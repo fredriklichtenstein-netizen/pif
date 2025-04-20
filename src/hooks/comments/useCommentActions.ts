@@ -47,10 +47,45 @@ export const useCommentActions = (
 
   // Import individual comment action hooks
   const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser, useFallbackMode);
-  const { deleteComment: handleDeleteComment } = useCommentDelete();
+  const { deleteComment } = useCommentDelete();
   const { handleEditComment } = useCommentEdit(comments, setComments);
   const { handleLikeComment, handleReplyToComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
   const { refreshComments, isRefreshing } = useCommentRefresh(itemId, setComments, currentUser);
+
+  // Enhanced delete comment handler to update the comments state properly
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      // First perform the server-side deletion
+      const success = await deleteComment(commentId);
+      
+      if (success) {
+        // Remove the comment or reply from the client-side state
+        const updatedComments = comments.filter(comment => {
+          // If this is the comment to delete
+          if (comment.id === commentId) {
+            return false;
+          }
+          
+          // Check if this comment has a reply that needs to be deleted
+          if (comment.replies && comment.replies.length > 0) {
+            // Filter out the reply to delete
+            comment.replies = comment.replies.filter(reply => reply.id !== commentId);
+          }
+          
+          return true;
+        });
+        
+        // Update the comments state
+        setComments(updatedComments);
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      return false;
+    }
+  };
 
   // Update the loading state based on the refreshing state
   useEffect(() => {
