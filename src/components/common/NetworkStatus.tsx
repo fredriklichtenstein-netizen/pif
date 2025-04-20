@@ -39,27 +39,25 @@ export function NetworkStatus({ onRetry }: NetworkStatusProps) {
       setShowBanner(!online);
     });
     
-    // Listen for browser online/offline events
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     
-    // Periodic check
-    const intervalId = setInterval(() => {
-      checkNetworkConnection().then(online => {
-        if (online !== isOnline) {
-          setIsOnline(online);
-          setShowBanner(!online);
-          
-          if (online && !isOnline) {
-            toast({
-              title: "Connection restored",
-              description: "You're back online. Real-time updates resumed.",
-              duration: 3000,
-            });
-          }
+    // Periodic check every 30 seconds
+    const intervalId = setInterval(async () => {
+      const online = await checkNetworkConnection();
+      if (online !== isOnline) {
+        setIsOnline(online);
+        setShowBanner(!online);
+        
+        if (online && !isOnline) {
+          toast({
+            title: "Connection restored",
+            description: "You're back online. Real-time updates resumed.",
+            duration: 3000,
+          });
         }
-      });
-    }, 10000);
+      }
+    }, 30000);
     
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -82,7 +80,6 @@ export function NetworkStatus({ onRetry }: NetworkStatusProps) {
         });
         setShowBanner(false);
         
-        // Call onRetry if connection is good
         if (onRetry) onRetry();
       } else {
         toast({
@@ -99,7 +96,6 @@ export function NetworkStatus({ onRetry }: NetworkStatusProps) {
     }
   };
 
-  // Only show banner when offline
   if (!showBanner) return null;
 
   return (
