@@ -20,7 +20,13 @@ export const useCommentCreate = (
 
   // Add a new comment
   const handleAddComment = async (text: string) => {
-    if (!text.trim() || !currentUser || !currentUser.id) return;
+    if (!text.trim() || !currentUser || !currentUser.id) {
+      console.log("Cannot add comment: empty text or missing user", { 
+        textLength: text?.length, 
+        currentUser: !!currentUser 
+      });
+      return;
+    }
     
     setIsLoading(true);
     try {
@@ -61,6 +67,11 @@ export const useCommentCreate = (
         
         // Create a new array with the new comment added (avoid direct mutation)
         const updatedComments = [...comments, newComment];
+        console.log("Updating comments state with new comment", { 
+          previousCount: comments.length, 
+          newCount: updatedComments.length 
+        });
+        
         setComments(updatedComments);
         
         toast({

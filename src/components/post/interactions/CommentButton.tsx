@@ -1,6 +1,6 @@
 
 import { MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect } from "react";
 import { LazyCommentsSection } from "@/components/comments/LazyCommentsSection";
 
 interface CommentButtonProps {
@@ -22,6 +22,11 @@ export function CommentButton({
     onCommentToggle();
   };
   
+  // Debug logging when component mounts or updates
+  useEffect(() => {
+    console.log(`CommentButton rendered for item ${itemId}, showComments: ${showComments}`);
+  }, [itemId, showComments]);
+  
   return (
     <>
       <button 
@@ -35,6 +40,7 @@ export function CommentButton({
         </span>
       </button>
       
+      {/* We render the LazyCommentsSection only when showComments is true */}
       {showComments && (
         <div className="mt-4">
           <LazyCommentsSection 

@@ -105,7 +105,7 @@ export function LazyCommentsSection({
         <CommentInput 
           onSubmit={handleAddComment} 
           placeholder="Write a comment..." 
-          disabled={isLoading}
+          disabled={!user} // Only disable if user is not logged in
         />
         
         {comments.length > 0 ? (
@@ -158,7 +158,9 @@ export function LazyCommentsSection({
         </div>
       )}
       
-      {renderContent()}
+      <div className="mt-4">
+        {renderContent()}
+      </div>
     </Card>
   );
 }
