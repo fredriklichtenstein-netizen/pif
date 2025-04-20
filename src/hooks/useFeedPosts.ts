@@ -1,11 +1,12 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 
 export function useFeedPosts() {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [allPosts, setAllPosts] = useState<any[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
@@ -41,7 +42,8 @@ export function useFeedPosts() {
         };
       }) || [];
 
-      setPosts(transformedData);
+      setAllPosts(transformedData);
+      setFilteredPosts(transformedData);
     } catch (err: any) {
       console.error('Error fetching posts:', err);
       setError(err);
@@ -60,14 +62,31 @@ export function useFeedPosts() {
     fetchPosts();
   }, [fetchPosts]);
 
+  // Filter posts by categories
+  const filterByCategories = useCallback((categories: string[]) => {
+    if (!categories.length) {
+      // If no categories selected, show all posts
+      setFilteredPosts(allPosts);
+      return;
+    }
+
+    const filtered = allPosts.filter(post => 
+      post.category && categories.includes(post.category)
+    );
+    
+    setFilteredPosts(filtered);
+  }, [allPosts]);
+
   const refreshPosts = useCallback(() => {
     fetchPosts();
   }, [fetchPosts]);
 
   return {
-    posts,
+    posts: filteredPosts,
+    allPosts,
     isLoading,
     error,
-    refreshPosts
+    refreshPosts,
+    filterByCategories
   };
 }

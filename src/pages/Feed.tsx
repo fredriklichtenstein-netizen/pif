@@ -3,12 +3,53 @@ import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { ItemCardWrapper } from "@/components/ItemCardWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
-import { Loader2 } from "lucide-react";
+import { Loader2, Filter } from "lucide-react";
 import { MainNav } from "@/components/MainNav";
 import { parseCoordinatesFromDB } from "@/types/post";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect } from "react";
+
+// Define our available categories
+const CATEGORIES = [
+  "Furniture",
+  "Electronics",
+  "Clothing",
+  "Kitchen",
+  "Books",
+  "Toys",
+  "Garden",
+  "Sports",
+  "Other"
+];
 
 export default function Feed() {
-  const { posts, isLoading, error, refreshPosts } = useFeedPosts();
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const { posts, isLoading, error, refreshPosts, filterByCategories } = useFeedPosts();
+
+  // Apply filtering based on selected categories
+  useEffect(() => {
+    filterByCategories(selectedCategories);
+  }, [selectedCategories, filterByCategories]);
+
+  // Toggle category selection
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSelectedCategories([]);
+  };
 
   if (isLoading) {
     return (
@@ -23,25 +64,80 @@ export default function Feed() {
       <NetworkStatus onRetry={refreshPosts} />
       
       {/* Header */}
-      <div className="mb-6 mt-4">
+      <div className="mb-4 mt-4">
         <h1 className="text-2xl font-bold mb-1">PiF Community</h1>
         <p className="text-muted-foreground">Sustainable sharing in your neighborhood</p>
       </div>
       
       {/* Category filters */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        <button className="px-4 py-2 rounded-full bg-primary text-white whitespace-nowrap">
-          All Items
-        </button>
-        <button className="px-4 py-2 rounded-full bg-accent hover:bg-accent/80 whitespace-nowrap">
-          Furniture
-        </button>
-        <button className="px-4 py-2 rounded-full bg-accent hover:bg-accent/80 whitespace-nowrap">
-          Electronics
-        </button>
-        <button className="px-4 py-2 rounded-full bg-accent hover:bg-accent/80 whitespace-nowrap">
-          Clothing
-        </button>
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="font-medium">Categories</h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-1 text-muted-foreground"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-4 w-4" />
+            <span>{selectedCategories.length > 0 ? `${selectedCategories.length} selected` : 'Filter'}</span>
+          </Button>
+        </div>
+
+        {/* Main category filter as a scrollable row */}
+        <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
+          <ToggleGroupItem
+            value="all"
+            className={`rounded-full border ${selectedCategories.length === 0 ? 'bg-primary text-white' : 'bg-accent'}`}
+            onClick={clearFilters}
+          >
+            All Items
+          </ToggleGroupItem>
+          
+          {CATEGORIES.slice(0, 5).map((category) => (
+            <ToggleGroupItem
+              key={category}
+              value={category}
+              className={`rounded-full border ${selectedCategories.includes(category) ? 'bg-primary text-white' : 'bg-accent'}`}
+              onClick={() => toggleCategory(category)}
+            >
+              {category}
+            </ToggleGroupItem>
+          ))}
+        </div>
+
+        {/* Expanded filter with checkboxes for multi-select */}
+        {showFilters && (
+          <div className="bg-accent/40 rounded-lg p-3 mb-4 mt-2 grid grid-cols-2 gap-2">
+            <div className="col-span-2 mb-1 flex justify-between items-center">
+              <h3 className="text-sm font-medium">Select categories</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={clearFilters}
+              >
+                Clear all
+              </Button>
+            </div>
+            
+            {CATEGORIES.map((category) => (
+              <div key={category} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`filter-${category}`} 
+                  checked={selectedCategories.includes(category)}
+                  onCheckedChange={() => toggleCategory(category)}
+                />
+                <label 
+                  htmlFor={`filter-${category}`}
+                  className="text-sm cursor-pointer"
+                >
+                  {category}
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Item Cards */}
@@ -84,7 +180,16 @@ export default function Feed() {
         })}
         {posts?.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No items found</p>
+            <p>No items found matching your filters</p>
+            {selectedCategories.length > 0 && (
+              <Button 
+                variant="outline" 
+                className="mt-2"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </Button>
+            )}
           </div>
         )}
       </div>
