@@ -67,6 +67,8 @@ export interface ItemInteractionsProps {
   onMessage: (e: React.MouseEvent) => void;
   onShare: () => void;
   onReport: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   interactionsLoading?: boolean;
   isLoadingInterested?: boolean;
   interestedError?: Error | null;
