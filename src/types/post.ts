@@ -45,7 +45,8 @@ export const parseCoordinatesFromDB = (point: string | null): Coordinates | unde
   try {
     // If it's already a parsed object
     if (typeof point === 'object' && point !== null) {
-      if ('lat' in point && 'lng' in point) {
+      // This null check is redundant but TypeScript still wants it
+      if (point !== null && 'lat' in point && 'lng' in point) {
         const pointObj = point as any; // Type assertion
         // Additional null checks before accessing properties
         if (pointObj.lat !== null && pointObj.lng !== null) {
