@@ -53,7 +53,7 @@ export const parseCoordinatesFromDB = (point: string | null): Coordinates | unde
     }
     
     // Handle the string format: (lng,lat)
-    const matches = point.match(/\(([-\d.]+),([-\d.]+)\)/);
+    const matches = point ? point.match(/\(([-\d.]+),([-\d.]+)\)/) : null;
     if (matches) {
       return {
         lng: parseFloat(matches[1]),
@@ -63,12 +63,14 @@ export const parseCoordinatesFromDB = (point: string | null): Coordinates | unde
     
     // Try to parse as JSON if it's a stringified object
     try {
-      const parsed = JSON.parse(point);
-      if (parsed && typeof parsed === 'object' && 'lat' in parsed && 'lng' in parsed) {
-        return {
-          lat: Number(parsed.lat),
-          lng: Number(parsed.lng)
-        };
+      if (point) {
+        const parsed = JSON.parse(point);
+        if (parsed && typeof parsed === 'object' && 'lat' in parsed && 'lng' in parsed) {
+          return {
+            lat: Number(parsed.lat),
+            lng: Number(parsed.lng)
+          };
+        }
       }
     } catch (e) {
       // Not a valid JSON string
