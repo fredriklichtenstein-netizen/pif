@@ -86,7 +86,7 @@ export function InteractionButtonWithPopup({
     const truncated = user.name.split(" ");
     const display =
       truncated.length > 1
-        ? `${truncated[0]} ${truncated[1].charAt(0).toUpperCase()}.`
+        ? `${truncated[0]} ${truncated[1].charAt(0).toUpperCase()}`
         : user.name;
     return (
       <button
@@ -112,7 +112,7 @@ export function InteractionButtonWithPopup({
   // Counter interactivity for like/interest with onCounterClick
   const isCounterInteractive = (type === "like" || type === "interest") && displayCount > 0 && onCounterClick;
 
-  // Placement: icon centered, then label+counter in row below
+  // Placement: icon centered, then label + counter on the same line side-by-side, slightly spaced
   return (
     <div className="relative flex flex-col items-center group" style={{ minWidth: 74 }}>
       <button
@@ -128,8 +128,8 @@ export function InteractionButtonWithPopup({
         <div className="flex items-center justify-center" style={{ height: 28, width: 32 }}>
           {renderIcon()}
         </div>
-        {/* Label + counter row (horizontal) */}
-        <div className="flex flex-row items-center justify-center mt-1 min-h-[22px]">
+        {/* Label + counter on the same horizontal line */}
+        <div className="flex flex-row items-center justify-center mt-1 min-h-[22px] space-x-1">
           <span
             className="text-xs font-medium select-none"
             style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
@@ -143,15 +143,15 @@ export function InteractionButtonWithPopup({
                   <button
                     onClick={handleCounterClick}
                     className={`
-                      ml-2 text-xs font-semibold underline underline-offset-4 bg-transparent border-none p-0
+                      text-xs font-semibold underline underline-offset-4 bg-transparent border-none p-0
                       focus:outline-none
                       transition-colors
                     `}
-                    style={{ 
+                    style={{
                       color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR,
                       cursor: "pointer",
+                      background: "none",
                       textDecoration: "underline",
-                      background: "none"
                     }}
                     aria-label={`${displayCount} ${type === "like" ? "likes" : "interests"}`}
                     tabIndex={-1}
@@ -178,16 +178,15 @@ export function InteractionButtonWithPopup({
             ) : (
               <span
                 className={`
-                  ml-2 text-xs font-semibold select-none
-                  ${isActive ? "" : ""}
+                  text-xs font-semibold select-none
                   border-none bg-transparent
                   underline underline-offset-4
                   cursor-default
                 `}
                 style={{
                   color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR,
-                  textDecoration: "underline",
                   background: "none",
+                  textDecoration: "underline",
                 }}
                 aria-label={`${displayCount} ${type === "like" ? "likes" : "interests"}`}
               >
