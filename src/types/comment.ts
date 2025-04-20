@@ -1,4 +1,3 @@
-
 export interface Comment {
   id: string;
   text: string;
@@ -11,15 +10,14 @@ export interface Comment {
   isLiked: boolean;
   replies: Comment[];
   createdAt: Date;
-  isOwn?: boolean; // Added this property
+  isOwn?: boolean;
 }
 
 export interface PostAction {
-  icon: React.ReactNode;
-  label?: string;
-  onClick?: (e: React.MouseEvent) => void;
-  to?: string;
+  icon: React.ReactElement;
+  label: string;
+  labelText: string;
+  onClick: () => void;
   active?: boolean;
-  disabled?: boolean; // Added this property
-  component?: React.ComponentType<any>;
+  disabled?: boolean;
 }

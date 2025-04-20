@@ -24,6 +24,7 @@ export function PrimaryActions({
     {
       icon: <ThumbsUp size={20} fill={isLiked ? "currentColor" : "none"} />,
       label: "Like",
+      labelText: "Like", // Explicitly adding label text
       onClick: onLikeToggle,
       active: isLiked,
       disabled: isOwner,
@@ -31,12 +32,14 @@ export function PrimaryActions({
     {
       icon: <MessageCircle size={20} />,
       label: "Comment",
+      labelText: "Comment", // Explicitly adding label text
       onClick: onCommentToggle,
       active: showComments,
     },
     {
-      icon: <Heart size={20} />,
+      icon: <Heart size={20} fill={isLiked ? "currentColor" : "none"} />,
       label: "Interest",
+      labelText: "Interest", // Explicitly adding label text
       onClick: onShowInterest,
       disabled: isOwner,
     },

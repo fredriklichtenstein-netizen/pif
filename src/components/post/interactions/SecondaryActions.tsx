@@ -1,16 +1,10 @@
 
-import { MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
+import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { ReportDialog } from "./ReportDialog";
-import { ActionMenuItems } from "./ActionMenuItems";
 
 interface SecondaryActionsProps {
   isBookmarked: boolean;
@@ -67,30 +61,6 @@ export function SecondaryActions({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 w-9 p-0 rounded-full bg-gray-100 hover:bg-gray-200"
-          >
-            <MoreVertical className="h-4 w-4" />
-            <span className="sr-only">More options</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 p-2">
-          <ActionMenuItems
-            isBookmarked={isBookmarked}
-            isOwner={isOwner}
-            isDeleting={isDeleting}
-            onBookmarkToggle={onBookmarkToggle}
-            onShare={onShare}
-            onReportClick={handleReportClick}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
       <ReportDialog onReport={onReport} />
     </>
   );
