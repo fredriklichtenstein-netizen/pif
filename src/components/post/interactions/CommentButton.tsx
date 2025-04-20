@@ -18,6 +18,7 @@ export function CommentButton({
 }: CommentButtonProps) {
   
   const handleCommentClick = () => {
+    console.log(`CommentButton: Toggling comments for item ${itemId}`);
     onCommentToggle();
   };
   

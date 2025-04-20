@@ -47,15 +47,15 @@ export const useFetchComments = (itemId: string) => {
       
       console.log(`Fetching comments for item ${numericItemId} (attempt ${getCurrentAttempts() + 1}/${maxAttempts})`);
       
-      // Set up a timeout for the request
+      // Set up a timeout for the request - reduced to 8 seconds from 15 seconds
       let timeoutId: number | null = null;
       if (typeof window !== 'undefined') {
         timeoutId = window.setTimeout(() => {
           if (controller) {
-            console.log(`Comments fetch timeout after 15000ms`);
+            console.log(`Comments fetch timeout after 8000ms`);
             controller.abort();
           }
-        }, 15000);
+        }, 8000);
       }
       
       // Prepare the query
@@ -116,7 +116,7 @@ export const useFetchComments = (itemId: string) => {
         // Retry logic
         if (!isMaxAttemptsReached()) {
           const currentAttempt = incrementAttempts();
-          const backoffDelay = 2000; // Fixed 2-second delay between retries
+          const backoffDelay = 1000 * (currentAttempt + 1); // Exponential backoff
           console.log(`Retrying comments fetch in ${backoffDelay}ms (attempt ${currentAttempt + 1}/${maxAttempts})`);
           
           // Schedule retry after backoff delay
@@ -133,7 +133,7 @@ export const useFetchComments = (itemId: string) => {
           // Max attempts reached
           console.error("Max comments fetch attempts reached");
           resetAttempts(); // Reset for next time
-          const timeoutError = new Error("Comments loading timed out after several attempts. Please try refreshing.");
+          const timeoutError = new Error("Comments loading timed out. Please try refreshing.");
           setError(timeoutError);
           setIsLoading(false);
           return [];
