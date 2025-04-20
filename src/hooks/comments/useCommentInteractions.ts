@@ -31,6 +31,15 @@ export const useCommentInteractions = (
     // TODO: Add backend API call to update likes
   };
 
+  // Format user name as "First name + first letter of last name"
+  const formatUserName = (fullName: string): string => {
+    const parts = fullName.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0]} ${parts[parts.length - 1].charAt(0)}`;
+    }
+    return fullName || 'User';
+  };
+
   // Add a reply to a comment
   const handleReplyToComment = (commentId: string, text: string) => {
     if (!text.trim() || !currentUser) return;
@@ -41,14 +50,19 @@ export const useCommentInteractions = (
         // Generate a unique ID for the comment
         const newId = Date.now().toString();
         
+        // Format name properly
+        const displayName = currentUser.name 
+          ? formatUserName(currentUser.name)
+          : 'User';
+        
         // Create the reply with proper user info
         const newReply: Comment = {
           id: newId,
           text,
           author: {
             id: currentUser.id || '',
-            name: currentUser.name || 'User',
-            avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`
+            name: displayName,
+            avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
           },
           likes: 0,
           isLiked: false,

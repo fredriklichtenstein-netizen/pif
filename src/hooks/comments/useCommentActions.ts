@@ -20,9 +20,27 @@ export const useCommentActions = (
 ) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Log current user info for debugging
+  // Format user name helper
+  const formatUserName = (fullName: string): string => {
+    if (!fullName) return 'User';
+    
+    const parts = fullName.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0]} ${parts[parts.length - 1].charAt(0)}`;
+    }
+    return fullName;
+  };
+
+  // Format current user info if available
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentUser.name) {
+      // Apply "First name + first letter of last name" format
+      const formattedName = formatUserName(currentUser.name);
+      
+      if (formattedName !== currentUser.name) {
+        currentUser.name = formattedName;
+      }
+      
       console.log("Current user in useCommentActions:", currentUser);
     }
   }, [currentUser]);

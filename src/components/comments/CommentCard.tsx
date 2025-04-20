@@ -57,7 +57,8 @@ export function CommentCard({
   };
   
   // Generate initials for avatar fallback
-  const authorInitials = comment.author.name
+  const authorName = comment.author.name || 'Anonymous';
+  const authorInitials = authorName
     .split(' ')
     .map(name => name.charAt(0))
     .join('')
@@ -130,4 +131,4 @@ export function CommentCard({
       )}
     </div>
   );
-};
+}

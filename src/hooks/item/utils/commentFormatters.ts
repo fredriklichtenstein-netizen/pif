@@ -23,20 +23,24 @@ export const formatCommentFromDB = (dbComment: DBComment, isOwnComment: boolean)
   const lastName = profile.last_name || '';
   
   // Format as "First name + first letter of last name"
-  const fullName = firstName && lastName 
-    ? `${firstName} ${lastName.charAt(0)}`
-    : firstName || 'Anonymous';
+  let fullName = firstName;
+  if (lastName) {
+    fullName = `${firstName} ${lastName.charAt(0)}`;
+  }
+  
+  // Use fallback if no name is available
+  const displayName = fullName || 'Anonymous';
   
   // Generate avatar URL if not provided
   const avatarUrl = profile.avatar_url || 
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
   
   console.log("Formatting comment from DB:", {
     id: dbComment.id,
     content: dbComment.content,
     author: {
       id: dbComment.user_id,
-      name: fullName,
+      name: displayName,
       avatar: avatarUrl
     },
     isOwn: isOwnComment
@@ -47,7 +51,7 @@ export const formatCommentFromDB = (dbComment: DBComment, isOwnComment: boolean)
     text: dbComment.content,
     author: {
       id: dbComment.user_id,
-      name: fullName,
+      name: displayName,
       avatar: avatarUrl
     },
     likes: 0, // We'll implement this in a future update

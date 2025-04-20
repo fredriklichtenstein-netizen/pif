@@ -20,6 +20,17 @@ export const useCommentCreate = (
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Format user name as "First name + first letter of last name"
+  const formatUserName = (fullName: string): string => {
+    if (!fullName) return 'User';
+    
+    const parts = fullName.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0]} ${parts[parts.length - 1].charAt(0)}`;
+    }
+    return fullName;
+  };
+
   // Add a new comment
   const handleAddComment = async (text: string) => {
     if (!text.trim() || !currentUser || !currentUser.id) {
@@ -37,14 +48,17 @@ export const useCommentCreate = (
       if (useFallbackMode) {
         console.log("Creating local comment in fallback mode");
         
+        // Format the display name properly
+        const displayName = formatUserName(currentUser.name || '');
+        
         // Create a fallback comment with a temporary ID
         const tempComment: Comment = {
           id: `local-${uuidv4()}`,
           text: text.trim(),
           author: {
             id: currentUser.id,
-            name: currentUser.name || 'User',
-            avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`
+            name: displayName,
+            avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
           },
           createdAt: new Date(),
           likes: 0,

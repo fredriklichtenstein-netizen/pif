@@ -1,7 +1,9 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { Comment } from '@/types/comment';
 import { useComments } from '@/hooks/item/useComments';
 import { useToast } from '@/hooks/use-toast';
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export function useLazyComments(itemId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,8 +14,20 @@ export function useLazyComments(itemId: string) {
   const [retryTimer, setRetryTimer] = useState<NodeJS.Timeout | null>(null);
   const [useFallbackMode, setUseFallbackMode] = useState(false);
   const { toast } = useToast();
+  const { user } = useGlobalAuth();
   
   const { fetchComments, useFallbackMode: fetchFallbackMode } = useComments(itemId);
+
+  // Format user name as "First name + first letter of last name"
+  const formatUserName = (fullName: string): string => {
+    if (!fullName) return 'User';
+    
+    const parts = fullName.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0]} ${parts[parts.length - 1].charAt(0)}`;
+    }
+    return fullName;
+  };
 
   // Update our fallback mode state when fetch fallback mode changes
   useEffect(() => {
@@ -30,6 +44,53 @@ export function useLazyComments(itemId: string) {
       }
     };
   }, [retryTimer]);
+
+  // Process pending comments from localStorage
+  useEffect(() => {
+    // Only process local comments if in fallback mode and we have a current user
+    if (useFallbackMode && user?.id && isInitialized) {
+      try {
+        const pendingCommentsJson = localStorage.getItem(`pending_comments_${itemId}`);
+        if (!pendingCommentsJson) return;
+        
+        const pendingComments = JSON.parse(pendingCommentsJson);
+        if (!Array.isArray(pendingComments) || pendingComments.length === 0) return;
+        
+        const existingIds = new Set(comments.map(c => c.id));
+        const newPendingComments = pendingComments.filter(pc => !existingIds.has(pc.id));
+        
+        if (newPendingComments.length > 0) {
+          // Format user display name properly
+          const displayName = formatUserName(
+            user.user_metadata?.full_name || 
+            user.user_metadata?.name || 
+            user.email?.split('@')[0] || 
+            'User'
+          );
+          
+          const formattedComments = newPendingComments.map((pc: any) => ({
+            id: pc.id,
+            text: pc.content,
+            author: {
+              id: user.id,
+              name: displayName,
+              avatar: user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
+            },
+            createdAt: new Date(pc.createdAt),
+            likes: 0,
+            isLiked: false,
+            replies: [],
+            isOwn: true,
+            isPending: true
+          }));
+          
+          setComments([...comments, ...formattedComments]);
+        }
+      } catch (err) {
+        console.error("Error processing pending comments:", err);
+      }
+    }
+  }, [useFallbackMode, user, itemId, isInitialized, comments, setComments]);
 
   const loadComments = useCallback(async (forceRefresh = false) => {
     if (isInitialized && !forceRefresh) return;
