@@ -1,4 +1,3 @@
-
 import { InteractionCounts } from "../post/interactions/InteractionCounts";
 import { PrimaryActions } from "../post/interactions/PrimaryActions";
 import { SecondaryActions } from "../post/interactions/SecondaryActions";
@@ -41,7 +40,14 @@ export function ItemInteractions({
     return <InteractionsLoading />;
   }
   
-  // Create Promise-returning wrapper functions for the fetch methods
+  // Users who commented on the post
+  const currentUserId = ""; // <--- This should be set based on current auth, placeholder for code
+  const hasCommented =
+    commenters && currentUserId
+      ? commenters.some((user) => user.id === currentUserId)
+      : false;
+
+  // Promise-returning wrapper functions for popups
   const fetchLikersWrapper = async (): Promise<User[]> => {
     if (typeof getInterestedUsers === 'function') {
       await getInterestedUsers();
@@ -55,7 +61,7 @@ export function ItemInteractions({
     }
     return interestedUsers || [];
   };
-  
+
   return (
     <div className="flex flex-col space-y-1">
       <InteractionCounts 
@@ -86,6 +92,7 @@ export function ItemInteractions({
         onShowInterest={onShowInterest}
         fetchLikers={fetchLikersWrapper}
         fetchInterestedUsers={fetchInterestedUsersWrapper}
+        hasCommented={hasCommented}
       />
 
       <Separator className="my-1" />

@@ -9,6 +9,7 @@ interface PrimaryActionsProps {
   showInterest: boolean;
   isOwner: boolean;
   itemId: string;
+  hasCommented?: boolean;
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
@@ -27,6 +28,7 @@ export function PrimaryActions({
   showInterest,
   isOwner,
   itemId,
+  hasCommented = false,
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
@@ -56,7 +58,7 @@ export function PrimaryActions({
       />
       <InteractionButtonWithPopup
         type="comment"
-        isActive={showComments}
+        isActive={hasCommented}
         count={commentsCount}
         itemId={itemId}
         onClick={onCommentToggle}
@@ -74,7 +76,7 @@ export function PrimaryActions({
         onClick={onShowInterest}
         onCounterClick={fetchInterestedUsers}
         isOwner={isOwner}
-        labelPassive="Show Interest"
+        labelPassive="Show interest"
         labelActive="Interested"
         iconPassive="star"
         iconActive="star"
@@ -83,3 +85,4 @@ export function PrimaryActions({
     </div>
   );
 }
+

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Heart, MessageSquare, Star } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -42,10 +41,11 @@ export function InteractionButtonWithPopup({
   const [popupUsers, setPopupUsers] = useState<User[]>(users);
   const navigate = useNavigate();
 
-  const mainColor = isActive
-    ? "text-green-600"
-    : "text-gray-500 group-hover:text-green-600";
-  const fillColor = isActive ? "#6FCF97" : "none";
+  // Use primary color from Tailwind config for turquoise (#00D1A0), black for passive
+  const activeColor = "text-primary";
+  const passiveColor = "text-black";
+  const borderColorActive = "border-primary";
+  const borderColorPassive = "border-black";
 
   // Choose icon
   let IconComponent = Heart;
@@ -74,9 +74,9 @@ export function InteractionButtonWithPopup({
   function renderIcon() {
     return (
       <IconComponent
-        className={`w-6 h-6 ${mainColor}`}
-        fill={fillColor}
-        stroke="#6FCF97"
+        className={`w-6 h-6 ${isActive ? activeColor : passiveColor}`}
+        fill={isActive ? "#00D1A0" : "none"}
+        stroke={isActive ? "#00D1A0" : "#000000"}
         strokeWidth={isActive ? 2.4 : 2}
       />
     );
@@ -117,7 +117,7 @@ export function InteractionButtonWithPopup({
         disabled={isOwner && (type === "like" || type === "interest")}
         aria-label={isActive ? labelActive : labelPassive}
         className={`flex flex-col items-center px-2 py-1 rounded group 
-          ${isActive ? "text-green-700" : "text-gray-700 hover:bg-gray-50"}
+          ${isActive ? "text-primary" : "text-black hover:bg-gray-50"}
           ${isOwner && (type === "like" || type === "interest") ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
         `}
         onClick={handleButtonClick}
@@ -133,7 +133,7 @@ export function InteractionButtonWithPopup({
                 <PopoverTrigger asChild>
                   <button
                     onClick={handleCounterClick}
-                    className="ml-1 text-xs font-bold text-green-700 bg-white border border-gray-200 rounded-full px-1.5 py-0.5 shadow focus:outline-none"
+                    className={`ml-1 text-xs font-bold ${isActive ? "text-primary" : "text-black"} bg-white border ${isActive ? borderColorActive : borderColorPassive} rounded-full px-1.5 py-0.5 shadow focus:outline-none`}
                   >
                     {count}
                   </button>
@@ -155,7 +155,7 @@ export function InteractionButtonWithPopup({
               </Popover>
             ) : (
               count > 0 && (
-                <span className="ml-1 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-full px-1.5 py-0.5 shadow">
+                <span className={`ml-1 text-xs font-bold ${isActive ? "text-primary" : "text-black"} bg-white border ${isActive ? borderColorActive : borderColorPassive} rounded-full px-1.5 py-0.5 shadow`}>
                   {count}
                 </span>
               )
@@ -163,7 +163,7 @@ export function InteractionButtonWithPopup({
           </div>
         </div>
         {/* Label */}
-        <span className="text-xs font-medium mt-1">
+        <span className={`text-xs font-medium mt-1 ${isActive ? "text-primary" : "text-black"}`}>
           {isActive ? labelActive : labelPassive}
         </span>
       </button>
