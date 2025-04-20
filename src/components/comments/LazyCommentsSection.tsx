@@ -40,9 +40,10 @@ export function LazyCommentsSection({
   // Load comments when component becomes visible
   useEffect(() => {
     if (isVisible && !isInitialized) {
+      console.log(`LazyCommentsSection: Loading comments for item ${itemId}`);
       loadComments();
     }
-  }, [isVisible, loadComments, isInitialized]);
+  }, [isVisible, loadComments, isInitialized, itemId]);
 
   const currentUser = user ? {
     id: user.id,
@@ -60,6 +61,11 @@ export function LazyCommentsSection({
     handleReplyToComment,
     handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser);
+
+  // Debug log for comments
+  useEffect(() => {
+    console.log(`Comments for item ${itemId}:`, comments);
+  }, [comments, itemId]);
 
   if (!isVisible) {
     return null;

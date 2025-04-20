@@ -22,6 +22,7 @@ export const useCommentRealtime = (
     
     // Check for duplicates before adding
     if (!comments.some(c => c.id === formattedComment.id)) {
+      console.log("Real-time: Adding new comment", formattedComment);
       const updatedComments = [...comments, formattedComment];
       setComments(updatedComments);
       
@@ -37,6 +38,7 @@ export const useCommentRealtime = (
 
   // Update an existing comment (for updates)
   const handleCommentUpdate = useCallback((updatedComment: any) => {
+    console.log("Real-time: Updating comment", updatedComment);
     const updatedComments = comments.map(comment => 
       comment.id === updatedComment.id.toString()
         ? formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id)
@@ -47,6 +49,7 @@ export const useCommentRealtime = (
 
   // Remove a comment from the list (for deletes)
   const handleCommentDelete = useCallback((deletedComment: any) => {
+    console.log("Real-time: Deleting comment", deletedComment);
     const filteredComments = comments.filter(comment => 
       comment.id !== deletedComment.id.toString()
     );
@@ -62,7 +65,7 @@ export const useCommentRealtime = (
         throw new Error(`Invalid item ID: ${itemId}`);
       }
       
-      console.log('Setting up real-time subscription for comments');
+      console.log('Setting up real-time subscription for comments on item', numericItemId);
       
       const channel = supabase
         .channel(`comments-${numericItemId}`)
@@ -72,7 +75,7 @@ export const useCommentRealtime = (
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          console.log('Real-time comment INSERT:', payload);
+          console.log('Real-time comment INSERT received:', payload);
           handleCommentInsert(payload.new);
         })
         .on('postgres_changes', {
@@ -81,7 +84,7 @@ export const useCommentRealtime = (
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          console.log('Real-time comment UPDATE:', payload);
+          console.log('Real-time comment UPDATE received:', payload);
           handleCommentUpdate(payload.new);
         })
         .on('postgres_changes', {
@@ -90,7 +93,7 @@ export const useCommentRealtime = (
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          console.log('Real-time comment DELETE:', payload);
+          console.log('Real-time comment DELETE received:', payload);
           handleCommentDelete(payload.old);
         })
         .subscribe((status) => {

@@ -30,6 +30,8 @@ export const useCommentCreate = (
         throw new Error(`Invalid item ID: ${itemId}`);
       }
       
+      console.log(`Adding comment to item ${numericItemId}: "${text.substring(0, 20)}..."`);
+      
       const { data, error } = await supabase
         .from('comments')
         .insert({
@@ -54,8 +56,17 @@ export const useCommentCreate = (
       if (error) throw error;
       
       if (data) {
+        console.log("Comment successfully added:", data);
         const newComment = formatCommentFromDB(data, true);
-        setComments([...comments, newComment]);
+        
+        // Create a new array with the new comment added (avoid direct mutation)
+        const updatedComments = [...comments, newComment];
+        setComments(updatedComments);
+        
+        toast({
+          title: "Comment posted",
+          description: "Your comment has been added successfully",
+        });
       }
     } catch (error) {
       console.error("Error adding comment:", error);
