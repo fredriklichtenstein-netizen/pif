@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +79,7 @@ export function useCommentData(itemId: string) {
         const formattedComments: Comment[] = commentsData.map(comment => {
           const profile = comment.profiles as ProfileData || {};
           const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous';
+          const isOwnComment = comment.user_id === session?.user?.id;
           
           return {
             id: comment.id.toString(),
@@ -92,7 +92,8 @@ export function useCommentData(itemId: string) {
             likes: 0, // We'll implement comment likes later
             isLiked: false,
             replies: [], // We'll implement replies later
-            createdAt: new Date(comment.created_at)
+            createdAt: new Date(comment.created_at),
+            isOwn: isOwnComment // Add the missing isOwn property
           };
         });
         
@@ -107,7 +108,7 @@ export function useCommentData(itemId: string) {
     };
     
     fetchComments();
-  }, [itemId]);
+  }, [itemId, session?.user?.id]);
   
   // Fetch profile data from the profiles table
   useEffect(() => {

@@ -1,3 +1,4 @@
+
 import { CommentInput } from "./CommentInput";
 import { CommentCard } from "./CommentCard";
 import type { Comment } from "@/types/comment";
@@ -26,6 +27,7 @@ export function CommentManager({
       id: Date.now().toString(),
       text,
       author: {
+        id: "current-user", // Add the missing id property
         name: "Current User",
         avatar: "https://i.pravatar.cc/150?img=3",
       },
@@ -33,6 +35,7 @@ export function CommentManager({
       isLiked: false,
       replies: [],
       createdAt: new Date(),
+      isOwn: true, // This user created the comment
     };
     onAddComment(text);
   };
