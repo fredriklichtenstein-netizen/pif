@@ -1,26 +1,20 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { optimizeImageUrl, preloadImages } from "@/utils/image";
-import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
 
 interface ItemCardGalleryProps {
   images: string[];
   title: string;
   category: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
 }
 
-export function ItemCardGallery({ images, title, category, coordinates }: ItemCardGalleryProps) {
+export function ItemCardGallery({ images, title, category }: ItemCardGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const mountedRef = useRef(true);
-  
-  const distanceText = useDistanceCalculation(coordinates);
 
   useEffect(() => {
     const validImages = images
@@ -80,11 +74,6 @@ export function ItemCardGallery({ images, title, category, coordinates }: ItemCa
       
       {/* Title and Category Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
-        {distanceText && (
-          <div className="mb-2">
-            <span className="text-white text-sm opacity-90">{distanceText}</span>
-          </div>
-        )}
         <div className="flex flex-col gap-1">
           <h3 className="text-white text-sm font-display font-medium tracking-wide drop-shadow-md">
             {title}

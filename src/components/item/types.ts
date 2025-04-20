@@ -29,6 +29,10 @@ export interface ItemCardHeaderProps {
   handleBookmark: () => void;
   handleShare: () => void;
   handleReport: () => void;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface ItemCardGalleryProps {

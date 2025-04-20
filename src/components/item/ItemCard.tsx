@@ -74,6 +74,7 @@ const ItemCard = memo(function ItemCard({
         handleBookmark={handleBookmark} 
         handleShare={handleShare} 
         handleReport={handleReport}
+        coordinates={coordinates}
       />
       
       <div className="relative">

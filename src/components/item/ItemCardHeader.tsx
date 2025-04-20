@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "../ui/dropdown-menu";
 import { ActionMenuItems } from "../post/interactions/ActionMenuItems";
 import type { ItemCardHeaderProps } from "./types";
+import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
 
 export function ItemCardHeader({
   postedBy,
@@ -12,8 +13,11 @@ export function ItemCardHeader({
   isBookmarked,
   handleBookmark,
   handleShare,
-  handleReport
+  handleReport,
+  coordinates
 }: ItemCardHeaderProps) {
+  const distanceText = useDistanceCalculation(coordinates);
+  
   return (
     <div className="p-3 flex items-center justify-between">
       <div className="flex items-center">
@@ -23,6 +27,12 @@ export function ItemCardHeader({
         </Avatar>
         <div>
           <div className="text-sm font-medium">{postedBy.name}</div>
+          {distanceText && (
+            <div className="text-xs text-gray-500 flex items-center">
+              <MapPin size={12} className="mr-1" />
+              {distanceText}
+            </div>
+          )}
         </div>
       </div>
       
