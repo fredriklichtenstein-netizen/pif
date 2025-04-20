@@ -1,3 +1,4 @@
+
 import { InteractionCounts } from "../post/interactions/InteractionCounts";
 import { PrimaryActions } from "../post/interactions/PrimaryActions";
 import { SecondaryActions } from "../post/interactions/SecondaryActions";
@@ -6,6 +7,7 @@ import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { ItemInteractionsProps } from "./types";
 import { Separator } from "@/components/ui/separator";
 import type { User } from "@/hooks/item/useItemInteractions";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth"; // <-- Make sure to import and use this for current user
 
 export function ItemInteractions({
   id,
@@ -36,25 +38,29 @@ export function ItemInteractions({
   getInterestedUsers,
   isRealtimeSubscribed = false
 }: ItemInteractionsProps) {
+  // Get the actual current user ID from the global auth store
+  const { user } = useGlobalAuth();
+  const currentUserId = user?.id || "";
+
   if (interactionsLoading) {
     return <InteractionsLoading />;
   }
-  
-  // Users who commented on the post
-  const currentUserId = ""; // <--- This should be set based on current auth, placeholder for code
+
+  // "Active" for comment action is only if current user has commented on the post!
   const hasCommented =
     commenters && currentUserId
       ? commenters.some((user) => user.id === currentUserId)
       : false;
 
-  // Promise-returning wrapper functions for popups
+  // Wrap fetchers so the signatures are correct for PrimaryActions (Promise<User[]>)
   const fetchLikersWrapper = async (): Promise<User[]> => {
+    // If a fetch function is available, call it, otherwise just return current likers
     if (typeof getInterestedUsers === 'function') {
-      await getInterestedUsers();
+      await getInterestedUsers(); // Side effect, e.g., refresh all users
     }
     return likers || [];
   };
-  
+
   const fetchInterestedUsersWrapper = async (): Promise<User[]> => {
     if (typeof getInterestedUsers === 'function') {
       await getInterestedUsers();
@@ -82,6 +88,8 @@ export function ItemInteractions({
         showInterest={showInterest}
         isOwner={isOwner}
         itemId={id}
+        hasCommented={hasCommented}
+        currentUserId={currentUserId}
         commentsCount={commentsCount}
         likesCount={likesCount}
         interestsCount={interestsCount}
@@ -92,7 +100,6 @@ export function ItemInteractions({
         onShowInterest={onShowInterest}
         fetchLikers={fetchLikersWrapper}
         fetchInterestedUsers={fetchInterestedUsersWrapper}
-        hasCommented={hasCommented}
       />
 
       <Separator className="my-1" />
@@ -109,3 +116,4 @@ export function ItemInteractions({
     </div>
   );
 }
+

@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 
@@ -9,7 +8,8 @@ interface PrimaryActionsProps {
   showInterest: boolean;
   isOwner: boolean;
   itemId: string;
-  hasCommented?: boolean;
+  currentUserId?: string; // NEW: Needed for "hasCommented" logic
+  hasCommented?: boolean; // True if user has posted a comment
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
@@ -24,11 +24,12 @@ interface PrimaryActionsProps {
 
 export function PrimaryActions({
   isLiked,
-  showComments,
+  showComments, // not used directly for active state
   showInterest,
   isOwner,
   itemId,
-  hasCommented = false,
+  currentUserId, // received but not used directly
+  hasCommented = false, // drive comment "active" state
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
@@ -66,7 +67,7 @@ export function PrimaryActions({
         labelActive="Commented"
         iconPassive="message-square"
         iconActive="message-square"
-        isOwner={false} // Comment always enabled
+        isOwner={false}
       />
       <InteractionButtonWithPopup
         type="interest"
@@ -85,4 +86,3 @@ export function PrimaryActions({
     </div>
   );
 }
-

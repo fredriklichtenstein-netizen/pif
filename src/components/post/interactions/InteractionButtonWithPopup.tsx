@@ -1,9 +1,15 @@
+
 import { useState } from "react";
 import { Heart, MessageSquare, Star } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import type { User } from "@/hooks/item/useItemInteractions";
+
+/** 
+ * ACTIVE: turquoise (#00D1A0)
+ * PASSIVE: black (#000000)
+ */
 
 type Type = "like" | "comment" | "interest";
 
@@ -41,11 +47,12 @@ export function InteractionButtonWithPopup({
   const [popupUsers, setPopupUsers] = useState<User[]>(users);
   const navigate = useNavigate();
 
-  // Use primary color from Tailwind config for turquoise (#00D1A0), black for passive
-  const activeColor = "text-primary";
-  const passiveColor = "text-black";
-  const borderColorActive = "border-primary";
-  const borderColorPassive = "border-black";
+  // Colors: turquoise for active, black for passive (label, border, icon)
+  const ACTIVE_COLOR = "#00D1A0";
+  const PASSIVE_COLOR = "#000000";
+
+  const activeColorClass = "text-primary";
+  const passiveColorClass = "text-black";
 
   // Choose icon
   let IconComponent = Heart;
@@ -63,7 +70,6 @@ export function InteractionButtonWithPopup({
     if ((type === "like" || type === "interest") && onCounterClick) {
       setLoading(true);
       setShowPopup(true);
-      // Try reload if empty
       const data = await onCounterClick();
       setPopupUsers(data || []);
       setLoading(false);
@@ -74,9 +80,9 @@ export function InteractionButtonWithPopup({
   function renderIcon() {
     return (
       <IconComponent
-        className={`w-6 h-6 ${isActive ? activeColor : passiveColor}`}
-        fill={isActive ? "#00D1A0" : "none"}
-        stroke={isActive ? "#00D1A0" : "#000000"}
+        className={`w-6 h-6`}
+        fill={isActive ? ACTIVE_COLOR : "none"}
+        stroke={isActive ? ACTIVE_COLOR : PASSIVE_COLOR}
         strokeWidth={isActive ? 2.4 : 2}
       />
     );
@@ -117,7 +123,6 @@ export function InteractionButtonWithPopup({
         disabled={isOwner && (type === "like" || type === "interest")}
         aria-label={isActive ? labelActive : labelPassive}
         className={`flex flex-col items-center px-2 py-1 rounded group 
-          ${isActive ? "text-primary" : "text-black hover:bg-gray-50"}
           ${isOwner && (type === "like" || type === "interest") ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
         `}
         onClick={handleButtonClick}
@@ -133,7 +138,8 @@ export function InteractionButtonWithPopup({
                 <PopoverTrigger asChild>
                   <button
                     onClick={handleCounterClick}
-                    className={`ml-1 text-xs font-bold ${isActive ? "text-primary" : "text-black"} bg-white border ${isActive ? borderColorActive : borderColorPassive} rounded-full px-1.5 py-0.5 shadow focus:outline-none`}
+                    className={`ml-1 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow focus:outline-none`}
+                    style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
                   >
                     {count}
                   </button>
@@ -155,7 +161,8 @@ export function InteractionButtonWithPopup({
               </Popover>
             ) : (
               count > 0 && (
-                <span className={`ml-1 text-xs font-bold ${isActive ? "text-primary" : "text-black"} bg-white border ${isActive ? borderColorActive : borderColorPassive} rounded-full px-1.5 py-0.5 shadow`}>
+                <span className={`ml-1 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow`}
+                  style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}>
                   {count}
                 </span>
               )
@@ -163,7 +170,12 @@ export function InteractionButtonWithPopup({
           </div>
         </div>
         {/* Label */}
-        <span className={`text-xs font-medium mt-1 ${isActive ? "text-primary" : "text-black"}`}>
+        <span
+          className={`text-xs font-medium mt-1`}
+          style={{
+            color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR
+          }}
+        >
           {isActive ? labelActive : labelPassive}
         </span>
       </button>
