@@ -1,5 +1,4 @@
-
-import { optimizeImageUrl } from "@/utils/imageProcessing";
+import { optimizeImageUrl } from "@/utils/image";
 
 interface ItemImageProps {
   image: string;

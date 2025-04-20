@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ImageCropper } from "@/components/profile/ImageCropper";
-import { getCroppedImg } from "@/utils/imageProcessing";
+import { getCroppedImg } from "@/utils/image";
 
 interface ImageCropperDialogProps {
   cropImage: string | null;

@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { optimizeImageUrl } from "@/utils/imageProcessing";
+import { optimizeImageUrl } from "@/utils/image";
 
 interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;

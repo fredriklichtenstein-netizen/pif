@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { optimizeImageUrl, preloadImages } from "@/utils/imageProcessing";
+import { optimizeImageUrl, preloadImages } from "@/utils/image";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -18,7 +17,6 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   const mountedRef = useRef(true);
   const imageRef = useRef<HTMLImageElement>(null);
   
-  // Filter and clean up image URLs on mount
   useEffect(() => {
     const validImages = images
       ?.filter(img => img && typeof img === 'string' && img.trim() !== '')
@@ -30,9 +28,8 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     
     setImageUrls(finalImages);
     
-    // Preload next image if there are multiple images
     if (finalImages.length > 1) {
-      preloadImages(finalImages.slice(1, 3)); // Preload the next 2 images
+      preloadImages(finalImages.slice(1, 3));
     }
     
     return () => {
@@ -41,8 +38,6 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   }, [images]);
   
   useEffect(() => {
-    // Force image loaded state to true after a timeout
-    // This ensures UI doesn't get stuck in loading state
     const loadingTimeout = setTimeout(() => {
       if (!isImageLoaded && mountedRef.current) {
         console.log("Force loading complete after timeout");
@@ -53,7 +48,6 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     return () => clearTimeout(loadingTimeout);
   }, [isImageLoaded]);
   
-  // Handle case where images array is empty
   if (!imageUrls || imageUrls.length === 0) {
     return (
       <div className="relative h-48 bg-gray-200 flex items-center justify-center">
@@ -75,19 +69,16 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
   };
   
-  // Handle image load error with retry
   const handleImageError = () => {
     console.error("Error loading image:", imageUrls[currentImageIndex]);
     
     if (retryAttempt < 2 && mountedRef.current) {
-      // Try again with a cache buster
       setRetryAttempt(prev => prev + 1);
       if (imageRef.current) {
         const cacheBuster = `${imageUrls[currentImageIndex]}${imageUrls[currentImageIndex].includes('?') ? '&' : '?'}cb=${Date.now()}`;
         imageRef.current.src = cacheBuster;
       }
     } else if (mountedRef.current) {
-      // After retries, use fallback and ensure we don't leave user in loading state
       if (imageRef.current) {
         imageRef.current.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
         setIsImageLoaded(true);
@@ -95,7 +86,6 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     }
   };
   
-  // Get the current image URL
   const currentImageUrl = imageUrls[currentImageIndex] || "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
   
   return (
@@ -115,7 +105,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
           if (mountedRef.current) {
             console.log("Image loaded successfully:", currentImageUrl);
             setIsImageLoaded(true);
-            setRetryAttempt(0); // Reset retry counter on successful load
+            setRetryAttempt(0);
           }
         }}
         onError={handleImageError}

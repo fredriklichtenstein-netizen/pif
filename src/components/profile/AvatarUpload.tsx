@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
-import { getCroppedImg } from "@/utils/imageProcessing";
+import { getCroppedImg } from "@/utils/image";
 
 interface AvatarUploadProps {
   avatarUrl: string | null;
@@ -119,4 +118,3 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     </div>
   );
 }
-
