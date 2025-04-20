@@ -41,8 +41,8 @@ export function ActionButtons({
       
       {!isOwner && (
         <InterestButton 
-          isInterested={showInterest} 
-          onInterestToggle={onShowInterest} 
+          showInterest={showInterest} 
+          onShowInterest={onShowInterest} 
         />
       )}
     </div>
