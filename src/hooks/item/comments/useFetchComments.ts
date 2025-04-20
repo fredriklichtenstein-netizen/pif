@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Comment } from "@/types/comment";
@@ -57,9 +56,9 @@ export const useFetchComments = (itemId: string) => {
 
   const fetchComments = async (): Promise<Comment[]> => {
     if (!itemId) return [];
-    
+
     cleanUp();
-    
+
     if (abortControllerRef.current) {
       try {
         abortControllerRef.current.abort();
@@ -67,7 +66,7 @@ export const useFetchComments = (itemId: string) => {
         console.warn("[useFetchComments] Error aborting previous request:", e);
       }
     }
-    
+
     let controller: AbortController | null = null;
     try {
       controller = createAbortController();
@@ -75,14 +74,14 @@ export const useFetchComments = (itemId: string) => {
     } catch (e) {
       console.warn("[useFetchComments] AbortController not supported, continuing without it");
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Parse itemId as number, but handle it more gracefully
       let numericItemId: number;
-      
+
       if (typeof itemId === 'number') {
         numericItemId = itemId;
       } else if (typeof itemId === 'string') {
@@ -99,78 +98,59 @@ export const useFetchComments = (itemId: string) => {
         setIsLoading(false);
         return [...FALLBACK_COMMENTS];
       }
-      
+
       console.log(`[useFetchComments] Fetching comments for item ${numericItemId} (attempt ${getCurrentAttempts() + 1}/${maxAttempts})`);
-      
+
       const result = await withRetry<Comment[]>(
         async () => {
           if (useFallbackMode) {
             console.log("[useFetchComments] Using fallback comments data");
             return Promise.resolve([...FALLBACK_COMMENTS]);
           }
-          
-          const signal = controller?.signal;
-          
-          // Fixed: Properly handling the Supabase query
-          return new Promise<Comment[]>(async (resolve, reject) => {
-            try {
-              let query = supabase
-                .from('comments')
-                .select(`
-                  id,
-                  content,
-                  created_at,
-                  user_id,
-                  profiles:user_id (
-                    id,
-                    first_name,
-                    last_name,
-                    avatar_url
-                  )
-                `)
-                .eq('item_id', numericItemId)
-                .order('created_at', { ascending: true });
-              
-              if (signal) {
-                query = query.abortSignal(signal);
-              }
-              
-              const timeoutPromise = new Promise<void>((_, timeoutReject) => {
-                setTimeout(() => timeoutReject(new Error('Request timed out')), 5000);
-              });
 
-              // Race between the query and the timeout
-              try {
-                const response = await Promise.race([
-                  query,
-                  timeoutPromise.then(() => { throw new Error('Request timed out'); })
-                ]);
-                
-                if ('error' in response && response.error) {
-                  console.error("[useFetchComments] Error in Supabase query:", response.error);
-                  reject(response.error);
-                  return;
-                }
-                
-                if ('data' in response && response.data) {
-                  console.log('[useFetchComments] Comments data received:', response.data.length, 'comments');
-                  
-                  const formattedComments = response.data.map(comment => 
-                    formatCommentFromDB(comment, comment.user_id === user?.id)
-                  );
-                  
-                  resolve(formattedComments);
-                } else {
-                  console.log("[useFetchComments] No comments data returned");
-                  resolve([]);
-                }
-              } catch (error) {
-                reject(error);
-              }
-            } catch (error) {
-              reject(error);
-            }
-          });
+          const signal = controller?.signal;
+
+          let query = supabase
+            .from('comments')
+            .select(`
+              id,
+              content,
+              created_at,
+              user_id,
+              profiles:user_id (
+                id,
+                first_name,
+                last_name,
+                avatar_url
+              )
+            `)
+            .eq('item_id', numericItemId)
+            .order('created_at', { ascending: true });
+
+          if (signal) {
+            query = query.abortSignal(signal);
+          }
+
+          const { data: commentsData, error: commentsError } = await fetchWithTimeout(
+            () => query,
+            5000
+          );
+
+          if (commentsError) {
+            console.error("[useFetchComments] Error in Supabase query:", commentsError);
+            throw commentsError;
+          }
+
+          if (!commentsData) {
+            console.log("[useFetchComments] No comments data returned");
+            return [];
+          }
+
+          console.log('[useFetchComments] Comments data received:', commentsData.length, 'comments');
+
+          return commentsData.map(comment =>
+            formatCommentFromDB(comment, comment.user_id === user?.id)
+          );
         },
         {
           maxAttempts: 2,
@@ -186,18 +166,18 @@ export const useFetchComments = (itemId: string) => {
           }
         }
       );
-      
+
       resetAttempts();
       setIsLoading(false);
       return result;
     } catch (error: any) {
-      const isAbortError = error.name === 'AbortError' || 
-                           error.message?.includes('aborted') || 
-                           error.message?.includes('signal');
-                           
+      const isAbortError = error.name === 'AbortError' ||
+        error.message?.includes('aborted') ||
+        error.message?.includes('signal');
+
       if (isAbortError) {
         console.log('[useFetchComments] Comments fetch aborted');
-        
+
         if (isMaxAttemptsReached()) {
           console.log("[useFetchComments] Max retries reached, switching to fallback mode");
           setUseFallbackMode(true);
@@ -205,23 +185,23 @@ export const useFetchComments = (itemId: string) => {
           setIsLoading(false);
           return [...FALLBACK_COMMENTS];
         }
-        
+
         // Don't retry on abort, just switch to fallback immediately for better UX
         setUseFallbackMode(true);
         resetAttempts();
         setIsLoading(false);
         return [...FALLBACK_COMMENTS];
       }
-      
+
       console.error("[useFetchComments] Error fetching comments:", error);
       setError(error instanceof Error ? error : new Error(String(error)));
       setIsLoading(false);
-      
+
       if (isMaxAttemptsReached()) {
         setUseFallbackMode(true);
         return [...FALLBACK_COMMENTS];
       }
-      
+
       return [];
     }
   };
