@@ -1,4 +1,3 @@
-
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { ItemCardWrapper } from "@/components/ItemCardWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
@@ -12,10 +11,9 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect } from "react";
 
-// Define our available categories
 const CATEGORIES = [
   "Furniture",
-  "Electronics",
+  "Electronics", 
   "Clothing",
   "Kitchen",
   "Books",
@@ -30,12 +28,10 @@ export default function Feed() {
   const [showFilters, setShowFilters] = useState(false);
   const { posts, isLoading, error, refreshPosts, filterByCategories } = useFeedPosts();
 
-  // Apply filtering based on selected categories
   useEffect(() => {
     filterByCategories(selectedCategories);
   }, [selectedCategories, filterByCategories]);
 
-  // Toggle category selection
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev => {
       if (prev.includes(category)) {
@@ -46,7 +42,6 @@ export default function Feed() {
     });
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setSelectedCategories([]);
   };
@@ -63,13 +58,11 @@ export default function Feed() {
     <div className="container max-w-md mx-auto px-4 pb-20">
       <NetworkStatus onRetry={refreshPosts} />
       
-      {/* Header */}
       <div className="mb-4 mt-4">
         <h1 className="text-2xl font-bold mb-1">PiF Community</h1>
         <p className="text-muted-foreground">Sustainable sharing in your neighborhood</p>
       </div>
       
-      {/* Category filters */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <h2 className="font-medium">Categories</h2>
@@ -84,23 +77,30 @@ export default function Feed() {
           </Button>
         </div>
 
-        {/* Main category filter as a scrollable row */}
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
-          <ToggleGroup type="multiple">
+          <ToggleGroup 
+            type="multiple" 
+            value={selectedCategories.length === 0 ? ['all'] : selectedCategories} 
+            onValueChange={(values) => {
+              if (values.includes('all')) {
+                clearFilters();
+              } else {
+                setSelectedCategories(values);
+              }
+            }}
+          >
             <ToggleGroupItem
               value="all"
               className={`rounded-full border ${selectedCategories.length === 0 ? 'bg-primary text-white' : 'bg-accent'}`}
-              onClick={clearFilters}
             >
-              All Items
+              ALL
             </ToggleGroupItem>
             
-            {CATEGORIES.slice(0, 5).map((category) => (
+            {CATEGORIES.map((category) => (
               <ToggleGroupItem
                 key={category}
                 value={category}
                 className={`rounded-full border ${selectedCategories.includes(category) ? 'bg-primary text-white' : 'bg-accent'}`}
-                onClick={() => toggleCategory(category)}
               >
                 {category}
               </ToggleGroupItem>
@@ -108,7 +108,6 @@ export default function Feed() {
           </ToggleGroup>
         </div>
 
-        {/* Expanded filter with checkboxes for multi-select */}
         {showFilters && (
           <div className="bg-accent/40 rounded-lg p-3 mb-4 mt-2 grid grid-cols-2 gap-2">
             <div className="col-span-2 mb-1 flex justify-between items-center">
@@ -142,10 +141,8 @@ export default function Feed() {
         )}
       </div>
 
-      {/* Item Cards */}
       <div className="space-y-4">
         {posts?.map((post) => {
-          // Parse coordinates from string representation if available
           let coordinates;
           if (post.coordinates) {
             try {
