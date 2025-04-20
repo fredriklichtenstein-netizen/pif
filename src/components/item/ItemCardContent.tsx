@@ -18,7 +18,7 @@ export function ItemCardContent({ description, measurements = {} }: ItemCardCont
   
   return (
     <div className="mt-1 mb-2 px-1">
-      <div className="text-lg text-gray-600">
+      <div className="text-sm text-gray-600">
         <p className="mb-1">{truncatedDescription}</p>
         
         {hasDetails && expanded && (
