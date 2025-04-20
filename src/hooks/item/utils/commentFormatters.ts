@@ -27,6 +27,17 @@ export const formatCommentFromDB = (dbComment: DBComment, isOwnComment: boolean)
   const avatarUrl = profile.avatar_url || 
     `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
   
+  console.log("Formatting comment from DB:", {
+    id: dbComment.id,
+    content: dbComment.content,
+    author: {
+      id: dbComment.user_id,
+      name: fullName,
+      avatar: avatarUrl
+    },
+    isOwn: isOwnComment
+  });
+  
   return {
     id: dbComment.id.toString(),
     text: dbComment.content,

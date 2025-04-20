@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { CommentInput } from "./CommentInput";
 import { CommentList } from "./CommentList";
 import { LoadingComments } from "./LoadingComments";
@@ -50,6 +51,14 @@ export function CommentsPanel({
 }: CommentsPanelProps) {
   // Check if comments are really loading - if they're initialized already, we shouldn't show the full loading state
   const isReallyLoading = isLoading && !isInitialized;
+  
+  // Log comments whenever they change
+  useEffect(() => {
+    console.log("CommentsPanel rendering with comments:", comments);
+    if (currentUser) {
+      console.log("Current user:", currentUser);
+    }
+  }, [comments, currentUser]);
   
   // Comment input should be shown regardless of other states
   const renderCommentInput = () => (

@@ -3,6 +3,8 @@
 
 import { useCallback } from "react";
 import { FALLBACK_COMMENTS } from "./fallbackComments";
+import { runCommentQuery } from "./commentQuery";
+import { useGlobalAuth } from "../../useGlobalAuth";
 
 interface CoreCallbacks {
   setError: React.Dispatch<React.SetStateAction<Error | null>>;
@@ -28,6 +30,9 @@ export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) =
     createAbortController,
     maxAttempts
   } = callbacks;
+  
+  const { user } = useGlobalAuth();
+  const userId = user?.id;
 
   const fetchComments = useCallback(async (useFallback: boolean) => {
     setIsLoading(true);
@@ -51,17 +56,23 @@ export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) =
     const controller = createAbortController();
 
     try {
-      // Simulate or do actual fetch here (example below, replace with real logic)
-      // const response = await fetch(`api/comments/${itemId}`, { signal: controller.signal });
-      // if (!response.ok) throw new Error("Fetch failed");
-      // const data = await response.json();
-
-      // Simulated fetch fallback just for placeholder:
-      throw new Error("Fetch not implemented"); 
-
+      // Parse the itemId to ensure it's a number
+      const numericItemId = parseInt(itemId);
+      if (isNaN(numericItemId)) {
+        throw new Error(`Invalid item ID: ${itemId}`);
+      }
+      
+      console.log(`Fetching comments for item ${numericItemId}, user: ${userId || 'unknown'}`);
+      
+      // Use the runCommentQuery function to fetch comments
+      const comments = await runCommentQuery(numericItemId, userId, controller);
+      console.log(`Fetched ${comments.length} comments for item ${numericItemId}`);
+      
+      setIsLoading(false);
+      return comments;
     } catch (error) {
       // Retry or fallback logic...
-      console.error(error);
+      console.error("Error fetching comments:", error);
       setError(error as Error);
       setIsLoading(false);
 
@@ -82,7 +93,9 @@ export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) =
     isMaxAttemptsReached,
     getCurrentAttempts,
     createAbortController,
-    maxAttempts
+    maxAttempts,
+    itemId,
+    userId
   ]);
 
   return { fetchComments };
