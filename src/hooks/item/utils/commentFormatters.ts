@@ -18,10 +18,14 @@ export const formatCommentFromDB = (dbComment: DBComment, isOwnComment: boolean)
   // Get the profile object or default to empty object
   const profile = dbComment.profiles || {};
   
-  // Create a name from the profile fields
-  const fullName = [profile.first_name, profile.last_name]
-    .filter(Boolean)
-    .join(' ') || 'Anonymous';
+  // Create a name from the profile fields with the new format
+  const firstName = profile.first_name || '';
+  const lastName = profile.last_name || '';
+  
+  // Format as "First name + first letter of last name"
+  const fullName = firstName && lastName 
+    ? `${firstName} ${lastName.charAt(0)}`
+    : firstName || 'Anonymous';
   
   // Generate avatar URL if not provided
   const avatarUrl = profile.avatar_url || 

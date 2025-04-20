@@ -20,6 +20,13 @@ export const useCommentActions = (
 ) => {
   const [isLoading, setIsLoading] = useState(false);
 
+  // Log current user info for debugging
+  useEffect(() => {
+    if (currentUser) {
+      console.log("Current user in useCommentActions:", currentUser);
+    }
+  }, [currentUser]);
+
   // Import individual comment action hooks
   const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser, useFallbackMode);
   const { deleteComment: handleDeleteComment } = useCommentDelete();

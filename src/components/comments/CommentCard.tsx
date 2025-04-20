@@ -43,6 +43,7 @@ export function CommentCard({
   };
 
   const handleReply = (text: string) => {
+    console.log("Replying to comment:", comment.id, "with text:", text);
     onReply(comment.id, text);
     setShowReplyInput(false);
   };
@@ -110,19 +111,23 @@ export function CommentCard({
         </div>
       )}
 
-      {comment.replies?.map((reply) => (
-        <CommentCard
-          key={reply.id}
-          comment={reply}
-          onLike={onLike}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onReply={onReply}
-          onReport={onReport}
-          currentUser={currentUser}
-          level={level + 1}
-        />
-      ))}
+      {comment.replies?.length > 0 && (
+        <div className="space-y-4">
+          {comment.replies.map((reply) => (
+            <CommentCard
+              key={reply.id}
+              comment={reply}
+              onLike={onLike}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              onReply={onReply}
+              onReport={onReport}
+              currentUser={currentUser}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+};

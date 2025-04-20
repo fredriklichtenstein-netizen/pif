@@ -41,13 +41,14 @@ export const useCommentInteractions = (
         // Generate a unique ID for the comment
         const newId = Date.now().toString();
         
+        // Create the reply with proper user info
         const newReply: Comment = {
           id: newId,
           text,
           author: {
-            id: currentUser.id,
+            id: currentUser.id || '',
             name: currentUser.name || 'User',
-            avatar: currentUser.avatar || ''
+            avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`
           },
           likes: 0,
           isLiked: false,

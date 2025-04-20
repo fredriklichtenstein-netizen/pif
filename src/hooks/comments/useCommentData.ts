@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,7 +79,13 @@ export function useCommentData(itemId: string) {
         // Transform database comments into our Comment type
         const formattedComments: Comment[] = commentsData.map(comment => {
           const profile = comment.profiles as ProfileData || {};
-          const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Anonymous';
+          // Apply the new naming format (First name + first letter of last name)
+          const firstName = profile.first_name || '';
+          const lastName = profile.last_name || '';
+          const fullName = firstName && lastName 
+            ? `${firstName} ${lastName.charAt(0)}`
+            : firstName || 'Anonymous';
+            
           const isOwnComment = comment.user_id === session?.user?.id;
           
           return {
@@ -132,17 +139,22 @@ export function useCommentData(itemId: string) {
     }
   }, [session?.user?.id]);
 
-  // Construct the user's full name from profile data
+  // Construct the user's full name from profile data with the new format
   const getFullName = () => {
-    if (profileData?.first_name && profileData?.last_name) {
-      return `${profileData.first_name} ${profileData.last_name}`;
+    const firstName = profileData?.first_name || '';
+    const lastName = profileData?.last_name || '';
+    
+    if (firstName && lastName) {
+      return `${firstName} ${lastName.charAt(0)}`;
     }
     
     // Fall back to user metadata if profile not found
-    return session?.user?.user_metadata?.full_name || 
-           session?.user?.user_metadata?.name ||
-           session?.user?.email?.split('@')[0] || 
-           "Anonymous User";
+    const metadataName = session?.user?.user_metadata?.full_name || 
+                         session?.user?.user_metadata?.name ||
+                         session?.user?.email?.split('@')[0] || 
+                         "Anonymous User";
+                         
+    return metadataName;
   };
   
   // Extract user information with better fallbacks
