@@ -1,6 +1,7 @@
 
 import { InteractionCounts } from "../post/interactions/InteractionCounts";
-import { ActionButtons } from "../post/interactions/ActionButtons";
+import { PrimaryActions } from "../post/interactions/PrimaryActions";
+import { SecondaryActions } from "../post/interactions/SecondaryActions";
 import { InteractionsLoading } from "../post/interactions/InteractionsLoading";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { ItemInteractionsProps } from "./types";
@@ -26,6 +27,8 @@ export function ItemInteractions({
   onMessage,
   onShare,
   onReport,
+  onEdit,
+  onDelete,
   interactionsLoading = false,
   isLoadingInterested = false,
   interestedError = null,
@@ -50,18 +53,26 @@ export function ItemInteractions({
         getInterestedUsers={getInterestedUsers}
       />
       
-      <ActionButtons 
-        isLiked={isLiked}
-        showComments={showComments}
-        showInterest={showInterest}
-        isOwner={isOwner}
-        isRealtimeSubscribed={isRealtimeSubscribed}
-        itemId={id}
-        commentsCount={commentsCount}
-        onLikeToggle={onLikeToggle}
-        onCommentToggle={onCommentToggle}
-        onShowInterest={onShowInterest}
-      />
+      <div className="flex justify-between items-center">
+        <PrimaryActions 
+          isLiked={isLiked}
+          showComments={showComments}
+          isOwner={isOwner}
+          onLikeToggle={onLikeToggle}
+          onCommentToggle={onCommentToggle}
+          onShowInterest={onShowInterest}
+        />
+        
+        <SecondaryActions 
+          isBookmarked={isBookmarked}
+          isOwner={isOwner}
+          onBookmarkToggle={onBookmarkToggle}
+          onShare={onShare}
+          onReport={onReport}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      </div>
       
       {showComments && (
         <LazyCommentsSection

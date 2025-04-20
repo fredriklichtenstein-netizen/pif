@@ -1,5 +1,5 @@
 
-import { ThumbsUp, MessageCircle, Mail, Heart } from "lucide-react";
+import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
 import { PostActions } from "../PostActions";
 import type { PostAction } from "@/types/comment";
 
@@ -9,7 +9,7 @@ interface PrimaryActionsProps {
   isOwner: boolean;
   onLikeToggle: () => void;
   onCommentToggle: () => void;
-  onMessage: (e: React.MouseEvent) => void;
+  onShowInterest: () => void;
 }
 
 export function PrimaryActions({
@@ -18,7 +18,7 @@ export function PrimaryActions({
   isOwner,
   onLikeToggle,
   onCommentToggle,
-  onMessage,
+  onShowInterest,
 }: PrimaryActionsProps) {
   const actions: PostAction[] = [
     {
@@ -37,7 +37,7 @@ export function PrimaryActions({
     {
       icon: <Heart size={20} />,
       label: "Interest",
-      onClick: onMessage,
+      onClick: onShowInterest,
       disabled: isOwner,
     },
   ];
