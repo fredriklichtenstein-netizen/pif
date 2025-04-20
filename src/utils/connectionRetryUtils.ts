@@ -1,106 +1,106 @@
-
-export interface RetryOptions {
-  maxAttempts: number;
-  initialDelay: number;
-  maxDelay: number;
-  backoffFactor: number;
-  onRetry?: (attempt: number, delay: number) => void;
-  onSuccess?: () => void;
-  onFail?: (error: Error) => void;
-}
-
 /**
- * Utility function to perform operations with exponential backoff retry
+ * Utility function to retry a function call with exponential backoff.
+ *
+ * @param fn The function to retry.  Should return a Promise.
+ * @param options Options for the retry mechanism.
+ * @param options.maxAttempts Maximum number of retry attempts.  Defaults to 3.
+ * @param options.initialDelay Initial delay in milliseconds.  Defaults to 500ms.
+ * @param options.maxDelay Maximum delay in milliseconds.  Defaults to 5000ms.
+ * @param options.backoffFactor The factor by which to increase the delay each attempt.  Defaults to 1.5.
+ * @param options.onRetry A callback function to execute on each retry.  Receives the attempt number and delay.
+ * @param options.onFail A callback function to execute when all retries have failed.
+ * @returns A Promise that resolves with the successful result of the function,
+ *          or rejects if all retry attempts fail.
  */
-export async function withRetry<T>(
-  operation: () => Promise<T>,
-  options: Partial<RetryOptions> = {}
-): Promise<T> {
+export const withRetry = async <T>(
+  fn: () => Promise<T>,
+  options: {
+    maxAttempts?: number;
+    initialDelay?: number;
+    maxDelay?: number;
+    backoffFactor?: number;
+    onRetry?: (attempt: number, delay: number) => void;
+    onFail?: () => void;
+  } = {}
+): Promise<T> => {
   const {
     maxAttempts = 3,
-    initialDelay = 1000,
-    maxDelay = 10000,
-    backoffFactor = 2,
+    initialDelay = 500,
+    maxDelay = 5000,
+    backoffFactor = 1.5,
     onRetry,
-    onSuccess,
-    onFail
+    onFail,
   } = options;
 
   let attempt = 0;
-  let lastError: Error;
+  let delay = initialDelay;
 
   while (attempt < maxAttempts) {
     try {
-      const result = await operation();
-      if (onSuccess) onSuccess();
-      return result;
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
+      return await fn();
+    } catch (error) {
       attempt++;
-      
       if (attempt >= maxAttempts) {
-        if (onFail) onFail(lastError);
-        throw lastError;
+        onFail?.();
+        throw error;
       }
-      
-      // Calculate backoff delay with jitter to prevent thundering herd
-      const jitter = Math.random() * 0.3 + 0.85; // Random value between 0.85 and 1.15
-      const delay = Math.min(initialDelay * Math.pow(backoffFactor, attempt - 1) * jitter, maxDelay);
-      
-      if (onRetry) onRetry(attempt, delay);
-      console.log(`Retry attempt ${attempt}/${maxAttempts} after ${delay}ms`, lastError);
-      
-      // Wait for the backoff period
-      await new Promise(resolve => setTimeout(resolve, delay));
+
+      onRetry?.(attempt, delay);
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      delay = Math.min(delay * backoffFactor, maxDelay);
     }
   }
-  
-  // This shouldn't be reached, but TypeScript requires a return
-  throw lastError!;
-}
+
+  // This should never be reached, but included for extra safety.
+  throw new Error("Max retry attempts reached without success.");
+};
 
 /**
- * Creates an abortable fetch with timeout
+ * Helper utility to add a timeout to a fetch operation
+ * @param fetchFn Function that performs the fetch operation
+ * @param timeoutMs Timeout in milliseconds
+ * @returns Promise that will reject if the timeout is reached
  */
-export function fetchWithTimeout(
-  input: RequestInfo | URL,
-  init?: RequestInit & { timeout?: number }
-): Promise<Response> {
-  const timeout = init?.timeout || 8000;
-  const controller = new AbortController();
-  const signal = controller.signal;
-  
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, timeout);
-  
-  return fetch(input, {
-    ...init,
-    signal
-  }).finally(() => {
-    clearTimeout(timeoutId);
+export const fetchWithTimeout = async <T>(fetchFn: () => Promise<T>, timeoutMs: number = 10000): Promise<T> => {
+  return new Promise(async (resolve, reject) => {
+    // Set up timeout
+    const timeoutId = setTimeout(() => {
+      reject(new Error('Request timed out'));
+    }, timeoutMs);
+    
+    try {
+      // Execute the fetch function
+      const result = await fetchFn();
+      clearTimeout(timeoutId);
+      resolve(result);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      reject(error);
+    }
   });
-}
+};
 
 /**
- * Check if an error is a network-related error
+ * Check if an error is likely a network-related error
+ * @param error The error to check
+ * @returns True if it appears to be a network error
  */
-export function isNetworkError(error: unknown): boolean {
+export const isNetworkError = (error: any): boolean => {
   if (!error) return false;
   
-  const errorMessage = error instanceof Error 
-    ? error.message.toLowerCase() 
-    : String(error).toLowerCase();
+  // Check error name
+  if (error.name === 'AbortError' || error.name === 'TimeoutError') return true;
   
+  // Check error message for common network-related terms
+  const errorMessage = String(error.message || error).toLowerCase();
   return (
     errorMessage.includes('network') ||
-    errorMessage.includes('internet') ||
+    errorMessage.includes('failed to fetch') ||
+    errorMessage.includes('abort') ||
+    errorMessage.includes('timeout') ||
     errorMessage.includes('offline') ||
     errorMessage.includes('connection') ||
-    errorMessage.includes('timeout') ||
-    errorMessage.includes('abort') ||
-    errorMessage.includes('unreachable') ||
-    errorMessage.includes('failed to fetch') ||
-    error instanceof TypeError && errorMessage.includes('fetch')
+    errorMessage.includes('unreachable')
   );
-}
+};

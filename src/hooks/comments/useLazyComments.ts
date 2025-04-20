@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { Comment } from '@/types/comment';
 import { useComments } from '@/hooks/item/useComments';
@@ -43,7 +42,7 @@ export function useLazyComments(itemId: string) {
       console.log(`[useLazyComments] Attempting to load comments for item ${itemId} (attempt ${retryCount + 1})`);
       const fetchedComments = await fetchComments();
       
-      // If comments are returned successfully
+      // If comments are returned successfully (even if it's an empty array)
       if (Array.isArray(fetchedComments)) {
         console.log(`[useLazyComments] Successfully loaded ${fetchedComments.length} comments for item ${itemId}`);
         setComments(fetchedComments);
@@ -83,9 +82,28 @@ export function useLazyComments(itemId: string) {
         setUseFallbackMode(true);
         setIsInitialized(true);
         setIsLoading(false);
+        const fallbackComments = await fetchComments(); // This should return fallback data
+        if (Array.isArray(fallbackComments)) {
+          setComments(fallbackComments);
+        }
       }
-      // Implement exponential backoff for retries (max 3 retries)
-      else if (retryCount < 3) {
+      // Implement immediate fallback mode after first attempt failure
+      else if (retryCount === 0) {
+        setUseFallbackMode(true);
+        setIsInitialized(true);
+        setIsLoading(false);
+        const fallbackComments = await fetchComments(); // This should return fallback data
+        if (Array.isArray(fallbackComments)) {
+          setComments(fallbackComments);
+        }
+        toast({
+          title: "Comments temporarily unavailable",
+          description: "Using offline mode for comments. Your new comments will be saved when connection improves.",
+          variant: "default"
+        });
+      }
+      // Keep the old fallback with retries as a last resort
+      else if (retryCount < 2) {
         const nextRetryCount = retryCount + 1;
         const delay = Math.min(1000 * Math.pow(2, nextRetryCount), 8000); // exponential backoff with max 8s
         
@@ -97,23 +115,19 @@ export function useLazyComments(itemId: string) {
         }, delay);
         
         setRetryTimer(timer);
-        
-        // Show toast on first failure
-        if (retryCount === 0) {
-          toast({
-            title: "Comments temporarily unavailable",
-            description: "We're having trouble loading comments. Retrying...",
-            variant: "destructive"
-          });
-        }
       } else {
-        // Max retries reached - set initialized to true to stop continuous retry attempts
+        // Max retries reached - switch to fallback
+        setUseFallbackMode(true);
         setIsInitialized(true);
         setIsLoading(false);
+        const fallbackComments = await fetchComments(); // This should return fallback data
+        if (Array.isArray(fallbackComments)) {
+          setComments(fallbackComments);
+        }
         toast({
-          title: "Failed to load comments",
-          description: "Please try again later or refresh the page.",
-          variant: "destructive"
+          title: "Using offline comments mode",
+          description: "We'll try to sync your comments when connection improves.",
+          variant: "default"
         });
       }
     }

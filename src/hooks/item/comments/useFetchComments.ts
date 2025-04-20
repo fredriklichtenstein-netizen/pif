@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Comment } from "@/types/comment";
@@ -79,9 +80,24 @@ export const useFetchComments = (itemId: string) => {
     setError(null);
     
     try {
-      const numericItemId = parseInt(itemId);
-      if (isNaN(numericItemId)) {
-        throw new Error(`Invalid item ID: ${itemId}`);
+      // Parse itemId as number, but handle it more gracefully
+      let numericItemId: number;
+      
+      if (typeof itemId === 'number') {
+        numericItemId = itemId;
+      } else if (typeof itemId === 'string') {
+        numericItemId = parseInt(itemId, 10);
+        if (isNaN(numericItemId)) {
+          console.warn(`[useFetchComments] Invalid item ID: ${itemId}, using fallback`);
+          setUseFallbackMode(true);
+          setIsLoading(false);
+          return [...FALLBACK_COMMENTS];
+        }
+      } else {
+        console.warn(`[useFetchComments] Unsupported item ID type: ${typeof itemId}, using fallback`);
+        setUseFallbackMode(true);
+        setIsLoading(false);
+        return [...FALLBACK_COMMENTS];
       }
       
       console.log(`[useFetchComments] Fetching comments for item ${numericItemId} (attempt ${getCurrentAttempts() + 1}/${maxAttempts})`);
@@ -116,7 +132,10 @@ export const useFetchComments = (itemId: string) => {
             query = query.abortSignal(signal);
           }
           
-          const { data, error } = await query;
+          const { data, error } = await fetchWithTimeout(
+            () => query,
+            5000 // 5 second timeout
+          );
           
           if (error) {
             console.error("[useFetchComments] Error in Supabase query:", error);
@@ -153,7 +172,11 @@ export const useFetchComments = (itemId: string) => {
       setIsLoading(false);
       return result;
     } catch (error: any) {
-      if (error.name === 'AbortError') {
+      const isAbortError = error.name === 'AbortError' || 
+                           error.message?.includes('aborted') || 
+                           error.message?.includes('signal');
+                           
+      if (isAbortError) {
         console.log('[useFetchComments] Comments fetch aborted');
         
         if (isMaxAttemptsReached()) {
@@ -164,10 +187,11 @@ export const useFetchComments = (itemId: string) => {
           return [...FALLBACK_COMMENTS];
         }
         
-        const currentAttempt = incrementAttempts();
-        const errorMsg = `Comments loading timeout. Retrying (${currentAttempt}/${maxAttempts})`;
-        setError(new Error(errorMsg));
-        return [];
+        // Don't retry on abort, just switch to fallback immediately for better UX
+        setUseFallbackMode(true);
+        resetAttempts();
+        setIsLoading(false);
+        return [...FALLBACK_COMMENTS];
       }
       
       console.error("[useFetchComments] Error fetching comments:", error);

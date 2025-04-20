@@ -48,51 +48,56 @@ export function CommentsPanel({
   onReport,
   refreshComments,
 }: CommentsPanelProps) {
-  // Render appropriate content based on state
-  // This was previously the renderContent function in LazyCommentsSection
-  if (isLoading && !comments.length) {
-    return <LoadingComments />;
-  }
+  // Check if comments are really loading - if they're initialized already, we shouldn't show the full loading state
+  const isReallyLoading = isLoading && !isInitialized;
+  
+  // Comment input should be shown regardless of other states
+  const renderCommentInput = () => (
+    <CommentInput 
+      onSubmit={onAddComment} 
+      placeholder="Write a comment..." 
+      disabled={!user} 
+    />
+  );
 
-  if (error && !comments.length) {
-    return (
-      <div className="py-6 space-y-4">
-        <CommentsError 
-          error={error} 
-          onRetry={refreshComments} 
-        />
-        <div className="text-center">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={refreshComments}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Try Again
-          </Button>
+  // Display loading, error, or comments content based on state
+  const renderContent = () => {
+    // Show full loading UI only if we're in the initial loading state and have no comments
+    if (isReallyLoading && !comments.length) {
+      return <div className="mt-4"><LoadingComments /></div>;
+    }
+    
+    // Show error UI only if we have a non-fallback error and no comments
+    if (error && !comments.length && !useFallbackMode) {
+      return (
+        <div className="py-6 space-y-4">
+          <CommentsError 
+            error={error} 
+            onRetry={refreshComments} 
+          />
+          <div className="text-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshComments}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </Button>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <>
-      <CommentInput 
-        onSubmit={onAddComment} 
-        placeholder="Write a comment..." 
-        disabled={!user} 
-      />
-      {isLoading && !comments.length ? (
-        <div className="mt-4"><LoadingComments /></div>
-      ) : comments.length > 0 ? (
+    // Show fallback mode notice if applicable
+    if (useFallbackMode && comments.length > 0) {
+      return (
         <div className="mt-4">
-          {useFallbackMode && (
-            <div className="mb-4 px-3 py-2 bg-blue-50 text-blue-800 rounded-md flex items-center text-sm border border-blue-200">
-              <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span>Showing community conversation. You can still join the discussion!</span>
-            </div>
-          )}
+          <div className="mb-4 px-3 py-2 bg-blue-50 text-blue-800 rounded-md flex items-center text-sm border border-blue-200">
+            <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span>Showing community conversation. You can still join the discussion!</span>
+          </div>
           <CommentList
             comments={comments}
             isLoading={isLoading}
@@ -104,11 +109,39 @@ export function CommentsPanel({
             onReport={onReport}
           />
         </div>
-      ) : (
-        <div className="py-6 text-center text-gray-500">
-          <p>No comments yet. Be the first to comment!</p>
+      );
+    }
+
+    // Show normal comments list if we have comments
+    if (comments.length > 0) {
+      return (
+        <div className="mt-4">
+          <CommentList
+            comments={comments}
+            isLoading={isLoading}
+            currentUserId={currentUser?.id}
+            onLike={onLike}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onReply={onReply}
+            onReport={onReport}
+          />
         </div>
-      )}
+      );
+    }
+
+    // Show empty state
+    return (
+      <div className="py-6 text-center text-gray-500">
+        <p>No comments yet. Be the first to comment!</p>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {renderCommentInput()}
+      {renderContent()}
     </>
   );
 }
