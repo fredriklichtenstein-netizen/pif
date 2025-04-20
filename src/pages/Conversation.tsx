@@ -20,16 +20,15 @@ export default function Conversation() {
   
   const { 
     conversation, 
-    loading: conversationLoading, 
+    isLoading: conversationLoading, 
     error: conversationError 
   } = useConversationDetails(id);
   
   const { 
     messages, 
-    loading: messagesLoading, 
+    isLoading: messagesLoading, 
     error: messagesError,
-    sendMessage,
-    refresh: refreshMessages
+    sendMessage
   } = useMessages(id);
 
   // Scroll to bottom when messages change
@@ -66,6 +65,14 @@ export default function Conversation() {
   const getOtherParticipant = () => {
     if (!conversation || !user) return null;
     return conversation.participants.find(p => p.user_id !== user.id)?.profile;
+  };
+
+  // Define a refresh function
+  const refreshMessages = async () => {
+    // If we navigate back to the messages page and then return,
+    // the page will reload and fetch fresh data
+    navigate(`/messages`);
+    setTimeout(() => navigate(`/conversation/${id}`), 10);
   };
 
   if (conversationLoading || messagesLoading) {

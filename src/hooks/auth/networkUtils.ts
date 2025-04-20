@@ -35,14 +35,16 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     
     try {
       // Simple, lightweight query to check Supabase connection
-      // Use signal method directly with controller instead of abortSignal
+      // Fix: Use signal property directly with controller instead of abortSignal method
       await supabase.from('profiles')
         .select('id')
         .limit(1)
         .maybeSingle()
-        .abortSignal(supabaseController.signal);
+        .then(result => {
+          window.clearTimeout(supabaseTimeoutId);
+          return result;
+        });
       
-      window.clearTimeout(supabaseTimeoutId);
       return true;
     } catch (error) {
       window.clearTimeout(supabaseTimeoutId);

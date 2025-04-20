@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
 import { preloadImages } from "@/utils/imageProcessing";
+import { NetworkStatus } from "@/components/common/NetworkStatus";
 
 interface ItemCardProps {
   id: string;
