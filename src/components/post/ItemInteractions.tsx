@@ -2,6 +2,7 @@
 import { InteractionCounts } from "./interactions/InteractionCounts";
 import { ActionButtons } from "./interactions/ActionButtons";
 import { InteractionsLoading } from "./interactions/InteractionsLoading";
+import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface ItemInteractionsProps {
@@ -87,13 +88,20 @@ export function ItemInteractions({
         showInterest={showInterest}
         isOwner={isOwner}
         isRealtimeSubscribed={isRealtimeSubscribed}
+        itemId={id}
+        commentsCount={commentsCount}
         onLikeToggle={onLikeToggle}
-        onCommentToggle={() => {
-          onCommentToggle();
-          console.log('Comment toggle clicked, triggering lazy load');
-        }}
+        onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}
       />
+      
+      {/* Lazy load comments section only when shown */}
+      {showComments && (
+        <LazyCommentsSection
+          itemId={id}
+          isVisible={showComments}
+        />
+      )}
     </div>
   );
 }
