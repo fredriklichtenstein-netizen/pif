@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Comment } from "@/types/comment";
@@ -110,6 +111,7 @@ export const useFetchComments = (itemId: string) => {
 
           const signal = controller?.signal;
 
+          // Create the query but don't execute it yet
           let query = supabase
             .from('comments')
             .select(`
@@ -127,20 +129,26 @@ export const useFetchComments = (itemId: string) => {
             .eq('item_id', numericItemId)
             .order('created_at', { ascending: true });
 
-          if (signal) {
-            query = query.abortSignal(signal);
-          }
-
-          const { data: commentsData, error: commentsError } = await fetchWithTimeout(
-            () => query,
+          // Using proper fetchWithTimeout with the query execution
+          const response = await fetchWithTimeout(
+            async () => {
+              // Add abort signal if available
+              if (signal) {
+                return await query.abortSignal(signal);
+              }
+              return await query;
+            },
             5000
           );
-
-          if (commentsError) {
-            console.error("[useFetchComments] Error in Supabase query:", commentsError);
-            throw commentsError;
+          
+          // Now properly access data and error from the response
+          if (response.error) {
+            console.error("[useFetchComments] Error in Supabase query:", response.error);
+            throw response.error;
           }
 
+          const commentsData = response.data;
+          
           if (!commentsData) {
             console.log("[useFetchComments] No comments data returned");
             return [];
