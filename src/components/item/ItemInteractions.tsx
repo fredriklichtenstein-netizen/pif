@@ -51,11 +51,11 @@ export function ItemInteractions({
     commenters &&
     currentUserId &&
     (
-      // direct comments
-      commenters.some(comment => comment.author.id === currentUserId) ||
-      // or any reply authored by currentUserId
+      // direct comments - add null check for author and author.id
+      commenters.some(comment => comment.author && comment.author.id === currentUserId) ||
+      // or any reply authored by currentUserId - add null checks for replies and reply.author
       commenters.some(comment =>
-        comment.replies?.some(reply => reply.author.id === currentUserId)
+        comment.replies?.some(reply => reply.author && reply.author.id === currentUserId)
       )
     )
   );
@@ -107,4 +107,3 @@ export function ItemInteractions({
     </div>
   );
 }
-
