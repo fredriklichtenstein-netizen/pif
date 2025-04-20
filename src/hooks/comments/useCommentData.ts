@@ -79,7 +79,7 @@ export function useCommentData(itemId: string) {
         // Transform database comments into our Comment type
         const formattedComments: Comment[] = commentsData.map(comment => {
           const profile = comment.profiles as ProfileData || {};
-          // Apply the new naming format (First name + first letter of last name)
+          // Apply the new naming format (First name + first letter of last name without dot)
           const firstName = profile.first_name || '';
           const lastName = profile.last_name || '';
           const fullName = firstName && lastName 
@@ -96,11 +96,11 @@ export function useCommentData(itemId: string) {
               name: fullName,
               avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
             },
-            likes: 0, // We'll implement comment likes later
+            likes: 0,
             isLiked: false,
-            replies: [], // We'll implement replies later
+            replies: [],
             createdAt: new Date(comment.created_at),
-            isOwn: isOwnComment // Add the missing isOwn property
+            isOwn: isOwnComment
           };
         });
         
@@ -145,7 +145,7 @@ export function useCommentData(itemId: string) {
     const lastName = profileData?.last_name || '';
     
     if (firstName && lastName) {
-      return `${firstName} ${lastName.charAt(0)}`;
+      return `${firstName} ${lastName.charAt(0)}`; // Removed dot after initial here
     }
     
     // Fall back to user metadata if profile not found
@@ -159,9 +159,7 @@ export function useCommentData(itemId: string) {
   
   // Extract user information with better fallbacks
   const currentUser = {
-    // Get user name prioritizing profile data over metadata
     name: getFullName(),
-    // Use profile avatar if available, otherwise fall back to generated avatar
     avatar: profileData?.avatar_url || 
            session?.user?.user_metadata?.avatar_url || 
            (session?.user?.id ? `https://ui-avatars.com/api/?name=${
