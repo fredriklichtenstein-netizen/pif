@@ -75,7 +75,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
       {/* Title and Category Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
         <div className="flex flex-col gap-1">
-          <h3 className="text-white text-sm font-display font-medium tracking-wide drop-shadow-md">
+          <h3 className="text-white text-base sm:text-lg font-display font-medium tracking-wide drop-shadow-md">
             {title}
           </h3>
           <h2 className="text-white text-3xl font-display font-bold tracking-wide drop-shadow-md uppercase">
@@ -114,3 +114,4 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     </div>
   );
 }
+
