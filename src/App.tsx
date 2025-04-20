@@ -33,7 +33,6 @@ function App() {
 
   return (
     <Router>
-      {/* MainHeader removed */}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />

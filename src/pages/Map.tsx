@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useMapbox } from "@/hooks/useMapbox";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MainNav } from "@/components/MainNav";
 
 export default function Map() {
   const [searchParams] = useSearchParams();
@@ -92,6 +93,7 @@ export default function Map() {
         )}
       </div>
       <Toaster />
+      <MainNav />
     </div>
   );
 }
