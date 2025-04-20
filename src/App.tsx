@@ -7,7 +7,8 @@ import { MainHeader } from "@/components/layout/MainHeader";
 import { NetworkStatusDebugger } from "@/components/debug/NetworkStatusDebugger";
 
 // Import your pages here
-import Index from "@/pages/Index";
+import Home from "@/pages/Home";
+import Feed from "@/pages/Feed";
 import Map from "@/pages/Map";
 import Post from "@/pages/Post";
 import Auth from "@/pages/Auth";
@@ -36,7 +37,8 @@ function App() {
       <MainHeader />
       <main>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/feed" element={<Feed />} />
           <Route path="/map" element={<Map />} />
           <Route path="/post" element={<Post />} />
           <Route path="/auth" element={<Auth />} />

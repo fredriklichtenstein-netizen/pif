@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff, MessageSquare, User } from "lucide-react";
 import { setupNetworkMonitoring } from "@/hooks/auth/networkUtils";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { AuthStatus } from "@/components/auth/AuthStatus";
 
 export function MainHeader() {
   const [isOnline, setIsOnline] = useState(true);
@@ -45,6 +47,12 @@ export function MainHeader() {
           <Link to="/post" className="text-sm font-medium transition-colors hover:text-primary">
             Post Item
           </Link>
+          <Link to="/messages" className="text-sm font-medium transition-colors hover:text-primary">
+            Messages
+          </Link>
+          <Link to="/profile" className="text-sm font-medium transition-colors hover:text-primary">
+            Profile
+          </Link>
         </nav>
         
         <div className="ml-auto flex items-center space-x-4">
@@ -56,7 +64,6 @@ export function MainHeader() {
             </div>
           )}
           
-          {/* Always place online indicator for visual continuity */}
           {isOnline && (
             <div className="flex items-center text-green-500 text-sm" title="Connected">
               <Wifi className="h-4 w-4 mr-1" />
@@ -64,7 +71,7 @@ export function MainHeader() {
             </div>
           )}
           
-          {/* User menu or login button would go here */}
+          <AuthStatus showButton={false} />
         </div>
       </div>
     </header>

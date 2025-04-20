@@ -1,5 +1,4 @@
-
-import { Home, Map, MessageSquare, User as UserIcon } from "lucide-react";
+import { Home, Map, MessageSquare, User as UserIcon, Feed } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -28,11 +27,9 @@ export function MainNav() {
     }
   };
 
-  // Get user initials for avatar fallback
   const getUserInitials = () => {
     if (!user) return "";
     
-    // First try to get initials from profile metadata if available
     const firstName = user.user_metadata?.first_name || "";
     const lastName = user.user_metadata?.last_name || "";
     
@@ -44,16 +41,13 @@ export function MainNav() {
       return firstName.charAt(0).toUpperCase();
     }
     
-    // If no name is available, use email
     if (user.email) {
       const parts = user.email.split('@');
       if (parts[0]) {
-        // Try to get initials from email prefix (e.g., "john.doe" -> "JD")
         const nameParts = parts[0].split(/[._-]/);
         if (nameParts.length > 1) {
           return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
         }
-        // Otherwise just use first two letters of email prefix
         return parts[0].slice(0, 2).toUpperCase();
       }
     }
@@ -66,13 +60,13 @@ export function MainNav() {
       <div className="container max-w-md mx-auto px-4">
         <div className="grid grid-cols-5 items-center">
           <Link
-            to="/"
+            to="/feed"
             className={`flex flex-col items-center ${
-              isActive("/") ? "text-primary" : "text-gray-500"
+              isActive("/feed") ? "text-primary" : "text-gray-500"
             }`}
           >
-            <Home size={24} />
-            <span className="text-xs mt-1">Home</span>
+            <Feed size={24} />
+            <span className="text-xs mt-1">Feed</span>
           </Link>
           
           <Link
