@@ -88,7 +88,10 @@ export function ItemInteractions({
         isOwner={isOwner}
         isRealtimeSubscribed={isRealtimeSubscribed}
         onLikeToggle={onLikeToggle}
-        onCommentToggle={onCommentToggle}
+        onCommentToggle={() => {
+          onCommentToggle();
+          console.log('Comment toggle clicked, triggering lazy load');
+        }}
         onShowInterest={onShowInterest}
       />
     </div>
