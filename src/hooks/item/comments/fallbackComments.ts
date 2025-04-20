@@ -1,4 +1,3 @@
-
 import { Comment } from "@/types/comment";
 
 export const FALLBACK_COMMENTS: Comment[] = [

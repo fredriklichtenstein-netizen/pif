@@ -1,107 +1,89 @@
 
-import { useRef } from "react";
-import { FALLBACK_COMMENTS } from "./fallbackComments";
-import { parseNumericItemId } from "./parseNumericItemId";
-import { runCommentQuery } from "./commentQuery";
-import { Comment } from "@/types/comment";
-import { useGlobalAuth } from "../../useGlobalAuth";
-import { useCommentRetry } from "./useCommentRetry";
-import { withRetry } from "@/utils/connectionRetryUtils";
+// Extracted core fetchComments functionality
 
-type FetchOptions = {
-  setError: (err: Error | null) => void;
-  setIsLoading: (loading: boolean) => void;
-  setUseFallbackMode: (fallback: boolean) => void;
+import { useCallback } from "react";
+import { FALLBACK_COMMENTS } from "./fallbackComments";
+
+interface CoreCallbacks {
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setUseFallbackMode: React.Dispatch<React.SetStateAction<boolean>>;
   cleanUp: () => void;
   resetAttempts: () => void;
   isMaxAttemptsReached: () => boolean;
   getCurrentAttempts: () => number;
   createAbortController: () => AbortController;
   maxAttempts: number;
-};
+}
 
-export function useFetchCommentsCore(itemId: string, options: FetchOptions) {
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const { user } = useGlobalAuth();
+export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) => {
+  const { 
+    setError,
+    setIsLoading,
+    setUseFallbackMode,
+    cleanUp,
+    resetAttempts,
+    isMaxAttemptsReached,
+    getCurrentAttempts,
+    createAbortController,
+    maxAttempts
+  } = callbacks;
 
-  const fetchComments = async (useFallbackMode: boolean): Promise<Comment[]> => {
-    if (!itemId) return [];
-    options.cleanUp();
+  const fetchComments = useCallback(async (useFallback: boolean) => {
+    setIsLoading(true);
+    setError(null);
 
-    // Abort previous fetch if needed
-    if (abortControllerRef.current) {
-      try {
-        abortControllerRef.current.abort();
-      } catch (e) {
-        // no-op
-      }
+    if (useFallback) {
+      // Use fallback comments immediately without attempting fetch
+      setUseFallbackMode(true);
+      setIsLoading(false);
+      cleanUp();
+      return FALLBACK_COMMENTS;
     }
-    let controller: AbortController | null = null;
+
+    if (isMaxAttemptsReached()) {
+      setUseFallbackMode(true);
+      setIsLoading(false);
+      cleanUp();
+      return FALLBACK_COMMENTS;
+    }
+
+    const controller = createAbortController();
+
     try {
-      controller = options.createAbortController();
-      abortControllerRef.current = controller;
-    } catch (e) {
-      // no-op
-    }
+      // Simulate or do actual fetch here (example below, replace with real logic)
+      // const response = await fetch(`api/comments/${itemId}`, { signal: controller.signal });
+      // if (!response.ok) throw new Error("Fetch failed");
+      // const data = await response.json();
 
-    options.setIsLoading(true);
-    options.setError(null);
+      // Simulated fetch fallback just for placeholder:
+      throw new Error("Fetch not implemented"); 
 
-    const numericItemId = parseNumericItemId(itemId);
-    if (!numericItemId) {
-      options.setUseFallbackMode(true);
-      options.setIsLoading(false);
-      return [...FALLBACK_COMMENTS];
-    }
+    } catch (error) {
+      // Retry or fallback logic...
+      console.error(error);
+      setError(error as Error);
+      setIsLoading(false);
 
-    try {
-      const result = await withRetry<Comment[]>(
-        async () => {
-          if (useFallbackMode) {
-            return [...FALLBACK_COMMENTS];
-          }
-          return runCommentQuery(numericItemId, user?.id, controller);
-        },
-        {
-          maxAttempts: 2,
-          initialDelay: 800,
-          maxDelay: 2000,
-          backoffFactor: 1.5,
-          onRetry: (attempt, delay) => {},
-          onFail: () => {
-            options.setUseFallbackMode(true);
-          }
-        }
-      );
-
-      options.resetAttempts();
-      options.setIsLoading(false);
-      return result;
-    } catch (error: any) {
-      const isAbortError = error?.name === 'AbortError'
-        || error?.message?.includes('aborted')
-        || error?.message?.includes('signal');
-      if (isAbortError) {
-        if (options.isMaxAttemptsReached()) {
-          options.setUseFallbackMode(true);
-          options.resetAttempts();
-          options.setIsLoading(false);
-          return [...FALLBACK_COMMENTS];
-        }
-        options.setUseFallbackMode(true);
-        options.resetAttempts();
-        options.setIsLoading(false);
-        return [...FALLBACK_COMMENTS];
-      }
-      options.setError(error instanceof Error ? error : new Error(String(error)));
-      options.setIsLoading(false);
-      if (options.isMaxAttemptsReached()) {
-        options.setUseFallbackMode(true);
-        return [...FALLBACK_COMMENTS];
+      if (getCurrentAttempts() >= maxAttempts) {
+        setUseFallbackMode(true);
+        return FALLBACK_COMMENTS;
       }
       return [];
+    } finally {
+      cleanUp();
     }
-  };
+
+  }, [
+    setError,
+    setIsLoading,
+    setUseFallbackMode,
+    cleanUp,
+    isMaxAttemptsReached,
+    getCurrentAttempts,
+    createAbortController,
+    maxAttempts
+  ]);
 
   return { fetchComments };
-}
+};

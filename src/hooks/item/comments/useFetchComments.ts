@@ -1,10 +1,11 @@
 
+// Refactored to focus only on hook useFetchComments and imports
+
 import { useState } from "react";
 import { useGlobalAuth } from "../../useGlobalAuth";
-import { useCommentRetry } from "./useCommentRetry";
 import { FALLBACK_COMMENTS } from "./fallbackComments";
 import { useFetchCommentsCore } from "./useFetchCommentsCore";
-import { Comment } from "@/types/comment";
+import { useCommentRetry } from "./useCommentRetry";
 
 export const useFetchComments = (itemId: string) => {
   const { user } = useGlobalAuth();
@@ -41,3 +42,4 @@ export const useFetchComments = (itemId: string) => {
     useFallbackMode
   };
 };
+
