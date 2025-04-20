@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { getPosts } from "@/services/posts";
@@ -55,9 +54,17 @@ export default function Map() {
   const isLoading = isTokenLoading || isPostsLoading;
   const error = tokenError || postsError;
 
+  // Height of the MainNav at the bottom (usually about 64px)
+  const navHeight = 68;
+
   return (
-    <div className="container mx-auto px-4 pb-20 pt-4">
-      <div className="h-[calc(100vh-170px)] rounded-lg overflow-hidden relative">
+    <div className="fixed top-0 left-0 right-0 bottom-0 z-0">
+      <div
+        className="absolute top-0 left-0 right-0"
+        style={{
+          bottom: navHeight, // leaves room for the fixed nav bar
+        }}
+      >
         {error ? (
           <div className="w-full h-full bg-gray-50 flex items-center justify-center">
             <div className="text-center p-6 max-w-md">
@@ -92,8 +99,11 @@ export default function Map() {
           />
         )}
       </div>
+      {/* Keep the nav absolutely fixed over the map at the bottom */}
+      <div className="fixed left-0 right-0 bottom-0 z-10">
+        <MainNav />
+      </div>
       <Toaster />
-      <MainNav />
     </div>
   );
 }
