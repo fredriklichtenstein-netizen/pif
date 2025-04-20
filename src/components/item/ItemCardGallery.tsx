@@ -1,81 +1,103 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { optimizeImageUrl } from "@/utils/image";
-import type { ItemCardGalleryProps } from "./types";
+import { optimizeImageUrl, preloadImages } from "@/utils/image";
+
+interface ItemCardGalleryProps {
+  images: string[];
+  title: string;
+  category: string;
+}
 
 export function ItemCardGallery({ images, title, category }: ItemCardGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  
-  const handleNext = () => {
-    setIsImageLoaded(false);
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
-  
-  const handlePrev = () => {
-    setIsImageLoaded(false);
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const mountedRef = useRef(true);
 
-  if (images.length === 0) {
+  useEffect(() => {
+    const validImages = images
+      ?.filter(img => img && typeof img === 'string' && img.trim() !== '')
+      .map(img => optimizeImageUrl(img, 600)) || [];
+      
+    const finalImages = validImages.length > 0 
+      ? validImages 
+      : ["https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image"];
+    
+    setImageUrls(finalImages);
+    
+    if (finalImages.length > 1) {
+      preloadImages(finalImages.slice(1, 3));
+    }
+    
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [images]);
+
+  if (!imageUrls || imageUrls.length === 0) {
     return (
-      <div className="relative h-48 bg-gray-200 flex items-center justify-center">
+      <div className="relative h-72 bg-gray-200 flex items-center justify-center">
         <p className="text-gray-500">No image available</p>
-        <div className="absolute top-2 right-2">
-          <Badge variant="secondary" className="text-xs">{category}</Badge>
-        </div>
       </div>
     );
   }
   
-  const currentImageUrl = optimizeImageUrl(images[currentImageIndex], 800);
+  const handleNext = () => {
+    setIsImageLoaded(false);
+    setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length);
+  };
   
+  const handlePrev = () => {
+    setIsImageLoaded(false);
+    setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+  };
+
   return (
-    <div className="relative h-48">
+    <div className="relative h-72">
       {!isImageLoaded && (
-        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-          <span className="text-gray-400 text-sm">Loading image...</span>
-        </div>
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}
       
       <img 
-        src={currentImageUrl}
+        src={imageUrls[currentImageIndex]}
         alt={title} 
-        className={`w-full h-48 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-72 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setIsImageLoaded(true)}
         onError={(e) => {
-          e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+          e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
           setIsImageLoaded(true);
         }}
         loading="lazy"
       />
       
-      <div className="absolute top-2 right-2 z-10">
-        <Badge variant="secondary" className="text-xs">{category}</Badge>
+      {/* Title and Category Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+        <h3 className="text-white text-lg font-semibold mb-1">{title}</h3>
+        <Badge variant="secondary" className="text-xs bg-primary text-white">
+          {category}
+        </Badge>
       </div>
       
-      {images.length > 1 && (
+      {imageUrls.length > 1 && (
         <>
           <button 
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handlePrev}
             aria-label="Previous image"
-            type="button"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button 
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handleNext}
             aria-label="Next image"
-            type="button"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-            {images.map((_, index) => (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-1">
+            {imageUrls.map((_, index) => (
               <div 
                 key={index}
                 className={`h-1.5 w-1.5 rounded-full ${currentImageIndex === index ? 'bg-white' : 'bg-white/50'}`}

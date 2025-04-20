@@ -1,3 +1,4 @@
+
 import { memo } from "react";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -60,9 +61,9 @@ const ItemCard = memo(function ItemCard({
   return (
     <Card 
       id={`item-card-${id}`}
-      className="mb-6 overflow-hidden transition-shadow hover:shadow-md"
+      className="overflow-hidden transition-shadow hover:shadow-md rounded-xl"
     >
-      {(realtimeError) && (
+      {realtimeError && (
         <NetworkStatus onRetry={refreshItemData} />
       )}
       
@@ -75,19 +76,15 @@ const ItemCard = memo(function ItemCard({
         handleReport={handleReport}
       />
       
-      <ItemCardGallery 
-        images={images.length > 0 ? images : image ? [image] : []} 
-        title={title} 
-        category={category} 
-      />
+      <div className="relative">
+        <ItemCardGallery 
+          images={images.length > 0 ? images : image ? [image] : []} 
+          title={title} 
+          category={category} 
+        />
+      </div>
       
       <div className="p-4">
-        <ItemCardContent 
-          title={title} 
-          description={description} 
-          measurements={measurements} 
-        />
-        
         <ItemInteractions 
           id={id}
           postedBy={postedBy}
@@ -114,6 +111,12 @@ const ItemCard = memo(function ItemCard({
           interestedError={interestedError}
           getInterestedUsers={getInterestedUsers}
           isRealtimeSubscribed={isRealtimeSubscribed}
+        />
+
+        <ItemCardContent 
+          title={title} 
+          description={description} 
+          measurements={measurements} 
         />
         
         {showComments && (
