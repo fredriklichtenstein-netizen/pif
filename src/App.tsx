@@ -1,6 +1,7 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { NetworkStatusDebugger } from "@/components/debug/NetworkStatusDebugger";
@@ -12,8 +13,17 @@ import Post from "@/pages/Post";
 import Auth from "@/pages/Auth";
 import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
-import Conversation from "@/pages/Conversation";
 import NotFound from "@/pages/NotFound";
+
+// Lazy load the Conversation page
+const Conversation = lazy(() => import("@/pages/Conversation"));
+
+// Simple loading component for lazy-loaded routes
+const PageLoading = () => (
+  <div className="flex justify-center items-center h-[60vh]">
+    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+  </div>
+);
 
 function App() {
   // Initialize auth on app load
@@ -32,7 +42,14 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/conversation/:id" element={<Conversation />} />
+          <Route 
+            path="/conversation/:id" 
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <Conversation />
+              </Suspense>
+            } 
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { AlertCircle, Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { checkNetworkConnection, setupNetworkMonitoring } from "@/hooks/auth/networkUtils";
+import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
 import { useToast } from "@/hooks/use-toast";
 
 interface NetworkStatusProps {
@@ -18,26 +18,54 @@ export function NetworkStatus({ onRetry }: NetworkStatusProps) {
 
   // Setup network monitoring
   useEffect(() => {
-    const cleanup = setupNetworkMonitoring((online) => {
-      // If status changes to online from offline, show toast
-      if (online && !isOnline) {
-        toast({
-          title: "Connection restored",
-          description: "You're back online. Real-time updates resumed.",
-          duration: 3000,
-        });
-        setShowBanner(false);
-      }
-      
-      // If status changes to offline, show banner
-      if (!online && isOnline) {
-        setShowBanner(true);
-      }
-      
-      setIsOnline(online);
-    }, 10000); // Check every 10 seconds
+    const handleOnline = () => {
+      setIsOnline(true);
+      setShowBanner(false);
+      toast({
+        title: "Connection restored",
+        description: "You're back online. Real-time updates resumed.",
+        duration: 3000,
+      });
+    };
     
-    return cleanup;
+    const handleOffline = () => {
+      setIsOnline(false);
+      setShowBanner(true);
+    };
+    
+    // Initial check
+    checkNetworkConnection().then(online => {
+      setIsOnline(online);
+      setShowBanner(!online);
+    });
+    
+    // Listen for browser online/offline events
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Periodic check
+    const intervalId = setInterval(() => {
+      checkNetworkConnection().then(online => {
+        if (online !== isOnline) {
+          setIsOnline(online);
+          setShowBanner(!online);
+          
+          if (online && !isOnline) {
+            toast({
+              title: "Connection restored",
+              description: "You're back online. Real-time updates resumed.",
+              duration: 3000,
+            });
+          }
+        }
+      });
+    }, 10000);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(intervalId);
+    };
   }, [isOnline, toast]);
 
   const handleManualCheck = async () => {

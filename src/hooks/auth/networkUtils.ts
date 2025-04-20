@@ -35,6 +35,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
     
     try {
       // Simple, lightweight query to check Supabase connection
+      // Use signal method directly with controller instead of abortSignal
       await supabase.from('profiles')
         .select('id')
         .limit(1)
@@ -54,7 +55,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
   }
 };
 
-// New utility to periodically monitor network status
+// Network status monitoring function for components that need it
 export const setupNetworkMonitoring = (
   onStatusChange: (online: boolean) => void,
   intervalMs = 15000
