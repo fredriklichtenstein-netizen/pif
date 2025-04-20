@@ -1,4 +1,3 @@
-
 import { memo } from "react";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -11,7 +10,6 @@ import { CommentSection } from "@/components/post/CommentSection";
 import type { ItemCardProps } from "./types";
 import { NetworkStatus } from "../common/NetworkStatus";
 import { parseCoordinatesFromDB } from "@/types/post";
-
 const ItemCard = memo(function ItemCard({
   id,
   title,
@@ -25,19 +23,20 @@ const ItemCard = memo(function ItemCard({
   measurements = {},
   postedBy
 }: ItemCardProps) {
-  const { session } = useGlobalAuth();
+  const {
+    session
+  } = useGlobalAuth();
   const isOwner = session?.user?.id === postedBy.id;
-  
+
   // Debug log for coordinates
   console.log(`ItemCard ${id} coordinates:`, coordinates);
-  
+
   // Parse coordinates if they're in string format
   let parsedCoordinates = coordinates;
   if (coordinates && typeof coordinates === 'string') {
     parsedCoordinates = parseCoordinatesFromDB(coordinates);
     console.log("Parsed coordinates:", parsedCoordinates);
   }
-  
   const {
     isLiked,
     likesCount,
@@ -68,80 +67,22 @@ const ItemCard = memo(function ItemCard({
     realtimeError,
     refreshItemData
   } = useItemCard(id);
-
-  return (
-    <Card 
-      id={`item-card-${id}`}
-      className="overflow-hidden transition-shadow hover:shadow-md rounded-xl"
-    >
-      {realtimeError && (
-        <NetworkStatus onRetry={refreshItemData} />
-      )}
+  return <Card id={`item-card-${id}`} className="overflow-hidden transition-shadow hover:shadow-md rounded-xl">
+      {realtimeError && <NetworkStatus onRetry={refreshItemData} />}
       
-      <ItemCardHeader 
-        postedBy={postedBy} 
-        isOwner={isOwner} 
-        isBookmarked={isBookmarked} 
-        handleBookmark={handleBookmark} 
-        handleShare={handleShare} 
-        handleReport={handleReport}
-        coordinates={parsedCoordinates}
-      />
+      <ItemCardHeader postedBy={postedBy} isOwner={isOwner} isBookmarked={isBookmarked} handleBookmark={handleBookmark} handleShare={handleShare} handleReport={handleReport} coordinates={parsedCoordinates} />
       
       <div className="relative">
-        <ItemCardGallery 
-          images={images.length > 0 ? images : image ? [image] : []} 
-          title={title} 
-          category={category} 
-        />
+        <ItemCardGallery images={images.length > 0 ? images : image ? [image] : []} title={title} category={category} />
       </div>
       
-      <div className="p-4">
-        <ItemInteractions 
-          id={id}
-          postedBy={postedBy}
-          isLiked={isLiked}
-          showComments={showComments}
-          isBookmarked={isBookmarked}
-          showInterest={showInterest}
-          isOwner={isOwner}
-          commentsCount={commentsCount}
-          likesCount={likesCount}
-          interestsCount={interestsCount}
-          likers={likers}
-          interestedUsers={interestedUsers}
-          commenters={commenters}
-          onLikeToggle={handleLike}
-          onCommentToggle={handleCommentToggle}
-          onShowInterest={handleShowInterest}
-          onBookmarkToggle={handleBookmark}
-          onMessage={handleMessage}
-          onShare={handleShare}
-          onReport={handleReport}
-          interactionsLoading={interactionsLoading}
-          isLoadingInterested={isLoadingInterested}
-          interestedError={interestedError}
-          getInterestedUsers={getInterestedUsers}
-          isRealtimeSubscribed={isRealtimeSubscribed}
-        />
+      <div className="p-4 py-0">
+        <ItemInteractions id={id} postedBy={postedBy} isLiked={isLiked} showComments={showComments} isBookmarked={isBookmarked} showInterest={showInterest} isOwner={isOwner} commentsCount={commentsCount} likesCount={likesCount} interestsCount={interestsCount} likers={likers} interestedUsers={interestedUsers} commenters={commenters} onLikeToggle={handleLike} onCommentToggle={handleCommentToggle} onShowInterest={handleShowInterest} onBookmarkToggle={handleBookmark} onMessage={handleMessage} onShare={handleShare} onReport={handleReport} interactionsLoading={interactionsLoading} isLoadingInterested={isLoadingInterested} interestedError={interestedError} getInterestedUsers={getInterestedUsers} isRealtimeSubscribed={isRealtimeSubscribed} />
 
-        <ItemCardContent 
-          description={description} 
-          measurements={measurements} 
-        />
+        <ItemCardContent description={description} measurements={measurements} />
         
-        {showComments && (
-          <CommentSection 
-            itemId={id}
-            comments={comments}
-            setComments={setComments}
-            isLoading={commentsLoading}
-            error={commentsError}
-          />
-        )}
+        {showComments && <CommentSection itemId={id} comments={comments} setComments={setComments} isLoading={commentsLoading} error={commentsError} />}
       </div>
-    </Card>
-  );
+    </Card>;
 });
-
 export { ItemCard };
