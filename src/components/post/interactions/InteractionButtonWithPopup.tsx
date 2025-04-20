@@ -104,7 +104,7 @@ export function InteractionButtonWithPopup({
         <div className="flex flex-row items-center justify-center mt-1 min-h-[22px] space-x-1">
           <span style={{
           color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR
-        }} className="text-xs font-medium select-none mx-[6px]">
+        }} className="text-xs font-medium select-none mx-[4px]">
             {isActive ? labelActive : labelPassive}
           </span>
           {displayCount > 0 && (isCounterInteractive ? <Popover open={showPopup} onOpenChange={setShowPopup}>
