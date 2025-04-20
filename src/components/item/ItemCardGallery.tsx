@@ -77,7 +77,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
           <h3 className="text-white text-sm font-display font-medium tracking-wide drop-shadow-md">
             {title}
           </h3>
-          <h2 className="text-white text-2xl font-display font-semibold tracking-wide drop-shadow-md uppercase">
+          <h2 className="text-white text-3xl font-display font-bold tracking-wide drop-shadow-md uppercase">
             {category}
           </h2>
         </div>
