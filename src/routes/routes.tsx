@@ -37,11 +37,12 @@ const enhancedLazy = (importFn: () => Promise<any>) => {
 };
 
 // Lazy load components with enhanced error handling
-const Index = enhancedLazy(() => import("@/pages/Index"));
+const Home = enhancedLazy(() => import("@/pages/Home"));
 const Map = enhancedLazy(() => import("@/pages/Map"));
 const Messages = enhancedLazy(() => import("@/pages/Messages"));
 const Post = enhancedLazy(() => import("@/pages/Post"));
 const Profile = enhancedLazy(() => import("@/pages/Profile"));
+const Feed = enhancedLazy(() => import("@/pages/Feed"));
 const AccountSettings = enhancedLazy(() => import("@/pages/AccountSettings"));
 const Auth = enhancedLazy(() => import("@/pages/Auth"));
 const EmailConfirmation = enhancedLazy(() => import("@/pages/EmailConfirmation"));
@@ -57,7 +58,8 @@ const withSuspense = (Component: React.ComponentType) => (
 );
 
 export const publicRoutes = [
-  { path: "/", element: withSuspense(Index) },
+  { path: "/", element: withSuspense(Home) },
+  { path: "/feed", element: withSuspense(Feed) },
   { path: "/map", element: withSuspense(Map) },
   { path: "/auth", element: withSuspense(Auth) },
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },

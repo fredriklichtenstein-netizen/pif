@@ -15,13 +15,29 @@ export function useFeedPosts() {
     
     try {
       const { data, error } = await supabase
-        .from('posts')
-        .select('*')
+        .from('items')
+        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
         .order('created_at', { ascending: false });
         
       if (error) throw error;
       
-      setPosts(data || []);
+      // Transform data to match the expected format
+      const transformedData = data?.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        images: item.images,
+        location: item.location,
+        coordinates: item.coordinates,
+        category: item.category,
+        condition: item.condition,
+        measurements: item.measurements,
+        user_id: item.user_id,
+        user_name: item.profiles ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() : 'Anonymous',
+        user_avatar: item.profiles?.avatar_url || ''
+      })) || [];
+      
+      setPosts(transformedData);
     } catch (err: any) {
       console.error('Error fetching posts:', err);
       setError(err);
