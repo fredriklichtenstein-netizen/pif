@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { getPosts } from "@/services/posts";
@@ -62,7 +61,7 @@ export default function Map() {
       <div
         className="absolute top-0 left-0 right-0"
         style={{
-          bottom: navHeight - 1, // One pixel less, so map touches nav border line exactly
+          bottom: navHeight - 5, // Adjusted per user request to fill closer to nav bar
         }}
       >
         {error ? (
@@ -107,4 +106,3 @@ export default function Map() {
     </div>
   );
 }
-
