@@ -40,7 +40,7 @@ export function ItemInteractions({
   }
   
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col space-y-1"> {/* Reduced vertical spacing */}
       <InteractionCounts 
         likesCount={likesCount}
         commentsCount={commentsCount}
@@ -53,7 +53,7 @@ export function ItemInteractions({
         getInterestedUsers={getInterestedUsers}
       />
       
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center"> {/* No additional spacing */}
         <PrimaryActions 
           isLiked={isLiked}
           showComments={showComments}

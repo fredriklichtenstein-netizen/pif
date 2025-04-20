@@ -52,7 +52,7 @@ export function InteractionCounts({
   }
 
   return (
-    <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-2 border-b border-gray-200">
+    <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-1 border-b border-gray-200"> {/* Reduced vertical padding */}
       {likesCount > 0 && (
         <Popover>
           <PopoverTrigger asChild>
@@ -83,7 +83,7 @@ export function InteractionCounts({
         </Popover>
       )}
       
-      <div className="ml-auto flex gap-2">
+      <div className="ml-auto flex gap-1"> {/* Reduced gap */}
         {commentsCount > 0 && (
           <button onClick={onCommentToggle} className="hover:underline">
             {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}

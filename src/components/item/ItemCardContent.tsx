@@ -14,15 +14,13 @@ export function ItemCardContent({ description, measurements = {} }: ItemCardCont
   
   return (
     <div className="mt-2">
-      <Separator className="mb-4" />
-      
-      <div className="text-sm text-gray-600">
-        <p className="mb-2">{truncatedDescription}</p>
+      <div className="text-sm text-gray-600 px-1"> {/* Reduced padding */}
+        <p className="mb-1">{truncatedDescription}</p> {/* Reduced margin */}
         
         {hasDetails && expanded && (
-          <div className="mt-2 space-y-1">
+          <div className="mt-1 space-y-1"> {/* Reduced margin */}
             <p className="font-medium text-xs text-gray-500 uppercase tracking-wide">Details</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-1 text-xs"> {/* Reduced gap */}
               {Object.entries(measurements).map(([key, value]) => (
                 <div key={key} className="flex">
                   <span className="font-medium mr-1">{key}:</span>

@@ -48,8 +48,8 @@ export function PrimaryActions({
 
   return (
     <div className="flex flex-col w-full">
-      <Separator className="my-2" />
-      <div className="flex items-center space-x-4">
+      <Separator className="my-1" /> {/* Reduced margin */}
+      <div className="flex items-center space-x-2"> {/* Reduced horizontal spacing */}
         <PostActions actions={actions} />
       </div>
     </div>
