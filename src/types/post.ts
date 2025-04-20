@@ -38,6 +38,7 @@ export const formatCoordinatesForDB = (coords: Coordinates | undefined): string 
 };
 
 export const parseCoordinatesFromDB = (point: string | null): Coordinates | undefined => {
+  // Early return if point is null
   if (!point) return undefined;
   
   // Handle different potential formats
@@ -46,34 +47,37 @@ export const parseCoordinatesFromDB = (point: string | null): Coordinates | unde
     if (typeof point === 'object' && point !== null) {
       if ('lat' in point && 'lng' in point) {
         return {
+          // Use type assertion after null check
           lat: Number((point as any).lat),
           lng: Number((point as any).lng)
         };
       }
     }
     
-    // At this point, we know point is a non-null string
-    // Handle the string format: (lng,lat)
-    const matches = point.match(/\(([-\d.]+),([-\d.]+)\)/);
-    if (matches && matches.length >= 3) {
-      return {
-        lng: parseFloat(matches[1]),
-        lat: parseFloat(matches[2])
-      };
-    }
-    
-    // Try to parse as JSON if it's a stringified object
-    try {
-      const parsed = JSON.parse(point);
-      if (parsed && typeof parsed === 'object' && 'lat' in parsed && 'lng' in parsed) {
+    // At this point, we know point is a non-null string if not an object
+    if (typeof point === 'string') {
+      // Handle the string format: (lng,lat)
+      const matches = point.match(/\(([-\d.]+),([-\d.]+)\)/);
+      if (matches && matches.length >= 3) {
         return {
-          lat: Number(parsed.lat),
-          lng: Number(parsed.lng)
+          lng: parseFloat(matches[1]),
+          lat: parseFloat(matches[2])
         };
       }
-    } catch (e) {
-      // Not a valid JSON string, ignore this error
-      console.log("Not a valid JSON string:", point);
+      
+      // Try to parse as JSON if it's a stringified object
+      try {
+        const parsed = JSON.parse(point);
+        if (parsed && typeof parsed === 'object' && 'lat' in parsed && 'lng' in parsed) {
+          return {
+            lat: Number(parsed.lat),
+            lng: Number(parsed.lng)
+          };
+        }
+      } catch (e) {
+        // Not a valid JSON string, ignore this error
+        console.log("Not a valid JSON string:", point);
+      }
     }
   } catch (e) {
     console.error("Error parsing coordinates:", e, point);
