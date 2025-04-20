@@ -1,4 +1,3 @@
-
 import { memo } from "react";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -7,7 +6,7 @@ import { ItemCardHeader } from "./ItemCardHeader";
 import { ItemCardGallery } from "./ItemCardGallery";
 import { ItemCardContent } from "./ItemCardContent";
 import { ItemInteractions } from "./ItemInteractions";
-import { CommentSection } from "@/components/comments/CommentSection";
+import { CommentSection } from "@/components/post/CommentSection";
 import type { ItemCardProps } from "./types";
 import { NetworkStatus } from "../common/NetworkStatus";
 

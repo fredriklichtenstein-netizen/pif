@@ -1,7 +1,7 @@
 
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { ItemCardWrapper } from "@/components/ItemCardWrapper";
-import { ItemCard } from "@/components/ItemCard";
+import { ItemCard } from "@/components/item/ItemCard";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { Loader2 } from "lucide-react";
 import { MainNav } from "@/components/MainNav";
