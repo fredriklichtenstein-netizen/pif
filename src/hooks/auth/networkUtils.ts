@@ -6,16 +6,12 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
   }
   
   try {
-    // Use a faster, lighter endpoint for connectivity check
+    // Use a multi-stage approach to check connectivity
     const controller = new AbortController();
-    let timeoutId: number | undefined;
+    const timeoutId = window.setTimeout(() => controller.abort(), 3000);
     
     try {
-      timeoutId = window.setTimeout(() => controller.abort(), 3000);
-      
-      const startTime = Date.now();
-      
-      // Try a faster HEAD request to a lightweight endpoint
+      // 1. Try a faster HEAD request to a reliable endpoint first
       const response = await fetch('https://www.gstatic.com/generate_204', { 
         method: 'HEAD',
         mode: 'no-cors',
@@ -23,31 +19,88 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
         signal: controller.signal
       });
       
-      if (timeoutId) window.clearTimeout(timeoutId);
+      window.clearTimeout(timeoutId);
       return true;
     } catch (e) {
-      // Fall through to Supabase check
-      if (timeoutId) window.clearTimeout(timeoutId);
+      // If the first check fails, clear timeout and continue to Supabase check
+      window.clearTimeout(timeoutId);
     }
     
-    // Use a simplified Supabase ping that's faster
+    // 2. Try Supabase connectivity as backup
     const { supabase } = await import('@/integrations/supabase/client');
-    const pingStartTime = Date.now();
     
-    // Just check if connection to Supabase is available - use a simple query
-    // instead of specific RPC which might not be available
-    await supabase.from('profiles').select('id').limit(1).maybeSingle();
+    // Use a new controller for the second request
+    const supabaseController = new AbortController();
+    const supabaseTimeoutId = window.setTimeout(() => supabaseController.abort(), 4000);
     
-    const endTime = Date.now();
-    
-    // If the request takes too long, consider it a network issue
-    if (endTime - pingStartTime > 4000) { // Reduced from 7000ms
-      console.warn('Network connection is very slow');
+    try {
+      // Simple, lightweight query to check Supabase connection
+      await supabase.from('profiles')
+        .select('id')
+        .limit(1)
+        .maybeSingle()
+        .abortSignal(supabaseController.signal);
+      
+      window.clearTimeout(supabaseTimeoutId);
+      return true;
+    } catch (error) {
+      window.clearTimeout(supabaseTimeoutId);
+      console.warn('Supabase connectivity check failed:', error);
       return false;
     }
-    
-    return true;
   } catch (error) {
+    console.error('Network connectivity check failed:', error);
     return false;
   }
+};
+
+// New utility to periodically monitor network status
+export const setupNetworkMonitoring = (
+  onStatusChange: (online: boolean) => void,
+  intervalMs = 15000
+): () => void => {
+  let lastStatus: boolean | null = null;
+  
+  const checkStatus = async () => {
+    try {
+      const isOnline = await checkNetworkConnection();
+      
+      // Only notify if status has changed
+      if (lastStatus === null || lastStatus !== isOnline) {
+        lastStatus = isOnline;
+        onStatusChange(isOnline);
+      }
+    } catch (e) {
+      console.error('Error in network monitoring:', e);
+    }
+  };
+  
+  // Initial check
+  checkStatus();
+  
+  // Setup interval
+  const intervalId = window.setInterval(checkStatus, intervalMs);
+  
+  // Setup browser online/offline events as backup
+  const handleOnline = () => {
+    console.log('Browser reports online');
+    lastStatus = true;
+    onStatusChange(true);
+  };
+  
+  const handleOffline = () => {
+    console.log('Browser reports offline');
+    lastStatus = false;
+    onStatusChange(false);
+  };
+  
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+  
+  // Return cleanup function
+  return () => {
+    window.clearInterval(intervalId);
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+  };
 };

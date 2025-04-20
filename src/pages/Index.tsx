@@ -31,54 +31,59 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
+  const [networkStatus, setNetworkStatus] = useState<boolean>(true);
+  
+  // Set up network monitoring
+  useEffect(() => {
+    const cleanup = setupNetworkMonitoring((online) => {
+      setNetworkStatus(online);
+      
+      // If we come back online and had an error, try refreshing
+      if (online && error && !hasAttemptedRefresh) {
+        toast({
+          title: "Connection restored",
+          description: "Attempting to reload data...",
+        });
+        setHasAttemptedRefresh(true);
+        fetchPosts();
+      }
+    });
+    
+    return cleanup;
+  }, [error, hasAttemptedRefresh]);
   
   // Fetch posts with better error handling
-  useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
-    
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const data = await getPosts();
-        if (isMounted) {
-          console.log("Fetched posts:", data?.length);
-          setPosts(data || []);
-        }
-      } catch (err) {
-        console.error("Error fetching posts:", err);
-        if (isMounted) {
-          setError("Failed to load items. Please try again later.");
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to load items. Please try again later.",
-          });
-          
-          // Auto-retry once if not already attempted
-          if (!hasAttemptedRefresh) {
-            setTimeout(() => {
-              if (isMounted) {
-                fetchPosts();
-                setHasAttemptedRefresh(true);
-              }
-            }, 3000);
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const data = await getPosts();
+      setPosts(data || []);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+      setError("Failed to load items. Please try again later.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load items. Please try again later.",
+      });
+      
+      // Auto-retry once if not already attempted and if it seems like a network error
+      if (!hasAttemptedRefresh && isNetworkError(err)) {
+        setTimeout(() => {
+          setHasAttemptedRefresh(true);
+          fetchPosts();
+        }, 3000);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Fetch posts on mount
+  useEffect(() => {
     fetchPosts();
-    
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [toast, hasAttemptedRefresh]);
+  }, []);
 
   // Filter posts based on selected category
   const filteredPosts = posts.filter(post => {
@@ -92,6 +97,16 @@ export default function Index() {
         <h1 className="text-2xl font-bold text-primary">PIF Community</h1>
         <p className="text-sm text-gray-500">Sustainable sharing in your neighborhood</p>
       </div>
+
+      {/* Network status banner */}
+      {!networkStatus && (
+        <Alert variant="destructive" className="mb-4">
+          <WifiOff className="h-4 w-4 mr-2" />
+          <AlertDescription>
+            Connection Error. Live updates unavailable. Data may not be real-time.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Category filters */}
       <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
@@ -135,19 +150,20 @@ export default function Index() {
         </div>
       )}
 
-      {/* Error state */}
+      {/* Error state with retry */}
       {error && !loading && (
         <div className="text-center py-10">
           <p className="text-red-500 mb-2">{error}</p>
-          <button 
+          <Button 
             onClick={() => {
               setHasAttemptedRefresh(false);
-              window.location.reload();
+              fetchPosts();
             }}
             className="bg-green-500 text-white px-4 py-2 rounded-full text-sm"
           >
+            <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
-          </button>
+          </Button>
         </div>
       )}
 

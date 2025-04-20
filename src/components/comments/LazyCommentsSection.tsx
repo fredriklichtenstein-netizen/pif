@@ -12,6 +12,7 @@ import { useLazyComments } from "@/hooks/comments/useLazyComments";
 import { useCommentActions } from "@/hooks/comments/useCommentActions";
 import { useCommentRealtime } from "@/hooks/comments/useCommentRealtime";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { NetworkStatus } from "../common/NetworkStatus";
 import { AlertTriangle } from "lucide-react";
 
 interface LazyCommentsSectionProps {
@@ -49,7 +50,7 @@ export function LazyCommentsSection({
     avatar: user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.user_metadata?.full_name || 'U')}&background=random`
   } : undefined;
   
-  const { isSubscribed } = useCommentRealtime(itemId, comments, setComments);
+  const { isSubscribed, error: realtimeError } = useCommentRealtime(itemId, comments, setComments);
 
   const {
     handleAddComment,
@@ -57,8 +58,7 @@ export function LazyCommentsSection({
     handleEditComment,
     handleDeleteComment,
     handleReplyToComment,
-    handleReportComment,
-    refreshComments: refreshFromActions
+    handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser);
 
   if (!isVisible) {
@@ -71,6 +71,11 @@ export function LazyCommentsSection({
 
   return (
     <Card className="mt-4 p-4 shadow-sm border-gray-100 transition-all duration-300">
+      {/* Network status banner at the top */}
+      {(error || realtimeError) && (
+        <NetworkStatus onRetry={refreshComments} />
+      )}
+      
       <div className="flex justify-between items-center">
         <CommentsHeader isSubscribed={isSubscribed} />
         {onClose && (
@@ -98,7 +103,7 @@ export function LazyCommentsSection({
         />
       )}
       
-      {!isSubscribed && isInitialized && (
+      {!isSubscribed && isInitialized && !error && (
         <div className="mt-4 px-3 py-2 bg-amber-50 text-amber-800 rounded-md flex items-center text-sm border border-amber-200">
           <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
           <span>Live updates unavailable. Comments may not refresh automatically.</span>

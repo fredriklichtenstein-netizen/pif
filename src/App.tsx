@@ -1,81 +1,47 @@
-
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { MainNav } from "./components/MainNav";
-import { publicRoutes, privateRoutes } from "./routes/routes";
 import { useEffect } from "react";
-import { initializeAuth } from "./hooks/useGlobalAuth";
+import { initializeAuth } from "@/hooks/useGlobalAuth";
+import { MainHeader } from "@/components/layout/MainHeader";
+import { NetworkStatusDebugger } from "@/components/debug/NetworkStatusDebugger";
 
-// Create a new QueryClient instance with better error handling
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30000,
-    },
-  },
-});
+// Import your pages here
+import Index from "@/pages/Index";
+import Map from "@/pages/Map";
+import Post from "@/pages/Post";
+import Auth from "@/pages/Auth";
+import Profile from "@/pages/Profile";
+import Messages from "@/pages/Messages";
+import Conversation from "@/pages/Conversation";
+import NotFound from "@/pages/NotFound";
 
-const AppContent = () => {
+function App() {
+  // Initialize auth on app load
   useEffect(() => {
-    // Initialize global auth state
-    let unsubscribe: (() => void) | undefined;
-    
-    try {
-      // Initialize auth and get unsubscribe function
-      initializeAuth()
-        .then(sub => {
-          if (sub && typeof sub.unsubscribe === 'function') {
-            unsubscribe = sub.unsubscribe;
-          }
-        })
-        .catch(error => {
-          console.error("Error initializing auth:", error);
-        });
-    } catch (error) {
-      console.error("Error initializing auth:", error);
-    }
-    
-    // Cleanup subscription on unmount
-    return () => {
-      if (unsubscribe) {
-        try {
-          unsubscribe();
-        } catch (error) {
-          console.error("Error unsubscribing from auth:", error);
-        }
-      }
-    };
+    initializeAuth();
   }, []);
 
   return (
-    <>
-      <Routes>
-        {publicRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
-        ))}
-        {privateRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
-        ))}
-      </Routes>
-      <MainNav />
-    </>
-  );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    <Router>
+      <MainHeader />
+      <main>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/map" element={<Map />} />
+          <Route path="/post" element={<Post />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/conversation/:id" element={<Conversation />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      
+      {/* Add the Network Debugger in development mode */}
+      {process.env.NODE_ENV === 'development' && <NetworkStatusDebugger />}
+    </Router>
+  );
+}
 
 export default App;

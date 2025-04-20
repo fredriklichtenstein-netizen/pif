@@ -178,7 +178,11 @@ const ItemCard = memo(function ItemCard({
       id={`item-card-${id}`}
       className={`mb-6 overflow-hidden transition-shadow hover:shadow-md ${!isMobile ? 'max-w-3xl mx-auto' : ''}`}
     >
-      {hasError && showErrorAlert && (
+      {(realtimeError || hasError) && (
+        <NetworkStatus onRetry={handleRetryConnection} />
+      )}
+      
+      {hasError && showErrorAlert && !realtimeError && (
         <Alert variant="destructive" className="m-2 mb-0">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex justify-between items-center">
