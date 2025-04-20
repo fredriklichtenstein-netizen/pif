@@ -19,53 +19,54 @@ export const useCommentRealtime = (
   // Add comment to the list (for inserts)
   const handleCommentInsert = useCallback((newComment: any) => {
     const formattedComment = formatCommentFromDB(newComment, newComment.user_id === user?.id);
+    setComments(currentComments => {
+      // Don't add duplicate comments
+      if (currentComments.some(c => c.id === formattedComment.id)) {
+        return currentComments;
+      }
+      return [...currentComments, formattedComment];
+    });
     
-    // Don't add duplicate comments
-    if (comments.some(c => c.id === formattedComment.id)) return;
-    
-    setComments([...comments, formattedComment]);
-    
-    // Optionally show a toast notification for new comments (only if not from current user)
+    // Show toast for new comments from others
     if (newComment.user_id !== user?.id) {
       toast({
         title: "New Comment",
         description: `${formattedComment.author.name} added a comment`,
       });
     }
-  }, [comments, setComments, user?.id, toast]);
+  }, [user?.id, setComments, toast]);
 
   // Update an existing comment (for updates)
   const handleCommentUpdate = useCallback((updatedComment: any) => {
-    setComments(comments.map(comment => {
-      if (comment.id === updatedComment.id.toString()) {
-        const formattedComment = formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id);
-        return formattedComment;
-      }
-      return comment;
-    }));
-  }, [comments, setComments, user?.id]);
+    setComments(currentComments => 
+      currentComments.map(comment => 
+        comment.id === updatedComment.id.toString()
+          ? formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id)
+          : comment
+      )
+    );
+  }, [user?.id, setComments]);
 
   // Remove a comment from the list (for deletes)
   const handleCommentDelete = useCallback((deletedComment: any) => {
-    setComments(comments.filter(comment => comment.id !== deletedComment.id.toString()));
-  }, [comments, setComments]);
+    setComments(currentComments => 
+      currentComments.filter(comment => comment.id !== deletedComment.id.toString())
+    );
+  }, [setComments]);
 
-  // Set up real-time subscription
   useEffect(() => {
-    if (!itemId || isSubscribed) return;
+    if (!itemId) return;
     
     try {
-      // Parse the itemId to ensure it's a number
       const numericItemId = parseInt(itemId);
       if (isNaN(numericItemId)) {
         throw new Error(`Invalid item ID: ${itemId}`);
       }
       
-      console.log(`Setting up real-time subscription for comments on item ${numericItemId}`);
-
-      // Subscribe to all changes (INSERT, UPDATE, DELETE) for this item
+      console.log('Setting up real-time subscription for comments');
+      
       const channel = supabase
-        .channel('comment-changes')
+        .channel(`comments-${numericItemId}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
@@ -94,24 +95,28 @@ export const useCommentRealtime = (
           handleCommentDelete(payload.old);
         })
         .subscribe((status) => {
-          console.log(`Real-time subscription status: ${status}`);
           if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to real-time comments');
             setIsSubscribed(true);
+            setError(null);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Failed to subscribe to real-time comments');
+            setIsSubscribed(false);
+            setError(new Error('Failed to connect to real-time updates'));
           }
         });
 
-      // Clean up subscription when component unmounts
       return () => {
         console.log('Cleaning up real-time subscription');
         supabase.removeChannel(channel);
         setIsSubscribed(false);
       };
     } catch (error) {
-      console.error('Error setting up real-time subscription:', error);
+      console.error('Error in real-time subscription:', error);
       setError(error instanceof Error ? error : new Error('Unknown error'));
       setIsSubscribed(false);
     }
-  }, [itemId, isSubscribed, handleCommentInsert, handleCommentUpdate, handleCommentDelete]);
+  }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete]);
 
   return {
     isSubscribed,
