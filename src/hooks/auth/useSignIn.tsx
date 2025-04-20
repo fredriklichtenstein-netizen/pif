@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -127,6 +126,7 @@ export function useSignIn() {
 
       console.log("Profile check result:", { profile, profileError });
 
+      // Always redirect to home ("/") after sign-in successful, no matter what
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         toast({
@@ -143,14 +143,11 @@ export function useSignIn() {
           title: "Complete your profile",
           description: "Let's set up your profile to get started.",
         });
+        // Optionally: if you want users to setup profile, keep this, but always show Home after ("navigate("/")"), otherwise comment out the next line
         navigate("/create-profile");
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in.",
-        });
-        navigate("/");
       }
+      // Always show home after any sign in
+      navigate("/");
       setSigningIn(false);
       return true;
     } catch (profileError) {

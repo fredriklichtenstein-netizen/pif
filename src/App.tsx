@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, lazy, Suspense } from "react";
 import { initializeAuth } from "@/hooks/useGlobalAuth";
-import { MainHeader } from "@/components/layout/MainHeader";
 import { NetworkStatusDebugger } from "@/components/debug/NetworkStatusDebugger";
 
 // Import your pages here
@@ -34,7 +33,7 @@ function App() {
 
   return (
     <Router>
-      <MainHeader />
+      {/* MainHeader removed */}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -56,7 +55,6 @@ function App() {
         </Routes>
       </main>
       <Toaster />
-      
       {/* Add the Network Debugger in development mode */}
       {process.env.NODE_ENV === 'development' && <NetworkStatusDebugger />}
     </Router>

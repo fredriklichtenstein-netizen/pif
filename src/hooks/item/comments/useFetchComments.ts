@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Comment } from "@/types/comment";
@@ -111,8 +110,8 @@ export const useFetchComments = (itemId: string) => {
 
           const signal = controller?.signal;
 
-          // Create the query but don't execute it yet
-          let query = supabase
+          // Run the query and get a real data/error result object
+          const query = supabase
             .from('comments')
             .select(`
               id,
@@ -129,26 +128,27 @@ export const useFetchComments = (itemId: string) => {
             .eq('item_id', numericItemId)
             .order('created_at', { ascending: true });
 
-          // Using proper fetchWithTimeout with the query execution
+          // Use abortSignal and await the full promise
+          let queryResult;
+          if (signal && typeof query.abortSignal === "function") {
+            queryResult = await query.abortSignal(signal);
+          } else {
+            queryResult = await query;
+          }
+
+          // Use fetchWithTimeout around the final result value, so it's always a promise with data/error
           const response = await fetchWithTimeout(
-            async () => {
-              // Add abort signal if available
-              if (signal) {
-                return await query.abortSignal(signal);
-              }
-              return await query;
-            },
+            () => Promise.resolve(queryResult),
             5000
           );
-          
-          // Now properly access data and error from the response
+
           if (response.error) {
             console.error("[useFetchComments] Error in Supabase query:", response.error);
             throw response.error;
           }
 
           const commentsData = response.data;
-          
+
           if (!commentsData) {
             console.log("[useFetchComments] No comments data returned");
             return [];
