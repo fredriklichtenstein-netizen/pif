@@ -2,7 +2,6 @@
 import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
 import { PostActions } from "../PostActions";
 import type { PostAction } from "@/types/comment";
-import { Separator } from "@/components/ui/separator";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -48,7 +47,7 @@ export function PrimaryActions({
 
   return (
     <div className="flex flex-col w-full">
-      <Separator className="my-1" /> {/* Reduced margin */}
+      {/* Removed separator here per user request to avoid double lines */}
       <div className="flex items-center space-x-2"> {/* Reduced horizontal spacing */}
         <PostActions actions={actions} />
       </div>

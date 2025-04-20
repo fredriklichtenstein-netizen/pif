@@ -5,6 +5,7 @@ import { SecondaryActions } from "../post/interactions/SecondaryActions";
 import { InteractionsLoading } from "../post/interactions/InteractionsLoading";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { ItemInteractionsProps } from "./types";
+import { Separator } from "@/components/ui/separator";
 
 export function ItemInteractions({
   id,
@@ -53,26 +54,26 @@ export function ItemInteractions({
         getInterestedUsers={getInterestedUsers}
       />
       
-      <div className="flex justify-between items-center"> {/* No additional spacing */}
-        <PrimaryActions 
-          isLiked={isLiked}
-          showComments={showComments}
-          isOwner={isOwner}
-          onLikeToggle={onLikeToggle}
-          onCommentToggle={onCommentToggle}
-          onShowInterest={onShowInterest}
-        />
-        
-        <SecondaryActions 
-          isBookmarked={isBookmarked}
-          isOwner={isOwner}
-          onBookmarkToggle={onBookmarkToggle}
-          onShare={onShare}
-          onReport={onReport}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      </div>
+      <PrimaryActions 
+        isLiked={isLiked}
+        showComments={showComments}
+        isOwner={isOwner}
+        onLikeToggle={onLikeToggle}
+        onCommentToggle={onCommentToggle}
+        onShowInterest={onShowInterest}
+      />
+
+      <Separator className="my-1" /> {/* Moved separator line here, between buttons and description */}
+      
+      <SecondaryActions 
+        isBookmarked={isBookmarked}
+        isOwner={isOwner}
+        onBookmarkToggle={onBookmarkToggle}
+        onShare={onShare}
+        onReport={onReport}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
       
       {showComments && (
         <LazyCommentsSection

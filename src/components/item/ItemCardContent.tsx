@@ -1,20 +1,28 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import type { ItemCardContentProps } from "./types";
 import { Separator } from "@/components/ui/separator";
 
-export function ItemCardContent({ description, measurements = {} }: ItemCardContentProps) {
+interface ItemCardContentProps {
+  title?: string;
+  description: string;
+  measurements?: Record<string, string>;
+}
+
+export function ItemCardContent({ title, description, measurements = {} }: ItemCardContentProps) {
   const [expanded, setExpanded] = useState(false);
   const hasDetails = Object.keys(measurements).length > 0;
   
+  // Limit description to first 150 characters if not expanded
   const truncatedDescription = !expanded && description.length > 150 
     ? `${description.substring(0, 150)}...` 
     : description;
   
   return (
-    <div className="mt-2">
-      <div className="text-sm text-gray-600 px-1"> {/* Reduced padding */}
+    <div className="mt-2 mb-4 px-1"> {/* Added horizontal padding here for frame edge spacing */}
+      {title && <h3 className="text-lg font-semibold mb-1">{title}</h3>}
+      
+      <div className="text-sm text-gray-600"> {/* Removed px padding here to allow padding from container */}
         <p className="mb-1">{truncatedDescription}</p> {/* Reduced margin */}
         
         {hasDetails && expanded && (
