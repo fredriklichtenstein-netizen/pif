@@ -16,6 +16,9 @@ export function ItemCardHeader({
   handleReport,
   coordinates
 }: ItemCardHeaderProps) {
+  // Add console logs to debug coordinates
+  console.log("ItemCardHeader coordinates:", coordinates);
+  
   const distanceText = useDistanceCalculation(coordinates);
   
   return (
@@ -27,12 +30,10 @@ export function ItemCardHeader({
         </Avatar>
         <div>
           <div className="text-sm font-medium">{postedBy.name}</div>
-          {distanceText && (
-            <div className="text-xs text-gray-500 flex items-center">
-              <MapPin size={12} className="mr-1" />
-              {distanceText}
-            </div>
-          )}
+          <div className="text-xs text-gray-500 flex items-center">
+            <MapPin size={12} className="mr-1" />
+            {distanceText || "NaN km"}
+          </div>
         </div>
       </div>
       

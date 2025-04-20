@@ -10,6 +10,7 @@ import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "@/components/post/CommentSection";
 import type { ItemCardProps } from "./types";
 import { NetworkStatus } from "../common/NetworkStatus";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 const ItemCard = memo(function ItemCard({
   id,
@@ -26,6 +27,16 @@ const ItemCard = memo(function ItemCard({
 }: ItemCardProps) {
   const { session } = useGlobalAuth();
   const isOwner = session?.user?.id === postedBy.id;
+  
+  // Debug log for coordinates
+  console.log(`ItemCard ${id} coordinates:`, coordinates);
+  
+  // Parse coordinates if they're in string format
+  let parsedCoordinates = coordinates;
+  if (coordinates && typeof coordinates === 'string') {
+    parsedCoordinates = parseCoordinatesFromDB(coordinates);
+    console.log("Parsed coordinates:", parsedCoordinates);
+  }
   
   const {
     isLiked,
@@ -74,7 +85,7 @@ const ItemCard = memo(function ItemCard({
         handleBookmark={handleBookmark} 
         handleShare={handleShare} 
         handleReport={handleReport}
-        coordinates={coordinates}
+        coordinates={parsedCoordinates}
       />
       
       <div className="relative">
