@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ItemCardContentProps } from "./types";
+import { Separator } from "@/components/ui/separator";
 
-export function ItemCardContent({ title, description, measurements = {} }: ItemCardContentProps) {
+export function ItemCardContent({ description, measurements = {} }: ItemCardContentProps) {
   const [expanded, setExpanded] = useState(false);
   const hasDetails = Object.keys(measurements).length > 0;
   
@@ -12,8 +13,8 @@ export function ItemCardContent({ title, description, measurements = {} }: ItemC
     : description;
   
   return (
-    <div className="mt-2 mb-4">
-      {title && <h3 className="text-lg font-semibold mb-1">{title}</h3>}
+    <div className="mt-2">
+      <Separator className="mb-4" />
       
       <div className="text-sm text-gray-600">
         <p className="mb-2">{truncatedDescription}</p>
