@@ -1,3 +1,4 @@
+
 import { InteractionCounts } from "../post/interactions/InteractionCounts";
 import { PrimaryActions } from "../post/interactions/PrimaryActions";
 import { SecondaryActions } from "../post/interactions/SecondaryActions";
@@ -56,10 +57,19 @@ export function ItemInteractions({
       <PrimaryActions 
         isLiked={isLiked}
         showComments={showComments}
+        showInterest={showInterest}
         isOwner={isOwner}
+        itemId={id}
+        commentsCount={commentsCount}
+        likesCount={likesCount}
+        interestsCount={interestsCount}
+        likers={likers}
+        interestedUsers={interestedUsers}
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}
+        fetchLikers={getInterestedUsers}
+        fetchInterestedUsers={getInterestedUsers}
       />
 
       <Separator className="my-1" />
