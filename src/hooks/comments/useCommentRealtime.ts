@@ -19,40 +19,39 @@ export const useCommentRealtime = (
   // Add comment to the list (for inserts)
   const handleCommentInsert = useCallback((newComment: any) => {
     const formattedComment = formatCommentFromDB(newComment, newComment.user_id === user?.id);
-    setComments(currentComments => {
-      // Don't add duplicate comments
-      if (currentComments.some(c => c.id === formattedComment.id)) {
-        return currentComments;
-      }
-      return [...currentComments, formattedComment];
-    });
     
-    // Show toast for new comments from others
-    if (newComment.user_id !== user?.id) {
-      toast({
-        title: "New Comment",
-        description: `${formattedComment.author.name} added a comment`,
-      });
+    // Check for duplicates before adding
+    if (!comments.some(c => c.id === formattedComment.id)) {
+      const updatedComments = [...comments, formattedComment];
+      setComments(updatedComments);
+      
+      // Show toast for new comments from others
+      if (newComment.user_id !== user?.id) {
+        toast({
+          title: "New Comment",
+          description: `${formattedComment.author.name} added a comment`,
+        });
+      }
     }
-  }, [user?.id, setComments, toast]);
+  }, [comments, user?.id, setComments, toast]);
 
   // Update an existing comment (for updates)
   const handleCommentUpdate = useCallback((updatedComment: any) => {
-    setComments(currentComments => 
-      currentComments.map(comment => 
-        comment.id === updatedComment.id.toString()
-          ? formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id)
-          : comment
-      )
+    const updatedComments = comments.map(comment => 
+      comment.id === updatedComment.id.toString()
+        ? formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id)
+        : comment
     );
-  }, [user?.id, setComments]);
+    setComments(updatedComments);
+  }, [comments, user?.id, setComments]);
 
   // Remove a comment from the list (for deletes)
   const handleCommentDelete = useCallback((deletedComment: any) => {
-    setComments(currentComments => 
-      currentComments.filter(comment => comment.id !== deletedComment.id.toString())
+    const filteredComments = comments.filter(comment => 
+      comment.id !== deletedComment.id.toString()
     );
-  }, [setComments]);
+    setComments(filteredComments);
+  }, [comments, setComments]);
 
   useEffect(() => {
     if (!itemId) return;
