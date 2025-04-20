@@ -6,6 +6,7 @@ import { InteractionsLoading } from "../post/interactions/InteractionsLoading";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { ItemInteractionsProps } from "./types";
 import { Separator } from "@/components/ui/separator";
+import type { User } from "@/hooks/item/useItemInteractions";
 
 export function ItemInteractions({
   id,
@@ -40,6 +41,21 @@ export function ItemInteractions({
     return <InteractionsLoading />;
   }
   
+  // Create Promise-returning wrapper functions for the fetch methods
+  const fetchLikersWrapper = async (): Promise<User[]> => {
+    if (typeof getInterestedUsers === 'function') {
+      await getInterestedUsers();
+    }
+    return likers || [];
+  };
+  
+  const fetchInterestedUsersWrapper = async (): Promise<User[]> => {
+    if (typeof getInterestedUsers === 'function') {
+      await getInterestedUsers();
+    }
+    return interestedUsers || [];
+  };
+  
   return (
     <div className="flex flex-col space-y-1">
       <InteractionCounts 
@@ -68,8 +84,8 @@ export function ItemInteractions({
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}
-        fetchLikers={getInterestedUsers}
-        fetchInterestedUsers={getInterestedUsers}
+        fetchLikers={fetchLikersWrapper}
+        fetchInterestedUsers={fetchInterestedUsersWrapper}
       />
 
       <Separator className="my-1" />
