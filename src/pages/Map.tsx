@@ -39,7 +39,6 @@ export default function Map() {
     navigate(`/?post=${postId}`);
   };
   
-  // Handle retry for both token and posts
   const handleRetry = () => {
     if (tokenError) {
       retryFetchToken();
@@ -49,11 +48,9 @@ export default function Map() {
     }
   };
 
-  // Combine loading states and errors
   const isLoading = isTokenLoading || isPostsLoading;
   const error = tokenError || postsError;
 
-  // Height of the MainNav at the bottom (usually about 64px)
   const navHeight = 68;
 
   return (
@@ -61,7 +58,7 @@ export default function Map() {
       <div
         className="absolute top-0 left-0 right-0"
         style={{
-          bottom: navHeight - 5, // Adjusted per user request to fill closer to nav bar
+          bottom: navHeight - 10,
         }}
       >
         {error ? (
@@ -98,7 +95,6 @@ export default function Map() {
           />
         )}
       </div>
-      {/* Keep the nav absolutely fixed over the map at the bottom */}
       <div className="fixed left-0 right-0 bottom-0 z-10">
         <MainNav />
       </div>
