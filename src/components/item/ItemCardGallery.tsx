@@ -73,13 +73,21 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
       />
       
       {/* Title and Category Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-        <h3 className="text-white text-lg font-semibold mb-1">{title}</h3>
-        <Badge variant="secondary" className="text-xs bg-primary text-white">
-          {category}
-        </Badge>
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
+        <div className="flex flex-col gap-2">
+          <Badge 
+            variant="secondary" 
+            className="self-start text-xs font-display tracking-wide uppercase bg-white/90 text-primary hover:bg-white/95 hover:text-primary"
+          >
+            {category}
+          </Badge>
+          <h3 className="text-white text-lg font-display font-semibold tracking-wide drop-shadow-md">
+            {title}
+          </h3>
+        </div>
       </div>
       
+      {/* Navigation controls */}
       {imageUrls.length > 1 && (
         <>
           <button 
