@@ -1,7 +1,19 @@
+
 import './utils/browserPolyfills';
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+})
 
 // Add version timestamp for cache busting
 const version = `v=${Date.now()}`;
@@ -107,7 +119,11 @@ if (!rootElement) {
   console.error("Root element not found!");
 } else {
   try {
-    createRoot(rootElement).render(<App />);
+    createRoot(rootElement).render(
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    );
   } catch (error) {
     console.error("Failed to render app:", error);
     // Fallback rendering in case of catastrophic error
