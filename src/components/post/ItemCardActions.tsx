@@ -89,7 +89,7 @@ export function ItemCardActions({
       </div>
       
       {/* Action buttons row with labels */}
-      <div className="flex items-center justify-around border-y border-gray-200 py-1">
+      <div className="flex items-center justify-around border-t border-gray-200 py-1">
         {!isOwner && (
           <button 
             onClick={onLike}
@@ -118,7 +118,7 @@ export function ItemCardActions({
             }`}
           >
             <Heart className={`h-5 w-5 mb-1 ${showInterest ? 'fill-current' : ''}`} />
-            <span className="text-xs font-medium">Interest</span>
+            <span className="text-xs font-medium">Show Interest</span>
           </button>
         )}
       </div>
