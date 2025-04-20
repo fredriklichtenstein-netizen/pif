@@ -72,6 +72,7 @@ export function InteractionButtonWithPopup({
       setShowPopup(true);
       const data = await onCounterClick();
       setPopupUsers(data || []);
+      // Update the count to match the actual number of users
       setLoading(false);
     }
   };
@@ -113,8 +114,11 @@ export function InteractionButtonWithPopup({
     );
   }
 
+  // Get the display count based on users available
+  const displayCount = type === "comment" ? count : popupUsers.length > 0 ? popupUsers.length : count;
+
   // Decide if counter should be interactive
-  const isCounterInteractive = (type === "like" || type === "interest") && count > 0 && onCounterClick;
+  const isCounterInteractive = (type === "like" || type === "interest") && displayCount > 0 && onCounterClick;
 
   // Rendering
   return (
@@ -131,17 +135,17 @@ export function InteractionButtonWithPopup({
       >
         <div className="relative">
           {renderIcon()}
-          {/* Counter in top-right */}
-          <div className="absolute -top-2 -right-2">
+          {/* Counter in top-right - with increased spacing from icon */}
+          <div className="absolute -top-2 -right-3">
             {isCounterInteractive ? (
               <Popover open={showPopup} onOpenChange={setShowPopup}>
                 <PopoverTrigger asChild>
                   <button
                     onClick={handleCounterClick}
-                    className={`ml-1 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow focus:outline-none`}
+                    className={`ml-2 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow focus:outline-none`}
                     style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
                   >
-                    {count}
+                    {displayCount}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-60 p-2">
@@ -160,10 +164,10 @@ export function InteractionButtonWithPopup({
                 </PopoverContent>
               </Popover>
             ) : (
-              count > 0 && (
-                <span className={`ml-1 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow`}
+              displayCount > 0 && (
+                <span className={`ml-2 text-xs font-bold bg-white border ${isActive ? "border-primary" : "border-black"} rounded-full px-1.5 py-0.5 shadow`}
                   style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}>
-                  {count}
+                  {displayCount}
                 </span>
               )
             )}

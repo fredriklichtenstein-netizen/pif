@@ -62,12 +62,16 @@ export function ItemInteractions({
     )
   );
 
+  // Get the actual counts based on available data
+  const actualLikeCount = likers.length || likesCount;
+  const actualInterestCount = interestedUsers.length || interestsCount;
+
   return (
     <div className="flex flex-col space-y-1">
       <InteractionCounts 
-        likesCount={likesCount}
+        likesCount={actualLikeCount}
         commentsCount={commentsCount}
-        interestsCount={interestsCount}
+        interestsCount={actualInterestCount}
         likers={likers}
         interestedUsers={interestedUsers}
         onCommentToggle={onCommentToggle}
@@ -85,8 +89,8 @@ export function ItemInteractions({
         hasCommented={hasCommented}
         currentUserId={currentUserId}
         commentsCount={commentsCount}
-        likesCount={likesCount}
-        interestsCount={interestsCount}
+        likesCount={actualLikeCount}
+        interestsCount={actualInterestCount}
         likers={likers}
         interestedUsers={interestedUsers}
         onLikeToggle={onLikeToggle}

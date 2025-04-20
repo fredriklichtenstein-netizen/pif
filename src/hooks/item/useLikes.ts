@@ -8,6 +8,7 @@ import type { User } from "./utils/userUtils";
 export const useLikes = (id: string, userId?: string | null) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [likers, setLikers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
@@ -37,15 +38,8 @@ export const useLikes = (id: string, userId?: string | null) => {
           }
         }
 
-        // Get total likes count
-        const { count, error: countError } = await supabase
-          .from('likes')
-          .select('id', { count: 'exact' })
-          .eq('item_id', numericId);
-
-        if (!countError) {
-          setLikesCount(count || 0);
-        }
+        // Fetch likers to get the accurate count and user list
+        await fetchLikersInternal(numericId);
       } catch (error) {
         console.error("Error fetching likes:", error);
       } finally {
@@ -56,6 +50,65 @@ export const useLikes = (id: string, userId?: string | null) => {
     fetchLikes();
   }, [id, userId]);
 
+  // Internal function to fetch likers and update count
+  const fetchLikersInternal = async (numericId: number): Promise<User[]> => {
+    try {
+      // Get user IDs who liked this item
+      const { data: likesData, error: likesError } = await supabase
+        .from('likes')
+        .select('user_id')
+        .eq('item_id', numericId);
+        
+      if (likesError) {
+        console.error('Error fetching likes data:', likesError);
+        return [];
+      }
+      
+      if (!likesData || likesData.length === 0) {
+        setLikesCount(0);
+        setLikers([]);
+        return [];
+      }
+      
+      // Update the count based on actual data
+      setLikesCount(likesData.length);
+      
+      // Get unique user IDs
+      const userIds = [...new Set(likesData.map(like => like.user_id))];
+      
+      // Fetch user profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', userIds);
+      
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return [];
+      }
+      
+      if (!profilesData || profilesData.length === 0) {
+        setLikers([]);
+        return [];
+      }
+      
+      // Map to User type
+      const users = profilesData.map(profile => ({
+        id: profile.id,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
+        avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
+      }));
+      
+      // Update local state
+      setLikers(users);
+      
+      return users;
+    } catch (error) {
+      console.error('Error in fetchLikersInternal:', error);
+      return [];
+    }
+  };
+
   const handleLike = async () => {
     if (!await checkAuth("like this item")) return;
     
@@ -65,10 +118,10 @@ export const useLikes = (id: string, userId?: string | null) => {
     // Create a local copy of the current state before making updates
     const wasLiked = isLiked;
     const previousCount = likesCount;
+    const previousLikers = [...likers];
     
     // Optimistically update UI
     setIsLiked(!wasLiked);
-    setLikesCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
     
     try {
       if (wasLiked) {
@@ -90,12 +143,16 @@ export const useLikes = (id: string, userId?: string | null) => {
           
         if (error) throw error;
       }
+      
+      // Fetch updated likes data
+      await fetchLikersInternal(numericId);
     } catch (error) {
       console.error('Error toggling like:', error);
       
       // Revert optimistic updates on error
       setIsLiked(wasLiked);
       setLikesCount(previousCount);
+      setLikers(previousLikers);
       
       toast({
         title: "Error",
@@ -105,46 +162,23 @@ export const useLikes = (id: string, userId?: string | null) => {
     }
   };
   
-  // Fetch users who liked this item
+  // Public method for components to fetch likers
   const fetchLikers = async (): Promise<User[]> => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
     
     try {
-      // Get user IDs who liked this item
-      const { data: likesData, error: likesError } = await supabase
-        .from('likes')
-        .select('user_id')
-        .eq('item_id', numericId);
-        
-      if (likesError || !likesData || likesData.length === 0) return [];
-      
-      // Get unique user IDs
-      const userIds = [...new Set(likesData.map(like => like.user_id))];
-      
-      // Fetch user profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
-        .in('id', userIds);
-        
-      if (profilesError || !profilesData) return [];
-      
-      // Map to User type
-      return profilesData.map(profile => ({
-        id: profile.id,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
-        avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
-      }));
+      return await fetchLikersInternal(numericId);
     } catch (error) {
-      console.error('Error fetching likers:', error);
-      return [];
+      console.error('Error in fetchLikers:', error);
+      return likers; // Return current likers on error
     }
   };
 
   return {
     isLiked,
     likesCount,
+    likers,
     loading,
     handleLike,
     fetchLikers

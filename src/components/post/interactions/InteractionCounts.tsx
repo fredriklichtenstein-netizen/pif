@@ -51,16 +51,20 @@ export function InteractionCounts({
     return null;
   }
 
+  // Get the actual counts based on available data
+  const actualLikeCount = likers.length || likesCount;
+  const actualInterestCount = interestedUsers.length || interestsCount;
+
   return (
-    <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-1 border-b border-gray-200"> {/* Reduced vertical padding */}
-      {likesCount > 0 && (
+    <div className="flex justify-between items-center text-sm text-gray-600 px-1 py-1 border-b border-gray-200"> 
+      {actualLikeCount > 0 && (
         <Popover>
           <PopoverTrigger asChild>
             <button className="flex items-center gap-1 hover:underline">
               <div className="bg-primary w-5 h-5 rounded-full flex items-center justify-center">
                 <ThumbsUp className="h-3 w-3 text-white" />
               </div>
-              <span>{likesCount}</span>
+              <span>{actualLikeCount}</span>
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-2" align="start">
@@ -83,18 +87,18 @@ export function InteractionCounts({
         </Popover>
       )}
       
-      <div className="ml-auto flex gap-1"> {/* Reduced gap */}
+      <div className="ml-auto flex gap-1"> 
         {commentsCount > 0 && (
           <button onClick={onCommentToggle} className="hover:underline">
             {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}
           </button>
         )}
         
-        {interestsCount > 0 && (
+        {actualInterestCount > 0 && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <button className="hover:underline">
-                {interestsCount} interested
+                {actualInterestCount} interested
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">

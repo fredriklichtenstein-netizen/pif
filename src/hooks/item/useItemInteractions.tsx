@@ -15,15 +15,25 @@ export const useItemInteractions = (id: string) => {
   const [loading, setLoading] = useState(true);
 
   // Individual interaction hooks
-  const { isLiked, likesCount, handleLike, fetchLikers, loading: likesLoading } = useLikes(id, userId);
+  const { 
+    isLiked, 
+    likesCount, 
+    likers, 
+    handleLike, 
+    fetchLikers, 
+    loading: likesLoading 
+  } = useLikes(id, userId);
+  
   const { 
     showInterest, 
     interestsCount, 
+    interestedUsers,
     handleShowInterest, 
     fetchInterestedUsers, 
     loading: interestsLoading,
     interestedUsersError 
   } = useInterests(id, userId);
+  
   const { isBookmarked, handleBookmark, loading: bookmarksLoading } = useBookmarks(id, userId);
 
   // Combine loading states
@@ -46,8 +56,10 @@ export const useItemInteractions = (id: string) => {
     // States
     isLiked,
     likesCount,
+    likers,
     showInterest,
     interestsCount,
+    interestedUsers,
     isBookmarked,
     loading,
     interestedUsersError,

@@ -8,6 +8,7 @@ import type { User } from "./utils/userUtils";
 export const useInterests = (id: string, userId?: string | null) => {
   const [showInterest, setShowInterest] = useState(false);
   const [interestsCount, setInterestsCount] = useState(0);
+  const [interestedUsers, setInterestedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [interestedUsersError, setInterestedUsersError] = useState<Error | null>(null);
   const [fetchAttemptCount, setFetchAttemptCount] = useState(0);
@@ -40,15 +41,8 @@ export const useInterests = (id: string, userId?: string | null) => {
           }
         }
         
-        // Get total interests count
-        const { count, error: countError } = await supabase
-          .from('interests')
-          .select('id', { count: 'exact', head: true })
-          .eq('item_id', numericId);
-        
-        if (!countError) {
-          setInterestsCount(count || 0);
-        }
+        // Get interested users to have an accurate count
+        await fetchInterestedUsersInternal(numericId);
       } catch (error) {
         console.error("Error fetching interests:", error);
       } finally {
@@ -59,6 +53,65 @@ export const useInterests = (id: string, userId?: string | null) => {
     fetchInterests();
   }, [id, userId]);
 
+  // Internal version to be used within the hook
+  const fetchInterestedUsersInternal = async (numericId: number): Promise<User[]> => {
+    try {
+      // Get user IDs who showed interest in this item
+      const { data: interestsData, error: interestsError } = await supabase
+        .from('interests')
+        .select('user_id')
+        .eq('item_id', numericId);
+        
+      if (interestsError) {
+        console.error('Error fetching interest data:', interestsError);
+        return [];
+      }
+      
+      if (!interestsData || interestsData.length === 0) {
+        setInterestsCount(0);
+        setInterestedUsers([]);
+        return [];
+      }
+      
+      // Update the count based on actual data
+      setInterestsCount(interestsData.length);
+      
+      // Get unique user IDs
+      const userIds = [...new Set(interestsData.map(interest => interest.user_id))];
+      
+      // Fetch user profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', userIds);
+      
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return [];
+      }
+      
+      if (!profilesData || profilesData.length === 0) {
+        setInterestedUsers([]);
+        return [];
+      }
+      
+      // Map to User type
+      const users = profilesData.map(profile => ({
+        id: profile.id,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
+        avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
+      }));
+      
+      // Update local state
+      setInterestedUsers(users);
+      
+      return users;
+    } catch (error) {
+      console.error('Error in fetchInterestedUsersInternal:', error);
+      return [];
+    }
+  };
+
   const handleShowInterest = async () => {
     if (!await checkAuth("show interest in this item")) return;
     
@@ -68,10 +121,10 @@ export const useInterests = (id: string, userId?: string | null) => {
     // Create a local copy of the current state before making updates
     const wasInterested = showInterest;
     const previousCount = interestsCount;
+    const previousUsers = [...interestedUsers];
     
     // Optimistically update UI
     setShowInterest(!wasInterested);
-    setInterestsCount(prev => wasInterested ? Math.max(0, prev - 1) : prev + 1);
     
     try {
       if (wasInterested) {
@@ -85,6 +138,9 @@ export const useInterests = (id: string, userId?: string | null) => {
         if (error) {
           throw error;
         }
+        
+        // Update the count and users list
+        await fetchInterestedUsersInternal(numericId);
         
         toast({
           title: "Interest removed",
@@ -102,6 +158,9 @@ export const useInterests = (id: string, userId?: string | null) => {
           throw error;
         }
         
+        // Update the count and users list
+        await fetchInterestedUsersInternal(numericId);
+        
         toast({
           title: "Interest shown",
           description: "You've shown interest in this item",
@@ -112,6 +171,7 @@ export const useInterests = (id: string, userId?: string | null) => {
       // Revert optimistic updates on error
       setShowInterest(wasInterested);
       setInterestsCount(previousCount);
+      setInterestedUsers(previousUsers);
       
       toast({
         title: "Error",
@@ -121,7 +181,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     }
   };
   
-  // Fetch users who are interested in this item
+  // Fetch users who are interested in this item - public method for components
   const fetchInterestedUsers = async (): Promise<User[]> => {
     // Cancel any in-flight request
     if (abortControllerRef.current) {
@@ -150,59 +210,14 @@ export const useInterests = (id: string, userId?: string | null) => {
         }
       }, 15000);
       
-      // Get user IDs who showed interest in this item
-      const { data: interestsData, error: interestsError } = await supabase
-        .from('interests')
-        .select('user_id')
-        .eq('item_id', numericId)
-        .abortSignal(abortControllerRef.current.signal);
+      const users = await fetchInterestedUsersInternal(numericId);
       
       clearTimeout(timeoutId);
-        
-      if (interestsError) {
-        console.error('Error fetching interest data:', interestsError);
-        setInterestedUsersError(new Error(interestsError.message));
-        return [];
-      }
-      
-      if (!interestsData || interestsData.length === 0) {
-        console.log('No interested users found');
-        return [];
-      }
-      
-      console.log(`Found ${interestsData.length} interested users`);
-      
-      // Get unique user IDs
-      const userIds = [...new Set(interestsData.map(interest => interest.user_id))];
-      
-      // Fetch user profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
-        .in('id', userIds);
-      
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        setInterestedUsersError(new Error(profilesError.message));
-        return [];
-      }
-      
-      if (!profilesData || profilesData.length === 0) {
-        console.log('No profile data found for interested users');
-        return [];
-      }
-      
-      console.log(`Retrieved ${profilesData.length} profiles for interested users`);
       
       // Reset fetch attempt count on success
       setFetchAttemptCount(0);
       
-      // Map to User type
-      return profilesData.map(profile => ({
-        id: profile.id,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
-        avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
-      }));
+      return users;
     } catch (error: any) {
       console.error('Error fetching interested users:', error);
       
@@ -222,13 +237,14 @@ export const useInterests = (id: string, userId?: string | null) => {
         setInterestedUsersError(new Error(error.message || 'Failed to load interested users'));
       }
       
-      return [];
+      return interestedUsers; // Return the current list on error
     }
   };
 
   return {
     showInterest,
     interestsCount,
+    interestedUsers,
     loading,
     interestedUsersError,
     handleShowInterest,
