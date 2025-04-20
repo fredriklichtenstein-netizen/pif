@@ -66,7 +66,7 @@ export function ItemInteractions({
 
   // Render only primary and secondary actions without the old counters section
   return (
-    <div className="flex flex-col space-y-1">
+    <div className="flex flex-col space-y-3 pt-2"> {/* Increased spacing from space-y-1 to space-y-3 and padding top added */}
       <PrimaryActions 
         isLiked={isLiked}
         showComments={showComments}
@@ -96,6 +96,15 @@ export function ItemInteractions({
         onEdit={onEdit}
         onDelete={onDelete}
       />
+
+      {/* Lazy load comments section only when shown */}
+      {showComments && (
+        <LazyCommentsSection
+          itemId={id}
+          isVisible={showComments}
+        />
+      )}
     </div>
   );
 }
+

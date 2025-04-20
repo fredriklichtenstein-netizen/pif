@@ -17,7 +17,7 @@ export function ItemCardContent({ description, measurements = {} }: ItemCardCont
     : description;
   
   return (
-    <div className="mt-1 mb-2 px-1">
+    <div className="mt-1 mb-4 px-1"> {/* Increased bottom margin from mb-2 to mb-4 */}
       <div className="text-sm text-gray-600">
         <p className="mb-1">{truncatedDescription}</p>
         
