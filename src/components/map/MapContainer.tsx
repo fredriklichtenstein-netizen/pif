@@ -30,7 +30,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
   }, [isMapReady, map]);
 
   return (
-    <div className="h-full rounded-lg overflow-hidden relative bg-gray-50">
+    <div className="h-full w-full relative">
       <div 
         ref={mapContainer} 
         className="w-full h-full"
