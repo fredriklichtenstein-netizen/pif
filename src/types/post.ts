@@ -46,11 +46,14 @@ export const parseCoordinatesFromDB = (point: string | null): Coordinates | unde
     // If it's already a parsed object
     if (typeof point === 'object' && point !== null) {
       if ('lat' in point && 'lng' in point) {
-        return {
-          // Use type assertion after null check
-          lat: Number((point as any).lat),
-          lng: Number((point as any).lng)
-        };
+        const pointObj = point as any; // Type assertion
+        // Additional null checks before accessing properties
+        if (pointObj.lat !== null && pointObj.lng !== null) {
+          return {
+            lat: Number(pointObj.lat),
+            lng: Number(pointObj.lng)
+          };
+        }
       }
     }
     
@@ -69,10 +72,13 @@ export const parseCoordinatesFromDB = (point: string | null): Coordinates | unde
       try {
         const parsed = JSON.parse(point);
         if (parsed && typeof parsed === 'object' && 'lat' in parsed && 'lng' in parsed) {
-          return {
-            lat: Number(parsed.lat),
-            lng: Number(parsed.lng)
-          };
+          // Additional null checks before accessing properties
+          if (parsed.lat !== null && parsed.lng !== null) {
+            return {
+              lat: Number(parsed.lat),
+              lng: Number(parsed.lng)
+            };
+          }
         }
       } catch (e) {
         // Not a valid JSON string, ignore this error
