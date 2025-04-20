@@ -86,24 +86,26 @@ export default function Feed() {
 
         {/* Main category filter as a scrollable row */}
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
-          <ToggleGroupItem
-            value="all"
-            className={`rounded-full border ${selectedCategories.length === 0 ? 'bg-primary text-white' : 'bg-accent'}`}
-            onClick={clearFilters}
-          >
-            All Items
-          </ToggleGroupItem>
-          
-          {CATEGORIES.slice(0, 5).map((category) => (
+          <ToggleGroup type="multiple">
             <ToggleGroupItem
-              key={category}
-              value={category}
-              className={`rounded-full border ${selectedCategories.includes(category) ? 'bg-primary text-white' : 'bg-accent'}`}
-              onClick={() => toggleCategory(category)}
+              value="all"
+              className={`rounded-full border ${selectedCategories.length === 0 ? 'bg-primary text-white' : 'bg-accent'}`}
+              onClick={clearFilters}
             >
-              {category}
+              All Items
             </ToggleGroupItem>
-          ))}
+            
+            {CATEGORIES.slice(0, 5).map((category) => (
+              <ToggleGroupItem
+                key={category}
+                value={category}
+                className={`rounded-full border ${selectedCategories.includes(category) ? 'bg-primary text-white' : 'bg-accent'}`}
+                onClick={() => toggleCategory(category)}
+              >
+                {category}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </div>
 
         {/* Expanded filter with checkboxes for multi-select */}
