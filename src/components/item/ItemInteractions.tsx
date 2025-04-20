@@ -48,29 +48,19 @@ export function ItemInteractions({
 
   // "Active" for comment action is only if current user has commented on the post or replied to a comment!
   // Check both direct comments and replies in all comments
-  const hasCommented = commenters && currentUserId ? (
-    commenters.some(user => user.id === currentUserId) || 
-    // Or check if the user has replied to any comment (look for author.id in all replies)
-    commenters.some(comment => 
-      comment.replies?.some(reply => reply.author.id === currentUserId)
+  // After deleting all comments/replies from this user, the active state should become false
+  const hasCommented = Boolean(
+    commenters &&
+    currentUserId &&
+    (
+      // direct comments
+      commenters.some(comment => comment.author.id === currentUserId) ||
+      // or any reply authored by currentUserId
+      commenters.some(comment =>
+        comment.replies?.some(reply => reply.author.id === currentUserId)
+      )
     )
-  ) : false;
-
-  // Wrap fetchers so the signatures are correct for PrimaryActions (Promise<User[]>)
-  const fetchLikersWrapper = async (): Promise<User[]> => {
-    // If a fetch function is available, call it, otherwise just return current likers
-    if (typeof getInterestedUsers === 'function') {
-      await getInterestedUsers(); // Side effect, e.g., refresh all users
-    }
-    return likers || [];
-  };
-
-  const fetchInterestedUsersWrapper = async (): Promise<User[]> => {
-    if (typeof getInterestedUsers === 'function') {
-      await getInterestedUsers();
-    }
-    return interestedUsers || [];
-  };
+  );
 
   return (
     <div className="flex flex-col space-y-1">
@@ -102,8 +92,8 @@ export function ItemInteractions({
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}
-        fetchLikers={fetchLikersWrapper}
-        fetchInterestedUsers={fetchInterestedUsersWrapper}
+        fetchLikers={async () => likers}
+        fetchInterestedUsers={async () => interestedUsers}
       />
 
       <Separator className="my-1" />

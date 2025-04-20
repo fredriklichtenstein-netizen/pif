@@ -1,4 +1,3 @@
-
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 
@@ -42,7 +41,7 @@ export function PrimaryActions({
   fetchInterestedUsers
 }: PrimaryActionsProps) {
   return (
-    <div className="flex justify-between w-full pt-1 gap-2">
+    <div className="flex justify-between w-full pt-1 gap-3">
       <InteractionButtonWithPopup
         type="like"
         isActive={isLiked}
