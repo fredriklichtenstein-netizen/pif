@@ -126,7 +126,6 @@ const ItemCard = memo(function ItemCard({
         />
 
         <ItemCardContent 
-          title={title} 
           description={description} 
           measurements={measurements} 
         />
