@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 
 export function useCommentRetry(maxRetries: number) {
@@ -36,8 +37,8 @@ export function useCommentRetry(maxRetries: number) {
     }
   };
 
-  const setTimeout = (callback: () => void, delay: number) => {
-    timeoutRef.current = setTimeout(callback, delay);
+  const setTimeoutFn = (callback: () => void, delay: number) => {
+    timeoutRef.current = global.setTimeout(callback, delay);
   };
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export function useCommentRetry(maxRetries: number) {
     isMaxAttemptsReached,
     getCurrentAttempts,
     createAbortController,
-    setTimeout,
+    setTimeout: setTimeoutFn,
     maxAttempts: maxRetries,
   };
 }
