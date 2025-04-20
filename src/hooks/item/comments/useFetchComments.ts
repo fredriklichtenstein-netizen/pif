@@ -111,47 +111,66 @@ export const useFetchComments = (itemId: string) => {
           
           const signal = controller?.signal;
           
-          let query = supabase
-            .from('comments')
-            .select(`
-              id,
-              content,
-              created_at,
-              user_id,
-              profiles:user_id (
-                id,
-                first_name,
-                last_name,
-                avatar_url
-              )
-            `)
-            .eq('item_id', numericItemId)
-            .order('created_at', { ascending: true });
-          
-          if (signal) {
-            query = query.abortSignal(signal);
-          }
-          
-          const { data, error } = await fetchWithTimeout(
-            () => query,
-            5000 // 5 second timeout
-          );
-          
-          if (error) {
-            console.error("[useFetchComments] Error in Supabase query:", error);
-            throw error;
-          }
-          
-          if (!data) {
-            console.log("[useFetchComments] No comments data returned");
-            return [];
-          }
-          
-          console.log('[useFetchComments] Comments data received:', data.length, 'comments');
-          
-          return data.map(comment => 
-            formatCommentFromDB(comment, comment.user_id === user?.id)
-          );
+          // Fixed: Properly handling the Supabase query
+          return new Promise<Comment[]>(async (resolve, reject) => {
+            try {
+              let query = supabase
+                .from('comments')
+                .select(`
+                  id,
+                  content,
+                  created_at,
+                  user_id,
+                  profiles:user_id (
+                    id,
+                    first_name,
+                    last_name,
+                    avatar_url
+                  )
+                `)
+                .eq('item_id', numericItemId)
+                .order('created_at', { ascending: true });
+              
+              if (signal) {
+                query = query.abortSignal(signal);
+              }
+              
+              const timeoutPromise = new Promise<void>((_, timeoutReject) => {
+                setTimeout(() => timeoutReject(new Error('Request timed out')), 5000);
+              });
+
+              // Race between the query and the timeout
+              try {
+                const response = await Promise.race([
+                  query,
+                  timeoutPromise.then(() => { throw new Error('Request timed out'); })
+                ]);
+                
+                if ('error' in response && response.error) {
+                  console.error("[useFetchComments] Error in Supabase query:", response.error);
+                  reject(response.error);
+                  return;
+                }
+                
+                if ('data' in response && response.data) {
+                  console.log('[useFetchComments] Comments data received:', response.data.length, 'comments');
+                  
+                  const formattedComments = response.data.map(comment => 
+                    formatCommentFromDB(comment, comment.user_id === user?.id)
+                  );
+                  
+                  resolve(formattedComments);
+                } else {
+                  console.log("[useFetchComments] No comments data returned");
+                  resolve([]);
+                }
+              } catch (error) {
+                reject(error);
+              }
+            } catch (error) {
+              reject(error);
+            }
+          });
         },
         {
           maxAttempts: 2,
