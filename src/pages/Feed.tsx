@@ -7,9 +7,8 @@ import { MainNav } from "@/components/MainNav";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect } from "react";
 
 const CATEGORIES = [
   "Furniture",
@@ -32,15 +31,15 @@ export default function Feed() {
     filterByCategories(selectedCategories);
   }, [selectedCategories, filterByCategories]);
 
-  const toggleCategory = (category: string) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.filter(c => c !== category);
-      } else {
-        return [...prev, category];
-      }
-    });
+  const handleCategoryChange = (values: string[]) => {
+    if (values.includes('all')) {
+      setSelectedCategories([...CATEGORIES]);
+    } else {
+      setSelectedCategories(values);
+    }
   };
+
+  const allSelected = selectedCategories.length === CATEGORIES.length;
 
   const clearFilters = () => {
     setSelectedCategories([]);
@@ -80,18 +79,12 @@ export default function Feed() {
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
           <ToggleGroup 
             type="multiple" 
-            value={selectedCategories.length === 0 ? ['all'] : selectedCategories} 
-            onValueChange={(values) => {
-              if (values.includes('all')) {
-                clearFilters();
-              } else {
-                setSelectedCategories(values);
-              }
-            }}
+            value={allSelected ? ['all'] : selectedCategories} 
+            onValueChange={handleCategoryChange}
           >
             <ToggleGroupItem
               value="all"
-              className={`rounded-full border ${selectedCategories.length === 0 ? 'bg-primary text-white' : 'bg-accent'}`}
+              className={`rounded-full border ${allSelected ? 'bg-primary text-white' : 'bg-accent'}`}
             >
               ALL
             </ToggleGroupItem>
@@ -127,7 +120,13 @@ export default function Feed() {
                 <Checkbox 
                   id={`filter-${category}`} 
                   checked={selectedCategories.includes(category)}
-                  onCheckedChange={() => toggleCategory(category)}
+                  onCheckedChange={() => {
+                    if (selectedCategories.includes(category)) {
+                      setSelectedCategories(selectedCategories.filter(c => c !== category));
+                    } else {
+                      setSelectedCategories([...selectedCategories, category]);
+                    }
+                  }}
                 />
                 <label 
                   htmlFor={`filter-${category}`}
