@@ -1,56 +1,85 @@
 
-import { ThumbsUp, MessageCircle, Heart } from "lucide-react";
-import { PostActions } from "../PostActions";
-import type { PostAction } from "@/types/comment";
+import { useState } from "react";
+import { User } from "@/hooks/item/useItemInteractions";
+import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
   showComments: boolean;
+  showInterest: boolean;
   isOwner: boolean;
+  itemId: string;
+  commentsCount?: number;
+  likesCount?: number;
+  interestsCount?: number;
+  likers?: User[];
+  interestedUsers?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
+  fetchLikers?: () => Promise<User[]>;
+  fetchInterestedUsers?: () => Promise<User[]>;
 }
 
 export function PrimaryActions({
   isLiked,
   showComments,
+  showInterest,
   isOwner,
+  itemId,
+  commentsCount = 0,
+  likesCount = 0,
+  interestsCount = 0,
+  likers = [],
+  interestedUsers = [],
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
+  fetchLikers,
+  fetchInterestedUsers
 }: PrimaryActionsProps) {
-  const actions: PostAction[] = [
-    {
-      icon: <ThumbsUp size={20} fill={isLiked ? "currentColor" : "none"} />,
-      label: "Like",
-      labelText: "Like",
-      onClick: onLikeToggle,
-      active: isLiked,
-      disabled: isOwner,
-    },
-    {
-      icon: <MessageCircle size={20} />,
-      label: "Comment",
-      labelText: "Comment",
-      onClick: onCommentToggle,
-      active: showComments,
-    },
-    {
-      icon: <Heart size={20} />,
-      label: "Interest",
-      labelText: "Show Interest",
-      onClick: onShowInterest,
-      disabled: isOwner,
-    },
-  ];
-
   return (
-    <div className="flex flex-col w-full">
-      {/* Removed separator here per user request to avoid double lines */}
-      <div className="flex items-center space-x-2"> {/* Reduced horizontal spacing */}
-        <PostActions actions={actions} />
-      </div>
+    <div className="flex justify-between w-full pt-1 gap-2">
+      <InteractionButtonWithPopup
+        type="like"
+        isActive={isLiked}
+        count={likesCount}
+        users={likers}
+        onClick={onLikeToggle}
+        onCounterClick={fetchLikers}
+        isOwner={isOwner}
+        labelPassive="Like"
+        labelActive="Liked"
+        iconPassive="heart"
+        iconActive="heart"
+        itemId={itemId}
+      />
+      <InteractionButtonWithPopup
+        type="comment"
+        isActive={showComments}
+        count={commentsCount}
+        itemId={itemId}
+        onClick={onCommentToggle}
+        labelPassive="Comment"
+        labelActive="Commented"
+        iconPassive="message-square"
+        iconActive="message-square"
+        isOwner={false} // Comment always enabled
+      />
+      <InteractionButtonWithPopup
+        type="interest"
+        isActive={showInterest}
+        count={interestsCount}
+        users={interestedUsers}
+        onClick={onShowInterest}
+        onCounterClick={fetchInterestedUsers}
+        isOwner={isOwner}
+        labelPassive="Show Interest"
+        labelActive="Interested"
+        iconPassive="star"
+        iconActive="star"
+        itemId={itemId}
+      />
     </div>
   );
 }
