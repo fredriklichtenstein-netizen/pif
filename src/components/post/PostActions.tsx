@@ -15,15 +15,15 @@ export function PostActions({ actions }: PostActionsProps) {
           onClick={action.onClick}
           disabled={action.disabled}
           className={`
-            flex flex-col items-center justify-center p-2 space-y-1
+            flex flex-col items-center justify-center p-2 space-y-1 flex-1
             ${action.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}
             ${action.active ? 'text-primary' : 'text-gray-600'}
           `}
         >
           {React.cloneElement(action.icon, {
-            className: `h-5 w-5 ${action.active ? 'fill-current' : ''}`
+            className: `h-5 w-5 mb-1 ${action.active ? 'fill-current' : ''}`
           })}
-          <span className="text-xs">{action.labelText}</span>
+          <span className="text-xs font-medium">{action.labelText}</span>
         </button>
       ))}
     </div>

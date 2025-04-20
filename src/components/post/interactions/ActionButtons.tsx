@@ -1,7 +1,6 @@
 
-import { LikeButton } from "./LikeButton";
-import { CommentButton } from "./CommentButton";
-import { InterestButton } from "./InterestButton";
+import { Separator } from "@/components/ui/separator";
+import { PrimaryActions } from "./PrimaryActions";
 
 interface ActionButtonsProps {
   isLiked: boolean;
@@ -9,42 +8,31 @@ interface ActionButtonsProps {
   showInterest: boolean;
   isOwner: boolean;
   isRealtimeSubscribed?: boolean;
+  itemId: string;
+  commentsCount?: number;
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
-  itemId: string;
-  commentsCount?: number;
 }
 
 export function ActionButtons({
   isLiked,
   showComments,
-  showInterest,
   isOwner,
-  isRealtimeSubscribed,
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
-  itemId,
-  commentsCount = 0
 }: ActionButtonsProps) {
   return (
-    <div className="flex items-center gap-2 py-2">
-      <LikeButton isLiked={isLiked} onLikeToggle={onLikeToggle} />
-      
-      <CommentButton 
-        onCommentToggle={onCommentToggle} 
-        commentsCount={commentsCount}
-        itemId={itemId}
+    <div className="w-full">
+      <PrimaryActions
+        isLiked={isLiked}
         showComments={showComments}
+        isOwner={isOwner}
+        onLikeToggle={onLikeToggle}
+        onCommentToggle={onCommentToggle}
+        onShowInterest={onShowInterest}
       />
-      
-      {!isOwner && (
-        <InterestButton 
-          showInterest={showInterest} 
-          onShowInterest={onShowInterest} 
-        />
-      )}
     </div>
   );
 }
