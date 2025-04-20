@@ -1,4 +1,3 @@
-
 import { InteractionCounts } from "../post/interactions/InteractionCounts";
 import { PrimaryActions } from "../post/interactions/PrimaryActions";
 import { SecondaryActions } from "../post/interactions/SecondaryActions";
@@ -41,7 +40,7 @@ export function ItemInteractions({
   }
   
   return (
-    <div className="flex flex-col space-y-1"> {/* Reduced vertical spacing */}
+    <div className="flex flex-col space-y-1">
       <InteractionCounts 
         likesCount={likesCount}
         commentsCount={commentsCount}
@@ -63,7 +62,7 @@ export function ItemInteractions({
         onShowInterest={onShowInterest}
       />
 
-      <Separator className="my-1" /> {/* Moved separator line here, between buttons and description */}
+      <Separator className="my-1" />
       
       <SecondaryActions 
         isBookmarked={isBookmarked}
@@ -74,13 +73,6 @@ export function ItemInteractions({
         onEdit={onEdit}
         onDelete={onDelete}
       />
-      
-      {showComments && (
-        <LazyCommentsSection
-          itemId={id}
-          isVisible={showComments}
-        />
-      )}
     </div>
   );
 }
