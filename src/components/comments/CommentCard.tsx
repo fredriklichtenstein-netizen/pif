@@ -1,19 +1,12 @@
 
 import { useState } from "react";
-import { ThumbsUp, Reply, Trash2, Pencil, MoreHorizontal, Flag } from "lucide-react";
 import type { Comment } from "@/types/comment";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+import { CommentHeader } from "./CommentHeader";
+import { CommentActions } from "./CommentActions";
+import { CommentEditor } from "./CommentEditor";
+import { CommentInteractions } from "./CommentInteractions";
 import { CommentInput } from "./CommentInput";
 import { useToast } from "@/hooks/use-toast";
-import { formatRelativeTime } from "@/utils/formatDate";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 interface CommentCardProps {
   comment: Comment;
@@ -61,9 +54,6 @@ export function CommentCard({
       description: "Thank you for helping keep our community safe.",
     });
   };
-
-  // Add a debug log to check what's coming in
-  console.log("Comment author:", comment.author);
   
   // Generate initials for avatar fallback
   const authorInitials = comment.author.name
@@ -72,104 +62,44 @@ export function CommentCard({
     .join('')
     .toUpperCase() || 'U';
 
-  // Handle avatar loading errors by falling back to initials
-  const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.log("Avatar failed to load, using fallback");
-    e.currentTarget.style.display = 'none';
-  };
-
   return (
     <div className="space-y-4">
       <div className={`bg-gray-50 p-3 rounded-lg ${level > 0 ? 'ml-8' : ''}`}>
         <div className="flex items-start gap-2">
-          <Avatar className="w-8 h-8">
-            <AvatarImage 
-              src={comment.author.avatar} 
-              alt={comment.author.name}
-              className="rounded-full object-cover"
-              onError={handleAvatarError}
-            />
-            <AvatarFallback>{authorInitials}</AvatarFallback>
-          </Avatar>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{comment.author.name}</span>
-                <span className="text-sm text-gray-500">
-                  {formatRelativeTime(new Date(comment.createdAt))}
-                </span>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal size={16} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {isCurrentUserAuthor && (
-                    <>
-                      <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onDelete(comment.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {!isCurrentUserAuthor && (
-                    <DropdownMenuItem onClick={handleReport}>
-                      <Flag className="mr-2 h-4 w-4" />
-                      Report
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <CommentHeader 
+                author={comment.author}
+                createdAt={new Date(comment.createdAt)}
+                authorInitials={authorInitials}
+              />
+              <CommentActions 
+                isCurrentUserAuthor={isCurrentUserAuthor}
+                onEdit={() => setIsEditing(true)}
+                onDelete={() => onDelete(comment.id)}
+                onReport={handleReport}
+              />
             </div>
             
             {isEditing ? (
-              <div className="mt-2 space-y-2">
-                <Textarea
-                  value={editedText}
-                  onChange={(e) => setEditedText(e.target.value)}
-                  className="min-h-[60px]"
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSaveEdit}>Save</Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsEditing(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
+              <CommentEditor 
+                text={editedText}
+                onTextChange={setEditedText}
+                onSave={handleSaveEdit}
+                onCancel={() => setIsEditing(false)}
+              />
             ) : (
               <p className="text-sm mt-1">{comment.text}</p>
             )}
 
-            <div className="flex items-center gap-4 mt-2">
-              <button
-                onClick={() => onLike(comment.id)}
-                className={`text-sm flex items-center gap-1 ${
-                  comment.isLiked ? "text-primary" : "text-gray-500"
-                }`}
-              >
-                <ThumbsUp size={14} />
-                {comment.likes > 0 && <span>{comment.likes}</span>}
-              </button>
-              {level < maxReplyLevel && (
-                <button
-                  onClick={() => setShowReplyInput(!showReplyInput)}
-                  className="text-sm flex items-center gap-1 text-gray-500"
-                >
-                  <Reply size={14} />
-                  Reply
-                </button>
-              )}
-            </div>
+            <CommentInteractions 
+              likes={comment.likes}
+              isLiked={comment.isLiked}
+              onLike={() => onLike(comment.id)}
+              onReply={() => setShowReplyInput(!showReplyInput)}
+              maxReplyLevel={maxReplyLevel}
+              level={level}
+            />
           </div>
         </div>
       </div>
