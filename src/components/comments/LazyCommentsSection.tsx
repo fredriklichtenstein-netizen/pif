@@ -67,7 +67,7 @@ export function LazyCommentsSection({
     handleDeleteComment,
     handleReplyToComment,
     handleReportComment
-  } = useCommentActions(itemId, comments, setComments, currentUser);
+  } = useCommentActions(itemId, comments, setComments, currentUser, useFallbackMode);
 
   // Debug log for component
   useEffect(() => {
@@ -81,6 +81,51 @@ export function LazyCommentsSection({
       useFallbackMode
     });
   }, [comments.length, error, isInitialized, isLoading, isSubscribed, isVisible, itemId, useFallbackMode]);
+
+  // Check for pending comments and load them
+  useEffect(() => {
+    // Only process local comments if in fallback mode and we have a current user
+    if (useFallbackMode && currentUser?.id && isInitialized) {
+      try {
+        // Load any pending comments from localStorage
+        const pendingCommentsJson = localStorage.getItem(`pending_comments_${itemId}`);
+        if (!pendingCommentsJson) return;
+        
+        const pendingComments = JSON.parse(pendingCommentsJson);
+        if (!Array.isArray(pendingComments) || pendingComments.length === 0) return;
+        
+        console.log(`Found ${pendingComments.length} pending comments for item ${itemId}`);
+        
+        // Check if any pending comments are not already in state
+        const existingIds = new Set(comments.map(c => c.id));
+        const newPendingComments = pendingComments.filter(pc => !existingIds.has(pc.id));
+        
+        if (newPendingComments.length > 0) {
+          // Convert to Comment format and add to state
+          const formattedComments = newPendingComments.map(pc => ({
+            id: pc.id,
+            text: pc.content,
+            author: {
+              id: currentUser.id,
+              name: currentUser.name || 'User',
+              avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`
+            },
+            createdAt: new Date(pc.createdAt),
+            likes: 0,
+            isLiked: false,
+            replies: [],
+            isOwn: true,
+            isPending: true
+          }));
+          
+          console.log(`Adding ${formattedComments.length} pending comments to state`);
+          setComments([...comments, ...formattedComments]);
+        }
+      } catch (err) {
+        console.error("Error processing pending comments:", err);
+      }
+    }
+  }, [useFallbackMode, currentUser, itemId, isInitialized, comments, setComments]);
 
   if (!isVisible) {
     return null;

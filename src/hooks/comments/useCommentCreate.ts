@@ -4,6 +4,7 @@ import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCommentFromDB } from "@/hooks/item/utils/commentFormatters";
+import { v4 as uuidv4 } from "uuid";
 
 export const useCommentCreate = (
   itemId: string,
@@ -13,7 +14,8 @@ export const useCommentCreate = (
     id?: string;
     name?: string;
     avatar?: string;
-  }
+  },
+  useFallbackMode = false
 ) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +31,65 @@ export const useCommentCreate = (
     }
     
     setIsLoading(true);
+    
     try {
+      // If in fallback mode, create a local comment
+      if (useFallbackMode) {
+        console.log("Creating local comment in fallback mode");
+        
+        // Create a fallback comment with a temporary ID
+        const tempComment: Comment = {
+          id: `local-${uuidv4()}`,
+          text: text.trim(),
+          author: {
+            id: currentUser.id,
+            name: currentUser.name || 'User',
+            avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`
+          },
+          createdAt: new Date(),
+          likes: 0,
+          isLiked: false,
+          replies: [],
+          isOwn: true,
+          isPending: true  // Mark as pending to show it's not yet synced
+        };
+        
+        // Add to local state
+        const updatedComments = [...comments, tempComment];
+        console.log("Adding local comment to state", { 
+          previousCount: comments.length, 
+          newCount: updatedComments.length,
+          newComment: tempComment
+        });
+        
+        setComments(updatedComments);
+        
+        // Store in local storage for later sync
+        try {
+          const pendingComments = JSON.parse(localStorage.getItem(`pending_comments_${itemId}`) || '[]');
+          pendingComments.push({
+            id: tempComment.id,
+            itemId,
+            content: text.trim(),
+            userId: currentUser.id,
+            createdAt: new Date().toISOString()
+          });
+          localStorage.setItem(`pending_comments_${itemId}`, JSON.stringify(pendingComments));
+        } catch (err) {
+          console.error("Failed to store pending comment in localStorage:", err);
+        }
+        
+        // Show success toast
+        toast({
+          title: "Comment saved locally",
+          description: "Your comment will be uploaded when connection improves",
+        });
+        
+        setIsLoading(false);
+        return;
+      }
+      
+      // Regular online mode - send to server
       // Parse the itemId to ensure it's a number
       const numericItemId = parseInt(itemId);
       if (isNaN(numericItemId)) {

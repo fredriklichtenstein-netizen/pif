@@ -15,12 +15,13 @@ export const useCommentActions = (
     id?: string;
     name?: string;
     avatar?: string;
-  }
+  },
+  useFallbackMode = false
 ) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Import individual comment action hooks
-  const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser);
+  const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser, useFallbackMode);
   const { deleteComment: handleDeleteComment } = useCommentDelete();
   const { handleEditComment } = useCommentEdit(comments, setComments);
   const { handleLikeComment, handleReplyToComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
