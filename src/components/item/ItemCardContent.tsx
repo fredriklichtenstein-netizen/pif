@@ -17,14 +17,13 @@ export function ItemCardContent({ description, measurements = {} }: ItemCardCont
     : description;
   
   return (
-    <div className="mt-1 mb-2 px-1"> {/* Reduced padding and margin */}
+    <div className="mt-1 mb-2 px-1">
       <div className="text-sm text-gray-600">
         <p className="mb-1">{truncatedDescription}</p>
         
         {hasDetails && expanded && (
-          <div className="mt-1 space-y-1"> {/* Reduced margin */}
-            <p className="font-medium text-xs text-gray-500 uppercase tracking-wide">Details</p>
-            <div className="grid grid-cols-2 gap-1 text-xs"> {/* Reduced gap */}
+          <div className="mt-1 space-y-1">
+            <div className="grid grid-cols-2 gap-1 text-xs">
               {Object.entries(measurements).map(([key, value]) => (
                 <div key={key} className="flex">
                   <span className="font-medium mr-1">{key}:</span>
