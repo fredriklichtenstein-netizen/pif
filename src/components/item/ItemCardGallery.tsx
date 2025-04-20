@@ -77,9 +77,9 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
         <div className="flex flex-col gap-2">
           <Badge 
             variant="secondary" 
-            className="self-start text-xs font-display tracking-wide uppercase bg-white/90 text-primary hover:bg-white/95 hover:text-primary"
+            className="self-start text-xs font-display tracking-wide uppercase text-white/90 bg-transparent"
           >
-            {category}
+            {category.toUpperCase()}
           </Badge>
           <h3 className="text-white text-lg font-display font-semibold tracking-wide drop-shadow-md">
             {title}
