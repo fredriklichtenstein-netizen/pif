@@ -52,10 +52,12 @@ export default function Feed() {
 
   // For ToggleGroup
   const handleCategoryChange = (values: string[]) => {
-    if (values.includes("all") && !allSelected) {
-      selectAll();
-    } else if (values.includes("all") && allSelected) {
-      return;
+    if (values.includes("all")) {
+      if (!allSelected) {
+        selectAll();
+      } else {
+        clearFilters();
+      }
     } else {
       setSelectedCategories(values);
     }
@@ -99,7 +101,7 @@ export default function Feed() {
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
           <ToggleGroup
             type="multiple"
-            value={allSelected && selectedCategories.length > 0 ? ["all"] : selectedCategories}
+            value={allSelected ? ["all", ...selectedCategories] : selectedCategories}
             onValueChange={handleCategoryChange}
           >
             <ToggleGroupItem
