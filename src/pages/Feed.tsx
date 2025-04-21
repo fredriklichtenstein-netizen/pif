@@ -32,58 +32,48 @@ export default function Feed() {
     filterByCategories(selectedCategories);
   }, [selectedCategories, filterByCategories]);
 
-  // Helper to determine if all categories are selected
   const allSelected = selectedCategories.length === CATEGORIES.length;
+  const isCategorySelected = (category: string) => selectedCategories.includes(category);
 
-  /**
-   * Update selected categories after toggling one category.
-   * If all categories get selected individually, then select all.
-   * If a category is deselected when all were selected, deselect it from full set.
-   */
-  const updateCategoriesAfterToggle = (category: string, selected: boolean) => {
-    if (selected) {
-      const updated = [...selectedCategories, category];
-      // If after adding, all categories selected, set allSelected true
-      if (updated.length === CATEGORIES.length) {
-        setSelectedCategories([...CATEGORIES]);
-      } else {
-        setSelectedCategories(updated);
-      }
+  // Select all categories
+  const selectAll = () => setSelectedCategories([...CATEGORIES]);
+
+  // Clear all categories
+  const clearFilters = () => setSelectedCategories([]);
+
+  // Toggle individual category
+  const toggleCategory = (category: string) => {
+    // If category already selected, deselect it
+    if (isCategorySelected(category)) {
+      setSelectedCategories(selectedCategories.filter((c) => c !== category));
     } else {
-      // Deselect this category
-      const updated = selectedCategories.filter(c => c !== category);
-      setSelectedCategories(updated);
+      setSelectedCategories(
+        // Ensure no duplicates, then check if it should trigger ALL
+        (() => {
+          const updated = [...selectedCategories, category];
+          if (updated.length >= CATEGORIES.length) return [...CATEGORIES];
+          return updated;
+        })()
+      );
     }
   };
 
-  /**
-   * Called when the toggle group value changes.
-   * If value includes 'all' and not all are currently selected, select all.
-   * If 'all' not included, set to values (individual categories).
-   * Prevent toggling off all by clicking 'all' again.
-   */
+  // For ToggleGroup. Preserves ability to activate/deactivate individual categories always.
   const handleCategoryChange = (values: string[]) => {
-    if (values.includes('all') && !allSelected) {
-      setSelectedCategories([...CATEGORIES]);
-    } else if (!values.includes('all')) {
+    // If ALL pressed and not already all selected, select all.
+    if (values.includes("all") && !allSelected) {
+      selectAll();
+    } else if (values.includes("all") && allSelected) {
+      // Do nothing if user tries to deselect ALL directly.
+      return;
+    } else {
       setSelectedCategories(values);
     }
-    // If user tries to 'deselect' ALL by clicking its toggle, do nothing—it should only respond to positive selection
   };
 
-  /**
-   * Called when a checkbox is toggled
-   */
+  // Checkbox click
   const handleCheckboxChange = (category: string) => {
-    if (selectedCategories.includes(category)) {
-      updateCategoriesAfterToggle(category, false);
-    } else {
-      updateCategoriesAfterToggle(category, true);
-    }
-  };
-
-  const clearFilters = () => {
-    setSelectedCategories([]);
+    toggleCategory(category);
   };
 
   if (isLoading) {
@@ -120,22 +110,34 @@ export default function Feed() {
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
           <ToggleGroup 
             type="multiple" 
-            // If allSelected true, 'all' toggle should be active, else individual categories.
-            value={allSelected ? ['all'] : selectedCategories} 
+            value={
+              allSelected && selectedCategories.length > 0
+                ? ["all"]
+                : selectedCategories
+            }
             onValueChange={handleCategoryChange}
           >
             <ToggleGroupItem
               value="all"
-              className={`rounded-full border ${allSelected ? 'bg-primary text-white' : 'bg-accent'}`}
+              className={`rounded-full border ${
+                allSelected
+                  ? "bg-primary text-white"
+                  : "bg-accent text-foreground"
+              }`}
+              aria-pressed={allSelected}
             >
               ALL
             </ToggleGroupItem>
-            
             {CATEGORIES.map((category) => (
               <ToggleGroupItem
                 key={category}
                 value={category}
-                className={`rounded-full border ${selectedCategories.includes(category) ? 'bg-primary text-white' : 'bg-accent'}`}
+                className={`rounded-full border ${
+                  isCategorySelected(category)
+                    ? "bg-primary text-white"
+                    : "bg-accent text-foreground"
+                }`}
+                aria-pressed={isCategorySelected(category)}
               >
                 {category}
               </ToggleGroupItem>
@@ -147,26 +149,44 @@ export default function Feed() {
           <div className="bg-accent/40 rounded-lg p-3 mb-4 mt-2 grid grid-cols-2 gap-2">
             <div className="col-span-2 mb-1 flex justify-between items-center">
               <h3 className="text-sm font-medium">Select categories</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 text-xs"
-                onClick={clearFilters}
-              >
-                Clear all
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={allSelected ? "default" : "outline"}
+                  className={`h-7 text-xs px-3 ${
+                    allSelected ? "" : ""
+                  }`}
+                  onClick={() => {
+                    if (!allSelected) selectAll();
+                  }}
+                  disabled={allSelected}
+                  tabIndex={0}
+                >
+                  Select all
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 text-xs"
+                  onClick={clearFilters}
+                  tabIndex={0}
+                >
+                  Clear all
+                </Button>
+              </div>
             </div>
             
             {CATEGORIES.map((category) => (
               <div key={category} className="flex items-center space-x-2">
                 <Checkbox 
                   id={`filter-${category}`} 
-                  checked={selectedCategories.includes(category)}
+                  checked={isCategorySelected(category)}
                   onCheckedChange={() => handleCheckboxChange(category)}
                 />
                 <label 
                   htmlFor={`filter-${category}`}
-                  className="text-sm cursor-pointer"
+                  className="text-sm cursor-pointer select-none"
                 >
                   {category}
                 </label>
@@ -181,9 +201,10 @@ export default function Feed() {
           let coordinates;
           if (post.coordinates) {
             try {
-              const coords = typeof post.coordinates === 'string' 
-                ? parseCoordinatesFromDB(post.coordinates) 
-                : post.coordinates;
+              const coords =
+                typeof post.coordinates === "string"
+                  ? parseCoordinatesFromDB(post.coordinates)
+                  : post.coordinates;
               coordinates = coords;
             } catch (e) {
               console.error("Failed to parse coordinates:", e, post.coordinates);
