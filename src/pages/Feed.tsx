@@ -1,4 +1,3 @@
-
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { ItemCardWrapper } from "@/components/ItemCardWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
@@ -43,35 +42,25 @@ export default function Feed() {
 
   // Toggle individual category
   const toggleCategory = (category: string) => {
-    // If category already selected, deselect it
     if (isCategorySelected(category)) {
       setSelectedCategories(selectedCategories.filter((c) => c !== category));
     } else {
-      setSelectedCategories(
-        // Ensure no duplicates, then check if it should trigger ALL
-        (() => {
-          const updated = [...selectedCategories, category];
-          if (updated.length >= CATEGORIES.length) return [...CATEGORIES];
-          return updated;
-        })()
-      );
+      const updated = [...selectedCategories, category];
+      setSelectedCategories(updated.length >= CATEGORIES.length ? [...CATEGORIES] : updated);
     }
   };
 
-  // For ToggleGroup. Preserves ability to activate/deactivate individual categories always.
+  // For ToggleGroup
   const handleCategoryChange = (values: string[]) => {
-    // If ALL pressed and not already all selected, select all.
     if (values.includes("all") && !allSelected) {
       selectAll();
     } else if (values.includes("all") && allSelected) {
-      // Do nothing if user tries to deselect ALL directly.
       return;
     } else {
       setSelectedCategories(values);
     }
   };
 
-  // Checkbox click
   const handleCheckboxChange = (category: string) => {
     toggleCategory(category);
   };
@@ -87,18 +76,18 @@ export default function Feed() {
   return (
     <div className="container max-w-md mx-auto px-4 pb-20">
       <NetworkStatus onRetry={refreshPosts} />
-      
+
       <div className="mb-4 mt-4">
         <h1 className="text-2xl font-bold mb-1">PiF Community</h1>
         <p className="text-muted-foreground">Sustainable sharing in your neighborhood</p>
       </div>
-      
+
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <h2 className="font-medium">Categories</h2>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="flex items-center gap-1 text-muted-foreground"
             onClick={() => setShowFilters(!showFilters)}
           >
@@ -108,21 +97,15 @@ export default function Feed() {
         </div>
 
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
-          <ToggleGroup 
-            type="multiple" 
-            value={
-              allSelected && selectedCategories.length > 0
-                ? ["all"]
-                : selectedCategories
-            }
+          <ToggleGroup
+            type="multiple"
+            value={allSelected && selectedCategories.length > 0 ? ["all"] : selectedCategories}
             onValueChange={handleCategoryChange}
           >
             <ToggleGroupItem
               value="all"
               className={`rounded-full border ${
-                allSelected
-                  ? "bg-primary text-white"
-                  : "bg-accent text-foreground"
+                allSelected ? "bg-primary text-white" : "bg-accent text-foreground"
               }`}
               aria-pressed={allSelected}
             >
@@ -153,21 +136,16 @@ export default function Feed() {
                 <Button
                   type="button"
                   size="sm"
-                  variant={allSelected ? "default" : "outline"}
-                  className={`h-7 text-xs px-3 ${
-                    allSelected ? "" : ""
-                  }`}
-                  onClick={() => {
-                    if (!allSelected) selectAll();
-                  }}
-                  disabled={allSelected}
+                  variant="outline"
+                  className="h-7 text-xs px-3"
+                  onClick={selectAll}
                   tabIndex={0}
                 >
                   Select all
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-7 text-xs"
                   onClick={clearFilters}
                   tabIndex={0}
@@ -176,15 +154,15 @@ export default function Feed() {
                 </Button>
               </div>
             </div>
-            
+
             {CATEGORIES.map((category) => (
               <div key={category} className="flex items-center space-x-2">
-                <Checkbox 
-                  id={`filter-${category}`} 
+                <Checkbox
+                  id={`filter-${category}`}
                   checked={isCategorySelected(category)}
                   onCheckedChange={() => handleCheckboxChange(category)}
                 />
-                <label 
+                <label
                   htmlFor={`filter-${category}`}
                   className="text-sm cursor-pointer select-none"
                 >
@@ -213,7 +191,7 @@ export default function Feed() {
 
           return (
             <ItemCardWrapper key={post.id}>
-              <ItemCard 
+              <ItemCard
                 id={post.id}
                 title={post.title}
                 description={post.description}
@@ -237,8 +215,8 @@ export default function Feed() {
           <div className="text-center py-8 text-muted-foreground">
             <p>No items found matching your filters</p>
             {selectedCategories.length > 0 && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="mt-2"
                 onClick={clearFilters}
               >
@@ -248,7 +226,7 @@ export default function Feed() {
           </div>
         )}
       </div>
-      
+
       <MainNav />
     </div>
   );
