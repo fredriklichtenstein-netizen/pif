@@ -1,3 +1,4 @@
+
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { ItemCardWrapper } from "@/components/ItemCardWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
@@ -31,15 +32,32 @@ export default function Feed() {
     filterByCategories(selectedCategories);
   }, [selectedCategories, filterByCategories]);
 
+  // Helper to determine if all categories are selected
+  const allSelected = selectedCategories.length === CATEGORIES.length;
+
+  /**
+   * Called when the toggle group value changes.
+   * If value includes 'all', select all. Otherwise, just those selected.
+   */
   const handleCategoryChange = (values: string[]) => {
-    if (values.includes('all')) {
+    if (values.includes('all') && !allSelected) {
       setSelectedCategories([...CATEGORIES]);
-    } else {
+    } else if (!values.includes('all')) {
       setSelectedCategories(values);
     }
+    // If user tries to 'deselect' ALL by clicking its toggle, do nothing—it should only respond to positive selection
   };
 
-  const allSelected = selectedCategories.length === CATEGORIES.length;
+  /**
+   * Called when a checkbox is toggled
+   */
+  const handleCheckboxChange = (category: string) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== category));
+    } else {
+      setSelectedCategories([...selectedCategories, category]);
+    }
+  };
 
   const clearFilters = () => {
     setSelectedCategories([]);
@@ -120,13 +138,7 @@ export default function Feed() {
                 <Checkbox 
                   id={`filter-${category}`} 
                   checked={selectedCategories.includes(category)}
-                  onCheckedChange={() => {
-                    if (selectedCategories.includes(category)) {
-                      setSelectedCategories(selectedCategories.filter(c => c !== category));
-                    } else {
-                      setSelectedCategories([...selectedCategories, category]);
-                    }
-                  }}
+                  onCheckedChange={() => handleCheckboxChange(category)}
                 />
                 <label 
                   htmlFor={`filter-${category}`}
@@ -196,3 +208,4 @@ export default function Feed() {
     </div>
   );
 }
+
