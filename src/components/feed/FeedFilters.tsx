@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,8 +30,11 @@ export function FeedFilters({
   // Toggle a single category, ensuring ALL logic works as described by user
   const toggleCategory = (category: string) => {
     // If "all" was active, but we tap a category: remove just that
-    if (allSelected && isCategorySelected(category)) {
-      setSelectedCategories(categories.filter((c) => c !== category));
+    if (allSelected) {
+      // When ALL is selected and a user clicks a category,
+      // we should select all categories EXCEPT the clicked one
+      const newCategories = categories.filter((c) => c !== category);
+      setSelectedCategories(newCategories);
       return;
     }
     
@@ -46,14 +48,29 @@ export function FeedFilters({
   };
 
   const handleCategoryChange = (values: string[]) => {
-    // ALL logic: if ALL is present in values, toggle between all and none
+    // If "all" is in the values list
     if (values.includes("all")) {
+      // If ALL wasn't previously selected, select all categories
       if (!allSelected) {
         selectAll();
       } else {
+        // If ALL was already selected, deselect all
         clearFilters();
       }
+      return;
+    }
+    
+    // If we're toggling a regular category
+    if (allSelected) {
+      // Find which category was toggled by comparing the previous selection (all categories) with values
+      // The category that needs to be deselected is the one missing from values
+      const deselectedCategory = categories.find(cat => !values.includes(cat));
+      if (deselectedCategory) {
+        // Keep all categories except the deselected one
+        setSelectedCategories(categories.filter(cat => cat !== deselectedCategory));
+      }
     } else {
+      // Normal logic - just set the selected categories
       setSelectedCategories(values);
     }
   };
