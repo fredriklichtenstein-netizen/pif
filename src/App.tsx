@@ -1,11 +1,9 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, lazy, Suspense } from "react";
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { NetworkStatusDebugger } from "@/components/debug/NetworkStatusDebugger";
 
-// Import your pages here
 import Home from "@/pages/Home";
 import Feed from "@/pages/Feed";
 import Map from "@/pages/Map";
@@ -14,11 +12,10 @@ import Auth from "@/pages/Auth";
 import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
 import NotFound from "@/pages/NotFound";
+import PublicProfile from "@/pages/PublicProfile";
 
-// Lazy load the Conversation page
 const Conversation = lazy(() => import("@/pages/Conversation"));
 
-// Simple loading component for lazy-loaded routes
 const PageLoading = () => (
   <div className="flex justify-center items-center h-[60vh]">
     <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -26,7 +23,6 @@ const PageLoading = () => (
 );
 
 function App() {
-  // Initialize auth on app load
   useEffect(() => {
     initializeAuth();
   }, []);
@@ -50,11 +46,11 @@ function App() {
               </Suspense>
             } 
           />
+          <Route path="/user/:id" element={<PublicProfile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Toaster />
-      {/* Add the Network Debugger in development mode */}
       {process.env.NODE_ENV === 'development' && <NetworkStatusDebugger />}
     </Router>
   );
