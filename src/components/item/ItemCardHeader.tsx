@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "../ui/dr
 import { ActionMenuItems } from "../post/interactions/ActionMenuItems";
 import type { ItemCardHeaderProps } from "./types";
 import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
+import { Link } from "react-router-dom";
 
 export function ItemCardHeader({
   postedBy,
@@ -23,7 +24,10 @@ export function ItemCardHeader({
   
   return (
     <div className="p-3 flex items-center justify-between">
-      <div className="flex items-center">
+      <Link 
+        to={`/user/${postedBy.id}`} 
+        className="flex items-center"
+      >
         <Avatar className="h-8 w-8 mr-2">
           <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
           <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
@@ -35,7 +39,7 @@ export function ItemCardHeader({
             {distanceText || "NaN km"}
           </div>
         </div>
-      </div>
+      </Link>
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

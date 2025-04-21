@@ -18,7 +18,7 @@ interface Profile {
   coordinates?: any;
 }
 
-const MAPBOX_TOKEN = import.meta.env.PUBLIC_MAPBOX_TOKEN || ""; // CHANGE TO SUPABASE SECRET FETCH IF NEEDED
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || ""; // CHANGE TO SUPABASE SECRET FETCH IF NEEDED
 
 // Helper: format name as "Firstname L"
 function formatPublicName(profile: Profile) {

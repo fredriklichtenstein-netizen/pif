@@ -1,6 +1,8 @@
+
 import { formatDistanceToNow } from "date-fns";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import type { Conversation } from "@/types/messaging";
+import { Link } from "react-router-dom";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -37,19 +39,21 @@ export function ConversationList({
               onClick={() => onSelectConversation(conversation.id)}
             >
               <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
-                  {otherParticipant?.profile?.avatar_url ? (
-                    <img 
-                      src={otherParticipant.profile.avatar_url} 
-                      alt={otherParticipant.profile.username || "User"}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center text-gray-500">
-                      {(otherParticipant?.profile?.username || "U").charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
+                {otherParticipant?.user_id && (
+                  <Link to={`/user/${otherParticipant.user_id}`} className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    {otherParticipant?.profile?.avatar_url ? (
+                      <img 
+                        src={otherParticipant.profile.avatar_url} 
+                        alt={otherParticipant.profile.username || "User"}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-gray-500">
+                        {(otherParticipant?.profile?.username || "U").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <h4 className="font-medium truncate">
