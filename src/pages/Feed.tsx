@@ -36,8 +36,31 @@ export default function Feed() {
   const allSelected = selectedCategories.length === CATEGORIES.length;
 
   /**
+   * Update selected categories after toggling one category.
+   * If all categories get selected individually, then select all.
+   * If a category is deselected when all were selected, deselect it from full set.
+   */
+  const updateCategoriesAfterToggle = (category: string, selected: boolean) => {
+    if (selected) {
+      const updated = [...selectedCategories, category];
+      // If after adding, all categories selected, set allSelected true
+      if (updated.length === CATEGORIES.length) {
+        setSelectedCategories([...CATEGORIES]);
+      } else {
+        setSelectedCategories(updated);
+      }
+    } else {
+      // Deselect this category
+      const updated = selectedCategories.filter(c => c !== category);
+      setSelectedCategories(updated);
+    }
+  };
+
+  /**
    * Called when the toggle group value changes.
-   * If value includes 'all', select all. Otherwise, just those selected.
+   * If value includes 'all' and not all are currently selected, select all.
+   * If 'all' not included, set to values (individual categories).
+   * Prevent toggling off all by clicking 'all' again.
    */
   const handleCategoryChange = (values: string[]) => {
     if (values.includes('all') && !allSelected) {
@@ -53,9 +76,9 @@ export default function Feed() {
    */
   const handleCheckboxChange = (category: string) => {
     if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter(c => c !== category));
+      updateCategoriesAfterToggle(category, false);
     } else {
-      setSelectedCategories([...selectedCategories, category]);
+      updateCategoriesAfterToggle(category, true);
     }
   };
 
@@ -97,6 +120,7 @@ export default function Feed() {
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
           <ToggleGroup 
             type="multiple" 
+            // If allSelected true, 'all' toggle should be active, else individual categories.
             value={allSelected ? ['all'] : selectedCategories} 
             onValueChange={handleCategoryChange}
           >
@@ -208,4 +232,3 @@ export default function Feed() {
     </div>
   );
 }
-
