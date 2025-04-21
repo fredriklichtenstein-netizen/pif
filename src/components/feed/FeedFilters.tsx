@@ -45,23 +45,24 @@ export function FeedFilters({
   };
 
   const handleCategoryChange = (values: string[]) => {
-    // If "all" is in the values list
+    // Handle the "ALL" button toggle
     if (values.includes("all")) {
-      // Toggle ALL on/off
       if (!allSelected) {
-        selectAll();
+        selectAll(); // Select all categories
       } else {
-        clearFilters();
+        clearFilters(); // Clear all categories
       }
       return;
     }
     
-    // When ALL is active and a category button is clicked
+    // When ALL is selected and a category button is clicked
     if (allSelected) {
-      // When ALL is selected and user clicks a category button, 
-      // the value will be only the clicked category itself (which we want to remove)
-      const categoryToRemove = values[0] || "";
-      setSelectedCategories(categories.filter(cat => cat !== categoryToRemove));
+      // The category that was clicked is the one we need to remove from "all categories"
+      const clickedCategory = categories.find(cat => !values.includes(cat) && cat !== "all");
+      if (clickedCategory) {
+        // Keep all categories except the clicked one
+        setSelectedCategories(categories.filter(cat => cat !== clickedCategory));
+      }
       return;
     }
     

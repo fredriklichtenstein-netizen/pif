@@ -37,11 +37,11 @@ export function FeedCategories({
             key={category}
             value={category}
             className={`rounded-full border ${
-              isCategorySelected(category)
+              isCategorySelected(category) || allSelected
                 ? "bg-primary text-white"
                 : "bg-accent text-foreground"
             }`}
-            aria-pressed={isCategorySelected(category)}
+            aria-pressed={isCategorySelected(category) || allSelected}
           >
             {category}
           </ToggleGroupItem>
