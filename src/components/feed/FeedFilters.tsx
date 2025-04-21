@@ -29,12 +29,9 @@ export function FeedFilters({
 
   // Toggle a single category, ensuring ALL logic works as described by user
   const toggleCategory = (category: string) => {
-    // If "all" was active, but we tap a category: remove just that
     if (allSelected) {
-      // When ALL is selected and a user clicks a category,
-      // we should select all categories EXCEPT the clicked one
-      const newCategories = categories.filter((c) => c !== category);
-      setSelectedCategories(newCategories);
+      // When ALL is selected and user clicks a category, keep all categories EXCEPT the clicked one
+      setSelectedCategories(categories.filter((c) => c !== category));
       return;
     }
     
@@ -50,29 +47,26 @@ export function FeedFilters({
   const handleCategoryChange = (values: string[]) => {
     // If "all" is in the values list
     if (values.includes("all")) {
-      // If ALL wasn't previously selected, select all categories
+      // Toggle ALL on/off
       if (!allSelected) {
         selectAll();
       } else {
-        // If ALL was already selected, deselect all
         clearFilters();
       }
       return;
     }
     
-    // If we're toggling a regular category
+    // When ALL is active and a category button is clicked
     if (allSelected) {
-      // Find which category was toggled by comparing the previous selection (all categories) with values
-      // The category that needs to be deselected is the one missing from values
-      const deselectedCategory = categories.find(cat => !values.includes(cat));
-      if (deselectedCategory) {
-        // Keep all categories except the deselected one
-        setSelectedCategories(categories.filter(cat => cat !== deselectedCategory));
-      }
-    } else {
-      // Normal logic - just set the selected categories
-      setSelectedCategories(values);
+      // When ALL is selected and user clicks a category button, 
+      // the value will be only the clicked category itself (which we want to remove)
+      const categoryToRemove = values[0] || "";
+      setSelectedCategories(categories.filter(cat => cat !== categoryToRemove));
+      return;
     }
+    
+    // Normal category selection (ALL is not active)
+    setSelectedCategories(values);
   };
 
   const handleCheckboxChange = (category: string) => {

@@ -20,7 +20,7 @@ export function FeedCategories({
     <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
       <ToggleGroup
         type="multiple"
-        value={allSelected ? ["all", ...selectedCategories] : selectedCategories}
+        value={allSelected ? ["all"] : selectedCategories}
         onValueChange={onCategoryChange}
       >
         <ToggleGroupItem
