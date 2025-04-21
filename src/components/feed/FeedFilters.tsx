@@ -1,8 +1,7 @@
-import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Filter } from "lucide-react";
-import { FeedCategories } from "./FeedCategories";
 
 interface FeedFiltersProps {
   categories: string[];
@@ -21,53 +20,18 @@ export function FeedFilters({
   showFilters,
   setShowFilters,
 }: FeedFiltersProps) {
-  // Handle ALL logic here while keeping the API the same as before
   const isCategorySelected = (category: string) => selectedCategories.includes(category);
 
   const selectAll = () => setSelectedCategories([...categories]);
   const clearFilters = () => setSelectedCategories([]);
 
-  // Toggle a single category, ensuring ALL logic works as described by user
   const toggleCategory = (category: string) => {
-    if (allSelected) {
-      // When ALL is selected and user clicks a category, keep all categories EXCEPT the clicked one
-      setSelectedCategories(categories.filter((c) => c !== category));
-      return;
-    }
-    
-    // Normal toggle logic
     if (isCategorySelected(category)) {
       setSelectedCategories(selectedCategories.filter((c) => c !== category));
     } else {
       const updated = [...selectedCategories, category];
       setSelectedCategories(updated.length >= categories.length ? [...categories] : updated);
     }
-  };
-
-  const handleCategoryChange = (values: string[]) => {
-    // Handle the "ALL" button toggle
-    if (values.includes("all")) {
-      if (!allSelected) {
-        selectAll(); // Select all categories
-      } else {
-        clearFilters(); // Clear all categories
-      }
-      return;
-    }
-    
-    // When ALL is selected and a category button is clicked
-    if (allSelected) {
-      // The category that was clicked is the one we need to remove from "all categories"
-      const clickedCategory = categories.find(cat => !values.includes(cat) && cat !== "all");
-      if (clickedCategory) {
-        // Keep all categories except the clicked one
-        setSelectedCategories(categories.filter(cat => cat !== clickedCategory));
-      }
-      return;
-    }
-    
-    // Normal category selection (ALL is not active)
-    setSelectedCategories(values);
   };
 
   const handleCheckboxChange = (category: string) => {
@@ -89,16 +53,7 @@ export function FeedFilters({
         </Button>
       </div>
 
-      {/* Category toggle group */}
-      <FeedCategories
-        categories={categories}
-        selectedCategories={selectedCategories}
-        allSelected={allSelected}
-        onCategoryChange={handleCategoryChange}
-        isCategorySelected={isCategorySelected}
-      />
-
-      {/* Filters dropdown with checkboxes */}
+      {/* Only show checkboxes as category filter controls */}
       {showFilters && (
         <div className="bg-accent/40 rounded-lg p-3 mb-4 mt-2 grid grid-cols-2 gap-2">
           <div className="col-span-2 mb-1 flex justify-between items-center">
