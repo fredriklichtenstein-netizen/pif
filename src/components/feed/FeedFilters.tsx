@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,6 +35,7 @@ export function FeedFilters({
       setSelectedCategories(categories.filter((c) => c !== category));
       return;
     }
+    
     // Normal toggle logic
     if (isCategorySelected(category)) {
       setSelectedCategories(selectedCategories.filter((c) => c !== category));
@@ -44,7 +46,7 @@ export function FeedFilters({
   };
 
   const handleCategoryChange = (values: string[]) => {
-    // ALL logic: if ALL is present and user removes a single category, ALL must deactivate
+    // ALL logic: if ALL is present in values, toggle between all and none
     if (values.includes("all")) {
       if (!allSelected) {
         selectAll();

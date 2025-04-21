@@ -25,7 +25,9 @@ export function FeedCategories({
       >
         <ToggleGroupItem
           value="all"
-          className="rounded-full border bg-accent text-foreground" // preserve transparency, no highlight even when active
+          className={`rounded-full border ${
+            allSelected ? "bg-primary text-white" : "bg-accent text-foreground"
+          }`}
           aria-pressed={allSelected}
         >
           ALL
