@@ -1,146 +1,190 @@
-
 import { useState, useEffect } from "react";
+import { CreatePostInput } from "@/types/post";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import type { CreatePostInput } from "@/types/post";
-import { addPost } from "@/services/posts";
-import { supabase } from "@/integrations/supabase/client";
-import { usePostLocation } from "./post/usePostLocation";
-import { useAuth } from "@/hooks/useAuth";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
-export const usePostForm = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { session } = useAuth();
+const DEFAULT_FORM_DATA: CreatePostInput = {
+  title: "",
+  description: "",
+  category: "",
+  condition: "",
+  images: [],
+  address: "",
+  coordinates: null,
+  // Optional fields with default values
+  dimensions: {
+    width: "",
+    height: "",
+    depth: "",
+  },
+  weight: "",
+};
+
+export function usePostForm(initialData?: any) {
+  const [formData, setFormData] = useState<CreatePostInput>(DEFAULT_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [formData, setFormData] = useState<CreatePostInput>({
-    title: "",
-    description: "",
-    category: "",
-    condition: "",
-    measurements: {},
-    images: [],
-    location: "",
-    coordinates: null,
-    status: "available",
-    user_id: undefined,
-  });
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useGlobalAuth();
 
-  // Location-related functionality
-  const { isGeocoding } = usePostLocation(formData, setFormData);
-
-  // Image-related functionality
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    setIsAnalyzing(true);
-    const newImages = [...formData.images];
-    
-    for (const file of e.target.files) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          newImages.push(e.target.result as string);
-          setFormData(prev => ({ ...prev, images: newImages }));
-        }
+  useEffect(() => {
+    // If initialData is provided, set it as the form data
+    if (initialData) {
+      // Transform the initialData into the expected format
+      const transformedData: CreatePostInput = {
+        title: initialData.title || "",
+        description: initialData.description || "",
+        category: initialData.category || "",
+        condition: initialData.condition || "",
+        images: initialData.images || [],
+        address: initialData.address || "",
+        coordinates: initialData.coordinates || null,
+        dimensions: {
+          width: initialData.dimensions?.width || "",
+          height: initialData.dimensions?.height || "",
+          depth: initialData.dimensions?.depth || "",
+        },
+        weight: initialData.weight || "",
       };
-      reader.readAsDataURL(file);
+      
+      setFormData(transformedData);
     }
-    
+  }, [initialData]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsAnalyzing(true);
+    const files = Array.from(e.target.files);
+
+    if (!files || files.length === 0) {
+      setIsAnalyzing(false);
+      return;
+    }
+
+    const uploadPromises = files.map(async (file) => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const timestamp = new Date().getTime();
+      const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
+
+      const { error } = await supabase.storage
+        .from("lovable-uploads")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("Error uploading image:", error);
+        toast({
+          title: "Error uploading image",
+          description: error.message,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from("lovable-uploads")
+        .getPublicUrl(filePath);
+      return data.publicUrl;
+    });
+
+    const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
+
+    if (uploadedUrls.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }));
+    }
+
     setIsAnalyzing(false);
   };
 
   const handleImagesChange = (newImages: string[]) => {
-    setFormData(prev => ({ ...prev, images: newImages }));
+    setFormData((prev) => ({
+      ...prev,
+      images: newImages,
+    }));
   };
 
-  // Fetch user's profile address on mount
-  useEffect(() => {
-    const fetchProfileAddress = async () => {
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('address')
-          .single();
-
-        if (profile?.address) {
-          sessionStorage.setItem('profile_address', profile.address);
-        }
-      } catch (error) {
-        console.error('Error fetching profile address:', error);
-      }
-    };
-
-    if (session?.user) {
-      fetchProfileAddress();
-    }
-  }, [session]);
+  const handleMeasurementChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      dimensions: {
+        ...prev.dimensions,
+        [field]: value,
+      },
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     
-    if (!session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to post items.",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-
-    if (!formData.title || !formData.category || !formData.condition) {
-      toast({
-        title: "Missing required fields",
-        description: "Please fill in all required fields (title, category, and condition).",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.coordinates) {
-      toast({
-        title: "Missing location",
-        description: "Please enter and verify a valid address.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.images.length === 0) {
-      toast({
-        title: "Missing images",
-        description: "Please upload at least one image.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
+    // If we're editing an existing post, use update instead of insert
+    const isEditing = !!initialData;
 
     try {
-      const postData: CreatePostInput = {
-        ...formData,
-        user_id: session.user.id,
+      e.preventDefault();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to create a post",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      const postData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        condition: formData.condition,
+        images: formData.images,
+        address: formData.address,
+        coordinates: formData.coordinates,
+        dimensions: formData.dimensions,
+        weight: formData.weight,
+        user_id: user.id,
       };
 
-      await addPost(postData);
-      await queryClient.invalidateQueries({ queryKey: ["posts"] });
+      let result;
       
+      if (isEditing) {
+        // Update existing post
+        result = await supabase
+          .from("items")
+          .update(postData)
+          .eq("id", initialData.id);
+      } else {
+        // Insert new post
+        result = await supabase
+          .from("items")
+          .insert(postData);
+      }
+
+      if (result.error) {
+        throw result.error;
+      }
+
       toast({
-        title: "Success!",
-        description: "Your item has been posted.",
+        title: isEditing ? "Post updated" : "Post created",
+        description: isEditing 
+          ? "Your PIF has been updated successfully" 
+          : "Your PIF has been created successfully",
       });
-      
-      navigate("/");
-    } catch (error) {
-      console.error("Error submitting post:", error);
+
+      // Navigate to profile page
+      navigate("/profile");
+    } catch (error: any) {
+      console.error("Error submitting form:", error);
       toast({
         title: "Error",
-        description: "Failed to create post. Please try again.",
+        description: error.message || "An error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -148,25 +192,14 @@ export const usePostForm = () => {
     }
   };
 
-  const handleMeasurementChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      measurements: {
-        ...prev.measurements,
-        [field]: value
-      }
-    }));
-  };
-
   return {
     formData,
-    isSubmitting,
-    isGeocoding,
-    isAnalyzing,
     setFormData,
+    isSubmitting,
+    isAnalyzing,
     handleImageUpload,
     handleImagesChange,
     handleMeasurementChange,
     handleSubmit,
   };
-};
+}

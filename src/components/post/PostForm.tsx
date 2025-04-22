@@ -4,8 +4,13 @@ import { PostFormContainer } from "./form/PostFormContainer";
 import { usePostForm } from "@/hooks/usePostForm";
 import { useMapbox } from "@/hooks/useMapbox";
 import { usePostLocation } from "@/hooks/post/usePostLocation";
+import { CreatePostInput } from "@/types/post";
 
-const PostForm = () => {
+interface PostFormProps {
+  initialData?: any;
+}
+
+const PostForm = ({ initialData }: PostFormProps = {}) => {
   const { mapToken } = useMapbox();
   const {
     formData,
@@ -16,7 +21,7 @@ const PostForm = () => {
     handleImagesChange,
     handleMeasurementChange,
     handleSubmit,
-  } = usePostForm();
+  } = usePostForm(initialData);
 
   const { handleAddressSelect } = usePostLocation(formData, setFormData);
 

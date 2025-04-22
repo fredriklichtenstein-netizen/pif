@@ -14,8 +14,12 @@ import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
 import NotFound from "@/pages/NotFound";
 import PublicProfile from "@/pages/PublicProfile";
+import AccountSettings from "@/pages/AccountSettings";
 
+// Lazy loaded components
 const Conversation = lazy(() => import("@/pages/Conversation"));
+const EditProfile = lazy(() => import("@/pages/ProfileEdit"));
+const PostEdit = lazy(() => import("@/pages/PostEdit"));
 
 const PageLoading = () => (
   <div className="flex justify-center items-center h-[60vh]">
@@ -48,6 +52,26 @@ function App() {
             } 
           />
           <Route path="/user/:id" element={<PublicProfile />} />
+          
+          {/* Added the missing routes */}
+          <Route 
+            path="/post/edit/:id" 
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <PostEdit />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/profile/edit" 
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <EditProfile />
+              </Suspense>
+            } 
+          />
+          <Route path="/account-settings" element={<AccountSettings />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
