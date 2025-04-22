@@ -2,7 +2,7 @@
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, ArrowRight } from "lucide-react";
+import { MessageSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function NotificationList() {
@@ -29,7 +29,7 @@ export function NotificationList() {
   if (notifications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-50 border rounded-lg">
-        <CheckCircle className="h-12 w-12 mb-4 text-gray-400 opacity-50" />
+        <MessageSquare className="h-12 w-12 mb-4 text-gray-400 opacity-50" />
         <h2 className="text-lg font-semibold text-gray-700 mb-2">No notifications yet</h2>
         <p className="text-sm text-gray-500">You'll receive updates here.</p>
       </div>
@@ -37,8 +37,8 @@ export function NotificationList() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between pb-2">
+    <div className="border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between p-3 border-b">
         <div className="font-medium text-lg">Notifications</div>
         {unreadCount > 0 && (
           <Button size="sm" variant="outline" onClick={markAllAsRead}>
@@ -48,7 +48,7 @@ export function NotificationList() {
       </div>
       <div className="divide-y">
         {notifications.map((notif) => (
-          <div key={notif.id} className={`py-3 px-1 flex items-start ${notif.is_read ? "opacity-60" : ""}`}>
+          <div key={notif.id} className={`py-3 px-4 flex items-start ${notif.is_read ? "opacity-60" : ""}`}>
             <div className="flex-1 min-w-0">
               <span className="text-xs font-semibold text-primary">{notif.type.replace(/_/g, " ").toUpperCase()}</span>
               <div className="font-semibold">{notif.title}</div>
