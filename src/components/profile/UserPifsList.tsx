@@ -1,10 +1,11 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { InterestUsersPopover } from "./InterestUsersPopover";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 
 export function UserPifsList({
   userId,
@@ -17,22 +18,44 @@ export function UserPifsList({
     ? isOwnerOverride
     : user && user.id === userId;
 
-  // Decide if we're in public profile (/profile/:id or /public-profile/:id)
-  // To fully support edge cases, you might want a better route match
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    supabase
-      .from("items")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setItems(data || []);
-        setLoading(false);
-      });
+    // Get all details for potential admin controls
+    // `images` is array, `id`, `title`, `description`, `created_at`, etc.
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase
+        .from("items")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .then(({ data }) => {
+          setItems(data || []);
+          setLoading(false);
+        });
+    });
   }, [userId]);
+
+  const handleEdit = (itemId: string) => {
+    navigate(`/post/edit/${itemId}`);
+  };
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (itemId: string) => {
+    if (!window.confirm("Are you sure you want to delete this PIF?")) return;
+    setDeletingId(itemId);
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { error } = await supabase.from("items").delete().eq("id", itemId);
+    if (error) {
+      alert("Error deleting PIF.");
+    } else {
+      setItems((prev) => prev.filter((item) => item.id !== itemId));
+    }
+    setDeletingId(null);
+  };
 
   if (loading) {
     return <div className="py-12 text-center text-gray-400">Loading your PIFs...</div>;
@@ -48,17 +71,53 @@ export function UserPifsList({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {items.map((item) => (
-        <Card key={item.id} className="flex flex-col p-4">
-          <div className="font-bold text-lg">{item.title}</div>
-          <div className="text-xs text-gray-500 mb-2">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
-          <div className="text-sm text-gray-700 mb-2">{item.description}</div>
-          {/* Only show management/interests for owner */}
-          {isOwner && (
-            <InterestUsersPopover itemId={item.id} />
-          )}
-        </Card>
-      ))}
+      {items.map((item) => {
+        // Use first image if possible
+        const imageUrl = item.images?.[0] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+        return (
+          <Card key={item.id} className="flex flex-col p-0 overflow-hidden hover:shadow-lg transition">
+            <img
+              src={imageUrl}
+              alt={item.title}
+              className="w-full h-40 object-cover"
+              onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
+            />
+            <div className="flex-1 flex flex-col p-3">
+              <div className="font-bold text-lg mb-1">{item.title}</div>
+              <div className="text-xs text-gray-500 mb-1">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
+              <div className="text-sm text-gray-700 mb-2">{item.description}</div>
+              {/* Only show management/interests for owner */}
+              {isOwner && (
+                <div className="flex flex-col gap-1 mt-2">
+                  <div className="mb-2"><InterestUsersPopover itemId={item.id} /></div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(item.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deletingId === item.id}
+                      onClick={() => handleDelete(item.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {deletingId === item.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 }
+
