@@ -38,13 +38,13 @@ export function UserPifsList({
     });
   }, [userId]);
 
-  const handleEdit = (itemId: string) => {
+  const handleEdit = (itemId: number) => {
     navigate(`/post/edit/${itemId}`);
   };
 
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = async (itemId: number) => {
     if (!window.confirm("Are you sure you want to delete this PIF?")) return;
     setDeletingId(itemId);
     const { supabase } = await import("@/integrations/supabase/client");
@@ -64,7 +64,7 @@ export function UserPifsList({
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
         <div className="text-lg font-semibold">No PIFs yet</div>
-        <div className="text-sm text-gray-500">You haven’t posted any PIFs yet.</div>
+        <div className="text-sm text-gray-500">You haven't posted any PIFs yet.</div>
       </Card>
     );
   }
@@ -120,4 +120,3 @@ export function UserPifsList({
     </div>
   );
 }
-
