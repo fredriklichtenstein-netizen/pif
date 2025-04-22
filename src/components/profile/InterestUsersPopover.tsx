@@ -67,7 +67,7 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
                 <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Receiver</span>
               )}
               {u.status === "pending" && (
-                <Button size="xs" onClick={() => handleSelectReceiver(u.id)}>
+                <Button size="sm" onClick={() => handleSelectReceiver(u.id)} className="text-xs py-1 px-2 h-auto">
                   Select as Receiver
                 </Button>
               )}
