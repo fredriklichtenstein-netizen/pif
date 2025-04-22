@@ -1,27 +1,89 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { ProfileOverview } from "@/components/profile/ProfileOverview";
-import { Settings, AlertCircle } from "lucide-react";
+import { UserPifsList } from "@/components/profile/UserPifsList";
+import { MyInterestsList } from "@/components/profile/MyInterestsList";
+import { AlertCircle, Settings } from "lucide-react";
+import { AvatarImage } from "@/components/ui/optimized-image";
+import { Skeleton } from "@/components/ui/skeleton";
+import mapboxgl from "mapbox-gl";
+import { addLocationPrivacy } from "@/utils/locationPrivacy";
+import "mapbox-gl/dist/mapbox-gl.css";
 
-import { ProfileOverviewTab } from "./ProfileOverviewTab";
-import { MyPifsTab } from "./MyPifsTab";
-import { MyInterestsTab } from "./MyInterestsTab";
-import { InterestsInMyPifsTab } from "./InterestsInMyPifsTab";
+// Helper: format name as "Firstname L"
+function formatPublicName(profile: any) {
+  if (!profile.first_name) return "";
+  const initial = profile.last_name ? profile.last_name[0].toUpperCase() : "";
+  return `${profile.first_name} ${initial}`;
+}
+
+// Same coordinates parser as in post utils
+function parseCoordinates(raw: any): { lng: number; lat: number } | null {
+  if (!raw) return null;
+  if (typeof raw === "string") {
+    const match = /\((-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)\)/.exec(raw);
+    if (match) {
+      return { lng: parseFloat(match[1]), lat: parseFloat(match[3]) };
+    }
+  }
+  if (typeof raw === "object" && "coordinates" in raw) {
+    return {
+      lng: raw.coordinates[0],
+      lat: raw.coordinates[1],
+    };
+  }
+  return null;
+}
+
+function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number } }) {
+  const mapRef = useState<HTMLDivElement | null>(null)[0];
+  useEffect(() => {
+    if (!coordinates) return;
+    const MAPBOX_TOKEN = "pk.eyJ1IjoiZnplamltcGRoZXN3cXJvamp2bWYiLCJhIjoiY2tuN3g2cjc2MGExdTJubzY1bXZxZDNsYiJ9.-yL0RpL13rMNcMYoHeuXvg"; // fallback token or get from env
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    let map: mapboxgl.Map;
+    let marker: mapboxgl.Marker | null = null;
+    let destroyed = false;
+
+    (async () => {
+      const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
+      if (destroyed) return;
+      map = new mapboxgl.Map({
+        container: "profile-map",
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [lng, lat],
+        zoom: 14,
+        interactive: false,
+        accessToken: MAPBOX_TOKEN,
+      });
+      marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+    })();
+
+    return () => {
+      destroyed = true;
+      if (marker) marker.remove();
+      if (map) map.remove();
+    };
+  }, [coordinates]);
+  return <div ref={mapRef as any} id="profile-map" className="w-full h-[200px] rounded-lg border mb-4" />;
+}
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
-  const [activeTab, setActiveTab] = useState<"overview" | "my-pifs" | "my-interests" | "interests-in-my-pifs">("overview");
+  const [profile, setProfile] = useState<any>(user || null);
+  const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
 
-  const handleTabChange = (value: string) => {
-    if (["overview", "my-pifs", "my-interests", "interests-in-my-pifs"].includes(value)) {
-      setActiveTab(value as typeof activeTab);
+  useEffect(() => {
+    if (user) {
+      setProfile(user);
+      const coord = parseCoordinates(user?.coordinates);
+      if (coord) setCoordinates(coord);
     }
-  };
+  }, [user]);
 
   if (authLoading) {
     return (
@@ -30,13 +92,13 @@ const Profile = () => {
       </div>
     );
   }
-  if (!user) {
+  if (!profile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="flex flex-col items-center p-8 gap-4">
+        <Card className="flex flex-col items-center p-8 gap-4 max-w-md">
           <AlertCircle className="h-12 w-12 text-amber-500" />
           <div className="text-xl font-bold">Authentication required</div>
-          <div className="text-gray-600">Please sign in to view your profile</div>
+          <div className="text-gray-600 text-center">Please sign in to view your profile</div>
           <Link to="/auth">
             <Button>Sign In</Button>
           </Link>
@@ -45,12 +107,29 @@ const Profile = () => {
     );
   }
 
+  // Main profile layout
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center pb-28">
-      <div className="w-full max-w-4xl">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <div className="flex gap-2">
+    <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center">
+      <div className="w-full max-w-3xl mx-auto">
+        {/* Public Profile Info */}
+        <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
+          <AvatarImage
+            src={profile.avatar_url || undefined}
+            alt={formatPublicName(profile)}
+            size={96}
+            className="mb-3 border"
+          />
+          <div className="text-2xl font-semibold mb-1">{formatPublicName(profile)}</div>
+          <div className="text-gray-600 capitalize mb-1">{profile.gender || "Gender undisclosed"}</div>
+          {profile.address && (
+            <div className="text-sm text-gray-500 mb-2 text-center">{profile.address}</div>
+          )}
+          {!!coordinates && (
+            <div className="w-full mb-2">
+              <ProfileMap coordinates={coordinates} />
+            </div>
+          )}
+          <div className="flex gap-3 mt-2">
             <Link to="/profile/edit">
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Settings size={16} />
@@ -61,27 +140,19 @@ const Profile = () => {
               <Button variant="outline" size="sm">Account Settings</Button>
             </Link>
           </div>
-        </div>
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="mb-4 w-full flex gap-2 border rounded-lg bg-white">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="my-pifs">My PIFs</TabsTrigger>
-            <TabsTrigger value="my-interests">My Interests</TabsTrigger>
-            <TabsTrigger value="interests-in-my-pifs">Interests in My PIFs</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview">
-            <ProfileOverviewTab user={user} />
-          </TabsContent>
-          <TabsContent value="my-pifs">
-            <MyPifsTab userId={user.id} />
-          </TabsContent>
-          <TabsContent value="my-interests">
-            <MyInterestsTab userId={user.id} />
-          </TabsContent>
-          <TabsContent value="interests-in-my-pifs">
-            <InterestsInMyPifsTab userId={user.id} />
-          </TabsContent>
-        </Tabs>
+        </Card>
+
+        {/* My PIFs Section */}
+        <section>
+          <h2 className="text-xl font-semibold mb-3">My PIFs</h2>
+          <UserPifsList userId={profile.id} />
+        </section>
+
+        {/* My Interests Section */}
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold mb-3">PIFs I’ve Shown Interest In</h2>
+          <MyInterestsList userId={profile.id} />
+        </section>
       </div>
     </div>
   );
