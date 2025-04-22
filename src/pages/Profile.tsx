@@ -80,8 +80,11 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       setProfile(user);
-      const coord = parseCoordinates(user?.coordinates);
-      if (coord) setCoordinates(coord);
+      // Fix: Check if user.coordinates exists on the profile
+      if (user && 'coordinates' in user) {
+        const coord = parseCoordinates(user.coordinates);
+        if (coord) setCoordinates(coord);
+      }
     }
   }, [user]);
 
@@ -150,7 +153,7 @@ const Profile = () => {
 
         {/* My Interests Section */}
         <section className="mt-10">
-          <h2 className="text-xl font-semibold mb-3">PIFs I’ve Shown Interest In</h2>
+          <h2 className="text-xl font-semibold mb-3">PIFs I've Shown Interest In</h2>
           <MyInterestsList userId={profile.id} />
         </section>
       </div>
