@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AvatarImage } from "@/components/ui/optimized-image";
@@ -131,20 +130,11 @@ function UserPifsGrid({ userId }: { userId: string }) {
       <h3 className="text-lg font-semibold mt-4 mb-2">My PIFs</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map((item) => (
-          <Link to={`/post/${item.id}`} key={item.id}>
-            <Card className="p-3 hover:ring-2 ring-primary transition">
-              {item.images?.[0] && (
-                <img
-                  src={item.images[0]}
-                  alt={item.title}
-                  className="rounded w-full h-28 object-cover mb-2"
-                />
-              )}
-              <div className="font-medium">{item.title}</div>
-              <div className="text-xs text-gray-500">{item.category}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {item.created_at && new Date(item.created_at).toLocaleDateString()}
-              </div>
+          <Link to={`/post/${item.id}`} key={item.id} aria-label={item.title}>
+            <Card className="p-4 hover:ring-2 ring-primary transition flex flex-col gap-2">
+              <div className="font-bold text-lg">{item.title}</div>
+              <div className="text-xs text-gray-500">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
+              <div className="text-sm text-gray-700">{item.description}</div>
             </Card>
           </Link>
         ))}

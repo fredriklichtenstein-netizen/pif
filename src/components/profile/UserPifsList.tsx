@@ -3,10 +3,22 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { InterestUsersPopover } from "./InterestUsersPopover";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useLocation } from "react-router-dom";
 
-export function UserPifsList({ userId }: { userId: string }) {
+export function UserPifsList({
+  userId,
+  isOwner: isOwnerOverride,
+}: { userId: string; isOwner?: boolean }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useGlobalAuth();
+  const isOwner = typeof isOwnerOverride === "boolean"
+    ? isOwnerOverride
+    : user && user.id === userId;
+
+  // Decide if we're in public profile (/profile/:id or /public-profile/:id)
+  // To fully support edge cases, you might want a better route match
 
   useEffect(() => {
     if (!userId) return;
@@ -38,12 +50,13 @@ export function UserPifsList({ userId }: { userId: string }) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {items.map((item) => (
         <Card key={item.id} className="flex flex-col p-4">
-          <div className="font-semibold text-lg">{item.title}</div>
+          <div className="font-bold text-lg">{item.title}</div>
           <div className="text-xs text-gray-500 mb-2">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
           <div className="text-sm text-gray-700 mb-2">{item.description}</div>
-          {/* Show interested users */}
-          <InterestUsersPopover itemId={item.id} />
-          {/* Add edit/delete buttons here if desired */}
+          {/* Only show management/interests for owner */}
+          {isOwner && (
+            <InterestUsersPopover itemId={item.id} />
+          )}
         </Card>
       ))}
     </div>
