@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationView } from "@/components/messaging/ConversationView";
-import { MessageSquare, Bell } from "lucide-react";
+import { MessageSquare, Bell, AlertCircle } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Skeleton } from "@/components/ui/skeleton";
