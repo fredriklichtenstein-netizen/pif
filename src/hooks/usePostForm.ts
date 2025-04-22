@@ -35,6 +35,36 @@ export function usePostForm(initialData?: any) {
     // If initialData is provided, set it as the form data
     if (initialData) {
       // Transform the initialData into the expected format
+      let coordinates = null;
+      
+      // If coordinates exist, try to parse them
+      if (initialData.coordinates) {
+        try {
+          // Check if it's already an object with lat and lng
+          if (typeof initialData.coordinates === 'object' && 
+              initialData.coordinates !== null &&
+              'lat' in initialData.coordinates &&
+              'lng' in initialData.coordinates) {
+            coordinates = {
+              lat: initialData.coordinates.lat,
+              lng: initialData.coordinates.lng
+            };
+          } else {
+            // Try to parse from a string format
+            const coordString = String(initialData.coordinates);
+            const matches = coordString.match(/\(([-\d.]+),([-\d.]+)\)/);
+            if (matches && matches.length >= 3) {
+              coordinates = {
+                lng: parseFloat(matches[1]),
+                lat: parseFloat(matches[2])
+              };
+            }
+          }
+        } catch (err) {
+          console.error("Error parsing coordinates:", err);
+        }
+      }
+      
       const transformedData: CreatePostInput = {
         title: initialData.title || "",
         description: initialData.description || "",
@@ -43,7 +73,7 @@ export function usePostForm(initialData?: any) {
         images: initialData.images || [],
         location: initialData.location || "",
         address: initialData.address || "",
-        coordinates: initialData.coordinates || null,
+        coordinates: coordinates,
         dimensions: {
           width: initialData.dimensions?.width || "",
           height: initialData.dimensions?.height || "",
@@ -143,6 +173,10 @@ export function usePostForm(initialData?: any) {
 
       const { supabase } = await import("@/integrations/supabase/client");
       
+      // Format coordinates for DB storage
+      const dbCoordinates = formData.coordinates ? 
+        `(${formData.coordinates.lng},${formData.coordinates.lat})` : null;
+      
       const postData = {
         title: formData.title,
         description: formData.description,
@@ -151,7 +185,7 @@ export function usePostForm(initialData?: any) {
         images: formData.images,
         location: formData.location,
         address: formData.address,
-        coordinates: formData.coordinates,
+        coordinates: dbCoordinates,
         dimensions: formData.dimensions,
         weight: formData.weight,
         measurements: formData.measurements,

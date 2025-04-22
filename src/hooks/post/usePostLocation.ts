@@ -1,9 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import type { CreatePostInput } from "@/types/post";
-import { formatCoordinatesForDB } from "@/types/post";
-import type { Coordinates } from "@/types/post";
+import type { CreatePostInput, Coordinates } from "@/types/post";
 
 export const usePostLocation = (
   formData: CreatePostInput,
@@ -19,15 +17,14 @@ export const usePostLocation = (
     setFormData(prev => ({
       ...prev,
       location: address,
-      coordinates: coordinates ? formatCoordinatesForDB(coordinates) : null
+      coordinates: coordinates || null
     }));
     
     setIsAddressVerified(!!coordinates);
     
     console.log("Address updated in form state:", { 
       address, 
-      coordinates,
-      formattedCoordinates: coordinates ? formatCoordinatesForDB(coordinates) : null 
+      coordinates
     });
   };
 
