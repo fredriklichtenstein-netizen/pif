@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationView } from "@/components/messaging/ConversationView";
-import { MessageSquare, AlertCircle, Bell } from "lucide-react";
+import { MessageSquare, Bell } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,9 +26,7 @@ const Messages = () => {
 
   const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
 
-  // Create a handler that ensures the correct type is passed
   const handleTabChange = (value: string) => {
-    // Only set the state if the value is one of the allowed values
     if (value === "messages" || value === "notifications") {
       setActiveTab(value);
     }
@@ -75,10 +72,10 @@ const Messages = () => {
               <p className="text-sm text-gray-500 mt-4">Please try refreshing the page</p>
             </div>
           ) : conversations.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 border rounded-lg">
-              <MessageSquare className="mx-auto h-12 w-12 mb-2 opacity-50" />
-              <p className="font-medium">No conversations yet</p>
-              <p className="text-sm mt-2">When you message someone about an item, it will appear here.</p>
+            <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-50 border rounded-lg">
+              <MessageSquare className="h-12 w-12 mb-4 text-gray-400 opacity-50" />
+              <h2 className="text-lg font-semibold text-gray-700 mb-2">No conversations yet</h2>
+              <p className="text-sm text-gray-500">When you message someone about an item, it will appear here.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

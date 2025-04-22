@@ -28,10 +28,10 @@ export function NotificationList() {
 
   if (notifications.length === 0) {
     return (
-      <div className="text-center text-gray-500 py-12">
-        <CheckCircle className="mx-auto h-8 w-8 mb-2 opacity-30" />
-        <div>No notifications yet</div>
-        <div className="text-xs mt-1 text-gray-400">You'll receive updates here.</div>
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-50 border rounded-lg">
+        <CheckCircle className="h-12 w-12 mb-4 text-gray-400 opacity-50" />
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">No notifications yet</h2>
+        <p className="text-sm text-gray-500">You'll receive updates here.</p>
       </div>
     );
   }
