@@ -69,7 +69,7 @@ function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number }
       if (map) map.remove();
     };
   }, [coordinates]);
-  return <div ref={mapRef as any} id="profile-map" className="w-full h-[200px] rounded-lg border mb-4" />;
+  return <div id="profile-map" className="w-full h-[200px] rounded-lg border mb-4" />;
 }
 
 const Profile = () => {
@@ -80,8 +80,8 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       setProfile(user);
-      // Only try to parse coordinates if clearly present
-      if ((user as any)?.coordinates) {
+      // Only try to parse coordinates if clearly present in user data
+      if (user && typeof user === 'object' && 'coordinates' in user) {
         const coord = parseCoordinates(user.coordinates);
         if (coord) setCoordinates(coord);
       }
@@ -162,4 +162,3 @@ const Profile = () => {
   );
 };
 export default Profile;
-
