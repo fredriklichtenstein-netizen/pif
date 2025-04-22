@@ -1,5 +1,4 @@
 
-// Import AlertCircle from lucide-react to fix the missing icon error
 import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
@@ -42,7 +41,7 @@ const Messages = () => {
             <MessageSquare className="h-5 w-5" />
             Messages
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
+          <TabsTrigger value="notifications" className="flex items-center gap-2 relative">
             <Bell className="h-5 w-5" />
             Notifications
             {unreadCount > 0 && (
