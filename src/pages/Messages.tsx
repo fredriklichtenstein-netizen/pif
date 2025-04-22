@@ -27,9 +27,17 @@ const Messages = () => {
 
   const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
 
+  // Create a handler that ensures the correct type is passed
+  const handleTabChange = (value: string) => {
+    // Only set the state if the value is one of the allowed values
+    if (value === "messages" || value === "notifications") {
+      setActiveTab(value);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-4 w-full flex justify-center">
           <TabsTrigger value="messages" className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
