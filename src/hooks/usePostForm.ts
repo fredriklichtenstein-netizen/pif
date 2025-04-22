@@ -1,141 +1,38 @@
 
-import { useState, useEffect } from "react";
+// -- REFACTORED: uses new hooks & utils
+
+import { useState } from "react";
 import { CreatePostInput } from "@/types/post";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { usePostFormInitializer } from "@/hooks/post/usePostFormInitializer";
+import { usePostImageUpload } from "@/hooks/post/usePostImageUpload";
 
-const DEFAULT_FORM_DATA: CreatePostInput = {
-  title: "",
-  description: "",
-  category: "",
-  condition: "",
-  images: [],
-  location: "",
-  address: "",
-  coordinates: null,
-  dimensions: {
-    width: "",
-    height: "",
-    depth: "",
-  },
-  weight: "",
-  measurements: {},
-};
-
+/**
+ * Orchestrates post form logic, wired to new focused hooks.
+ */
 export function usePostForm(initialData?: any) {
-  const [formData, setFormData] = useState<CreatePostInput>(DEFAULT_FORM_DATA);
+  const [formData, setFormData] = useState<CreatePostInput>(usePostFormInitializer(initialData));
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useGlobalAuth();
 
-  useEffect(() => {
-    // If initialData is provided, set it as the form data
-    if (initialData) {
-      // Transform the initialData into the expected format
-      let coordinates = null;
-      
-      // If coordinates exist, try to parse them
-      if (initialData.coordinates) {
-        try {
-          // Check if it's already an object with lat and lng
-          if (typeof initialData.coordinates === 'object' && 
-              initialData.coordinates !== null &&
-              'lat' in initialData.coordinates &&
-              'lng' in initialData.coordinates) {
-            coordinates = {
-              lat: initialData.coordinates.lat,
-              lng: initialData.coordinates.lng
-            };
-          } else {
-            // Try to parse from a string format
-            const coordString = String(initialData.coordinates);
-            const matches = coordString.match(/\(([-\d.]+),([-\d.]+)\)/);
-            if (matches && matches.length >= 3) {
-              coordinates = {
-                lng: parseFloat(matches[1]),
-                lat: parseFloat(matches[2])
-              };
-            }
-          }
-        } catch (err) {
-          console.error("Error parsing coordinates:", err);
-        }
-      }
-      
-      const transformedData: CreatePostInput = {
-        title: initialData.title || "",
-        description: initialData.description || "",
-        category: initialData.category || "",
-        condition: initialData.condition || "",
-        images: initialData.images || [],
-        location: initialData.location || "",
-        address: initialData.address || "",
-        coordinates: coordinates,
-        dimensions: {
-          width: initialData.dimensions?.width || "",
-          height: initialData.dimensions?.height || "",
-          depth: initialData.dimensions?.depth || "",
-        },
-        weight: initialData.weight || "",
-        measurements: initialData.measurements || {},
-      };
-      
-      setFormData(transformedData);
-    }
-  }, [initialData]);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsAnalyzing(true);
-    const files = Array.from(e.target.files || []);
-
-    if (!files || files.length === 0) {
-      setIsAnalyzing(false);
-      return;
-    }
-
-    const uploadPromises = files.map(async (file) => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const timestamp = new Date().getTime();
-      const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
-
-      const { error } = await supabase.storage
-        .from("lovable-uploads")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (error) {
-        console.error("Error uploading image:", error);
-        toast({
-          title: "Error uploading image",
-          description: error.message,
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      const { data } = supabase.storage
-        .from("lovable-uploads")
-        .getPublicUrl(filePath);
-      return data.publicUrl;
-    });
-
-    const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
-
-    if (uploadedUrls.length > 0) {
+  // Image upload logic delegated to dedicated hook
+  const {
+    handleImageUpload,
+    isAnalyzing,
+  } = usePostImageUpload({
+    onImagesUploaded: (uploadedUrls) => {
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, ...uploadedUrls],
       }));
     }
+  });
 
-    setIsAnalyzing(false);
-  };
-
+  // For direct image list changes (used with crop/ordering UI)
   const handleImagesChange = (newImages: string[]) => {
     setFormData((prev) => ({
       ...prev,
@@ -154,8 +51,6 @@ export function usePostForm(initialData?: any) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    
-    // If we're editing an existing post, use update instead of insert
     const isEditing = !!initialData;
 
     try {
@@ -172,11 +67,11 @@ export function usePostForm(initialData?: any) {
       setIsSubmitting(true);
 
       const { supabase } = await import("@/integrations/supabase/client");
-      
-      // Format coordinates for DB storage
-      const dbCoordinates = formData.coordinates ? 
+
+      // format coordinates for DB: (lng,lat)
+      const dbCoordinates = formData.coordinates ?
         `(${formData.coordinates.lng},${formData.coordinates.lat})` : null;
-      
+
       const postData = {
         title: formData.title,
         description: formData.description,
@@ -184,7 +79,6 @@ export function usePostForm(initialData?: any) {
         condition: formData.condition,
         images: formData.images,
         location: formData.location,
-        address: formData.address,
         coordinates: dbCoordinates,
         dimensions: formData.dimensions,
         weight: formData.weight,
@@ -193,15 +87,13 @@ export function usePostForm(initialData?: any) {
       };
 
       let result;
-      
+
       if (isEditing) {
-        // Update existing post
         result = await supabase
           .from("items")
           .update(postData)
           .eq("id", initialData.id);
       } else {
-        // Insert new post
         result = await supabase
           .from("items")
           .insert(postData);
@@ -213,12 +105,11 @@ export function usePostForm(initialData?: any) {
 
       toast({
         title: isEditing ? "Post updated" : "Post created",
-        description: isEditing 
-          ? "Your PIF has been updated successfully" 
+        description: isEditing
+          ? "Your PIF has been updated successfully"
           : "Your PIF has been created successfully",
       });
 
-      // Navigate to profile page
       navigate("/profile");
     } catch (error: any) {
       console.error("Error submitting form:", error);
