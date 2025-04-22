@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AvatarImage } from "@/components/ui/optimized-image";
@@ -18,16 +17,14 @@ interface Profile {
   coordinates?: any;
 }
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || ""; // CHANGE TO SUPABASE SECRET FETCH IF NEEDED
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
-// Helper: format name as "Firstname L"
 function formatPublicName(profile: Profile) {
   if (!profile.first_name) return "";
   const initial = profile.last_name ? profile.last_name[0].toUpperCase() : "";
   return `${profile.first_name} ${initial}`;
 }
 
-// Fetch profile from Supabase by id
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const { supabase } = await import("@/integrations/supabase/client");
   const { data, error } = await supabase
@@ -42,7 +39,6 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   return data as Profile;
 }
 
-// Same coordinates parser as in post utils
 function parseCoordinates(raw: any): { lng: number; lat: number } | null {
   if (!raw) return null;
   if (typeof raw === "string") {
@@ -69,7 +65,6 @@ function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number }
     let marker: mapboxgl.Marker | null = null;
     let destroyed = false;
 
-    // Distort location for privacy
     (async () => {
       const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
       if (destroyed) return;
@@ -96,6 +91,64 @@ function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number }
       id="public-profile-map"
       className="w-full h-[250px] rounded-lg border"
     />
+  );
+}
+
+function UserPifsGrid({ userId }: { userId: string }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    setLoading(true);
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase
+        .from("items")
+        .select("id,title,description,category,images,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .then(({ data }) => {
+          setItems(data || []);
+          setLoading(false);
+        });
+    });
+  }, [userId]);
+
+  if (loading) {
+    return <div className="py-4 text-center text-gray-400">Loading user PIFs...</div>;
+  }
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center p-4 gap-2">
+        <div className="text-sm text-gray-500">No PIFs posted yet.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold mt-4 mb-2">My PIFs</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {items.map((item) => (
+          <Link to={`/post/${item.id}`} key={item.id}>
+            <Card className="p-3 hover:ring-2 ring-primary transition">
+              {item.images?.[0] && (
+                <img
+                  src={item.images[0]}
+                  alt={item.title}
+                  className="rounded w-full h-28 object-cover mb-2"
+                />
+              )}
+              <div className="font-medium">{item.title}</div>
+              <div className="text-xs text-gray-500">{item.category}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {item.created_at && new Date(item.created_at).toLocaleDateString()}
+              </div>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -146,11 +199,6 @@ export default function PublicProfile() {
           />
           <div className="text-xl font-semibold">{formatPublicName(profile)}</div>
           <div className="text-gray-600 mb-2 capitalize">{profile.gender || "Gender undisclosed"}</div>
-          {profile.address && (
-            <div className="text-sm text-gray-500 mb-3 text-center">
-              {profile.address}
-            </div>
-          )}
           {coordinates && (
             <div className="w-full">
               <ProfileMap coordinates={coordinates} />
@@ -162,6 +210,7 @@ export default function PublicProfile() {
             </div>
           )}
         </div>
+        <UserPifsGrid userId={profile.id} />
       </Card>
     </div>
   );

@@ -80,8 +80,8 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       setProfile(user);
-      // Fix: Check if user.coordinates exists on the profile
-      if (user && 'coordinates' in user) {
+      // Only try to parse coordinates if clearly present
+      if ((user as any)?.coordinates) {
         const coord = parseCoordinates(user.coordinates);
         if (coord) setCoordinates(coord);
       }
@@ -124,6 +124,7 @@ const Profile = () => {
           />
           <div className="text-2xl font-semibold mb-1">{formatPublicName(profile)}</div>
           <div className="text-gray-600 capitalize mb-1">{profile.gender || "Gender undisclosed"}</div>
+          {/* Only owner sees address */}
           {profile.address && (
             <div className="text-sm text-gray-500 mb-2 text-center">{profile.address}</div>
           )}
@@ -161,3 +162,4 @@ const Profile = () => {
   );
 };
 export default Profile;
+
