@@ -397,6 +397,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -510,6 +549,18 @@ export type Database = {
         Args: { item_id_param: number; receiver_id_param: string }
         Returns: string
       }
+      create_notification: {
+        Args: {
+          p_user_id: string
+          p_type: string
+          p_title: string
+          p_content: string
+          p_reference_id?: string
+          p_reference_type?: string
+          p_action_url?: string
+        }
+        Returns: string
+      }
       get_follower_count: {
         Args: { user_id: string }
         Returns: number
@@ -524,6 +575,10 @@ export type Database = {
       }
       get_item_likes_count: {
         Args: { item_id_param: number }
+        Returns: number
+      }
+      get_unread_notifications_count: {
+        Args: { user_id_param: string }
         Returns: number
       }
       get_user_conversation_ids: {
@@ -544,6 +599,14 @@ export type Database = {
       }
       is_following: {
         Args: { follower: string; following: string }
+        Returns: boolean
+      }
+      mark_all_notifications_read: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      mark_notification_read: {
+        Args: { notification_id: string }
         Returns: boolean
       }
     }

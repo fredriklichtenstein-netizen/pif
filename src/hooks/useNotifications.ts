@@ -1,0 +1,105 @@
+
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useToast } from "@/hooks/use-toast";
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  content?: string;
+  reference_id?: string;
+  reference_type?: string;
+  is_read: boolean;
+  created_at: string;
+  action_url?: string;
+}
+
+export function useNotifications() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<Error | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { user } = useGlobalAuth();
+  const { toast } = useToast();
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoading(true);
+    setFetchError(null);
+
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setFetchError(error);
+      toast({
+        title: "Failed to load notifications",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+    setNotifications(data || []);
+    setIsLoading(false);
+
+    // Count unread
+    const unread = (data || []).filter((n) => !n.is_read).length;
+    setUnreadCount(unread);
+  }, [user?.id, toast]);
+
+  // Realtime notifications
+  useEffect(() => {
+    fetchNotifications();
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`public:notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchNotifications]);
+
+  const markAllAsRead = async () => {
+    if (!user?.id) return;
+    const { error } = await supabase.rpc("mark_all_notifications_read");
+    if (error) {
+      toast({
+        title: "Failed to mark notifications as read",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    fetchNotifications();
+  };
+
+  return {
+    notifications,
+    isLoading,
+    fetchError,
+    unreadCount,
+    markAllAsRead,
+    fetchNotifications,
+  };
+}
