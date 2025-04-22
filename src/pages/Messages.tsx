@@ -1,3 +1,5 @@
+
+// Import AlertCircle from lucide-react to fix the missing icon error
 import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
@@ -35,12 +37,12 @@ const Messages = () => {
   return (
     <div className="container mx-auto px-4 pb-20 pt-4">
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="mb-4 w-full flex justify-center">
-          <TabsTrigger value="messages" className="flex items-center gap-2">
+        <TabsList className="mb-4 w-full flex justify-center border rounded-lg bg-white">
+          <TabsTrigger value="messages" className="flex items-center gap-2 border-r border-gray-200 last:border-0">
             <MessageSquare className="h-5 w-5" />
             Messages
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2 relative">
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
             Notifications
             {unreadCount > 0 && (
@@ -51,7 +53,7 @@ const Messages = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="messages">
+        <TabsContent value="messages" className="border rounded-lg bg-white">
           {isLoading ? (
             <div className="space-y-4">
               <Skeleton className="h-12 w-full rounded-lg" />
@@ -102,10 +104,8 @@ const Messages = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="notifications">
-          <div className="border rounded-lg bg-white min-h-[350px] p-3">
-            <NotificationList />
-          </div>
+        <TabsContent value="notifications" className="border rounded-lg bg-white">
+          <NotificationList />
         </TabsContent>
       </Tabs>
       <Toaster />
