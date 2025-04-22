@@ -4,17 +4,24 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AvatarImage } from "@/components/ui/optimized-image";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { ProfileOverview } from "@/components/profile/ProfileOverview";
-import { UserPifsList } from "@/components/profile/UserPifsList";
-import { MyInterestsList } from "@/components/profile/MyInterestsList";
-import { InterestsInMyPifsList } from "@/components/profile/InterestsInMyPifsList";
-import { AlertCircle, Settings } from "lucide-react";
+import { Settings, AlertCircle } from "lucide-react";
+
+import { ProfileOverviewTab } from "./ProfileOverviewTab";
+import { MyPifsTab } from "./MyPifsTab";
+import { MyInterestsTab } from "./MyInterestsTab";
+import { InterestsInMyPifsTab } from "./InterestsInMyPifsTab";
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "my-pifs" | "my-interests" | "interests-in-my-pifs">("overview");
+
+  const handleTabChange = (value: string) => {
+    if (["overview", "my-pifs", "my-interests", "interests-in-my-pifs"].includes(value)) {
+      setActiveTab(value as typeof activeTab);
+    }
+  };
 
   if (authLoading) {
     return (
@@ -55,7 +62,7 @@ const Profile = () => {
             </Link>
           </div>
         </div>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-4 w-full flex gap-2 border rounded-lg bg-white">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="my-pifs">My PIFs</TabsTrigger>
@@ -63,16 +70,16 @@ const Profile = () => {
             <TabsTrigger value="interests-in-my-pifs">Interests in My PIFs</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
-            <ProfileOverview user={user} />
+            <ProfileOverviewTab user={user} />
           </TabsContent>
           <TabsContent value="my-pifs">
-            <UserPifsList userId={user.id} />
+            <MyPifsTab userId={user.id} />
           </TabsContent>
           <TabsContent value="my-interests">
-            <MyInterestsList userId={user.id} />
+            <MyInterestsTab userId={user.id} />
           </TabsContent>
           <TabsContent value="interests-in-my-pifs">
-            <InterestsInMyPifsList userId={user.id} />
+            <InterestsInMyPifsTab userId={user.id} />
           </TabsContent>
         </Tabs>
       </div>
