@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 /**
  * Group interests by item, and show interested users for each item.
@@ -31,7 +32,7 @@ export function InterestsInMyPifsList({ userId }: { userId: string }) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
         <div className="text-lg font-semibold">No PIFs yet</div>
-        <div className="text-sm text-gray-500">You haven’t posted any PIFs yet.</div>
+        <div className="text-sm text-gray-500">You haven't posted any PIFs yet.</div>
       </Card>
     );
   }
@@ -39,7 +40,7 @@ export function InterestsInMyPifsList({ userId }: { userId: string }) {
     <div className="flex flex-col gap-8">
       {items.map((item) => (
         <Card key={item.id} className="p-4">
-          <div className="font-semibold text-lg mb-1">{item.title}</div>
+          <Link to={`/feed?post=${item.id}`} className="font-semibold text-lg mb-1 hover:underline block">{item.title}</Link>
           <div className="text-xs text-gray-400 mb-2">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
           <div className="mb-2 text-sm text-gray-500">
             {item.interests?.length

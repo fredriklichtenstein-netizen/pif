@@ -1,6 +1,8 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 
 export function MyInterestsList({ userId }: { userId: string }) {
   const [interests, setInterests] = useState<any[]>([]);
@@ -40,18 +42,23 @@ export function MyInterestsList({ userId }: { userId: string }) {
         const imageUrl = item.images?.[0] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
         return (
           <Card key={int.id} className="p-0 flex flex-col overflow-hidden hover:shadow-lg transition">
-            <img
-              src={imageUrl}
-              alt={item.title}
-              className="w-full h-40 object-cover"
-              onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
-            />
+            <Link to={`/feed?post=${item.id}`} className="relative">
+              <img
+                src={imageUrl}
+                alt={item.title}
+                className="w-full h-40 object-cover"
+                onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
+              />
+              <div className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
+                <ExternalLink className="h-4 w-4 text-white" />
+              </div>
+            </Link>
             <div className="flex-1 flex flex-col p-3">
-              <div className="font-semibold text-base">{item.title}</div>
+              <Link to={`/feed?post=${item.id}`} className="font-semibold text-base hover:underline">{item.title}</Link>
               <div className="text-xs text-gray-400 mb-1">
                 {int.created_at && new Date(int.created_at).toLocaleDateString()}
               </div>
-              <div className="mb-1 text-gray-600">{item.description}</div>
+              <div className="mb-1 text-gray-600 text-sm line-clamp-2">{item.description}</div>
               <div>
                 {int.status === "pending" && (
                   <span className="bg-yellow-100 text-yellow-700 px-2 rounded text-xs">Pending</span>
@@ -70,4 +77,3 @@ export function MyInterestsList({ userId }: { userId: string }) {
     </div>
   );
 }
-

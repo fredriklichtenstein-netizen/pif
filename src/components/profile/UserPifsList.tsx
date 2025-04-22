@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InterestUsersPopover } from "./InterestUsersPopover";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { useNavigate } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Pencil, Trash2, ExternalLink } from "lucide-react";
 
 export function UserPifsList({
   userId,
@@ -76,14 +76,19 @@ export function UserPifsList({
         const imageUrl = item.images?.[0] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
         return (
           <Card key={item.id} className="flex flex-col p-0 overflow-hidden hover:shadow-lg transition">
-            <img
-              src={imageUrl}
-              alt={item.title}
-              className="w-full h-40 object-cover"
-              onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
-            />
+            <Link to={`/feed?post=${item.id}`} className="relative">
+              <img
+                src={imageUrl}
+                alt={item.title}
+                className="w-full h-40 object-cover"
+                onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
+              />
+              <div className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
+                <ExternalLink className="h-4 w-4 text-white" />
+              </div>
+            </Link>
             <div className="flex-1 flex flex-col p-3">
-              <div className="font-bold text-lg mb-1">{item.title}</div>
+              <Link to={`/feed?post=${item.id}`} className="font-bold text-lg mb-1 hover:underline">{item.title}</Link>
               <div className="text-xs text-gray-500 mb-1">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
               <div className="text-sm text-gray-700 mb-2">{item.description}</div>
               {/* Only show management/interests for owner */}
