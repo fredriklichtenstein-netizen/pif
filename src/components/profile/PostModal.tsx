@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ItemCard } from "@/components/post/ItemCard";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -20,8 +19,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
-  // Fetch post data when modal opens
-  useState(() => {
+  useEffect(() => {
     if (open && postId) {
       setLoading(true);
       supabase
@@ -35,7 +33,6 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
             return;
           }
           if (data) {
-            // Format the data to match the ItemCard component's expected props
             const formattedPost = {
               ...data,
               postedBy: {
@@ -48,7 +45,6 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               image: data.images?.[0] || "",
               coordinates: data.coordinates 
                 ? { 
-                    // Properly type and access coordinates
                     lat: typeof data.coordinates === 'object' && data.coordinates !== null ? 
                          (data.coordinates as any).y : null,
                     lng: typeof data.coordinates === 'object' && data.coordinates !== null ? 
@@ -69,7 +65,6 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     setIsUpdating(true);
     
     try {
-      // Update the post status
       const { error } = await supabase
         .from("items")
         .update({ status: "piffed" })
@@ -77,16 +72,13 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
         
       if (error) throw error;
       
-      // Get all users who showed interest except the selected one
       const { data: interests } = await supabase
         .from("interests")
         .select("user_id, status")
         .eq("item_id", post.id)
         .neq("status", "selected");
         
-      // Create notifications for all interested users
       if (interests && interests.length > 0) {
-        // Get the selected user (receiver) info for the notification
         const { data: selectedInterest } = await supabase
           .from("interests")
           .select("users:profiles!interests_user_id_fkey(first_name)")
@@ -96,7 +88,6 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           
         const receiverName = selectedInterest?.users?.first_name || "Someone";
         
-        // Create notifications for all non-selected interested users
         for (const interest of interests) {
           await supabase.rpc("create_notification", {
             p_user_id: interest.user_id,
@@ -115,13 +106,10 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
         description: "This PIF has been marked as piffed.",
       });
       
-      // Refresh the post data
       setPost({ ...post, status: "piffed" });
       
-      // Trigger any additional updates needed
       if (onStatusChange) onStatusChange();
       
-      // Close the dialog
       setMarkAsPiffedOpen(false);
       
     } catch (error) {
