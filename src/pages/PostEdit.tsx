@@ -28,7 +28,7 @@ function PostEdit() {
         const { data, error } = await supabase
           .from("items")
           .select("*")
-          .eq("id", id)
+          .eq("id", parseInt(id, 10))  // Convert string ID to number
           .single();
 
         if (error) {
@@ -76,8 +76,6 @@ function PostEdit() {
     );
   }
 
-  // For now, we're just rendering the PostForm component
-  // In a real implementation, you'd want to prefill the form with the item data
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Edit PIF</h1>

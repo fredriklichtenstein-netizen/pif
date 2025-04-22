@@ -23,7 +23,24 @@ export interface Post {
   commentsCount?: number;
 }
 
-export type CreatePostInput = Omit<Post, "id" | "postedBy" | "createdAt" | "likesCount" | "interestsCount" | "commentsCount"> & {
+export type CreatePostInput = {
+  title: string;
+  description: string;
+  category: string;
+  condition: string;
+  images: string[];
+  address?: string;
+  location?: string;
+  coordinates: { lat: number; lng: number } | null;
+  dimensions?: {
+    width: string;
+    height: string;
+    depth: string;
+  };
+  weight?: string;
+  measurements?: {
+    [key: string]: string;
+  };
   user_id?: string;
 };
 

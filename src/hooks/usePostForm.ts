@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CreatePostInput } from "@/types/post";
 import { useNavigate } from "react-router-dom";
@@ -10,15 +11,16 @@ const DEFAULT_FORM_DATA: CreatePostInput = {
   category: "",
   condition: "",
   images: [],
+  location: "",
   address: "",
   coordinates: null,
-  // Optional fields with default values
   dimensions: {
     width: "",
     height: "",
     depth: "",
   },
   weight: "",
+  measurements: {},
 };
 
 export function usePostForm(initialData?: any) {
@@ -39,6 +41,7 @@ export function usePostForm(initialData?: any) {
         category: initialData.category || "",
         condition: initialData.condition || "",
         images: initialData.images || [],
+        location: initialData.location || "",
         address: initialData.address || "",
         coordinates: initialData.coordinates || null,
         dimensions: {
@@ -47,6 +50,7 @@ export function usePostForm(initialData?: any) {
           depth: initialData.dimensions?.depth || "",
         },
         weight: initialData.weight || "",
+        measurements: initialData.measurements || {},
       };
       
       setFormData(transformedData);
@@ -55,7 +59,7 @@ export function usePostForm(initialData?: any) {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsAnalyzing(true);
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
 
     if (!files || files.length === 0) {
       setIsAnalyzing(false);
@@ -113,7 +117,7 @@ export function usePostForm(initialData?: any) {
     setFormData((prev) => ({
       ...prev,
       dimensions: {
-        ...prev.dimensions,
+        ...prev.dimensions!,
         [field]: value,
       },
     }));
@@ -145,10 +149,12 @@ export function usePostForm(initialData?: any) {
         category: formData.category,
         condition: formData.condition,
         images: formData.images,
+        location: formData.location,
         address: formData.address,
         coordinates: formData.coordinates,
         dimensions: formData.dimensions,
         weight: formData.weight,
+        measurements: formData.measurements,
         user_id: user.id,
       };
 
