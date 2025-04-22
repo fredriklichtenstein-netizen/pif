@@ -1,6 +1,6 @@
 
-import { MyInterestsList } from "@/components/profile/MyInterestsList";
+import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
 
 export function MyInterestsTab({ userId }: { userId: string }) {
-  return <MyInterestsList userId={userId} />;
+  return <InterestedPifsGrid userId={userId} />;
 }

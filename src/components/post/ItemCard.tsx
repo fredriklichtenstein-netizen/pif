@@ -9,11 +9,11 @@ import { ItemImage } from "./ItemImage";
 import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "./CommentSection";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Check } from "lucide-react";
 import { useItemCard } from "@/hooks/useItemCard";
 
 interface ItemCardProps {
-  id: number; // Changed from string to number to match the database type
+  id: number;
   title: string;
   description: string;
   image: string;
@@ -29,6 +29,7 @@ interface ItemCardProps {
     name: string;
     avatar: string;
   };
+  markAsPiffedAction?: () => void;
 }
 
 export function ItemCard({
@@ -41,6 +42,7 @@ export function ItemCard({
   category,
   condition,
   postedBy,
+  markAsPiffedAction
 }: ItemCardProps) {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -146,6 +148,17 @@ export function ItemCard({
               <Trash2 className="h-4 w-4" />
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>
+            {markAsPiffedAction && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={markAsPiffedAction}
+                className="flex items-center gap-2 ml-auto text-green-600 border-green-200 hover:bg-green-50"
+              >
+                <Check className="h-4 w-4" />
+                Mark as Piffed
+              </Button>
+            )}
           </div>
         )}
         <div className="mt-4">

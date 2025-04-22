@@ -5,13 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { ProfileOverview } from "@/components/profile/ProfileOverview";
-import { UserPifsList } from "@/components/profile/UserPifsList";
-import { MyInterestsList } from "@/components/profile/MyInterestsList";
-import { AlertCircle, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { AvatarImage } from "@/components/ui/optimized-image";
-import { Skeleton } from "@/components/ui/skeleton";
-import mapboxgl from "mapbox-gl";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
+import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
+import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 // Helper: format name as "Firstname L"
@@ -97,6 +95,7 @@ const Profile = () => {
       </div>
     );
   }
+
   if (!profile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -149,18 +148,19 @@ const Profile = () => {
         </Card>
 
         {/* My PIFs Section */}
-        <section>
+        <section className="mb-10">
           <h2 className="text-xl font-semibold mb-3">My PIFs</h2>
-          <UserPifsList userId={profile.id} isOwner />
+          <MyPifsGrid userId={profile.id} />
         </section>
 
-        {/* My Interests Section */}
+        {/* PIFs I'm Interested In Section */}
         <section className="mt-10">
-          <h2 className="text-xl font-semibold mb-3">PIFs I've Shown Interest In</h2>
-          <MyInterestsList userId={profile.id} />
+          <h2 className="text-xl font-semibold mb-3">PIFs I'm Interested In</h2>
+          <InterestedPifsGrid userId={profile.id} />
         </section>
       </div>
     </div>
   );
 };
+
 export default Profile;

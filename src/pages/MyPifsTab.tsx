@@ -1,6 +1,6 @@
 
-import { UserPifsList } from "@/components/profile/UserPifsList";
+import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
 
 export function MyPifsTab({ userId }: { userId: string }) {
-  return <UserPifsList userId={userId} />;
+  return <MyPifsGrid userId={userId} />;
 }
