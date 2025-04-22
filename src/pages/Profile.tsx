@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { ProfileOverview } from "@/components/profile/ProfileOverview";
 import { Settings } from "lucide-react";
+import { AlertCircle } from "lucide-react"; // Add missing import
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
 import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
 import "mapbox-gl/dist/mapbox-gl.css";
+import mapboxgl from "mapbox-gl"; // Proper import for mapboxgl
 
 // Helper: format name as "Firstname L"
 function formatPublicName(profile: any) {

@@ -47,7 +47,13 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               },
               image: data.images?.[0] || "",
               coordinates: data.coordinates 
-                ? { lat: data.coordinates.y, lng: data.coordinates.x } 
+                ? { 
+                    // Properly type and access coordinates
+                    lat: typeof data.coordinates === 'object' && data.coordinates !== null ? 
+                         (data.coordinates as any).y : null,
+                    lng: typeof data.coordinates === 'object' && data.coordinates !== null ? 
+                         (data.coordinates as any).x : null 
+                  } 
                 : undefined,
             };
             setPost(formattedPost);
