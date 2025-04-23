@@ -2,7 +2,6 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapbox } from "@/hooks/useMapbox";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface ProfileLocationMapProps {
@@ -28,40 +27,42 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
       return;
     }
     
-    console.log("Initializing profile map with coordinates:", coordinates);
+    console.log("Initializing profile map with exact coordinates:", coordinates);
     mapboxgl.accessToken = mapToken;
     let destroyed = false;
 
     const initializeMap = async () => {
       try {
-        // Apply location privacy to the coordinates
-        const [privateLng, privateLat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
+        // Use exact coordinates for profile map - no privacy offset
+        const lng = coordinates.lng;
+        const lat = coordinates.lat;
+        
         if (destroyed) return;
         
-        console.log("Privacy-adjusted coordinates:", privateLng, privateLat);
+        console.log("Using exact coordinates for profile map:", { lng, lat });
         
         const map = new mapboxgl.Map({
           container: mapContainerRef.current!,
           style: "mapbox://styles/mapbox/streets-v12",
-          center: [privateLng, privateLat],
-          zoom: 14,
+          center: [lng, lat],
+          zoom: 15,
           interactive: false,
         });
         
         map.on('load', () => {
-          console.log("Map loaded successfully");
+          console.log("Profile map loaded successfully");
         });
         
         map.on('error', (e) => {
-          console.error("Map error:", e);
+          console.error("Profile map error:", e);
         });
         
-        const marker = new mapboxgl.Marker().setLngLat([privateLng, privateLat]).addTo(map);
+        const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
         
         mapRef.current = map;
         markerRef.current = marker;
       } catch (error) {
-        console.error("Error initializing map:", error);
+        console.error("Error initializing profile map:", error);
       }
     };
 
