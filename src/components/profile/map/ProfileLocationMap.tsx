@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapbox } from "@/hooks/useMapbox";
+import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -16,7 +17,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
   
   // Add log to debug the incoming coordinates
-  console.log("ProfileLocationMap rendering with exact coordinates:", coordinates);
+  console.log("ProfileLocationMap rendering with coordinates:", coordinates);
   
   useEffect(() => {
     if (!coordinates || !mapToken || !mapContainerRef.current) {
@@ -28,18 +29,28 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
       return;
     }
     
-    console.log("Initializing profile map with exact coordinates:", coordinates);
+    console.log("Initializing profile map with coordinates:", coordinates);
     mapboxgl.accessToken = mapToken;
     let destroyed = false;
 
     const initializeMap = async () => {
       try {
+        // Process coordinates exactly like in MapMarkersLayer.tsx
+        // Apply location privacy to the coordinates - note: removed the third argument (map)
+        // which matches how MapMarkersLayer does it
+        const [privateLng, privateLat] = await addLocationPrivacy(
+          coordinates.lng,
+          coordinates.lat
+        );
+        
         if (destroyed) return;
+        
+        console.log("Privacy-adjusted coordinates for profile map:", privateLng, privateLat);
         
         const map = new mapboxgl.Map({
           container: mapContainerRef.current!,
           style: "mapbox://styles/mapbox/streets-v12",
-          center: [coordinates.lng, coordinates.lat],
+          center: [privateLng, privateLat],
           zoom: 14,
           interactive: false,
         });
@@ -52,9 +63,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
           console.error("Map error:", e);
         });
         
-        const marker = new mapboxgl.Marker()
-          .setLngLat([coordinates.lng, coordinates.lat])
-          .addTo(map);
+        const marker = new mapboxgl.Marker().setLngLat([privateLng, privateLat]).addTo(map);
         
         mapRef.current = map;
         markerRef.current = marker;
@@ -84,7 +93,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
     <div 
       ref={mapContainerRef} 
       className="w-full h-[200px] rounded-lg border mb-4" 
-      style={{ display: "block" }}
+      style={{ display: "block" }} // Force display
     />
   );
 }
