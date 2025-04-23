@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -7,12 +6,24 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
+import { 
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function InterestUsersPopover({ itemId }: { itemId: number }) {
   const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const fetchInterests = async () => {
     setLoading(true);
@@ -43,6 +54,7 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
   }, [itemId]);
 
   const handleSelectReceiver = async (interestId: number) => {
+    setConfirmDialogOpen(false);
     try {
       await supabase
         .from("interests")
@@ -90,53 +102,85 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
   };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mt-2">
-          <Heart className="h-5 w-5 text-primary fill-primary" />
-          <span className="hover:underline">{getInterestText()}</span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-2" align="start">
-        <div className="font-bold text-sm mb-2">Interested Users</div>
-        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
-          {users.map((u) => (
-            <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md transition-all">
-              <Link 
-                to={`/user/${u.user_id}`}
-                className="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <AvatarImage 
-                  src={u.users?.avatar_url} 
-                  size={28} 
-                  alt={u.users?.first_name || "User"} 
-                />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
-                  <span className="text-xs text-gray-500">
-                    {format(new Date(u.created_at), "PPp")}
-                  </span>
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mt-2">
+            <Heart className="h-5 w-5 text-primary fill-primary" />
+            <span className="hover:underline">{getInterestText()}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-2" align="start">
+          <div className="font-bold text-sm mb-2">Interested Users</div>
+          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+            {users.map((u) => (
+              <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md transition-all">
+                <Link 
+                  to={`/user/${u.user_id}`}
+                  className="flex items-center gap-2 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <AvatarImage 
+                    src={u.users?.avatar_url} 
+                    size={28} 
+                    alt={u.users?.first_name || "User"} 
+                  />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm font-medium truncate">
+                      {u.users?.first_name} {u.users?.last_name?.[0] || ""}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {format(new Date(u.created_at), "MMM d, HH:mm")}
+                    </span>
+                  </div>
+                </Link>
+                <div className="ml-auto flex items-center gap-2">
+                  {u.status === "selected" && (
+                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                      Selected
+                    </span>
+                  )}
+                  {u.status === "pending" && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedUserId(u.id);
+                        setConfirmDialogOpen(true);
+                      }} 
+                      className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                    >
+                      I Choose You
+                    </Button>
+                  )}
+                  {u.status === "not_selected" && (
+                    <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                      Not Selected
+                    </span>
+                  )}
                 </div>
-              </Link>
-              <div className="ml-auto flex items-center gap-2">
-                {u.status === "selected" && (
-                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Selected</span>
-                )}
-                {u.status === "pending" && (
-                  <Button size="sm" onClick={() => handleSelectReceiver(u.id)} className="text-xs py-1 px-2 h-auto">
-                    Select
-                  </Button>
-                )}
-                {u.status === "not_selected" && (
-                  <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs">Not Selected</span>
-                )}
               </div>
-            </div>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Selection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to pif to this user?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => selectedUserId && handleSelectReceiver(selectedUserId)}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

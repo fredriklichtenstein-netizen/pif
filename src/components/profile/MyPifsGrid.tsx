@@ -79,8 +79,8 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                     Piffed
                   </div>
                 )}
-                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                  {item.created_at && format(new Date(item.created_at), "yyyy-MM-dd")}
+                <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                  {item.created_at && format(new Date(item.created_at), "MMM d, HH:mm")}
                 </div>
               </div>
               <div className="p-3">
