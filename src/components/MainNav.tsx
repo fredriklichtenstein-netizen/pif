@@ -1,4 +1,3 @@
-
 import { Home, Map, MessageSquare, User as UserIcon, List } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -159,19 +158,19 @@ export function MainNav() {
           >
             {user ? (
               <>
-                <Avatar 
-                  className={`h-6 w-6 ${isProfileActive ? "border border-primary" : ""}`}
+                <div
+                  className={`h-8 w-8 ${
+                    isProfileActive ? "border-2 border-primary" : ""
+                  } overflow-hidden`} // New: makes the avatar square, removes full rounding
+                  style={{ borderRadius: "8px" }} // 8px matches prior styling
                 >
-                  <AvatarImage 
-                    src={avatarUrl} 
-                    alt={user.email || "User"} 
-                    size={24} 
-                    className="object-cover" // Ensure image covers the entire avatar
+                  <AvatarImage
+                    src={avatarUrl}
+                    alt={user.email || "User"}
+                    size={32}
+                    className="h-8 w-8 object-cover rounded-none" // Remove rounding, fill square
                   />
-                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
+                </div>
                 <span className="text-xs mt-1">
                   Profile
                 </span>
