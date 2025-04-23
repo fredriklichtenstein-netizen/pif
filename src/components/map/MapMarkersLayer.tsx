@@ -4,7 +4,7 @@ import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
 import { createMapPopup } from "./MapPopup";
 import { createMarkerElement } from "./MapMarkerElement";
-import { addLocationPrivacy } from "@/utils/location/privacyOffset";
+import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import { parseCoordinatesFromDB } from "@/types/post";
 
 interface MapMarkersLayerProps {
@@ -47,17 +47,15 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             [privateLng, privateLat] = cachedCoords;
             console.log("Using cached coordinates for post:", post.id);
           } else {
-            // Calculate new privacy-adjusted coordinates - passing map for water detection
+            // Calculate new privacy-adjusted coordinates - fix: removing the third argument (map)
             [privateLng, privateLat] = await addLocationPrivacy(
               coords.lng,
-              coords.lat,
-              map
+              coords.lat
             );
             console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
             processedCoordinates.current.set(post.id, [privateLng, privateLat]);
           }
 
-          // Create marker element and add interactions
           const markerElement = createMarkerElement({
             onClick: () => onPostClick(post.id),
             onMouseEnter: () => {
@@ -73,7 +71,6 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             }
           });
 
-          // Add the marker to the map
           const marker = new mapboxgl.Marker({
             element: markerElement,
             anchor: 'center'
