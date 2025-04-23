@@ -54,21 +54,15 @@ const Profile = () => {
         } else {
           console.log("Failed to parse coordinates from location field");
         }
-      } else if (data?.coordinates) {
-        console.log("Raw coordinates data from profile:", data.coordinates);
-        const directCoords = parseCoordinates(data.coordinates);
-        if (directCoords) {
-          console.log("Successfully parsed direct coordinates:", directCoords);
-          setCoordinates(directCoords);
-        } else {
-          console.log("Failed to parse direct coordinates field");
-        }
-      } else if (data?.address) {
-        console.log("No coordinates found, but address exists:", data.address);
+      } else {
+        console.log("No location data found in profile");
         
         // Fallback to Stockholm coordinates if no location data available
-        setCoordinates({ lat: 59.3293, lng: 18.0686 });
-        console.log("Using fallback coordinates for Stockholm:", { lat: 59.3293, lng: 18.0686 });
+        if (data?.address) {
+          console.log("No coordinates found, but address exists:", data.address);
+          setCoordinates({ lat: 59.3293, lng: 18.0686 });
+          console.log("Using fallback coordinates for Stockholm:", { lat: 59.3293, lng: 18.0686 });
+        }
       }
     } catch (err) {
       console.error("Error in profile data fetch:", err);
@@ -83,14 +77,16 @@ const Profile = () => {
       setProfile(user);
       fetchProfileData();
       
-      // Also try to check for coordinates directly in user object
+      // Type-safe approach - access user as any to check if it might have coordinates
       const userAny = user as any;
-      if (userAny?.coordinates) {
-        console.log("Raw coordinates from user object:", userAny.coordinates);
-        const coord = parseCoordinates(userAny.coordinates);
-        if (coord) {
-          console.log("Parsed coordinates from user object:", coord);
-          setCoordinates(coord);
+      if (userAny && typeof userAny === 'object') {
+        if ('location' in userAny && userAny.location) {
+          console.log("Raw location from user object:", userAny.location);
+          const coord = parseCoordinates(userAny.location);
+          if (coord) {
+            console.log("Parsed coordinates from user location:", coord);
+            setCoordinates(coord);
+          }
         }
       }
     }
