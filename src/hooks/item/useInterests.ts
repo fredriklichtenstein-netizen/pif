@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useInterestState } from "./interest/useInterestState";
 import { useInterestFetch } from "./interest/useInterestFetch";
 import { useInterestActions } from "./interest/useInterestActions";
+import { supabase } from "@/integrations/supabase/client";
 import type { User } from "./utils/userUtils";
 
 export const useInterests = (id: string, userId?: string | null) => {
