@@ -40,6 +40,7 @@ export function OptimizedImage({
       };
       
       img.onerror = () => {
+        console.error(`Failed to load image: ${optimizedSrc}`);
         setError(true);
         setCurrentSrc(placeholderSrc);
       };
@@ -58,6 +59,7 @@ export function OptimizedImage({
         alt={alt || ""}
         className={`${className} ${!loaded && !priority ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
         onError={() => {
+          console.error(`Error loading image at render time: ${currentSrc}`);
           setError(true);
           setCurrentSrc(placeholderSrc);
         }}
@@ -83,10 +85,16 @@ export function AvatarImage({
   size?: number;
   className?: string;
 }) {
-  // Generate a fallback based on alt text if available
-  const fallbackSrc = alt 
-    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${alt.split(' ').join('')}`
-    : "https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous";
+  // Ensure consistent fallbacks for users
+  const uniqueSeed = alt || 'anonymous';
+  const fallbackSrc = `https://api.dicebear.com/7.x/avataaars/svg?seed=${uniqueSeed}`;
+  
+  // Debug information
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`AvatarImage rendering with src: ${src || 'null'}, fallback using seed: ${uniqueSeed}`);
+    }
+  }, [src, uniqueSeed]);
     
   return (
     <OptimizedImage

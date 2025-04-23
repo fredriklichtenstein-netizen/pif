@@ -1,11 +1,13 @@
+
 import { useState, useCallback } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
 import { getCroppedImg } from "@/utils/image";
+import { Button } from "../ui/button";
 
 interface AvatarUploadProps {
   avatarUrl: string | null;
@@ -17,6 +19,10 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+
+  // Generate a fallback based on timestamp to avoid caching issues
+  const fallbackSrc = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`;
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,6 +42,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
       setTempImage(avatarUrl);
       setShowCropper(true);
       setIsEditing(true);
+      setShowOptions(false);
     }
   }, [avatarUrl]);
 
@@ -66,27 +73,12 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     setShowCropper(false);
     setTempImage(null);
     setIsEditing(false);
+    setShowOptions(false);
   }, []);
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <Dialog open={showCropper} onOpenChange={(open) => {
-        if (!open) handleCancel();
-      }}>
-        <Avatar 
-          className="h-32 w-32 cursor-pointer" 
-          onClick={() => {
-            if (!showCropper) {
-              setShowCropper(true);
-            }
-          }}
-        >
-          <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback>
-            <Upload className="h-8 w-8 text-gray-400" />
-          </AvatarFallback>
-        </Avatar>
-        
+      <Dialog open={showCropper} onOpenChange={setShowCropper}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Edit Profile Picture</DialogTitle>
@@ -107,6 +99,47 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
           )}
         </DialogContent>
       </Dialog>
+      
+      <Dialog open={showOptions} onOpenChange={setShowOptions}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Profile Picture Options</DialogTitle>
+          </DialogHeader>
+          <UploadOptions
+            onFileSelect={() => {
+              setShowOptions(false);
+              document.getElementById('avatar-upload')?.click();
+            }}
+            onEditCurrent={() => {
+              handleEditCurrent();
+              setShowOptions(false);
+            }}
+            hasExistingImage={!!avatarUrl}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      <div className="relative group">
+        <Avatar 
+          className="h-32 w-32 cursor-pointer border-2 border-gray-200 group-hover:border-primary transition-colors" 
+          onClick={() => setShowOptions(true)}
+        >
+          <AvatarImage src={avatarUrl || undefined} alt="Profile picture" />
+          <AvatarFallback className="bg-gray-100">
+            <Upload className="h-8 w-8 text-gray-400" />
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            size="sm" 
+            className="rounded-full h-8 w-8 p-0"
+            onClick={() => setShowOptions(true)}
+          >
+            <Camera className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       
       <input
         id="avatar-upload"

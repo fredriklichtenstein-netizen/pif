@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { ProfileFormData } from "@/hooks/profile/types";
 import { useToast } from "@/hooks/use-toast";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { useProfileAvatar } from "@/hooks/profile/useProfileAvatar";
 
 function ProfileEdit() {
   const { user, isLoading } = useGlobalAuth();
@@ -24,6 +26,7 @@ function ProfileEdit() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
+  const { setAvatar, avatarUrl, loading: avatarLoading } = useProfileAvatar();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -131,14 +134,22 @@ function ProfileEdit() {
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
+      
+      <div className="mb-6 flex justify-center">
+        <AvatarUpload 
+          avatarUrl={avatarUrl || (user as any).avatar_url} 
+          onFileChange={setAvatar} 
+        />
+      </div>
+      
       <ProfileForm formData={formData} onChange={handleFormChange} />
       <div className="mt-6 flex justify-end">
         <Button 
           onClick={handleSubmit} 
-          disabled={isSubmitting}
+          disabled={isSubmitting || avatarLoading}
           className="w-full sm:w-auto"
         >
-          {isSubmitting ? (
+          {isSubmitting || avatarLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
