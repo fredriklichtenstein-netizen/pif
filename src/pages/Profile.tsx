@@ -1,81 +1,20 @@
-import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { ProfileOverview } from "@/components/profile/ProfileOverview";
-import { Settings, AlertCircle } from "lucide-react";
-import { AvatarImage } from "@/components/ui/optimized-image";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
 import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
-import { useMapbox } from "@/hooks/useMapbox";
 import { supabase } from "@/integrations/supabase/client";
-import "mapbox-gl/dist/mapbox-gl.css";
-import mapboxgl from "mapbox-gl";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
+import { ProfileBasicInfo } from "@/components/profile/info/ProfileBasicInfo";
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
   const initial = profile.last_name ? profile.last_name[0].toUpperCase() : "";
   return `${profile.first_name} ${initial}`;
-}
-
-function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number } }) {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
-  
-  useEffect(() => {
-    if (!coordinates || !mapToken || !mapContainerRef.current) return;
-    
-    console.log("Initializing map with coordinates:", coordinates);
-    mapboxgl.accessToken = mapToken;
-    let destroyed = false;
-
-    const initializeMap = async () => {
-      try {
-        const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
-        if (destroyed) return;
-        
-        console.log("Privacy-adjusted coordinates:", lng, lat);
-        
-        const map = new mapboxgl.Map({
-          container: mapContainerRef.current!,
-          style: "mapbox://styles/mapbox/streets-v12",
-          center: [lng, lat],
-          zoom: 14,
-          interactive: false,
-        });
-        
-        const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-        
-        mapRef.current = map;
-        markerRef.current = marker;
-      } catch (error) {
-        console.error("Error initializing map:", error);
-      }
-    };
-
-    initializeMap();
-
-    return () => {
-      destroyed = true;
-      if (markerRef.current) markerRef.current.remove();
-      if (mapRef.current) mapRef.current.remove();
-      mapRef.current = null;
-      markerRef.current = null;
-    };
-  }, [coordinates, mapToken]);
-  
-  if (isMapTokenLoading) {
-    return <div className="w-full h-[200px] rounded-lg border mb-4 bg-gray-100 flex items-center justify-center">
-      <div className="text-sm text-gray-500">Loading map...</div>
-    </div>;
-  }
-  
-  return <div ref={mapContainerRef} id="profile-map" className="w-full h-[200px] rounded-lg border mb-4" />;
 }
 
 const Profile = () => {
@@ -166,32 +105,12 @@ const Profile = () => {
     <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center">
       <div className="w-full max-w-3xl mx-auto">
         <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
-          <AvatarImage
-            src={currentAvatarUrl}
-            alt={displayName || "User"}
-            size={96}
-            className="mb-3 border"
+          <ProfileBasicInfo
+            avatarUrl={currentAvatarUrl}
+            displayName={displayName}
+            gender={profileData?.gender}
+            coordinates={coordinates}
           />
-          <div className="text-2xl font-semibold mb-1">{displayName || "User"}</div>
-          <div className="text-gray-600 capitalize mb-1">
-            {profileData?.gender ? profileData.gender.replace('_', ' ') : "Gender undisclosed"}
-          </div>
-          {!!coordinates && (
-            <div className="w-full mb-2">
-              <ProfileMap coordinates={coordinates} />
-            </div>
-          )}
-          <div className="flex gap-3 mt-2">
-            <Link to="/profile/edit">
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Settings size={16} />
-                Edit Profile
-              </Button>
-            </Link>
-            <Link to="/account-settings">
-              <Button variant="outline" size="sm">Account Settings</Button>
-            </Link>
-          </div>
         </Card>
 
         <section className="mb-10">
