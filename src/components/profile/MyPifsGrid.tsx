@@ -5,7 +5,7 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { PostModal } from "./PostModal";
 import { InterestUsersPopover } from "./InterestUsersPopover";
-import { format } from "date-fns";
+import { formatRelativeTime } from "@/utils/formatDate";
 
 export function MyPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
@@ -80,7 +80,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                   </div>
                 )}
                 <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                  {item.created_at && format(new Date(item.created_at), "MMM d, HH:mm")}
+                  {item.created_at && formatRelativeTime(new Date(item.created_at))}
                 </div>
               </div>
               <div className="p-3">
