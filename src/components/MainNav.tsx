@@ -159,8 +159,15 @@ export function MainNav() {
           >
             {user ? (
               <>
-                <Avatar className={`h-6 w-6 ${isProfileActive ? "border border-primary" : ""}`}>
-                  <AvatarImage src={avatarUrl} alt={user.email || "User"} size={24} />
+                <Avatar 
+                  className={`h-6 w-6 ${isProfileActive ? "border border-primary" : ""}`}
+                >
+                  <AvatarImage 
+                    src={avatarUrl} 
+                    alt={user.email || "User"} 
+                    size={24} 
+                    className="object-cover" // Ensure image covers the entire avatar
+                  />
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                     {getUserInitials()}
                   </AvatarFallback>
