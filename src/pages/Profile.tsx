@@ -5,8 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { ProfileOverview } from "@/components/profile/ProfileOverview";
-import { Settings } from "lucide-react";
-import { AlertCircle } from "lucide-react";
+import { Settings, AlertCircle } from "lucide-react";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
@@ -14,30 +13,13 @@ import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
 import { useMapbox } from "@/hooks/useMapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
+import { parseCoordinates } from "@/utils/post/parseCoordinates";
 
 // Helper: format name as "Firstname L"
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
   const initial = profile.last_name ? profile.last_name[0].toUpperCase() : "";
   return `${profile.first_name} ${initial}`;
-}
-
-// Same coordinates parser as in post utils
-function parseCoordinates(raw: any): { lng: number; lat: number } | null {
-  if (!raw) return null;
-  if (typeof raw === "string") {
-    const match = /\((-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)\)/.exec(raw);
-    if (match) {
-      return { lng: parseFloat(match[1]), lat: parseFloat(match[3]) };
-    }
-  }
-  if (typeof raw === "object" && "coordinates" in raw) {
-    return {
-      lng: raw.coordinates[0],
-      lat: raw.coordinates[1],
-    };
-  }
-  return null;
 }
 
 function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number } }) {
@@ -102,8 +84,10 @@ const Profile = () => {
     if (user) {
       setProfile(user);
       // Only try to parse coordinates if clearly present in user data
-      if (user?.coordinates) {
-        const coord = parseCoordinates(user.coordinates);
+      // Use type assertion to access coordinates property
+      const userAny = user as any;
+      if (userAny?.coordinates) {
+        const coord = parseCoordinates(userAny.coordinates);
         if (coord) setCoordinates(coord);
       }
     }
