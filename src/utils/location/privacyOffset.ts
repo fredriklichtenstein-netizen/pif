@@ -17,6 +17,14 @@ export async function addLocationPrivacy(
   map?: mapboxgl.Map | null
 ): Promise<[number, number]> {
   try {
+    // Validate input coordinates
+    if (isNaN(lng) || isNaN(lat)) {
+      console.error("Invalid coordinates for privacy calculation:", { lng, lat });
+      throw new Error("Invalid coordinates provided for privacy calculation");
+    }
+    
+    console.log("Adding privacy to coordinates:", { lng, lat });
+    
     // Check if we have cached coordinates for this location
     const cached = getCachedCoordinates(lng, lat);
     if (cached) {
@@ -25,11 +33,12 @@ export async function addLocationPrivacy(
     }
     
     // Check if location is in an urban area (more anonymization needed)
-    const isUrban = await isUrbanArea(lng, lat);
+    const isUrban = await isUrbanArea(lat, lng);
     
     // Determine privacy radius based on location type (urban = smaller offset)
     // Urban areas have many PIF users, so less offset needed for privacy
     const privacyRadius = isUrban ? 300 : 800; // meters
+    console.log(`Location is ${isUrban ? 'urban' : 'rural'}, using radius: ${privacyRadius}m`);
     
     // Calculate privacy offset
     const offsetMeters = Math.random() * privacyRadius;
@@ -72,6 +81,9 @@ export async function addLocationPrivacy(
       attempts++;
     }
     
+    console.log("Original coordinates:", { lng, lat });
+    console.log("Privacy-adjusted coordinates:", { lng: adjustedLng, lat: adjustedLat });
+    
     // Cache the result
     const result: [number, number] = [adjustedLng, adjustedLat];
     cacheCoordinates(lng, lat, result);
@@ -80,6 +92,9 @@ export async function addLocationPrivacy(
   } catch (error) {
     console.error('Error in privacy offset calculation:', error);
     // In case of error, return original coordinates with minimal offset
-    return [lng + (Math.random() - 0.5) * 0.001, lat + (Math.random() - 0.5) * 0.001];
+    const minimalOffsetLng = lng + (Math.random() - 0.5) * 0.001;
+    const minimalOffsetLat = lat + (Math.random() - 0.5) * 0.001;
+    console.log("Using minimal offset due to error:", { lng: minimalOffsetLng, lat: minimalOffsetLat });
+    return [minimalOffsetLng, minimalOffsetLat];
   }
 }

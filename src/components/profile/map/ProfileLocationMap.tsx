@@ -28,21 +28,22 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
       return;
     }
     
-    console.log("Initializing profile map with coordinates:", coordinates, "and map token:", mapToken.substring(0, 8) + "...");
+    console.log("Initializing profile map with coordinates:", coordinates);
     mapboxgl.accessToken = mapToken;
     let destroyed = false;
 
     const initializeMap = async () => {
       try {
-        const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
+        // Apply location privacy to the coordinates
+        const [privateLng, privateLat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
         if (destroyed) return;
         
-        console.log("Privacy-adjusted coordinates:", lng, lat);
+        console.log("Privacy-adjusted coordinates:", privateLng, privateLat);
         
         const map = new mapboxgl.Map({
           container: mapContainerRef.current!,
           style: "mapbox://styles/mapbox/streets-v12",
-          center: [lng, lat],
+          center: [privateLng, privateLat],
           zoom: 14,
           interactive: false,
         });
@@ -55,7 +56,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
           console.error("Map error:", e);
         });
         
-        const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+        const marker = new mapboxgl.Marker().setLngLat([privateLng, privateLat]).addTo(map);
         
         mapRef.current = map;
         markerRef.current = marker;

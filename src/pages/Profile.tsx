@@ -44,22 +44,29 @@ const Profile = () => {
       console.log("Fetched profile data:", data);
       setProfileData(data);
       
-      // Check for coordinates in location or address field
+      // Process coordinates with more detailed logging
       if (data?.location) {
-        console.log("Trying to parse coordinates from location:", data.location);
+        console.log("Raw location data from profile:", data.location);
         const locationCoords = parseCoordinates(data.location);
         if (locationCoords) {
-          console.log("Found coordinates in location field:", locationCoords);
+          console.log("Successfully parsed coordinates from location:", locationCoords);
           setCoordinates(locationCoords);
         } else {
-          console.log("No coordinates found in location field");
+          console.log("Failed to parse coordinates from location field");
+        }
+      } else if (data?.coordinates) {
+        console.log("Raw coordinates data from profile:", data.coordinates);
+        const directCoords = parseCoordinates(data.coordinates);
+        if (directCoords) {
+          console.log("Successfully parsed direct coordinates:", directCoords);
+          setCoordinates(directCoords);
+        } else {
+          console.log("Failed to parse direct coordinates field");
         }
       } else if (data?.address) {
-        // If no location field but address exists, try geocoding
-        // This is a fallback since we should have coordinates
-        console.log("No location field, trying address field:", data.address);
+        console.log("No coordinates found, but address exists:", data.address);
         
-        // For testing, let's hardcode default coordinates for Stockholm if no coordinates found
+        // Fallback to Stockholm coordinates if no location data available
         setCoordinates({ lat: 59.3293, lng: 18.0686 });
         console.log("Using fallback coordinates for Stockholm:", { lat: 59.3293, lng: 18.0686 });
       }
@@ -76,6 +83,7 @@ const Profile = () => {
       setProfile(user);
       fetchProfileData();
       
+      // Also try to check for coordinates directly in user object
       const userAny = user as any;
       if (userAny?.coordinates) {
         console.log("Raw coordinates from user object:", userAny.coordinates);

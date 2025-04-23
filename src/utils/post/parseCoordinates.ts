@@ -25,8 +25,8 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
       if (matches && matches.length >= 3) {
         console.log("Found Format 2: PostGIS point string format");
         return {
-          lng: parseFloat(matches[1]),
-          lat: parseFloat(matches[2]),
+          lat: parseFloat(matches[2]),  // Note: This is corrected - lat is the second value
+          lng: parseFloat(matches[1]),  // lng is the first value
         };
       }
     }
@@ -46,6 +46,16 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
       return {
         lng: Number(coordinates[0]),
         lat: Number(coordinates[1]),
+      };
+    }
+    
+    // Format 5: PostGIS geometry object
+    if (typeof coordinates === "object" && coordinates !== null && coordinates.type === "Point" && 
+        Array.isArray(coordinates.coordinates) && coordinates.coordinates.length >= 2) {
+      console.log("Found Format 5: PostGIS geometry object");
+      return {
+        lng: Number(coordinates.coordinates[0]),
+        lat: Number(coordinates.coordinates[1]),
       };
     }
     
