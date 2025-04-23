@@ -6,10 +6,15 @@ import { getCachedCoordinates, cacheCoordinates } from "./coordinateCache";
 /**
  * Adds privacy offset to coordinates based on urban density
  * Returns adjusted coordinates [lng, lat]
+ * 
+ * @param lng - Longitude value
+ * @param lat - Latitude value
+ * @param map - Optional Mapbox map instance for water detection (not used in current implementation)
  */
 export async function addLocationPrivacy(
   lng: number, 
-  lat: number
+  lat: number,
+  map?: mapboxgl.Map | null
 ): Promise<[number, number]> {
   try {
     // Check if we have cached coordinates for this location
@@ -44,7 +49,8 @@ export async function addLocationPrivacy(
     const maxAttempts = 3;
     
     while (attempts < maxAttempts) {
-      const isWater = await isWaterLocation(adjustedLng, adjustedLat);
+      // If map is provided, use it for water detection
+      const isWater = map ? await isWaterLocation(adjustedLng, adjustedLat, map) : await isWaterLocation(adjustedLng, adjustedLat);
       
       if (!isWater) {
         break; // Found a valid location
