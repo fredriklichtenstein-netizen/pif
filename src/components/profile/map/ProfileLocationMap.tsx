@@ -15,10 +15,20 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
   
+  // Add log to debug the incoming coordinates
+  console.log("ProfileLocationMap rendering with coordinates:", coordinates);
+  
   useEffect(() => {
-    if (!coordinates || !mapToken || !mapContainerRef.current) return;
+    if (!coordinates || !mapToken || !mapContainerRef.current) {
+      console.log("Map initialization skipped:", { 
+        hasCoordinates: !!coordinates, 
+        hasMapToken: !!mapToken, 
+        hasContainer: !!mapContainerRef.current 
+      });
+      return;
+    }
     
-    console.log("Initializing profile map with coordinates:", coordinates);
+    console.log("Initializing profile map with coordinates:", coordinates, "and map token:", mapToken.substring(0, 8) + "...");
     mapboxgl.accessToken = mapToken;
     let destroyed = false;
 
@@ -35,6 +45,14 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
           center: [lng, lat],
           zoom: 14,
           interactive: false,
+        });
+        
+        map.on('load', () => {
+          console.log("Map loaded successfully");
+        });
+        
+        map.on('error', (e) => {
+          console.error("Map error:", e);
         });
         
         const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
@@ -63,5 +81,11 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
     </div>;
   }
   
-  return <div ref={mapContainerRef} className="w-full h-[200px] rounded-lg border mb-4" />;
+  return (
+    <div 
+      ref={mapContainerRef} 
+      className="w-full h-[200px] rounded-lg border mb-4" 
+      style={{ display: "block" }} // Force display
+    />
+  );
 }

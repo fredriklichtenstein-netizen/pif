@@ -12,6 +12,7 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
   try {
     // Format 1: { lat: number, lng: number }
     if (typeof coordinates === "object" && coordinates !== null && "lat" in coordinates && "lng" in coordinates) {
+      console.log("Found Format 1: Object with lat/lng properties");
       return {
         lat: Number(coordinates.lat),
         lng: Number(coordinates.lng),
@@ -22,6 +23,7 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
     if (typeof coordinates === "string") {
       const matches = coordinates.match(/\(([-\d.]+),([-\d.]+)\)/);
       if (matches && matches.length >= 3) {
+        console.log("Found Format 2: PostGIS point string format");
         return {
           lng: parseFloat(matches[1]),
           lat: parseFloat(matches[2]),
@@ -31,6 +33,7 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
     
     // Format 3: PostGIS point object with x, y properties
     if (typeof coordinates === "object" && coordinates !== null && "x" in coordinates && "y" in coordinates) {
+      console.log("Found Format 3: PostGIS point object with x/y");
       return {
         lng: Number(coordinates.x),
         lat: Number(coordinates.y),
@@ -39,6 +42,7 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
     
     // Format 4: Array [lng, lat]
     if (Array.isArray(coordinates) && coordinates.length >= 2) {
+      console.log("Found Format 4: Array [lng, lat]");
       return {
         lng: Number(coordinates[0]),
         lat: Number(coordinates[1]),

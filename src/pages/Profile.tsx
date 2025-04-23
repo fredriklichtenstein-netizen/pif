@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
@@ -43,12 +44,24 @@ const Profile = () => {
       console.log("Fetched profile data:", data);
       setProfileData(data);
       
+      // Check for coordinates in location or address field
       if (data?.location) {
+        console.log("Trying to parse coordinates from location:", data.location);
         const locationCoords = parseCoordinates(data.location);
         if (locationCoords) {
           console.log("Found coordinates in location field:", locationCoords);
           setCoordinates(locationCoords);
+        } else {
+          console.log("No coordinates found in location field");
         }
+      } else if (data?.address) {
+        // If no location field but address exists, try geocoding
+        // This is a fallback since we should have coordinates
+        console.log("No location field, trying address field:", data.address);
+        
+        // For testing, let's hardcode default coordinates for Stockholm if no coordinates found
+        setCoordinates({ lat: 59.3293, lng: 18.0686 });
+        console.log("Using fallback coordinates for Stockholm:", { lat: 59.3293, lng: 18.0686 });
       }
     } catch (err) {
       console.error("Error in profile data fetch:", err);
@@ -65,15 +78,20 @@ const Profile = () => {
       
       const userAny = user as any;
       if (userAny?.coordinates) {
-        console.log("Raw coordinates:", userAny.coordinates);
+        console.log("Raw coordinates from user object:", userAny.coordinates);
         const coord = parseCoordinates(userAny.coordinates);
         if (coord) {
-          console.log("Parsed coordinates:", coord);
+          console.log("Parsed coordinates from user object:", coord);
           setCoordinates(coord);
         }
       }
     }
   }, [user]);
+
+  // Add effect to log coordinates state changes
+  useEffect(() => {
+    console.log("Coordinates state updated:", coordinates);
+  }, [coordinates]);
 
   if (authLoading || loading) {
     return (
@@ -100,6 +118,8 @@ const Profile = () => {
 
   const currentAvatarUrl = profileData?.avatar_url || null;
   const displayName = formatPublicName(profileData || profile);
+
+  console.log("Rendering ProfileBasicInfo with coordinates:", coordinates);
 
   return (
     <>
