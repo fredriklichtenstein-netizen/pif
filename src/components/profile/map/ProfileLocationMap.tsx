@@ -2,8 +2,7 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapbox } from "@/hooks/useMapbox";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
-import { parseCoordinates } from "@/utils/post/parseCoordinates";
+import { addLocationPrivacy } from "@/utils/location/privacyOffset";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface ProfileLocationMapProps {
@@ -35,38 +34,54 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
 
     const initializeMap = async () => {
       try {
-        // Process coordinates exactly like in MapMarkersLayer.tsx
-        // Apply location privacy to the coordinates - note: removed the third argument (map)
-        // which matches how MapMarkersLayer does it
-        const [privateLng, privateLat] = await addLocationPrivacy(
-          coordinates.lng,
-          coordinates.lat
-        );
-        
-        if (destroyed) return;
-        
-        console.log("Privacy-adjusted coordinates for profile map:", privateLng, privateLat);
-        
+        // Create the map first so we can use it for water detection
         const map = new mapboxgl.Map({
           container: mapContainerRef.current!,
           style: "mapbox://styles/mapbox/streets-v12",
-          center: [privateLng, privateLat],
+          center: [coordinates.lng, coordinates.lat],
           zoom: 14,
           interactive: false,
         });
         
-        map.on('load', () => {
-          console.log("Map loaded successfully");
+        mapRef.current = map;
+        
+        // Wait for the map to load before applying privacy offset
+        await new Promise(resolve => {
+          map.once('load', () => {
+            console.log("Map loaded, now applying privacy offset");
+            resolve(true);
+          });
         });
+        
+        if (destroyed) return;
+        
+        // Now apply location privacy, passing the map for water detection
+        // This matches exactly how it's done in MapMarkersLayer.tsx
+        const [privateLng, privateLat] = await addLocationPrivacy(
+          coordinates.lng,
+          coordinates.lat,
+          mapRef.current  // Pass map for water detection like MapMarkersLayer does
+        );
+        
+        if (destroyed) return;
+        
+        console.log("Privacy-adjusted coordinates:", { 
+          original: [coordinates.lng, coordinates.lat],
+          private: [privateLng, privateLat] 
+        });
+        
+        // Update the map center and add the marker after privacy is applied
+        map.setCenter([privateLng, privateLat]);
+        
+        const marker = new mapboxgl.Marker()
+          .setLngLat([privateLng, privateLat])
+          .addTo(map);
+        
+        markerRef.current = marker;
         
         map.on('error', (e) => {
           console.error("Map error:", e);
         });
-        
-        const marker = new mapboxgl.Marker().setLngLat([privateLng, privateLat]).addTo(map);
-        
-        mapRef.current = map;
-        markerRef.current = marker;
       } catch (error) {
         console.error("Error initializing map:", error);
       }
