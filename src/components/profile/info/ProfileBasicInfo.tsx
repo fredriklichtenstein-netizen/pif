@@ -14,7 +14,7 @@ interface ProfileBasicInfoProps {
 
 export function ProfileBasicInfo({ avatarUrl, displayName, gender, coordinates }: ProfileBasicInfoProps) {
   return (
-    <>
+    <div className="w-full flex flex-col items-center">
       <AvatarImage
         src={avatarUrl}
         alt={displayName || "User"}
@@ -22,15 +22,17 @@ export function ProfileBasicInfo({ avatarUrl, displayName, gender, coordinates }
         className="mb-3 border"
       />
       <div className="text-2xl font-semibold mb-1">{displayName || "User"}</div>
-      <div className="text-gray-600 capitalize mb-1">
+      <div className="text-gray-600 capitalize mb-4">
         {gender ? gender.replace('_', ' ') : "Gender undisclosed"}
       </div>
-      {!!coordinates && (
-        <div className="w-full mb-2">
+      
+      {coordinates && (
+        <div className="w-full max-w-md mb-6">
           <ProfileLocationMap coordinates={coordinates} />
         </div>
       )}
-      <div className="flex gap-3 mt-2">
+
+      <div className="flex gap-3">
         <Link to="/profile/edit">
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <Settings size={16} />
@@ -41,6 +43,6 @@ export function ProfileBasicInfo({ avatarUrl, displayName, gender, coordinates }
           <Button variant="outline" size="sm">Account Settings</Button>
         </Link>
       </div>
-    </>
+    </div>
   );
 }
