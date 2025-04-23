@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Upload, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,13 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const [showCropper, setShowCropper] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl);
+
+  // Update preview when avatarUrl prop changes
+  useEffect(() => {
+    console.log("AvatarUpload received avatarUrl:", avatarUrl);
+    setPreviewUrl(avatarUrl);
+  }, [avatarUrl]);
 
   // Generate a fallback based on timestamp to avoid caching issues
   const fallbackSrc = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`;
@@ -52,10 +59,17 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     try {
       const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels);
       if (croppedImage) {
+        // Create a temporary preview URL for the cropped image
+        const tempPreviewUrl = URL.createObjectURL(croppedImage);
+        setPreviewUrl(tempPreviewUrl);
+        
+        // Pass the file to parent component for upload
         onFileChange(croppedImage);
         setShowCropper(false);
         setTempImage(null);
         setIsEditing(false);
+        
+        console.log("Created temporary preview URL:", tempPreviewUrl);
       } else {
         throw new Error('Failed to process image');
       }
@@ -89,6 +103,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
               image={tempImage}
               onSave={handleSaveCrop}
               onCancel={handleCancel}
+              cropShape="round"
             />
           ) : (
             <UploadOptions
@@ -124,10 +139,21 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
           className="h-32 w-32 cursor-pointer border-2 border-gray-200 group-hover:border-primary transition-colors" 
           onClick={() => setShowOptions(true)}
         >
-          <AvatarImage src={avatarUrl || undefined} alt="Profile picture" />
-          <AvatarFallback className="bg-gray-100">
-            <Upload className="h-8 w-8 text-gray-400" />
-          </AvatarFallback>
+          {previewUrl ? (
+            <AvatarImage 
+              src={previewUrl} 
+              alt="Profile picture" 
+              className="object-cover"
+              onError={() => {
+                console.error("Error loading avatar image:", previewUrl);
+                setPreviewUrl(fallbackSrc);
+              }}
+            />
+          ) : (
+            <AvatarFallback className="bg-gray-100">
+              <Upload className="h-8 w-8 text-gray-400" />
+            </AvatarFallback>
+          )}
         </Avatar>
         
         <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">

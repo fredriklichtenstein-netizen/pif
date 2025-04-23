@@ -30,6 +30,10 @@ export function OptimizedImage({
   const optimizedSrc = src ? optimizeImageUrl(src, width) : placeholderSrc;
   
   useEffect(() => {
+    // When src changes, reset states
+    setLoaded(false);
+    setError(false);
+    
     if (!priority && src) {
       const img = new Image();
       img.src = optimizedSrc;
@@ -49,6 +53,8 @@ export function OptimizedImage({
         img.onload = null;
         img.onerror = null;
       };
+    } else if (priority && src) {
+      setCurrentSrc(optimizedSrc);
     }
   }, [optimizedSrc, placeholderSrc, priority, src]);
   
@@ -58,6 +64,7 @@ export function OptimizedImage({
         src={priority ? optimizedSrc : currentSrc}
         alt={alt || ""}
         className={`${className} ${!loaded && !priority ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+        onLoad={() => setLoaded(true)}
         onError={() => {
           console.error(`Error loading image at render time: ${currentSrc}`);
           setError(true);
@@ -89,6 +96,14 @@ export function AvatarImage({
   const uniqueSeed = alt || 'anonymous';
   const fallbackSrc = `https://api.dicebear.com/7.x/avataaars/svg?seed=${uniqueSeed}`;
   
+  // Track if we need to use the fallback
+  const [useFallback, setUseFallback] = useState(false);
+  
+  // Reset fallback state when src changes
+  useEffect(() => {
+    setUseFallback(false);
+  }, [src]);
+  
   // Debug information
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -98,12 +113,16 @@ export function AvatarImage({
     
   return (
     <OptimizedImage
-      src={src || fallbackSrc}
+      src={useFallback || !src ? fallbackSrc : src}
       alt={alt || "User avatar"}
       width={size}
       height={size}
       className={`rounded-full object-cover ${className || ''}`}
       placeholderSrc={fallbackSrc}
+      onError={() => {
+        console.log("Avatar image error, using fallback");
+        setUseFallback(true);
+      }}
       {...props}
     />
   );

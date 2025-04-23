@@ -16,17 +16,19 @@ export function ImageCropper({
   image, 
   onSave, 
   onCancel,
-  cropShape = 'rect' 
+  cropShape = 'round' 
 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const onCropComplete = async (_croppedArea: any, pixels: any) => {
+    console.log("Crop completed, pixels:", pixels);
     setCroppedAreaPixels(pixels);
   };
 
   const handleSave = () => {
+    console.log("Saving cropped image with pixels:", croppedAreaPixels);
     if (croppedAreaPixels) {
       onSave(croppedAreaPixels);
     }

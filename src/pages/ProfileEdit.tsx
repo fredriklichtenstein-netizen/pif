@@ -26,7 +26,13 @@ function ProfileEdit() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
-  const { setAvatar, avatarUrl, loading: avatarLoading } = useProfileAvatar();
+  const { setAvatar, avatarUrl, loading: avatarLoading, setAvatarUrl } = useProfileAvatar();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("Current avatarUrl:", avatarUrl);
+    console.log("User avatar_url:", (user as any)?.avatar_url);
+  }, [avatarUrl, user]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -52,6 +58,11 @@ function ProfileEdit() {
         .single();
 
       if (error) throw error;
+
+      // Set the avatar URL from the profile data
+      if (data.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+      }
 
       setFormData({
         firstName: data.first_name || "",
@@ -131,13 +142,16 @@ function ProfileEdit() {
     );
   }
 
+  // Determine which avatar URL to use
+  const currentAvatarUrl = avatarUrl || (user as any).avatar_url;
+  
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
       
       <div className="mb-6 flex justify-center">
         <AvatarUpload 
-          avatarUrl={avatarUrl || (user as any).avatar_url} 
+          avatarUrl={currentAvatarUrl} 
           onFileChange={setAvatar} 
         />
       </div>
