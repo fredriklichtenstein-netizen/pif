@@ -1,18 +1,19 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { ProfileOverview } from "@/components/profile/ProfileOverview";
 import { Settings } from "lucide-react";
-import { AlertCircle } from "lucide-react"; // Add missing import
+import { AlertCircle } from "lucide-react";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
 import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
+import { useMapbox } from "@/hooks/useMapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
-import mapboxgl from "mapbox-gl"; // Proper import for mapboxgl
+import mapboxgl from "mapbox-gl";
 
 // Helper: format name as "Firstname L"
 function formatPublicName(profile: any) {
@@ -40,36 +41,56 @@ function parseCoordinates(raw: any): { lng: number; lat: number } | null {
 }
 
 function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number } }) {
-  const mapRef = useState<HTMLDivElement | null>(null)[0];
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
+  
   useEffect(() => {
-    if (!coordinates) return;
-    const MAPBOX_TOKEN = "pk.eyJ1IjoiZnplamltcGRoZXN3cXJvamp2bWYiLCJhIjoiY2tuN3g2cjc2MGExdTJubzY1bXZxZDNsYiJ9.-yL0RpL13rMNcMYoHeuXvg"; // fallback token or get from env
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    let map: mapboxgl.Map;
-    let marker: mapboxgl.Marker | null = null;
+    if (!coordinates || !mapToken || !mapContainerRef.current) return;
+    
+    mapboxgl.accessToken = mapToken;
     let destroyed = false;
 
-    (async () => {
+    const initializeMap = async () => {
       const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
       if (destroyed) return;
-      map = new mapboxgl.Map({
-        container: "profile-map",
+      
+      // Create map instance
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current!,
         style: "mapbox://styles/mapbox/streets-v12",
         center: [lng, lat],
         zoom: 14,
         interactive: false,
-        accessToken: MAPBOX_TOKEN,
       });
-      marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-    })();
+      
+      // Add marker
+      const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+      
+      // Store references
+      mapRef.current = map;
+      markerRef.current = marker;
+    };
+
+    initializeMap();
 
     return () => {
       destroyed = true;
-      if (marker) marker.remove();
-      if (map) map.remove();
+      if (markerRef.current) markerRef.current.remove();
+      if (mapRef.current) mapRef.current.remove();
+      mapRef.current = null;
+      markerRef.current = null;
     };
-  }, [coordinates]);
-  return <div id="profile-map" className="w-full h-[200px] rounded-lg border mb-4" />;
+  }, [coordinates, mapToken]);
+  
+  if (isMapTokenLoading) {
+    return <div className="w-full h-[200px] rounded-lg border mb-4 bg-gray-100 flex items-center justify-center">
+      <div className="text-sm text-gray-500">Loading map...</div>
+    </div>;
+  }
+  
+  return <div ref={mapContainerRef} id="profile-map" className="w-full h-[200px] rounded-lg border mb-4" />;
 }
 
 const Profile = () => {
@@ -81,9 +102,7 @@ const Profile = () => {
     if (user) {
       setProfile(user);
       // Only try to parse coordinates if clearly present in user data
-      // @ts-ignore: ignore coordinates type error for now
-      if ((user as any)?.coordinates) {
-        // @ts-ignore
+      if (user?.coordinates) {
         const coord = parseCoordinates(user.coordinates);
         if (coord) setCoordinates(coord);
       }
@@ -126,7 +145,9 @@ const Profile = () => {
             className="mb-3 border"
           />
           <div className="text-2xl font-semibold mb-1">{formatPublicName(profile)}</div>
-          <div className="text-gray-600 capitalize mb-1">{profile.gender || "Gender undisclosed"}</div>
+          <div className="text-gray-600 capitalize mb-1">
+            {profile.gender ? profile.gender.replace('_', ' ') : "Gender undisclosed"}
+          </div>
           {/* Only owner sees address */}
           {profile.address && (
             <div className="text-sm text-gray-500 mb-2 text-center">{profile.address}</div>
