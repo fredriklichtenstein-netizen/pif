@@ -1,12 +1,13 @@
 
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { format } from "date-fns";
+import { Heart } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function InterestUsersPopover({ itemId }: { itemId: number }) {
   const { toast } = useToast();
@@ -70,51 +71,72 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
   };
 
   if (loading) {
-    return <div className="text-xs py-2 text-gray-400">Loading interested users...</div>;
+    return <div className="text-xs py-1 text-gray-400">Loading...</div>;
   }
   
   if (users.length === 0) {
-    return <div className="text-xs py-2 text-gray-400">No interests yet.</div>;
+    return null;
   }
 
+  const getInterestText = () => {
+    if (users.length === 0) return "";
+    if (users.length === 1) {
+      return `${users[0].users.first_name || 'Someone'} is interested`;
+    }
+    if (users.length === 2) {
+      return `${users[0].users.first_name || 'Someone'} and ${users[1].users.first_name || 'someone else'} are interested`;
+    }
+    return `${users[0].users.first_name || 'Someone'} and ${users.length - 1} others are interested`;
+  };
+
   return (
-    <Card className="p-2 bg-blue-50 mt-2">
-      <div className="font-bold text-sm mb-2">Interested Users</div>
-      <div className="flex flex-col gap-2">
-        {users.map((u) => (
-          <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-blue-100 rounded-md transition-all">
-            <Link 
-              to={`/user/${u.user_id}`}
-              className="flex items-center gap-2 hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AvatarImage 
-                src={u.users?.avatar_url} 
-                size={28} 
-                alt={u.users?.first_name || "User"} 
-              />
-              <span className="text-sm">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
-            </Link>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-gray-500">
-                {format(new Date(u.created_at), "yyyy-MM-dd HH:mm")}
-              </span>
-              {u.status === "selected" && (
-                <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Selected</span>
-              )}
-              {u.status === "pending" && (
-                <Button size="sm" onClick={() => handleSelectReceiver(u.id)} className="text-xs py-1 px-2 h-auto">
-                  Select as Receiver
-                </Button>
-              )}
-              {u.status === "not_selected" && (
-                <span className="bg-gray-200 text-gray-500 px-2 rounded text-xs">Not Selected</span>
-              )}
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mt-2">
+          <Heart className="h-5 w-5 text-primary fill-primary" />
+          <span className="hover:underline">{getInterestText()}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-2" align="start">
+        <div className="font-bold text-sm mb-2">Interested Users</div>
+        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+          {users.map((u) => (
+            <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md transition-all">
+              <Link 
+                to={`/user/${u.user_id}`}
+                className="flex items-center gap-2 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <AvatarImage 
+                  src={u.users?.avatar_url} 
+                  size={28} 
+                  alt={u.users?.first_name || "User"} 
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
+                  <span className="text-xs text-gray-500">
+                    {format(new Date(u.created_at), "PPp")}
+                  </span>
+                </div>
+              </Link>
+              <div className="ml-auto flex items-center gap-2">
+                {u.status === "selected" && (
+                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Selected</span>
+                )}
+                {u.status === "pending" && (
+                  <Button size="sm" onClick={() => handleSelectReceiver(u.id)} className="text-xs py-1 px-2 h-auto">
+                    Select
+                  </Button>
+                )}
+                {u.status === "not_selected" && (
+                  <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs">Not Selected</span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </Card>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
