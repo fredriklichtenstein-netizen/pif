@@ -5,6 +5,7 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { PostModal } from "./PostModal";
 import { InterestUsersPopover } from "./InterestUsersPopover";
+import { format } from "date-fns";
 
 export function MyPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
@@ -78,12 +79,11 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                     Piffed
                   </div>
                 )}
+                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                  {item.created_at && format(new Date(item.created_at), "yyyy-MM-dd")}
+                </div>
               </div>
               <div className="p-3">
-                <h3 className="font-semibold truncate">{item.title}</h3>
-                <div className="text-xs text-gray-500 mb-2">
-                  {item.created_at && new Date(item.created_at).toLocaleDateString()}
-                </div>
                 <InterestUsersPopover itemId={item.id} />
               </div>
             </Card>

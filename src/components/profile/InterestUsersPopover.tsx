@@ -5,10 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
 
-/**
- * Popover that shows users interested in a given item, allows owner to select a receiver.
- */
 export function InterestUsersPopover({ itemId }: { itemId: number }) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,21 +35,18 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
   }, [itemId]);
 
   const handleSelectReceiver = async (interestId: number) => {
-    // Piffer selects a receiver by updating status
     try {
       await supabase
         .from("interests")
         .update({ status: "selected", selected_at: new Date().toISOString() })
         .eq("id", interestId);
         
-      // Optionally update other interests to "not_selected"
       await supabase
         .from("interests")
         .update({ status: "not_selected" })
         .eq("item_id", itemId)
         .neq("id", interestId);
         
-      // Refresh the data
       fetchInterests();
     } catch (err) {
       console.error("Error selecting receiver:", err);
@@ -85,7 +80,10 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
               />
               <span className="text-sm">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
             </Link>
-            <span className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-gray-500">
+                {format(new Date(u.created_at), "HH:mm:ss")}
+              </span>
               {u.status === "selected" && (
                 <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Receiver</span>
               )}
@@ -97,7 +95,7 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
               {u.status === "not_selected" && (
                 <span className="bg-gray-200 text-gray-500 px-2 rounded text-xs">Not Selected</span>
               )}
-            </span>
+            </div>
           </div>
         ))}
       </div>
