@@ -6,8 +6,10 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export function InterestUsersPopover({ itemId }: { itemId: number }) {
+  const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,6 +26,11 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
       setUsers(data || []);
     } catch (err) {
       console.error("Error fetching interested users:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load interested users",
+      });
     } finally {
       setLoading(false);
     }
@@ -48,8 +55,17 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
         .neq("id", interestId);
         
       fetchInterests();
+      toast({
+        title: "Success",
+        description: "Receiver has been selected",
+      });
     } catch (err) {
       console.error("Error selecting receiver:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to select receiver",
+      });
     }
   };
 
@@ -66,7 +82,7 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
       <div className="font-bold text-sm mb-2">Interested Users</div>
       <div className="flex flex-col gap-2">
         {users.map((u) => (
-          <div key={u.id} className="flex items-center gap-2">
+          <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-blue-100 rounded-md transition-all">
             <Link 
               to={`/user/${u.user_id}`}
               className="flex items-center gap-2 hover:underline"
@@ -82,10 +98,10 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
             </Link>
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs text-gray-500">
-                {format(new Date(u.created_at), "yyyy-MM-dd HH:mm:ss")}
+                {format(new Date(u.created_at), "yyyy-MM-dd HH:mm")}
               </span>
               {u.status === "selected" && (
-                <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Receiver</span>
+                <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Selected</span>
               )}
               {u.status === "pending" && (
                 <Button size="sm" onClick={() => handleSelectReceiver(u.id)} className="text-xs py-1 px-2 h-auto">
