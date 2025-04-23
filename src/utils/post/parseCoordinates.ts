@@ -21,12 +21,23 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
     
     // Format 2: PostGIS point "(lng,lat)" string
     if (typeof coordinates === "string") {
-      const matches = coordinates.match(/\(([-\d.]+),([-\d.]+)\)/);
-      if (matches && matches.length >= 3) {
-        console.log("Found Format 2: PostGIS point string format");
+      // Match both standard PostGIS format "(lng,lat)" and variations like "POINT(lng lat)"
+      const simpleMatches = coordinates.match(/\(([-\d.]+),([-\d.]+)\)/);
+      const pointMatches = coordinates.match(/POINT\(([-\d.]+) ([-\d.]+)\)/i);
+      
+      if (simpleMatches && simpleMatches.length >= 3) {
+        console.log("Found Format 2a: PostGIS point string format (lng,lat)");
         return {
-          lat: parseFloat(matches[2]),  // Note: This is corrected - lat is the second value
-          lng: parseFloat(matches[1]),  // lng is the first value
+          lat: parseFloat(simpleMatches[2]),  // lat is the second value
+          lng: parseFloat(simpleMatches[1]),  // lng is the first value
+        };
+      }
+      
+      if (pointMatches && pointMatches.length >= 3) {
+        console.log("Found Format 2b: PostGIS POINT(lng lat) format");
+        return {
+          lng: parseFloat(pointMatches[1]),  // lng is the first value
+          lat: parseFloat(pointMatches[2]),  // lat is the second value
         };
       }
     }

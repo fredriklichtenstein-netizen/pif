@@ -2,7 +2,6 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapbox } from "@/hooks/useMapbox";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface ProfileLocationMapProps {
@@ -34,16 +33,16 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
 
     const initializeMap = async () => {
       try {
-        // Apply location privacy to the coordinates
-        const [privateLng, privateLat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
+        // Use exact coordinates for profile map without privacy adjustment
+        const { lng, lat } = coordinates;
         if (destroyed) return;
         
-        console.log("Privacy-adjusted coordinates:", privateLng, privateLat);
+        console.log("Using exact coordinates for profile map:", lng, lat);
         
         const map = new mapboxgl.Map({
           container: mapContainerRef.current!,
           style: "mapbox://styles/mapbox/streets-v12",
-          center: [privateLng, privateLat],
+          center: [lng, lat],
           zoom: 14,
           interactive: false,
         });
@@ -56,7 +55,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
           console.error("Map error:", e);
         });
         
-        const marker = new mapboxgl.Marker().setLngLat([privateLng, privateLat]).addTo(map);
+        const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
         
         mapRef.current = map;
         markerRef.current = marker;
