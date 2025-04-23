@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X } from "lucide-react";
 
 export function InterestUsersPopover({ itemId }: { itemId: number }) {
   const { toast } = useToast();
@@ -42,37 +41,30 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
     fetchInterests();
   }, [itemId]);
 
-  const handleSelectReceiver = async (interestId: number, approved: boolean) => {
+  const handleSelectReceiver = async (interestId: number) => {
     try {
-      if (approved) {
-        await supabase
-          .from("interests")
-          .update({ status: "selected", selected_at: new Date().toISOString() })
-          .eq("id", interestId);
-          
-        await supabase
-          .from("interests")
-          .update({ status: "not_selected" })
-          .eq("item_id", itemId)
-          .neq("id", interestId);
-      } else {
-        await supabase
-          .from("interests")
-          .update({ status: "rejected" })
-          .eq("id", interestId);
-      }
+      await supabase
+        .from("interests")
+        .update({ status: "selected", selected_at: new Date().toISOString() })
+        .eq("id", interestId);
+        
+      await supabase
+        .from("interests")
+        .update({ status: "not_selected" })
+        .eq("item_id", itemId)
+        .neq("id", interestId);
         
       fetchInterests();
       toast({
         title: "Success",
-        description: approved ? "Receiver has been selected" : "Interest has been rejected",
+        description: "Receiver has been selected",
       });
     } catch (err) {
-      console.error("Error managing interest:", err);
+      console.error("Error selecting receiver:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update interest status",
+        description: "Failed to select receiver",
       });
     }
   };
@@ -86,64 +78,38 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
   }
 
   return (
-    <Card className="p-4 bg-blue-50 mt-2">
-      <div className="font-bold text-sm mb-4">Interested Users</div>
-      <div className="flex flex-col gap-4">
+    <Card className="p-2 bg-blue-50 mt-2">
+      <div className="font-bold text-sm mb-2">Interested Users</div>
+      <div className="flex flex-col gap-2">
         {users.map((u) => (
-          <div key={u.id} className="flex flex-col gap-2 p-4 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center justify-between">
-              <Link 
-                to={`/user/${u.user_id}`}
-                className="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <AvatarImage 
-                  src={u.users?.avatar_url} 
-                  size={32} 
-                  alt={u.users?.first_name || "User"} 
-                />
-                <span className="text-sm font-medium">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
-              </Link>
-              <span className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">
-                {format(new Date(u.created_at), "MMM d, yyyy HH:mm")}
+          <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-blue-100 rounded-md transition-all">
+            <Link 
+              to={`/user/${u.user_id}`}
+              className="flex items-center gap-2 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AvatarImage 
+                src={u.users?.avatar_url} 
+                size={28} 
+                alt={u.users?.first_name || "User"} 
+              />
+              <span className="text-sm">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
+            </Link>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-gray-500">
+                {format(new Date(u.created_at), "yyyy-MM-dd HH:mm")}
               </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {u.status === "selected" ? (
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                  Selected
-                </span>
-              ) : u.status === "rejected" ? (
-                <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-medium">
-                  Rejected
-                </span>
-              ) : u.status === "not_selected" ? (
-                <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
-                  Not Selected
-                </span>
-              ) : (
-                <div className="flex gap-2 ml-auto">
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-1 text-green-600 border-green-200 hover:bg-green-50"
-                    onClick={() => handleSelectReceiver(u.id, true)}
-                  >
-                    <Check className="h-4 w-4" />
-                    Select
-                  </Button>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-1 text-red-600 border-red-200 hover:bg-red-50"
-                    onClick={() => handleSelectReceiver(u.id, false)}
-                  >
-                    <X className="h-4 w-4" />
-                    Reject
-                  </Button>
-                </div>
+              {u.status === "selected" && (
+                <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Selected</span>
+              )}
+              {u.status === "pending" && (
+                <Button size="sm" onClick={() => handleSelectReceiver(u.id)} className="text-xs py-1 px-2 h-auto">
+                  Select as Receiver
+                </Button>
+              )}
+              {u.status === "not_selected" && (
+                <span className="bg-gray-200 text-gray-500 px-2 rounded text-xs">Not Selected</span>
               )}
             </div>
           </div>
