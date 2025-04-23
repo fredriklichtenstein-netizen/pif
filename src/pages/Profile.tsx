@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -16,7 +15,6 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 
-// Helper: format name as "Firstname L"
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
   const initial = profile.last_name ? profile.last_name[0].toUpperCase() : "";
@@ -43,7 +41,6 @@ function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number }
         
         console.log("Privacy-adjusted coordinates:", lng, lat);
         
-        // Create map instance
         const map = new mapboxgl.Map({
           container: mapContainerRef.current!,
           style: "mapbox://styles/mapbox/streets-v12",
@@ -52,10 +49,8 @@ function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number }
           interactive: false,
         });
         
-        // Add marker
         const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
         
-        // Store references
         mapRef.current = map;
         markerRef.current = marker;
       } catch (error) {
@@ -90,7 +85,6 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch profile data including avatar_url
   const fetchProfileData = async () => {
     if (!user) return;
     
@@ -110,9 +104,7 @@ const Profile = () => {
       console.log("Fetched profile data:", data);
       setProfileData(data);
       
-      // Set coordinates if available in the location field or coordinates column
       if (data?.location) {
-        // Try to parse location as coordinates
         const locationCoords = parseCoordinates(data.location);
         if (locationCoords) {
           console.log("Found coordinates in location field:", locationCoords);
@@ -132,7 +124,6 @@ const Profile = () => {
       setProfile(user);
       fetchProfileData();
       
-      // Only try to parse coordinates if clearly present in user data
       const userAny = user as any;
       if (userAny?.coordinates) {
         console.log("Raw coordinates:", userAny.coordinates);
@@ -168,15 +159,12 @@ const Profile = () => {
     );
   }
 
-  // Determine the current avatar URL to use
   const currentAvatarUrl = profileData?.avatar_url || null;
   const displayName = formatPublicName(profileData || profile);
 
-  // Main profile layout
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center">
       <div className="w-full max-w-3xl mx-auto">
-        {/* Public Profile Info */}
         <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
           <AvatarImage
             src={currentAvatarUrl}
@@ -188,10 +176,6 @@ const Profile = () => {
           <div className="text-gray-600 capitalize mb-1">
             {profileData?.gender ? profileData.gender.replace('_', ' ') : "Gender undisclosed"}
           </div>
-          {/* Only owner sees address */}
-          {profileData?.address && (
-            <div className="text-sm text-gray-500 mb-2 text-center">{profileData.address}</div>
-          )}
           {!!coordinates && (
             <div className="w-full mb-2">
               <ProfileMap coordinates={coordinates} />
@@ -210,13 +194,11 @@ const Profile = () => {
           </div>
         </Card>
 
-        {/* My PIFs Section */}
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-3">My PIFs</h2>
           <MyPifsGrid userId={profile.id} />
         </section>
 
-        {/* PIFs I'm Interested In Section */}
         <section className="mt-10">
           <h2 className="text-xl font-semibold mb-3">PIFs I'm Interested In</h2>
           <InterestedPifsGrid userId={profile.id} />
