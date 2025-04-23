@@ -35,9 +35,13 @@ export async function addLocationPrivacy(
     // Check if location is in an urban area (more anonymization needed)
     const isUrban = await isUrbanArea(lat, lng);
     
-    // Determine privacy radius based on location type (urban = smaller offset)
-    // Urban areas have many PIF users, so less offset needed for privacy
-    const privacyRadius = isUrban ? 300 : 800; // meters
+    // Determine privacy radius based on location type
+    // Urban areas use smaller radius (higher density of potential PIF users)
+    // These values match what's used across both profile and main map
+    const privacyRadiusUrban = 300; // meters for urban areas
+    const privacyRadiusRural = 800; // meters for rural areas
+    
+    const privacyRadius = isUrban ? privacyRadiusUrban : privacyRadiusRural;
     console.log(`Location is ${isUrban ? 'urban' : 'rural'}, using radius: ${privacyRadius}m`);
     
     // Calculate privacy offset
