@@ -1,9 +1,9 @@
-
 import React, { Suspense } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MainNav } from "@/components/MainNav";
 
 // Lazy load the PostForm component
 const PostForm = React.lazy(() => import("@/components/post/PostForm"));
@@ -25,13 +25,16 @@ const Post = () => {
   }
 
   return (
-    <Suspense fallback={
-      <div className="container mx-auto px-4 pt-4">
-        <Skeleton className="h-[70vh] w-full rounded-lg" />
-      </div>
-    }>
-      <PostForm />
-    </Suspense>
+    <>
+      <Suspense fallback={
+        <div className="container mx-auto px-4 pt-4">
+          <Skeleton className="h-[70vh] w-full rounded-lg" />
+        </div>
+      }>
+        <PostForm />
+      </Suspense>
+      <MainNav />
+    </>
   );
 };
 

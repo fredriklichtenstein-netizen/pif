@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
@@ -10,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNotifications } from "@/hooks/useNotifications";
+import { MainNav } from "@/components/MainNav";
 
 const Messages = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();

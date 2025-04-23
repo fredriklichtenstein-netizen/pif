@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
@@ -102,28 +101,31 @@ const Profile = () => {
   const displayName = formatPublicName(profileData || profile);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center">
-      <div className="w-full max-w-3xl mx-auto">
-        <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
-          <ProfileBasicInfo
-            avatarUrl={currentAvatarUrl}
-            displayName={displayName}
-            gender={profileData?.gender}
-            coordinates={coordinates}
-          />
-        </Card>
+    <>
+      <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center pb-20">
+        <div className="w-full max-w-3xl mx-auto">
+          <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
+            <ProfileBasicInfo
+              avatarUrl={currentAvatarUrl}
+              displayName={displayName}
+              gender={profileData?.gender}
+              coordinates={coordinates}
+            />
+          </Card>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">My PIFs</h2>
-          <MyPifsGrid userId={profile.id} />
-        </section>
+          <section className="mb-10">
+            <h2 className="text-xl font-semibold mb-3">My PIFs</h2>
+            <MyPifsGrid userId={profile.id} />
+          </section>
 
-        <section className="mt-10">
-          <h2 className="text-xl font-semibold mb-3">PIFs I'm Interested In</h2>
-          <InterestedPifsGrid userId={profile.id} />
-        </section>
+          <section className="mt-10">
+            <h2 className="text-xl font-semibold mb-3">PIFs I'm Interested In</h2>
+            <InterestedPifsGrid userId={profile.id} />
+          </section>
+        </div>
       </div>
-    </div>
+      <MainNav />
+    </>
   );
 };
 

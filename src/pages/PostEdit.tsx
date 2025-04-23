@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import PostForm from "@/components/post/PostForm";
+import { MainNav } from "@/components/MainNav";
 
 function PostEdit() {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +28,7 @@ function PostEdit() {
         const { data, error } = await supabase
           .from("items")
           .select("*")
-          .eq("id", parseInt(id, 10))  // Convert string ID to number
+          .eq("id", parseInt(id, 10))
           .single();
 
         if (error) {
@@ -39,7 +39,6 @@ function PostEdit() {
           throw new Error("Item not found");
         }
 
-        // Check if current user is the owner
         if (user?.id !== data.user_id) {
           throw new Error("You don't have permission to edit this item");
         }
@@ -77,10 +76,13 @@ function PostEdit() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6">Edit PIF</h1>
-      <PostForm initialData={item} />
-    </div>
+    <>
+      <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
+        <h1 className="text-2xl font-bold mb-6">Edit PIF</h1>
+        <PostForm initialData={item} />
+      </div>
+      <MainNav />
+    </>
   );
 }
 
