@@ -9,6 +9,7 @@ import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import { ProfileBasicInfo } from "@/components/profile/info/ProfileBasicInfo";
+import { MainNav } from "@/components/MainNav";
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
