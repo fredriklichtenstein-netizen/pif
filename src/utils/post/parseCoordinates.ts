@@ -6,13 +6,19 @@
  */
 export function parseCoordinates(coordinates: any): { lat: number; lng: number } | null {
   if (!coordinates) return null;
+  
+  console.log("Parsing coordinates:", coordinates, typeof coordinates);
+  
   try {
+    // Format 1: { lat: number, lng: number }
     if (typeof coordinates === "object" && coordinates !== null && "lat" in coordinates && "lng" in coordinates) {
       return {
         lat: Number(coordinates.lat),
         lng: Number(coordinates.lng),
       };
     }
+    
+    // Format 2: PostGIS point "(lng,lat)" string
     if (typeof coordinates === "string") {
       const matches = coordinates.match(/\(([-\d.]+),([-\d.]+)\)/);
       if (matches && matches.length >= 3) {
@@ -22,8 +28,27 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
         };
       }
     }
+    
+    // Format 3: PostGIS point object with x, y properties
+    if (typeof coordinates === "object" && coordinates !== null && "x" in coordinates && "y" in coordinates) {
+      return {
+        lng: Number(coordinates.x),
+        lat: Number(coordinates.y),
+      };
+    }
+    
+    // Format 4: Array [lng, lat]
+    if (Array.isArray(coordinates) && coordinates.length >= 2) {
+      return {
+        lng: Number(coordinates[0]),
+        lat: Number(coordinates[1]),
+      };
+    }
+    
+    console.log("No matching coordinate format found");
+    return null;
   } catch (err) {
     console.error("Error parsing coordinates:", err, coordinates);
+    return null;
   }
-  return null;
 }

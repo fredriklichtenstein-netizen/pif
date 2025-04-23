@@ -10,6 +10,15 @@ import { getCachedCoordinates, cacheCoordinates } from "./coordinateCache";
  * Values expressed directly in degrees to avoid conversion errors
  */
 export const addLocationPrivacy = async (lng: number, lat: number, map?: mapboxgl.Map): Promise<[number, number]> => {
+  // Valid input check
+  if (isNaN(lng) || isNaN(lat)) {
+    console.error('Invalid coordinates provided to addLocationPrivacy:', lng, lat);
+    return [lng || 0, lat || 0]; // Return input or default to prevent crashes
+  }
+
+  // Debug logging
+  console.log('Adding privacy to coordinates:', lng, lat);
+
   // Check cache first
   const cachedValue = getCachedCoordinates(lng, lat);
   if (cachedValue) {

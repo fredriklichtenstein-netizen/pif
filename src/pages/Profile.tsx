@@ -31,28 +31,35 @@ function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number }
   useEffect(() => {
     if (!coordinates || !mapToken || !mapContainerRef.current) return;
     
+    console.log("Initializing map with coordinates:", coordinates);
     mapboxgl.accessToken = mapToken;
     let destroyed = false;
 
     const initializeMap = async () => {
-      const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
-      if (destroyed) return;
-      
-      // Create map instance
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current!,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [lng, lat],
-        zoom: 14,
-        interactive: false,
-      });
-      
-      // Add marker
-      const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-      
-      // Store references
-      mapRef.current = map;
-      markerRef.current = marker;
+      try {
+        const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
+        if (destroyed) return;
+        
+        console.log("Privacy-adjusted coordinates:", lng, lat);
+        
+        // Create map instance
+        const map = new mapboxgl.Map({
+          container: mapContainerRef.current!,
+          style: "mapbox://styles/mapbox/streets-v12",
+          center: [lng, lat],
+          zoom: 14,
+          interactive: false,
+        });
+        
+        // Add marker
+        const marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+        
+        // Store references
+        mapRef.current = map;
+        markerRef.current = marker;
+      } catch (error) {
+        console.error("Error initializing map:", error);
+      }
     };
 
     initializeMap();
@@ -82,13 +89,18 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
+      console.log("User data:", user);
       setProfile(user);
+      
       // Only try to parse coordinates if clearly present in user data
-      // Use type assertion to access coordinates property
       const userAny = user as any;
       if (userAny?.coordinates) {
+        console.log("Raw coordinates:", userAny.coordinates);
         const coord = parseCoordinates(userAny.coordinates);
-        if (coord) setCoordinates(coord);
+        if (coord) {
+          console.log("Parsed coordinates:", coord);
+          setCoordinates(coord);
+        }
       }
     }
   }, [user]);
@@ -123,7 +135,7 @@ const Profile = () => {
         {/* Public Profile Info */}
         <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
           <AvatarImage
-            src={profile.avatar_url || undefined}
+            src={profile.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + profile.id}
             alt={formatPublicName(profile)}
             size={96}
             className="mb-3 border"

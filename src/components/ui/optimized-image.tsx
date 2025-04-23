@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { optimizeImageUrl } from "@/utils/image";
 
@@ -77,18 +78,24 @@ export function AvatarImage({
   className,
   ...props
 }: {
-  src: string;
+  src?: string | null;
   alt?: string;
   size?: number;
   className?: string;
 }) {
+  // Generate a fallback based on alt text if available
+  const fallbackSrc = alt 
+    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${alt.split(' ').join('')}`
+    : "https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous";
+    
   return (
     <OptimizedImage
-      src={src}
+      src={src || fallbackSrc}
       alt={alt || "User avatar"}
       width={size}
       height={size}
-      className={`rounded-full object-cover ${className}`}
+      className={`rounded-full object-cover ${className || ''}`}
+      placeholderSrc={fallbackSrc}
       {...props}
     />
   );
