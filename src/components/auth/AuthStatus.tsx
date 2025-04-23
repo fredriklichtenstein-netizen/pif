@@ -2,8 +2,11 @@
 import { useNavigate } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/optimized-image";
 import { LogIn, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthStatusProps {
   showAvatar?: boolean;
@@ -20,6 +23,30 @@ export function AuthStatus({
 }: AuthStatusProps) {
   const navigate = useNavigate();
   const { user } = useGlobalAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  
+  // Fetch avatar URL from profiles table
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchAvatar = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", user.id)
+          .single();
+          
+        if (!error && data?.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      } catch (err) {
+        console.error("Error fetching avatar:", err);
+      }
+    };
+    
+    fetchAvatar();
+  }, [user]);
   
   // Get user initials for avatar fallback
   const getUserInitials = () => {
@@ -47,7 +74,7 @@ export function AuthStatus({
         <>
           {showAvatar && (
             <Avatar className="h-8 w-8 border border-primary">
-              <AvatarImage src={user.user_metadata?.avatar_url} />
+              <AvatarImage src={avatarUrl} alt={getDisplayName()} size={32} />
               <AvatarFallback className="text-xs bg-primary/10 text-primary">
                 {getUserInitials()}
               </AvatarFallback>

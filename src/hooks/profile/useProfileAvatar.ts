@@ -13,10 +13,51 @@ export const useProfileAvatar = () => {
   
   // Initialize avatarUrl from user data when component mounts
   useEffect(() => {
-    if (user && (user as any).avatar_url) {
-      setAvatarUrl((user as any).avatar_url);
-      console.log("Initialized avatarUrl from user:", (user as any).avatar_url);
-    }
+    if (!user) return;
+    
+    const fetchAvatar = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching avatar:", error);
+          return;
+        }
+        
+        if (data?.avatar_url) {
+          console.log("Fetched avatar URL:", data.avatar_url);
+          setAvatarUrl(data.avatar_url);
+        }
+      } catch (err) {
+        console.error("Error fetching avatar:", err);
+      }
+    };
+    
+    fetchAvatar();
+    
+    // Set up real-time subscription for avatar changes
+    const channel = supabase
+      .channel('profile-avatar-changes')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'profiles',
+        filter: `id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.new.avatar_url) {
+          console.log("Real-time avatar update:", payload.new.avatar_url);
+          setAvatarUrl(payload.new.avatar_url);
+        }
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const handleAvatarUpdate = async (file: File) => {

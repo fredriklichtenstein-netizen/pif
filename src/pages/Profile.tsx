@@ -11,6 +11,7 @@ import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
 import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
 import { useMapbox } from "@/hooks/useMapbox";
+import { supabase } from "@/integrations/supabase/client";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
@@ -86,11 +87,48 @@ const Profile = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
   const [profile, setProfile] = useState<any>(user || null);
   const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch profile data including avatar_url
+  const fetchProfileData = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching profile data:", error);
+        return;
+      }
+      
+      console.log("Fetched profile data:", data);
+      setProfileData(data);
+      
+      // Set coordinates if available
+      if (data?.coordinates) {
+        const coords = parseCoordinates(data.coordinates);
+        if (coords) {
+          setCoordinates(coords);
+        }
+      }
+    } catch (err) {
+      console.error("Error in profile data fetch:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
       console.log("User data:", user);
       setProfile(user);
+      fetchProfileData();
       
       // Only try to parse coordinates if clearly present in user data
       const userAny = user as any;
@@ -105,7 +143,7 @@ const Profile = () => {
     }
   }, [user]);
 
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <span className="text-gray-600">Loading profile...</span>
@@ -128,6 +166,10 @@ const Profile = () => {
     );
   }
 
+  // Determine the current avatar URL to use
+  const currentAvatarUrl = profileData?.avatar_url || null;
+  const displayName = formatPublicName(profileData || profile);
+
   // Main profile layout
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center">
@@ -135,18 +177,18 @@ const Profile = () => {
         {/* Public Profile Info */}
         <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
           <AvatarImage
-            src={profile.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + profile.id}
-            alt={formatPublicName(profile)}
+            src={currentAvatarUrl}
+            alt={displayName || "User"}
             size={96}
             className="mb-3 border"
           />
-          <div className="text-2xl font-semibold mb-1">{formatPublicName(profile)}</div>
+          <div className="text-2xl font-semibold mb-1">{displayName || "User"}</div>
           <div className="text-gray-600 capitalize mb-1">
-            {profile.gender ? profile.gender.replace('_', ' ') : "Gender undisclosed"}
+            {profileData?.gender ? profileData.gender.replace('_', ' ') : "Gender undisclosed"}
           </div>
           {/* Only owner sees address */}
-          {profile.address && (
-            <div className="text-sm text-gray-500 mb-2 text-center">{profile.address}</div>
+          {profileData?.address && (
+            <div className="text-sm text-gray-500 mb-2 text-center">{profileData.address}</div>
           )}
           {!!coordinates && (
             <div className="w-full mb-2">

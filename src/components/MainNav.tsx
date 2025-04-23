@@ -1,20 +1,64 @@
+
 import { Home, Map, MessageSquare, User as UserIcon, List } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useProfileData } from "@/hooks/profile/useProfileData";
-import { useEffect } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/optimized-image";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function MainNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useGlobalAuth();
-  const { avatarUrl } = useProfileData();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const isActive = (path: string) => location.pathname === path;
   const isProfileActive = isActive("/profile") || isActive("/account-settings");
+
+  // Fetch avatar URL from profiles table
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchAvatar = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", user.id)
+          .single();
+          
+        if (!error && data?.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      } catch (err) {
+        console.error("Error fetching avatar:", err);
+      }
+    };
+    
+    fetchAvatar();
+    
+    // Subscribe to realtime updates for the avatar
+    const channel = supabase
+      .channel('profile-changes')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'profiles',
+        filter: `id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.new.avatar_url !== avatarUrl) {
+          setAvatarUrl(payload.new.avatar_url);
+        }
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!user) {
@@ -116,7 +160,7 @@ export function MainNav() {
             {user ? (
               <>
                 <Avatar className={`h-6 w-6 ${isProfileActive ? "border border-primary" : ""}`}>
-                  <AvatarImage src={avatarUrl || user.user_metadata?.avatar_url} />
+                  <AvatarImage src={avatarUrl} alt={user.email || "User"} size={24} />
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                     {getUserInitials()}
                   </AvatarFallback>
