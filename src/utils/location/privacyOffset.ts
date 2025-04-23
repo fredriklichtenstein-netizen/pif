@@ -4,14 +4,17 @@ import { isWaterLocation } from "./waterDetection";
 import { getCachedCoordinates, cacheCoordinates } from "./coordinateCache";
 
 /**
- * For profile maps, we don't want to add any privacy offset
- * This keeps the true location visible to the user on their own profile
+ * Adds privacy offset to coordinates based on urban density
+ * Returns adjusted coordinates [lng, lat]
+ * 
+ * @param lng - Longitude value
+ * @param lat - Latitude value
+ * @param map - Optional Mapbox map instance for water detection (not used in current implementation)
  */
 export async function addLocationPrivacy(
   lng: number, 
   lat: number,
-  map?: mapboxgl.Map | null,
-  profileMap: boolean = false
+  map?: mapboxgl.Map | null
 ): Promise<[number, number]> {
   try {
     // Validate input coordinates
@@ -20,13 +23,7 @@ export async function addLocationPrivacy(
       throw new Error("Invalid coordinates provided for privacy calculation");
     }
     
-    console.log("Adding privacy to coordinates:", { lng, lat }, "profileMap:", profileMap);
-    
-    // For profile maps, don't apply any privacy offset
-    if (profileMap) {
-      console.log("Profile map detected - returning original coordinates");
-      return [lng, lat];
-    }
+    console.log("Adding privacy to coordinates:", { lng, lat });
     
     // Check if we have cached coordinates for this location
     const cached = getCachedCoordinates(lng, lat);

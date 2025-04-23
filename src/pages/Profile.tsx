@@ -44,25 +44,15 @@ const Profile = () => {
       console.log("Fetched profile data:", data);
       setProfileData(data);
       
-      // Process coordinates from location field with detailed logging
+      // Process coordinates with more detailed logging
       if (data?.location) {
         console.log("Raw location data from profile:", data.location);
-        try {
-          const locationCoords = parseCoordinates(data.location);
-          if (locationCoords) {
-            console.log("Successfully parsed coordinates from location:", locationCoords);
-            setCoordinates(locationCoords);
-          } else {
-            console.log("Failed to parse coordinates from location field");
-            
-            // Fallback to Stockholm coordinates if parsing fails
-            console.log("Using fallback coordinates for Stockholm");
-            setCoordinates({ lat: 59.3293, lng: 18.0686 });
-          }
-        } catch (parseError) {
-          console.error("Error parsing location:", parseError);
-          // Fallback to Stockholm coordinates
-          setCoordinates({ lat: 59.3293, lng: 18.0686 });
+        const locationCoords = parseCoordinates(data.location);
+        if (locationCoords) {
+          console.log("Successfully parsed coordinates from location:", locationCoords);
+          setCoordinates(locationCoords);
+        } else {
+          console.log("Failed to parse coordinates from location field");
         }
       } else {
         console.log("No location data found in profile");

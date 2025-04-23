@@ -47,12 +47,10 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
             [privateLng, privateLat] = cachedCoords;
             console.log("Using cached coordinates for post:", post.id);
           } else {
-            // Calculate new privacy-adjusted coordinates - pass false for profileMap parameter
+            // Calculate new privacy-adjusted coordinates - fix: removing the third argument (map)
             [privateLng, privateLat] = await addLocationPrivacy(
               coords.lng,
-              coords.lat,
-              map,
-              false // This is not a profile map, apply privacy offset
+              coords.lat
             );
             console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
             processedCoordinates.current.set(post.id, [privateLng, privateLat]);
