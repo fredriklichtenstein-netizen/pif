@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapbox } from "@/hooks/useMapbox";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
+import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface ProfileLocationMapProps {
@@ -34,7 +35,9 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
 
     const initializeMap = async () => {
       try {
-        // Apply location privacy to the coordinates
+        // Process coordinates exactly like in MapMarkersLayer.tsx
+        // Apply location privacy to the coordinates - note: removed the third argument (map)
+        // which matches how MapMarkersLayer does it
         const [privateLng, privateLat] = await addLocationPrivacy(
           coordinates.lng,
           coordinates.lat
