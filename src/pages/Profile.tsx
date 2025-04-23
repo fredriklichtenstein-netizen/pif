@@ -110,11 +110,13 @@ const Profile = () => {
       console.log("Fetched profile data:", data);
       setProfileData(data);
       
-      // Set coordinates if available
-      if (data?.coordinates) {
-        const coords = parseCoordinates(data.coordinates);
-        if (coords) {
-          setCoordinates(coords);
+      // Set coordinates if available in the location field or coordinates column
+      if (data?.location) {
+        // Try to parse location as coordinates
+        const locationCoords = parseCoordinates(data.location);
+        if (locationCoords) {
+          console.log("Found coordinates in location field:", locationCoords);
+          setCoordinates(locationCoords);
         }
       }
     } catch (err) {
