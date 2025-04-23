@@ -1,8 +1,8 @@
+
 import { Home, Map, MessageSquare, User as UserIcon, List } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -161,14 +161,19 @@ export function MainNav() {
                 <div
                   className={`h-8 w-8 ${
                     isProfileActive ? "border-2 border-primary" : ""
-                  } overflow-hidden`} // New: makes the avatar square, removes full rounding
-                  style={{ borderRadius: "8px" }} // 8px matches prior styling
+                  } overflow-hidden`}
+                  style={{ 
+                    borderRadius: "50%", // Use 50% border radius for elliptical/circular shape
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
                 >
                   <AvatarImage
                     src={avatarUrl}
                     alt={user.email || "User"}
                     size={32}
-                    className="h-8 w-8 object-cover rounded-none" // Remove rounding, fill square
+                    className="h-8 w-8 object-cover rounded-full" // Ensure full elliptical shape
                   />
                 </div>
                 <span className="text-xs mt-1">
