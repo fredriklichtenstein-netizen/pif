@@ -68,7 +68,7 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
         {users.map((u) => (
           <div key={u.id} className="flex items-center gap-2">
             <Link 
-              to={`/profile/${u.user_id}`}
+              to={`/user/${u.user_id}`}
               className="flex items-center gap-2 hover:underline"
               target="_blank"
               rel="noopener noreferrer"
@@ -82,7 +82,7 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
             </Link>
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs text-gray-500">
-                {format(new Date(u.created_at), "HH:mm:ss")}
+                {format(new Date(u.created_at), "yyyy-MM-dd HH:mm:ss")}
               </span>
               {u.status === "selected" && (
                 <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Receiver</span>
