@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { PostModal } from "./PostModal";
-import { InterestUsersPopover } from "./InterestUsersPopover";
+import { InterestUsersPopover } from "./interest/InterestUsersPopover";
 import { formatRelativeTime } from "@/utils/formatDate";
 
 export function MyPifsGrid({ userId }: { userId: string }) {

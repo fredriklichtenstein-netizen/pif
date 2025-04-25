@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { InterestUsersPopover } from "./InterestUsersPopover";
+import { InterestUsersPopover } from "./interest/InterestUsersPopover";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { Pencil, Trash2, ExternalLink } from "lucide-react";
