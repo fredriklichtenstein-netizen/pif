@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/optimized-image";
@@ -84,7 +83,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                 </div>
               </div>
               <div className="p-3">
-                <InterestUsersPopover itemId={item.id} />
+                <InterestUsersPopover itemId={item.id} itemOwnerId={userId} />
               </div>
             </Card>
           );

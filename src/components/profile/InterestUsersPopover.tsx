@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -19,12 +18,26 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-export function InterestUsersPopover({ itemId }: { itemId: number }) {
+interface InterestUsersPopoverProps {
+  itemId: number;
+  itemOwnerId: string;
+}
+
+export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopoverProps) {
   const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
 
   const fetchInterests = async () => {
     setLoading(true);
@@ -102,6 +115,8 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
     return `${users[0].users.first_name || 'Someone'} and ${users.length - 1} others are interested`;
   };
 
+  const isOwner = currentUser === itemOwnerId;
+
   return (
     <>
       <Popover>
@@ -142,7 +157,7 @@ export function InterestUsersPopover({ itemId }: { itemId: number }) {
                       Selected
                     </span>
                   )}
-                  {u.status === "pending" && (
+                  {u.status === "pending" && isOwner && (
                     <Button 
                       size="sm" 
                       onClick={() => {
