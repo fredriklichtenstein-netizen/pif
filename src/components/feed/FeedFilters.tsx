@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Filter } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FeedFiltersProps {
   categories: string[];
@@ -10,6 +11,8 @@ interface FeedFiltersProps {
   allSelected: boolean;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
+  viewMode: string;
+  setViewMode: (mode: string) => void;
 }
 
 export function FeedFilters({
@@ -19,6 +22,8 @@ export function FeedFilters({
   allSelected,
   showFilters,
   setShowFilters,
+  viewMode,
+  setViewMode,
 }: FeedFiltersProps) {
   const isCategorySelected = (category: string) => selectedCategories.includes(category);
 
@@ -40,6 +45,21 @@ export function FeedFilters({
 
   return (
     <div className="mb-6">
+      {/* View Mode Tabs */}
+      <Tabs 
+        value={viewMode} 
+        onValueChange={setViewMode}
+        className="mb-4"
+      >
+        <TabsList className="w-full grid grid-cols-4 mb-2">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="saved">Saved</TabsTrigger>
+          <TabsTrigger value="myPifs">My PIFs</TabsTrigger>
+          <TabsTrigger value="interested">Interested</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      {/* Category Filters */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="font-medium">Categories</h2>
         <Button

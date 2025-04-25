@@ -8,13 +8,32 @@ interface FeedItemListProps {
   posts: any[];
   selectedCategories: string[];
   clearFilters: () => void;
+  viewMode: string;
 }
 
 export function FeedItemList({
   posts,
   selectedCategories,
   clearFilters,
+  viewMode,
 }: FeedItemListProps) {
+  const getEmptyStateMessage = () => {
+    if (selectedCategories.length > 0) {
+      return "No items found matching your filters";
+    }
+    
+    switch (viewMode) {
+      case "saved":
+        return "You haven't saved any items yet";
+      case "myPifs":
+        return "You haven't posted any items yet";
+      case "interested":
+        return "You haven't shown interest in any items yet";
+      default:
+        return "No items found";
+    }
+  };
+
   return (
     <div className="space-y-4">
       {posts?.map((post) => {
@@ -54,7 +73,7 @@ export function FeedItemList({
       })}
       {posts?.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          <p>No items found matching your filters</p>
+          <p>{getEmptyStateMessage()}</p>
           {selectedCategories.length > 0 && (
             <Button
               variant="outline"

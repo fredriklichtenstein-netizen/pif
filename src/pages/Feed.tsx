@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
@@ -5,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { MainNav } from "@/components/MainNav";
 import { FeedFilters } from "@/components/feed/FeedFilters";
 import { FeedItemList } from "@/components/feed/FeedItemList";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const CATEGORIES = [
   "Furniture",
@@ -21,11 +24,54 @@ const CATEGORIES = [
 export default function Feed() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const { posts, isLoading, error, refreshPosts, filterByCategories } = useFeedPosts();
+  const [viewMode, setViewMode] = useState("all");
+  const { user } = useGlobalAuth();
+  const { toast } = useToast();
+  
+  const { 
+    posts, 
+    isLoading, 
+    error, 
+    refreshPosts, 
+    filterByCategories, 
+    loadSavedPosts,
+    loadMyPosts,
+    loadInterestedPosts
+  } = useFeedPosts();
 
   useEffect(() => {
     filterByCategories(selectedCategories);
   }, [selectedCategories, filterByCategories]);
+
+  useEffect(() => {
+    const loadPostsBasedOnViewMode = async () => {
+      if (!user && viewMode !== "all") {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to use this filter",
+          variant: "destructive"
+        });
+        setViewMode("all");
+        return;
+      }
+      
+      switch (viewMode) {
+        case "saved":
+          await loadSavedPosts();
+          break;
+        case "myPifs":
+          await loadMyPosts();
+          break;
+        case "interested":
+          await loadInterestedPosts();
+          break;
+        default:
+          await refreshPosts();
+      }
+    };
+    
+    loadPostsBasedOnViewMode();
+  }, [viewMode, user]);
 
   const allSelected = selectedCategories.length === CATEGORIES.length;
 
@@ -61,6 +107,8 @@ export default function Feed() {
         allSelected={allSelected}
         showFilters={showFilters}
         setShowFilters={setShowFilters}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
       />
 
       {/* ItemList component */}
@@ -68,6 +116,7 @@ export default function Feed() {
         posts={posts}
         selectedCategories={selectedCategories}
         clearFilters={clearFilters}
+        viewMode={viewMode}
       />
       <MainNav />
     </div>
