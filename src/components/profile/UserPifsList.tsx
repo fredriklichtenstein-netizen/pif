@@ -94,7 +94,7 @@ export function UserPifsList({
               {/* Only show management/interests for owner */}
               {isOwner && (
                 <div className="flex flex-col gap-1 mt-2">
-                  <div className="mb-2"><InterestUsersPopover itemId={item.id} /></div>
+                  <div className="mb-2"><InterestUsersPopover itemId={item.id} itemOwnerId={userId} /></div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
