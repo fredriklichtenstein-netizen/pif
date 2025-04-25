@@ -7,6 +7,7 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 interface InterestUserItemProps {
   user: {
     id: string;
+    user_id?: string; // Add optional user_id field
     users: {
       first_name?: string;
       last_name?: string;
@@ -20,10 +21,13 @@ interface InterestUserItemProps {
 }
 
 export function InterestUserItem({ user, isOwner, onSelect }: InterestUserItemProps) {
+  // Use either user_id if it exists or fall back to id
+  const userProfileId = user.user_id || user.id;
+  
   return (
     <div className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md transition-all">
       <Link 
-        to={`/user/${user.user_id}`}
+        to={`/user/${userProfileId}`}
         className="flex items-center gap-2 hover:underline"
         target="_blank"
         rel="noopener noreferrer"
