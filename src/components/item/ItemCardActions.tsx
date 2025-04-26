@@ -1,4 +1,3 @@
-
 import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "@/components/post/CommentSection";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
@@ -75,12 +74,9 @@ export function ItemCardActions({
   setComments,
   isRealtimeSubscribed
 }: ItemCardActionsProps) {
-  // Always convert id to string for the hook
-  const stringId = typeof id === 'number' ? id.toString() : id;
-  const { handleShare } = useItemSharing(stringId);
-  
-  // Convert id to string to fix TypeScript errors
-  const itemId = String(id);
+  // Ensure id is always a string for the sharing hook
+  const itemId = typeof id === 'number' ? id.toString() : id;
+  const { handleShare } = useItemSharing(itemId);
   
   return (
     <div className="space-y-4">
