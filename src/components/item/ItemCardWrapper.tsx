@@ -1,19 +1,17 @@
 
-import { memo } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ItemCardHeader } from "./ItemCardHeader";
 import { ItemCardGallery } from "./ItemCardGallery";
 import { ItemCardContent } from "./ItemCardContent";
-import { ItemInteractions } from "./ItemInteractions";
-import { CommentSection } from "@/components/post/CommentSection";
-import { ReportDialog } from "./ReportDialog";
+import { ItemCardActions } from "./ItemCardActions";
 import { NetworkStatus } from "../common/NetworkStatus";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
 import type { ItemCardProps } from "./types";
 import { parseCoordinatesFromDB } from "@/types/post";
 
-export const ItemCardWrapper = memo(function ItemCardWrapper({
+export const ItemCardWrapper = function ItemCardWrapper({
   id,
   title,
   description,
@@ -34,7 +32,7 @@ export const ItemCardWrapper = memo(function ItemCardWrapper({
     parsedCoordinates = parseCoordinatesFromDB(coordinates);
   }
   
-  // Get card actions
+  // Get card actions and interactions
   const {
     isOwner,
     handleDelete,
@@ -42,7 +40,6 @@ export const ItemCardWrapper = memo(function ItemCardWrapper({
     handleMessage
   } = useItemCardActions(id, postedBy.id);
 
-  // Get item interactions
   const {
     isLiked,
     likesCount,
@@ -89,64 +86,52 @@ export const ItemCardWrapper = memo(function ItemCardWrapper({
         itemId={typeof id === 'string' ? parseInt(id, 10) : id}
       />
       
-      <div className="relative">
-        <ItemCardGallery 
-          images={images.length > 0 ? images : image ? [image] : []} 
-          title={title} 
-          category={category} 
-        />
-      </div>
+      <ItemCardGallery 
+        images={images.length > 0 ? images : image ? [image] : []} 
+        title={title} 
+        category={category} 
+      />
       
-      <div className="p-4 py-0">
-        <ItemInteractions 
-          id={id} 
-          postedBy={postedBy} 
-          isLiked={isLiked} 
-          showComments={showComments} 
-          isBookmarked={isBookmarked} 
-          showInterest={showInterest} 
-          isOwner={isOwner} 
-          commentsCount={commentsCount} 
-          likesCount={likesCount} 
-          interestsCount={interestsCount} 
-          likers={likers} 
-          interestedUsers={interestedUsers} 
-          commenters={commenters} 
-          onLikeToggle={handleLike} 
-          onCommentToggle={handleCommentToggle} 
-          onShowInterest={handleShowInterest} 
-          onBookmarkToggle={handleBookmark} 
-          onMessage={handleMessage} 
-          onShare={handleShare} 
-          onReport={handleReport}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          interactionsLoading={interactionsLoading} 
-          isLoadingInterested={isLoadingInterested} 
-          interestedError={interestedError} 
-          getInterestedUsers={getInterestedUsers} 
-          isRealtimeSubscribed={isRealtimeSubscribed} 
-        />
-
+      <div className="p-4">
         <ItemCardContent 
           description={description} 
           measurements={measurements} 
         />
         
-        {showComments && <CommentSection 
-          itemId={id} 
-          comments={comments} 
-          setComments={setComments} 
-          isLoading={commentsLoading} 
-          error={commentsError} 
-        />}
+        <ItemCardActions
+          id={id}
+          postedBy={postedBy}
+          isOwner={isOwner}
+          isLiked={isLiked}
+          showComments={showComments}
+          isBookmarked={isBookmarked}
+          showInterest={showInterest}
+          commentsCount={commentsCount}
+          likesCount={likesCount}
+          interestsCount={interestsCount}
+          likers={likers}
+          interestedUsers={interestedUsers}
+          commenters={commenters}
+          comments={comments}
+          commentsLoading={commentsLoading}
+          commentsError={commentsError}
+          interactionsLoading={interactionsLoading}
+          isLoadingInterested={isLoadingInterested}
+          interestedError={interestedError}
+          onLikeToggle={handleLike}
+          onCommentToggle={handleCommentToggle}
+          onShowInterest={handleShowInterest}
+          onBookmarkToggle={handleBookmark}
+          onMessage={handleMessage}
+          onShare={handleShare}
+          onReport={handleReport}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          getInterestedUsers={getInterestedUsers}
+          setComments={setComments}
+          isRealtimeSubscribed={isRealtimeSubscribed}
+        />
       </div>
-      
-      <ReportDialog 
-        open={isReportDialogOpen} 
-        onOpenChange={setIsReportDialogOpen} 
-        itemId={id} 
-      />
     </Card>
   );
-});
+};
