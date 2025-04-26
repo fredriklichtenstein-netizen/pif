@@ -91,7 +91,6 @@ export function ItemInteractions({
         isBookmarked={isBookmarked}
         isOwner={isOwner}
         onBookmarkToggle={onBookmarkToggle}
-        onShare={onShare}
         onReport={onReport}
         onEdit={onEdit}
         onDelete={onDelete}

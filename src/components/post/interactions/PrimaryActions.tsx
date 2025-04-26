@@ -2,6 +2,7 @@
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { useShare } from "@/hooks/useShare";
+import { Share } from "lucide-react";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -82,18 +83,25 @@ export function PrimaryActions({
         iconActive="message-square"
         isOwner={false}
       />
-      <InteractionButtonWithPopup
-        type="share"
-        isActive={false}
-        count={0}
-        itemId={itemId}
-        onClick={handleShare}
-        labelPassive="Share"
-        labelActive="Share"
-        iconPassive="share"
-        iconActive="share"
-        isOwner={false}
-      />
+      
+      {/* Custom share button that matches the other interaction buttons */}
+      <div className="relative flex flex-col items-center group" style={{ minWidth: 74 }}>
+        <button 
+          aria-label="Share"
+          className="flex flex-col items-center rounded cursor-pointer"
+          onClick={handleShare}
+        >
+          <div className="flex items-center justify-center" style={{ height: 28, width: 32 }}>
+            <Share className="w-6 h-6 flex-shrink-0" stroke="#333333" strokeWidth={2} />
+          </div>
+          <div className="flex flex-row items-center justify-center mt-1 min-h-[22px]">
+            <span className="text-xs font-medium select-none mx-[4px]" style={{ color: "#333333" }}>
+              Share
+            </span>
+          </div>
+        </button>
+      </div>
+      
       <InteractionButtonWithPopup
         type="interest"
         isActive={showInterest}

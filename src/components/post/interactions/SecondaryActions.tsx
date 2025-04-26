@@ -18,6 +18,8 @@ interface SecondaryActionsProps {
   isOwner?: boolean;
   onBookmarkToggle: () => void;
   onReport: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export function SecondaryActions({
@@ -25,6 +27,8 @@ export function SecondaryActions({
   isOwner = false,
   onBookmarkToggle,
   onReport,
+  onEdit,
+  onDelete
 }: SecondaryActionsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -102,6 +106,22 @@ export function SecondaryActions({
                 </>
               )}
             </DropdownMenuItem>
+          )}
+          
+          {isOwner && (
+            <>
+              {onEdit && (
+                <DropdownMenuItem onClick={onEdit}>
+                  <span>Edit</span>
+                </DropdownMenuItem>
+              )}
+              
+              {onDelete && (
+                <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                  <span>Delete</span>
+                </DropdownMenuItem>
+              )}
+            </>
           )}
           
           {!isOwner && (
