@@ -48,7 +48,7 @@ export interface ItemCardContentProps {
 }
 
 export interface ItemInteractionsProps {
-  id: string; // Ensuring this is specifically a string type
+  id: string;
   postedBy: {
     id?: string;
     name: string;

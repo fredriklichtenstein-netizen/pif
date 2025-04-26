@@ -81,7 +81,7 @@ export function ItemCardActions({
   return (
     <div className="space-y-4">
       <ItemInteractions
-        id={itemId} // Using the converted string id here
+        id={id}
         postedBy={postedBy}
         isLiked={isLiked}
         showComments={showComments}
