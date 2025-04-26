@@ -1,5 +1,4 @@
-
-import { memo, useState } from "react";
+import React, { memo, useState } from "react";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Card } from "@/components/ui/card";
@@ -144,12 +143,7 @@ const ItemCard = memo(function ItemCard({
   };
   
   // Modify handleMessage to work with both event and no-event calls
-  const handleMessage = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
+  const handleMessage = () => {
     if (!session) {
       toast({
         title: "Authentication required",
