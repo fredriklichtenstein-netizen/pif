@@ -74,14 +74,13 @@ export function ItemCardActions({
   setComments,
   isRealtimeSubscribed
 }: ItemCardActionsProps) {
-  // Ensure id is always a string for the sharing hook
-  const itemId = typeof id === 'number' ? id.toString() : id;
-  const { handleShare } = useItemSharing(itemId);
+  const stringId = String(id);
+  const { handleShare } = useItemSharing(stringId);
   
   return (
     <div className="space-y-4">
       <ItemInteractions
-        id={id}
+        id={stringId}
         postedBy={postedBy}
         isLiked={isLiked}
         showComments={showComments}
@@ -112,7 +111,7 @@ export function ItemCardActions({
 
       {showComments && (
         <CommentSection
-          itemId={itemId}
+          itemId={stringId}
           comments={comments}
           setComments={setComments}
           isLoading={commentsLoading}
