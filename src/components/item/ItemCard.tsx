@@ -142,7 +142,7 @@ const ItemCard = memo(function ItemCard({
     navigate(`/post/edit/${id}`);
   };
   
-  // Modify handleMessage to work with both event and no-event calls
+  // Modify handleMessage to work with no arguments
   const handleMessage = () => {
     if (!session) {
       toast({
