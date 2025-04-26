@@ -10,6 +10,9 @@ export function useItemBookmark(itemId: number | string) {
   const { toast } = useToast();
   const { user } = useGlobalAuth();
   
+  // Ensure itemId is numeric for database operations
+  const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+  
   // Check if the item is bookmarked when the component mounts
   useEffect(() => {
     const checkBookmarkStatus = async () => {
@@ -22,7 +25,7 @@ export function useItemBookmark(itemId: number | string) {
           .from('bookmarks')
           .select('id')
           .eq('user_id', user.id)
-          .eq('item_id', itemId)
+          .eq('item_id', numericItemId)
           .single();
           
         if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
@@ -38,10 +41,10 @@ export function useItemBookmark(itemId: number | string) {
       }
     };
     
-    if (user && itemId) {
+    if (user && numericItemId) {
       checkBookmarkStatus();
     }
-  }, [itemId, user]);
+  }, [numericItemId, user]);
   
   // Toggle bookmark status
   const toggleBookmark = async () => {
@@ -63,7 +66,7 @@ export function useItemBookmark(itemId: number | string) {
           .from('bookmarks')
           .delete()
           .eq('user_id', user.id)
-          .eq('item_id', itemId);
+          .eq('item_id', numericItemId);
           
         if (error) throw error;
         
@@ -77,7 +80,7 @@ export function useItemBookmark(itemId: number | string) {
           .from('bookmarks')
           .insert({
             user_id: user.id,
-            item_id: itemId
+            item_id: numericItemId
           });
           
         if (error) throw error;

@@ -45,6 +45,9 @@ const ItemCard = memo(function ItemCard({
     console.log("Parsed coordinates:", parsedCoordinates);
   }
   
+  // Convert id to number for database operations if it's a string
+  const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+  
   const {
     isLiked,
     likesCount,
@@ -101,7 +104,7 @@ const ItemCard = memo(function ItemCard({
       const { count, error: countError } = await supabase
         .from('interests')
         .select('*', { count: 'exact', head: true })
-        .eq('item_id', id);
+        .eq('item_id', numericId);
         
       if (countError) throw countError;
       
@@ -115,7 +118,7 @@ const ItemCard = memo(function ItemCard({
       const { error } = await supabase
         .from('items')
         .delete()
-        .eq('id', id);
+        .eq('id', numericId);
 
       if (error) throw error;
 
@@ -140,6 +143,7 @@ const ItemCard = memo(function ItemCard({
     navigate(`/post/edit/${id}`);
   };
   
+  // Create a wrapper for handleMessage that properly handles React events
   const handleMessage = () => {
     if (!session) {
       toast({
@@ -164,7 +168,7 @@ const ItemCard = memo(function ItemCard({
         isOwner={isOwner}
         handleReport={handleReportClick}
         coordinates={parsedCoordinates}
-        itemId={Number(id)}
+        itemId={numericId}
       />
       
       <div className="relative">
