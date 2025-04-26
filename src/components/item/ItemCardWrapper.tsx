@@ -68,7 +68,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
     isRealtimeSubscribed,
     realtimeError,
     refreshItemData
-  } = useItemCard(id);
+  } = useItemCard(String(id)); // Convert id to string here
 
   const handleReportClick = () => {
     setIsReportDialogOpen(true);

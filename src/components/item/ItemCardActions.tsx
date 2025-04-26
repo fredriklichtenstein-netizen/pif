@@ -75,6 +75,9 @@ export function ItemCardActions({
   setComments,
   isRealtimeSubscribed
 }: ItemCardActionsProps) {
+  // Convert id to string to fix TypeScript errors
+  const itemId = String(id);
+  
   return (
     <div className="space-y-4">
       <ItemInteractions
@@ -109,7 +112,7 @@ export function ItemCardActions({
 
       {showComments && (
         <CommentSection
-          itemId={id}
+          itemId={itemId}
           comments={comments}
           setComments={setComments}
           isLoading={commentsLoading}
