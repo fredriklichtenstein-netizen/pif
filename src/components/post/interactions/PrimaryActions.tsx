@@ -1,6 +1,7 @@
 
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
+import { useShare } from "@/hooks/useShare";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -9,7 +10,7 @@ interface PrimaryActionsProps {
   isOwner: boolean;
   itemId: string;
   currentUserId?: string;
-  hasCommented?: boolean; // True if user has posted a comment
+  hasCommented?: boolean;
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
@@ -24,12 +25,11 @@ interface PrimaryActionsProps {
 
 export function PrimaryActions({
   isLiked,
-  showComments, // not used directly for active state
+  showComments,
   showInterest,
   isOwner,
   itemId,
-  currentUserId, // received but not used directly
-  hasCommented = false, // drive comment "active" state
+  hasCommented = false,
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
@@ -39,8 +39,21 @@ export function PrimaryActions({
   onCommentToggle,
   onShowInterest,
   fetchLikers,
-  fetchInterestedUsers
+  fetchInterestedUsers,
 }: PrimaryActionsProps) {
+  const { shareContent } = useShare();
+  
+  const handleShare = async () => {
+    const baseUrl = window.location.origin;
+    const itemUrl = `${baseUrl}/item/${itemId}`;
+    
+    await shareContent({
+      title: 'Check out this PIF item',
+      text: 'I found this interesting item on PIF Community',
+      url: itemUrl
+    });
+  };
+
   return (
     <div className="flex justify-between w-full pt-1 gap-3">
       <InteractionButtonWithPopup
@@ -67,6 +80,18 @@ export function PrimaryActions({
         labelActive="Commented"
         iconPassive="message-square"
         iconActive="message-square"
+        isOwner={false}
+      />
+      <InteractionButtonWithPopup
+        type="share"
+        isActive={false}
+        count={0}
+        itemId={itemId}
+        onClick={handleShare}
+        labelPassive="Share"
+        labelActive="Share"
+        iconPassive="share"
+        iconActive="share"
         isOwner={false}
       />
       <InteractionButtonWithPopup

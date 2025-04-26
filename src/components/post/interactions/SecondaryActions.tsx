@@ -5,31 +5,25 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ReportDialog } from "./ReportDialog";
-import { BookmarkPlus, BookmarkCheck, Share, Flag } from "lucide-react";
+import { BookmarkPlus, BookmarkCheck, Flag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface SecondaryActionsProps {
   isBookmarked: boolean;
   isOwner?: boolean;
-  isDeleting?: boolean;
   onBookmarkToggle: () => void;
-  onShare: () => void;
   onReport: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
 }
 
 export function SecondaryActions({
   isBookmarked,
   isOwner = false,
   onBookmarkToggle,
-  onShare,
   onReport,
 }: SecondaryActionsProps) {
   const { toast } = useToast();
@@ -99,7 +93,7 @@ export function SecondaryActions({
               {isBookmarked ? (
                 <>
                   <BookmarkCheck className="mr-2 h-4 w-4" />
-                  <span>Saved</span>
+                  <span>Unsave</span>
                 </>
               ) : (
                 <>
@@ -110,19 +104,11 @@ export function SecondaryActions({
             </DropdownMenuItem>
           )}
           
-          <DropdownMenuItem onClick={onShare}>
-            <Share className="mr-2 h-4 w-4" />
-            <span>Share</span>
-          </DropdownMenuItem>
-          
           {!isOwner && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleReportClick} className="text-destructive">
-                <Flag className="mr-2 h-4 w-4" />
-                <span>Report</span>
-              </DropdownMenuItem>
-            </>
+            <DropdownMenuItem onClick={handleReportClick} className="text-destructive">
+              <Flag className="mr-2 h-4 w-4" />
+              <span>Report</span>
+            </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
