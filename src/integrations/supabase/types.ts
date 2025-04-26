@@ -256,6 +256,45 @@ export type Database = {
           },
         ]
       }
+      item_shares: {
+        Row: {
+          created_at: string | null
+          id: number
+          item_id: number | null
+          share_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          item_id?: number | null
+          share_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          item_id?: number | null
+          share_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_shares_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "item_shares_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           category: string | null
@@ -528,18 +567,7 @@ export type Database = {
           interests_count: number | null
           item_id: number | null
           likes_count: number | null
-        }
-        Insert: {
-          comments_count?: never
-          interests_count?: never
-          item_id?: number | null
-          likes_count?: never
-        }
-        Update: {
-          comments_count?: never
-          interests_count?: never
-          item_id?: number | null
-          likes_count?: never
+          share_count: number | null
         }
         Relationships: []
       }
@@ -608,6 +636,10 @@ export type Database = {
       mark_notification_read: {
         Args: { notification_id: string }
         Returns: boolean
+      }
+      notify_interested_users_on_delete: {
+        Args: { item_id_param: number }
+        Returns: undefined
       }
     }
     Enums: {

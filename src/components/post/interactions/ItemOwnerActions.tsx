@@ -21,6 +21,12 @@ export function ItemOwnerActions({ id }: ItemOwnerActionsProps) {
 
     setIsDeleting(true);
     try {
+      // First notify interested users
+      await supabase.rpc('notify_interested_users_on_delete', {
+        item_id_param: parseInt(id, 10)
+      });
+
+      // Then delete the item
       const { error } = await supabase
         .from('items')
         .delete()

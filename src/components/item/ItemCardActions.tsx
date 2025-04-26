@@ -1,7 +1,7 @@
 
 import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "@/components/post/CommentSection";
-import { ReportDialog } from "./ReportDialog";
+import { useItemSharing } from "@/hooks/item/useItemSharing";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface ItemCardActionsProps {
@@ -75,6 +75,8 @@ export function ItemCardActions({
   setComments,
   isRealtimeSubscribed
 }: ItemCardActionsProps) {
+  const { handleShare } = useItemSharing(id.toString());
+  
   // Convert id to string to fix TypeScript errors
   const itemId = String(id);
   
@@ -99,7 +101,7 @@ export function ItemCardActions({
         onShowInterest={onShowInterest}
         onBookmarkToggle={onBookmarkToggle}
         onMessage={onMessage}
-        onShare={onShare}
+        onShare={handleShare}
         onReport={onReport}
         onEdit={onEdit}
         onDelete={onDelete}
