@@ -20,12 +20,16 @@ export const useItemSharing = (itemId: string) => {
       });
 
       // Record the share in the database
-      await supabase
-        .from('item_shares')
-        .insert({
-          item_id: itemId,
-          share_type: 'general'
-        });
+      // Convert string itemId to number for the database
+      const numericId = parseInt(itemId, 10);
+      if (!isNaN(numericId)) {
+        await supabase
+          .from('item_shares')
+          .insert({
+            item_id: numericId,
+            share_type: 'general'
+          });
+      }
 
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {

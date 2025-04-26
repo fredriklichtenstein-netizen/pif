@@ -75,7 +75,9 @@ export function ItemCardActions({
   setComments,
   isRealtimeSubscribed
 }: ItemCardActionsProps) {
-  const { handleShare } = useItemSharing(id.toString());
+  // Always convert id to string for the hook
+  const stringId = typeof id === 'number' ? id.toString() : id;
+  const { handleShare } = useItemSharing(stringId);
   
   // Convert id to string to fix TypeScript errors
   const itemId = String(id);
