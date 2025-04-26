@@ -143,8 +143,13 @@ const ItemCard = memo(function ItemCard({
     navigate(`/post/edit/${id}`);
   };
   
-  // Create a wrapper for handleMessage that properly handles React events
-  const handleMessage = () => {
+  // Modify handleMessage to work with both event and no-event calls
+  const handleMessage = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     if (!session) {
       toast({
         title: "Authentication required",
