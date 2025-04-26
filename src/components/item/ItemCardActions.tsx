@@ -1,7 +1,10 @@
+
 import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "@/components/post/CommentSection";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import type { User } from "@/hooks/item/useItemInteractions";
+import { Button } from "@/components/ui/button";
+import { Share } from "lucide-react";
 
 interface ItemCardActionsProps {
   id: string | number;
@@ -75,7 +78,7 @@ export function ItemCardActions({
   isRealtimeSubscribed
 }: ItemCardActionsProps) {
   const stringId = String(id);
-  const { handleShare } = useItemSharing(stringId);
+  const { handleShare, isSharing } = useItemSharing(stringId);
   
   return (
     <div className="space-y-4">
@@ -108,6 +111,19 @@ export function ItemCardActions({
         getInterestedUsers={getInterestedUsers}
         isRealtimeSubscribed={isRealtimeSubscribed}
       />
+
+      <div className="flex justify-between items-center px-1">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleShare}
+          disabled={isSharing}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Share className="h-4 w-4 mr-2" />
+          Share
+        </Button>
+      </div>
 
       {showComments && (
         <CommentSection
