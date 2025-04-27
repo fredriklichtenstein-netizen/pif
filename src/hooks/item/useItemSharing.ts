@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,15 +15,11 @@ export const useItemSharing = (itemId: string) => {
 
   /**
    * Generates the appropriate URL for sharing an item.
-   * Handles different environments and routes.
+   * Uses the current origin to handle different environments.
    */
   const getShareUrl = (id: string): string => {
-    // Get the base URL (handles dev, preview, and production environments)
     const baseUrl = window.location.origin;
-    
-    // Create the item URL - avoiding duplicate slashes if origin already has trailing slash
-    const itemUrl = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}item/${id}`;
-    
+    const itemUrl = `${baseUrl}/item/${id}`;
     console.log(`Generated share URL: ${itemUrl} for item: ${id}`);
     return itemUrl;
   };

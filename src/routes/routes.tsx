@@ -1,10 +1,8 @@
-
 import { Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 
-// Improved loading fallback component
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh]">
     <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
@@ -12,7 +10,6 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Error fallback component
 const ErrorFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
     <p className="text-red-500 font-semibold mb-2">Failed to load the page</p>
@@ -25,7 +22,6 @@ const ErrorFallback = () => (
   </div>
 );
 
-// Enhanced lazy loading with error handling
 const enhancedLazy = (importFn: () => Promise<any>) => {
   return lazy(() => 
     importFn()
@@ -36,7 +32,6 @@ const enhancedLazy = (importFn: () => Promise<any>) => {
   );
 };
 
-// Lazy load components with enhanced error handling
 const Home = enhancedLazy(() => import("@/pages/Home"));
 const Map = enhancedLazy(() => import("@/pages/Map"));
 const Messages = enhancedLazy(() => import("@/pages/Messages"));
@@ -49,8 +44,8 @@ const EmailConfirmation = enhancedLazy(() => import("@/pages/EmailConfirmation")
 const ResetPassword = enhancedLazy(() => import("@/pages/ResetPassword"));
 const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
+const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 
-// Wrap component with suspense
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
     <Component />
@@ -64,6 +59,7 @@ export const publicRoutes = [
   { path: "/auth", element: withSuspense(Auth) },
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
+  { path: "/item/:id", element: withSuspense(ItemDetail) },
   { path: "*", element: withSuspense(NotFound) },
 ];
 
