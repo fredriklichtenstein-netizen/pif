@@ -1,129 +1,101 @@
 
-import { useState, useEffect } from "react";
-import { AlertCircle, Wifi, WifiOff, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { RefreshCw, WifiOff, CheckCircle2 } from 'lucide-react';
 
 interface NetworkStatusProps {
   onRetry?: () => void;
+  className?: string;
+  showOnlineStatus?: boolean;
 }
 
-export function NetworkStatus({ onRetry }: NetworkStatusProps) {
-  const [isOnline, setIsOnline] = useState<boolean>(true);
-  const [checking, setChecking] = useState(false);
-  const [showBanner, setShowBanner] = useState(false);
-  const { toast } = useToast();
-
-  // Setup network monitoring
+export function NetworkStatus({ 
+  onRetry, 
+  className = '',
+  showOnlineStatus = false
+}: NetworkStatusProps) {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      setShowBanner(false);
-      toast({
-        title: "Connection restored",
-        description: "You're back online. Real-time updates resumed.",
-        duration: 3000,
-      });
+      if (!showOnlineStatus) return;
+      
+      setShowSuccessMessage(true);
+      const timer = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
     };
     
     const handleOffline = () => {
       setIsOnline(false);
-      setShowBanner(true);
     };
-    
-    // Initial check
-    checkNetworkConnection().then(online => {
-      setIsOnline(online);
-      setShowBanner(!online);
-    });
     
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     
-    // Periodic check every 30 seconds
-    const intervalId = setInterval(async () => {
-      const online = await checkNetworkConnection();
-      if (online !== isOnline) {
-        setIsOnline(online);
-        setShowBanner(!online);
-        
-        if (online && !isOnline) {
-          toast({
-            title: "Connection restored",
-            description: "You're back online. Real-time updates resumed.",
-            duration: 3000,
-          });
-        }
-      }
-    }, 30000);
-    
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(intervalId);
     };
-  }, [isOnline, toast]);
-
-  const handleManualCheck = async () => {
-    setChecking(true);
+  }, [showOnlineStatus]);
+  
+  const handleRetry = async () => {
+    if (!onRetry) return;
+    
+    setIsRetrying(true);
     try {
-      const result = await checkNetworkConnection();
-      setIsOnline(result);
-      
-      if (result) {
-        toast({
-          title: "Connection verified",
-          description: "Your internet connection is working properly.",
-          duration: 3000,
-        });
-        setShowBanner(false);
-        
-        if (onRetry) onRetry();
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Connection issues persist",
-          description: "Please check your internet connection and try again.",
-          duration: 5000,
-        });
-      }
-    } catch (e) {
-      console.error("Error checking connection:", e);
+      await onRetry();
+    } catch (error) {
+      console.error('Error during retry:', error);
     } finally {
-      setChecking(false);
+      setIsRetrying(false);
     }
   };
-
-  if (!showBanner) return null;
-
-  return (
-    <Alert variant="destructive" className="mb-4 animate-in fade-in duration-300">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-          <AlertDescription className="text-sm">
-            {isOnline ? 
-              "Connection limited. Some real-time updates may be delayed." : 
-              "Connection Error. Live updates unavailable. Data may not be real-time."}
-          </AlertDescription>
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleManualCheck}
-          disabled={checking}
-          className="ml-2 flex-shrink-0"
-        >
-          {checking ? (
-            <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3 w-3 mr-1" />
+  
+  // Don't show anything when online and success message is hidden
+  if (isOnline && !showSuccessMessage) return null;
+  
+  if (isOnline && showSuccessMessage) {
+    return (
+      <Alert className={`bg-green-50 border-green-200 text-green-800 ${className} transition-all`}>
+        <CheckCircle2 className="h-4 w-4 text-green-600" />
+        <AlertTitle>Connected</AlertTitle>
+        <AlertDescription>
+          Your connection has been restored.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (!isOnline) {
+    return (
+      <Alert variant="destructive" className={className}>
+        <WifiOff className="h-4 w-4" />
+        <AlertTitle>You are offline</AlertTitle>
+        <AlertDescription className="flex items-center justify-between">
+          <span>Check your connection and try again.</span>
+          {onRetry && (
+            <Button 
+              onClick={handleRetry} 
+              variant="outline" 
+              size="sm" 
+              className="ml-2 bg-white"
+              disabled={isRetrying}
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${isRetrying ? 'animate-spin' : ''}`} />
+              {isRetrying ? 'Reconnecting...' : 'Reconnect'}
+            </Button>
           )}
-          Retry
-        </Button>
-      </div>
-    </Alert>
-  );
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  return null;
 }
