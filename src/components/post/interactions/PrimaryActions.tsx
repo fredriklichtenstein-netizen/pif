@@ -1,7 +1,6 @@
 
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
-import { useShare } from "@/hooks/useShare";
 import { Share } from "lucide-react";
 
 interface PrimaryActionsProps {
@@ -20,6 +19,7 @@ interface PrimaryActionsProps {
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
+  onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
 }
@@ -40,22 +40,14 @@ export function PrimaryActions({
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
+  onShare,
   fetchLikers,
   fetchInterestedUsers,
 }: PrimaryActionsProps) {
-  const { shareContent } = useShare();
+  console.log("PrimaryActions rendering for item:", itemId, "with props:", { 
+    isLiked, showComments, showInterest, likesCount, commentsCount, interestsCount 
+  });
   
-  const handleShare = async () => {
-    const baseUrl = window.location.origin;
-    const itemUrl = `${baseUrl}/item/${itemId}`;
-    
-    await shareContent({
-      title: 'Check out this PIF item',
-      text: 'I found this interesting item on PIF Community',
-      url: itemUrl
-    });
-  };
-
   return (
     <div className="flex justify-between w-full pt-1 gap-1 md:gap-3">
       <InteractionButtonWithPopup
@@ -89,7 +81,7 @@ export function PrimaryActions({
         <button 
           aria-label="Share"
           className="flex flex-col items-center rounded cursor-pointer w-full"
-          onClick={handleShare}
+          onClick={onShare}
         >
           <div className="flex items-center justify-center h-7">
             <Share className="w-6 h-6 flex-shrink-0" stroke="#333333" strokeWidth={2} />

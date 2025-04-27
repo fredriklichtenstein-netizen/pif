@@ -1,3 +1,4 @@
+
 import { PrimaryActions } from "../post/interactions/PrimaryActions";
 import { useToast } from "@/hooks/use-toast";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
@@ -5,6 +6,7 @@ import type { ItemInteractionsProps } from "./types";
 import type { User } from "@/hooks/item/useItemInteractions";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useNavigate } from "react-router-dom";
+import { useItemSharing } from "@/hooks/item/useItemSharing";
 
 export function ItemInteractions({
   id,
@@ -39,9 +41,17 @@ export function ItemInteractions({
   const { toast } = useToast();
   const navigate = useNavigate();
   const currentUserId = user?.id || "";
+  const { handleShare } = useItemSharing(id);
+  
+  console.log("ItemInteractions rendering for item:", id, "with props:", { 
+    isLiked, showComments, showInterest, commentsCount, likesCount, interestsCount 
+  });
 
   const handleAction = async (action: () => void, requiresAuth: boolean = true) => {
+    console.log("handleAction called, requiresAuth:", requiresAuth, "user:", !!user);
+    
     if (requiresAuth && !user) {
+      console.log("Authentication required but no user is logged in");
       toast({
         title: "Authentication required",
         description: "Please sign in to perform this action",
@@ -52,7 +62,9 @@ export function ItemInteractions({
     }
     
     try {
+      console.log("Executing action");
       await action();
+      console.log("Action completed successfully");
     } catch (error) {
       console.error('Action failed:', error);
       toast({
@@ -77,6 +89,12 @@ export function ItemInteractions({
   const actualLikeCount = likers.length || likesCount;
   const actualInterestCount = interestedUsers.length || interestsCount;
 
+  // Handle share function using the imported hook
+  const handleShareAction = () => {
+    console.log("Share action triggered for item:", id);
+    handleShare();
+  };
+
   return (
     <div className="flex flex-col space-y-3 pt-2">
       <div className="flex flex-col gap-3">
@@ -96,7 +114,7 @@ export function ItemInteractions({
           onLikeToggle={() => handleAction(onLikeToggle)}
           onCommentToggle={() => handleAction(onCommentToggle, false)}
           onShowInterest={() => handleAction(onShowInterest)}
-          onShare={onShare}
+          onShare={handleShareAction}
           fetchLikers={async () => likers}
           fetchInterestedUsers={async () => interestedUsers}
         />
