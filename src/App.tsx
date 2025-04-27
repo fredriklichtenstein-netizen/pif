@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, lazy, Suspense } from "react";
@@ -16,10 +15,10 @@ import NotFound from "@/pages/NotFound";
 import PublicProfile from "@/pages/PublicProfile";
 import AccountSettings from "@/pages/AccountSettings";
 
-// Lazy loaded components
 const Conversation = lazy(() => import("@/pages/Conversation"));
 const EditProfile = lazy(() => import("@/pages/ProfileEdit"));
 const PostEdit = lazy(() => import("@/pages/PostEdit"));
+const ItemDetail = lazy(() => import("@/pages/ItemDetail"));
 
 const PageLoading = () => (
   <div className="flex justify-center items-center h-[60vh]">
@@ -52,10 +51,15 @@ function App() {
             } 
           />
           <Route path="/user/:id" element={<PublicProfile />} />
-          
-          {/* Added the missing routes */}
-          <Route 
-            path="/post/edit/:id" 
+          <Route
+            path="/item/:id"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <ItemDetail />
+              </Suspense>
+            }
+          />
+          <Route path="/post/edit/:id" 
             element={
               <Suspense fallback={<PageLoading />}>
                 <PostEdit />
