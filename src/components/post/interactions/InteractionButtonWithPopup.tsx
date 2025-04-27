@@ -3,14 +3,11 @@ import { Heart, MessageSquare, Star } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/hooks/item/useItemInteractions";
 
-/** 
- * ACTIVE: turquoise (#00D1A0)
- * PASSIVE: dark gray (#333333)
- */
-
 type Type = "like" | "comment" | "interest";
+
 interface InteractionButtonWithPopupProps {
   type: Type;
   isActive: boolean;
@@ -25,6 +22,7 @@ interface InteractionButtonWithPopupProps {
   iconActive: "heart" | "message-square" | "star";
   itemId: string;
 }
+
 export function InteractionButtonWithPopup({
   type,
   isActive,
@@ -43,28 +41,66 @@ export function InteractionButtonWithPopup({
   const [loading, setLoading] = useState(false);
   const [popupUsers, setPopupUsers] = useState<User[]>(users);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const ACTIVE_COLOR = "#00D1A0";
   const PASSIVE_COLOR = "#333333";
+  
   let IconComponent = Heart;
-  if (iconPassive === "message-square") IconComponent = MessageSquare;else if (iconPassive === "star") IconComponent = Star;
-  const handleButtonClick = (e: React.MouseEvent) => {
+  if (iconPassive === "message-square") IconComponent = MessageSquare;
+  else if (iconPassive === "star") IconComponent = Star;
+
+  const handleButtonClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (isOwner && (type === "like" || type === "interest")) return;
-    onClick();
+    console.log(`${type} button clicked, isOwner:`, isOwner);
+    
+    if (isOwner && (type === "like" || type === "interest")) {
+      console.log('Owner attempted to interact with their own item');
+      return;
+    }
+    
+    try {
+      await onClick();
+      console.log(`${type} action completed successfully`);
+    } catch (error) {
+      console.error(`${type} action failed:`, error);
+      toast({
+        title: "Action failed",
+        description: error instanceof Error ? error.message : `Unable to ${type} this item`,
+        variant: "destructive",
+      });
+    }
   };
+
   const handleCounterClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log(`Counter clicked for ${type}`);
+    
     if ((type === "like" || type === "interest") && onCounterClick) {
       setLoading(true);
       setShowPopup(true);
-      const data = await onCounterClick();
-      setPopupUsers(data || []);
-      setLoading(false);
+      
+      try {
+        const data = await onCounterClick();
+        console.log(`Fetched ${type} users:`, data?.length);
+        setPopupUsers(data || []);
+      } catch (error) {
+        console.error(`Error fetching ${type} users:`, error);
+        toast({
+          title: "Failed to load users",
+          description: "Unable to load the list of users",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
+
   function renderIcon() {
     return <IconComponent className="w-6 h-6 flex-shrink-0" fill={isActive ? ACTIVE_COLOR : "none"} stroke={isActive ? ACTIVE_COLOR : PASSIVE_COLOR} strokeWidth={isActive ? 2.4 : 2} />;
   }
+
   function renderUserRow(user: User) {
     const truncated = user.name.split(" ");
     const display = truncated.length > 1 ? `${truncated[0]} ${truncated[1].charAt(0).toUpperCase()}` : user.name;
@@ -80,15 +116,12 @@ export function InteractionButtonWithPopup({
       </button>;
   }
 
-  // Calculate display count; for comment type pure count, else use popupUsers length if available else count
   const displayCount = type === "comment" ? count : popupUsers.length > 0 ? popupUsers.length : count;
 
-  // Counter interactivity for like/interest with onCounterClick
   const isCounterInteractive = (type === "like" || type === "interest") && displayCount > 0 && onCounterClick;
 
-  // Placement: icon centered, then label + counter on the same line side-by-side, slightly spaced
   return (
-    <div className="relative flex flex-col items-center flex-1">
+    <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
       <button 
         disabled={isOwner && (type === "like" || type === "interest")} 
         aria-label={isActive ? labelActive : labelPassive}
