@@ -1,3 +1,4 @@
+
 import { Separator } from "@/components/ui/separator";
 import { useMemo } from "react";
 import { PrimaryActions } from "./PrimaryActions";
@@ -18,6 +19,7 @@ interface ActionButtonsProps {
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
+  onShare: () => void;  // Added this prop to match PrimaryActions requirements
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
 }
@@ -36,6 +38,7 @@ export function ActionButtons({
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
+  onShare,  // Added this prop to match PrimaryActions requirements
   fetchLikers,
   fetchInterestedUsers,
 }: ActionButtonsProps) {
@@ -55,6 +58,7 @@ export function ActionButtons({
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}
+        onShare={onShare}  // Pass the onShare prop to PrimaryActions
         fetchLikers={fetchLikers}
         fetchInterestedUsers={fetchInterestedUsers}
       />

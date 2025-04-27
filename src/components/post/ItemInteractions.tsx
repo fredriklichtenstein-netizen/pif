@@ -4,6 +4,7 @@ import { ActionButtons } from "./interactions/ActionButtons";
 import { InteractionsLoading } from "./interactions/InteractionsLoading";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { User } from "@/hooks/item/useItemInteractions";
+import { useItemSharing } from "@/hooks/item/useItemSharing";
 
 interface ItemInteractionsProps {
   id: string;
@@ -68,6 +69,14 @@ export function ItemInteractions({
     return <InteractionsLoading />;
   }
   
+  const { handleShare } = useItemSharing(id);
+  
+  // Create a share handler that uses the useItemSharing hook
+  const handleShareAction = () => {
+    console.log(`Post.ItemInteractions: Share action triggered for item: ${id}`);
+    handleShare();
+  };
+  
   return (
     <div className="flex flex-col space-y-2">
       <InteractionCounts 
@@ -90,9 +99,16 @@ export function ItemInteractions({
         isRealtimeSubscribed={isRealtimeSubscribed}
         itemId={id}
         commentsCount={commentsCount}
+        likesCount={likesCount}
+        interestsCount={interestsCount}
+        likers={likers}
+        interestedUsers={interestedUsers}
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}
+        onShare={handleShareAction}  // Pass the share handler to ActionButtons
+        fetchLikers={getInterestedUsers ? () => Promise.resolve(likers) : undefined}
+        fetchInterestedUsers={getInterestedUsers ? () => Promise.resolve(interestedUsers) : undefined}
       />
       
       {/* Lazy load comments section only when shown */}
