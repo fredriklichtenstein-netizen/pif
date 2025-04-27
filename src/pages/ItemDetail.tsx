@@ -65,13 +65,15 @@ export default function ItemDetail() {
     return <Navigate to="/404" replace />;
   }
 
-  // Handle user data safely
+  // Handle user data safely - making sure we access the nested profile data correctly
+  const profileData = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
+  
   const postedBy = {
-    id: item.profiles?.id || "",
-    name: item.profiles?.first_name 
-      ? `${item.profiles.first_name} ${item.profiles.last_name || ''}`
+    id: profileData?.id || "",
+    name: profileData?.first_name 
+      ? `${profileData.first_name} ${profileData.last_name || ''}`
       : "Unknown User",
-    avatar: item.profiles?.avatar_url || ""
+    avatar: profileData?.avatar_url || ""
   };
 
   // Parse coordinates from the database format to the expected format
@@ -84,7 +86,6 @@ export default function ItemDetail() {
         title={item.title}
         description={item.description || ""}
         image={item.images?.[0] || ""}
-        images={item.images || []}
         location={item.location || ""}
         coordinates={coordinates}
         category={item.category || ""}

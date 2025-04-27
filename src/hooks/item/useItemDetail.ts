@@ -17,6 +17,7 @@ export function useItemDetail(id: string) {
         .from('items')
         .select(`
           *,
+          user_id,
           profiles:user_id (
             id,
             first_name,

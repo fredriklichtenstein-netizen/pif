@@ -24,12 +24,14 @@ interface ItemCardProps {
   };
   category: string;
   condition?: string;
+  measurements?: Record<string, string>;
   postedBy: {
     id: string;
     name: string;
     avatar: string;
   };
   markAsPiffedAction?: () => void;
+  images?: string[]; // Adding this to match the props passed
 }
 
 export function ItemCard({
@@ -37,10 +39,12 @@ export function ItemCard({
   title,
   description,
   image,
+  images = [],
   location,
   coordinates,
   category,
   condition,
+  measurements,
   postedBy,
   markAsPiffedAction
 }: ItemCardProps) {
