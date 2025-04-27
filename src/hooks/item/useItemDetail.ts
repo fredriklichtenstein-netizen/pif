@@ -6,6 +6,13 @@ export function useItemDetail(id: string) {
   return useQuery({
     queryKey: ['item', id],
     queryFn: async () => {
+      // Convert the ID to a number since the database expects a numeric ID
+      const numericId = parseInt(id, 10);
+      
+      if (isNaN(numericId)) {
+        throw new Error('Invalid item ID');
+      }
+      
       const { data, error } = await supabase
         .from('items')
         .select(`
@@ -17,7 +24,7 @@ export function useItemDetail(id: string) {
             avatar_url
           )
         `)
-        .eq('id', id)
+        .eq('id', numericId)
         .single();
 
       if (error) throw error;

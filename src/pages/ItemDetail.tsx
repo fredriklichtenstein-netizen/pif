@@ -5,6 +5,7 @@ import { ItemCard } from '@/components/post/ItemCard';
 import { CardSkeleton } from '@/components/ui/skeleton';
 import { useItemDetail } from '@/hooks/item/useItemDetail';
 import { useToast } from '@/hooks/use-toast';
+import { parseCoordinatesFromDB } from '@/types/post';
 
 export default function ItemDetail() {
   const { id } = useParams();
@@ -64,6 +65,7 @@ export default function ItemDetail() {
     return <Navigate to="/404" replace />;
   }
 
+  // Handle user data safely
   const postedBy = {
     id: item.profiles?.id || "",
     name: item.profiles?.first_name 
@@ -71,6 +73,9 @@ export default function ItemDetail() {
       : "Unknown User",
     avatar: item.profiles?.avatar_url || ""
   };
+
+  // Parse coordinates from the database format to the expected format
+  const coordinates = item.coordinates ? parseCoordinatesFromDB(String(item.coordinates)) : undefined;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -81,7 +86,7 @@ export default function ItemDetail() {
         image={item.images?.[0] || ""}
         images={item.images || []}
         location={item.location || ""}
-        coordinates={item.coordinates}
+        coordinates={coordinates}
         category={item.category || ""}
         condition={item.condition}
         measurements={item.measurements}
