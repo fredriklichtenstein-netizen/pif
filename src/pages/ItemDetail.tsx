@@ -112,7 +112,7 @@ export default function ItemDetail() {
   return (
     <div className="container mx-auto px-4 py-8">
       <ItemCardWrapper
-        id={item.id}
+        id={item.id.toString()} // Convert number to string to satisfy the type requirement
         title={item.title}
         description={item.description || ""}
         image={item.images?.[0] || ""}
