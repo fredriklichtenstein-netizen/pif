@@ -2,6 +2,8 @@
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { Share } from "lucide-react";
+import { useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -48,6 +50,22 @@ export function PrimaryActions({
     isLiked, showComments, showInterest, likesCount, commentsCount, interestsCount 
   });
   
+  const [shareAttempted, setShareAttempted] = useState(false);
+  
+  // Safe share handler with error handling
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      console.log("Share button clicked for item:", itemId);
+      setShareAttempted(true);
+      onShare();
+    } catch (error) {
+      console.error("Error in share handler:", error);
+    }
+  };
+  
   return (
     <div className="flex justify-between w-full pt-1 gap-1 md:gap-3">
       <InteractionButtonWithPopup
@@ -77,22 +95,33 @@ export function PrimaryActions({
         isOwner={false}
       />
       
-      <div className="relative flex flex-col items-center" role="button" tabIndex={0}>
-        <button 
-          aria-label="Share"
-          className="flex flex-col items-center rounded cursor-pointer w-full"
-          onClick={onShare}
-        >
-          <div className="flex items-center justify-center h-7">
-            <Share className="w-6 h-6 flex-shrink-0" stroke="#333333" strokeWidth={2} />
-          </div>
-          <div className="flex flex-row items-center justify-center mt-1">
-            <span className="text-xs font-medium select-none">
-              Share
-            </span>
-          </div>
-        </button>
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative flex flex-col items-center" role="button" tabIndex={0}>
+              <button 
+                aria-label="Share"
+                className="flex flex-col items-center rounded cursor-pointer w-full"
+                onClick={handleShareClick}
+              >
+                <div className="flex items-center justify-center h-7">
+                  <Share className="w-6 h-6 flex-shrink-0" stroke="#333333" strokeWidth={2} />
+                </div>
+                <div className="flex flex-row items-center justify-center mt-1">
+                  <span className="text-xs font-medium select-none">
+                    Share
+                  </span>
+                </div>
+              </button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="center" className="bg-black text-white text-xs p-2">
+            {shareAttempted ? 
+              "Link will be copied to clipboard if sharing isn't available" : 
+              "Share this item"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
       <InteractionButtonWithPopup
         type="interest"

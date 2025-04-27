@@ -5,52 +5,84 @@ import { supabase } from '@/integrations/supabase/client';
 import { useShare } from '@/hooks/useShare';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
+/**
+ * Hook for sharing item content with enhanced error handling and analytics.
+ */
 export const useItemSharing = (itemId: string) => {
   const [isSharing, setIsSharing] = useState(false);
   const { toast } = useToast();
-  const { shareContent } = useShare();
+  const { shareContent, isShareSupported } = useShare();
   const { session } = useGlobalAuth();
 
-  const handleShare = async () => {
-    setIsSharing(true);
-    try {
-      const baseUrl = window.location.origin;
-      const itemUrl = `${baseUrl}/item/${itemId}`;
+  /**
+   * Generates the appropriate URL for sharing an item.
+   * Handles different environments and routes.
+   */
+  const getShareUrl = (id: string): string => {
+    // Get the base URL (handles dev, preview, and production environments)
+    const baseUrl = window.location.origin;
+    
+    // Create the item URL - avoiding duplicate slashes if origin already has trailing slash
+    const itemUrl = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}item/${id}`;
+    
+    console.log(`Generated share URL: ${itemUrl} for item: ${id}`);
+    return itemUrl;
+  };
 
+  /**
+   * Records the share event in the database for analytics.
+   */
+  const recordShareAnalytics = async (id: string, shareType: string = 'general') => {
+    if (!session?.user) return;
+    
+    try {
+      const numericId = parseInt(id, 10);
+      if (isNaN(numericId)) return;
+      
+      await supabase
+        .from('item_shares')
+        .insert({
+          item_id: numericId,
+          user_id: session.user.id,
+          share_type: shareType
+        });
+        
+      console.log(`Recorded share analytics for item: ${id}`);
+    } catch (error) {
+      console.error('Failed to record share analytics:', error);
+      // Non-critical error, don't show toast to user
+    }
+  };
+
+  /**
+   * Main handler for sharing an item.
+   * Provides appropriate fallbacks and error handling.
+   */
+  const handleShare = async () => {
+    console.log(`Starting share process for item: ${itemId}`);
+    setIsSharing(true);
+    
+    try {
+      const shareUrl = getShareUrl(itemId);
+      
       await shareContent({
         title: 'Check out this PIF item',
         text: 'I found this interesting item on PIF Community',
-        url: itemUrl
+        url: shareUrl
       });
-
-      // Record the share in the database if user is authenticated
-      if (session?.user) {
-        const numericId = parseInt(itemId, 10);
-        if (!isNaN(numericId)) {
-          await supabase
-            .from('item_shares')
-            .insert({
-              item_id: numericId,
-              user_id: session.user.id,
-              share_type: 'general'
-            });
-        }
-      }
-
-      toast({
-        title: "Shared successfully",
-        description: "Item has been shared",
-      });
-
+      
+      // Record analytics regardless of share method
+      await recordShareAnalytics(itemId);
+      
     } catch (error) {
-      if ((error as Error).name !== 'AbortError') {
-        console.error('Error sharing:', error);
-        toast({
-          title: "Error sharing",
-          description: "Failed to share the item. Please try again.",
-          variant: "destructive"
-        });
-      }
+      // This catch block should only trigger for truly unexpected errors
+      // since most errors are handled within the shareContent function
+      console.error('Unexpected error in handleShare:', error);
+      toast({
+        title: "Error sharing",
+        description: "Something went wrong while sharing. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsSharing(false);
     }
@@ -58,6 +90,7 @@ export const useItemSharing = (itemId: string) => {
 
   return {
     isSharing,
-    handleShare
+    handleShare,
+    isShareSupported
   };
 };

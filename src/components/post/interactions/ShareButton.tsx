@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Share, Facebook, Twitter, Mail, Link2 } from "lucide-react";
+import { Share, Link2, Copy, Check } from "lucide-react";
 import { useShare } from "@/hooks/useShare";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,35 +11,81 @@ interface ShareButtonProps {
   url: string;
   message?: string;
   compact?: boolean;
+  onShareComplete?: () => void;
 }
 
-export function ShareButton({ title, url, message = "", compact = false }: ShareButtonProps) {
+export function ShareButton({ 
+  title, 
+  url, 
+  message = "", 
+  compact = false,
+  onShareComplete
+}: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { shareContent, isSharing } = useShare();
+  const [isCopied, setIsCopied] = useState(false);
+  const { shareContent, isSharing, isShareSupported } = useShare();
   const { toast } = useToast();
-  const [shareCount, setShareCount] = useState(0);
   
-  // In a real app, this would fetch the share count from the server
-  useEffect(() => {
-    // Mock share count - in reality this would be fetched from your backend
-    setShareCount(Math.floor(Math.random() * 5));
-  }, []);
+  // Reset copy state when popover closes
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setTimeout(() => setIsCopied(false), 300);
+    }
+  };
   
-  const handleNativeShare = async () => {
+  const handleShare = async () => {
     await shareContent({ title, text: message, url });
     setIsOpen(false);
-    // In a real app, this would increment the share count on the server
-    setShareCount(prev => prev + 1);
+    if (onShareComplete) {
+      onShareComplete();
+    }
   };
   
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url);
-      toast({ title: "Link copied", description: "Link has been copied to clipboard" });
-      setIsOpen(false);
-      // In a real app, this would increment the share count on the server
-      setShareCount(prev => prev + 1);
+      const { navigator } = window;
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+        setIsCopied(true);
+        toast({ title: "Link copied", description: "Link has been copied to clipboard" });
+        
+        // Close popover after a brief delay
+        setTimeout(() => {
+          setIsOpen(false);
+          if (onShareComplete) {
+            onShareComplete();
+          }
+        }, 1000);
+      } else {
+        // Fallback for browsers without clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+          setIsCopied(true);
+          toast({ title: "Link copied", description: "Link has been copied to clipboard" });
+          setTimeout(() => setIsOpen(false), 1000);
+        } else {
+          toast({ 
+            title: "Failed to copy link", 
+            description: "Please try another sharing method",
+            variant: "destructive" 
+          });
+        }
+      }
     } catch (error) {
+      console.error("Error copying to clipboard:", error);
       toast({ 
         title: "Failed to copy link", 
         description: "Please try another sharing method",
@@ -47,47 +93,26 @@ export function ShareButton({ title, url, message = "", compact = false }: Share
       });
     }
   };
-  
-  const handleShareTo = (platform: string) => {
-    let shareUrl = "";
-    
-    switch (platform) {
-      case "facebook":
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-        break;
-      case "twitter":
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(url)}`;
-        break;
-      case "email":
-        shareUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${message} ${url}`)}`;
-        break;
-      default:
-        return;
-    }
-    
-    window.open(shareUrl, "_blank");
-    setIsOpen(false);
-    // In a real app, this would increment the share count on the server
-    setShareCount(prev => prev + 1);
-  };
 
+  // Compact button for mobile or space-constrained UIs
   if (compact) {
     return (
       <Button
         variant="ghost"
         size="sm"
         className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-transparent text-gray-600 hover:text-primary"
-        onClick={handleNativeShare}
+        onClick={handleShare}
+        disabled={isSharing}
       >
         <Share className="h-5 w-5" />
         <span className="text-xs font-medium">Share</span>
-        {shareCount > 0 && <span className="text-xs">{shareCount}</span>}
       </Button>
     );
   }
 
+  // Full sharing popover for desktop
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -97,60 +122,39 @@ export function ShareButton({ title, url, message = "", compact = false }: Share
         >
           <Share className="h-4 w-4" />
           Share
-          {shareCount > 0 && (
-            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-              {shareCount}
-            </span>
-          )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-3">
-        <h3 className="font-medium mb-2">Share this item</h3>
-        <div className="grid grid-cols-4 gap-2 mb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex flex-col items-center h-16 p-1"
-            onClick={() => handleShareTo("facebook")}
+      <PopoverContent className="w-72 p-4">
+        <h3 className="font-medium mb-3 text-center">Share this item</h3>
+        
+        {isShareSupported && (
+          <Button 
+            className="w-full mb-4 flex items-center justify-center gap-2" 
+            onClick={handleShare}
           >
-            <Facebook className="h-6 w-6 mb-1 text-blue-600" />
-            <span className="text-xs">Facebook</span>
+            <Share className="h-4 w-4" />
+            Share using device options
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex flex-col items-center h-16 p-1"
-            onClick={() => handleShareTo("twitter")}
-          >
-            <Twitter className="h-6 w-6 mb-1 text-sky-500" />
-            <span className="text-xs">Twitter</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex flex-col items-center h-16 p-1"
-            onClick={() => handleShareTo("email")}
-          >
-            <Mail className="h-6 w-6 mb-1 text-gray-600" />
-            <span className="text-xs">Email</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex flex-col items-center h-16 p-1"
+        )}
+        
+        <div className="flex items-center rounded-md border overflow-hidden">
+          <div className="bg-muted py-2 px-3 flex-grow text-sm truncate">
+            {url}
+          </div>
+          <Button 
+            variant="ghost" 
+            className="h-full rounded-l-none px-3 hover:bg-muted-foreground/10"
             onClick={handleCopyLink}
           >
-            <Link2 className="h-6 w-6 mb-1 text-purple-500" />
-            <span className="text-xs">Copy</span>
+            {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </Button>
         </div>
-        <Button 
-          className="w-full mt-2" 
-          size="sm"
-          onClick={handleNativeShare}
-        >
-          Share now
-        </Button>
+        
+        <p className="text-xs text-muted-foreground mt-3 text-center">
+          {isShareSupported ? 
+            "Share with friends or copy the link directly" : 
+            "Copy the link to share this item"}
+        </p>
       </PopoverContent>
     </Popover>
   );
