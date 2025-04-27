@@ -79,6 +79,15 @@ export default function ItemDetail() {
   // Parse coordinates from the database format to the expected format
   const coordinates = item.coordinates ? parseCoordinatesFromDB(String(item.coordinates)) : undefined;
 
+  // Convert measurements from Json type to Record<string, string>
+  // Handle the case when measurements is a string or any other non-object type
+  const measurementsRecord: Record<string, string> = {};
+  if (item.measurements && typeof item.measurements === 'object' && item.measurements !== null) {
+    Object.entries(item.measurements).forEach(([key, value]) => {
+      measurementsRecord[key] = String(value);
+    });
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <ItemCard
@@ -86,11 +95,12 @@ export default function ItemDetail() {
         title={item.title}
         description={item.description || ""}
         image={item.images?.[0] || ""}
+        images={item.images || []}
         location={item.location || ""}
         coordinates={coordinates}
         category={item.category || ""}
         condition={item.condition}
-        measurements={item.measurements}
+        measurements={measurementsRecord}
         postedBy={postedBy}
       />
     </div>
