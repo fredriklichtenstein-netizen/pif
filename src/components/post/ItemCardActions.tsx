@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface ItemCardActionsProps {
+  id?: string | number; // Added id prop
   isLiked: boolean;
   likesCount?: number;
   commentsCount?: number;
@@ -22,6 +23,7 @@ interface ItemCardActionsProps {
 }
 
 export function ItemCardActions({
+  id, // Added id prop
   isLiked,
   likesCount = 0,
   commentsCount = 0,
@@ -138,4 +140,3 @@ export function ItemCardActions({
     </div>
   );
 }
-

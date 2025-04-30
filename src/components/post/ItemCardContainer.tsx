@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -142,25 +141,18 @@ export function ItemCardContainer({
         
         <div className="mt-4">
           <ItemCardActions
-            id={id.toString()}
-            postedBy={postedBy}
+            id={id.toString()} // Pass id with toString() to match the updated prop type
             isLiked={isLiked}
-            showComments={showComments}
-            isBookmarked={isBookmarked}
             showInterest={showInterest}
             isOwner={isOwner}
             commentsCount={commentsCount}
             likesCount={likesCount}
             interestsCount={interestsCount}
             likers={likers}
-            commenters={commenters}
-            onLikeToggle={handleLike}
+            interestedUsers={interestedUsers}
+            onLike={handleLike}
             onCommentToggle={handleCommentToggle}
             onShowInterest={handleShowInterest}
-            onBookmarkToggle={handleBookmark}
-            onMessage={handleMessage}
-            onShare={handleShare}
-            onReport={handleReport}
           />
         </div>
         
