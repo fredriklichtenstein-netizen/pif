@@ -4,7 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useShare } from '@/hooks/useShare';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
-import { generatePath } from 'react-router-dom';
 
 /**
  * Hook for sharing item content with enhanced error handling and analytics.
@@ -16,17 +15,17 @@ export const useItemSharing = (itemId: string) => {
   const { session } = useGlobalAuth();
 
   /**
-   * Generates a reliable URL for sharing an item using React Router's generatePath.
-   * This ensures the URL format is consistent with the router configuration.
+   * Generates a reliable URL for sharing an item using our share redirect path.
+   * This approach is more resilient to routing changes and direct URL access.
    */
   const getShareUrl = (id: string): string => {
     try {
-      // Use React Router's generatePath to create a path that matches our routes configuration
-      const itemPath = generatePath("/item/:id", { id });
+      // Use the dedicated share route for better deep linking support
+      const sharePath = `/share/${id}`;
       const baseUrl = window.location.origin;
-      const fullUrl = `${baseUrl}${itemPath}`;
+      const fullUrl = `${baseUrl}${sharePath}`;
       
-      console.log(`Generated share URL using Router: ${fullUrl} for item: ${id}`);
+      console.log(`Generated share URL: ${fullUrl} for item: ${id}`);
       
       // Validate URL format
       new URL(fullUrl);
@@ -34,7 +33,7 @@ export const useItemSharing = (itemId: string) => {
     } catch (error) {
       console.error('Error generating share URL:', error);
       // Fallback to a simple format if there's any error
-      return `${window.location.origin}/item/${id}`;
+      return `${window.location.origin}/share/${id}`;
     }
   };
 
@@ -65,8 +64,7 @@ export const useItemSharing = (itemId: string) => {
 
   /**
    * Main handler for sharing an item.
-   * Provides appropriate fallbacks and prioritizes clipboard functionality.
-   * Can be called with or without an event parameter.
+   * Uses the new share path strategy for better deep link handling.
    */
   const handleShare = async (e?: React.MouseEvent) => {
     // Prevent any default navigation or event propagation

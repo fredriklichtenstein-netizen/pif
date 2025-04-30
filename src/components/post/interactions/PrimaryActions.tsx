@@ -4,7 +4,6 @@ import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { Share } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Link } from "react-router-dom";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -53,26 +52,37 @@ export function PrimaryActions({
   
   const [shareAttempted, setShareAttempted] = useState(false);
   
-  // Improved share handler with better prevention of navigation
+  // Complete rewrite of the share handler to prevent any navigation
   const handleShareClick = (e: React.MouseEvent) => {
+    // Comprehensive event prevention
     e.preventDefault();
     e.stopPropagation();
     
-    // Prevent any parent click handlers or navigation
     if (e.nativeEvent) {
       e.nativeEvent.stopImmediatePropagation();
       e.nativeEvent.preventDefault();
     }
     
+    // Add debug breadcrumb
+    console.log(`[SHARE] Button click detected for item: ${itemId}`);
+    
     try {
-      console.log("Share button clicked for item:", itemId);
+      // Set state before calling the callback
       setShareAttempted(true);
+      
+      // Invoke share handler from props
+      console.log(`[SHARE] Invoking share callback for item: ${itemId}`);
       onShare();
+      
+      // Additional safety: prevent default one more time after a small delay
+      setTimeout(() => {
+        console.log(`[SHARE] Share operation completed for item: ${itemId}`);
+      }, 50);
     } catch (error) {
-      console.error("Error in share handler:", error);
+      console.error("[SHARE] Error in share handler:", error);
     }
     
-    // Return false to prevent any default behavior
+    // Explicitly return false to prevent any default behavior
     return false;
   };
   
@@ -108,7 +118,18 @@ export function PrimaryActions({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="relative flex flex-col items-center" role="button" tabIndex={0}>
+            <div 
+              className="relative flex flex-col items-center" 
+              role="button" 
+              tabIndex={0}
+              onClick={handleShareClick}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleShareClick(e as unknown as React.MouseEvent);
+                }
+              }}
+            >
               <button 
                 type="button"
                 aria-label="Share"

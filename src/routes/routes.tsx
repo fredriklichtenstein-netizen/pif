@@ -46,6 +46,7 @@ const ResetPassword = enhancedLazy(() => import("@/pages/ResetPassword"));
 const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
+const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -60,7 +61,8 @@ export const publicRoutes = [
   { path: "/auth", element: withSuspense(Auth) },
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
-  { path: "/item/:id", element: withSuspense(ItemDetail) }, // This is the route we need to match
+  { path: "/item/:id", element: withSuspense(ItemDetail) },
+  { path: "/share/:id", element: withSuspense(ShareRedirect) }, // New share redirect route
   { path: "*", element: withSuspense(NotFound) },
 ];
 
