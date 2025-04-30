@@ -1,4 +1,3 @@
-
 import { useParams, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useItemCard } from '@/hooks/useItemCard';

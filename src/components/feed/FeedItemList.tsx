@@ -1,5 +1,5 @@
 
-import { ItemCardWrapper } from "@/components/ItemCardWrapper";
+import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ export function FeedItemList({
           }
         }
         return (
-          <ItemCardWrapper key={post.id}>
+          <NetworkStatusWrapper key={post.id}>
             <ItemCard
               id={post.id}
               title={post.title}
@@ -68,7 +68,7 @@ export function FeedItemList({
                 avatar: post.user_avatar || '',
               }}
             />
-          </ItemCardWrapper>
+          </NetworkStatusWrapper>
         );
       })}
       {posts?.length === 0 && (
