@@ -96,7 +96,7 @@ export function ItemCardContainer({
         interestedUsers={interestedUsers}
         comments={comments}
         setComments={setComments}
-        onLike={handleLike}
+        onLikeToggle={handleLike}
         onCommentToggle={handleCommentToggle}
         onShowInterest={handleShowInterest}
       />

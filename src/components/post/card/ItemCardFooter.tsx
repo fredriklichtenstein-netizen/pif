@@ -46,6 +46,7 @@ export function ItemCardFooter({
           isLiked={isLiked}
           showInterest={showInterest}
           isOwner={isOwner}
+          showComments={showComments}
           commentsCount={commentsCount}
           likesCount={likesCount}
           interestsCount={interestsCount}
