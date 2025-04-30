@@ -1,15 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { ItemHeader } from "./ItemHeader";
 import { ItemImage } from "./ItemImage";
-import { ItemCardActions } from "./ItemCardActions";
-import { CommentSection } from "./CommentSection";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Check } from "lucide-react";
-import { useItemCard } from "@/hooks/useItemCard";
+import { ItemCardBody } from "./card/ItemCardBody";
+import { ItemCardFooter } from "./card/ItemCardFooter";
+import { useItemCardContainer } from "./card/useItemCardContainer";
 
 interface ItemCardProps {
   id: number;
@@ -48,169 +42,64 @@ export function ItemCardContainer({
   markAsPiffedAction
 }: ItemCardProps) {
   const { session } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isDeleting, setIsDeleting] = useState(false);
   const isOwner = session?.user?.id === postedBy.id;
   
   const {
+    isDeleting,
     isLiked,
     likesCount,
     showComments,
     comments,
     commentsCount,
-    commentsLoading,
     showInterest,
     interestsCount,
-    isBookmarked,
     likers,
-    commenters,
     interestedUsers,
-    handleShowInterest,
+    handleDelete,
+    handleEdit,
     handleLike,
     handleCommentToggle,
-    handleMessage: itemCardHandleMessage,
-    handleShare,
-    handleReport,
-    handleBookmark,
+    handleShowInterest,
     setComments,
-  } = useItemCard(id.toString());
-
-  // Create a wrapper function that adapts the signature
-  const handleMessage = (e: React.MouseEvent) => {
-    if (postedBy.id) {
-      itemCardHandleMessage(e, id.toString(), postedBy.id);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Post deleted successfully",
-      });
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete post. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleEdit = () => {
-    navigate(`/post/edit/${id}`);
-  };
+  } = useItemCardContainer({ id, postedBy });
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
       <ItemImage image={image} title={title} />
-      <div className="p-4">
-        <ItemHeader
-          category={category}
-          condition={condition}
-          location={location}
-          coordinates={coordinates}
-          title={title}
-          description={description}
-          postedBy={postedBy}
-        />
-        
-        <OwnerActions 
-          isOwner={isOwner}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-          isDeleting={isDeleting}
-          markAsPiffedAction={markAsPiffedAction}
-        />
-        
-        <div className="mt-4">
-          <ItemCardActions
-            id={id.toString()} // Pass id with toString() to match the updated prop type
-            isLiked={isLiked}
-            showInterest={showInterest}
-            isOwner={isOwner}
-            commentsCount={commentsCount}
-            likesCount={likesCount}
-            interestsCount={interestsCount}
-            likers={likers}
-            interestedUsers={interestedUsers}
-            onLike={handleLike}
-            onCommentToggle={handleCommentToggle}
-            onShowInterest={handleShowInterest}
-          />
-        </div>
-        
-        {showComments && (
-          <CommentSection
-            itemId={id.toString()}
-            comments={comments}
-            setComments={setComments}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface OwnerActionsProps {
-  isOwner: boolean;
-  handleEdit: () => void;
-  handleDelete: () => void;
-  isDeleting: boolean;
-  markAsPiffedAction?: () => void;
-}
-
-function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, markAsPiffedAction }: OwnerActionsProps) {
-  if (!isOwner) return null;
-  
-  return (
-    <div className="mt-4 flex gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleEdit}
-        className="flex items-center gap-2"
-      >
-        <Pencil className="h-4 w-4" />
-        Edit
-      </Button>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={handleDelete}
-        disabled={isDeleting}
-        className="flex items-center gap-2"
-      >
-        <Trash2 className="h-4 w-4" />
-        {isDeleting ? "Deleting..." : "Delete"}
-      </Button>
-      {markAsPiffedAction && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={markAsPiffedAction}
-          className="flex items-center gap-2 ml-auto text-green-600 border-green-200 hover:bg-green-50"
-        >
-          <Check className="h-4 w-4" />
-          Mark as Piffed
-        </Button>
-      )}
+      
+      <ItemCardBody
+        category={category}
+        condition={condition}
+        location={location}
+        coordinates={coordinates}
+        title={title}
+        description={description}
+        measurements={measurements}
+        postedBy={postedBy}
+        isOwner={isOwner}
+        isDeleting={isDeleting}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+        markAsPiffedAction={markAsPiffedAction}
+      />
+      
+      <ItemCardFooter
+        id={id.toString()}
+        isLiked={isLiked}
+        showInterest={showInterest}
+        isOwner={isOwner}
+        showComments={showComments}
+        commentsCount={commentsCount}
+        likesCount={likesCount}
+        interestsCount={interestsCount}
+        likers={likers}
+        interestedUsers={interestedUsers}
+        comments={comments}
+        setComments={setComments}
+        onLike={handleLike}
+        onCommentToggle={handleCommentToggle}
+        onShowInterest={handleShowInterest}
+      />
     </div>
   );
 }
