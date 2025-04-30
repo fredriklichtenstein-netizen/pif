@@ -19,7 +19,11 @@ const NotFound = () => {
     if (!authError) {
       console.error(
         "404 Error: User attempted to access non-existent route:",
-        location.pathname
+        location.pathname,
+        "with search params:",
+        location.search,
+        "and hash:",
+        location.hash
       );
     } else {
       console.error(
@@ -27,7 +31,7 @@ const NotFound = () => {
         { authError, errorCode, errorDescription, url: window.location.href }
       );
     }
-  }, [location.pathname, authError, errorCode, errorDescription]);
+  }, [location.pathname, location.search, location.hash, authError, errorCode, errorDescription]);
 
   const getErrorMessage = () => {
     if (errorCode === "otp_expired") {
@@ -63,6 +67,7 @@ const NotFound = () => {
           <>
             <h1 className="text-4xl font-bold mb-4">404</h1>
             <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
+            <p className="text-sm text-gray-500 mb-4">Path: {location.pathname}</p>
             <Button 
               onClick={() => navigate("/")}
               className="bg-green-500 hover:bg-green-600"

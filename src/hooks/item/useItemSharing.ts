@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useShare } from '@/hooks/useShare';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
+import { generatePath } from 'react-router-dom';
 
 /**
  * Hook for sharing item content with enhanced error handling and analytics.
@@ -15,20 +16,21 @@ export const useItemSharing = (itemId: string) => {
   const { session } = useGlobalAuth();
 
   /**
-   * Generates a reliable URL for sharing an item.
-   * Uses the current origin and ensures proper route format.
+   * Generates a reliable URL for sharing an item using React Router's generatePath.
+   * This ensures the URL format is consistent with the router configuration.
    */
   const getShareUrl = (id: string): string => {
     try {
+      // Use React Router's generatePath to create a path that matches our routes configuration
+      const itemPath = generatePath("/item/:id", { id });
       const baseUrl = window.location.origin;
-      // Use a consistent URL format that matches the router configuration
-      const itemUrl = `${baseUrl}/item/${id}`;
-      console.log(`Generated share URL: ${itemUrl} for item: ${id}`);
+      const fullUrl = `${baseUrl}${itemPath}`;
+      
+      console.log(`Generated share URL using Router: ${fullUrl} for item: ${id}`);
       
       // Validate URL format
-      new URL(itemUrl); // This will throw if URL is invalid
-      
-      return itemUrl;
+      new URL(fullUrl);
+      return fullUrl;
     } catch (error) {
       console.error('Error generating share URL:', error);
       // Fallback to a simple format if there's any error
@@ -82,15 +84,21 @@ export const useItemSharing = (itemId: string) => {
       }
       
       const shareUrl = getShareUrl(itemId);
+      console.log(`Attempting to share URL: ${shareUrl}`);
       
       await shareContent({
-        title: 'Check out this PIF item',
-        text: 'I found this interesting item on PIF Community',
+        title: 'Check out this sustainable item on PIF',
+        text: 'I found this interesting eco-friendly item on PIF Community',
         url: shareUrl
       });
       
       // Record analytics regardless of share method
       await recordShareAnalytics(itemId);
+      
+      toast({
+        title: "Shared successfully",
+        description: "Link has been copied to clipboard",
+      });
       
     } catch (error) {
       console.error('Unexpected error in handleShare:', error);

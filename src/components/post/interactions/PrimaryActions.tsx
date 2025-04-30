@@ -4,6 +4,7 @@ import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { Share } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "react-router-dom";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -52,10 +53,16 @@ export function PrimaryActions({
   
   const [shareAttempted, setShareAttempted] = useState(false);
   
-  // Safe share handler with error handling
+  // Improved share handler with better prevention of navigation
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Prevent any parent click handlers or navigation
+    if (e.nativeEvent) {
+      e.nativeEvent.stopImmediatePropagation();
+      e.nativeEvent.preventDefault();
+    }
     
     try {
       console.log("Share button clicked for item:", itemId);
@@ -64,6 +71,9 @@ export function PrimaryActions({
     } catch (error) {
       console.error("Error in share handler:", error);
     }
+    
+    // Return false to prevent any default behavior
+    return false;
   };
   
   return (
@@ -100,6 +110,7 @@ export function PrimaryActions({
           <TooltipTrigger asChild>
             <div className="relative flex flex-col items-center" role="button" tabIndex={0}>
               <button 
+                type="button"
                 aria-label="Share"
                 className="flex flex-col items-center rounded cursor-pointer w-full"
                 onClick={handleShareClick}

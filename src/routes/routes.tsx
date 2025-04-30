@@ -1,3 +1,4 @@
+
 import { Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -59,7 +60,7 @@ export const publicRoutes = [
   { path: "/auth", element: withSuspense(Auth) },
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
-  { path: "/item/:id", element: withSuspense(ItemDetail) },
+  { path: "/item/:id", element: withSuspense(ItemDetail) }, // This is the route we need to match
   { path: "*", element: withSuspense(NotFound) },
 ];
 
