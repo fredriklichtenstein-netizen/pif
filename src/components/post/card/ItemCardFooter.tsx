@@ -16,7 +16,7 @@ interface ItemCardFooterProps {
   interestedUsers: User[];
   comments: any[];
   setComments: (comments: any[]) => void;
-  onLike: () => void;
+  onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
 }
@@ -34,7 +34,7 @@ export function ItemCardFooter({
   interestedUsers,
   comments,
   setComments,
-  onLike,
+  onLikeToggle,
   onCommentToggle,
   onShowInterest
 }: ItemCardFooterProps) {
@@ -51,9 +51,27 @@ export function ItemCardFooter({
           interestsCount={interestsCount}
           likers={likers}
           interestedUsers={interestedUsers}
-          onLike={onLike}
+          onLikeToggle={onLikeToggle}
           onCommentToggle={onCommentToggle}
           onShowInterest={onShowInterest}
+          postedBy={{id: "", name: "", avatar: ""}}
+          isBookmarked={false}
+          onBookmarkToggle={() => {}}
+          onMessage={() => {}}
+          onShare={() => {}}
+          onReport={() => {}}
+          onEdit={() => {}}
+          onDelete={() => {}}
+          getInterestedUsers={() => {}}
+          setComments={() => {}}
+          comments={[]}
+          commenters={[]}
+          commentsLoading={false}
+          commentsError={null}
+          interactionsLoading={false}
+          isLoadingInterested={false}
+          interestedError={null}
+          isRealtimeSubscribed={false}
         />
       </div>
       

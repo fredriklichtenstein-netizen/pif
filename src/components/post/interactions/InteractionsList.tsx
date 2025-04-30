@@ -1,14 +1,46 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface InteractionsListProps {
   likers?: User[];
   interested?: User[];
+  isLoading?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
 }
 
-export function InteractionsList({ likers = [], interested = [] }: InteractionsListProps) {
+export function InteractionsList({ 
+  likers = [], 
+  interested = [], 
+  isLoading = false,
+  error = null,
+  onRetry
+}: InteractionsListProps) {
   const users = likers.length > 0 ? likers : interested;
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 text-center">
+        <p className="text-destructive mb-4">Failed to load users</p>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            Try Again
+          </Button>
+        )}
+      </div>
+    );
+  }
   
   if (users.length === 0) {
     return (

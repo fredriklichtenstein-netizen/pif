@@ -30,6 +30,8 @@ interface ItemInteractionsProps {
   onMessage: (e: React.MouseEvent) => void;
   onShare: () => void;
   onReport: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   interactionsLoading?: boolean;
   isLoadingInterested?: boolean;
   interestedError?: Error | null;
@@ -58,6 +60,8 @@ export function ItemInteractions({
   onMessage,
   onShare,
   onReport,
+  onEdit,
+  onDelete,
   interactionsLoading = false,
   isLoadingInterested = false,
   interestedError = null,
@@ -106,7 +110,7 @@ export function ItemInteractions({
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}
-        onShare={handleShareAction}  // Pass the share handler to ActionButtons
+        onShare={handleShareAction}
         fetchLikers={getInterestedUsers ? () => Promise.resolve(likers) : undefined}
         fetchInterestedUsers={getInterestedUsers ? () => Promise.resolve(interestedUsers) : undefined}
       />
