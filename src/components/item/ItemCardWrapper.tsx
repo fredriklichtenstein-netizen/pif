@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { ItemCardHeader } from "./ItemCardHeader";
 import { ItemCardGallery } from "./ItemCardGallery";
-import { ItemCardContent } from "./ItemCardContent";
+import { ItemCardContent } from "./content/ItemCardContent";
 import { ItemCardActions } from "./ItemCardActions";
 import { NetworkStatus } from "../common/NetworkStatus";
 import { useItemCard } from "@/hooks/useItemCard";
