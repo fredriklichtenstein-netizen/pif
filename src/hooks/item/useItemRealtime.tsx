@@ -1,59 +1,48 @@
 
-import { useState, useCallback, useEffect } from "react";
-import { useItemRealtimeUpdates } from "./useItemRealtimeUpdates";
-import { useToast } from "@/hooks/use-toast";
+import { useRealtimeUpdates } from "./realtime/useRealtimeUpdates";
+import { useRealtimeConnection } from "./realtime/useRealtimeConnection";
+import { useRealtimeStatus } from "./realtime/useRealtimeStatus";
+import { useRealtimeRefresh } from "./realtime/useRealtimeRefresh";
 
+/**
+ * Main hook for managing real-time updates for an item
+ * This combines multiple smaller hooks for better separation of concerns
+ */
 export const useItemRealtime = (itemId: string, refreshData: () => void) => {
-  const [isRealtimeSubscribed, setIsRealtimeSubscribed] = useState(false);
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
-  const { toast } = useToast();
+  // Get connection management utilities
+  const { 
+    connectionAttempts, 
+    handleReconnect 
+  } = useRealtimeConnection(itemId);
   
-  const handleReconnect = useCallback(() => {
-    setConnectionAttempts(prev => prev + 1);
-  }, []);
-  
-  const { isSubscribed, error: realtimeError, retry } = useItemRealtimeUpdates(
+  // Handle real-time subscription
+  const { 
+    isSubscribed, 
+    error: realtimeError, 
+    retry 
+  } = useRealtimeUpdates(
     itemId, 
     refreshData
   );
 
-  // Effect to track subscription status
-  useEffect(() => {
-    if (isSubscribed && !isRealtimeSubscribed) {
-      console.log(`Realtime subscription active for item ${itemId}`);
-      setIsRealtimeSubscribed(true);
-      
-      // Show toast only after successful reconnection attempt
-      if (connectionAttempts > 0) {
-        toast({
-          title: "Reconnected",
-          description: "Live updates are now active",
-        });
-      }
-    } else if (!isSubscribed && isRealtimeSubscribed) {
-      console.log(`Realtime subscription lost for item ${itemId}`);
-      setIsRealtimeSubscribed(false);
-    }
-  }, [isSubscribed, isRealtimeSubscribed, itemId, connectionAttempts, toast]);
+  // Track subscription status and handle notifications
+  const { 
+    isRealtimeSubscribed 
+  } = useRealtimeStatus(
+    itemId,
+    isSubscribed,
+    connectionAttempts
+  );
 
-  // Enhanced refresh with proper error handling
-  const refreshItemData = useCallback(() => {
-    try {
-      console.log(`Manual refresh requested for item ${itemId}`);
-      handleReconnect();
-      retry();
-      refreshData();
-      return true;
-    } catch (error) {
-      console.error("Error refreshing item data:", error);
-      toast({
-        title: "Error refreshing",
-        description: "Could not refresh the data. Please try again.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  }, [refreshData, itemId, retry, handleReconnect, toast]);
+  // Handle refresh functionality with error handling
+  const { 
+    refreshItemData 
+  } = useRealtimeRefresh(
+    itemId,
+    refreshData,
+    retry,
+    handleReconnect
+  );
 
   return {
     isRealtimeSubscribed,

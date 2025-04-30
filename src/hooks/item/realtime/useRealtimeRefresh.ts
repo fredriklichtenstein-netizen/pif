@@ -1,0 +1,38 @@
+
+import { useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+/**
+ * Hook to handle refreshing item data with error handling
+ */
+export const useRealtimeRefresh = (
+  itemId: string,
+  refreshData: () => void,
+  retry: () => void,
+  handleReconnect: () => void
+) => {
+  const { toast } = useToast();
+  
+  // Enhanced refresh with proper error handling
+  const refreshItemData = useCallback(() => {
+    try {
+      console.log(`Manual refresh requested for item ${itemId}`);
+      handleReconnect();
+      retry();
+      refreshData();
+      return true;
+    } catch (error) {
+      console.error("Error refreshing item data:", error);
+      toast({
+        title: "Error refreshing",
+        description: "Could not refresh the data. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [refreshData, itemId, retry, handleReconnect, toast]);
+  
+  return {
+    refreshItemData
+  };
+};
