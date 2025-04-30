@@ -89,12 +89,10 @@ export function ItemInteractions({
   const actualLikeCount = likers.length || likesCount;
   const actualInterestCount = interestedUsers.length || interestsCount;
 
-  // Handle share function using the imported hook
-  const handleShareAction = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Wrapper for handleShare that doesn't require an event parameter
+  const handleShareAction = () => {
     console.log("Share action triggered for item:", id);
-    handleShare(e);
+    handleShare();
   };
 
   return (

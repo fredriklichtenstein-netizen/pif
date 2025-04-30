@@ -64,6 +64,7 @@ export const useItemSharing = (itemId: string) => {
   /**
    * Main handler for sharing an item.
    * Provides appropriate fallbacks and prioritizes clipboard functionality.
+   * Can be called with or without an event parameter.
    */
   const handleShare = async (e?: React.MouseEvent) => {
     // Prevent any default navigation or event propagation
