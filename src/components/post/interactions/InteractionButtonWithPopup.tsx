@@ -76,6 +76,7 @@ export function InteractionButtonWithPopup({
         const data = await onCounterClick();
         console.log(`Fetched ${type} users:`, data?.length);
         setPopupUsers(data || []);
+        return data || [];
       } catch (error) {
         console.error(`Error fetching ${type} users:`, error);
         toast({
@@ -83,17 +84,16 @@ export function InteractionButtonWithPopup({
           description: "Unable to load the list of users",
           variant: "destructive",
         });
+        return [];
       } finally {
         setLoading(false);
       }
-      
-      return popupUsers;
     }
     return [];
   };
 
   const displayCount = type === "comment" ? count : popupUsers.length > 0 ? popupUsers.length : count;
-  const isCounterInteractive = (type === "like" || type === "interest") && displayCount > 0 && onCounterClick;
+  const isCounterInteractive = (type === "like" || type === "interest") && displayCount > 0 && !!onCounterClick;
 
   const isDisabled = isOwner && (type === "like" || type === "interest");
 
