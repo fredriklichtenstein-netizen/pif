@@ -15,14 +15,25 @@ export const useItemSharing = (itemId: string) => {
   const { session } = useGlobalAuth();
 
   /**
-   * Generates the appropriate URL for sharing an item.
-   * Uses the current origin to handle different environments.
+   * Generates a reliable URL for sharing an item.
+   * Uses the current origin and ensures proper route format.
    */
   const getShareUrl = (id: string): string => {
-    const baseUrl = window.location.origin;
-    const itemUrl = `${baseUrl}/item/${id}`;
-    console.log(`Generated share URL: ${itemUrl} for item: ${id}`);
-    return itemUrl;
+    try {
+      const baseUrl = window.location.origin;
+      // Use a consistent URL format that matches the router configuration
+      const itemUrl = `${baseUrl}/item/${id}`;
+      console.log(`Generated share URL: ${itemUrl} for item: ${id}`);
+      
+      // Validate URL format
+      new URL(itemUrl); // This will throw if URL is invalid
+      
+      return itemUrl;
+    } catch (error) {
+      console.error('Error generating share URL:', error);
+      // Fallback to a simple format if there's any error
+      return `${window.location.origin}/item/${id}`;
+    }
   };
 
   /**
@@ -52,13 +63,23 @@ export const useItemSharing = (itemId: string) => {
 
   /**
    * Main handler for sharing an item.
-   * Provides appropriate fallbacks and error handling.
+   * Provides appropriate fallbacks and prioritizes clipboard functionality.
    */
-  const handleShare = async () => {
+  const handleShare = async (e?: React.MouseEvent) => {
+    // Prevent any default navigation or event propagation
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     console.log(`Starting share process for item: ${itemId}`);
     setIsSharing(true);
     
     try {
+      if (!itemId) {
+        throw new Error('Invalid item ID for sharing');
+      }
+      
       const shareUrl = getShareUrl(itemId);
       
       await shareContent({
@@ -71,8 +92,6 @@ export const useItemSharing = (itemId: string) => {
       await recordShareAnalytics(itemId);
       
     } catch (error) {
-      // This catch block should only trigger for truly unexpected errors
-      // since most errors are handled within the shareContent function
       console.error('Unexpected error in handleShare:', error);
       toast({
         title: "Error sharing",

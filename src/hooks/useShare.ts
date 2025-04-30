@@ -9,15 +9,46 @@ interface ShareOptions {
 }
 
 /**
- * Hook for sharing content through various methods.
- * Provides fallbacks for when the Web Share API is unavailable or denied permissions.
+ * Hook for sharing content through various methods,
+ * prioritizing clipboard functionality for reliability.
  */
 export function useShare() {
   const [isSharing, setIsSharing] = useState(false);
   const { toast } = useToast();
 
   /**
+   * Copies text to the clipboard with fallbacks for older browsers.
+   * This is our primary sharing method for maximum reliability.
+   */
+  const copyToClipboard = async (text: string): Promise<boolean> => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+      }
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      return false;
+    }
+  };
+
+  /**
    * Checks if the Web Share API is available in this browser/environment.
+   * Used as a secondary sharing method when available.
    */
   const isShareApiSupported = () => {
     return typeof navigator !== 'undefined' && 
@@ -50,120 +81,91 @@ export function useShare() {
   };
 
   /**
-   * Copies text to the clipboard with fallbacks for older browsers.
+   * Attempts to share using the Web Share API.
+   * Returns true if successful, false otherwise.
    */
-  const copyToClipboard = async (text: string): Promise<boolean> => {
+  const attemptWebShare = async (options: ShareOptions): Promise<boolean> => {
+    if (!isSecureContext() || !isShareApiSupported() || !canShareContent(options)) {
+      return false;
+    }
+
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } else {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        return successful;
-      }
+      await navigator.share({
+        title: options.title || 'Check out this item on PIF',
+        text: options.text || 'I found this item on PIF Community that might interest you',
+        url: options.url,
+      });
+      return true;
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
+      // If it's an AbortError, the user cancelled, which is not a failure
+      if ((error as Error).name === 'AbortError') {
+        console.log('Share operation was aborted by user');
+        return true;
+      }
+      console.error('Web Share API error:', error);
       return false;
     }
   };
 
   /**
-   * Share content using available methods, with fallbacks.
+   * Share content prioritizing clipboard functionality with Web Share API as fallback.
    */
   const shareContent = async (options: ShareOptions) => {
     console.log('Starting share process with options:', options);
     setIsSharing(true);
     
     try {
-      // Check if we're in a secure context
-      if (!isSecureContext()) {
-        console.log('Not in a secure context, falling back to clipboard');
-        const copied = await copyToClipboard(options.url);
-        
+      // Validate URL before attempting to share
+      if (!options.url || !options.url.trim()) {
+        throw new Error('No valid URL provided for sharing');
+      }
+
+      // First attempt: Copy to clipboard (most reliable across all platforms)
+      const copied = await copyToClipboard(options.url);
+      
+      if (copied) {
         toast({
-          title: copied ? "Link copied" : "Sharing failed",
-          description: copied 
-            ? "Link has been copied to clipboard" 
-            : "Couldn't share or copy link. Please try again.",
-          variant: copied ? "default" : "destructive",
+          title: "Link copied",
+          description: "Link has been copied to clipboard",
         });
         
-        setIsSharing(false);
+        // As an enhancement, also try Web Share API if available
+        // This doesn't affect our primary success path
+        if (isSecureContext() && isShareApiSupported() && canShareContent(options)) {
+          attemptWebShare(options)
+            .then(success => {
+              if (success) {
+                console.log('Also shared via Web Share API');
+              }
+            })
+            .catch(err => {
+              console.log('Web Share API attempt failed after clipboard success:', err);
+              // We don't show errors here since clipboard already worked
+            });
+        }
+        
         return;
       }
       
-      // Try using the Web Share API if supported and content can be shared
-      if (isShareApiSupported() && canShareContent(options)) {
-        console.log('Using native Web Share API');
-        
-        try {
-          await navigator.share({
-            title: options.title || 'Check out this item on PIF',
-            text: options.text || 'I found this item on PIF Community that might interest you',
-            url: options.url,
-          });
-          
-          console.log('Native share successful');
-          toast({
-            title: "Shared successfully",
-            description: "Content has been shared",
-          });
-        } catch (error) {
-          // Handle specific error types
-          if ((error as Error).name === 'AbortError') {
-            // User cancelled the share operation - no need for error toast
-            console.log('Share operation was aborted by user');
-          } else if ((error as Error).name === 'NotAllowedError') {
-            console.log('Share permission denied, falling back to clipboard');
-            const copied = await copyToClipboard(options.url);
-            
-            toast({
-              title: copied ? "Link copied" : "Sharing failed",
-              description: copied 
-                ? "Sharing permission denied. Link has been copied to clipboard instead." 
-                : "Sharing permission denied and couldn't copy link.",
-              variant: copied ? "default" : "destructive",
-            });
-          } else {
-            // Generic error handler
-            console.error('Share error:', error);
-            const copied = await copyToClipboard(options.url);
-            
-            toast({
-              title: copied ? "Link copied" : "Sharing failed",
-              description: copied 
-                ? "Couldn't use share functionality. Link has been copied to clipboard instead." 
-                : "Couldn't share or copy link. Please try again.",
-              variant: copied ? "default" : "destructive",
-            });
-          }
-        }
-      } else {
-        // Fallback to clipboard if Web Share API not available
-        console.log('Web Share API not supported, falling back to clipboard');
-        const copied = await copyToClipboard(options.url);
-        
+      // Second attempt: If clipboard fails, try Web Share API
+      const webShareSucceeded = await attemptWebShare(options);
+      
+      if (webShareSucceeded) {
         toast({
-          title: copied ? "Link copied" : "Sharing failed",
-          description: copied 
-            ? "Link has been copied to clipboard" 
-            : "Couldn't share or copy link. Please try again.",
-          variant: copied ? "default" : "destructive",
+          title: "Shared successfully",
+          description: "Content has been shared",
         });
+        return;
       }
+      
+      // If both methods fail
+      toast({
+        title: "Sharing failed",
+        description: "Couldn't share content. Please try copying the URL manually.",
+        variant: "destructive",
+      });
+      
     } catch (error) {
-      // Final fallback for any unexpected errors
       console.error('Unexpected error during share process:', error);
       toast({
         title: "Sharing failed",

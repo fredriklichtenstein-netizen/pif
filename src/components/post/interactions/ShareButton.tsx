@@ -34,7 +34,10 @@ export function ShareButton({
     }
   };
   
-  const handleShare = async () => {
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     await shareContent({ title, text: message, url });
     setIsOpen(false);
     if (onShareComplete) {
@@ -42,7 +45,10 @@ export function ShareButton({
     }
   };
   
-  const handleCopyLink = async () => {
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
       const { navigator } = window;
       
@@ -101,7 +107,7 @@ export function ShareButton({
         variant="ghost"
         size="sm"
         className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-transparent text-gray-600 hover:text-primary"
-        onClick={handleShare}
+        onClick={handleCopyLink}
         disabled={isSharing}
       >
         <Share className="h-5 w-5" />
@@ -127,9 +133,18 @@ export function ShareButton({
       <PopoverContent className="w-72 p-4">
         <h3 className="font-medium mb-3 text-center">Share this item</h3>
         
+        <Button 
+          className="w-full mb-4 flex items-center justify-center gap-2" 
+          onClick={handleCopyLink}
+        >
+          <Copy className="h-4 w-4" />
+          Copy link to clipboard
+        </Button>
+        
         {isShareSupported && (
           <Button 
-            className="w-full mb-4 flex items-center justify-center gap-2" 
+            className="w-full mb-4 flex items-center justify-center gap-2"
+            variant="outline" 
             onClick={handleShare}
           >
             <Share className="h-4 w-4" />
@@ -151,9 +166,7 @@ export function ShareButton({
         </div>
         
         <p className="text-xs text-muted-foreground mt-3 text-center">
-          {isShareSupported ? 
-            "Share with friends or copy the link directly" : 
-            "Copy the link to share this item"}
+          Share with friends or copy the link directly
         </p>
       </PopoverContent>
     </Popover>
