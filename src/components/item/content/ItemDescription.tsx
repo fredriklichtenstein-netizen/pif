@@ -15,14 +15,10 @@ export function ItemDescription({
   toggleExpanded,
   showToggle 
 }: ItemDescriptionProps) {
-  // Limit description to first 150 characters if not expanded
-  const truncatedDescription = !expanded && description.length > 150 
-    ? `${description.substring(0, 150)}...` 
-    : description;
-    
+  // Always show full description since toggle is handled in parent
   return (
     <div>
-      <p className="mb-1 py-[6px]">{truncatedDescription}</p>
+      <p className="mb-2 py-[6px]">{description}</p>
       
       {showToggle && (
         <button 

@@ -1,4 +1,3 @@
-
 import { PrimaryActions } from "../post/interactions/PrimaryActions";
 import { useToast } from "@/hooks/use-toast";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
@@ -96,8 +95,8 @@ export function ItemInteractions({
   };
 
   return (
-    <div className="flex flex-col space-y-3 pt-2">
-      <div className="flex flex-col gap-3">
+    <div className="flex flex-col space-y-3">
+      <div className="flex flex-col">
         <PrimaryActions 
           isLiked={isLiked}
           showComments={showComments}

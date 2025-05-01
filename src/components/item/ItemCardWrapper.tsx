@@ -97,7 +97,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
     isRealtimeSubscribed,
     realtimeError,
     refreshItemData
-  } = useItemCard(String(id)); // Convert id to string here
+  } = useItemCard(String(id));
 
   const handleReportClick = () => {
     setIsReportDialogOpen(true);
@@ -147,12 +147,8 @@ export const ItemCardWrapper = function ItemCardWrapper({
         category={category} 
       />
       
-      <div className="p-4">
-        <ItemCardContent 
-          description={description} 
-          measurements={measurements} 
-        />
-        
+      {/* Moved the actions right below the gallery */}
+      <div className="px-4 pt-2 pb-0">
         <ItemCardActions
           id={id}
           postedBy={postedBy}
@@ -185,6 +181,14 @@ export const ItemCardWrapper = function ItemCardWrapper({
           getInterestedUsers={getInterestedUsers}
           setComments={setComments}
           isRealtimeSubscribed={isRealtimeSubscribed}
+        />
+      </div>
+      
+      {/* Content moved below actions */}
+      <div className="p-4 pt-2">
+        <ItemCardContent 
+          description={description} 
+          measurements={measurements} 
         />
       </div>
     </Card>

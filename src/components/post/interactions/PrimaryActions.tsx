@@ -1,4 +1,3 @@
-
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { Share } from "lucide-react";
@@ -137,104 +136,113 @@ export function PrimaryActions({
   }, [itemId, onShare, shareInProgress, clickCount]);
   
   return (
-    <div className="flex justify-between w-full pt-1 gap-1 md:gap-3">
-      <InteractionButtonWithPopup
-        type="like"
-        isActive={isLiked}
-        count={likesCount}
-        users={likers}
-        onClick={onLikeToggle}
-        onCounterClick={fetchLikers}
-        isOwner={isOwner}
-        labelPassive="Like"
-        labelActive="Liked"
-        iconPassive="heart"
-        iconActive="heart"
-        itemId={itemId}
-      />
-      <InteractionButtonWithPopup
-        type="comment"
-        isActive={hasCommented}
-        count={commentsCount}
-        itemId={itemId}
-        onClick={onCommentToggle}
-        labelPassive="Comment"
-        labelActive="Commented"
-        iconPassive="message-square"
-        iconActive="message-square"
-        isOwner={false}
-      />
+    <div className="grid grid-cols-4 w-full gap-1 mb-1">
+      <div className="flex justify-center">
+        <InteractionButtonWithPopup
+          type="like"
+          isActive={isLiked}
+          count={likesCount}
+          users={likers}
+          onClick={onLikeToggle}
+          onCounterClick={fetchLikers}
+          isOwner={isOwner}
+          labelPassive="Like"
+          labelActive="Liked"
+          iconPassive="heart"
+          iconActive="heart"
+          itemId={itemId}
+        />
+      </div>
       
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div 
-              className="relative flex flex-col items-center" 
-              role="button" 
-              tabIndex={0}
-              onClick={handleShareClick}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleShareClick(e as unknown as React.MouseEvent);
-                }
-              }}
-              data-testid={`share-button-${itemId}`}
-              aria-busy={shareInProgress}
-            >
-              <button 
-                type="button"
-                aria-label="Share"
-                className={`flex flex-col items-center rounded cursor-pointer w-full ${
-                  shareInProgress ? 'opacity-70 pointer-events-none' : ''
-                } ${shareSuccess ? 'text-green-600' : ''}`}
-                disabled={shareInProgress}
+      <div className="flex justify-center">
+        <InteractionButtonWithPopup
+          type="comment"
+          isActive={hasCommented}
+          count={commentsCount}
+          itemId={itemId}
+          onClick={onCommentToggle}
+          labelPassive="Comment"
+          labelActive="Commented"
+          iconPassive="message-square"
+          iconActive="message-square"
+          isOwner={false}
+        />
+      </div>
+      
+      <div className="flex justify-center">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className="relative flex flex-col items-center" 
+                role="button" 
+                tabIndex={0}
                 onClick={handleShareClick}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleShareClick(e as unknown as React.MouseEvent);
+                  }
+                }}
+                data-testid={`share-button-${itemId}`}
+                aria-busy={shareInProgress}
               >
-                <div className="flex items-center justify-center h-7">
-                  <Share 
-                    className={`w-6 h-6 flex-shrink-0 
-                      ${shareInProgress ? 'animate-pulse text-primary' : ''}
-                      ${shareSuccess ? 'text-green-600' : ''}
-                    `} 
-                    stroke={shareSuccess ? "#16a34a" : "#333333"} 
-                    strokeWidth={2} 
-                  />
-                </div>
-                <div className="flex flex-row items-center justify-center mt-1">
-                  <span className="text-xs font-medium select-none">
-                    {shareInProgress ? "Sharing..." : shareSuccess ? "Shared!" : "Share"}
-                  </span>
-                </div>
-              </button>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" align="center" className="bg-black text-white text-xs p-2">
-            {shareInProgress ? 
-              "Sharing in progress..." :
-              shareSuccess ? 
-                "Successfully shared!" :
-                shareAttempted ? 
-                  "Link will be copied to clipboard" : 
-                  "Share this item"}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+                <button 
+                  type="button"
+                  aria-label="Share"
+                  className={`flex flex-col items-center rounded cursor-pointer w-full ${
+                    shareInProgress ? 'opacity-70 pointer-events-none' : ''
+                  } ${shareSuccess ? 'text-green-600' : ''}`}
+                  disabled={shareInProgress}
+                  onClick={handleShareClick}
+                >
+                  <div className="flex items-center justify-center h-7">
+                    <Share 
+                      className={`w-6 h-6 flex-shrink-0 
+                        ${shareInProgress ? 'animate-pulse text-primary' : ''}
+                        ${shareSuccess ? 'text-green-600' : ''}
+                      `} 
+                      stroke={shareSuccess ? "#16a34a" : "#333333"} 
+                      strokeWidth={2} 
+                    />
+                  </div>
+                  <div className="flex flex-row items-center justify-center mt-1">
+                    <span className="text-xs font-medium select-none">
+                      {shareInProgress ? "Sharing..." : shareSuccess ? "Shared!" : "Share"}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center" className="bg-black text-white text-xs p-2">
+              {shareInProgress ? 
+                "Sharing in progress..." :
+                shareSuccess ? 
+                  "Successfully shared!" :
+                  shareAttempted ? 
+                    "Link will be copied to clipboard" : 
+                    "Share this item"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       
-      <InteractionButtonWithPopup
-        type="interest"
-        isActive={showInterest}
-        count={interestsCount}
-        users={interestedUsers}
-        onClick={onShowInterest}
-        onCounterClick={fetchInterestedUsers}
-        isOwner={isOwner}
-        labelPassive="Interest"
-        labelActive="Interested"
-        iconPassive="star"
-        iconActive="star"
-        itemId={itemId}
-      />
+      <div className="flex justify-center">
+        <InteractionButtonWithPopup
+          type="interest"
+          isActive={showInterest}
+          count={interestsCount}
+          users={interestedUsers}
+          onClick={onShowInterest}
+          onCounterClick={fetchInterestedUsers}
+          isOwner={isOwner}
+          labelPassive="Interest"
+          labelActive="Interested"
+          iconPassive="star"
+          iconActive="star"
+          itemId={itemId}
+        />
+      </div>
     </div>
   );
 }
