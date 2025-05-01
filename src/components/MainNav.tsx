@@ -1,5 +1,5 @@
 
-import { Home, Map, MessageSquare, User as UserIcon, List } from "lucide-react";
+import { House, Map, MessageSquare, User as UserIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -108,7 +108,7 @@ export function MainNav() {
               isActive("/feed") ? "text-primary" : "text-gray-500"
             }`}
           >
-            <List size={24} />
+            <House size={24} />
             <span className="text-xs mt-1">Pifs</span>
           </Link>
           
