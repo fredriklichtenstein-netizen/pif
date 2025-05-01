@@ -1,6 +1,6 @@
 
 import { ItemInteractions } from "./ItemInteractions";
-import { CommentSection } from "@/components/post/CommentSection";
+import { ItemCommentsSection } from "./comments/ItemCommentsSection";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import type { User } from "@/hooks/item/useItemInteractions";
 
@@ -76,7 +76,7 @@ export function ItemCardActions({
   isRealtimeSubscribed
 }: ItemCardActionsProps) {
   const stringId = String(id);
-  const { handleShare, isSharing } = useItemSharing(stringId);
+  const { handleShare } = useItemSharing(stringId);
   
   return (
     <div className="space-y-4">
@@ -110,15 +110,14 @@ export function ItemCardActions({
         isRealtimeSubscribed={isRealtimeSubscribed}
       />
 
-      {showComments && (
-        <CommentSection
-          itemId={stringId}
-          comments={comments}
-          setComments={setComments}
-          isLoading={commentsLoading}
-          error={commentsError}
-        />
-      )}
+      <ItemCommentsSection
+        itemId={stringId}
+        comments={comments}
+        setComments={setComments}
+        isLoading={commentsLoading}
+        error={commentsError}
+        isVisible={showComments}
+      />
     </div>
   );
 }

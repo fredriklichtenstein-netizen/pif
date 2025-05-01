@@ -48,6 +48,11 @@ export function PrimaryActions({
     isLiked, showComments, showInterest, likesCount, commentsCount, interestsCount 
   });
   
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onShare();
+  };
+  
   return (
     <div className="grid grid-cols-4 w-full gap-1 mb-1">
       <div className="flex justify-center">
@@ -85,7 +90,7 @@ export function PrimaryActions({
       <div className="flex justify-center">
         <ShareButton
           itemId={itemId}
-          onShareClick={() => onShare()}
+          onShareClick={handleShareClick}
           disabled={false}
         />
       </div>

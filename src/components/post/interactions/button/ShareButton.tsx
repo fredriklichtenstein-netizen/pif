@@ -7,9 +7,15 @@ interface ShareButtonProps {
   itemId: string;
   onShareClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
+  className?: string;
 }
 
-export const ShareButton = ({ itemId, onShareClick, disabled = false }: ShareButtonProps) => {
+export const ShareButton = ({ 
+  itemId, 
+  onShareClick, 
+  disabled = false, 
+  className = "" 
+}: ShareButtonProps) => {
   const [shareAttempted, setShareAttempted] = useState(false);
   const [shareInProgress, setShareInProgress] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
@@ -101,7 +107,7 @@ export const ShareButton = ({ itemId, onShareClick, disabled = false }: ShareBut
       <Tooltip>
         <TooltipTrigger asChild>
           <div 
-            className="relative flex flex-col items-center" 
+            className={`relative flex flex-col items-center ${className}`}
             role="button" 
             tabIndex={0}
             onClick={handleShareClick}
