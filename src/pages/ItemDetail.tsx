@@ -1,19 +1,24 @@
-
 import { Navigate, useParams, useLocation } from 'react-router-dom';
 import { useItemDetailPage } from '@/hooks/item/detail/useItemDetailPage';
 import { ItemDetailLoader } from '@/components/item/detail/ItemDetailLoader';
 import { ItemDetailError } from '@/components/item/detail/ItemDetailError';
 import { ItemDetailContainer } from '@/components/item/detail/ItemDetailContainer';
 import { useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default function ItemDetail() {
   const { id } = useParams();
   const location = useLocation();
+  const { toast } = useToast();
   const fromShare = location.state?.fromShare === true;
+  const shareTimestamp = location.state?.timestamp;
   
   useEffect(() => {
-    console.log(`ItemDetail page loaded with ID: ${id}, fromShare: ${fromShare}`);
-  }, [id, fromShare]);
+    console.log(`ItemDetail page loaded with ID: ${id}, fromShare: ${fromShare}`, 
+      fromShare ? { shareTimestamp } : '');
+  }, [id, fromShare, shareTimestamp]);
   
   const {
     redirectTo404,
@@ -41,7 +46,7 @@ export default function ItemDetail() {
   // If coming from a share link, provide more context in the error logs
   useEffect(() => {
     if (fromShare) {
-      console.log('User arrived from shared link, ID:', id);
+      console.log('User arrived from shared link, ID:', id, 'Timestamp:', shareTimestamp);
       
       // Track share link usage analytics
       try {
@@ -50,14 +55,27 @@ export default function ItemDetail() {
         shareVisits.push({
           id,
           timestamp: new Date().toISOString(),
+          shareOriginTimestamp: shareTimestamp,
           success: !redirectTo404 && !error
         });
+        
+        // Keep only the last 20 entries
+        while (shareVisits.length > 20) shareVisits.shift();
+        
         localStorage.setItem('pif_share_visits', JSON.stringify(shareVisits));
+        
+        // Show toast for successful share navigation
+        if (!redirectTo404 && !error && displayItem) {
+          toast({
+            title: "Shared item loaded",
+            description: `You're viewing an item shared with you`,
+          });
+        }
       } catch (err) {
         console.error('Failed to track share analytics:', err);
       }
     }
-  }, [fromShare, id, redirectTo404, error]);
+  }, [fromShare, id, redirectTo404, error, shareTimestamp, displayItem, toast]);
   
   if (redirectTo404) {
     console.log('No item data found, redirecting to 404');
@@ -73,7 +91,19 @@ export default function ItemDetail() {
   // Handle error state with user feedback and retry option
   if (error && !displayItem) {
     console.error('Error loading item:', error);
-    return <ItemDetailError onRetry={handleRetry} />;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        {fromShare && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              There was an error loading this shared item. The content may have been removed or is no longer available.
+            </AlertDescription>
+          </Alert>
+        )}
+        <ItemDetailError onRetry={handleRetry} />
+      </div>
+    );
   }
 
   console.log('Rendering item:', displayItem?.id);

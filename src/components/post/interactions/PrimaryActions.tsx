@@ -2,7 +2,7 @@
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { Share } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PrimaryActionsProps {
@@ -51,9 +51,10 @@ export function PrimaryActions({
   });
   
   const [shareAttempted, setShareAttempted] = useState(false);
+  const [shareInProgress, setShareInProgress] = useState(false);
   
-  // Complete rewrite of the share handler to prevent any navigation
-  const handleShareClick = (e: React.MouseEvent) => {
+  // Create memoized share handler to prevent unnecessary re-renders and ensure stability
+  const handleShareClick = useCallback((e: React.MouseEvent) => {
     // Comprehensive event prevention
     e.preventDefault();
     e.stopPropagation();
@@ -63,28 +64,36 @@ export function PrimaryActions({
       e.nativeEvent.preventDefault();
     }
     
+    if (shareInProgress) {
+      console.log(`[SHARE] Share already in progress for item: ${itemId}, ignoring click`);
+      return;
+    }
+    
     // Add debug breadcrumb
     console.log(`[SHARE] Button click detected for item: ${itemId}`);
     
     try {
-      // Set state before calling the callback
+      // Set states to track share attempt
       setShareAttempted(true);
+      setShareInProgress(true);
       
       // Invoke share handler from props
       console.log(`[SHARE] Invoking share callback for item: ${itemId}`);
       onShare();
       
-      // Additional safety: prevent default one more time after a small delay
+      // Additional safety: reset share progress state after a delay
       setTimeout(() => {
         console.log(`[SHARE] Share operation completed for item: ${itemId}`);
-      }, 50);
+        setShareInProgress(false);
+      }, 1000);
     } catch (error) {
       console.error("[SHARE] Error in share handler:", error);
+      setShareInProgress(false);
     }
     
     // Explicitly return false to prevent any default behavior
     return false;
-  };
+  }, [itemId, onShare, shareInProgress]);
   
   return (
     <div className="flex justify-between w-full pt-1 gap-1 md:gap-3">
@@ -129,28 +138,37 @@ export function PrimaryActions({
                   handleShareClick(e as unknown as React.MouseEvent);
                 }
               }}
+              data-testid={`share-button-${itemId}`}
+              aria-busy={shareInProgress}
             >
               <button 
                 type="button"
                 aria-label="Share"
                 className="flex flex-col items-center rounded cursor-pointer w-full"
+                disabled={shareInProgress}
                 onClick={handleShareClick}
               >
                 <div className="flex items-center justify-center h-7">
-                  <Share className="w-6 h-6 flex-shrink-0" stroke="#333333" strokeWidth={2} />
+                  <Share 
+                    className={`w-6 h-6 flex-shrink-0 ${shareInProgress ? 'animate-pulse text-primary' : ''}`} 
+                    stroke="#333333" 
+                    strokeWidth={2} 
+                  />
                 </div>
                 <div className="flex flex-row items-center justify-center mt-1">
                   <span className="text-xs font-medium select-none">
-                    Share
+                    {shareInProgress ? "Sharing..." : "Share"}
                   </span>
                 </div>
               </button>
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom" align="center" className="bg-black text-white text-xs p-2">
-            {shareAttempted ? 
-              "Link will be copied to clipboard if sharing isn't available" : 
-              "Share this item"}
+            {shareInProgress ? 
+              "Sharing in progress..." :
+              shareAttempted ? 
+                "Link will be copied to clipboard if sharing isn't available" : 
+                "Share this item"}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -6,13 +6,65 @@ import { useShare } from '@/hooks/useShare';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
 /**
- * Hook for sharing item content with enhanced error handling and analytics.
+ * Hook for sharing item content with enhanced error handling and validation.
  */
 export const useItemSharing = (itemId: string) => {
   const [isSharing, setIsSharing] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
   const { shareContent, isShareSupported } = useShare();
   const { session } = useGlobalAuth();
+
+  /**
+   * Validates that an item exists before sharing it
+   */
+  const validateItem = async (id: string): Promise<boolean> => {
+    try {
+      setIsValidating(true);
+      console.log(`Validating item existence before sharing: ${id}`);
+      
+      // Normalized ID (ensure it's a valid format)
+      const trimmedId = id.trim();
+      
+      if (!trimmedId) {
+        console.error('Invalid item ID format for sharing');
+        return false;
+      }
+      
+      // Convert to numeric ID
+      const numericId = parseInt(trimmedId, 10);
+      if (isNaN(numericId)) {
+        console.error('Item ID is not a number:', trimmedId);
+        return false;
+      }
+      
+      // Check if the item exists
+      const { data, error } = await supabase
+        .from('items')
+        .select('id, title')
+        .eq('id', numericId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error checking item existence:', error);
+        return false;
+      }
+      
+      if (!data) {
+        console.error(`Item with ID ${numericId} not found`);
+        return false;
+      }
+      
+      console.log(`Item validated successfully: ${data.title} (ID: ${data.id})`);
+      return true;
+      
+    } catch (error) {
+      console.error('Unexpected error during item validation:', error);
+      return false;
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   /**
    * Generates a reliable URL for sharing an item using our share redirect path.
@@ -40,7 +92,7 @@ export const useItemSharing = (itemId: string) => {
   /**
    * Records the share event in the database for analytics.
    */
-  const recordShareAnalytics = async (id: string, shareType: string = 'general') => {
+  const recordShareAnalytics = async (id: string, shareType: string = 'general', success: boolean = true) => {
     if (!session?.user) return;
     
     try {
@@ -52,10 +104,11 @@ export const useItemSharing = (itemId: string) => {
         .insert({
           item_id: numericId,
           user_id: session.user.id,
-          share_type: shareType
+          share_type: shareType,
+          success: success
         });
         
-      console.log(`Recorded share analytics for item: ${id}`);
+      console.log(`Recorded share analytics for item: ${id}`, { success });
     } catch (error) {
       console.error('Failed to record share analytics:', error);
       // Non-critical error, don't show toast to user
@@ -79,6 +132,21 @@ export const useItemSharing = (itemId: string) => {
     try {
       if (!itemId) {
         throw new Error('Invalid item ID for sharing');
+      }
+      
+      // Validate the item exists before sharing
+      const isValid = await validateItem(itemId);
+      
+      if (!isValid) {
+        toast({
+          title: "Cannot share item",
+          description: "This item is no longer available or may have been removed.",
+          variant: "destructive"
+        });
+        
+        // Record failed share attempt
+        await recordShareAnalytics(itemId, 'failed_validation', false);
+        return;
       }
       
       const shareUrl = getShareUrl(itemId);
@@ -105,6 +173,9 @@ export const useItemSharing = (itemId: string) => {
         description: "Something went wrong while sharing. Please try again.",
         variant: "destructive"
       });
+      
+      // Record failed share attempt
+      await recordShareAnalytics(itemId, 'error', false);
     } finally {
       setIsSharing(false);
     }
@@ -112,7 +183,9 @@ export const useItemSharing = (itemId: string) => {
 
   return {
     isSharing,
+    isValidating,
     handleShare,
-    isShareSupported
+    isShareSupported,
+    validateItem
   };
 };

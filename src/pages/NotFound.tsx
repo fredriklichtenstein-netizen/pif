@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,8 +17,15 @@ const NotFound = () => {
 
   // Extract referrer information for better debugging
   const referrer = document.referrer;
-  const fromState = location.state as { from?: string } | null;
+  const fromState = location.state as { 
+    from?: string;
+    itemId?: string;
+    error?: string;
+  } | null;
+  
   const fromPath = fromState?.from || 'unknown';
+  const itemId = fromState?.itemId || 'none';
+  const errorMsg = fromState?.error || 'unknown';
 
   useEffect(() => {
     // Enhanced logging for better debugging
@@ -30,6 +38,8 @@ const NotFound = () => {
           hash: location.hash,
           referrer,
           fromPath,
+          itemId,
+          errorMsg,
           state: location.state,
           userAgent: navigator.userAgent,
           timestamp: new Date().toISOString()
@@ -55,7 +65,9 @@ const NotFound = () => {
         path: location.pathname,
         referrer,
         timestamp: new Date().toISOString(),
-        info: authError ? { authError, errorCode, errorDescription } : { state: location.state }
+        info: authError ? 
+          { authError, errorCode, errorDescription } : 
+          { state: location.state, fromPath, itemId, errorMsg }
       });
       // Keep last 10 errors only
       while (errorLog.length > 10) errorLog.shift();
@@ -63,15 +75,21 @@ const NotFound = () => {
     } catch (err) {
       console.error("Failed to log error to localStorage:", err);
     }
-  }, [location.pathname, location.search, location.hash, authError, errorCode, errorDescription, referrer, fromPath, location.state]);
+  }, [location.pathname, location.search, location.hash, authError, errorCode, 
+      errorDescription, referrer, fromPath, location.state, itemId, errorMsg]);
 
   const getErrorMessage = () => {
     if (errorCode === "otp_expired") {
       return "Your password reset link has expired. Please request a new password reset link.";
     }
+    
+    if (fromPath === 'share' || fromPath === 'item') {
+      return `The item you're looking for (ID: ${itemId}) couldn't be found. It may have been removed or is no longer available.`;
+    }
+    
     return errorDescription 
       ? decodeURIComponent(errorDescription.replace(/\+/g, ' ')) 
-      : "An unknown error occurred.";
+      : "The page you're looking for doesn't exist.";
   };
 
   const handleReturnToAuth = () => {
@@ -126,8 +144,23 @@ const NotFound = () => {
           <>
             <h1 className="text-4xl font-bold mb-4">404</h1>
             <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
+            
+            {fromPath === 'share' && (
+              <Alert variant="destructive" className="text-left mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Item Not Found</AlertTitle>
+                <AlertDescription>
+                  {errorMsg === 'Invalid item ID format - not a number' 
+                    ? 'The shared link contains an invalid item ID.' 
+                    : `The shared item (ID: ${itemId}) couldn't be found or may have been removed.`}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <p className="text-sm text-gray-500 mb-4">
-              The page you're looking for doesn't exist or may have been moved
+              {fromPath === 'unknown' 
+                ? "The page you're looking for doesn't exist or may have been moved" 
+                : getErrorMessage()}
             </p>
             {getNavigationOptions()}
           </>
