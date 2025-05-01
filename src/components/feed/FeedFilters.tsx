@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Filter } from "lucide-react";
@@ -45,7 +44,7 @@ export function FeedFilters({
 
   return (
     <div className="mb-6">
-      {/* View Mode Tabs */}
+      {/* View Mode Tabs - Reordered as requested: All, My PIFs, Interested, Saved */}
       <Tabs 
         value={viewMode} 
         onValueChange={setViewMode}
@@ -53,9 +52,9 @@ export function FeedFilters({
       >
         <TabsList className="w-full grid grid-cols-4 mb-2">
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="saved">Saved</TabsTrigger>
           <TabsTrigger value="myPifs">My PIFs</TabsTrigger>
           <TabsTrigger value="interested">Interested</TabsTrigger>
+          <TabsTrigger value="saved">Saved</TabsTrigger>
         </TabsList>
       </Tabs>
       
