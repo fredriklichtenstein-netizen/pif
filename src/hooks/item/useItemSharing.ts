@@ -1,12 +1,17 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useShare } from '@/hooks/useShare';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
+import { withRetry, isNetworkError, fetchWithTimeout } from '@/utils/connectionRetryUtils';
+
+// Local validation cache to avoid redundant validations
+const validatedItemIds: Record<string, { timestamp: number, valid: boolean }> = {};
+const CACHE_EXPIRY_MS = 1000 * 60 * 10; // 10 minutes
 
 /**
- * Hook for sharing item content with enhanced error handling and validation.
+ * Hook for sharing item content with enhanced error handling, validation, and retry logic.
  */
 export const useItemSharing = (itemId: string) => {
   const [isSharing, setIsSharing] = useState(false);
@@ -16,13 +21,21 @@ export const useItemSharing = (itemId: string) => {
   const { session } = useGlobalAuth();
 
   /**
-   * Validates that an item exists before sharing it
+   * Validates that an item exists before sharing it, with retry logic
    */
-  const validateItem = async (id: string): Promise<boolean> => {
+  const validateItem = useCallback(async (id: string): Promise<boolean> => {
     try {
       setIsValidating(true);
       console.log(`Validating item existence before sharing: ${id}`);
       
+      // Check cache first
+      const now = Date.now();
+      const cachedResult = validatedItemIds[id];
+      if (cachedResult && (now - cachedResult.timestamp) < CACHE_EXPIRY_MS) {
+        console.log(`Using cached validation result for item ${id}: ${cachedResult.valid}`);
+        return cachedResult.valid;
+      }
+
       // Normalized ID (ensure it's a valid format)
       const trimmedId = id.trim();
       
@@ -38,39 +51,76 @@ export const useItemSharing = (itemId: string) => {
         return false;
       }
       
-      // Check if the item exists
-      const { data, error } = await supabase
-        .from('items')
-        .select('id, title')
-        .eq('id', numericId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error checking item existence:', error);
+      // Check if the item exists with retry logic
+      const result = await withRetry(
+        async () => {
+          console.log(`Attempt to validate item ${numericId} existence`);
+          
+          return await fetchWithTimeout(
+            async () => {
+              const { data, error } = await supabase
+                .from('items')
+                .select('id, title')
+                .eq('id', numericId)
+                .maybeSingle();
+                
+              if (error) {
+                console.error(`Error checking item ${numericId} existence:`, error);
+                throw error;
+              }
+              
+              return { data };
+            }, 
+            5000 // 5 second timeout
+          );
+        },
+        {
+          maxAttempts: 2,
+          initialDelay: 500,
+          backoffFactor: 1.5,
+          onRetry: (attempt, delay) => {
+            console.log(`Retrying item validation (attempt ${attempt}) for item ${numericId} after ${delay}ms`);
+          },
+          onFail: () => {
+            console.error(`Failed to validate item ${numericId} after all retry attempts`);
+          }
+        }
+      );
+      
+      const isValid = !!result.data;
+      
+      // Cache the result
+      validatedItemIds[id] = { timestamp: now, valid: isValid };
+      
+      if (!isValid) {
+        console.error(`Item with ID ${numericId} not found during validation`);
         return false;
       }
       
-      if (!data) {
-        console.error(`Item with ID ${numericId} not found`);
-        return false;
-      }
-      
-      console.log(`Item validated successfully: ${data.title} (ID: ${data.id})`);
+      console.log(`Item validated successfully: ${result.data.title} (ID: ${result.data.id})`);
       return true;
       
     } catch (error) {
-      console.error('Unexpected error during item validation:', error);
+      const isNetworkIssue = isNetworkError(error);
+      console.error(`Validation error for item ${id}:`, error, isNetworkIssue ? '(Network error)' : '');
+      
+      // If it's a network error, we'll assume the item exists to allow offline sharing
+      if (isNetworkIssue) {
+        console.log(`Network error during validation - proceeding with share for item ${id} anyway`);
+        return true;
+      }
+      
       return false;
     } finally {
       setIsValidating(false);
     }
-  };
+  }, []);
 
   /**
    * Generates a reliable URL for sharing an item using our share redirect path.
    * This approach is more resilient to routing changes and direct URL access.
    */
-  const getShareUrl = (id: string): string => {
+  const getShareUrl = useCallback((id: string): string => {
     try {
       // Use the dedicated share route for better deep linking support
       const sharePath = `/share/${id}`;
@@ -87,12 +137,12 @@ export const useItemSharing = (itemId: string) => {
       // Fallback to a simple format if there's any error
       return `${window.location.origin}/share/${id}`;
     }
-  };
+  }, []);
 
   /**
    * Records the share event in the database for analytics.
    */
-  const recordShareAnalytics = async (id: string, shareType: string = 'general', success: boolean = true) => {
+  const recordShareAnalytics = useCallback(async (id: string, shareType: string = 'general', success: boolean = true) => {
     if (!session?.user) return;
     
     try {
@@ -105,21 +155,22 @@ export const useItemSharing = (itemId: string) => {
           item_id: numericId,
           user_id: session.user.id,
           share_type: shareType,
-          success: success
+          success: success,
+          device_type: navigator.userAgent || 'unknown',
         });
         
-      console.log(`Recorded share analytics for item: ${id}`, { success });
+      console.log(`Recorded share analytics for item: ${id}`, { success, shareType });
     } catch (error) {
       console.error('Failed to record share analytics:', error);
       // Non-critical error, don't show toast to user
     }
-  };
+  }, [session]);
 
   /**
    * Main handler for sharing an item.
-   * Uses the new share path strategy for better deep link handling.
+   * Uses the share path strategy for reliable deep link handling.
    */
-  const handleShare = async (e?: React.MouseEvent) => {
+  const handleShare = useCallback(async (e?: React.MouseEvent) => {
     // Prevent any default navigation or event propagation
     if (e) {
       e.preventDefault();
@@ -134,8 +185,21 @@ export const useItemSharing = (itemId: string) => {
         throw new Error('Invalid item ID for sharing');
       }
       
-      // Validate the item exists before sharing
-      const isValid = await validateItem(itemId);
+      let isValid = true;
+      
+      // Only validate if we're online - allow offline sharing by skipping validation
+      if (navigator.onLine) {
+        // Validate the item exists before sharing, with timeout protection
+        isValid = await Promise.race([
+          validateItem(itemId),
+          new Promise<boolean>(resolve => setTimeout(() => {
+            console.log('Item validation timed out - proceeding with share anyway');
+            resolve(true);
+          }, 3000)) // 3 second timeout as a fallback
+        ]);
+      } else {
+        console.log('Device appears offline - skipping validation and proceeding with share');
+      }
       
       if (!isValid) {
         toast({
@@ -159,7 +223,7 @@ export const useItemSharing = (itemId: string) => {
       });
       
       // Record analytics regardless of share method
-      await recordShareAnalytics(itemId);
+      await recordShareAnalytics(itemId, 'success');
       
       toast({
         title: "Shared successfully",
@@ -179,7 +243,7 @@ export const useItemSharing = (itemId: string) => {
     } finally {
       setIsSharing(false);
     }
-  };
+  }, [itemId, validateItem, getShareUrl, shareContent, recordShareAnalytics, toast]);
 
   return {
     isSharing,

@@ -2,7 +2,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
@@ -42,7 +42,8 @@ const NotFound = () => {
           errorMsg,
           state: location.state,
           userAgent: navigator.userAgent,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          isOnline: navigator.onLine
         }
       );
     } else {
@@ -78,12 +79,26 @@ const NotFound = () => {
   }, [location.pathname, location.search, location.hash, authError, errorCode, 
       errorDescription, referrer, fromPath, location.state, itemId, errorMsg]);
 
+  const handleRetryShareLink = () => {
+    if (fromPath === 'share' && itemId !== 'none') {
+      navigate(`/share/${itemId}`, { replace: true });
+    }
+  };
+
   const getErrorMessage = () => {
     if (errorCode === "otp_expired") {
       return "Your password reset link has expired. Please request a new password reset link.";
     }
     
     if (fromPath === 'share' || fromPath === 'item') {
+      if (errorMsg === 'Invalid item ID format - not a number') {
+        return `The link contains an invalid item ID format. Item IDs should be numbers.`;
+      }
+      
+      if (errorMsg?.includes('Database error')) {
+        return `We're having trouble connecting to our database. Please try again in a moment.`;
+      }
+      
       return `The item you're looking for (ID: ${itemId}) couldn't be found. It may have been removed or is no longer available.`;
     }
     
@@ -103,11 +118,29 @@ const NotFound = () => {
     if (path.includes('item') || path.includes('share')) {
       return (
         <div className="flex flex-col gap-2 mt-4">
-          <Button onClick={() => navigate("/feed")} className="bg-green-500 hover:bg-green-600">
+          {fromPath === 'share' && (
+            <Button 
+              onClick={handleRetryShareLink} 
+              className="flex items-center gap-2"
+              variant="outline"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Try Again</span>
+            </Button>
+          )}
+          <Button 
+            onClick={() => navigate("/feed")} 
+            className="bg-green-500 hover:bg-green-600"
+          >
             Browse Feed
           </Button>
-          <Button onClick={() => navigate("/map")} variant="outline">
-            Browse Map
+          <Button 
+            onClick={() => navigate("/map")} 
+            variant="outline" 
+            className="flex items-center gap-2"
+          >
+            <Search className="h-4 w-4" />
+            <span>Browse Map</span>
           </Button>
         </div>
       );
@@ -124,7 +157,7 @@ const NotFound = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full space-y-6 text-center">
         {authError ? (
           <>
@@ -152,7 +185,9 @@ const NotFound = () => {
                 <AlertDescription>
                   {errorMsg === 'Invalid item ID format - not a number' 
                     ? 'The shared link contains an invalid item ID.' 
-                    : `The shared item (ID: ${itemId}) couldn't be found or may have been removed.`}
+                    : errorMsg?.includes('Database error')
+                      ? 'We\'re having trouble connecting to the database. Please try again.'
+                      : `The shared item (ID: ${itemId}) couldn't be found or may have been removed.`}
                 </AlertDescription>
               </Alert>
             )}

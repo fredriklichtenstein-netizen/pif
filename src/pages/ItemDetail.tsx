@@ -1,12 +1,14 @@
+
 import { Navigate, useParams, useLocation } from 'react-router-dom';
 import { useItemDetailPage } from '@/hooks/item/detail/useItemDetailPage';
 import { ItemDetailLoader } from '@/components/item/detail/ItemDetailLoader';
 import { ItemDetailError } from '@/components/item/detail/ItemDetailError';
 import { ItemDetailContainer } from '@/components/item/detail/ItemDetailContainer';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { withRetry } from '@/utils/connectionRetryUtils';
 
 export default function ItemDetail() {
   const { id } = useParams();
@@ -14,6 +16,7 @@ export default function ItemDetail() {
   const { toast } = useToast();
   const fromShare = location.state?.fromShare === true;
   const shareTimestamp = location.state?.timestamp;
+  const [loadFailed, setLoadFailed] = useState(false);
   
   useEffect(() => {
     console.log(`ItemDetail page loaded with ID: ${id}, fromShare: ${fromShare}`, 
@@ -37,6 +40,7 @@ export default function ItemDetail() {
   useEffect(() => {
     if (error) {
       console.error('Error loading item details:', error);
+      setLoadFailed(true);
     }
     if (redirectTo404) {
       console.error('Item not found, redirecting to 404. Item ID:', id);
@@ -56,7 +60,7 @@ export default function ItemDetail() {
           id,
           timestamp: new Date().toISOString(),
           shareOriginTimestamp: shareTimestamp,
-          success: !redirectTo404 && !error
+          success: !redirectTo404 && !error && !!displayItem
         });
         
         // Keep only the last 20 entries
@@ -76,6 +80,41 @@ export default function ItemDetail() {
       }
     }
   }, [fromShare, id, redirectTo404, error, shareTimestamp, displayItem, toast]);
+
+  // Enhanced retry logic for shared items
+  const handleRetryWithBackoff = async () => {
+    setLoadFailed(false);
+    console.log(`Attempting retry for item ${id} with backoff strategy...`);
+    
+    try {
+      await withRetry(
+        async () => {
+          await refreshItemData();
+          return true;
+        },
+        {
+          maxAttempts: 3,
+          initialDelay: 500,
+          backoffFactor: 2,
+          onRetry: (attempt, delay) => {
+            console.log(`Retrying item load (attempt ${attempt}) after ${delay}ms`);
+            toast({
+              title: "Retrying...",
+              description: `Attempt ${attempt} to load the item`
+            });
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Failed to load item after multiple retries:', error);
+      setLoadFailed(true);
+      toast({
+        title: "Loading failed",
+        description: "Could not load the item after multiple attempts",
+        variant: "destructive"
+      });
+    }
+  };
   
   if (redirectTo404) {
     console.log('No item data found, redirecting to 404');
@@ -89,7 +128,7 @@ export default function ItemDetail() {
   }
 
   // Handle error state with user feedback and retry option
-  if (error && !displayItem) {
+  if ((error && !displayItem) || loadFailed) {
     console.error('Error loading item:', error);
     return (
       <div className="container mx-auto px-4 py-8">
@@ -101,7 +140,7 @@ export default function ItemDetail() {
             </AlertDescription>
           </Alert>
         )}
-        <ItemDetailError onRetry={handleRetry} />
+        <ItemDetailError onRetry={handleRetryWithBackoff} />
       </div>
     );
   }
