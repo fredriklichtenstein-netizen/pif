@@ -1,8 +1,20 @@
 
 import type { User } from "@/hooks/item/useItemInteractions";
 
+// Define a type for comments that includes the expected structure
+interface Comment {
+  author?: {
+    id: string;
+  };
+  replies?: Array<{
+    author?: {
+      id: string;
+    }
+  }>;
+}
+
 export const hasUserCommented = (
-  commenters: User[],
+  commenters: Comment[],
   currentUserId?: string
 ): boolean => {
   if (!currentUserId || !commenters?.length) {
