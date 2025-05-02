@@ -2,9 +2,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./images/ImageUpload";
-import { Trash2, Crop, Star } from "lucide-react";
+import { Trash2, Crop, Star, AlertCircle } from "lucide-react";
 import { usePostImages } from "@/hooks/post/usePostImages";
 import { ImageCropperDialog } from "./ImageCropperDialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface PostFormImagesProps {
   images: string[];
@@ -40,8 +41,17 @@ export function PostFormImages({
       <div className="space-y-2">
         <label htmlFor="images" className="text-sm font-medium">
           {isPrimaryImageRequired ? "Upload Primary Image (Required)" : "Images"}
-          {isAnalyzing && <span className="text-muted-foreground ml-2">(Analyzing...)</span>}
         </label>
+
+        {isAnalyzing && (
+          <Alert variant="default" className="bg-primary/10 text-primary border-primary/30 mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Uploading images</AlertTitle>
+            <AlertDescription>
+              Your images are being uploaded. This may take a few moments depending on your connection speed.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {isPrimaryImageRequired && (
           <div className="mt-2">
@@ -121,4 +131,3 @@ export function PostFormImages({
     </div>
   );
 }
-

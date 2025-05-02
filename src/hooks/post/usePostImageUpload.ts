@@ -13,49 +13,85 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
 
   // Handles uploading images and returns URLs
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Image upload started");
     setIsAnalyzing(true);
     const files = Array.from(e.target.files || []);
 
     if (!files || files.length === 0) {
+      console.log("No files selected");
       setIsAnalyzing(false);
       return;
     }
 
-    const uploadPromises = files.map(async (file) => {
+    try {
+      console.log(`Processing ${files.length} files for upload`);
       const { supabase } = await import("@/integrations/supabase/client");
-      const timestamp = new Date().getTime();
-      const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
+      
+      const uploadPromises = files.map(async (file) => {
+        try {
+          console.log(`Uploading file: ${file.name}, size: ${file.size}`);
+          const timestamp = new Date().getTime();
+          const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
 
-      const { error } = await supabase.storage
-        .from("lovable-uploads")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+          const { error, data } = await supabase.storage
+            .from("lovable-uploads")
+            .upload(filePath, file, {
+              cacheControl: "3600",
+              upsert: false,
+            });
 
-      if (error) {
-        console.error("Error uploading image:", error);
+          if (error) {
+            console.error("Upload error:", error);
+            toast({
+              title: "Error uploading image",
+              description: error.message,
+              variant: "destructive",
+            });
+            return null;
+          }
+
+          console.log(`File uploaded successfully: ${filePath}`);
+          const { data: urlData } = supabase.storage
+            .from("lovable-uploads")
+            .getPublicUrl(filePath);
+            
+          console.log(`Generated public URL: ${urlData.publicUrl}`);
+          return urlData.publicUrl;
+        } catch (fileError) {
+          console.error("File upload error:", fileError);
+          toast({
+            title: "Upload failed",
+            description: "An error occurred while uploading the image",
+            variant: "destructive",
+          });
+          return null;
+        }
+      });
+
+      console.log("Waiting for all uploads to complete");
+      const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
+
+      console.log(`Upload completed: ${uploadedUrls.length} successful uploads`);
+      if (uploadedUrls.length > 0) {
+        onImagesUploaded(uploadedUrls);
+      } else if (files.length > 0 && uploadedUrls.length === 0) {
         toast({
-          title: "Error uploading image",
-          description: error.message,
+          title: "Upload failed",
+          description: "None of the images could be uploaded. Please try again.",
           variant: "destructive",
         });
-        return null;
       }
-
-      const { data } = supabase.storage
-        .from("lovable-uploads")
-        .getPublicUrl(filePath);
-      return data.publicUrl;
-    });
-
-    const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
-
-    if (uploadedUrls.length > 0) {
-      onImagesUploaded(uploadedUrls);
+    } catch (error) {
+      console.error("Unexpected error in image upload process:", error);
+      toast({
+        title: "Upload error",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      console.log("Upload process finished, resetting state");
+      setIsAnalyzing(false);
     }
-
-    setIsAnalyzing(false);
   };
 
   return { handleImageUpload, isAnalyzing };

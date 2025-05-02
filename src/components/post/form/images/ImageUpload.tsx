@@ -25,10 +25,15 @@ export function ImageUpload({
         ? 'h-60 border-primary hover:bg-primary/5' 
         : 'h-40 aspect-square border-gray-300 hover:border-primary'
       }
+      ${isAnalyzing ? 'opacity-70 cursor-wait' : ''}
     `}>
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
         {isAnalyzing ? (
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <>
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <span className="text-sm text-primary font-medium">Uploading...</span>
+            <span className="text-xs text-muted-foreground mt-1">Please wait</span>
+          </>
         ) : (
           <>
             <ImagePlus className={`mb-2 ${isPrimary ? 'h-10 w-10 text-primary' : 'h-8 w-8 text-gray-400'}`} />
@@ -53,6 +58,7 @@ export function ImageUpload({
         onChange={onImageUpload}
         required={isPrimaryImageRequired}
         aria-label={isPrimaryImageRequired ? "Upload primary image" : "Upload additional images"}
+        disabled={isAnalyzing}
       />
     </label>
   );
