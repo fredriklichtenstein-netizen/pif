@@ -13,41 +13,38 @@ export function ItemCardContent({
   measurements = {}
 }: ItemCardContentProps) {
   const hasDetails = Object.keys(measurements).length > 0;
-  const { expanded, toggleExpanded, showToggle } = useExpandableContent(description, hasDetails);
+  // Force showToggle to true regardless of description length
+  const { expanded, toggleExpanded } = useExpandableContent(description, hasDetails);
 
   return (
-    <div className="mt-1 mb-2 px-1">
+    <div className="mt-1 mb-4 px-1">
       <div className="text-sm text-gray-600">
-        {/* Show toggle button first */}
-        {showToggle && (
-          <button 
-            onClick={toggleExpanded} 
-            className="mb-2 flex items-center text-primary text-xs font-medium"
-          >
-            {expanded ? (
-              <>
-                Show less
-              </>
-            ) : (
-              <>
-                Show more
-              </>
-            )}
-          </button>
-        )}
+        <button 
+          onClick={toggleExpanded} 
+          className="mb-2 flex items-center text-primary text-xs font-medium"
+        >
+          {expanded ? (
+            <>
+              Show less
+            </>
+          ) : (
+            <>
+              Show more
+            </>
+          )}
+        </button>
         
-        {/* Content is shown if expanded or if there's no toggle */}
-        {(!showToggle || expanded) && (
-          <div className="pt-1">
+        {expanded && (
+          <>
             <ItemDescription 
               description={description}
               expanded={expanded}
               toggleExpanded={toggleExpanded}
-              showToggle={false} /* Hide toggle in the description component as we're showing it separately */
+              showToggle={false}
             />
             
-            {hasDetails && expanded && <ItemMeasurements measurements={measurements} />}
-          </div>
+            {hasDetails && <ItemMeasurements measurements={measurements} />}
+          </>
         )}
       </div>
     </div>

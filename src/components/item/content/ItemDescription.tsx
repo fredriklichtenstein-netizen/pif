@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ItemDescriptionProps {
@@ -15,7 +14,6 @@ export function ItemDescription({
   toggleExpanded,
   showToggle 
 }: ItemDescriptionProps) {
-  // Always show full description since toggle is handled in parent
   return (
     <div>
       <p className="mb-2 py-[6px]">{description}</p>
