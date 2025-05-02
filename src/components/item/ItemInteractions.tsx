@@ -1,11 +1,11 @@
-import { PrimaryActions } from "../post/interactions/PrimaryActions";
-import { useToast } from "@/hooks/use-toast";
+
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
-import type { ItemInteractionsProps } from "./types";
-import type { User } from "@/hooks/item/useItemInteractions";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { useNavigate } from "react-router-dom";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
+import { ItemInteractionButtons } from "./interactions/ItemInteractionButtons";
+import { ActionHandler } from "./interactions/ActionHandler";
+import { hasUserCommented } from "./interactions/CommentHelper";
+import type { ItemInteractionsProps } from "./types";
 
 export function ItemInteractions({
   id,
@@ -37,8 +37,6 @@ export function ItemInteractions({
   isRealtimeSubscribed = false
 }: ItemInteractionsProps) {
   const { user } = useGlobalAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
   const currentUserId = user?.id || "";
   const { handleShare } = useItemSharing(id);
   
@@ -46,45 +44,10 @@ export function ItemInteractions({
     isLiked, showComments, showInterest, commentsCount, likesCount, interestsCount 
   });
 
-  const handleAction = async (action: () => void, requiresAuth: boolean = true) => {
-    console.log("handleAction called, requiresAuth:", requiresAuth, "user:", !!user);
-    
-    if (requiresAuth && !user) {
-      console.log("Authentication required but no user is logged in");
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to perform this action",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-    
-    try {
-      console.log("Executing action");
-      await action();
-      console.log("Action completed successfully");
-    } catch (error) {
-      console.error('Action failed:', error);
-      toast({
-        title: "Action failed",
-        description: error instanceof Error ? error.message : "Unable to complete action",
-        variant: "destructive",
-      });
-    }
-  };
+  // Check if current user has commented
+  const userHasCommented = hasUserCommented(commenters, currentUserId);
 
-  const hasCommented = Boolean(
-    commenters &&
-    currentUserId &&
-    (
-      commenters.some(comment => comment.author && comment.author.id === currentUserId) ||
-      commenters.some(comment =>
-        comment.replies?.some(reply => reply.author && reply.author.id === currentUserId)
-      )
-    )
-  );
-
+  // Calculate actual counts in case likers array has more precise data
   const actualLikeCount = likers.length || likesCount;
   const actualInterestCount = interestedUsers.length || interestsCount;
 
@@ -96,28 +59,32 @@ export function ItemInteractions({
 
   return (
     <div className="flex flex-col space-y-3">
-      <div className="flex flex-col">
-        <PrimaryActions 
-          isLiked={isLiked}
-          showComments={showComments}
-          showInterest={showInterest}
-          isOwner={isOwner}
-          itemId={id}
-          hasCommented={hasCommented}
-          currentUserId={currentUserId}
-          commentsCount={commentsCount}
-          likesCount={actualLikeCount}
-          interestsCount={actualInterestCount}
-          likers={likers}
-          interestedUsers={interestedUsers}
-          onLikeToggle={() => handleAction(onLikeToggle)}
-          onCommentToggle={() => handleAction(onCommentToggle, false)}
-          onShowInterest={() => handleAction(onShowInterest)}
-          onShare={handleShareAction}
-          fetchLikers={async () => likers}
-          fetchInterestedUsers={async () => interestedUsers}
-        />
-      </div>
+      <ActionHandler>
+        {(handleAction) => (
+          <div className="flex flex-col">
+            <ItemInteractionButtons
+              id={id}
+              isLiked={isLiked}
+              showComments={showComments}
+              showInterest={showInterest}
+              isOwner={isOwner}
+              currentUserId={currentUserId}
+              hasCommented={userHasCommented}
+              commentsCount={commentsCount}
+              likesCount={actualLikeCount}
+              interestsCount={actualInterestCount}
+              likers={likers}
+              interestedUsers={interestedUsers}
+              onLikeToggle={() => handleAction(onLikeToggle)}
+              onCommentToggle={() => handleAction(onCommentToggle, false)}
+              onShowInterest={() => handleAction(onShowInterest)}
+              onShare={handleShareAction}
+              fetchLikers={async () => likers}
+              fetchInterestedUsers={async () => interestedUsers}
+            />
+          </div>
+        )}
+      </ActionHandler>
 
       {showComments && (
         <LazyCommentsSection
