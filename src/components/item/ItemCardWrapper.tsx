@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { ItemCardHeader } from "./ItemCardHeader";
@@ -11,7 +12,6 @@ import type { ItemCardProps } from "./types";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "../ui/button";
 import { AlertCircle, Eye } from "lucide-react";
-import { Alert } from "../ui/alert";
 
 export const ItemCardWrapper = function ItemCardWrapper({
   id,
@@ -147,8 +147,8 @@ export const ItemCardWrapper = function ItemCardWrapper({
         category={category} 
       />
       
-      {/* Moved the actions right below the gallery */}
-      <div className="px-4 pt-2 pb-0">
+      {/* Actions moved directly below gallery with no padding-top */}
+      <div className="px-4">
         <ItemCardActions
           id={id}
           postedBy={postedBy}
@@ -184,8 +184,8 @@ export const ItemCardWrapper = function ItemCardWrapper({
         />
       </div>
       
-      {/* Content moved below actions */}
-      <div className="p-4 pt-2">
+      {/* Content with reduced top padding */}
+      <div className="px-4 pb-2">
         <ItemCardContent 
           description={description} 
           measurements={measurements} 

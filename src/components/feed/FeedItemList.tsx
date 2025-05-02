@@ -35,7 +35,7 @@ export function FeedItemList({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3"> {/* Reduced space between cards */}
       {posts?.map((post) => {
         let coordinates;
         if (post.coordinates) {
