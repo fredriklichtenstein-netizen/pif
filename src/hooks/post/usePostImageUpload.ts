@@ -39,7 +39,7 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
           const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
 
           const { error, data } = await supabase.storage
-            .from("lovable-uploads")
+            .from("post-images")
             .upload(filePath, file, {
               cacheControl: "3600",
               upsert: false,
@@ -61,7 +61,7 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
 
           console.log(`File uploaded successfully: ${filePath}`);
           const { data: urlData } = supabase.storage
-            .from("lovable-uploads")
+            .from("post-images")
             .getPublicUrl(filePath);
             
           console.log(`Generated public URL: ${urlData.publicUrl}`);
