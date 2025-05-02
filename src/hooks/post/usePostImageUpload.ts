@@ -8,6 +8,7 @@ import { useState } from "react";
  */
 export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (urls: string[]) => void }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
   const { user } = useGlobalAuth();
 
@@ -15,6 +16,7 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("Image upload started");
     setIsAnalyzing(true);
+    setUploadProgress(0);
     const files = Array.from(e.target.files || []);
 
     if (!files || files.length === 0) {
@@ -26,6 +28,9 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
     try {
       console.log(`Processing ${files.length} files for upload`);
       const { supabase } = await import("@/integrations/supabase/client");
+      
+      // Track successful uploads to show progress
+      let completedUploads = 0;
       
       const uploadPromises = files.map(async (file) => {
         try {
@@ -50,6 +55,10 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
             return null;
           }
 
+          // Update progress after each successful upload
+          completedUploads++;
+          setUploadProgress(Math.round((completedUploads / files.length) * 100));
+
           console.log(`File uploaded successfully: ${filePath}`);
           const { data: urlData } = supabase.storage
             .from("lovable-uploads")
@@ -71,9 +80,13 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
       console.log("Waiting for all uploads to complete");
       const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
 
-      console.log(`Upload completed: ${uploadedUrls.length} successful uploads`);
+      console.log(`Upload completed: ${uploadedUrls.length} successful uploads out of ${files.length} attempts`);
       if (uploadedUrls.length > 0) {
         onImagesUploaded(uploadedUrls);
+        toast({
+          title: "Upload successful",
+          description: `Successfully uploaded ${uploadedUrls.length} image${uploadedUrls.length > 1 ? 's' : ''}`,
+        });
       } else if (files.length > 0 && uploadedUrls.length === 0) {
         toast({
           title: "Upload failed",
@@ -91,8 +104,9 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
     } finally {
       console.log("Upload process finished, resetting state");
       setIsAnalyzing(false);
+      setUploadProgress(0);
     }
   };
 
-  return { handleImageUpload, isAnalyzing };
+  return { handleImageUpload, isAnalyzing, uploadProgress };
 }

@@ -1,9 +1,11 @@
 
 import React from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface ImageUploadProps {
   isAnalyzing?: boolean;
+  uploadProgress?: number;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isPrimaryImageRequired?: boolean;
   variant: 'primary' | 'secondary';
@@ -11,6 +13,7 @@ interface ImageUploadProps {
 
 export function ImageUpload({ 
   isAnalyzing, 
+  uploadProgress = 0,
   onImageUpload, 
   isPrimaryImageRequired,
   variant
@@ -32,7 +35,15 @@ export function ImageUpload({
           <>
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
             <span className="text-sm text-primary font-medium">Uploading...</span>
-            <span className="text-xs text-muted-foreground mt-1">Please wait</span>
+            {uploadProgress > 0 && (
+              <div className="w-4/5 mt-2">
+                <Progress value={uploadProgress} className="h-2" />
+                <span className="text-xs text-muted-foreground mt-1">{uploadProgress}% complete</span>
+              </div>
+            )}
+            {!uploadProgress && (
+              <span className="text-xs text-muted-foreground mt-1">Please wait</span>
+            )}
           </>
         ) : (
           <>

@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 interface PostFormImagesProps {
   images: string[];
   isAnalyzing?: boolean;
+  uploadProgress?: number;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImagesChange: (newImages: string[]) => void;
 }
@@ -17,6 +18,7 @@ interface PostFormImagesProps {
 export function PostFormImages({ 
   images, 
   isAnalyzing,
+  uploadProgress,
   onImageUpload,
   onImagesChange
 }: PostFormImagesProps) {
@@ -49,6 +51,7 @@ export function PostFormImages({
             <AlertTitle>Uploading images</AlertTitle>
             <AlertDescription>
               Your images are being uploaded. This may take a few moments depending on your connection speed.
+              {uploadProgress ? ` (${uploadProgress}% complete)` : ''}
             </AlertDescription>
           </Alert>
         )}
@@ -57,6 +60,7 @@ export function PostFormImages({
           <div className="mt-2">
             <ImageUpload
               isAnalyzing={isAnalyzing}
+              uploadProgress={uploadProgress}
               onImageUpload={onImageUpload}
               isPrimaryImageRequired={true}
               variant="primary"
@@ -113,6 +117,7 @@ export function PostFormImages({
               
               <ImageUpload
                 isAnalyzing={isAnalyzing}
+                uploadProgress={uploadProgress}
                 onImageUpload={onImageUpload}
                 isPrimaryImageRequired={false}
                 variant="secondary"
