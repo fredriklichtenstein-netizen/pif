@@ -13,14 +13,15 @@ export function ItemCardContent({
   measurements = {}
 }: ItemCardContentProps) {
   const hasDetails = Object.keys(measurements).length > 0;
+  // Force showToggle to true regardless of description length
   const { expanded, toggleExpanded } = useExpandableContent(description, hasDetails);
 
   return (
-    <div className="mt-0 mb-2 px-1"> {/* Reduced top margin */}
+    <div className="mt-1 mb-4 px-1">
       <div className="text-sm text-gray-600">
         <button 
           onClick={toggleExpanded} 
-          className="flex items-center text-primary text-xs font-medium"
+          className="mb-2 flex items-center text-primary text-xs font-medium"
         >
           {expanded ? (
             <>

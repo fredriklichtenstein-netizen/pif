@@ -45,7 +45,7 @@ export function ItemCardHeader({
   };
   
   return (
-    <div className="p-3 flex items-center justify-between bg-background">
+    <div className="p-3 flex items-center justify-between">
       {postedBy.id ? (
         <Link to={`/user/${postedBy.id}`} className="flex items-center">
           <Avatar className="h-8 w-8 mr-2">

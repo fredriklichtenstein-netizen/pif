@@ -79,7 +79,7 @@ export function ItemCardActions({
   const { handleShare, isSharing } = useItemSharing(stringId);
   
   return (
-    <div className="space-y-2"> {/* Reduced spacing between elements */}
+    <div className="space-y-4">
       <ItemInteractions
         id={stringId}
         postedBy={postedBy}
