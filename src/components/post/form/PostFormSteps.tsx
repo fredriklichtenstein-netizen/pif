@@ -8,6 +8,7 @@ import { AddressInput } from "@/components/profile/address/AddressInput";
 interface PostFormStepsProps {
   formData: CreatePostInput;
   isAnalyzing?: boolean;
+  uploadProgress?: number;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImagesChange: (newImages: string[]) => void;
   onMeasurementChange: (field: string, value: string) => void;
@@ -18,6 +19,7 @@ interface PostFormStepsProps {
 export function PostFormSteps({
   formData,
   isAnalyzing,
+  uploadProgress,
   onImageUpload,
   onImagesChange,
   onMeasurementChange,
@@ -33,6 +35,7 @@ export function PostFormSteps({
           onImageUpload={onImageUpload}
           onImagesChange={onImagesChange}
           isAnalyzing={isAnalyzing}
+          uploadProgress={uploadProgress}
         />
       </div>
 

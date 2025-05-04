@@ -23,6 +23,14 @@ export function usePostFormInitializer(initialData?: any): CreatePostInput {
   if (!initialData) return { ...DEFAULT_FORM_DATA };
 
   const coordinates = parseCoordinates(initialData.coordinates);
+  const measurements = initialData.measurements || {};
+  
+  // Extract dimension values from measurements if they exist
+  const dimensions = {
+    width: measurements.width || "",
+    height: measurements.height || "",
+    depth: measurements.depth || "",
+  };
 
   // Only use fields that exist in the type
   return {
@@ -33,12 +41,8 @@ export function usePostFormInitializer(initialData?: any): CreatePostInput {
     images: initialData.images || [],
     location: initialData.location || "",
     coordinates: coordinates,
-    dimensions: {
-      width: initialData.dimensions?.width || "",
-      height: initialData.dimensions?.height || "",
-      depth: initialData.dimensions?.depth || "",
-    },
+    dimensions: dimensions,
     weight: initialData.weight || "",
-    measurements: initialData.measurements || {},
+    measurements: measurements,
   };
 }

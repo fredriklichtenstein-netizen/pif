@@ -23,6 +23,7 @@ export function usePostForm(initialData?: any) {
   const {
     handleImageUpload,
     isAnalyzing,
+    uploadProgress,
   } = usePostImageUpload({
     onImagesUploaded: (uploadedUrls) => {
       setFormData((prev) => ({
@@ -41,13 +42,29 @@ export function usePostForm(initialData?: any) {
   };
 
   const handleMeasurementChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      dimensions: {
-        ...prev.dimensions!,
-        [field]: value,
-      },
-    }));
+    setFormData((prev) => {
+      // Create a deep copy of measurements to prevent mutation
+      const updatedMeasurements = { ...prev.measurements };
+      
+      // Update the dimensions field in measurements
+      if (field === 'width' || field === 'height' || field === 'depth') {
+        const dimensions = { ...prev.dimensions };
+        dimensions[field] = value;
+        
+        return {
+          ...prev,
+          dimensions: dimensions,
+          measurements: updatedMeasurements
+        };
+      } else {
+        // For other measurements not related to dimensions
+        updatedMeasurements[field] = value;
+        return {
+          ...prev,
+          measurements: updatedMeasurements
+        };
+      }
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,6 +88,15 @@ export function usePostForm(initialData?: any) {
       // format coordinates for DB: (lng,lat)
       const dbCoordinates = formData.coordinates ?
         `(${formData.coordinates.lng},${formData.coordinates.lat})` : null;
+        
+      // Prepare the measurements object with dimensions included
+      const measurementsWithDimensions = {
+        ...formData.measurements,
+        // Include dimensions in the measurements object
+        width: formData.dimensions?.width || "",
+        height: formData.dimensions?.height || "",
+        depth: formData.dimensions?.depth || "",
+      };
 
       const postData = {
         title: formData.title,
@@ -80,9 +106,9 @@ export function usePostForm(initialData?: any) {
         images: formData.images,
         location: formData.location,
         coordinates: dbCoordinates,
-        dimensions: formData.dimensions,
         weight: formData.weight,
-        measurements: formData.measurements,
+        // Store dimensions in the measurements JSONB field
+        measurements: measurementsWithDimensions,
         user_id: user.id,
       };
 
@@ -128,6 +154,7 @@ export function usePostForm(initialData?: any) {
     setFormData,
     isSubmitting,
     isAnalyzing,
+    uploadProgress,
     handleImageUpload,
     handleImagesChange,
     handleMeasurementChange,
