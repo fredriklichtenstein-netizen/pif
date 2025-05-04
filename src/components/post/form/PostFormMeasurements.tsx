@@ -26,14 +26,15 @@ export function PostFormMeasurements({
   const showWeightField = true;
   
   const handleSizeChange = (size: string) => {
-    onMeasurementChange("size", size);
+    // If size is "none", set it to empty string for data storage purposes
+    onMeasurementChange("size", size === "none" ? "" : size);
   };
   
   const handleCustomSizeChange = (customSize: string) => {
     onMeasurementChange("customSize", customSize);
     
     // If custom size is provided and standard size is not, use custom size as the main size
-    if (customSize && !measurements.size) {
+    if (customSize && (!measurements.size || measurements.size === "none")) {
       onMeasurementChange("size", customSize);
     }
   };

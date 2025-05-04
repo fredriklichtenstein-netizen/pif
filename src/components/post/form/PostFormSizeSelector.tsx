@@ -58,7 +58,8 @@ export function PostFormSizeSelector({
               <SelectValue placeholder="Select size" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Select size</SelectItem>
+              {/* Replace empty string "" with "none" */}
+              <SelectItem value="none">Select size</SelectItem>
               {standardSizes.map((size) => (
                 <SelectItem key={size} value={size}>{size}</SelectItem>
               ))}
@@ -89,7 +90,8 @@ export function PostFormSizeSelector({
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select size</SelectItem>
+                  {/* Replace empty string "" with "none" */}
+                  <SelectItem value="none">Select size</SelectItem>
                   {euSizes.men.map((size) => (
                     <SelectItem key={size} value={size}>{size}</SelectItem>
                   ))}
@@ -122,7 +124,8 @@ export function PostFormSizeSelector({
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select size</SelectItem>
+                  {/* Replace empty string "" with "none" */}
+                  <SelectItem value="none">Select size</SelectItem>
                   {usSizes.men.map((size) => (
                     <SelectItem key={size} value={size}>{size}</SelectItem>
                   ))}
