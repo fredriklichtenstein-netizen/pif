@@ -96,6 +96,8 @@ export function usePostForm(initialData?: any) {
         width: formData.dimensions?.width || "",
         height: formData.dimensions?.height || "",
         depth: formData.dimensions?.depth || "",
+        // Include weight in the measurements object
+        weight: formData.weight || "",
       };
 
       const postData = {
@@ -106,8 +108,7 @@ export function usePostForm(initialData?: any) {
         images: formData.images,
         location: formData.location,
         coordinates: dbCoordinates,
-        weight: formData.weight,
-        // Store dimensions in the measurements JSONB field
+        // Store dimensions and weight in the measurements JSONB field
         measurements: measurementsWithDimensions,
         user_id: user.id,
       };

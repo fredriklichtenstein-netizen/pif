@@ -31,6 +31,9 @@ export function usePostFormInitializer(initialData?: any): CreatePostInput {
     height: measurements.height || "",
     depth: measurements.depth || "",
   };
+  
+  // Extract weight from measurements
+  const weight = measurements.weight || "";
 
   // Only use fields that exist in the type
   return {
@@ -42,7 +45,7 @@ export function usePostFormInitializer(initialData?: any): CreatePostInput {
     location: initialData.location || "",
     coordinates: coordinates,
     dimensions: dimensions,
-    weight: initialData.weight || "",
+    weight: weight,
     measurements: measurements,
   };
 }
