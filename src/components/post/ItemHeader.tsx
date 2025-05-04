@@ -116,6 +116,7 @@ export function ItemHeader({
       <ItemContent 
         title={title}
         description={description}
+        condition={condition}
       />
       
       <ItemMeasurements measurements={measurements} />

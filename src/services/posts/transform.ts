@@ -19,6 +19,11 @@ export const transformPostData = (
       console.error("Error parsing coordinates:", err, item.coordinates);
     }
   }
+  
+  // Process measurements to ensure they are correctly formatted
+  const measurements = (typeof item.measurements === 'object' && item.measurements !== null) 
+    ? item.measurements
+    : {};
 
   return {
     id: item.id.toString(),
@@ -26,9 +31,7 @@ export const transformPostData = (
     description: item.description || '',
     category: item.category || '',
     condition: item.condition || '',
-    measurements: (typeof item.measurements === 'object' && item.measurements !== null) 
-      ? item.measurements
-      : {},
+    measurements: measurements,
     images: item.images || [],
     location: item.location || '',
     coordinates: parsedCoordinates,

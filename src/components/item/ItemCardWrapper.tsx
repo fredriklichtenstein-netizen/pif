@@ -188,6 +188,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
       <div className="p-4 pt-2">
         <ItemCardContent 
           description={description} 
+          condition={condition}
           measurements={measurements} 
         />
       </div>

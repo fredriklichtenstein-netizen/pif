@@ -34,7 +34,7 @@ export function PostFormDetails({
 
       <PostFormMeasurements
         category={formData.category}
-        measurements={formData.measurements}
+        measurements={formData.measurements || {}}
         onMeasurementChange={onMeasurementChange}
       />
     </>

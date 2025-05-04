@@ -1,15 +1,18 @@
 
 import { ItemDescription } from "./ItemDescription";
+import { ItemCondition } from "./ItemCondition";
 import { ItemMeasurements } from "./ItemMeasurements";
 import { useExpandableContent } from "./useExpandableContent";
 
 interface ItemCardContentProps {
   description: string;
+  condition?: string;
   measurements?: Record<string, string>;
 }
 
 export function ItemCardContent({
   description,
+  condition,
   measurements = {}
 }: ItemCardContentProps) {
   const hasDetails = Object.keys(measurements).length > 0;
@@ -42,6 +45,8 @@ export function ItemCardContent({
               toggleExpanded={toggleExpanded}
               showToggle={false}
             />
+            
+            {condition && <ItemCondition condition={condition} />}
             
             {hasDetails && <ItemMeasurements measurements={measurements} />}
           </>

@@ -1,4 +1,3 @@
-
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
@@ -49,6 +48,7 @@ export function FeedItemList({
             console.error("Failed to parse coordinates:", e, post.coordinates);
           }
         }
+        
         return (
           <NetworkStatusWrapper key={post.id}>
             <ItemCard
@@ -71,6 +71,7 @@ export function FeedItemList({
           </NetworkStatusWrapper>
         );
       })}
+      
       {posts?.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           <p>{getEmptyStateMessage()}</p>
