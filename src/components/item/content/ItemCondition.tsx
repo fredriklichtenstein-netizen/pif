@@ -1,5 +1,5 @@
 
-import { Check, X, Info } from "lucide-react";
+import { CircleCheck, CircleDot, Circle, HeartCrack } from "lucide-react";
 
 interface ItemConditionProps {
   condition: string;
@@ -7,17 +7,18 @@ interface ItemConditionProps {
 
 export function ItemCondition({ condition }: ItemConditionProps) {
   const getConditionIcon = () => {
+    const iconClass = "h-4 w-4 text-gray-500"; // Using neutral gray color for all icons
+    
     switch (condition.toLowerCase()) {
       case "new":
       case "like new":
-      case "excellent":
-        return <Check className="h-4 w-4 text-green-500" />;
+        return <CircleCheck className={iconClass} />;
       case "good":
+        return <CircleDot className={iconClass} />;
       case "fair":
-        return <Info className="h-4 w-4 text-amber-500" />;
-      case "poor":
-      case "for parts":
-        return <X className="h-4 w-4 text-red-500" />;
+        return <Circle className={iconClass} />;
+      case "well loved":
+        return <HeartCrack className={iconClass} />;
       default:
         return null;
     }

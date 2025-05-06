@@ -16,7 +16,6 @@ export function ItemCardContent({
   measurements = {}
 }: ItemCardContentProps) {
   const hasDetails = Object.keys(measurements).length > 0;
-  // Force showToggle to true regardless of description length
   const { expanded, toggleExpanded } = useExpandableContent(description, hasDetails);
 
   return (
