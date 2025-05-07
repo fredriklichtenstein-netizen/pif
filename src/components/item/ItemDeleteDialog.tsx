@@ -92,20 +92,22 @@ export function ItemDeleteDialog({
       if (interestedCount > 0) {
         try {
           // Get item title first for the notification
-          const { data: itemData } = await supabase
+          const itemResponse = await supabase
             .from('items')
             .select('title')
             .eq('id', numericId)
             .single();
             
-          const itemTitle = itemData?.title || 'An item';
+          const itemTitle = itemResponse?.data?.title || 'An item';
           
           // Get all interested users
-          const { data: interestedUsers } = await supabase
+          const interestedUsersResponse = await supabase
             .from('interests')
             .select('user_id')
             .eq('item_id', numericId);
             
+          const interestedUsers = interestedUsersResponse?.data || [];
+          
           if (interestedUsers && interestedUsers.length > 0) {
             // Create notification promises for each user
             notificationPromises = interestedUsers.map(user => 
@@ -118,7 +120,7 @@ export function ItemDeleteDialog({
                   : `"${itemTitle}" was ${isSoftDelete ? 'archived' : 'deleted'} by the owner`,
                 p_reference_id: numericId.toString(),
                 p_reference_type: 'item'
-              })
+              }).then(result => result)
             );
           }
         } catch (notifyError) {
@@ -128,7 +130,7 @@ export function ItemDeleteDialog({
       }
       
       // Perform delete/archive operation first
-      let operationPromise: Promise<{ error: any }>;
+      let operationPromise;
       
       if (isSoftDelete) {
         // Soft delete: update status to 'archived'
@@ -149,11 +151,10 @@ export function ItemDeleteDialog({
       }
       
       // Execute delete/archive operation
-      const { error } = await operationPromise;
-      if (error) throw error;
+      const operationResult = await operationPromise;
+      if (operationResult.error) throw operationResult.error;
       
-      // Send notifications in the background - don't wait for them to complete
-      // But catch any errors to prevent unhandled promise rejections
+      // Send notifications in the background if there are any
       if (notificationPromises.length > 0) {
         Promise.all(notificationPromises)
           .catch(err => console.error('Error sending notifications:', err));
