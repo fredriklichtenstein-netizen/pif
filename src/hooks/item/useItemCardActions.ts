@@ -46,7 +46,7 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
       if (error.name === 'AbortError') {
         console.error('Interested users check timed out');
         toast({
-          variant: "warning",
+          variant: "destructive", // Changed from "warning" to "destructive" to match allowed variants
           title: "Operation timed out",
           description: "Checking interested users took too long. Proceeding with limited information."
         });
