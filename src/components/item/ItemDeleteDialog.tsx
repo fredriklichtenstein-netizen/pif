@@ -105,8 +105,9 @@ export function ItemDeleteDialog({
             .eq('item_id', numericId);
             
           if (interestedUsers && interestedUsers.length > 0) {
-            // Create notification for each user (non-blocking)
-            interestedUsers.forEach(user => {
+            // Create notification for each user - using Promise.all to wait for all
+            // instead of using non-awaited forEach which could lead to issues
+            await Promise.all(interestedUsers.map(user => 
               supabase.rpc('create_notification', {
                 p_user_id: user.user_id,
                 p_type: isSoftDelete ? 'item_archived' : 'item_deleted',
@@ -116,9 +117,8 @@ export function ItemDeleteDialog({
                   : `"${itemTitle}" was ${isSoftDelete ? 'archived' : 'deleted'} by the owner`,
                 p_reference_id: numericId.toString(),
                 p_reference_type: 'item'
-              }).then(() => console.log(`Notification sent to user ${user.user_id}`))
-                .catch(err => console.error('Error sending notification:', err));
-            });
+              })
+            ));
           }
         } catch (notifyError) {
           console.error('Error preparing notifications:', notifyError);
