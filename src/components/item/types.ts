@@ -1,4 +1,3 @@
-
 import { type Comment } from "@/types/comment";
 
 export interface ItemCardProps {
@@ -20,6 +19,7 @@ export interface ItemCardProps {
     name: string;
     avatar: string;
   };
+  archived_at?: string | null;
 }
 
 export interface ItemCardHeaderProps {
