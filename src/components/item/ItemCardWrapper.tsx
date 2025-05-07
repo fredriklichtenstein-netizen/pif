@@ -12,6 +12,7 @@ import { ItemErrorDisplay } from "./content/ItemErrorDisplay";
 import { useItemErrorHandler } from "./content/useItemErrorHandler";
 import { useCoordinatesParser } from "./content/useCoordinatesParser";
 import { ItemDeleteDialog } from "./ItemDeleteDialog";
+import { Archive } from "lucide-react";
 import type { ItemCardProps } from "./types";
 
 export const ItemCardWrapper = function ItemCardWrapper({
@@ -25,13 +26,15 @@ export const ItemCardWrapper = function ItemCardWrapper({
   category,
   condition,
   measurements = {},
-  postedBy
+  postedBy,
+  archived_at
 }: ItemCardProps) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemDeleted, setIsItemDeleted] = useState(false);
   const [isItemArchived, setIsItemArchived] = useState(false);
   const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
   const { parsedCoordinates } = useCoordinatesParser(coordinates);
+  const isArchived = !!archived_at;
 
   // Get card actions and interactions
   const {
@@ -48,9 +51,9 @@ export const ItemCardWrapper = function ItemCardWrapper({
   useEffect(() => {
     console.log('ItemCardWrapper props:', {
       id, title, description, image, images, location, 
-      coordinates, category, condition, measurements, postedBy
+      coordinates, category, condition, measurements, postedBy, archived_at
     });
-  }, [id, title, description, image, images, location, coordinates, category, condition, measurements, postedBy]);
+  }, [id, title, description, image, images, location, coordinates, category, condition, measurements, postedBy, archived_at]);
   
   const {
     isLiked,
@@ -124,6 +127,13 @@ export const ItemCardWrapper = function ItemCardWrapper({
       {realtimeError && (
         <div className="p-2 bg-gray-50 py-0">
           <NetworkStatus onRetry={refreshItemData} />
+        </div>
+      )}
+      
+      {isArchived && (
+        <div className="bg-yellow-50 p-2 flex items-center gap-2 text-sm text-amber-700">
+          <Archive className="h-4 w-4" />
+          <span>This item has been archived</span>
         </div>
       )}
       

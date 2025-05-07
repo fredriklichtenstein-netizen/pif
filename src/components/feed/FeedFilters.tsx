@@ -1,12 +1,12 @@
+
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Filter } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface FeedFiltersProps {
   categories: string[];
   selectedCategories: string[];
-  setSelectedCategories: (val: string[]) => void;
+  setSelectedCategories: (categories: string[]) => void;
   allSelected: boolean;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
@@ -22,99 +22,119 @@ export function FeedFilters({
   showFilters,
   setShowFilters,
   viewMode,
-  setViewMode,
+  setViewMode
 }: FeedFiltersProps) {
-  const isCategorySelected = (category: string) => selectedCategories.includes(category);
+  const { user } = useGlobalAuth();
+  const isLoggedIn = !!user;
 
-  const selectAll = () => setSelectedCategories([...categories]);
-  const clearFilters = () => setSelectedCategories([]);
-
-  const toggleCategory = (category: string) => {
-    if (isCategorySelected(category)) {
+  const handleCategoryToggle = (category: string) => {
+    if (selectedCategories.includes(category)) {
       setSelectedCategories(selectedCategories.filter((c) => c !== category));
     } else {
-      const updated = [...selectedCategories, category];
-      setSelectedCategories(updated.length >= categories.length ? [...categories] : updated);
+      setSelectedCategories([...selectedCategories, category]);
     }
   };
 
-  const handleCheckboxChange = (category: string) => {
-    toggleCategory(category);
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories([...categories]);
+    }
   };
 
+  const isSelected = (currentMode: string) => viewMode === currentMode;
+
   return (
-    <div className="mb-6">
-      {/* View Mode Tabs - Reordered as requested: All, My PIFs, Interested, Saved */}
-      <Tabs 
-        value={viewMode} 
-        onValueChange={setViewMode}
-        className="mb-4"
-      >
-        <TabsList className="w-full grid grid-cols-4 mb-2">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="myPifs">My PIFs</TabsTrigger>
-          <TabsTrigger value="interested">Interested</TabsTrigger>
-          <TabsTrigger value="saved">Saved</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      
-      {/* Category Filters */}
+    <div className="mb-4">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="font-medium">Categories</h2>
+        <div className="flex space-x-2">
+          <Button 
+            variant={isSelected("all") ? "default" : "outline"} 
+            size="sm"
+            onClick={() => setViewMode("all")}
+          >
+            All PIFs
+          </Button>
+          
+          {isLoggedIn && (
+            <>
+              <Button 
+                variant={isSelected("saved") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setViewMode("saved")}
+              >
+                Saved
+              </Button>
+              
+              <Button 
+                variant={isSelected("myPifs") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setViewMode("myPifs")}
+              >
+                My PIFs
+              </Button>
+              
+              <Button 
+                variant={isSelected("archived") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setViewMode("archived")}
+              >
+                Archived
+              </Button>
+              
+              <Button 
+                variant={isSelected("interested") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setViewMode("interested")}
+              >
+                Interested
+              </Button>
+            </>
+          )}
+        </div>
+        
         <Button
           variant="ghost"
           size="sm"
-          className="flex items-center gap-1 text-muted-foreground"
           onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-1"
         >
-          <Filter className="h-4 w-4" />
-          <span>{selectedCategories.length > 0 ? `${selectedCategories.length} selected` : 'Filter'}</span>
+          <Filter className="w-4 h-4" />
+          <span className="sr-md:inline">Filter</span>
+          {showFilters ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
         </Button>
       </div>
 
-      {/* Only show checkboxes as category filter controls */}
       {showFilters && (
-        <div className="bg-accent/40 rounded-lg p-3 mb-4 mt-2 grid grid-cols-2 gap-2">
-          <div className="col-span-2 mb-1 flex justify-between items-center">
-            <h3 className="text-sm font-medium">Select categories</h3>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="h-7 text-xs px-3"
-                onClick={selectAll}
-                tabIndex={0}
-              >
-                Select all
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={clearFilters}
-                tabIndex={0}
-              >
-                Clear all
-              </Button>
-            </div>
+        <div className="bg-background border rounded-lg p-4 mb-4 shadow-sm">
+          <div className="mb-2 flex justify-between items-center">
+            <h3 className="font-medium">Categories</h3>
+            <Button 
+              variant="link" 
+              size="sm" 
+              onClick={handleSelectAll}
+              className="h-auto p-0"
+            >
+              {allSelected ? "Clear all" : "Select all"}
+            </Button>
           </div>
-
-          {categories.map((category) => (
-            <div key={category} className="flex items-center space-x-2">
-              <Checkbox
-                id={`filter-${category}`}
-                checked={isCategorySelected(category)}
-                onCheckedChange={() => handleCheckboxChange(category)}
-              />
-              <label
-                htmlFor={`filter-${category}`}
-                className="text-sm cursor-pointer select-none"
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategories.includes(category) ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleCategoryToggle(category)}
               >
                 {category}
-              </label>
-            </div>
-          ))}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
     </div>

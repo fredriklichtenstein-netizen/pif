@@ -579,6 +579,10 @@ export type Database = {
       }
     }
     Functions: {
+      archive_item: {
+        Args: { p_item_id: number; p_reason?: string }
+        Returns: boolean
+      }
       create_conversation: {
         Args: { item_id_param: number; receiver_id_param: string }
         Returns: string
@@ -594,6 +598,10 @@ export type Database = {
           p_action_url?: string
         }
         Returns: string
+      }
+      delete_item_with_related_records: {
+        Args: { p_item_id: number; p_reason?: string }
+        Returns: boolean
       }
       get_follower_count: {
         Args: { user_id: string }

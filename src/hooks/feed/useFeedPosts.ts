@@ -25,7 +25,8 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
     error: userPostsError,
     loadSavedPosts,
     loadMyPosts, 
-    loadInterestedPosts 
+    loadInterestedPosts,
+    loadArchivedPosts
   } = useUserPosts({ 
     includeArchived: options.includeArchived,
     onlyArchived: options.onlyArchived
@@ -60,7 +61,7 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
         await loadMyPosts(user);
         break;
       case "archived":
-        await loadMyPosts(user);
+        await loadArchivedPosts(user);
         break;
       case "interested":
         await loadInterestedPosts(user);
@@ -68,7 +69,7 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
       default:
         await fetchPosts();
     }
-  }, [fetchPosts, loadSavedPosts, loadMyPosts, loadInterestedPosts, user]);
+  }, [fetchPosts, loadSavedPosts, loadMyPosts, loadArchivedPosts, loadInterestedPosts, user]);
 
   // Initial posts fetch
   useEffect(() => {

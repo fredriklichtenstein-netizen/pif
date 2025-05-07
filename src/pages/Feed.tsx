@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
@@ -35,6 +36,7 @@ export default function Feed() {
     filterByCategories, 
     loadSavedPosts,
     loadMyPosts,
+    loadArchivedPosts,
     loadInterestedPosts
   } = useFeedPosts();
 
@@ -60,6 +62,9 @@ export default function Feed() {
           break;
         case "myPifs":
           await loadMyPosts();
+          break;
+        case "archived":
+          await loadArchivedPosts();
           break;
         case "interested":
           await loadInterestedPosts();
