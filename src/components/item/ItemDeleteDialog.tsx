@@ -78,6 +78,64 @@ export function ItemDeleteDialog({
       }
     }
   };
+
+  // Helper function to delete related records for an item
+  const deleteRelatedRecords = async (itemId: number): Promise<void> => {
+    // Create an array of promises to delete related records in parallel
+    const deletePromises = [
+      // Delete bookmarks first
+      supabase.from('bookmarks').delete().eq('item_id', itemId),
+      // Delete likes
+      supabase.from('likes').delete().eq('item_id', itemId),
+      // Delete interests
+      supabase.from('interests').delete().eq('item_id', itemId),
+      // Delete comments
+      supabase.from('comments').delete().eq('item_id', itemId),
+    ];
+    
+    try {
+      // Execute all delete operations in parallel
+      const results = await Promise.all(deletePromises);
+      
+      // Check for errors
+      results.forEach((result, index) => {
+        if (result.error) {
+          console.error(`Error deleting related records (${index}):`, result.error);
+        }
+      });
+      
+      // Handle conversations separately as they need special treatment
+      const { data: conversations, error: convError } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('item_id', itemId);
+      
+      if (convError) {
+        console.error('Error fetching conversations:', convError);
+      } else if (conversations && conversations.length > 0) {
+        // Get all conversation IDs
+        const conversationIds = conversations.map(conv => conv.id);
+        
+        // Delete related conversation participants and messages
+        await Promise.all([
+          supabase.from('conversation_participants')
+            .delete()
+            .in('conversation_id', conversationIds),
+          supabase.from('messages')
+            .delete()
+            .in('conversation_id', conversationIds),
+        ]);
+        
+        // Then delete the conversations themselves
+        await supabase.from('conversations')
+          .delete()
+          .eq('item_id', itemId);
+      }
+    } catch (error) {
+      console.error('Error in deleteRelatedRecords:', error);
+      throw error;
+    }
+  };
   
   const handleDeleteConfirm = async (reason: string, isSoftDelete: boolean) => {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
@@ -130,7 +188,6 @@ export function ItemDeleteDialog({
         }
       }
       
-      // Perform delete/archive operation first
       let operationResult;
       
       if (isSoftDelete) {
@@ -144,7 +201,10 @@ export function ItemDeleteDialog({
           })
           .eq('id', numericId);
       } else {
-        // Hard delete: permanently remove
+        // For hard delete, we need to first delete related records
+        await deleteRelatedRecords(numericId);
+        
+        // Then delete the item itself
         operationResult = await supabase
           .from('items')
           .delete()
@@ -152,7 +212,14 @@ export function ItemDeleteDialog({
       }
       
       // Check for operation errors
-      if (operationResult.error) throw operationResult.error;
+      if (operationResult.error) {
+        if (operationResult.error.code === '23503') {
+          // Foreign key constraint violation
+          throw new Error("This item has related records that prevent deletion. Please try archiving instead.");
+        } else {
+          throw operationResult.error;
+        }
+      }
       
       // Send notifications in the background if there are any
       if (notificationPromises.length > 0) {
