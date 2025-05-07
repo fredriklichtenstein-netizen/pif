@@ -109,9 +109,10 @@ export function ItemDeleteDialog({
           const interestedUsers = interestedUsersResponse?.data || [];
           
           if (interestedUsers && interestedUsers.length > 0) {
-            // Create notification promises for each user
-            notificationPromises = interestedUsers.map(user => 
-              supabase.rpc('create_notification', {
+            // Create notification promises for each user, ensuring they are proper Promise objects
+            notificationPromises = interestedUsers.map(user => {
+              // Convert the PromiseLike to a full Promise with .then()
+              return Promise.resolve(supabase.rpc('create_notification', {
                 p_user_id: user.user_id,
                 p_type: isSoftDelete ? 'item_archived' : 'item_deleted',
                 p_title: isSoftDelete ? 'Item Archived' : 'Item Deleted',
@@ -120,8 +121,8 @@ export function ItemDeleteDialog({
                   : `"${itemTitle}" was ${isSoftDelete ? 'archived' : 'deleted'} by the owner`,
                 p_reference_id: numericId.toString(),
                 p_reference_type: 'item'
-              }).then(result => result)
-            );
+              }));
+            });
           }
         } catch (notifyError) {
           console.error('Error preparing notifications:', notifyError);
@@ -130,11 +131,11 @@ export function ItemDeleteDialog({
       }
       
       // Perform delete/archive operation first
-      let operationPromise;
+      let operationResult;
       
       if (isSoftDelete) {
         // Soft delete: update status to 'archived'
-        operationPromise = supabase
+        operationResult = await supabase
           .from('items')
           .update({ 
             status: 'archived',
@@ -144,14 +145,13 @@ export function ItemDeleteDialog({
           .eq('id', numericId);
       } else {
         // Hard delete: permanently remove
-        operationPromise = supabase
+        operationResult = await supabase
           .from('items')
           .delete()
           .eq('id', numericId);
       }
       
-      // Execute delete/archive operation
-      const operationResult = await operationPromise;
+      // Check for operation errors
       if (operationResult.error) throw operationResult.error;
       
       // Send notifications in the background if there are any
