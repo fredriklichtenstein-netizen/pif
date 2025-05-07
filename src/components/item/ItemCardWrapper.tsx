@@ -9,11 +9,10 @@ import { NetworkStatus } from "../common/NetworkStatus";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { ItemErrorDisplay } from "./content/ItemErrorDisplay";
+import { useItemErrorHandler } from "./content/useItemErrorHandler";
+import { useCoordinatesParser } from "./content/useCoordinatesParser";
 import type { ItemCardProps } from "./types";
-import { parseCoordinatesFromDB } from "@/types/post";
-import { Button } from "../ui/button";
-import { AlertCircle, Eye } from "lucide-react";
-import { Alert } from "../ui/alert";
 
 export const ItemCardWrapper = function ItemCardWrapper({
   id,
@@ -29,33 +28,8 @@ export const ItemCardWrapper = function ItemCardWrapper({
   postedBy
 }: ItemCardProps) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
-  const [errors, setErrors] = useState<Array<{
-    message: string;
-  }>>([]);
-  const [showError, setShowError] = useState(false);
-
-  // Error boundary for component errors
-  useEffect(() => {
-    const errorHandler = (event: ErrorEvent) => {
-      console.error('Error caught by ItemCardWrapper error handler:', event.error);
-      setErrors(prev => [...prev, {
-        message: event.message
-      }]);
-      setShowError(true);
-    };
-    window.addEventListener('error', errorHandler);
-    return () => window.removeEventListener('error', errorHandler);
-  }, []);
-
-  // Parse coordinates if they're in string format
-  let parsedCoordinates = coordinates;
-  if (coordinates && typeof coordinates === 'string') {
-    try {
-      parsedCoordinates = parseCoordinatesFromDB(coordinates);
-    } catch (e) {
-      console.error('Error parsing coordinates:', e);
-    }
-  }
+  const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
+  const { parsedCoordinates } = useCoordinatesParser(coordinates);
 
   // Get card actions and interactions
   const {
@@ -72,17 +46,8 @@ export const ItemCardWrapper = function ItemCardWrapper({
   // Log all props for debugging
   useEffect(() => {
     console.log('ItemCardWrapper props:', {
-      id,
-      title,
-      description,
-      image,
-      images,
-      location,
-      coordinates,
-      category,
-      condition,
-      measurements,
-      postedBy
+      id, title, description, image, images, location, 
+      coordinates, category, condition, measurements, postedBy
     });
   }, [id, title, description, image, images, location, coordinates, category, condition, measurements, postedBy]);
   
@@ -122,42 +87,40 @@ export const ItemCardWrapper = function ItemCardWrapper({
 
   // If there are errors, show a simplified error card
   if (showError && errors.length > 0) {
-    return <Card className="overflow-hidden transition-shadow hover:shadow-md rounded-xl bg-red-50 border-red-200 p-4">
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-          <p className="text-gray-600 mb-4">We encountered an issue loading this content</p>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-            <Button variant="ghost" onClick={() => setShowError(false)}>
-              <Eye className="h-4 w-4 mr-2" />
-              Show Content Anyway
-            </Button>
-          </div>
-        </div>
-      </Card>;
+    return <ItemErrorDisplay 
+      errors={errors} 
+      onRetry={handleRetry}
+      onDismiss={handleDismissError}
+    />;
   }
   
-  return <Card id={`item-card-${id}`} className="overflow-hidden transition-shadow hover:shadow-md rounded-xl">
-      {realtimeError && <div className="p-2 bg-gray-50 py-0">
+  const numericItemId = typeof id === 'string' ? parseInt(id, 10) : id;
+  
+  return (
+    <Card id={`item-card-${id}`} className="overflow-hidden transition-shadow hover:shadow-md rounded-xl">
+      {realtimeError && (
+        <div className="p-2 bg-gray-50 py-0">
           <NetworkStatus onRetry={refreshItemData} />
-        </div>}
+        </div>
+      )}
       
       <ItemCardHeader 
         postedBy={postedBy} 
         isOwner={isOwner} 
         handleReport={handleReportClick} 
         coordinates={parsedCoordinates} 
-        itemId={typeof id === 'string' ? parseInt(id, 10) : id} 
+        itemId={numericItemId}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
       />
       
-      <ItemCardGallery images={images.length > 0 ? images : image ? [image] : []} title={title} category={category} />
+      <ItemCardGallery 
+        images={images.length > 0 ? images : image ? [image] : []} 
+        title={title} 
+        category={category} 
+      />
       
-      {/* Moved the actions right below the gallery */}
+      {/* Actions section */}
       <div className="pt-2 pb-0 px-0">
         <ItemCardActions 
           id={id} 
@@ -194,9 +157,13 @@ export const ItemCardWrapper = function ItemCardWrapper({
         />
       </div>
       
-      {/* Content moved below actions */}
+      {/* Content section */}
       <div className="p-4 pt-2 py-0">
-        <ItemCardContent description={description} condition={condition} measurements={measurements} />
+        <ItemCardContent 
+          description={description} 
+          condition={condition} 
+          measurements={measurements} 
+        />
       </div>
       
       {/* Delete confirmation dialog */}
@@ -209,5 +176,6 @@ export const ItemCardWrapper = function ItemCardWrapper({
         hasInterestedUsers={interestedCount > 0}
         interestCount={interestedCount}
       />
-    </Card>;
+    </Card>
+  );
 };
