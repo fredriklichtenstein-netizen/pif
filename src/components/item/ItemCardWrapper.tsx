@@ -8,10 +8,10 @@ import { ItemCardActions } from "./ItemCardActions";
 import { NetworkStatus } from "../common/NetworkStatus";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
-import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { ItemErrorDisplay } from "./content/ItemErrorDisplay";
 import { useItemErrorHandler } from "./content/useItemErrorHandler";
 import { useCoordinatesParser } from "./content/useCoordinatesParser";
+import { ItemDeleteDialog } from "./ItemDeleteDialog";
 import type { ItemCardProps } from "./types";
 
 export const ItemCardWrapper = function ItemCardWrapper({
@@ -37,7 +37,6 @@ export const ItemCardWrapper = function ItemCardWrapper({
     showDeleteDialog,
     interestedCount, 
     handleDeleteClick,
-    handleDeleteConfirm,
     setShowDeleteDialog,
     handleEdit,
     handleMessage
@@ -167,14 +166,11 @@ export const ItemCardWrapper = function ItemCardWrapper({
       </div>
       
       {/* Delete confirmation dialog */}
-      <DeleteConfirmDialog
+      <ItemDeleteDialog
+        id={id}
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Item"
-        description="Are you sure you want to delete this item? This action may not be reversible."
-        hasInterestedUsers={interestedCount > 0}
-        interestCount={interestedCount}
+        interestedCount={interestedCount}
       />
     </Card>
   );
