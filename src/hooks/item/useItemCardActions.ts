@@ -19,10 +19,17 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     setIsCheckingInterests(true);
     
     try {
+      // More efficient query with timeout to prevent UI blocking
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
       const { count, error } = await supabase
         .from('interests')
         .select('*', { count: 'exact', head: true })
-        .eq('item_id', numericId);
+        .eq('item_id', numericId)
+        .abortSignal(controller.signal);
+      
+      clearTimeout(timeoutId);
         
       if (error) {
         console.error('Error checking interested users:', error);
@@ -34,8 +41,18 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
         return 0;
       }
       return count || 0;
-    } catch (error) {
-      console.error('Error checking interested users:', error);
+    } catch (error: any) {
+      // Handle timeout or other errors
+      if (error.name === 'AbortError') {
+        console.error('Interested users check timed out');
+        toast({
+          variant: "warning",
+          title: "Operation timed out",
+          description: "Checking interested users took too long. Proceeding with limited information."
+        });
+      } else {
+        console.error('Error checking interested users:', error);
+      }
       return 0;
     } finally {
       setIsCheckingInterests(false);
