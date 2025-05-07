@@ -297,6 +297,8 @@ export type Database = {
       }
       items: {
         Row: {
+          archived_at: string | null
+          archived_reason: string | null
           category: string | null
           condition: string | null
           coordinates: unknown | null
@@ -312,6 +314,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_reason?: string | null
           category?: string | null
           condition?: string | null
           coordinates?: unknown | null
@@ -327,6 +331,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_reason?: string | null
           category?: string | null
           condition?: string | null
           coordinates?: unknown | null

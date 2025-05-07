@@ -10,7 +10,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -38,7 +37,7 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
-  const [deleteType, setDeleteType] = useState<"permanent" | "archive">("permanent");
+  const [deleteType, setDeleteType] = useState<"permanent" | "archive">("archive");
   const { toast } = useToast();
 
   const handleConfirm = async () => {
