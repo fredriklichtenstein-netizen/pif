@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +18,7 @@ interface DeleteConfirmDialogProps {
   isLoading?: boolean;
   isLoadingInterested?: boolean;
 }
+
 export function DeleteConfirmDialog({
   isOpen,
   onClose,
@@ -31,14 +33,23 @@ export function DeleteConfirmDialog({
   const [reason, setReason] = useState("");
   const [isSoftDelete, setIsSoftDelete] = useState(true);
   
-  const handleConfirm = () => {
+  // Reset state when dialog opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setReason("");
+      setIsSoftDelete(true);
+    }
+  }, [isOpen]);
+  
+  const handleConfirm = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default form submission
     onConfirm(reason, isSoftDelete);
   };
   
   // Close the dialog when Escape key is pressed
-  React.useEffect(() => {
+  useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
+      if (event.key === 'Escape' && isOpen && !isLoading) {
         onClose();
       }
     };
@@ -47,7 +58,7 @@ export function DeleteConfirmDialog({
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isLoading]);
   
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => {
@@ -77,8 +88,13 @@ export function DeleteConfirmDialog({
         <div className="mb-4">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <Checkbox id="soft-delete" checked={isSoftDelete} onCheckedChange={checked => setIsSoftDelete(Boolean(checked))} />
-              <Label htmlFor="soft-delete" className="cursor-pointer">
+              <Checkbox 
+                id="soft-delete" 
+                checked={isSoftDelete} 
+                onCheckedChange={checked => setIsSoftDelete(Boolean(checked))} 
+                disabled={isLoading}
+              />
+              <Label htmlFor="soft-delete" className={`cursor-pointer ${isLoading ? 'opacity-50' : ''}`}>
                 Archive instead of permanently delete
               </Label>
             </div>
@@ -90,16 +106,39 @@ export function DeleteConfirmDialog({
 
         <div className="mb-4">
           <Label htmlFor="delete-reason">Reason (optional)</Label>
-          <Textarea id="delete-reason" placeholder={isSoftDelete ? "Why are you archiving this item?" : "Why are you deleting this item?"} value={reason} onChange={e => setReason(e.target.value)} className="mt-1" />
+          <Textarea 
+            id="delete-reason" 
+            placeholder={isSoftDelete ? "Why are you archiving this item?" : "Why are you deleting this item?"} 
+            value={reason} 
+            onChange={e => setReason(e.target.value)} 
+            className="mt-1" 
+            disabled={isLoading}
+          />
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} className="bg-red-600 hover:bg-red-700" disabled={isLoading || isLoadingInterested}>
-            {isLoading ? <>
+          <AlertDialogCancel 
+            type="button" 
+            disabled={isLoading || isLoadingInterested} 
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLoading && !isLoadingInterested) onClose();
+            }}
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            type="button" 
+            onClick={handleConfirm} 
+            className="bg-red-600 hover:bg-red-700" 
+            disabled={isLoading || isLoadingInterested}
+          >
+            {isLoading ? (
+              <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
-              </> : isSoftDelete ? "Archive" : "Delete"}
+              </>
+            ) : isSoftDelete ? "Archive" : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

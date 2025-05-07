@@ -86,7 +86,9 @@ export function ItemDeleteDialog({
     try {
       // We already have the interested count from the fetch earlier
       
-      // If there are interested users, create notifications in batch
+      let notificationPromises: Promise<any>[] = [];
+      
+      // If there are interested users, prepare notifications
       if (interestedCount > 0) {
         try {
           // Get item title first for the notification
@@ -105,9 +107,8 @@ export function ItemDeleteDialog({
             .eq('item_id', numericId);
             
           if (interestedUsers && interestedUsers.length > 0) {
-            // Create notification for each user - using Promise.all to wait for all
-            // instead of using non-awaited forEach which could lead to issues
-            await Promise.all(interestedUsers.map(user => 
+            // Create notification promises for each user
+            notificationPromises = interestedUsers.map(user => 
               supabase.rpc('create_notification', {
                 p_user_id: user.user_id,
                 p_type: isSoftDelete ? 'item_archived' : 'item_deleted',
@@ -118,7 +119,7 @@ export function ItemDeleteDialog({
                 p_reference_id: numericId.toString(),
                 p_reference_type: 'item'
               })
-            ));
+            );
           }
         } catch (notifyError) {
           console.error('Error preparing notifications:', notifyError);
@@ -126,10 +127,12 @@ export function ItemDeleteDialog({
         }
       }
       
-      // Perform soft or permanent delete
+      // Perform delete/archive operation first
+      let operationPromise: Promise<{ error: any }>;
+      
       if (isSoftDelete) {
         // Soft delete: update status to 'archived'
-        const { error } = await supabase
+        operationPromise = supabase
           .from('items')
           .update({ 
             status: 'archived',
@@ -137,27 +140,31 @@ export function ItemDeleteDialog({
             archived_at: new Date().toISOString()
           })
           .eq('id', numericId);
-
-        if (error) throw error;
-        
-        toast({
-          title: "Item archived",
-          description: "The item has been archived and can be restored later",
-        });
       } else {
         // Hard delete: permanently remove
-        const { error } = await supabase
+        operationPromise = supabase
           .from('items')
           .delete()
           .eq('id', numericId);
-
-        if (error) throw error;
-        
-        toast({
-          title: "Item deleted",
-          description: "The item has been permanently deleted",
-        });
       }
+      
+      // Execute delete/archive operation
+      const { error } = await operationPromise;
+      if (error) throw error;
+      
+      // Send notifications in the background - don't wait for them to complete
+      // But catch any errors to prevent unhandled promise rejections
+      if (notificationPromises.length > 0) {
+        Promise.all(notificationPromises)
+          .catch(err => console.error('Error sending notifications:', err));
+      }
+      
+      toast({
+        title: isSoftDelete ? "Item archived" : "Item deleted",
+        description: isSoftDelete 
+          ? "The item has been archived and can be restored later" 
+          : "The item has been permanently deleted",
+      });
 
       // Call onSuccess callback if provided
       if (onSuccess) {
@@ -165,20 +172,22 @@ export function ItemDeleteDialog({
       } else {
         // Default behavior - return to profile or reload feed
         if (window.location.pathname.includes('/feed')) {
-          window.location.reload();
+          // Instead of full page reload, redirect to ensure clean state
+          navigate('/feed', { replace: true });
         } else {
           navigate('/profile');
         }
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting item:', error);
       toast({
         title: "Error",
-        description: "Failed to delete item. Please try again.",
+        description: error.message || "Failed to delete item. Please try again.",
         variant: "destructive",
       });
     } finally {
+      // Always clean up state and close dialog, even on error
       setIsDeleting(false);
       onClose();
     }
@@ -187,7 +196,10 @@ export function ItemDeleteDialog({
   return (
     <DeleteConfirmDialog
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        // Only allow closing if not currently processing
+        if (!isDeleting) onClose();
+      }}
       onConfirm={handleDeleteConfirm}
       title="Delete Item"
       description="Are you sure you want to delete this item? This action may not be reversible."

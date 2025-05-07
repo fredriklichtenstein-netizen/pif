@@ -29,6 +29,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
 }: ItemCardProps) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemDeleted, setIsItemDeleted] = useState(false);
+  const [isItemArchived, setIsItemArchived] = useState(false);
   const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
   const { parsedCoordinates } = useCoordinatesParser(coordinates);
 
@@ -87,13 +88,23 @@ export const ItemCardWrapper = function ItemCardWrapper({
 
   // Handle successful delete or archive
   const handleDeleteSuccess = () => {
-    setIsItemDeleted(true);
-    // Close the delete dialog
-    setShowDeleteDialog(false);
+    // Show a small delay for better UX
+    setTimeout(() => {
+      console.log("Item was successfully deleted or archived");
+      setIsItemDeleted(true);
+    }, 200);
   };
 
+  // Ensure dialog is properly closed if component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup if component is unmounting
+      setShowDeleteDialog(false);
+    };
+  }, [setShowDeleteDialog]);
+
   // If the item was deleted or archived, don't render it anymore
-  if (isItemDeleted) {
+  if (isItemDeleted || isItemArchived) {
     return null;
   }
 
