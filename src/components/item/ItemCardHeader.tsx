@@ -21,6 +21,8 @@ interface ItemCardHeaderProps {
     lng: number;
   };
   itemId?: number;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export function ItemCardHeader({
@@ -28,7 +30,9 @@ export function ItemCardHeader({
   isOwner,
   handleReport,
   coordinates,
-  itemId = 0
+  itemId = 0,
+  onEdit,
+  onDelete
 }: ItemCardHeaderProps) {
   const { isBookmarked, toggleBookmark } = useItemBookmark(itemId);
   const { shareContent } = useShare();
@@ -94,6 +98,8 @@ export function ItemCardHeader({
             onBookmarkToggle={toggleBookmark}
             onShare={handleShare}
             onReportClick={handleReport}
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
         </DropdownMenuContent>
       </DropdownMenu>

@@ -9,12 +9,10 @@ import {
   Share, 
   Pencil, 
   Trash2, 
-  Flag 
+  Flag,
+  Archive,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useItemBookmark } from "@/hooks/item/useItemBookmark";
-import { useShare } from "@/hooks/useShare";
-import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface ActionMenuItemsProps {
   isBookmarked: boolean;
@@ -39,11 +37,9 @@ export function ActionMenuItems({
 }: ActionMenuItemsProps) {
   const navigate = useNavigate();
   
-  const handleShare = () => {
-    onShare();
-  };
-  
-  const handleEdit = () => {
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (onEdit) {
       onEdit();
     } else if (itemId) {
@@ -51,12 +47,11 @@ export function ActionMenuItems({
     }
   };
   
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (onDelete) {
       onDelete();
-    } else if (itemId && confirm("Are you sure you want to delete this item?")) {
-      // Fallback deletion logic if onDelete is not provided
-      // This should be replaced with proper deletion logic
     }
   };
 
@@ -78,7 +73,7 @@ export function ActionMenuItems({
         </DropdownMenuItem>
       )}
       
-      <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+      <DropdownMenuItem onClick={onShare} className="cursor-pointer">
         <Share className="mr-2 h-4 w-4" />
         <span>Share</span>
       </DropdownMenuItem>

@@ -145,7 +145,15 @@ export const ItemCardWrapper = function ItemCardWrapper({
           <NetworkStatus onRetry={refreshItemData} />
         </div>}
       
-      <ItemCardHeader postedBy={postedBy} isOwner={isOwner} handleReport={handleReportClick} coordinates={parsedCoordinates} itemId={typeof id === 'string' ? parseInt(id, 10) : id} />
+      <ItemCardHeader 
+        postedBy={postedBy} 
+        isOwner={isOwner} 
+        handleReport={handleReportClick} 
+        coordinates={parsedCoordinates} 
+        itemId={typeof id === 'string' ? parseInt(id, 10) : id} 
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
       
       <ItemCardGallery images={images.length > 0 ? images : image ? [image] : []} title={title} category={category} />
       
