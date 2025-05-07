@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
@@ -29,10 +30,31 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   const [reason, setReason] = useState("");
   const [isSoftDelete, setIsSoftDelete] = useState(true);
+  
   const handleConfirm = () => {
     onConfirm(reason, isSoftDelete);
   };
-  return <AlertDialog open={isOpen} onOpenChange={onClose}>
+  
+  // Close the dialog when Escape key is pressed
+  React.useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen, onClose]);
+  
+  return (
+    <AlertDialog open={isOpen} onOpenChange={(open) => {
+      if (!open && !isLoading) {
+        onClose();
+      }
+    }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -81,5 +103,6 @@ export function DeleteConfirmDialog({
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>;
+    </AlertDialog>
+  );
 }

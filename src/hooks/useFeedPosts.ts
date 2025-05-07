@@ -1,3 +1,3 @@
 
 // Re-export from the new location for backwards compatibility
-export { useFeedPosts } from "./feed/useFeedPosts";
+export { useFeedPosts, type FeedPostsOptions } from "./feed/useFeedPosts";

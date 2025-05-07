@@ -28,6 +28,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
   postedBy
 }: ItemCardProps) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isItemDeleted, setIsItemDeleted] = useState(false);
   const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
   const { parsedCoordinates } = useCoordinatesParser(coordinates);
 
@@ -83,6 +84,18 @@ export const ItemCardWrapper = function ItemCardWrapper({
   const handleReportClick = () => {
     setIsReportDialogOpen(true);
   };
+
+  // Handle successful delete or archive
+  const handleDeleteSuccess = () => {
+    setIsItemDeleted(true);
+    // Close the delete dialog
+    setShowDeleteDialog(false);
+  };
+
+  // If the item was deleted or archived, don't render it anymore
+  if (isItemDeleted) {
+    return null;
+  }
 
   // If there are errors, show a simplified error card
   if (showError && errors.length > 0) {
@@ -171,7 +184,8 @@ export const ItemCardWrapper = function ItemCardWrapper({
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
         checkInterestedUsers={checkInterestedUsers}
+        onSuccess={handleDeleteSuccess}
       />
     </Card>
   );
-};
+}

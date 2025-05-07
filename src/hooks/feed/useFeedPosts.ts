@@ -5,13 +5,20 @@ import { useUserPosts } from "./useUserPosts";
 import { usePostsFilter } from "./usePostsFilter";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
-export function useFeedPosts() {
+export interface FeedPostsOptions {
+  includeArchived?: boolean;
+  onlyArchived?: boolean;
+}
+
+export function useFeedPosts(options: FeedPostsOptions = {}) {
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const { user } = useGlobalAuth();
   const [viewMode, setViewMode] = useState("all");
   
   // Import core hooks
-  const { posts: fetchedPosts, isLoading: isFetchLoading, error: fetchError, fetchPosts } = useFetchPosts();
+  const { posts: fetchedPosts, isLoading: isFetchLoading, error: fetchError, fetchPosts } = 
+    useFetchPosts({ includeArchived: options.includeArchived });
+    
   const { 
     posts: userPosts, 
     isLoading: isUserPostsLoading, 
@@ -19,7 +26,10 @@ export function useFeedPosts() {
     loadSavedPosts,
     loadMyPosts, 
     loadInterestedPosts 
-  } = useUserPosts();
+  } = useUserPosts({ 
+    includeArchived: options.includeArchived,
+    onlyArchived: options.onlyArchived
+  });
   
   // Set up filters with the current posts
   const { filteredPosts, filterByCategories } = usePostsFilter(allPosts);
@@ -49,6 +59,9 @@ export function useFeedPosts() {
       case "myPifs":
         await loadMyPosts(user);
         break;
+      case "archived":
+        await loadMyPosts(user);
+        break;
       case "interested":
         await loadInterestedPosts(user);
         break;
@@ -71,6 +84,7 @@ export function useFeedPosts() {
     filterByCategories,
     loadSavedPosts: () => loadPostsBasedOnViewMode("saved"),
     loadMyPosts: () => loadPostsBasedOnViewMode("myPifs"),
+    loadArchivedPosts: () => loadPostsBasedOnViewMode("archived"),
     loadInterestedPosts: () => loadPostsBasedOnViewMode("interested"),
     loadAll: () => loadPostsBasedOnViewMode("all"),
     currentViewMode: viewMode

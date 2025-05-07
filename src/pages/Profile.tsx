@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import { ProfileBasicInfo } from "@/components/profile/info/ProfileBasicInfo";
 import { MainNav } from "@/components/MainNav";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArchivedPifsGrid } from "@/components/profile/ArchivedPifsGrid";
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
@@ -24,6 +26,7 @@ const Profile = () => {
   const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("my-pifs");
 
   const fetchProfileData = async () => {
     if (!user) return;
@@ -138,15 +141,25 @@ const Profile = () => {
             />
           </Card>
 
-          <section className="mb-10">
-            <h2 className="text-xl font-semibold mb-3">My PIFs</h2>
-            <MyPifsGrid userId={profile.id} />
-          </section>
-
-          <section className="mt-10">
-            <h2 className="text-xl font-semibold mb-3">PIFs I'm Interested In</h2>
-            <InterestedPifsGrid userId={profile.id} />
-          </section>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="my-pifs">My PIFs</TabsTrigger>
+              <TabsTrigger value="interested">Interested</TabsTrigger>
+              <TabsTrigger value="archived">Archived</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="my-pifs" className="mt-0">
+              <MyPifsGrid userId={profile.id} />
+            </TabsContent>
+            
+            <TabsContent value="interested" className="mt-0">
+              <InterestedPifsGrid userId={profile.id} />
+            </TabsContent>
+            
+            <TabsContent value="archived" className="mt-0">
+              <ArchivedPifsGrid userId={profile.id} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
       <MainNav />

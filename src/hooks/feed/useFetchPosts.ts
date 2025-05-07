@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 
-export function useFetchPosts() {
+export function useFetchPosts(options = { includeArchived: false }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -15,10 +15,17 @@ export function useFetchPosts() {
     setError(null);
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
         .order('created_at', { ascending: false });
+      
+      // Filter out archived items unless specifically requested
+      if (!options.includeArchived) {
+        query = query.neq('status', 'archived');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -36,6 +43,9 @@ export function useFetchPosts() {
           condition: item.condition,
           measurements: item.measurements,
           user_id: item.user_id,
+          status: item.status, // Add status to the transformed data
+          archived_at: item.archived_at, // Add archived date
+          archived_reason: item.archived_reason, // Add reason
           user_name: user.name,
           user_avatar: user.avatar || ''
         };
@@ -54,7 +64,7 @@ export function useFetchPosts() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, options.includeArchived]);
 
   return {
     posts,

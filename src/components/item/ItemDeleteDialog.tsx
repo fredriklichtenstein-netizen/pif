@@ -1,22 +1,24 @@
+
 import { useState, useEffect } from "react";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface ItemDeleteDialogProps {
   id: string | number;
   isOpen: boolean;
   onClose: () => void;
   checkInterestedUsers?: () => Promise<number>;
+  onSuccess?: () => void;
 }
 
 export function ItemDeleteDialog({ 
   id, 
   isOpen, 
   onClose,
-  checkInterestedUsers
+  checkInterestedUsers,
+  onSuccess
 }: ItemDeleteDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoadingCount, setIsLoadingCount] = useState(false);
@@ -30,10 +32,19 @@ export function ItemDeleteDialog({
     if (isOpen) {
       fetchInterestedCount();
     }
+    
+    // Cleanup function to prevent memory leaks and stale state
+    return () => {
+      setIsLoadingCount(false);
+      setInterestedCount(0);
+      setCountError(null);
+    };
   }, [isOpen]);
   
   // Function to fetch interested count
   const fetchInterestedCount = async () => {
+    if (!isOpen) return;
+    
     setIsLoadingCount(true);
     setCountError(null);
     
@@ -41,6 +52,7 @@ export function ItemDeleteDialog({
       if (checkInterestedUsers) {
         // Use the passed function if available
         const count = await checkInterestedUsers();
+        if (!isOpen) return; // Check if component is still mounted
         setInterestedCount(count);
       } else {
         // Otherwise do the direct DB query
@@ -51,15 +63,19 @@ export function ItemDeleteDialog({
           .eq('item_id', numericId);
           
         if (error) throw error;
+        if (!isOpen) return; // Check if component is still mounted
         setInterestedCount(count || 0);
       }
     } catch (error) {
       console.error('Error fetching interested count:', error);
+      if (!isOpen) return; // Check if component is still mounted
       setCountError(error as Error);
       // Set to 0 in case of error, to be safe
       setInterestedCount(0);
     } finally {
-      setIsLoadingCount(false);
+      if (isOpen) { // Only update state if still mounted
+        setIsLoadingCount(false);
+      }
     }
   };
   
@@ -68,9 +84,9 @@ export function ItemDeleteDialog({
     setIsDeleting(true);
 
     try {
-      // We already have the interested count, no need to fetch again
+      // We already have the interested count from the fetch earlier
       
-      // If there are interested users, notify them about deletion
+      // If there are interested users, create notifications in batch
       if (interestedCount > 0) {
         try {
           // Get item title first for the notification
@@ -82,16 +98,16 @@ export function ItemDeleteDialog({
             
           const itemTitle = itemData?.title || 'An item';
           
-          // For each interested user, create a notification
+          // Get all interested users
           const { data: interestedUsers } = await supabase
             .from('interests')
             .select('user_id')
             .eq('item_id', numericId);
             
           if (interestedUsers && interestedUsers.length > 0) {
-            for (const user of interestedUsers) {
-              // Create notification for each user
-              await supabase.rpc('create_notification', {
+            // Create notification for each user (non-blocking)
+            interestedUsers.forEach(user => {
+              supabase.rpc('create_notification', {
                 p_user_id: user.user_id,
                 p_type: isSoftDelete ? 'item_archived' : 'item_deleted',
                 p_title: isSoftDelete ? 'Item Archived' : 'Item Deleted',
@@ -100,12 +116,13 @@ export function ItemDeleteDialog({
                   : `"${itemTitle}" was ${isSoftDelete ? 'archived' : 'deleted'} by the owner`,
                 p_reference_id: numericId.toString(),
                 p_reference_type: 'item'
-              });
-            }
+              }).then(() => console.log(`Notification sent to user ${user.user_id}`))
+                .catch(err => console.error('Error sending notification:', err));
+            });
           }
         } catch (notifyError) {
-          console.error('Error notifying interested users:', notifyError);
-          // Continue with deletion even if notification fails
+          console.error('Error preparing notifications:', notifyError);
+          // Continue with deletion even if notification prep fails
         }
       }
       
@@ -122,6 +139,11 @@ export function ItemDeleteDialog({
           .eq('id', numericId);
 
         if (error) throw error;
+        
+        toast({
+          title: "Item archived",
+          description: "The item has been archived and can be restored later",
+        });
       } else {
         // Hard delete: permanently remove
         const { error } = await supabase
@@ -130,21 +152,24 @@ export function ItemDeleteDialog({
           .eq('id', numericId);
 
         if (error) throw error;
+        
+        toast({
+          title: "Item deleted",
+          description: "The item has been permanently deleted",
+        });
       }
 
-      // Return to profile or reload feed
-      if (window.location.pathname.includes('/feed')) {
-        window.location.reload();
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
       } else {
-        navigate('/profile');
+        // Default behavior - return to profile or reload feed
+        if (window.location.pathname.includes('/feed')) {
+          window.location.reload();
+        } else {
+          navigate('/profile');
+        }
       }
-      
-      toast({
-        title: isSoftDelete ? "Item archived" : "Item deleted",
-        description: isSoftDelete 
-          ? "The item has been archived and can be restored later" 
-          : "The item has been permanently deleted",
-      });
       
     } catch (error) {
       console.error('Error deleting item:', error);
@@ -159,8 +184,7 @@ export function ItemDeleteDialog({
     }
   };
 
-  // Dialog content with loading state for interested count
-  const dialogContent = (
+  return (
     <DeleteConfirmDialog
       isOpen={isOpen}
       onClose={onClose}
@@ -173,6 +197,4 @@ export function ItemDeleteDialog({
       isLoadingInterested={isLoadingCount}
     />
   );
-
-  return dialogContent;
 }

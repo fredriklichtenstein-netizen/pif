@@ -5,7 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 import type { User } from "@supabase/supabase-js";
 
-export function useUserPosts() {
+export interface UserPostsOptions {
+  includeArchived?: boolean;
+  onlyArchived?: boolean;
+}
+
+export function useUserPosts(options: UserPostsOptions = {}) {
   const [posts, setPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -25,6 +30,9 @@ export function useUserPosts() {
         condition: item.condition,
         measurements: item.measurements,
         user_id: item.user_id,
+        status: item.status,
+        archived_at: item.archived_at,
+        archived_reason: item.archived_reason,
         user_name: user.name,
         user_avatar: user.avatar || ''
       };
@@ -56,11 +64,20 @@ export function useUserPosts() {
       const itemIds = bookmarks.map(bookmark => bookmark.item_id);
 
       // Then fetch all items with those IDs
-      const { data, error } = await supabase
+      let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
         .in('id', itemIds)
         .order('created_at', { ascending: false });
+        
+      // Handle archived filtering
+      if (options.onlyArchived) {
+        query = query.eq('status', 'archived');
+      } else if (!options.includeArchived) {
+        query = query.neq('status', 'archived');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -79,7 +96,7 @@ export function useUserPosts() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, transformPostsData]);
+  }, [toast, transformPostsData, options.includeArchived, options.onlyArchived]);
 
   const loadMyPosts = useCallback(async (user: User | null) => {
     if (!user) return;
@@ -88,11 +105,20 @@ export function useUserPosts() {
     setError(null);
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+        
+      // Handle archived filtering
+      if (options.onlyArchived) {
+        query = query.eq('status', 'archived');
+      } else if (!options.includeArchived) {
+        query = query.neq('status', 'archived');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -111,7 +137,7 @@ export function useUserPosts() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, transformPostsData]);
+  }, [toast, transformPostsData, options.includeArchived, options.onlyArchived]);
 
   const loadInterestedPosts = useCallback(async (user: User | null) => {
     if (!user) return;
@@ -138,11 +164,20 @@ export function useUserPosts() {
       const itemIds = interests.map(interest => interest.item_id);
 
       // Then fetch all items with those IDs
-      const { data, error } = await supabase
+      let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
         .in('id', itemIds)
         .order('created_at', { ascending: false });
+        
+      // Handle archived filtering
+      if (options.onlyArchived) {
+        query = query.eq('status', 'archived');
+      } else if (!options.includeArchived) {
+        query = query.neq('status', 'archived');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -161,7 +196,7 @@ export function useUserPosts() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, transformPostsData]);
+  }, [toast, transformPostsData, options.includeArchived, options.onlyArchived]);
 
   return {
     posts,
