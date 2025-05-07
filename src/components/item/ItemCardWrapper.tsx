@@ -35,11 +35,11 @@ export const ItemCardWrapper = function ItemCardWrapper({
   const {
     isOwner,
     showDeleteDialog,
-    interestedCount, 
     handleDeleteClick,
     setShowDeleteDialog,
     handleEdit,
-    handleMessage
+    handleMessage,
+    checkInterestedUsers
   } = useItemCardActions(id, postedBy.id);
 
   // Log all props for debugging
@@ -170,7 +170,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
         id={id}
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        interestedCount={interestedCount}
+        checkInterestedUsers={checkInterestedUsers}
       />
     </Card>
   );

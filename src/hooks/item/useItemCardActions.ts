@@ -6,12 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useItemCardActions = (id: string | number, postedById?: string) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [interestedCount, setInterestedCount] = useState(0);
   const navigate = useNavigate();
   const { session } = useGlobalAuth();
   const isOwner = session?.user?.id === postedById;
 
-  // Get the count of interested users for this item
+  // Now this is just a helper method that will be used by the dialog component
   const checkInterestedUsers = async (): Promise<number> => {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
     
@@ -29,9 +28,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     }
   };
 
-  const handleDeleteClick = async () => {
-    const userCount = await checkInterestedUsers();
-    setInterestedCount(userCount);
+  // Simplified to show dialog immediately without blocking
+  const handleDeleteClick = () => {
     setShowDeleteDialog(true);
   };
 
@@ -52,10 +50,10 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   return {
     isOwner,
     showDeleteDialog,
-    interestedCount,
     handleDeleteClick,
     setShowDeleteDialog,
     handleEdit,
-    handleMessage
+    handleMessage,
+    checkInterestedUsers // Export this function for use by the dialog
   };
 };

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,20 +10,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Checkbox } from "../ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (reason: string, isSoftDelete: boolean) => Promise<void>;
+  onConfirm: (reason: string, isSoftDelete: boolean) => void;
   title: string;
   description: string;
   hasInterestedUsers?: boolean;
   interestCount?: number;
+  isLoading?: boolean;
+  isLoadingInterested?: boolean;
 }
 
 export function DeleteConfirmDialog({
@@ -34,98 +36,88 @@ export function DeleteConfirmDialog({
   description,
   hasInterestedUsers = false,
   interestCount = 0,
+  isLoading = false,
+  isLoadingInterested = false
 }: DeleteConfirmDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteReason, setDeleteReason] = useState("");
-  const [deleteType, setDeleteType] = useState<"permanent" | "archive">("archive");
-  const { toast } = useToast();
+  const [reason, setReason] = useState("");
+  const [isSoftDelete, setIsSoftDelete] = useState(true);
 
-  const handleConfirm = async () => {
-    if (isDeleting) return;
-
-    setIsDeleting(true);
-    try {
-      await onConfirm(deleteReason, deleteType === "archive");
-      
-      toast({
-        title: deleteType === "archive" ? "Item archived" : "Item deleted",
-        description: deleteType === "archive" 
-          ? "The item has been archived and can be restored later" 
-          : "The item has been permanently deleted",
-      });
-      
-      onClose();
-    } catch (error) {
-      console.error("Error during deletion:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete item. Please try again.",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleConfirm = () => {
+    onConfirm(reason, isSoftDelete);
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription className="space-y-4">
-            <p>{description}</p>
-            
-            {hasInterestedUsers && (
-              <div className="my-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
-                <p className="font-medium mb-1">Important Notice</p>
-                <p>
-                  This item has {interestCount} {interestCount === 1 ? "user" : "users"} interested in it. 
-                  They will be notified when you delete this item.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-3 mt-4">
-              <div>
-                <Label htmlFor="delete-reason">Why are you removing this item? (optional)</Label>
-                <Textarea 
-                  id="delete-reason"
-                  placeholder="e.g., No longer available, found a recipient, etc."
-                  value={deleteReason}
-                  onChange={(e) => setDeleteReason(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-
-              <RadioGroup value={deleteType} onValueChange={(value) => setDeleteType(value as "permanent" | "archive")}>
-                <div className="flex items-start space-x-2 mb-2">
-                  <RadioGroupItem value="archive" id="archive" />
-                  <div>
-                    <Label htmlFor="archive" className="font-medium">Archive instead</Label>
-                    <p className="text-sm text-muted-foreground">Hide the item but keep it in your profile. You can restore it later.</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <RadioGroupItem value="permanent" id="permanent" />
-                  <div>
-                    <Label htmlFor="permanent" className="font-medium">Permanently delete</Label>
-                    <p className="text-sm text-muted-foreground">Remove the item completely. This cannot be undone.</p>
-                  </div>
-                </div>
-              </RadioGroup>
-            </div>
-          </AlertDialogDescription>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+
+        {isLoadingInterested ? (
+          <div className="space-y-2 my-4">
+            <p className="text-sm text-gray-500 flex items-center">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Checking if anyone is interested in this item...
+            </p>
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ) : hasInterestedUsers && (
+          <div className="mb-4">
+            <p className="text-sm text-amber-600 font-medium">
+              Warning: {interestCount} {interestCount === 1 ? 'person is' : 'people are'} interested in this item.
+            </p>
+            <p className="text-sm text-gray-500">
+              They will be notified if you proceed with deletion.
+            </p>
+          </div>
+        )}
+
+        <div className="mb-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="soft-delete" 
+                checked={isSoftDelete} 
+                onCheckedChange={(checked) => setIsSoftDelete(Boolean(checked))}
+              />
+              <Label htmlFor="soft-delete" className="cursor-pointer">
+                Archive instead of permanently delete
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500 pl-6">
+              {isSoftDelete 
+                ? "The item will be archived and can be restored later." 
+                : "The item will be permanently deleted and cannot be recovered."}
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <Label htmlFor="delete-reason">Reason (optional)</Label>
+          <Textarea
+            id="delete-reason"
+            placeholder={isSoftDelete ? "Why are you archiving this item?" : "Why are you deleting this item?"}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="mt-1"
+          />
+        </div>
+
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} disabled={isDeleting}>
-            {isDeleting ? (
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleConfirm} 
+            className="bg-red-600 hover:bg-red-700"
+            disabled={isLoading || isLoadingInterested}
+          >
+            {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
               </>
             ) : (
-              <>{deleteType === "archive" ? "Archive Item" : "Delete Item"}</>
+              isSoftDelete ? "Archive" : "Delete"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
