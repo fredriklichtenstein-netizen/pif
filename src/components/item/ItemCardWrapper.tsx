@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { ItemCardHeader } from "./ItemCardHeader";
@@ -7,11 +8,13 @@ import { ItemCardActions } from "./ItemCardActions";
 import { NetworkStatus } from "../common/NetworkStatus";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import type { ItemCardProps } from "./types";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "../ui/button";
 import { AlertCircle, Eye } from "lucide-react";
 import { Alert } from "../ui/alert";
+
 export const ItemCardWrapper = function ItemCardWrapper({
   id,
   title,
@@ -57,7 +60,11 @@ export const ItemCardWrapper = function ItemCardWrapper({
   // Get card actions and interactions
   const {
     isOwner,
-    handleDelete,
+    showDeleteDialog,
+    interestedCount, 
+    handleDeleteClick,
+    handleDeleteConfirm,
+    setShowDeleteDialog,
     handleEdit,
     handleMessage
   } = useItemCardActions(id, postedBy.id);
@@ -78,6 +85,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
       postedBy
     });
   }, [id, title, description, image, images, location, coordinates, category, condition, measurements, postedBy]);
+  
   const {
     isLiked,
     likesCount,
@@ -107,6 +115,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
     realtimeError,
     refreshItemData
   } = useItemCard(String(id));
+  
   const handleReportClick = () => {
     setIsReportDialogOpen(true);
   };
@@ -130,6 +139,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
         </div>
       </Card>;
   }
+  
   return <Card id={`item-card-${id}`} className="overflow-hidden transition-shadow hover:shadow-md rounded-xl">
       {realtimeError && <div className="p-2 bg-gray-50 py-0">
           <NetworkStatus onRetry={refreshItemData} />
@@ -141,12 +151,55 @@ export const ItemCardWrapper = function ItemCardWrapper({
       
       {/* Moved the actions right below the gallery */}
       <div className="pt-2 pb-0 px-0">
-        <ItemCardActions id={id} postedBy={postedBy} isOwner={isOwner} isLiked={isLiked} showComments={showComments} isBookmarked={isBookmarked} showInterest={showInterest} commentsCount={commentsCount} likesCount={likesCount} interestsCount={interestsCount} likers={likers} interestedUsers={interestedUsers} commenters={commenters} comments={comments} commentsLoading={commentsLoading} commentsError={commentsError} interactionsLoading={interactionsLoading} isLoadingInterested={isLoadingInterested} interestedError={interestedError} onLikeToggle={handleLike} onCommentToggle={handleCommentToggle} onShowInterest={handleShowInterest} onBookmarkToggle={handleBookmark} onMessage={handleMessage} onShare={handleShare} onReport={handleReport} onEdit={handleEdit} onDelete={handleDelete} getInterestedUsers={getInterestedUsers} setComments={setComments} isRealtimeSubscribed={isRealtimeSubscribed} />
+        <ItemCardActions 
+          id={id} 
+          postedBy={postedBy} 
+          isOwner={isOwner} 
+          isLiked={isLiked} 
+          showComments={showComments} 
+          isBookmarked={isBookmarked} 
+          showInterest={showInterest} 
+          commentsCount={commentsCount} 
+          likesCount={likesCount} 
+          interestsCount={interestsCount} 
+          likers={likers} 
+          interestedUsers={interestedUsers} 
+          commenters={commenters} 
+          comments={comments} 
+          commentsLoading={commentsLoading} 
+          commentsError={commentsError} 
+          interactionsLoading={interactionsLoading} 
+          isLoadingInterested={isLoadingInterested} 
+          interestedError={interestedError} 
+          onLikeToggle={handleLike} 
+          onCommentToggle={handleCommentToggle} 
+          onShowInterest={handleShowInterest} 
+          onBookmarkToggle={handleBookmark} 
+          onMessage={handleMessage} 
+          onShare={handleShare} 
+          onReport={handleReport} 
+          onEdit={handleEdit} 
+          onDelete={handleDeleteClick} 
+          getInterestedUsers={getInterestedUsers} 
+          setComments={setComments} 
+          isRealtimeSubscribed={isRealtimeSubscribed} 
+        />
       </div>
       
       {/* Content moved below actions */}
       <div className="p-4 pt-2 py-0">
         <ItemCardContent description={description} condition={condition} measurements={measurements} />
       </div>
+      
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Item"
+        description="Are you sure you want to delete this item? This action may not be reversible."
+        hasInterestedUsers={interestedCount > 0}
+        interestCount={interestedCount}
+      />
     </Card>;
 };
