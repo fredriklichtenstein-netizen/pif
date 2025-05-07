@@ -140,7 +140,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
       <ItemCardGallery images={images.length > 0 ? images : image ? [image] : []} title={title} category={category} />
       
       {/* Moved the actions right below the gallery */}
-      <div className="px-4 pt-2 pb-0">
+      <div className="pt-2 pb-0 px-0">
         <ItemCardActions id={id} postedBy={postedBy} isOwner={isOwner} isLiked={isLiked} showComments={showComments} isBookmarked={isBookmarked} showInterest={showInterest} commentsCount={commentsCount} likesCount={likesCount} interestsCount={interestsCount} likers={likers} interestedUsers={interestedUsers} commenters={commenters} comments={comments} commentsLoading={commentsLoading} commentsError={commentsError} interactionsLoading={interactionsLoading} isLoadingInterested={isLoadingInterested} interestedError={interestedError} onLikeToggle={handleLike} onCommentToggle={handleCommentToggle} onShowInterest={handleShowInterest} onBookmarkToggle={handleBookmark} onMessage={handleMessage} onShare={handleShare} onReport={handleReport} onEdit={handleEdit} onDelete={handleDelete} getInterestedUsers={getInterestedUsers} setComments={setComments} isRealtimeSubscribed={isRealtimeSubscribed} />
       </div>
       
