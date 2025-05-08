@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from "react";
 
+type ErrorWithMessage = {
+  message: string;
+};
+
 export function useItemErrorHandler() {
-  const [errors, setErrors] = useState<Array<{
-    message: string;
-  }>>([]);
+  const [errors, setErrors] = useState<Array<Error | ErrorWithMessage>>([]);
   const [showError, setShowError] = useState(false);
 
   // Error boundary for component errors

@@ -4,13 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 
+type ErrorItem = Error | { message: string };
+
 interface ItemErrorDisplayProps {
-  errors: Array<{ message: string }>;
+  errors: Array<ErrorItem>;
   onRetry: () => void;
   onDismiss: () => void;
 }
 
 export function ItemErrorDisplay({ errors, onRetry, onDismiss }: ItemErrorDisplayProps) {
+  // Function to safely get error message regardless of error type
+  const getErrorMessage = (error: ErrorItem): string => {
+    return error.message || "Unknown error";
+  };
+
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-md rounded-xl bg-red-50 border-red-200 p-4">
       <div className="flex flex-col items-center justify-center py-8 text-center">

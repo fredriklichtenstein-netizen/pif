@@ -3,7 +3,7 @@ import { ItemErrorHandler } from "./ItemErrorHandler";
 
 interface ItemErrorStateProps {
   showError: boolean;
-  errors: Error[];
+  errors: Array<Error | { message: string }>;
   onRetry: () => void;
   onDismiss: () => void;
 }
