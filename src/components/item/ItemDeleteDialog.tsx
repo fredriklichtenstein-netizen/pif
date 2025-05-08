@@ -119,12 +119,10 @@ export function ItemDeleteDialog({
       // Close the dialog first to prevent state updates on unmounted components
       onClose();
 
-      // Call onSuccess callback if provided (after a small delay)
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        }
-      }, 100);
+      // Call onSuccess callback immediately if provided
+      if (onSuccess) {
+        onSuccess();
+      }
       
     } catch (error: any) {
       console.error('Error deleting item:', error);
@@ -133,10 +131,12 @@ export function ItemDeleteDialog({
         description: error.message || "Failed to delete item. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      // Always clean up state and close dialog, even on error
-      setIsDeleting(false);
+      
+      // Close the dialog even on error to avoid stuck UI
       onClose();
+    } finally {
+      // Always clean up state
+      setIsDeleting(false);
     }
   };
 

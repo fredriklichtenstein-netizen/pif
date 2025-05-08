@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useFetchPosts } from "./useFetchPosts";
 import { useUserPosts } from "./useUserPosts";
 import { usePostsFilter } from "./usePostsFilter";
@@ -14,10 +14,17 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const { user } = useGlobalAuth();
   const [viewMode, setViewMode] = useState("all");
+  const refreshInProgressRef = useRef(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Import core hooks
-  const { posts: fetchedPosts, isLoading: isFetchLoading, error: fetchError, fetchPosts } = 
-    useFetchPosts({ includeArchived: options.includeArchived });
+  const { 
+    posts: fetchedPosts, 
+    isLoading: isFetchLoading, 
+    error: fetchError, 
+    fetchPosts, 
+    cleanup: cleanupFetchPosts 
+  } = useFetchPosts({ includeArchived: options.includeArchived });
     
   const { 
     posts: userPosts, 
@@ -26,7 +33,8 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
     loadSavedPosts,
     loadMyPosts, 
     loadInterestedPosts,
-    loadArchivedPosts
+    loadArchivedPosts,
+    cleanup: cleanupUserPosts
   } = useUserPosts({ 
     includeArchived: options.includeArchived,
     onlyArchived: options.onlyArchived
@@ -49,32 +57,72 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
     }
   }, [userPosts, viewMode]);
 
+  // Debounced refresh function to prevent multiple rapid refreshes
+  const debouncedLoadPosts = useCallback((mode: string, delay = 300) => {
+    if (refreshInProgressRef.current) {
+      console.log('Refresh already in progress, deferring this request');
+      return;
+    }
+    
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      refreshInProgressRef.current = true;
+      
+      const loadAction = async () => {
+        switch (mode) {
+          case "saved":
+            await loadSavedPosts(user);
+            break;
+          case "myPifs":
+            await loadMyPosts(user);
+            break;
+          case "archived":
+            await loadArchivedPosts(user);
+            break;
+          case "interested":
+            await loadInterestedPosts(user);
+            break;
+          default:
+            await fetchPosts();
+        }
+        
+        refreshInProgressRef.current = false;
+      };
+      
+      loadAction().catch(err => {
+        console.error('Error in debouncedLoadPosts:', err);
+        refreshInProgressRef.current = false;
+      });
+      
+      debounceTimerRef.current = null;
+    }, delay);
+    
+  }, [fetchPosts, loadSavedPosts, loadMyPosts, loadArchivedPosts, loadInterestedPosts, user]);
+
   // Load posts based on viewMode
   const loadPostsBasedOnViewMode = useCallback(async (mode: string) => {
     setViewMode(mode);
-    
-    switch (mode) {
-      case "saved":
-        await loadSavedPosts(user);
-        break;
-      case "myPifs":
-        await loadMyPosts(user);
-        break;
-      case "archived":
-        await loadArchivedPosts(user);
-        break;
-      case "interested":
-        await loadInterestedPosts(user);
-        break;
-      default:
-        await fetchPosts();
-    }
-  }, [fetchPosts, loadSavedPosts, loadMyPosts, loadArchivedPosts, loadInterestedPosts, user]);
+    debouncedLoadPosts(mode, 300);
+  }, [debouncedLoadPosts]);
+
+  // Cleanup function to abort any pending requests on unmount
+  useEffect(() => {
+    return () => {
+      cleanupFetchPosts();
+      cleanupUserPosts();
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [cleanupFetchPosts, cleanupUserPosts]);
 
   // Initial posts fetch
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    debouncedLoadPosts("all", 500);
+  }, [debouncedLoadPosts]);
 
   return {
     posts: filteredPosts,

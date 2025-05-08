@@ -27,7 +27,8 @@ export const ItemCardWrapper = function ItemCardWrapper({
   condition,
   measurements = {},
   postedBy,
-  archived_at
+  archived_at,
+  onOperationSuccess
 }: ItemCardProps) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemDeleted, setIsItemDeleted] = useState(false);
@@ -45,13 +46,6 @@ export const ItemCardWrapper = function ItemCardWrapper({
     handleMessage,
     checkInterestedUsers
   } = useItemCardActions(id, postedBy.id);
-
-  // Reduced logging to prevent performance issues
-  useEffect(() => {
-    if (archived_at) {
-      console.log(`Item ${id} is archived`);
-    }
-  }, [id, archived_at]);
   
   const {
     isLiked,
@@ -91,6 +85,13 @@ export const ItemCardWrapper = function ItemCardWrapper({
   const handleDeleteSuccess = () => {
     console.log("Item was successfully deleted or archived");
     setIsItemDeleted(true);
+    
+    // Call the parent's success callback after a short delay to allow state updates
+    if (onOperationSuccess) {
+      setTimeout(() => {
+        onOperationSuccess();
+      }, 300);
+    }
   };
 
   // Ensure dialog is properly closed if component unmounts

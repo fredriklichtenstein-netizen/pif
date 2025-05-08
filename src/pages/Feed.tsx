@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { Loader2 } from "lucide-react";
@@ -26,6 +26,8 @@ export default function Feed() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState("all");
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -54,6 +56,19 @@ export default function Feed() {
   useEffect(() => {
     filterByCategories(selectedCategories);
   }, [selectedCategories, filterByCategories]);
+
+  // Debounced refresh function to prevent multiple rapid refreshes
+  const debouncedRefresh = useCallback((delay = 300) => {
+    if (refreshTimeoutRef.current !== null) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+    
+    refreshTimeoutRef.current = setTimeout(() => {
+      console.log('Executing debounced feed refresh');
+      loadPostsBasedOnViewMode(viewMode);
+      refreshTimeoutRef.current = null;
+    }, delay);
+  }, [viewMode]);
 
   // Memoized function to load posts based on view mode
   const loadPostsBasedOnViewMode = useCallback(async (mode: string) => {
@@ -87,20 +102,44 @@ export default function Feed() {
 
   // Load posts whenever view mode changes or user auth state changes
   useEffect(() => {
-    loadPostsBasedOnViewMode(viewMode);
-  }, [viewMode, user, loadPostsBasedOnViewMode]);
+    if (!isInitialLoad) {  // Skip immediate refresh on first render
+      debouncedRefresh(300);
+    }
+  }, [viewMode, user, debouncedRefresh, isInitialLoad]);
 
-  // Initial refresh on component mount - with a small delay to prevent race conditions
-  // This fixes the flashing issue by preventing simultaneous refreshes
+  // Initial refresh on component mount with a longer delay to prevent race conditions
   useEffect(() => {
-    const timer = setTimeout(() => {
-      refreshPosts();
-    }, 100);
+    const initialLoadTimer = setTimeout(() => {
+      refreshPosts().then(() => {
+        setIsInitialLoad(false);  // Mark initial load as complete after first refresh
+        console.log('Initial feed load complete');
+      });
+    }, 500);
     
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(initialLoadTimer);
+      if (refreshTimeoutRef.current !== null) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
   }, [refreshPosts]);
 
-  if (isLoading) {
+  // Cleanup function to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current !== null) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle successful item deletion or archiving
+  const handleItemOperationSuccess = useCallback(() => {
+    console.log('Item operation success detected, refreshing feed');
+    debouncedRefresh(800); // Use a longer delay for post-deletion refresh
+  }, [debouncedRefresh]);
+
+  if (isLoading && isInitialLoad) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -134,6 +173,8 @@ export default function Feed() {
         selectedCategories={selectedCategories}
         clearFilters={clearFilters}
         viewMode={viewMode}
+        onItemOperationSuccess={handleItemOperationSuccess}
+        isLoading={isLoading && !isInitialLoad}
       />
       <MainNav />
     </div>

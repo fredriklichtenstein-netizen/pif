@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
@@ -9,6 +9,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
 
   const fetchPosts = useCallback(async () => {
@@ -17,6 +18,15 @@ export function useFetchPosts(options = { includeArchived: false }) {
       console.log("Fetch already in progress, skipping redundant call");
       return;
     }
+    
+    // Cancel any in-flight requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     
     setIsFetching(true);
     setIsLoading(true);
@@ -28,7 +38,8 @@ export function useFetchPosts(options = { includeArchived: false }) {
       let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(signal);
       
       // Filter out archived items unless specifically requested
       if (!options.includeArchived) {
@@ -36,6 +47,12 @@ export function useFetchPosts(options = { includeArchived: false }) {
       }
 
       const { data, error } = await query;
+
+      // Don't update state if request was aborted or component unmounted
+      if (signal.aborted) {
+        console.log('Request aborted, skipping state update');
+        return;
+      }
 
       if (error) throw error;
 
@@ -64,28 +81,43 @@ export function useFetchPosts(options = { includeArchived: false }) {
       setPosts(transformedData);
       console.log('Posts fetched successfully:', { count: transformedData.length });
     } catch (err: any) {
-      console.error('Error fetching posts:', err);
-      setError(err);
+      // Only set error if request wasn't aborted
+      if (err.name !== 'AbortError' && !signal.aborted) {
+        console.error('Error fetching posts:', err);
+        setError(err);
 
-      // Only show toast for network errors, not for component unmount
-      if (err.code !== 'ABORT_ERR') {
-        toast({
-          variant: "destructive",
-          title: "Failed to load posts",
-          description: "Please check your connection and try again",
-        });
+        // Only show toast for network errors, not for component unmount
+        if (err.code !== 'ABORT_ERR') {
+          toast({
+            variant: "destructive",
+            title: "Failed to load posts",
+            description: "Please check your connection and try again",
+          });
+        }
       }
     } finally {
-      setIsLoading(false);
-      setIsFetching(false);
+      // Only update state if request wasn't aborted
+      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+        setIsLoading(false);
+        setIsFetching(false);
+      }
     }
-  }, [toast, options.includeArchived, isFetching]);
+  }, [toast, options.includeArchived]);
+
+  // Cleanup function to abort any pending requests
+  const cleanup = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
 
   return {
     posts,
     isLoading,
     error,
     fetchPosts,
-    setPosts
+    setPosts,
+    cleanup
   };
 }

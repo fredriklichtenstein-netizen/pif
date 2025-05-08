@@ -4,12 +4,15 @@ import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 interface FeedItemListProps {
   posts: any[];
   selectedCategories: string[];
   clearFilters: () => void;
   viewMode: string;
+  onItemOperationSuccess?: () => void;
+  isLoading?: boolean;
 }
 
 export function FeedItemList({
@@ -17,6 +20,8 @@ export function FeedItemList({
   selectedCategories,
   clearFilters,
   viewMode,
+  onItemOperationSuccess,
+  isLoading = false
 }: FeedItemListProps) {
   const getEmptyStateMessage = () => {
     if (selectedCategories.length > 0) {
@@ -41,6 +46,14 @@ export function FeedItemList({
   useEffect(() => {
     console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
   }, [posts, viewMode]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -77,6 +90,7 @@ export function FeedItemList({
                 avatar: post.user_avatar || '',
               }}
               archived_at={post.archived_at}
+              onOperationSuccess={onItemOperationSuccess}
             />
           </NetworkStatusWrapper>
         );
