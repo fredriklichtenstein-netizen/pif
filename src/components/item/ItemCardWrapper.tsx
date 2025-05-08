@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ItemCardHeader } from "./ItemCardHeader";
 import { ItemCardGallery } from "./ItemCardGallery";
 import { ItemCardContent } from "./content/ItemCardContent";
@@ -89,8 +89,8 @@ export function ItemCardWrapper({
     setIsReportDialogOpen(true);
   };
 
-  // Handle successful delete or archive with additional error recovery
-  const handleDeleteSuccess = () => {
+  // Handle successful delete or archive with better error recovery
+  const handleDeleteSuccess = useCallback(() => {
     console.log("Item was successfully deleted or archived");
     
     try {
@@ -109,22 +109,26 @@ export function ItemCardWrapper({
               description: "Something went wrong while refreshing the page. Please refresh manually.",
               variant: "destructive",
             });
+            // Force refresh the data if callback fails
+            refreshItemData();
           }
         }, 300);
       }
     } catch (error) {
       console.error("Error handling delete success:", error);
+      // Even if there's an error, try to refresh data
+      setTimeout(() => refreshItemData(), 500);
     }
-  };
+  }, [onOperationSuccess, refreshItemData, toast]);
 
   // Fully refresh the component if needed
-  const forceRefresh = () => {
+  const forceRefresh = useCallback(() => {
     setIsRefreshing(true);
     setTimeout(() => {
       refreshItemData();
       setIsRefreshing(false);
     }, 100);
-  };
+  }, [refreshItemData]);
 
   // If the item was deleted, don't render it anymore
   if (isItemDeleted) {

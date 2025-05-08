@@ -3,8 +3,8 @@ import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface FeedItemListProps {
@@ -55,23 +55,29 @@ export function FeedItemList({
     console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
   }, [posts, viewMode]);
 
-  // Error recovery function
-  const handleRecoveryAction = () => {
+  // Error recovery function with debouncing
+  const handleRecoveryAction = useCallback(() => {
     try {
       setRefreshKey(Date.now()); // Force re-render
       setErrorState({ hasError: false, errorMessage: '' });
-      
-      // Wait a bit then call onItemOperationSuccess to refresh data
-      setTimeout(() => {
-        if (onItemOperationSuccess) {
-          onItemOperationSuccess();
-        }
-      }, 300);
       
       toast({
         title: "Refreshing",
         description: "Attempting to recover and refresh the feed",
       });
+      
+      // Wait a bit then call onItemOperationSuccess to refresh data
+      setTimeout(() => {
+        if (onItemOperationSuccess) {
+          try {
+            onItemOperationSuccess();
+          } catch (err) {
+            console.error("Error during recovery refresh:", err);
+            // If the callback fails, we'll still try to recover UI
+            setRefreshKey(Date.now() + 1);
+          }
+        }
+      }, 500);
     } catch (err) {
       console.error("Error during recovery action:", err);
       toast({
@@ -80,11 +86,12 @@ export function FeedItemList({
         variant: "destructive",
       });
     }
-  };
+  }, [onItemOperationSuccess, toast]);
 
   // Handle successful operations with better error protection
-  const handleItemSuccess = () => {
+  const handleItemSuccess = useCallback(() => {
     try {
+      console.log("Item operation success callback triggered");
       if (onItemOperationSuccess) {
         onItemOperationSuccess();
       }
@@ -95,7 +102,7 @@ export function FeedItemList({
         errorMessage: "Error updating feed. Please try refreshing."
       });
     }
-  };
+  }, [onItemOperationSuccess]);
 
   if (isLoading) {
     return (
@@ -108,7 +115,18 @@ export function FeedItemList({
   if (errorState.hasError) {
     return (
       <div className="bg-destructive/10 p-4 rounded-md my-4">
-        <h3 className="font-semibold mb-2">Error</h3>
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-semibold">Error</h3>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleRecoveryAction}
+            className="p-1 h-8 w-8"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="sr-only">Refresh</span>
+          </Button>
+        </div>
         <p className="text-sm mb-3">{errorState.errorMessage}</p>
         <Button onClick={handleRecoveryAction}>Refresh</Button>
       </div>
