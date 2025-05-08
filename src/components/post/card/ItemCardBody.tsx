@@ -16,7 +16,7 @@ interface ItemCardBodyProps {
   postedBy: {
     id: string;
     name: string;
-    avatar: string;
+    avatar?: string; // Changed from required to optional
   };
   isOwner: boolean;
   isDeleting: boolean;
