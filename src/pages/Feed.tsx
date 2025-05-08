@@ -85,22 +85,15 @@ export default function Feed() {
     loadPostsBasedOnViewMode(viewMode);
   }, [viewMode, user, loadPostsBasedOnViewMode]);
 
-  // Force refresh when returning to feed page
+  // Initial refresh on component mount - with a small delay to prevent race conditions
+  // This fixes the flashing issue by preventing simultaneous refreshes
   useEffect(() => {
-    // This will trigger a refresh when the component mounts
-    // Crucial for when returning to feed after delete/archive operations
-    refreshPosts();
+    const timer = setTimeout(() => {
+      refreshPosts();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [refreshPosts]);
-
-  const allSelected = selectedCategories.length === CATEGORIES.length;
-
-  // To check if a specific category is selected
-  const isCategorySelected = (category: string) => selectedCategories.includes(category);
-
-  // Select all categories
-  const selectAll = () => setSelectedCategories([...CATEGORIES]);
-  // Clear all categories
-  const clearFilters = () => setSelectedCategories([]);
 
   if (isLoading) {
     return (
@@ -123,7 +116,7 @@ export default function Feed() {
         categories={CATEGORIES}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
-        allSelected={allSelected}
+        allSelected={selectedCategories.length === CATEGORIES.length}
         showFilters={showFilters}
         setShowFilters={setShowFilters}
         viewMode={viewMode}

@@ -8,13 +8,23 @@ export function useFetchPosts(options = { includeArchived: false }) {
   const [posts, setPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
   const { toast } = useToast();
 
   const fetchPosts = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (isFetching) {
+      console.log("Fetch already in progress, skipping redundant call");
+      return;
+    }
+    
+    setIsFetching(true);
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log("Fetching posts from database...");
+      
       let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
@@ -22,7 +32,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       
       // Filter out archived items unless specifically requested
       if (!options.includeArchived) {
-        query = query.not('status', 'eq', 'archived');
+        query = query.is('archived_at', null);
       }
 
       const { data, error } = await query;
@@ -43,29 +53,33 @@ export function useFetchPosts(options = { includeArchived: false }) {
           condition: item.condition,
           measurements: item.measurements,
           user_id: item.user_id,
-          status: item.status, // Add status to the transformed data
-          archived_at: item.archived_at, // Add archived date
-          archived_reason: item.archived_reason, // Add reason
+          status: item.status, 
+          archived_at: item.archived_at,
+          archived_reason: item.archived_reason,
           user_name: user.name,
           user_avatar: user.avatar || ''
         };
       }) || [];
 
       setPosts(transformedData);
-      console.log('useFetchPosts: Posts fetched successfully', { count: transformedData.length });
+      console.log('Posts fetched successfully:', { count: transformedData.length });
     } catch (err: any) {
       console.error('Error fetching posts:', err);
       setError(err);
 
-      toast({
-        variant: "destructive",
-        title: "Failed to load posts",
-        description: "Please check your connection and try again",
-      });
+      // Only show toast for network errors, not for component unmount
+      if (err.code !== 'ABORT_ERR') {
+        toast({
+          variant: "destructive",
+          title: "Failed to load posts",
+          description: "Please check your connection and try again",
+        });
+      }
     } finally {
       setIsLoading(false);
+      setIsFetching(false);
     }
-  }, [toast, options.includeArchived]);
+  }, [toast, options.includeArchived, isFetching]);
 
   return {
     posts,

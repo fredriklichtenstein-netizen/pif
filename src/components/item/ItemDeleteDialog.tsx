@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ItemDeleteDialogProps {
@@ -24,7 +22,6 @@ export function ItemDeleteDialog({
   const [isLoadingCount, setIsLoadingCount] = useState(false);
   const [interestedCount, setInterestedCount] = useState(0);
   const [countError, setCountError] = useState<Error | null>(null);
-  const navigate = useNavigate();
   const { toast } = useToast();
   
   // Fetch interested count when dialog opens
@@ -119,18 +116,15 @@ export function ItemDeleteDialog({
           : "The item has been permanently deleted",
       });
 
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        // Default behavior - return to profile or reload feed
-        if (window.location.pathname.includes('/feed')) {
-          // Navigate to feed without using replace to ensure a fresh load
-          navigate('/feed');
-        } else {
-          navigate('/profile');
+      // Close the dialog first to prevent state updates on unmounted components
+      onClose();
+
+      // Call onSuccess callback if provided (after a small delay)
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
         }
-      }
+      }, 100);
       
     } catch (error: any) {
       console.error('Error deleting item:', error);

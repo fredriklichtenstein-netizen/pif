@@ -31,10 +31,9 @@ export const ItemCardWrapper = function ItemCardWrapper({
 }: ItemCardProps) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemDeleted, setIsItemDeleted] = useState(false);
-  const [isItemArchived, setIsItemArchived] = useState(false);
+  const [isItemArchived, setIsItemArchived] = useState(!!archived_at);
   const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
   const { parsedCoordinates } = useCoordinatesParser(coordinates);
-  const isArchived = !!archived_at;
 
   // Get card actions and interactions
   const {
@@ -47,13 +46,12 @@ export const ItemCardWrapper = function ItemCardWrapper({
     checkInterestedUsers
   } = useItemCardActions(id, postedBy.id);
 
-  // Log all props for debugging
+  // Reduced logging to prevent performance issues
   useEffect(() => {
-    console.log('ItemCardWrapper props:', {
-      id, title, description, image, images, location, 
-      coordinates, category, condition, measurements, postedBy, archived_at
-    });
-  }, [id, title, description, image, images, location, coordinates, category, condition, measurements, postedBy, archived_at]);
+    if (archived_at) {
+      console.log(`Item ${id} is archived`);
+    }
+  }, [id, archived_at]);
   
   const {
     isLiked,
@@ -91,23 +89,19 @@ export const ItemCardWrapper = function ItemCardWrapper({
 
   // Handle successful delete or archive
   const handleDeleteSuccess = () => {
-    // Show a small delay for better UX
-    setTimeout(() => {
-      console.log("Item was successfully deleted or archived");
-      setIsItemDeleted(true);
-    }, 200);
+    console.log("Item was successfully deleted or archived");
+    setIsItemDeleted(true);
   };
 
   // Ensure dialog is properly closed if component unmounts
   useEffect(() => {
     return () => {
-      // Cleanup if component is unmounting
       setShowDeleteDialog(false);
     };
   }, [setShowDeleteDialog]);
 
-  // If the item was deleted or archived, don't render it anymore
-  if (isItemDeleted || isItemArchived) {
+  // If the item was deleted, don't render it anymore
+  if (isItemDeleted) {
     return null;
   }
 
@@ -130,7 +124,7 @@ export const ItemCardWrapper = function ItemCardWrapper({
         </div>
       )}
       
-      {isArchived && (
+      {isItemArchived && (
         <div className="bg-yellow-50 p-2 flex items-center gap-2 text-sm text-amber-700">
           <Archive className="h-4 w-4" />
           <span>This item has been archived</span>
