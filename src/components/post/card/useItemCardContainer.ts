@@ -10,7 +10,7 @@ interface UseItemCardContainerProps {
   postedBy: {
     id: string;
     name: string;
-    avatar: string;
+    avatar?: string; // Make avatar optional to match our updated types
   };
 }
 
@@ -115,3 +115,4 @@ export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps
     handleReport,
   };
 };
+
