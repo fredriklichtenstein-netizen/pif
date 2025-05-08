@@ -1,12 +1,13 @@
 
-import { useCallback } from "react";
-import { useItemComments } from "./item/useItemComments";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useItemActions } from "./item/useItemActions";
-import { useItemUsers } from "./item/useItemUsers";
 import { useItemRealtime } from "./item/useItemRealtime";
+import { useItemCardComments } from "./item/useItemCardComments";
+import { useItemCardUsers } from "./item/useItemCardUsers";
+import { useItemCardRefresh } from "./item/useItemCardRefresh";
 
 export const useItemCard = (itemId: string) => {
+  // Get comments functionality
   const {
     showComments,
     comments,
@@ -16,9 +17,11 @@ export const useItemCard = (itemId: string) => {
     setComments,
     handleCommentToggle,
     fetchItemComments,
-    setCommentsCount
-  } = useItemComments(itemId);
+    setCommentsCount,
+    refreshComments
+  } = useItemCardComments(itemId);
 
+  // Get interactions functionality
   const {
     isLiked,
     likesCount,
@@ -34,22 +37,18 @@ export const useItemCard = (itemId: string) => {
     interestedUsersError
   } = useItemInteractions(itemId);
 
+  // Action handlers
   const { handleMessage, handleShare, handleReport } = useItemActions();
 
-  const refreshData = useCallback(() => {
-    fetchLikers()
-      .then(() => console.log('Refreshed likes data'))
-      .catch(err => console.error('Error refreshing likes:', err));
-    
-    fetchInterestedUsers()
-      .then(() => console.log('Refreshed interests data'))
-      .catch(err => console.error('Error refreshing interests:', err));
-    
-    if (showComments) {
-      fetchItemComments();
-    }
-  }, [itemId, fetchLikers, fetchInterestedUsers, showComments, fetchItemComments]);
+  // Data refresh functionality
+  const { refreshData } = useItemCardRefresh(
+    fetchLikers,
+    fetchInterestedUsers,
+    showComments,
+    fetchItemComments
+  );
 
+  // User data management
   const { 
     likers, 
     commenters, 
@@ -57,7 +56,8 @@ export const useItemCard = (itemId: string) => {
     getInterestedUsers,
     isLoadingInterested,
     interestedError
-  } = useItemUsers(
+  } = useItemCardUsers(
+    itemId,
     comments,
     fetchLikers,
     likesCount,
@@ -65,6 +65,7 @@ export const useItemCard = (itemId: string) => {
     interestsCount
   );
 
+  // Realtime updates
   const {
     isRealtimeSubscribed,
     realtimeError,
