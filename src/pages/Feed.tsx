@@ -45,6 +45,11 @@ export default function Feed() {
     loadInterestedPosts
   } = useFeedPosts();
 
+  // Define clearFilters function
+  const clearFilters = () => {
+    setSelectedCategories([]);
+  };
+
   // Apply category filters whenever selected categories change
   useEffect(() => {
     filterByCategories(selectedCategories);
