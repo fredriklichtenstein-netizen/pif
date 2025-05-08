@@ -5,7 +5,7 @@ interface PosterInfoProps {
   postedBy: {
     id?: string;
     name: string;
-    avatar: string;
+    avatar?: string; // Make avatar optional to match our updated types
   };
 }
 
@@ -16,7 +16,7 @@ export function PosterInfo({ postedBy }: PosterInfoProps) {
       className="flex items-center"
     >
       <img
-        src={postedBy.avatar}
+        src={postedBy.avatar || ''}
         alt={postedBy.name}
         className="w-6 h-6 rounded-full mr-2"
       />

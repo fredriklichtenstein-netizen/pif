@@ -38,3 +38,37 @@ export interface ItemContentProps {
   measurements?: Record<string, string>;
   children?: ReactNode;
 }
+
+export interface ItemInteractionsProps {
+  id: string;
+  postedBy: {
+    id?: string;
+    name: string;
+    avatar?: string;  // Make avatar optional here to match the ItemCardProps
+  };
+  isLiked: boolean;
+  showComments: boolean;
+  isBookmarked: boolean;
+  showInterest: boolean;
+  isOwner?: boolean;
+  commentsCount?: number;
+  likesCount?: number;
+  interestsCount?: number;
+  likers?: any[];
+  interestedUsers?: any[];
+  commenters?: any[];
+  onLikeToggle: () => void;
+  onCommentToggle: () => void;
+  onShowInterest: () => void;
+  onBookmarkToggle: () => void;
+  onMessage: (e: React.MouseEvent) => void;
+  onShare: () => void;
+  onReport: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  interactionsLoading?: boolean;
+  isLoadingInterested?: boolean;
+  interestedError?: Error | null;
+  getInterestedUsers?: () => void;
+  isRealtimeSubscribed?: boolean;
+}

@@ -21,7 +21,7 @@ interface ItemCardProps {
   postedBy: {
     id: string;
     name: string;
-    avatar: string;
+    avatar?: string; // Make avatar optional to match our updated types
   };
   markAsPiffedAction?: () => void;
   images?: string[];

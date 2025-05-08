@@ -11,6 +11,7 @@ interface ItemInteractionsProps {
   postedBy: {
     id?: string;
     name: string;
+    avatar?: string; // Make avatar optional to match our updated types
   };
   isLiked: boolean;
   showComments: boolean;
