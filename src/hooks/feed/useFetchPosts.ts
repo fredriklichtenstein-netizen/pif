@@ -22,7 +22,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       
       // Filter out archived items unless specifically requested
       if (!options.includeArchived) {
-        query = query.neq('status', 'archived');
+        query = query.not('status', 'eq', 'archived');
       }
 
       const { data, error } = await query;
@@ -52,6 +52,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       }) || [];
 
       setPosts(transformedData);
+      console.log('useFetchPosts: Posts fetched successfully', { count: transformedData.length });
     } catch (err: any) {
       console.error('Error fetching posts:', err);
       setError(err);

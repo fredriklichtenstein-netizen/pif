@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { Loader2 } from "lucide-react";
@@ -8,6 +8,7 @@ import { FeedFilters } from "@/components/feed/FeedFilters";
 import { FeedItemList } from "@/components/feed/FeedItemList";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
 
 const CATEGORIES = [
   "Furniture",
@@ -27,6 +28,10 @@ export default function Feed() {
   const [viewMode, setViewMode] = useState("all");
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  
+  // Get post ID from URL if present
+  const postIdParam = searchParams.get('post');
   
   const { 
     posts, 
@@ -40,42 +45,52 @@ export default function Feed() {
     loadInterestedPosts
   } = useFeedPosts();
 
+  // Apply category filters whenever selected categories change
   useEffect(() => {
     filterByCategories(selectedCategories);
   }, [selectedCategories, filterByCategories]);
 
-  useEffect(() => {
-    const loadPostsBasedOnViewMode = async () => {
-      if (!user && viewMode !== "all") {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to use this filter",
-          variant: "destructive"
-        });
-        setViewMode("all");
-        return;
-      }
-      
-      switch (viewMode) {
-        case "saved":
-          await loadSavedPosts();
-          break;
-        case "myPifs":
-          await loadMyPosts();
-          break;
-        case "archived":
-          await loadArchivedPosts();
-          break;
-        case "interested":
-          await loadInterestedPosts();
-          break;
-        default:
-          await refreshPosts();
-      }
-    };
+  // Memoized function to load posts based on view mode
+  const loadPostsBasedOnViewMode = useCallback(async (mode: string) => {
+    if (!user && mode !== "all") {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to use this filter",
+        variant: "destructive"
+      });
+      setViewMode("all");
+      return;
+    }
     
-    loadPostsBasedOnViewMode();
-  }, [viewMode, user]);
+    switch (mode) {
+      case "saved":
+        await loadSavedPosts();
+        break;
+      case "myPifs":
+        await loadMyPosts();
+        break;
+      case "archived":
+        await loadArchivedPosts();
+        break;
+      case "interested":
+        await loadInterestedPosts();
+        break;
+      default:
+        await refreshPosts();
+    }
+  }, [user, loadSavedPosts, loadMyPosts, loadArchivedPosts, loadInterestedPosts, refreshPosts, toast]);
+
+  // Load posts whenever view mode changes or user auth state changes
+  useEffect(() => {
+    loadPostsBasedOnViewMode(viewMode);
+  }, [viewMode, user, loadPostsBasedOnViewMode]);
+
+  // Force refresh when returning to feed page
+  useEffect(() => {
+    // This will trigger a refresh when the component mounts
+    // Crucial for when returning to feed after delete/archive operations
+    refreshPosts();
+  }, [refreshPosts]);
 
   const allSelected = selectedCategories.length === CATEGORIES.length;
 

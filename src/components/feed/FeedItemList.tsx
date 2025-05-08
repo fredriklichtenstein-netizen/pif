@@ -1,7 +1,9 @@
+
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 
 interface FeedItemListProps {
   posts: any[];
@@ -26,12 +28,19 @@ export function FeedItemList({
         return "You haven't saved any items yet";
       case "myPifs":
         return "You haven't posted any items yet";
+      case "archived":
+        return "You don't have any archived items yet";
       case "interested":
         return "You haven't shown interest in any items yet";
       default:
         return "No items found";
     }
   };
+
+  // Log when posts change for debugging
+  useEffect(() => {
+    console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
+  }, [posts, viewMode]);
 
   return (
     <div className="space-y-4">
@@ -67,6 +76,7 @@ export function FeedItemList({
                 name: post.user_name || 'Anonymous',
                 avatar: post.user_avatar || '',
               }}
+              archived_at={post.archived_at}
             />
           </NetworkStatusWrapper>
         );

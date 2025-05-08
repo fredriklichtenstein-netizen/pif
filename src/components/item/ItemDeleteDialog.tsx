@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -124,8 +125,8 @@ export function ItemDeleteDialog({
       } else {
         // Default behavior - return to profile or reload feed
         if (window.location.pathname.includes('/feed')) {
-          // Refresh the current feed
-          navigate('/feed', { replace: true });
+          // Navigate to feed without using replace to ensure a fresh load
+          navigate('/feed');
         } else {
           navigate('/profile');
         }
