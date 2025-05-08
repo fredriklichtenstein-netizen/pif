@@ -1,16 +1,10 @@
 
-import { useRef } from "react";
+import { useCallback } from "react";
 
 export const useAbortController = () => {
-  const abortControllerRef = useRef<AbortController | null>(null);
-  
-  const setupAbortController = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-    return abortControllerRef.current;
-  };
+  const setupAbortController = useCallback(() => {
+    return new AbortController();
+  }, []);
 
   return { setupAbortController };
 };
