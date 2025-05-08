@@ -82,18 +82,35 @@ export function ItemCardWrapper({
     getInterestedUsers,
     isRealtimeSubscribed,
     realtimeError,
-    refreshItemData
+    refreshItemData,
+    cleanup: cleanupRealtime
   } = useItemCard(String(id));
   
   const handleReportClick = () => {
     setIsReportDialogOpen(true);
   };
 
+  // Clean up resources when component unmounts or item is deleted
+  useEffect(() => {
+    return () => {
+      try {
+        console.log(`ItemCard unmounting or being deleted, cleaning up resources for item ${id}`);
+        cleanupRealtime();
+      } catch (error) {
+        console.error("Error during cleanup:", error);
+      }
+    };
+  }, [id, cleanupRealtime]);
+
   // Handle successful delete or archive with better error recovery
   const handleDeleteSuccess = useCallback(() => {
     console.log("Item was successfully deleted or archived");
     
     try {
+      // Clean up any realtime connections or subscriptions
+      cleanupRealtime();
+      
+      // Mark item as deleted in the UI to remove it
       setIsItemDeleted(true);
       
       // Call the parent's success callback after a short delay to allow state updates
@@ -119,7 +136,7 @@ export function ItemCardWrapper({
       // Even if there's an error, try to refresh data
       setTimeout(() => refreshItemData(), 500);
     }
-  }, [onOperationSuccess, refreshItemData, toast]);
+  }, [onOperationSuccess, refreshItemData, toast, cleanupRealtime]);
 
   // Fully refresh the component if needed
   const forceRefresh = useCallback(() => {

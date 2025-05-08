@@ -3,7 +3,7 @@ import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,7 +29,18 @@ export function FeedItemList({
     hasError: false, 
     errorMessage: '' 
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+    };
+  }, []);
 
   const getEmptyStateMessage = () => {
     if (selectedCategories.length > 0) {
@@ -55,10 +66,13 @@ export function FeedItemList({
     console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
   }, [posts, viewMode]);
 
-  // Error recovery function with debouncing
+  // Enhanced recovery function with debouncing and complete refresh
   const handleRecoveryAction = useCallback(() => {
     try {
-      setRefreshKey(Date.now()); // Force re-render
+      setIsRefreshing(true);
+      
+      // Force component re-render with a new key
+      setRefreshKey(Date.now());
       setErrorState({ hasError: false, errorMessage: '' });
       
       toast({
@@ -66,18 +80,29 @@ export function FeedItemList({
         description: "Attempting to recover and refresh the feed",
       });
       
+      // Clean up any potential timers
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+      
       // Wait a bit then call onItemOperationSuccess to refresh data
-      setTimeout(() => {
+      refreshTimerRef.current = setTimeout(() => {
         if (onItemOperationSuccess) {
           try {
             onItemOperationSuccess();
+            console.log("Feed data refresh completed");
           } catch (err) {
             console.error("Error during recovery refresh:", err);
             // If the callback fails, we'll still try to recover UI
             setRefreshKey(Date.now() + 1);
+          } finally {
+            setIsRefreshing(false);
+            refreshTimerRef.current = null;
           }
+        } else {
+          setIsRefreshing(false);
         }
-      }, 500);
+      }, 800); // Longer delay for more complete refresh
     } catch (err) {
       console.error("Error during recovery action:", err);
       toast({
@@ -85,26 +110,53 @@ export function FeedItemList({
         description: "Please try refreshing the page manually",
         variant: "destructive",
       });
+      setIsRefreshing(false);
     }
   }, [onItemOperationSuccess, toast]);
 
-  // Handle successful operations with better error protection
+  // Handle successful operations with better error protection and state reset
   const handleItemSuccess = useCallback(() => {
     try {
       console.log("Item operation success callback triggered");
-      if (onItemOperationSuccess) {
-        onItemOperationSuccess();
+      
+      // Reset any error state
+      if (errorState.hasError) {
+        setErrorState({ hasError: false, errorMessage: '' });
       }
+      
+      // Force a re-render first to clear any stale UI
+      setRefreshKey(Date.now());
+      
+      // Clean up any potential timers
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+      
+      // Give the UI time to reset before refreshing data
+      refreshTimerRef.current = setTimeout(() => {
+        if (onItemOperationSuccess) {
+          try {
+            onItemOperationSuccess();
+          } catch (err) {
+            console.error("Error in operation success handler:", err);
+            setErrorState({
+              hasError: true,
+              errorMessage: "Error updating feed. Please try refreshing."
+            });
+          }
+        }
+        refreshTimerRef.current = null;
+      }, 500);
     } catch (err) {
-      console.error("Error in operation success handler:", err);
+      console.error("Error in handleItemSuccess:", err);
       setErrorState({
         hasError: true,
         errorMessage: "Error updating feed. Please try refreshing."
       });
     }
-  }, [onItemOperationSuccess]);
+  }, [onItemOperationSuccess, errorState]);
 
-  if (isLoading) {
+  if (isLoading || isRefreshing) {
     return (
       <div className="flex justify-center items-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />

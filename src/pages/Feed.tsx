@@ -8,7 +8,7 @@ import { FeedFilters } from "@/components/feed/FeedFilters";
 import { FeedItemList } from "@/components/feed/FeedItemList";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 const CATEGORIES = [
   "Furniture",
@@ -27,13 +27,17 @@ export default function Feed() {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState("all");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [feedKey, setFeedKey] = useState(Date.now());
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const forceRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   // Get post ID from URL if present
   const postIdParam = searchParams.get('post');
+  const timeParam = searchParams.get('t');
   
   const { 
     posts, 
@@ -46,6 +50,29 @@ export default function Feed() {
     loadArchivedPosts,
     loadInterestedPosts
   } = useFeedPosts();
+
+  // Function to force a complete refresh of the feed
+  const forceCompleteRefresh = useCallback(() => {
+    // Clear any ongoing timers
+    if (forceRefreshTimeoutRef.current) {
+      clearTimeout(forceRefreshTimeoutRef.current);
+    }
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+    
+    // Log the refresh
+    console.log("Forcing complete feed refresh");
+    
+    // Update the key to force a component remount
+    setFeedKey(Date.now());
+    
+    // Force refresh after a delay
+    forceRefreshTimeoutRef.current = setTimeout(() => {
+      loadPostsBasedOnViewMode(viewMode);
+      forceRefreshTimeoutRef.current = null;
+    }, 300);
+  }, [viewMode]);
 
   // Define clearFilters function
   const clearFilters = () => {
@@ -121,8 +148,33 @@ export default function Feed() {
       if (refreshTimeoutRef.current !== null) {
         clearTimeout(refreshTimeoutRef.current);
       }
+      if (forceRefreshTimeoutRef.current !== null) {
+        clearTimeout(forceRefreshTimeoutRef.current);
+      }
     };
   }, [refreshPosts]);
+
+  // If there's a timestamp parameter, it's coming from a refresh - force refresh data
+  useEffect(() => {
+    if (timeParam && !isInitialLoad) {
+      console.log("Time parameter detected, forcing refresh");
+      forceCompleteRefresh();
+    }
+  }, [timeParam, isInitialLoad, forceCompleteRefresh]);
+
+  // Handle successful item deletion or archiving with more aggressive refresh
+  const handleItemOperationSuccess = useCallback(() => {
+    console.log('Item operation success detected, refreshing feed');
+    
+    // First attempt a normal refresh
+    debouncedRefresh(500); 
+    
+    // If it's after a deletion/major operation, use a more aggressive approach after a delay
+    setTimeout(() => {
+      // Navigate to same route with timestamp to force a full refresh
+      navigate(`/feed?t=${Date.now()}`, { replace: true });
+    }, 300);
+  }, [debouncedRefresh, navigate]);
 
   // Cleanup function to prevent memory leaks
   useEffect(() => {
@@ -130,14 +182,11 @@ export default function Feed() {
       if (refreshTimeoutRef.current !== null) {
         clearTimeout(refreshTimeoutRef.current);
       }
+      if (forceRefreshTimeoutRef.current !== null) {
+        clearTimeout(forceRefreshTimeoutRef.current);
+      }
     };
   }, []);
-
-  // Handle successful item deletion or archiving
-  const handleItemOperationSuccess = useCallback(() => {
-    console.log('Item operation success detected, refreshing feed');
-    debouncedRefresh(800); // Use a longer delay for post-deletion refresh
-  }, [debouncedRefresh]);
 
   if (isLoading && isInitialLoad) {
     return (
@@ -148,7 +197,7 @@ export default function Feed() {
   }
 
   return (
-    <div className="container max-w-md mx-auto px-4 pb-20">
+    <div className="container max-w-md mx-auto px-4 pb-20" key={feedKey}>
       <NetworkStatus onRetry={refreshPosts} />
       <div className="mb-4 mt-4">
         <h1 className="text-2xl font-bold mb-1">PiF Community</h1>

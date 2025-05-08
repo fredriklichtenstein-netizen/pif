@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface ItemDeleteDialogProps {
   id: string | number;
@@ -23,6 +25,7 @@ export function ItemDeleteDialog({
   const [interestedCount, setInterestedCount] = useState(0);
   const [countError, setCountError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Fetch interested count when dialog opens
   useEffect(() => {
@@ -73,6 +76,32 @@ export function ItemDeleteDialog({
       if (isOpen) { // Only update state if still mounted
         setIsLoadingCount(false);
       }
+    }
+  };
+
+  // Function to cleanup all realtime connections for this item
+  const cleanupRealtimeConnections = () => {
+    try {
+      // Get all channels
+      const allChannels = supabase.getChannels();
+      
+      // Find and remove channels related to this item
+      const itemChannels = allChannels.filter(channel => 
+        channel.topic.includes(`item-`) && channel.topic.includes(`${id}`)
+      );
+      
+      console.log(`Found ${itemChannels.length} realtime channels to clean up for item ${id}`);
+      
+      itemChannels.forEach(channel => {
+        try {
+          supabase.removeChannel(channel);
+          console.log(`Removed channel: ${channel.topic}`);
+        } catch (e) {
+          console.error(`Error removing channel ${channel.topic}:`, e);
+        }
+      });
+    } catch (e) {
+      console.error("Error in cleanup process:", e);
     }
   };
 
@@ -127,13 +156,25 @@ export function ItemDeleteDialog({
         });
       }
 
+      // Cleanup all realtime connections for this item
+      cleanupRealtimeConnections();
+      
       // Close the dialog first to prevent state updates on unmounted components
       onClose();
 
-      // Call onSuccess callback immediately if provided
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Force a complete refresh after a small delay to ensure state is updated
+      setTimeout(() => {
+        if (onSuccess) {
+          // Call onSuccess callback if provided
+          onSuccess();
+        }
+        
+        // For permanent deletion, force a navigation refresh
+        if (!isSoftDelete) {
+          // Add timestamp to prevent caching
+          navigate(`/feed?t=${Date.now()}`, { replace: true });
+        }
+      }, 300);
       
     } catch (error: any) {
       console.error('Error deleting/archiving item:', error);

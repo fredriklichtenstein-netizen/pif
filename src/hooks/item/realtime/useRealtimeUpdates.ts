@@ -25,7 +25,8 @@ export const useRealtimeUpdates = (
     cleanupChannels,
     handleReconnect,
     channelsRef,
-    setupAttemptedRef
+    setupAttemptedRef,
+    handleCleanup
   } = useRealtimeConnection(itemId);
 
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,9 +70,13 @@ export const useRealtimeUpdates = (
       
       numericIdRef.current = numericId;
       
+      // Create a unique channel name with timestamp to avoid collisions
+      const channelName = `item-combined-${numericId}-${Date.now()}`;
+      console.log(`Setting up realtime channel: ${channelName}`);
+      
       // Consolidated channel for all table changes
       const combinedChannel = supabase
-        .channel(`item-combined-${numericId}-${Date.now()}`) // Unique channel name
+        .channel(channelName)
         .on('postgres_changes', {
           event: '*', // All events (INSERT, UPDATE, DELETE)
           schema: 'public',
@@ -148,11 +153,22 @@ export const useRealtimeUpdates = (
       setupAttemptedRef.current = false;
     };
   }, [itemId]);
+  
+  // Make sure to clean up properly on unmount
+  useEffect(() => {
+    return () => {
+      handleCleanup();
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, [handleCleanup]);
 
   return {
     isSubscribed,
     error,
     numericId: numericIdRef.current,
+    cleanup: handleCleanup,
     retry: useCallback(() => {
       cleanupChannels();
       attemptCountRef.current = 0;

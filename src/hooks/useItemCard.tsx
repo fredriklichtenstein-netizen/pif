@@ -68,7 +68,8 @@ export const useItemCard = (itemId: string) => {
   const {
     isRealtimeSubscribed,
     realtimeError,
-    refreshItemData
+    refreshItemData,
+    cleanup
   } = useItemRealtime(itemId, refreshData);
 
   return {
@@ -105,6 +106,7 @@ export const useItemCard = (itemId: string) => {
     // Realtime
     isRealtimeSubscribed,
     realtimeError,
-    refreshItemData
+    refreshItemData,
+    cleanup
   };
 };

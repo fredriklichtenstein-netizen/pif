@@ -12,14 +12,16 @@ export const useItemRealtime = (itemId: string, refreshData: () => void) => {
   // Get connection management utilities
   const { 
     connectionAttempts, 
-    handleReconnect 
+    handleReconnect,
+    handleCleanup: connectionCleanup
   } = useRealtimeConnection(itemId);
   
   // Handle real-time subscription
   const { 
     isSubscribed, 
     error: realtimeError, 
-    retry 
+    retry,
+    cleanup: updatesCleanup
   } = useRealtimeUpdates(
     itemId, 
     refreshData
@@ -43,11 +45,19 @@ export const useItemRealtime = (itemId: string, refreshData: () => void) => {
     retry,
     handleReconnect
   );
+  
+  // Unified cleanup for all realtime resources
+  const cleanup = () => {
+    console.log(`Cleaning up all realtime resources for item ${itemId}`);
+    connectionCleanup();
+    updatesCleanup();
+  };
 
   return {
     isRealtimeSubscribed,
     realtimeError,
     refreshItemData,
-    connectionAttempts
+    connectionAttempts,
+    cleanup
   };
 };

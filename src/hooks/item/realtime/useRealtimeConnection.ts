@@ -29,15 +29,25 @@ export const useRealtimeConnection = (itemId: string) => {
       }
     });
     
+    // Reset all state
     channelsRef.current = [];
     setIsSubscribed(false);
     setupAttemptedRef.current = false;
+    setConnectionAttempts(0);  
   }, [itemId]);
 
   // Handle reconnection attempts
   const handleReconnect = useCallback(() => {
     setConnectionAttempts(prev => prev + 1);
   }, []);
+
+  // Handle component unmounting or item id change
+  const handleCleanup = useCallback(() => {
+    cleanupChannels();
+    setIsSubscribed(false);
+    setError(null);
+    setConnectionAttempts(0);
+  }, [cleanupChannels]);
 
   return {
     isSubscribed,
@@ -48,6 +58,7 @@ export const useRealtimeConnection = (itemId: string) => {
     cleanupChannels,
     handleReconnect,
     channelsRef,
-    setupAttemptedRef
+    setupAttemptedRef,
+    handleCleanup
   };
 };
