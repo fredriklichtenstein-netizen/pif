@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ItemMetadata } from "./card/ItemMetadata";
@@ -19,7 +18,7 @@ interface ItemHeaderProps {
   description: string;
   postedBy: {
     name: string;
-    avatar: string;
+    avatar?: string; // Changed from required to optional
   };
   measurements?: Record<string, string>;
 }

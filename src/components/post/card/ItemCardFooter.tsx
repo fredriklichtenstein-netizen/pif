@@ -55,7 +55,7 @@ export function ItemCardFooter({
           onLikeToggle={onLikeToggle}
           onCommentToggle={onCommentToggle}
           onShowInterest={onShowInterest}
-          postedBy={{id: "", name: "", avatar: ""}}
+          postedBy={{id: "", name: "", avatar: undefined}}
           isBookmarked={false}
           onBookmarkToggle={() => {}}
           onMessage={() => {}}

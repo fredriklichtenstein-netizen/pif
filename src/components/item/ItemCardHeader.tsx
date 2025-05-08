@@ -12,7 +12,7 @@ interface ItemCardHeaderProps {
   postedBy: {
     id?: string;
     name: string;
-    avatar: string;
+    avatar?: string; // Changed from required to optional
   };
   isOwner: boolean;
   handleReport: (e: React.MouseEvent) => void;
