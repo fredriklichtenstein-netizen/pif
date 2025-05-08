@@ -1,5 +1,5 @@
 
-import { ItemDeleteDialog } from "../ItemDeleteDialog";
+import { ItemDeleteDialog } from "../delete/ItemDeleteDialog";
 
 interface ItemDialogsProps {
   id: string | number;

@@ -1,83 +1,20 @@
 
-import { useState, useEffect } from "react";
-import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface ItemDeleteDialogProps {
-  id: string | number;
-  isOpen: boolean;
-  onClose: () => void;
-  checkInterestedUsers?: () => Promise<number>;
-  onSuccess?: () => void;
-}
-
-export function ItemDeleteDialog({ 
-  id, 
-  isOpen, 
-  onClose,
-  checkInterestedUsers,
-  onSuccess
-}: ItemDeleteDialogProps) {
+/**
+ * Custom hook to handle item deletion or archiving
+ */
+export function useItemDeletion(
+  id: string | number,
+  onClose: () => void,
+  onSuccess?: () => void
+) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isLoadingCount, setIsLoadingCount] = useState(false);
-  const [interestedCount, setInterestedCount] = useState(0);
-  const [countError, setCountError] = useState<Error | null>(null);
-  const { toast } = useToast();
   const navigate = useNavigate();
-  
-  // Fetch interested count when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchInterestedCount();
-    }
-    
-    // Cleanup function to prevent memory leaks and stale state
-    return () => {
-      setIsLoadingCount(false);
-      setInterestedCount(0);
-      setCountError(null);
-    };
-  }, [isOpen]);
-  
-  // Function to fetch interested count
-  const fetchInterestedCount = async () => {
-    if (!isOpen) return;
-    
-    setIsLoadingCount(true);
-    setCountError(null);
-    
-    try {
-      if (checkInterestedUsers) {
-        // Use the passed function if available
-        const count = await checkInterestedUsers();
-        if (!isOpen) return; // Check if component is still mounted
-        setInterestedCount(count);
-      } else {
-        // Otherwise do the direct DB query
-        const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-        const { count, error } = await supabase
-          .from('interests')
-          .select('*', { count: 'exact', head: true })
-          .eq('item_id', numericId);
-          
-        if (error) throw error;
-        if (!isOpen) return; // Check if component is still mounted
-        setInterestedCount(count || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching interested count:', error);
-      if (!isOpen) return; // Check if component is still mounted
-      setCountError(error as Error);
-      // Set to 0 in case of error, to be safe
-      setInterestedCount(0);
-    } finally {
-      if (isOpen) { // Only update state if still mounted
-        setIsLoadingCount(false);
-      }
-    }
-  };
+  const { toast } = useToast();
 
   // Function to cleanup all realtime connections for this item
   const cleanupRealtimeConnections = () => {
@@ -192,20 +129,8 @@ export function ItemDeleteDialog({
     }
   };
 
-  return (
-    <DeleteConfirmDialog
-      isOpen={isOpen}
-      onClose={() => {
-        // Only allow closing if not currently processing
-        if (!isDeleting) onClose();
-      }}
-      onConfirm={handleDeleteConfirm}
-      title="Delete Item"
-      description="Are you sure you want to delete this item? This action may not be reversible."
-      hasInterestedUsers={isLoadingCount ? false : interestedCount > 0}
-      interestCount={isLoadingCount ? 0 : interestedCount}
-      isLoading={isDeleting}
-      isLoadingInterested={isLoadingCount}
-    />
-  );
+  return {
+    isDeleting,
+    handleDeleteConfirm
+  };
 }
