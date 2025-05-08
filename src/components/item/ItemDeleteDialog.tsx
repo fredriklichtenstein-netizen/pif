@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -84,7 +85,7 @@ export function ItemDeleteDialog({
       let success = false;
       
       if (isSoftDelete) {
-        // Use the archive_item function
+        // Use the archive_item function - now we only use archived_at
         const { data, error } = await supabase
           .rpc('archive_item', { 
             p_item_id: numericId,

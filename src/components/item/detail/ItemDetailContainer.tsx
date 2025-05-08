@@ -41,6 +41,8 @@ export function ItemDetailContainer({
         condition={displayItem.condition}
         measurements={measurements}
         postedBy={postedBy}
+        archived_at={displayItem.archived_at}
+        archived_reason={displayItem.archived_reason}
       />
     </div>
   );

@@ -27,6 +27,7 @@ export function ItemCardWrapper({
   measurements = {},
   postedBy,
   archived_at,
+  archived_reason,
   onOperationSuccess
 }: ItemCardProps) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -115,7 +116,7 @@ export function ItemCardWrapper({
       id={id}
       isRealtimeError={!!realtimeError}
       refreshItemData={refreshItemData}
-      statusBanner={isItemArchived ? <ItemArchivedBanner /> : undefined}
+      statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} /> : undefined}
       header={
         <ItemCardHeader 
           postedBy={postedBy} 

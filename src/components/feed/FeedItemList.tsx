@@ -1,4 +1,3 @@
-
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
@@ -90,6 +89,7 @@ export function FeedItemList({
                 avatar: post.user_avatar || '',
               }}
               archived_at={post.archived_at}
+              archived_reason={post.archived_reason}
               onOperationSuccess={onItemOperationSuccess}
             />
           </NetworkStatusWrapper>
