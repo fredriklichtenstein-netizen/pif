@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -85,25 +84,80 @@ export function ItemDeleteDialog({
       let success = false;
       
       if (isSoftDelete) {
-        // Use the archive_item function - now we only use archived_at
+        // For archive operations, use a simpler approach with better error handling
         const { data, error } = await supabase
-          .rpc('archive_item', { 
-            p_item_id: numericId,
-            p_reason: reason || null
-          });
+          .from('items')
+          .update({
+            archived_at: new Date().toISOString(),
+            archived_reason: reason || null
+          })
+          .eq('id', numericId);
           
-        if (error) throw error;
-        success = data === true;
+        if (error) {
+          console.error('Archive error details:', error);
+          throw error;
+        }
+        
+        // If we get here, the archive operation was successful
+        success = true;
       } else {
-        // Use the delete_item_with_related_records function
-        const { data, error } = await supabase
-          .rpc('delete_item_with_related_records', { 
-            p_item_id: numericId,
-            p_reason: reason || null
-          });
-          
-        if (error) throw error;
-        success = data === true;
+        // For permanent deletion, we'll handle notifications separately
+        // First notify interested users
+        try {
+          await supabase
+            .from('interests')
+            .select('user_id')
+            .eq('item_id', numericId)
+            .then(async ({ data: interestedUsers, error }) => {
+              if (error) throw error;
+              if (interestedUsers && interestedUsers.length > 0) {
+                // Get the item title first
+                const { data: item } = await supabase
+                  .from('items')
+                  .select('title')
+                  .eq('id', numericId)
+                  .single();
+
+                // Create notifications manually
+                for (const user of interestedUsers) {
+                  await supabase
+                    .from('notifications')
+                    .insert({
+                      user_id: user.user_id,
+                      type: 'status_change', // Using a valid notification type
+                      title: 'Item Deleted',
+                      content: item ? `The item "${item.title}" has been deleted${reason ? `: ${reason}` : ''}` : 'An item you were interested in has been deleted',
+                      reference_id: numericId.toString(),
+                      reference_type: 'item'
+                    });
+                }
+              }
+            });
+        } catch (notifyError) {
+          console.error('Error notifying users:', notifyError);
+          // Continue with deletion even if notification fails
+        }
+        
+        // Now delete the items relationships in sequence
+        await supabase.from('bookmarks').delete().eq('item_id', numericId);
+        await supabase.from('likes').delete().eq('item_id', numericId);
+        await supabase.from('comments').delete().eq('item_id', numericId);
+        await supabase.from('interests').delete().eq('item_id', numericId);
+        await supabase.from('item_interactions').delete().eq('item_id', numericId);
+        await supabase.from('item_shares').delete().eq('item_id', numericId);
+        
+        // Finally delete the item itself
+        const { error: deleteError } = await supabase
+          .from('items')
+          .delete()
+          .eq('id', numericId);
+        
+        if (deleteError) {
+          console.error('Delete error details:', deleteError);
+          throw deleteError;
+        }
+        
+        success = true;
       }
       
       if (!success) {

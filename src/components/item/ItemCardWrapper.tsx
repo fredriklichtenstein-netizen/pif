@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ItemCardHeader } from "./ItemCardHeader";
 import { ItemCardGallery } from "./ItemCardGallery";
 import { ItemCardContent } from "./content/ItemCardContent";
@@ -13,6 +13,7 @@ import { ItemCardLayout } from "./layout/ItemCardLayout";
 import { ItemArchivedBanner } from "./status/ItemArchivedBanner";
 import { ItemErrorHandler } from "./status/ItemErrorHandler";
 import type { ItemCardProps } from "./types";
+import { useToast } from "@/hooks/use-toast";
 
 export function ItemCardWrapper({
   id,
@@ -33,8 +34,15 @@ export function ItemCardWrapper({
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemDeleted, setIsItemDeleted] = useState(false);
   const [isItemArchived, setIsItemArchived] = useState(!!archived_at);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
   const { parsedCoordinates } = useCoordinatesParser(coordinates);
+  const { toast } = useToast();
+
+  // Update archived status when props change
+  useEffect(() => {
+    setIsItemArchived(!!archived_at);
+  }, [archived_at]);
 
   // Get card actions and interactions
   const {
@@ -81,17 +89,41 @@ export function ItemCardWrapper({
     setIsReportDialogOpen(true);
   };
 
-  // Handle successful delete or archive
+  // Handle successful delete or archive with additional error recovery
   const handleDeleteSuccess = () => {
     console.log("Item was successfully deleted or archived");
-    setIsItemDeleted(true);
     
-    // Call the parent's success callback after a short delay to allow state updates
-    if (onOperationSuccess) {
-      setTimeout(() => {
-        onOperationSuccess();
-      }, 300);
+    try {
+      setIsItemDeleted(true);
+      
+      // Call the parent's success callback after a short delay to allow state updates
+      if (onOperationSuccess) {
+        // Use setTimeout to ensure UI updates first
+        setTimeout(() => {
+          try {
+            onOperationSuccess();
+          } catch (error) {
+            console.error("Error in onOperationSuccess callback:", error);
+            toast({
+              title: "Update Error",
+              description: "Something went wrong while refreshing the page. Please refresh manually.",
+              variant: "destructive",
+            });
+          }
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Error handling delete success:", error);
     }
+  };
+
+  // Fully refresh the component if needed
+  const forceRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      refreshItemData();
+      setIsRefreshing(false);
+    }, 100);
   };
 
   // If the item was deleted, don't render it anymore
@@ -111,11 +143,22 @@ export function ItemCardWrapper({
   
   const numericItemId = typeof id === 'string' ? parseInt(id, 10) : id;
   
+  if (isRefreshing) {
+    return <div className="p-4 text-center">Refreshing...</div>;
+  }
+  
   return (
     <ItemCardLayout
       id={id}
       isRealtimeError={!!realtimeError}
-      refreshItemData={refreshItemData}
+      refreshItemData={() => {
+        try {
+          refreshItemData();
+        } catch (error) {
+          console.error("Error refreshing item data:", error);
+          forceRefresh();
+        }
+      }}
       statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} /> : undefined}
       header={
         <ItemCardHeader 

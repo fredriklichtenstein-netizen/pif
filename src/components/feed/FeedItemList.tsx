@@ -1,9 +1,11 @@
+
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface FeedItemListProps {
   posts: any[];
@@ -22,6 +24,13 @@ export function FeedItemList({
   onItemOperationSuccess,
   isLoading = false
 }: FeedItemListProps) {
+  const [refreshKey, setRefreshKey] = useState(Date.now());
+  const [errorState, setErrorState] = useState<{ hasError: boolean, errorMessage: string }>({ 
+    hasError: false, 
+    errorMessage: '' 
+  });
+  const { toast } = useToast();
+
   const getEmptyStateMessage = () => {
     if (selectedCategories.length > 0) {
       return "No items found matching your filters";
@@ -46,6 +55,48 @@ export function FeedItemList({
     console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
   }, [posts, viewMode]);
 
+  // Error recovery function
+  const handleRecoveryAction = () => {
+    try {
+      setRefreshKey(Date.now()); // Force re-render
+      setErrorState({ hasError: false, errorMessage: '' });
+      
+      // Wait a bit then call onItemOperationSuccess to refresh data
+      setTimeout(() => {
+        if (onItemOperationSuccess) {
+          onItemOperationSuccess();
+        }
+      }, 300);
+      
+      toast({
+        title: "Refreshing",
+        description: "Attempting to recover and refresh the feed",
+      });
+    } catch (err) {
+      console.error("Error during recovery action:", err);
+      toast({
+        title: "Recovery failed",
+        description: "Please try refreshing the page manually",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle successful operations with better error protection
+  const handleItemSuccess = () => {
+    try {
+      if (onItemOperationSuccess) {
+        onItemOperationSuccess();
+      }
+    } catch (err) {
+      console.error("Error in operation success handler:", err);
+      setErrorState({
+        hasError: true,
+        errorMessage: "Error updating feed. Please try refreshing."
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -54,8 +105,18 @@ export function FeedItemList({
     );
   }
 
+  if (errorState.hasError) {
+    return (
+      <div className="bg-destructive/10 p-4 rounded-md my-4">
+        <h3 className="font-semibold mb-2">Error</h3>
+        <p className="text-sm mb-3">{errorState.errorMessage}</p>
+        <Button onClick={handleRecoveryAction}>Refresh</Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" key={refreshKey}>
       {posts?.map((post) => {
         let coordinates;
         if (post.coordinates) {
@@ -90,7 +151,7 @@ export function FeedItemList({
               }}
               archived_at={post.archived_at}
               archived_reason={post.archived_reason}
-              onOperationSuccess={onItemOperationSuccess}
+              onOperationSuccess={handleItemSuccess}
             />
           </NetworkStatusWrapper>
         );
