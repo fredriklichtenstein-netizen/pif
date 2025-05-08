@@ -1,21 +1,20 @@
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
 import { ItemCardHeader } from "./ItemCardHeader";
 import { ItemCardGallery } from "./ItemCardGallery";
 import { ItemCardContent } from "./content/ItemCardContent";
 import { ItemCardActions } from "./ItemCardActions";
-import { NetworkStatus } from "../common/NetworkStatus";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
-import { ItemErrorDisplay } from "./content/ItemErrorDisplay";
 import { useItemErrorHandler } from "./content/useItemErrorHandler";
 import { useCoordinatesParser } from "./content/useCoordinatesParser";
 import { ItemDeleteDialog } from "./ItemDeleteDialog";
-import { Archive } from "lucide-react";
+import { ItemCardLayout } from "./layout/ItemCardLayout";
+import { ItemArchivedBanner } from "./status/ItemArchivedBanner";
+import { ItemErrorHandler } from "./status/ItemErrorHandler";
 import type { ItemCardProps } from "./types";
 
-export const ItemCardWrapper = function ItemCardWrapper({
+export function ItemCardWrapper({
   id,
   title,
   description,
@@ -94,13 +93,6 @@ export const ItemCardWrapper = function ItemCardWrapper({
     }
   };
 
-  // Ensure dialog is properly closed if component unmounts
-  useEffect(() => {
-    return () => {
-      setShowDeleteDialog(false);
-    };
-  }, [setShowDeleteDialog]);
-
   // If the item was deleted, don't render it anymore
   if (isItemDeleted) {
     return null;
@@ -108,8 +100,9 @@ export const ItemCardWrapper = function ItemCardWrapper({
 
   // If there are errors, show a simplified error card
   if (showError && errors.length > 0) {
-    return <ItemErrorDisplay 
-      errors={errors} 
+    return <ItemErrorHandler 
+      showError={showError}
+      errors={errors}
       onRetry={handleRetry}
       onDismiss={handleDismissError}
     />;
@@ -118,38 +111,30 @@ export const ItemCardWrapper = function ItemCardWrapper({
   const numericItemId = typeof id === 'string' ? parseInt(id, 10) : id;
   
   return (
-    <Card id={`item-card-${id}`} className="overflow-hidden transition-shadow hover:shadow-md rounded-xl">
-      {realtimeError && (
-        <div className="p-2 bg-gray-50 py-0">
-          <NetworkStatus onRetry={refreshItemData} />
-        </div>
-      )}
-      
-      {isItemArchived && (
-        <div className="bg-yellow-50 p-2 flex items-center gap-2 text-sm text-amber-700">
-          <Archive className="h-4 w-4" />
-          <span>This item has been archived</span>
-        </div>
-      )}
-      
-      <ItemCardHeader 
-        postedBy={postedBy} 
-        isOwner={isOwner} 
-        handleReport={handleReportClick} 
-        coordinates={parsedCoordinates} 
-        itemId={numericItemId}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-      />
-      
-      <ItemCardGallery 
-        images={images.length > 0 ? images : image ? [image] : []} 
-        title={title} 
-        category={category} 
-      />
-      
-      {/* Actions section */}
-      <div className="pt-2 pb-0 px-0">
+    <ItemCardLayout
+      id={id}
+      isRealtimeError={!!realtimeError}
+      refreshItemData={refreshItemData}
+      statusBanner={isItemArchived ? <ItemArchivedBanner /> : undefined}
+      header={
+        <ItemCardHeader 
+          postedBy={postedBy} 
+          isOwner={isOwner} 
+          handleReport={handleReportClick} 
+          coordinates={parsedCoordinates} 
+          itemId={numericItemId}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
+      }
+      gallery={
+        <ItemCardGallery 
+          images={images.length > 0 ? images : image ? [image] : []} 
+          title={title} 
+          category={category} 
+        />
+      }
+      actions={
         <ItemCardActions 
           id={id} 
           postedBy={postedBy} 
@@ -183,25 +168,23 @@ export const ItemCardWrapper = function ItemCardWrapper({
           setComments={setComments} 
           isRealtimeSubscribed={isRealtimeSubscribed} 
         />
-      </div>
-      
-      {/* Content section */}
-      <div className="p-4 pt-2 py-0">
+      }
+      content={
         <ItemCardContent 
           description={description} 
           condition={condition} 
           measurements={measurements} 
         />
-      </div>
-      
-      {/* Delete confirmation dialog */}
-      <ItemDeleteDialog
-        id={id}
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        checkInterestedUsers={checkInterestedUsers}
-        onSuccess={handleDeleteSuccess}
-      />
-    </Card>
+      }
+      dialogs={
+        <ItemDeleteDialog
+          id={id}
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          checkInterestedUsers={checkInterestedUsers}
+          onSuccess={handleDeleteSuccess}
+        />
+      }
+    />
   );
 }
