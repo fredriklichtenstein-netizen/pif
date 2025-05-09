@@ -106,16 +106,7 @@ export function DeleteConfirmDialog({
         }
       }}
     >
-      <AlertDialogContent
-        onPointerDownOutside={(e) => {
-          if (!isLoading) {
-            e.preventDefault();
-            handleSafeClose();
-          } else {
-            e.preventDefault();
-          }
-        }}
-      >
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
