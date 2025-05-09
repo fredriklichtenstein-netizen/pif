@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -11,9 +11,17 @@ export const useItemDelete = (
   const [isItemDeleted, setIsItemDeleted] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isProcessingRef = useRef(false);
 
-  // Handle successful delete or archive with better error recovery
+  // Handle successful delete or archive
   const handleDeleteSuccess = useCallback(() => {
+    // Prevent duplicate calls during the same operation
+    if (isProcessingRef.current) {
+      console.log("Operation already in progress, skipping duplicate call");
+      return;
+    }
+    
+    isProcessingRef.current = true;
     console.log("Item was successfully deleted or archived");
     
     try {
@@ -23,43 +31,40 @@ export const useItemDelete = (
       // Mark item as deleted in the UI to remove it
       setIsItemDeleted(true);
       
-      // Call the parent's success callback after a short delay to allow state updates
+      // Call the parent's success callback
       if (onOperationSuccess) {
-        // Use setTimeout to ensure UI updates first
-        setTimeout(() => {
-          try {
-            onOperationSuccess();
-          } catch (error) {
-            console.error("Error in onOperationSuccess callback:", error);
-            toast({
-              title: "Update Error",
-              description: "Something went wrong while refreshing the page. Please refresh manually.",
-              variant: "destructive",
-            });
-            // Force a navigation refresh if callback fails
-            setTimeout(() => {
-              navigate(`/feed?t=${Date.now()}`, { replace: true });
-            }, 300);
-          }
-        }, 300);
-      } else {
-        // If no success callback, force a navigation refresh
-        setTimeout(() => {
-          navigate(`/feed?t=${Date.now()}`, { replace: true });
-        }, 300);
+        try {
+          onOperationSuccess();
+        } catch (error) {
+          console.error("Error in onOperationSuccess callback:", error);
+          toast({
+            title: "Update Error",
+            description: "Something went wrong while refreshing. Please refresh manually if needed.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error("Error handling delete success:", error);
-      // Even if there's an error, try to navigate
+      
+      // Even if there's an error, try to reset the UI state
+      toast({
+        title: "Warning",
+        description: "Operation completed but there was an issue refreshing the view",
+        variant: "destructive",
+      });
+    } finally {
+      // Reset the processing flag after a delay to prevent any race conditions
       setTimeout(() => {
-        navigate(`/feed?t=${Date.now()}`, { replace: true });
+        isProcessingRef.current = false;
       }, 500);
     }
-  }, [onOperationSuccess, navigate, toast, cleanupRealtime]);
+  }, [onOperationSuccess, toast, cleanupRealtime]);
 
   return {
     isItemDeleted,
     setIsItemDeleted,
-    handleDeleteSuccess
+    handleDeleteSuccess,
+    isProcessing: isProcessingRef.current
   };
 };

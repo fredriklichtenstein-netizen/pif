@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { ItemDeleteDialog } from "../delete/ItemDeleteDialog";
 
 interface ItemDialogsProps {
@@ -16,12 +17,30 @@ export function ItemDialogs({
   checkInterestedUsers,
   onDeleteSuccess
 }: ItemDialogsProps) {
+  // Local state to control dialog visibility
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  // Sync local state with parent prop
+  useEffect(() => {
+    setIsDeleteDialogOpen(showDeleteDialog);
+  }, [showDeleteDialog]);
+  
+  // Handle dialog close safely
+  const handleCloseDialog = () => {
+    setIsDeleteDialogOpen(false);
+    
+    // Small delay to ensure dialog animations complete
+    setTimeout(() => {
+      onCloseDeleteDialog();
+    }, 50);
+  };
+
   return (
     <>
       <ItemDeleteDialog
         id={id}
-        isOpen={showDeleteDialog}
-        onClose={onCloseDeleteDialog}
+        isOpen={isDeleteDialogOpen}
+        onClose={handleCloseDialog}
         checkInterestedUsers={checkInterestedUsers}
         onSuccess={onDeleteSuccess}
       />

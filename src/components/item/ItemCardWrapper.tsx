@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { useItemCardWrapper } from "./hooks/useItemCardWrapper";
 import { ItemCardWrapperContent } from "./ItemCardWrapperContent";
 import { ItemCardDialogs } from "./ItemCardDialogs";
@@ -61,6 +62,7 @@ export function ItemCardWrapper({
     getInterestedUsers,
     isRealtimeSubscribed,
     realtimeError,
+    cleanupRealtime,
     handleRefresh,
     isItemDeleted,
     handleDeleteSuccess,
@@ -73,6 +75,14 @@ export function ItemCardWrapper({
     onOperationSuccess,
     coordinates
   });
+
+  // Cleanup effect to ensure realtime connections are removed
+  useEffect(() => {
+    return () => {
+      console.log(`ItemCardWrapper unmounting, cleaning up resources for item ${id}`);
+      cleanupRealtime();
+    };
+  }, [id, cleanupRealtime]);
 
   // If the item was deleted, don't render it anymore
   if (isItemDeleted) {
@@ -90,6 +100,11 @@ export function ItemCardWrapper({
       />
     );
   }
+  
+  const handleCloseDeleteDialog = () => {
+    console.log("Closing delete dialog...");
+    setShowDeleteDialog(false);
+  };
   
   return (
     <>
@@ -144,7 +159,7 @@ export function ItemCardWrapper({
       <ItemCardDialogs
         id={id}
         showDeleteDialog={showDeleteDialog}
-        onCloseDeleteDialog={() => setShowDeleteDialog(false)}
+        onCloseDeleteDialog={handleCloseDeleteDialog}
         checkInterestedUsers={checkInterestedUsers}
         onDeleteSuccess={handleDeleteSuccess}
       />

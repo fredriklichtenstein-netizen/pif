@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useItemCard } from "@/hooks/useItemCard";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
 import { useItemErrorHandler } from "../content/useItemErrorHandler";
@@ -17,6 +17,7 @@ export function useItemCardWrapper({
 }) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemArchived, setIsItemArchived] = useState(!!archived_at);
+  const [interactionEnabled, setInteractionEnabled] = useState(true);
   const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
   const { parsedCoordinates } = useCoordinatesParser(coordinates);
 
@@ -34,8 +35,9 @@ export function useItemCardWrapper({
     handleEdit,
     handleMessage,
     checkInterestedUsers
-  } = useItemCardActions(id, postedBy.id);
+  } = useItemCardActions(id, postedBy?.id);
   
+  // Get item interactions
   const {
     isLiked,
     likesCount,
@@ -70,25 +72,59 @@ export function useItemCardWrapper({
   // Refresh handling
   const { isRefreshing, handleRefresh } = useItemRefresh({ refreshItemData });
 
-  // Delete handling
-  const { isItemDeleted, handleDeleteSuccess } = useItemDelete(id, cleanupRealtime, onOperationSuccess);
+  // Delete handling with enhanced cleanup
+  const { isItemDeleted, handleDeleteSuccess } = useItemDelete(
+    id, 
+    cleanupRealtime, 
+    onOperationSuccess
+  );
   
-  // Report dialog handling
-  const handleReportClick = () => {
+  // Report dialog handling with interaction management
+  const handleReportClick = useCallback(() => {
+    if (!interactionEnabled) return;
     setIsReportDialogOpen(true);
-  };
+  }, [interactionEnabled]);
+
+  // Manage interactive state
+  useEffect(() => {
+    if (showDeleteDialog) {
+      setInteractionEnabled(false);
+    } else {
+      // Re-enable interactions after a small delay
+      const timer = setTimeout(() => {
+        setInteractionEnabled(true);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [showDeleteDialog]);
 
   // Clean up resources when component unmounts or item is deleted
   useEffect(() => {
     return () => {
       try {
-        console.log(`ItemCard unmounting or being deleted, cleaning up resources for item ${id}`);
+        console.log(`ItemCardWrapper hook cleanup for item ${id}`);
         cleanupRealtime();
       } catch (error) {
-        console.error("Error during cleanup:", error);
+        console.error("Error during hook cleanup:", error);
       }
     };
   }, [id, cleanupRealtime]);
+
+  // Force cleanup when component is unmounted due to deletion
+  useEffect(() => {
+    if (isItemDeleted) {
+      cleanupRealtime();
+    }
+  }, [isItemDeleted, cleanupRealtime]);
+
+  // Wrap interaction handlers to prevent actions when interactions are disabled
+  const wrapInteraction = useCallback((handler) => {
+    return (...args) => {
+      if (interactionEnabled) {
+        return handler(...args);
+      }
+    };
+  }, [interactionEnabled]);
 
   return {
     isReportDialogOpen,
@@ -101,10 +137,10 @@ export function useItemCardWrapper({
     parsedCoordinates,
     isOwner,
     showDeleteDialog,
-    handleDeleteClick,
+    handleDeleteClick: wrapInteraction(handleDeleteClick),
     setShowDeleteDialog,
-    handleEdit,
-    handleMessage,
+    handleEdit: wrapInteraction(handleEdit),
+    handleMessage: wrapInteraction(handleMessage),
     checkInterestedUsers,
     isLiked,
     likesCount,
@@ -122,12 +158,12 @@ export function useItemCardWrapper({
     interestedUsers,
     isLoadingInterested,
     interestedError,
-    handleLike,
-    handleCommentToggle,
-    handleShowInterest,
-    handleShare,
-    handleReport,
-    handleBookmark,
+    handleLike: wrapInteraction(handleLike),
+    handleCommentToggle: wrapInteraction(handleCommentToggle),
+    handleShowInterest: wrapInteraction(handleShowInterest),
+    handleShare: wrapInteraction(handleShare),
+    handleReport: wrapInteraction(handleReport),
+    handleBookmark: wrapInteraction(handleBookmark),
     setComments,
     getInterestedUsers,
     isRealtimeSubscribed,
@@ -135,7 +171,7 @@ export function useItemCardWrapper({
     refreshItemData,
     cleanupRealtime,
     isRefreshing,
-    handleRefresh,
+    handleRefresh: wrapInteraction(handleRefresh),
     isItemDeleted,
     handleDeleteSuccess,
     handleReportClick

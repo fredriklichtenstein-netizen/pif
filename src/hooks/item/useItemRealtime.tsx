@@ -1,4 +1,5 @@
 
+import { useCallback } from "react";
 import { useRealtimeUpdates } from "./realtime/useRealtimeUpdates";
 import { useRealtimeStatus } from "./realtime/useRealtimeStatus";
 import { useRealtimeRefresh } from "./realtime/useRealtimeRefresh";
@@ -10,6 +11,31 @@ export const useItemRealtime = (
   itemId: string,
   refreshData: () => void,
 ) => {
+  // Enhanced cleanup function to ensure all resources are released
+  const forceCleanup = useCallback(() => {
+    console.log(`Force cleaning up all realtime resources for item ${itemId}`);
+    
+    try {
+      // Get all Supabase channels
+      const allChannels = supabase.getChannels();
+      
+      // Remove any channels related to this item
+      const itemChannels = allChannels.filter(channel => 
+        channel.topic.includes('item-') && channel.topic.includes(itemId)
+      );
+      
+      itemChannels.forEach(channel => {
+        try {
+          supabase.removeChannel(channel);
+        } catch (err) {
+          console.error("Error removing channel:", err);
+        }
+      });
+    } catch (error) {
+      console.error("Error during force cleanup:", error);
+    }
+  }, [itemId]);
+  
   // Set up real-time updates with debounce for better performance
   const {
     isSubscribed,
@@ -31,10 +57,20 @@ export const useItemRealtime = (
     refreshItemData
   } = useRealtimeRefresh(itemId, refreshData, retry, () => {});
   
+  // Combined cleanup function
+  const combinedCleanup = useCallback(() => {
+    console.log(`Cleaning up realtime for item ${itemId}`);
+    cleanup();
+    forceCleanup();
+  }, [cleanup, forceCleanup, itemId]);
+  
   return {
     isRealtimeSubscribed,
     realtimeError: error,
     refreshItemData,
-    cleanup
+    cleanup: combinedCleanup
   };
 };
+
+// Add missing import
+import { supabase } from "@/integrations/supabase/client";

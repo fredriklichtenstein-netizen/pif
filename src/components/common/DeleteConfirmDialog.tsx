@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
@@ -32,17 +32,54 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   const [reason, setReason] = useState("");
   const [isSoftDelete, setIsSoftDelete] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(isOpen);
+  const unmountedRef = useRef(false);
   
-  // Reset state when dialog opens/closes
+  // Sync open state with prop
+  useEffect(() => {
+    if (!unmountedRef.current) {
+      setDialogOpen(isOpen);
+    }
+  }, [isOpen]);
+  
+  // Reset state when dialog opens
   useEffect(() => {
     if (isOpen) {
       setReason("");
       setIsSoftDelete(true);
+      unmountedRef.current = false;
     }
+    
+    // Cleanup function for when component unmounts or dialog closes
+    return () => {
+      if (!isOpen) {
+        unmountedRef.current = true;
+      }
+    };
   }, [isOpen]);
   
-  const handleConfirm = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default form submission
+  // Handle safe close
+  const handleSafeClose = () => {
+    // Only handle close if not in loading state
+    if (!isLoading && !unmountedRef.current) {
+      setDialogOpen(false);
+      
+      // Small delay before calling onClose to allow animations
+      setTimeout(() => {
+        if (!unmountedRef.current) {
+          onClose();
+        }
+      }, 10);
+    }
+  };
+  
+  // Handle confirmation with safety checks
+  const handleConfirmAction = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (unmountedRef.current || isLoading) return;
+    
+    // Call onConfirm with current state
     onConfirm(reason, isSoftDelete);
   };
   
@@ -50,7 +87,7 @@ export function DeleteConfirmDialog({
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen && !isLoading) {
-        onClose();
+        handleSafeClose();
       }
     };
     
@@ -58,15 +95,27 @@ export function DeleteConfirmDialog({
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [isOpen, onClose, isLoading]);
+  }, [isOpen, isLoading]);
   
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => {
-      if (!open && !isLoading) {
-        onClose();
-      }
-    }}>
-      <AlertDialogContent>
+    <AlertDialog 
+      open={dialogOpen} 
+      onOpenChange={(open) => {
+        if (!open && !isLoading) {
+          handleSafeClose();
+        }
+      }}
+    >
+      <AlertDialogContent
+        onPointerDownOutside={(e) => {
+          if (!isLoading) {
+            e.preventDefault();
+            handleSafeClose();
+          } else {
+            e.preventDefault();
+          }
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
@@ -122,14 +171,14 @@ export function DeleteConfirmDialog({
             disabled={isLoading || isLoadingInterested} 
             onClick={(e) => {
               e.preventDefault();
-              if (!isLoading && !isLoadingInterested) onClose();
+              if (!isLoading && !isLoadingInterested) handleSafeClose();
             }}
           >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction 
             type="button" 
-            onClick={handleConfirm} 
+            onClick={handleConfirmAction} 
             className="bg-red-600 hover:bg-red-700" 
             disabled={isLoading || isLoadingInterested}
           >

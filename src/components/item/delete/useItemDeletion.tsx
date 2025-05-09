@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,11 +12,10 @@ export function useItemDeletion(
   onSuccess?: () => void
 ) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   // Function to cleanup all realtime connections for this item
-  const cleanupRealtimeConnections = () => {
+  const cleanupRealtimeConnections = useCallback(() => {
     try {
       // Get all channels
       const allChannels = supabase.getChannels();
@@ -29,18 +27,22 @@ export function useItemDeletion(
       
       console.log(`Found ${itemChannels.length} realtime channels to clean up for item ${id}`);
       
-      itemChannels.forEach(channel => {
-        try {
-          supabase.removeChannel(channel);
-          console.log(`Removed channel: ${channel.topic}`);
-        } catch (e) {
-          console.error(`Error removing channel ${channel.topic}:`, e);
-        }
-      });
+      if (itemChannels.length > 0) {
+        itemChannels.forEach(channel => {
+          try {
+            supabase.removeChannel(channel);
+            console.log(`Removed channel: ${channel.topic}`);
+          } catch (e) {
+            console.error(`Error removing channel ${channel.topic}:`, e);
+          }
+        });
+      } else {
+        console.log("No realtime channels found for cleanup");
+      }
     } catch (e) {
       console.error("Error in cleanup process:", e);
     }
-  };
+  }, [id]);
 
   const handleDeleteConfirm = async (reason: string, isSoftDelete: boolean) => {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
@@ -53,9 +55,11 @@ export function useItemDeletion(
         throw new Error('You must be signed in to perform this action.');
       }
       
+      let success = false;
+      
       if (isSoftDelete) {
         // Use the database function for archiving
-        const { data: success, error } = await supabase.rpc(
+        const { data: result, error } = await supabase.rpc(
           'archive_item',
           { 
             p_item_id: numericId,
@@ -63,9 +67,15 @@ export function useItemDeletion(
           }
         );
         
-        if (error || !success) {
+        if (error) {
           console.error('Archive error details:', error);
-          throw error || new Error('Failed to archive item');
+          throw error;
+        }
+        
+        success = Boolean(result);
+        
+        if (!success) {
+          throw new Error('Failed to archive item');
         }
         
         toast({
@@ -74,7 +84,7 @@ export function useItemDeletion(
         });
       } else {
         // For permanent deletion, use the database function
-        const { data: success, error: deleteError } = await supabase.rpc(
+        const { data: result, error: deleteError } = await supabase.rpc(
           'delete_item_with_related_records',
           { 
             p_item_id: numericId,
@@ -82,9 +92,15 @@ export function useItemDeletion(
           }
         );
         
-        if (deleteError || !success) {
+        if (deleteError) {
           console.error('Delete error details:', deleteError);
-          throw deleteError || new Error('Failed to delete item');
+          throw deleteError;
+        }
+        
+        success = Boolean(result);
+        
+        if (!success) {
+          throw new Error('Failed to delete item');
         }
         
         toast({
@@ -93,25 +109,25 @@ export function useItemDeletion(
         });
       }
 
-      // Cleanup all realtime connections for this item
+      // Important: Cleanup all realtime connections first
+      // This is crucial to prevent the stale UI issue
       cleanupRealtimeConnections();
       
-      // Close the dialog first to prevent state updates on unmounted components
-      onClose();
-
-      // Force a complete refresh after a small delay to ensure state is updated
+      // Close the dialog first, with a small delay to ensure
+      // the dialog properly unmounts
       setTimeout(() => {
-        if (onSuccess) {
-          // Call onSuccess callback if provided
-          onSuccess();
-        }
+        // Now it's safe to close the dialog
+        onClose();
         
-        // For permanent deletion, force a navigation refresh
-        if (!isSoftDelete) {
-          // Add timestamp to prevent caching
-          navigate(`/feed?t=${Date.now()}`, { replace: true });
-        }
-      }, 300);
+        // After dialog is closed and with realtime connections cleaned up,
+        // it's safe to call onSuccess after a small delay
+        setTimeout(() => {
+          if (onSuccess) {
+            // Call onSuccess callback if provided
+            onSuccess();
+          }
+        }, 100);
+      }, 50);
       
     } catch (error: any) {
       console.error('Error deleting/archiving item:', error);
@@ -121,16 +137,19 @@ export function useItemDeletion(
         variant: "destructive",
       });
       
-      // Close the dialog even on error to avoid stuck UI
-      onClose();
+      // Even on error, ensure we close the dialog to prevent UI hang
+      setTimeout(() => {
+        onClose();
+      }, 50);
     } finally {
-      // Always clean up state
+      // Set deleting state to false to update UI
       setIsDeleting(false);
     }
   };
 
   return {
     isDeleting,
-    handleDeleteConfirm
+    handleDeleteConfirm,
+    cleanupRealtimeConnections
   };
 }
