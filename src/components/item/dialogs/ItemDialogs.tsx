@@ -20,13 +20,17 @@ export function ItemDialogs({
   // Local state to control dialog visibility
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
+  console.log("ItemDialogs render - showDeleteDialog:", showDeleteDialog);
+  
   // Sync local state with parent prop
   useEffect(() => {
+    console.log("ItemDialogs useEffect - showDeleteDialog changed:", showDeleteDialog);
     setIsDeleteDialogOpen(showDeleteDialog);
   }, [showDeleteDialog]);
   
   // Handle dialog close safely
   const handleCloseDialog = () => {
+    console.log("ItemDialogs - handleCloseDialog called");
     setIsDeleteDialogOpen(false);
     
     // Small delay to ensure dialog animations complete

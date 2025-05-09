@@ -1,108 +1,101 @@
 
-import { MapPin, MoreVertical } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { Button } from "../ui/button";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "../ui/dropdown-menu";
+import { UserAvatar } from "../common/UserAvatar";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ActionMenuItems } from "../post/interactions/ActionMenuItems";
-import { Link } from "react-router-dom";
-import { useItemBookmark } from "@/hooks/item/useItemBookmark";
-import { useShare } from "@/hooks/useShare";
+import { MoreHorizontal, MapPin } from "lucide-react";
+import { formatRelativeTime } from "@/utils/formatDate";
 
 interface ItemCardHeaderProps {
   postedBy: {
     id?: string;
-    name: string;
-    avatar?: string; // Changed from required to optional
+    name?: string;
+    avatar?: string;
   };
+  createdAt?: string;
   isOwner: boolean;
   handleReport: (e: React.MouseEvent) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   coordinates?: {
     lat: number;
     lng: number;
   };
   itemId?: number;
-  onEdit?: () => void;
-  onDelete?: () => void;
 }
 
 export function ItemCardHeader({
   postedBy,
+  createdAt,
   isOwner,
   handleReport,
-  coordinates,
-  itemId = 0,
   onEdit,
-  onDelete
+  onDelete,
+  coordinates,
+  itemId
 }: ItemCardHeaderProps) {
-  const { isBookmarked, toggleBookmark } = useItemBookmark(itemId);
-  const { shareContent } = useShare();
+  const navigate = useNavigate();
   
-  const distanceText = "Nearby"; // This should be calculated based on user location and coordinates
-  
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}/item/${itemId}`;
-    shareContent({
-      title: `Check out this item on PIF`,
-      text: `Check out what ${postedBy.name} is sharing on PIF Community!`,
-      url: shareUrl
-    });
+  const handleMenuDelete = () => {
+    console.log("Delete menu clicked in ItemCardHeader");
+    if (onDelete) {
+      onDelete();
+    }
   };
   
+  const handleUserClick = () => {
+    if (postedBy?.id) {
+      navigate(`/profile/${postedBy.id}`);
+    }
+  };
+
   return (
-    <div className="p-3 flex items-center justify-between">
-      {postedBy.id ? (
-        <Link to={`/user/${postedBy.id}`} className="flex items-center">
-          <Avatar className="h-8 w-8 mr-2">
-            <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
-            <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="text-sm font-medium">{postedBy.name}</div>
-            {distanceText && (
-              <div className="text-xs text-gray-500 flex items-center">
-                <MapPin size={12} className="mr-1" />
-                {distanceText}
-              </div>
-            )}
-          </div>
-        </Link>
-      ) : (
-        <div className="flex items-center">
-          <Avatar className="h-8 w-8 mr-2">
-            <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
-            <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="text-sm font-medium">{postedBy.name}</div>
-            {distanceText && (
-              <div className="text-xs text-gray-500 flex items-center">
-                <MapPin size={12} className="mr-1" />
-                {distanceText}
-              </div>
-            )}
-          </div>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-2 cursor-pointer" onClick={handleUserClick}>
+        <UserAvatar user={postedBy} className="h-8 w-8" fallback={postedBy?.name?.[0] || '?'} />
+        <div>
+          <div className="font-medium text-sm">{postedBy?.name || "Unknown User"}</div>
+          {createdAt && (
+            <div className="text-xs text-gray-500">{formatRelativeTime(new Date(createdAt))}</div>
+          )}
         </div>
-      )}
+      </div>
       
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreVertical className="h-4 w-4" />
+      <div className="flex items-center space-x-1">
+        {coordinates && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8" 
+            onClick={() => navigate(`/map?lat=${coordinates.lat}&lng=${coordinates.lng}`)}
+          >
+            <MapPin className="h-4 w-4 text-gray-500" />
+            <span className="sr-only">View on map</span>
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <ActionMenuItems
-            isBookmarked={isBookmarked}
-            isOwner={isOwner}
-            itemId={itemId}
-            onBookmarkToggle={toggleBookmark}
-            onShare={handleShare}
-            onReportClick={handleReport}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+        )}
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">More options</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <ActionMenuItems 
+              isBookmarked={false}
+              isOwner={isOwner}
+              itemId={itemId}
+              onBookmarkToggle={() => {}} 
+              onShare={() => {}} 
+              onReportClick={handleReport}
+              onEdit={onEdit}
+              onDelete={handleMenuDelete} // Use our special handler
+            />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }

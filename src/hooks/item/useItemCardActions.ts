@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +60,9 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   };
 
   // Show dialog immediately without blocking
-  const handleDeleteClick = () => {
+  const handleDeleteClick = useCallback(() => {
+    console.log("HandleDeleteClick called in useItemCardActions", { isOwner, id }); 
+    
     if (!isOwner) {
       toast({
         variant: "destructive",
@@ -70,8 +72,12 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
       return;
     }
     
-    setShowDeleteDialog(true);
-  };
+    // Use a short timeout to ensure state updates properly
+    setTimeout(() => {
+      setShowDeleteDialog(true);
+      console.log("Delete dialog should be visible now");
+    }, 10);
+  }, [isOwner, toast]);
 
   const handleEdit = () => {
     if (!isOwner) {

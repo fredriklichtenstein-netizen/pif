@@ -85,10 +85,27 @@ export function useItemCardWrapper({
     setIsReportDialogOpen(true);
   }, [interactionEnabled]);
 
+  // Fix for delete button functionality
+  const handleDeleteButtonClick = useCallback(() => {
+    console.log("Delete button clicked in useItemCardWrapper");
+    // Always enable interactions when explicitly clicking delete
+    setInteractionEnabled(true);
+    // Set timeout to ensure state updates before dialog opens
+    setTimeout(() => {
+      if (isOwner) {
+        handleDeleteClick();
+      }
+    }, 10);
+  }, [isOwner, handleDeleteClick]);
+
   // Manage interactive state
   useEffect(() => {
     if (showDeleteDialog) {
-      setInteractionEnabled(false);
+      // Don't disable interactions immediately to prevent race conditions
+      const timer = setTimeout(() => {
+        setInteractionEnabled(false);
+      }, 50);
+      return () => clearTimeout(timer);
     } else {
       // Re-enable interactions after a small delay
       const timer = setTimeout(() => {
@@ -120,11 +137,13 @@ export function useItemCardWrapper({
   // Wrap interaction handlers to prevent actions when interactions are disabled
   const wrapInteraction = useCallback((handler) => {
     return (...args) => {
-      if (interactionEnabled) {
+      if (interactionEnabled || handler === handleDeleteButtonClick) {
         return handler(...args);
+      } else {
+        console.log("Interaction disabled, ignoring action");
       }
     };
-  }, [interactionEnabled]);
+  }, [interactionEnabled, handleDeleteButtonClick]);
 
   return {
     isReportDialogOpen,
@@ -137,7 +156,7 @@ export function useItemCardWrapper({
     parsedCoordinates,
     isOwner,
     showDeleteDialog,
-    handleDeleteClick: wrapInteraction(handleDeleteClick),
+    handleDeleteClick: handleDeleteButtonClick, // Use the fixed handler directly
     setShowDeleteDialog,
     handleEdit: wrapInteraction(handleEdit),
     handleMessage: wrapInteraction(handleMessage),

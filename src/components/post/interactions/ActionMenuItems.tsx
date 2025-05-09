@@ -50,6 +50,7 @@ export function ActionMenuItems({
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("Delete clicked in ActionMenuItems"); // Debug log
     if (onDelete) {
       onDelete();
     }
