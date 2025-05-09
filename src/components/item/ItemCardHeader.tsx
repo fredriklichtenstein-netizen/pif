@@ -7,6 +7,7 @@ import { MoreHorizontal, MapPin } from "lucide-react";
 import { formatRelativeTime } from "@/utils/formatDate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useEffect, useCallback } from "react";
+import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -38,19 +39,42 @@ export function ItemCardHeader({
 }: ItemCardHeaderProps) {
   const navigate = useNavigate();
   
-  // More robust delete handler with additional logging
+  // Direct delete handler that uses our global dialog manager
   const handleMenuDelete = useCallback(() => {
     console.log("Delete menu clicked in ItemCardHeader with itemId:", itemId);
     
+    if (itemId) {
+      // Try using the global dialog manager first
+      const dialogManager = getDeleteDialogManager();
+      
+      if (dialogManager) {
+        console.log("Using global dialog manager to open delete dialog");
+        dialogManager.openDeleteDialog({
+          id: itemId,
+          onSuccess: onDelete
+        });
+        return;
+      }
+      
+      // Fallback to the custom event if global manager not available
+      console.log("Global dialog manager not available, using custom event");
+      const deleteEvent = new CustomEvent("global-delete-dialog-open", {
+        detail: { itemId, onSuccess: onDelete },
+        bubbles: true,
+        cancelable: true
+      });
+      
+      document.dispatchEvent(deleteEvent);
+    }
+    
+    // Also try the callback as a final fallback
     if (onDelete) {
       console.log("Calling onDelete callback from ItemCardHeader");
-      // Force this to run after current event loop
       setTimeout(() => {
-        console.log("Executing onDelete callback with timeout");
         onDelete();
-      }, 0);
+      }, 10);
     }
-  }, [onDelete, itemId]);
+  }, [itemId, onDelete]);
   
   // More robust edit handler
   const handleMenuEdit = useCallback(() => {
@@ -58,10 +82,9 @@ export function ItemCardHeader({
     
     if (onEdit) {
       console.log("Calling onEdit callback from ItemCardHeader");
-      // Force this to run after current event loop
       setTimeout(() => {
         onEdit();
-      }, 0);
+      }, 10);
     }
   }, [onEdit]);
   
@@ -71,7 +94,7 @@ export function ItemCardHeader({
     }
   };
 
-  // Listen for the direct delete event
+  // Listen for the direct delete event as a fallback
   useEffect(() => {
     const handleDirectDeleteEvent = (event: CustomEvent) => {
       const eventItemId = event.detail?.itemId;
@@ -92,10 +115,12 @@ export function ItemCardHeader({
     
     // Add event listener for custom event
     document.addEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+    document.addEventListener("global-delete-dialog-open", handleDirectDeleteEvent as EventListener);
     
     return () => {
-      // Clean up event listener
+      // Clean up event listeners
       document.removeEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+      document.removeEventListener("global-delete-dialog-open", handleDirectDeleteEvent as EventListener);
     };
   }, [itemId, onDelete]);
 

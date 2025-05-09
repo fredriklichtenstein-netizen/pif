@@ -1,6 +1,7 @@
 
 import { ItemDialogs } from "./dialogs/ItemDialogs";
 import { useEffect, useState, useRef } from "react";
+import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 interface ItemCardDialogsProps {
   id: string | number;
@@ -23,6 +24,29 @@ export function ItemCardDialogs({
   // Track mount status
   const isMounted = useRef(true);
   
+  // Register with global dialog manager on mount
+  useEffect(() => {
+    console.log(`ItemCardDialogs mounted for item ${id}`);
+    
+    // Listen for global dialog events as a fallback mechanism
+    const handleGlobalDialogEvent = (event: CustomEvent) => {
+      const eventId = event.detail?.id || event.detail?.itemId;
+      
+      if ((eventId === id || eventId === String(id)) && isMounted.current) {
+        console.log(`ItemCardDialogs caught global dialog event for item ${id}`);
+        setIsDialogOpen(true);
+      }
+    };
+    
+    document.addEventListener("global-delete-dialog-open", handleGlobalDialogEvent as EventListener);
+    
+    return () => {
+      console.log(`ItemCardDialogs unmounting for item ${id}`);
+      isMounted.current = false;
+      document.removeEventListener("global-delete-dialog-open", handleGlobalDialogEvent as EventListener);
+    };
+  }, [id]);
+  
   // Force dialog open status when prop changes
   useEffect(() => {
     if (isMounted.current) {
@@ -35,10 +59,6 @@ export function ItemCardDialogs({
         setIsDialogOpen(false);
       }
     }
-    
-    return () => {
-      isMounted.current = false;
-    };
   }, [showDeleteDialog]);
   
   // Handle safe close with consistent behavior
@@ -51,14 +71,6 @@ export function ItemCardDialogs({
       onCloseDeleteDialog();
     }
   };
-  
-  // Add debug mount/unmount logging
-  useEffect(() => {
-    console.log(`ItemCardDialogs mounted for item ${id}`);
-    return () => {
-      console.log(`ItemCardDialogs unmounting for item ${id}`);
-    };
-  }, [id]);
 
   return (
     <ItemDialogs

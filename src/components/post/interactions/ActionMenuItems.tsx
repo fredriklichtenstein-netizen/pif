@@ -12,6 +12,7 @@ import {
   Flag,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 interface ActionMenuItemsProps {
   isBookmarked: boolean;
@@ -58,18 +59,31 @@ export function ActionMenuItems({
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("Delete clicked in ActionMenuItems, dispatching direct event");
+    console.log("Delete clicked in ActionMenuItems for item:", itemId);
     
-    // Create and dispatch a custom event for direct communication
-    const deleteEvent = new CustomEvent("item-delete-requested", {
-      detail: { itemId },
+    // Try to use the global dialog manager first (most direct approach)
+    const dialogManager = getDeleteDialogManager();
+    
+    if (dialogManager && itemId) {
+      console.log("Using global dialog manager to open delete dialog");
+      dialogManager.openDeleteDialog({
+        id: itemId,
+        onSuccess: onDelete
+      });
+      return;
+    }
+    
+    // Fallback to the custom event approach if global manager not ready
+    console.log("Global dialog manager not available, using custom event");
+    const deleteEvent = new CustomEvent("global-delete-dialog-open", {
+      detail: { itemId, onSuccess: onDelete },
       bubbles: true,
       cancelable: true
     });
     
     document.dispatchEvent(deleteEvent);
     
-    // Also call the regular callback with a small delay
+    // Also try the regular callback as a final fallback
     setTimeout(() => {
       if (onDelete) {
         console.log("Calling onDelete callback");

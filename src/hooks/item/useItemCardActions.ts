@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getDeleteDialogManager } from './useItemDeleteDialog';
 
 export const useItemCardActions = (id: string | number, postedById?: string) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -63,7 +64,7 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   // Listen for global delete event
   useEffect(() => {
     const handleDirectDeleteEvent = (event: CustomEvent) => {
-      const eventItemId = event.detail?.itemId;
+      const eventItemId = event.detail?.itemId || event.detail?.id;
       
       console.log("useItemCardActions - Received direct delete event", { eventItemId, thisItemId: id });
       
@@ -74,13 +75,15 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     };
     
     document.addEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+    document.addEventListener("global-delete-dialog-open", handleDirectDeleteEvent as EventListener);
     
     return () => {
       document.removeEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+      document.removeEventListener("global-delete-dialog-open", handleDirectDeleteEvent as EventListener);
     };
   }, [id, isOwner]);
 
-  // Show dialog immediately without blocking
+  // Enhanced delete handler with global dialog manager support
   const handleDeleteClick = useCallback(() => {
     console.log("HandleDeleteClick called in useItemCardActions", { isOwner, id, pending: deleteActionPending.current }); 
     
@@ -102,9 +105,19 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     // Mark as pending to prevent duplicate triggers
     deleteActionPending.current = true;
     
-    console.log("Setting showDeleteDialog to true");
-    // Force dialog to show
-    setShowDeleteDialog(true);
+    // Try to use global dialog manager first (most direct approach)
+    const dialogManager = getDeleteDialogManager();
+    if (dialogManager) {
+      console.log("Using global dialog manager to open dialog");
+      dialogManager.openDeleteDialog({
+        id,
+        // We'll pass onDeleteSuccess later in the component
+      });
+    } else {
+      // Fallback to the component's local state
+      console.log("Using local state to show delete dialog");
+      setShowDeleteDialog(true);
+    }
     
     // Reset pending flag after a delay
     setTimeout(() => {

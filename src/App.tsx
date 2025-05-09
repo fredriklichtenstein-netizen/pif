@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { NetworkStatusDebugger } from "@/components/debug/NetworkStatusDebugger";
 import { publicRoutes, privateRoutes } from "./routes/routes";
+import { GlobalDeleteDialog } from "./components/item/delete/GlobalDeleteDialog";
 
 function App() {
   useEffect(() => {
@@ -30,6 +31,7 @@ function App() {
         </Routes>
       </main>
       <Toaster />
+      <GlobalDeleteDialog />
       {process.env.NODE_ENV === 'development' && <NetworkStatusDebugger />}
     </Router>
   );
