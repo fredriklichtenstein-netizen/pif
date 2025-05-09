@@ -1,11 +1,11 @@
 
-import { UserAvatar } from "../common/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ActionMenuItems } from "../post/interactions/ActionMenuItems";
 import { MoreHorizontal, MapPin } from "lucide-react";
 import { formatRelativeTime } from "@/utils/formatDate";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -53,7 +53,10 @@ export function ItemCardHeader({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2 cursor-pointer" onClick={handleUserClick}>
-        <UserAvatar user={postedBy} className="h-8 w-8" fallback={postedBy?.name?.[0] || '?'} />
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={postedBy?.avatar} alt={postedBy?.name || "User"} />
+          <AvatarFallback>{postedBy?.name?.[0] || '?'}</AvatarFallback>
+        </Avatar>
         <div>
           <div className="font-medium text-sm">{postedBy?.name || "Unknown User"}</div>
           {createdAt && (
