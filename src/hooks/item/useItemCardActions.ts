@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useItemCardActions = (id: string | number, postedById?: string) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isCheckingInterests, setIsCheckingInterests] = useState(false);
+  const deleteActionPending = useRef(false);
   const navigate = useNavigate();
   const { session } = useGlobalAuth();
   const { toast } = useToast();
@@ -46,7 +47,7 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
       if (error.name === 'AbortError') {
         console.error('Interested users check timed out');
         toast({
-          variant: "destructive", // Changed from "warning" to "destructive" to match allowed variants
+          variant: "destructive",
           title: "Operation timed out",
           description: "Checking interested users took too long. Proceeding with limited information."
         });
@@ -59,9 +60,35 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     }
   };
 
+  // Listen for global delete event
+  useEffect(() => {
+    const handleDirectDeleteEvent = (event: CustomEvent) => {
+      const eventItemId = event.detail?.itemId;
+      
+      console.log("useItemCardActions - Received direct delete event", { eventItemId, thisItemId: id });
+      
+      if ((eventItemId === id || eventItemId === String(id)) && isOwner) {
+        console.log("useItemCardActions - Direct event matches this item, showing delete dialog");
+        setShowDeleteDialog(true);
+      }
+    };
+    
+    document.addEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+    
+    return () => {
+      document.removeEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+    };
+  }, [id, isOwner]);
+
   // Show dialog immediately without blocking
   const handleDeleteClick = useCallback(() => {
-    console.log("HandleDeleteClick called in useItemCardActions", { isOwner, id }); 
+    console.log("HandleDeleteClick called in useItemCardActions", { isOwner, id, pending: deleteActionPending.current }); 
+    
+    // Prevent duplicate triggers
+    if (deleteActionPending.current) {
+      console.log("Delete action already pending, ignoring duplicate call");
+      return;
+    }
     
     if (!isOwner) {
       toast({
@@ -72,12 +99,18 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
       return;
     }
     
-    // Use a short timeout to ensure state updates properly
+    // Mark as pending to prevent duplicate triggers
+    deleteActionPending.current = true;
+    
+    console.log("Setting showDeleteDialog to true");
+    // Force dialog to show
+    setShowDeleteDialog(true);
+    
+    // Reset pending flag after a delay
     setTimeout(() => {
-      setShowDeleteDialog(true);
-      console.log("Delete dialog should be visible now");
-    }, 10);
-  }, [isOwner, toast]);
+      deleteActionPending.current = false;
+    }, 500);
+  }, [isOwner, toast, id]);
 
   const handleEdit = () => {
     if (!isOwner) {

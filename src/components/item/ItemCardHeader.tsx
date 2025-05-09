@@ -6,6 +6,7 @@ import { ActionMenuItems } from "../post/interactions/ActionMenuItems";
 import { MoreHorizontal, MapPin } from "lucide-react";
 import { formatRelativeTime } from "@/utils/formatDate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useEffect, useCallback } from "react";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -37,18 +38,66 @@ export function ItemCardHeader({
 }: ItemCardHeaderProps) {
   const navigate = useNavigate();
   
-  const handleMenuDelete = () => {
-    console.log("Delete menu clicked in ItemCardHeader");
+  // More robust delete handler with additional logging
+  const handleMenuDelete = useCallback(() => {
+    console.log("Delete menu clicked in ItemCardHeader with itemId:", itemId);
+    
     if (onDelete) {
-      onDelete();
+      console.log("Calling onDelete callback from ItemCardHeader");
+      // Force this to run after current event loop
+      setTimeout(() => {
+        console.log("Executing onDelete callback with timeout");
+        onDelete();
+      }, 0);
     }
-  };
+  }, [onDelete, itemId]);
+  
+  // More robust edit handler
+  const handleMenuEdit = useCallback(() => {
+    console.log("Edit menu clicked in ItemCardHeader");
+    
+    if (onEdit) {
+      console.log("Calling onEdit callback from ItemCardHeader");
+      // Force this to run after current event loop
+      setTimeout(() => {
+        onEdit();
+      }, 0);
+    }
+  }, [onEdit]);
   
   const handleUserClick = () => {
     if (postedBy?.id) {
       navigate(`/profile/${postedBy.id}`);
     }
   };
+
+  // Listen for the direct delete event
+  useEffect(() => {
+    const handleDirectDeleteEvent = (event: CustomEvent) => {
+      const eventItemId = event.detail?.itemId;
+      
+      console.log("Received direct delete event", { eventItemId, thisItemId: itemId });
+      
+      // Check if this event is for this item
+      if (eventItemId === itemId || eventItemId === String(itemId)) {
+        console.log("Direct delete event matches this item, triggering onDelete");
+        
+        if (onDelete) {
+          setTimeout(() => {
+            onDelete();
+          }, 10);
+        }
+      }
+    };
+    
+    // Add event listener for custom event
+    document.addEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+    
+    return () => {
+      // Clean up event listener
+      document.removeEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
+    };
+  }, [itemId, onDelete]);
 
   return (
     <div className="flex items-center justify-between">
@@ -93,8 +142,8 @@ export function ItemCardHeader({
               onBookmarkToggle={() => {}} 
               onShare={() => {}} 
               onReportClick={handleReport}
-              onEdit={onEdit}
-              onDelete={handleMenuDelete} // Use our special handler
+              onEdit={handleMenuEdit}
+              onDelete={handleMenuDelete} 
             />
           </DropdownMenuContent>
         </DropdownMenu>

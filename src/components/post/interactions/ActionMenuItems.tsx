@@ -10,7 +10,6 @@ import {
   Pencil, 
   Trash2, 
   Flag,
-  Archive,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -38,22 +37,45 @@ export function ActionMenuItems({
   const navigate = useNavigate();
   
   const handleEdit = (e: React.MouseEvent) => {
+    // Prevent default behavior
     e.preventDefault();
     e.stopPropagation();
-    if (onEdit) {
-      onEdit();
-    } else if (itemId) {
-      navigate(`/post/edit/${itemId}`);
-    }
+    
+    console.log("Edit clicked in ActionMenuItems");
+    
+    // Add a small delay to ensure the dropdown closes properly
+    setTimeout(() => {
+      if (onEdit) {
+        onEdit();
+      } else if (itemId) {
+        navigate(`/post/edit/${itemId}`);
+      }
+    }, 10);
   };
   
   const handleDelete = (e: React.MouseEvent) => {
+    // Prevent default behavior
     e.preventDefault();
     e.stopPropagation();
-    console.log("Delete clicked in ActionMenuItems"); // Debug log
-    if (onDelete) {
-      onDelete();
-    }
+    
+    console.log("Delete clicked in ActionMenuItems, dispatching direct event");
+    
+    // Create and dispatch a custom event for direct communication
+    const deleteEvent = new CustomEvent("item-delete-requested", {
+      detail: { itemId },
+      bubbles: true,
+      cancelable: true
+    });
+    
+    document.dispatchEvent(deleteEvent);
+    
+    // Also call the regular callback with a small delay
+    setTimeout(() => {
+      if (onDelete) {
+        console.log("Calling onDelete callback");
+        onDelete();
+      }
+    }, 10);
   };
 
   return (
@@ -82,11 +104,19 @@ export function ActionMenuItems({
       {isOwner && (
         <>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
+          <DropdownMenuItem 
+            onClick={handleEdit} 
+            className="cursor-pointer"
+            data-action="edit-item"
+          >
             <Pencil className="mr-2 h-4 w-4" />
             <span>Edit</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDelete} className="cursor-pointer text-destructive focus:text-destructive">
+          <DropdownMenuItem 
+            onClick={handleDelete} 
+            className="cursor-pointer text-destructive focus:text-destructive"
+            data-action="delete-item"
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             <span>Delete</span>
           </DropdownMenuItem>

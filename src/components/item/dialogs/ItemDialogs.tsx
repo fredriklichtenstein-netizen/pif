@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ItemDeleteDialog } from "../delete/ItemDeleteDialog";
 
 interface ItemDialogsProps {
@@ -19,24 +19,39 @@ export function ItemDialogs({
 }: ItemDialogsProps) {
   // Local state to control dialog visibility
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const initialRender = useRef(true);
+  const forcedOpen = useRef(false);
   
-  console.log("ItemDialogs render - showDeleteDialog:", showDeleteDialog);
+  console.log(`ItemDialogs render - showDeleteDialog: ${showDeleteDialog}, isDeleteDialogOpen: ${isDeleteDialogOpen}`);
   
-  // Sync local state with parent prop
+  // Sync local state with parent prop immediately on first render
   useEffect(() => {
-    console.log("ItemDialogs useEffect - showDeleteDialog changed:", showDeleteDialog);
-    setIsDeleteDialogOpen(showDeleteDialog);
+    if (initialRender.current) {
+      initialRender.current = false;
+      setIsDeleteDialogOpen(showDeleteDialog);
+      return;
+    }
+
+    // On subsequent renders, track state changes
+    console.log(`ItemDialogs useEffect - showDeleteDialog changed to: ${showDeleteDialog}`);
+    
+    if (showDeleteDialog) {
+      console.log("ItemDialogs - Opening delete dialog");
+      forcedOpen.current = true;
+      setIsDeleteDialogOpen(true);
+    } else if (!forcedOpen.current) {
+      setIsDeleteDialogOpen(false);
+    }
   }, [showDeleteDialog]);
   
-  // Handle dialog close safely
+  // Handle dialog close with consistent behavior
   const handleCloseDialog = () => {
     console.log("ItemDialogs - handleCloseDialog called");
     setIsDeleteDialogOpen(false);
+    forcedOpen.current = false;
     
-    // Small delay to ensure dialog animations complete
-    setTimeout(() => {
-      onCloseDeleteDialog();
-    }, 50);
+    // Call parent callback
+    onCloseDeleteDialog();
   };
 
   return (
