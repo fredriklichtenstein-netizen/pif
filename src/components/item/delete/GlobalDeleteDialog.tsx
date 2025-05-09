@@ -14,6 +14,7 @@ export function GlobalDeleteDialog() {
     
     return () => {
       console.log("GlobalDeleteDialog unmounting, cleaning up");
+      setDeleteDialogManager(null);
     };
   }, [dialogManager]);
 
@@ -28,11 +29,19 @@ export function GlobalDeleteDialog() {
   
   const { id, onSuccess } = currentDialog;
   
+  const handleClose = () => {
+    // Always force re-enable pointer events and interactions when dialog closes
+    document.body.style.pointerEvents = '';
+    
+    // Then close dialog
+    closeDeleteDialog();
+  };
+  
   return (
     <ItemDeleteDialog 
       id={id}
       isOpen={true}
-      onClose={closeDeleteDialog}
+      onClose={handleClose}
       onSuccess={onSuccess}
     />
   );

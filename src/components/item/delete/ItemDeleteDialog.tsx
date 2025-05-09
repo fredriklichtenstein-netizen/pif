@@ -2,6 +2,7 @@
 import { useInterestedCount } from "./useInterestedCount";
 import { useItemDeletion } from "./useItemDeletion";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { useEffect } from "react";
 
 interface ItemDeleteDialogProps {
   id: string | number;
@@ -30,15 +31,41 @@ export function ItemDeleteDialog({
   // Get deletion functionality
   const { 
     isDeleting, 
-    handleDeleteConfirm 
+    handleDeleteConfirm,
+    isOperationComplete
   } = useItemDeletion(id, onClose, onSuccess);
+
+  // Add a cleanup effect to ensure proper state reset
+  useEffect(() => {
+    if (!isOpen) {
+      // Ensure body styling is reset when dialog closes
+      document.body.style.pointerEvents = '';
+    }
+    
+    return () => {
+      // Ensure cleanup on unmount
+      document.body.style.pointerEvents = '';
+    };
+  }, [isOpen]);
+  
+  // Force a reflow/refresh to fix unresponsiveness after operation
+  useEffect(() => {
+    if (isOperationComplete) {
+      // Force body style reset
+      document.body.style.pointerEvents = '';
+    }
+  }, [isOperationComplete]);
 
   return (
     <DeleteConfirmDialog
       isOpen={isOpen}
       onClose={() => {
         // Only allow closing if not currently processing
-        if (!isDeleting) onClose();
+        if (!isDeleting) {
+          // Force body style reset before closing
+          document.body.style.pointerEvents = '';
+          onClose();
+        }
       }}
       onConfirm={handleDeleteConfirm}
       title="Delete Item"

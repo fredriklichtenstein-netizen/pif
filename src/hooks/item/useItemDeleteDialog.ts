@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 type DialogProps = {
   id: string | number;
@@ -10,6 +10,7 @@ const activeDialogs = new Map<string, boolean>();
 
 export const useItemDeleteDialog = () => {
   const [currentDialog, setCurrentDialog] = useState<DialogProps | null>(null);
+  const isClosingRef = useRef(false);
 
   // Direct method to open the dialog from anywhere in the app
   const openDeleteDialog = useCallback((props: DialogProps) => {
@@ -25,6 +26,9 @@ export const useItemDeleteDialog = () => {
     // Debug info
     console.log("Active dialogs:", Array.from(activeDialogs.keys()));
     
+    // Reset closing state
+    isClosingRef.current = false;
+    
     // Also dispatch a DOM event as a fallback trigger mechanism
     document.dispatchEvent(
       new CustomEvent("global-delete-dialog-open", { 
@@ -36,11 +40,28 @@ export const useItemDeleteDialog = () => {
   
   // Method to close the dialog
   const closeDeleteDialog = useCallback(() => {
+    // Prevent duplicate close calls
+    if (isClosingRef.current) {
+      console.log("Close already in progress, ignoring duplicate call");
+      return;
+    }
+    
+    isClosingRef.current = true;
+    console.log("useItemDeleteDialog - closeDeleteDialog called");
+    
     if (currentDialog) {
       const itemKey = `item-${currentDialog.id}`;
       activeDialogs.delete(itemKey);
     }
-    setCurrentDialog(null);
+    
+    // Reset all global state that might be affected
+    document.body.style.pointerEvents = '';
+    
+    // Set dialog to null with a slight delay to allow animations to complete
+    setTimeout(() => {
+      setCurrentDialog(null);
+      isClosingRef.current = false;
+    }, 10);
   }, [currentDialog]);
 
   // Global event listener as a fallback mechanism
@@ -80,6 +101,6 @@ export const getDeleteDialogManager = () => {
   return dialogInstance;
 };
 
-export const setDeleteDialogManager = (instance: ReturnType<typeof useItemDeleteDialog>) => {
+export const setDeleteDialogManager = (instance: ReturnType<typeof useItemDeleteDialog> | null) => {
   dialogInstance = instance;
 };

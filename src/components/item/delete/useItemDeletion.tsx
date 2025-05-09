@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,11 +12,14 @@ export function useItemDeletion(
   onSuccess?: () => void
 ) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const operationCompleteRef = useRef(false);
   const { toast } = useToast();
 
   // Function to cleanup all realtime connections for this item
   const cleanupRealtimeConnections = useCallback(() => {
     try {
+      console.log(`Starting cleanup for item ${id} realtime connections`);
+      
       // Get all channels
       const allChannels = supabase.getChannels();
       
@@ -47,6 +50,7 @@ export function useItemDeletion(
   const handleDeleteConfirm = async (reason: string, isSoftDelete: boolean) => {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
     setIsDeleting(true);
+    operationCompleteRef.current = false;
 
     try {
       // First check if we're authenticated
@@ -109,21 +113,21 @@ export function useItemDeletion(
         });
       }
 
+      // Mark operation as complete to prevent state conflicts
+      operationCompleteRef.current = true;
+      
       // Important: Cleanup all realtime connections first
       // This is crucial to prevent the stale UI issue
       cleanupRealtimeConnections();
       
-      // Close the dialog first, with a small delay to ensure
-      // the dialog properly unmounts
+      // Defer state changes to allow React to process events properly
       setTimeout(() => {
-        // Now it's safe to close the dialog
+        // First close the dialog
         onClose();
         
-        // After dialog is closed and with realtime connections cleaned up,
-        // it's safe to call onSuccess after a small delay
+        // Then after a delay, call the success callback
         setTimeout(() => {
           if (onSuccess) {
-            // Call onSuccess callback if provided
             onSuccess();
           }
         }, 100);
@@ -137,7 +141,7 @@ export function useItemDeletion(
         variant: "destructive",
       });
       
-      // Even on error, ensure we close the dialog to prevent UI hang
+      // Even on error, ensure we close the dialog
       setTimeout(() => {
         onClose();
       }, 50);
@@ -150,6 +154,7 @@ export function useItemDeletion(
   return {
     isDeleting,
     handleDeleteConfirm,
-    cleanupRealtimeConnections
+    cleanupRealtimeConnections,
+    isOperationComplete: operationCompleteRef.current
   };
 }

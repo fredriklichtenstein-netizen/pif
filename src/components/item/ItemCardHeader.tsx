@@ -6,7 +6,7 @@ import { ActionMenuItems } from "../post/interactions/ActionMenuItems";
 import { MoreHorizontal, MapPin } from "lucide-react";
 import { formatRelativeTime } from "@/utils/formatDate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 interface ItemCardHeaderProps {
@@ -25,6 +25,9 @@ interface ItemCardHeaderProps {
     lng: number;
   };
   itemId?: number;
+  isBookmarked?: boolean;
+  handleBookmark?: () => void;
+  handleShare?: () => void;
 }
 
 export function ItemCardHeader({
@@ -35,7 +38,10 @@ export function ItemCardHeader({
   onEdit,
   onDelete,
   coordinates,
-  itemId
+  itemId,
+  isBookmarked = false,
+  handleBookmark = () => {},
+  handleShare = () => {}
 }: ItemCardHeaderProps) {
   const navigate = useNavigate();
   
@@ -94,36 +100,6 @@ export function ItemCardHeader({
     }
   };
 
-  // Listen for the direct delete event as a fallback
-  useEffect(() => {
-    const handleDirectDeleteEvent = (event: CustomEvent) => {
-      const eventItemId = event.detail?.itemId;
-      
-      console.log("Received direct delete event", { eventItemId, thisItemId: itemId });
-      
-      // Check if this event is for this item
-      if (eventItemId === itemId || eventItemId === String(itemId)) {
-        console.log("Direct delete event matches this item, triggering onDelete");
-        
-        if (onDelete) {
-          setTimeout(() => {
-            onDelete();
-          }, 10);
-        }
-      }
-    };
-    
-    // Add event listener for custom event
-    document.addEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
-    document.addEventListener("global-delete-dialog-open", handleDirectDeleteEvent as EventListener);
-    
-    return () => {
-      // Clean up event listeners
-      document.removeEventListener("item-delete-requested", handleDirectDeleteEvent as EventListener);
-      document.removeEventListener("global-delete-dialog-open", handleDirectDeleteEvent as EventListener);
-    };
-  }, [itemId, onDelete]);
-
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2 cursor-pointer" onClick={handleUserClick}>
@@ -161,11 +137,11 @@ export function ItemCardHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <ActionMenuItems 
-              isBookmarked={false}
+              isBookmarked={isBookmarked}
               isOwner={isOwner}
               itemId={itemId}
-              onBookmarkToggle={() => {}} 
-              onShare={() => {}} 
+              onBookmarkToggle={handleBookmark} 
+              onShare={handleShare} 
               onReportClick={handleReport}
               onEdit={handleMenuEdit}
               onDelete={handleMenuDelete} 

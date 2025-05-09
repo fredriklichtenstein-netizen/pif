@@ -90,24 +90,14 @@ export function useItemCardWrapper({
     console.log("Delete button clicked in useItemCardWrapper");
     // Always enable interactions when explicitly clicking delete
     setInteractionEnabled(true);
-    // Set timeout to ensure state updates before dialog opens
-    setTimeout(() => {
-      if (isOwner) {
-        handleDeleteClick();
-      }
-    }, 10);
-  }, [isOwner, handleDeleteClick]);
+    // Call handleDeleteClick immediately
+    handleDeleteClick();
+  }, [handleDeleteClick]);
 
-  // Manage interactive state
+  // Reset interaction enabled state when dialog closes
   useEffect(() => {
-    if (showDeleteDialog) {
-      // Don't disable interactions immediately to prevent race conditions
-      const timer = setTimeout(() => {
-        setInteractionEnabled(false);
-      }, 50);
-      return () => clearTimeout(timer);
-    } else {
-      // Re-enable interactions after a small delay
+    if (!showDeleteDialog) {
+      // Re-enable interactions after dialog closes
       const timer = setTimeout(() => {
         setInteractionEnabled(true);
       }, 200);
@@ -134,17 +124,6 @@ export function useItemCardWrapper({
     }
   }, [isItemDeleted, cleanupRealtime]);
 
-  // Wrap interaction handlers to prevent actions when interactions are disabled
-  const wrapInteraction = useCallback((handler) => {
-    return (...args) => {
-      if (interactionEnabled || handler === handleDeleteButtonClick) {
-        return handler(...args);
-      } else {
-        console.log("Interaction disabled, ignoring action");
-      }
-    };
-  }, [interactionEnabled, handleDeleteButtonClick]);
-
   return {
     isReportDialogOpen,
     setIsReportDialogOpen,
@@ -156,10 +135,10 @@ export function useItemCardWrapper({
     parsedCoordinates,
     isOwner,
     showDeleteDialog,
-    handleDeleteClick: handleDeleteButtonClick, // Use the fixed handler directly
+    handleDeleteClick: handleDeleteButtonClick,
     setShowDeleteDialog,
-    handleEdit: wrapInteraction(handleEdit),
-    handleMessage: wrapInteraction(handleMessage),
+    handleEdit,
+    handleMessage,
     checkInterestedUsers,
     isLiked,
     likesCount,
@@ -177,12 +156,12 @@ export function useItemCardWrapper({
     interestedUsers,
     isLoadingInterested,
     interestedError,
-    handleLike: wrapInteraction(handleLike),
-    handleCommentToggle: wrapInteraction(handleCommentToggle),
-    handleShowInterest: wrapInteraction(handleShowInterest),
-    handleShare: wrapInteraction(handleShare),
-    handleReport: wrapInteraction(handleReport),
-    handleBookmark: wrapInteraction(handleBookmark),
+    handleLike,
+    handleCommentToggle,
+    handleShowInterest,
+    handleShare,
+    handleReport,
+    handleBookmark,
     setComments,
     getInterestedUsers,
     isRealtimeSubscribed,
@@ -190,7 +169,7 @@ export function useItemCardWrapper({
     refreshItemData,
     cleanupRealtime,
     isRefreshing,
-    handleRefresh: wrapInteraction(handleRefresh),
+    handleRefresh,
     isItemDeleted,
     handleDeleteSuccess,
     handleReportClick
