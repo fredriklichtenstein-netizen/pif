@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 interface ItemOwnerActionsProps {
   id: string;
@@ -13,48 +13,65 @@ export function ItemOwnerActions({ id }: ItemOwnerActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const deleteInProgressRef = useRef(false);
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) {
+  const handleDelete = useCallback(() => {
+    // Prevent multiple clicks
+    if (deleteInProgressRef.current) {
+      console.log("Delete already in progress, ignoring duplicate request");
       return;
     }
-
-    setIsDeleting(true);
-    try {
-      // First notify interested users
-      await supabase.rpc('notify_interested_users_on_delete', {
-        item_id_param: parseInt(id, 10)
+    
+    deleteInProgressRef.current = true;
+    console.log("ItemOwnerActions - handleDelete called for item:", id);
+    
+    // Try to use the global dialog manager first (most direct approach)
+    const dialogManager = getDeleteDialogManager();
+    
+    if (dialogManager) {
+      console.log("Using global dialog manager to open delete dialog");
+      dialogManager.openDeleteDialog({
+        id,
+        onSuccess: () => {
+          // Reset state and refresh view
+          setIsDeleting(false);
+          deleteInProgressRef.current = false;
+          // Refresh the page to ensure clean state
+          window.location.reload();
+        }
       });
-
-      // Then delete the item
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', parseInt(id, 10));
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Post deleted successfully",
-      });
-      
-      window.location.reload();
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete post. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
+      return;
     }
-  };
+    
+    // Fallback to the custom event approach
+    console.log("Global dialog manager not available, using custom event");
+    const deleteEvent = new CustomEvent("global-delete-dialog-open", {
+      detail: { 
+        itemId: id,
+        onSuccess: () => {
+          // Reset state and refresh view
+          setIsDeleting(false);
+          deleteInProgressRef.current = false;
+          // Refresh the page to ensure clean state
+          window.location.reload();
+        }
+      },
+      bubbles: true,
+      cancelable: true
+    });
+    
+    // Dispatch the event to trigger dialog opening
+    document.dispatchEvent(deleteEvent);
+    
+    // Reset the in-progress flag after a short timeout
+    setTimeout(() => {
+      deleteInProgressRef.current = false;
+    }, 500);
+  }, [id]);
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     navigate(`/post/edit/${id}`);
-  };
+  }, [id, navigate]);
 
   return (
     <div className="flex gap-2 mt-2">

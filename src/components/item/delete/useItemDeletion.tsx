@@ -13,7 +13,22 @@ export function useItemDeletion(
 ) {
   const [isDeleting, setIsDeleting] = useState(false);
   const operationCompleteRef = useRef(false);
+  const timeoutRefs = useRef<Array<NodeJS.Timeout>>([]);
   const { toast } = useToast();
+
+  // Cleanup function to ensure all pending operations are properly terminated
+  const cleanupState = useCallback(() => {
+    // Clear all pending timeouts
+    timeoutRefs.current.forEach(timeoutId => {
+      if (timeoutId) clearTimeout(timeoutId);
+    });
+    
+    // Reset the timeout refs array
+    timeoutRefs.current = [];
+    
+    // Reset state
+    setIsDeleting(false);
+  }, []);
 
   // Function to cleanup all realtime connections for this item
   const cleanupRealtimeConnections = useCallback(() => {
@@ -117,21 +132,27 @@ export function useItemDeletion(
       operationCompleteRef.current = true;
       
       // Important: Cleanup all realtime connections first
-      // This is crucial to prevent the stale UI issue
       cleanupRealtimeConnections();
       
+      // Always reset pointer events
+      document.body.style.pointerEvents = '';
+      
       // Defer state changes to allow React to process events properly
-      setTimeout(() => {
+      const closeTimeout = setTimeout(() => {
         // First close the dialog
         onClose();
         
         // Then after a delay, call the success callback
-        setTimeout(() => {
+        const successTimeout = setTimeout(() => {
           if (onSuccess) {
             onSuccess();
           }
         }, 100);
+        
+        timeoutRefs.current.push(successTimeout);
       }, 50);
+      
+      timeoutRefs.current.push(closeTimeout);
       
     } catch (error: any) {
       console.error('Error deleting/archiving item:', error);
@@ -141,10 +162,15 @@ export function useItemDeletion(
         variant: "destructive",
       });
       
+      // Reset pointer events
+      document.body.style.pointerEvents = '';
+      
       // Even on error, ensure we close the dialog
-      setTimeout(() => {
+      const errorTimeout = setTimeout(() => {
         onClose();
       }, 50);
+      
+      timeoutRefs.current.push(errorTimeout);
     } finally {
       // Set deleting state to false to update UI
       setIsDeleting(false);
@@ -155,6 +181,7 @@ export function useItemDeletion(
     isDeleting,
     handleDeleteConfirm,
     cleanupRealtimeConnections,
-    isOperationComplete: operationCompleteRef.current
+    isOperationComplete: operationCompleteRef.current,
+    cleanupState
   };
 }

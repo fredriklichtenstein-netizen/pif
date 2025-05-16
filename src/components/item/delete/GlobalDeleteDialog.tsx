@@ -1,12 +1,13 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useItemDeleteDialog, setDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 import { ItemDeleteDialog } from "./ItemDeleteDialog";
 
 export function GlobalDeleteDialog() {
   const dialogManager = useItemDeleteDialog();
   const { currentDialog, closeDeleteDialog } = dialogManager;
-  
+  const mountedRef = useRef(true);
+
   // Register this instance as the global singleton
   useEffect(() => {
     console.log("GlobalDeleteDialog mounted, registering global instance");
@@ -15,13 +16,17 @@ export function GlobalDeleteDialog() {
     return () => {
       console.log("GlobalDeleteDialog unmounting, cleaning up");
       setDeleteDialogManager(null);
+      mountedRef.current = false;
     };
   }, [dialogManager]);
-
-  // Debug info
+  
+  // Force cleanup on unmount to prevent memory leaks
   useEffect(() => {
-    console.log("Dialog state changed:", currentDialog ? "open" : "closed");
-  }, [currentDialog]);
+    return () => {
+      // Reset any DOM manipulations when unmounting
+      document.body.style.pointerEvents = '';
+    };
+  }, []);
   
   if (!currentDialog) {
     return null;
@@ -33,8 +38,11 @@ export function GlobalDeleteDialog() {
     // Always force re-enable pointer events and interactions when dialog closes
     document.body.style.pointerEvents = '';
     
-    // Then close dialog
-    closeDeleteDialog();
+    // Only process if component is still mounted
+    if (mountedRef.current) {
+      // Then close dialog with slight delay to ensure state is updated properly
+      closeDeleteDialog();
+    }
   };
   
   return (

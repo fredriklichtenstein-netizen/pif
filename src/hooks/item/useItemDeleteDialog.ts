@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 type DialogProps = {
   id: string | number;
@@ -11,6 +11,18 @@ const activeDialogs = new Map<string, boolean>();
 export const useItemDeleteDialog = () => {
   const [currentDialog, setCurrentDialog] = useState<DialogProps | null>(null);
   const isClosingRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  // Track mounted status for safe state updates
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      
+      // Reset any DOM manipulations when unmounting
+      document.body.style.pointerEvents = '';
+    };
+  }, []);
 
   // Direct method to open the dialog from anywhere in the app
   const openDeleteDialog = useCallback((props: DialogProps) => {
@@ -20,8 +32,10 @@ export const useItemDeleteDialog = () => {
     const itemKey = `item-${props.id}`;
     activeDialogs.set(itemKey, true);
     
-    // Update local state
-    setCurrentDialog(props);
+    // Update local state only if component is still mounted
+    if (mountedRef.current) {
+      setCurrentDialog(props);
+    }
     
     // Debug info
     console.log("Active dialogs:", Array.from(activeDialogs.keys()));
@@ -58,17 +72,29 @@ export const useItemDeleteDialog = () => {
     document.body.style.pointerEvents = '';
     
     // Set dialog to null with a slight delay to allow animations to complete
-    setTimeout(() => {
-      setCurrentDialog(null);
+    // but only if the component is still mounted
+    if (mountedRef.current) {
+      setTimeout(() => {
+        if (mountedRef.current) {
+          setCurrentDialog(null);
+        }
+        isClosingRef.current = false;
+      }, 50);
+    } else {
+      // If not mounted, just reset the ref
       isClosingRef.current = false;
-    }, 10);
+    }
   }, [currentDialog]);
 
   // Global event listener as a fallback mechanism
   useEffect(() => {
     const handleGlobalOpen = (event: CustomEvent) => {
       console.log("Global delete dialog event received:", event.detail);
-      setCurrentDialog(event.detail);
+      
+      // Only update state if mounted
+      if (mountedRef.current) {
+        setCurrentDialog(event.detail);
+      }
     };
     
     document.addEventListener(

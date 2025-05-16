@@ -23,10 +23,14 @@ export function ItemCardDialogs({
   
   // Track mount status
   const isMounted = useRef(true);
+  const dialogClosedManually = useRef(false);
   
   // Register with global dialog manager on mount
   useEffect(() => {
     console.log(`ItemCardDialogs mounted for item ${id}`);
+    
+    // Reset state on mount
+    dialogClosedManually.current = false;
     
     // Listen for global dialog events as a fallback mechanism
     const handleGlobalDialogEvent = (event: CustomEvent) => {
@@ -44,6 +48,9 @@ export function ItemCardDialogs({
       console.log(`ItemCardDialogs unmounting for item ${id}`);
       isMounted.current = false;
       document.removeEventListener("global-delete-dialog-open", handleGlobalDialogEvent as EventListener);
+      
+      // Reset any DOM manipulations when unmounting
+      document.body.style.pointerEvents = '';
     };
   }, [id]);
   
@@ -52,11 +59,13 @@ export function ItemCardDialogs({
     if (isMounted.current) {
       console.log(`ItemCardDialogs - showDeleteDialog changed to: ${showDeleteDialog}`);
       
-      if (showDeleteDialog) {
+      if (showDeleteDialog && !dialogClosedManually.current) {
         console.log("Setting dialog to open immediately");
         setIsDialogOpen(true);
-      } else {
+      } else if (!showDeleteDialog) {
         setIsDialogOpen(false);
+        // Reset the manual close flag when parent explicitly closes
+        dialogClosedManually.current = false;
       }
     }
   }, [showDeleteDialog]);
@@ -66,9 +75,20 @@ export function ItemCardDialogs({
     console.log("ItemCardDialogs - handleDialogClose called");
     setIsDialogOpen(false);
     
-    // Call parent callback
+    // Mark as manually closed
+    dialogClosedManually.current = true;
+    
+    // Reset any DOM manipulations
+    document.body.style.pointerEvents = '';
+    
+    // Call parent callback with a slight delay to prevent race conditions
     if (isMounted.current) {
-      onCloseDeleteDialog();
+      // Use timeout to prevent race conditions in React's event handling
+      setTimeout(() => {
+        if (isMounted.current) {
+          onCloseDeleteDialog();
+        }
+      }, 10);
     }
   };
 

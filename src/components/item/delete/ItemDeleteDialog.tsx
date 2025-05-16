@@ -2,7 +2,7 @@
 import { useInterestedCount } from "./useInterestedCount";
 import { useItemDeletion } from "./useItemDeletion";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface ItemDeleteDialogProps {
   id: string | number;
@@ -22,6 +22,8 @@ export function ItemDeleteDialog({
   checkInterestedUsers,
   onSuccess
 }: ItemDeleteDialogProps) {
+  const mountedRef = useRef(true);
+  
   // Get interested count functionality
   const { 
     isLoadingCount, 
@@ -32,36 +34,56 @@ export function ItemDeleteDialog({
   const { 
     isDeleting, 
     handleDeleteConfirm,
-    isOperationComplete
+    isOperationComplete,
+    cleanupState
   } = useItemDeletion(id, onClose, onSuccess);
 
-  // Add a cleanup effect to ensure proper state reset
+  // Ensure cleanup happens on unmount
+  useEffect(() => {
+    return () => {
+      // Mark component as unmounted
+      mountedRef.current = false;
+      
+      // Always ensure body styling is reset
+      document.body.style.pointerEvents = '';
+      
+      // Run cleanup
+      cleanupState();
+    };
+  }, [cleanupState]);
+  
+  // Reset styling when dialog state changes
   useEffect(() => {
     if (!isOpen) {
-      // Ensure body styling is reset when dialog closes
       document.body.style.pointerEvents = '';
     }
     
-    return () => {
-      // Ensure cleanup on unmount
-      document.body.style.pointerEvents = '';
-    };
-  }, [isOpen]);
+    // Always run cleanup when dialog closes
+    if (!isOpen && mountedRef.current) {
+      cleanupState();
+    }
+  }, [isOpen, cleanupState]);
   
   // Force a reflow/refresh to fix unresponsiveness after operation
   useEffect(() => {
-    if (isOperationComplete) {
+    if (isOperationComplete && mountedRef.current) {
       // Force body style reset
       document.body.style.pointerEvents = '';
+      
+      // Clean up state
+      cleanupState();
     }
-  }, [isOperationComplete]);
+  }, [isOperationComplete, cleanupState]);
+
+  // Only render if open
+  if (!isOpen) return null;
 
   return (
     <DeleteConfirmDialog
       isOpen={isOpen}
       onClose={() => {
         // Only allow closing if not currently processing
-        if (!isDeleting) {
+        if (!isDeleting && mountedRef.current) {
           // Force body style reset before closing
           document.body.style.pointerEvents = '';
           onClose();
