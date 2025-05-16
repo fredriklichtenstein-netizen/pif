@@ -63,7 +63,7 @@ export function useItemDeletion(
   }, [id]);
 
   const handleDeleteConfirm = async (reason: string, isSoftDelete: boolean) => {
-    // Ensure id is correctly parsed to a number if it's a string
+    // Always ensure we have a numeric ID for the database functions
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
     console.log(`Starting ${isSoftDelete ? 'archive' : 'delete'} operation for item ${numericId}, type: ${typeof numericId}`);
     
@@ -74,13 +74,16 @@ export function useItemDeletion(
       // First check if we're authenticated
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
+        console.error("Authentication error: No active session found");
         throw new Error('You must be signed in to perform this action.');
       }
       
+      console.log(`Using authenticated session for user: ${sessionData.session.user.id}`);
       let success = false;
       
       if (isSoftDelete) {
         // Use the database function for archiving
+        console.log(`Calling archive_item with ID: ${numericId}, type: ${typeof numericId}`);
         const { data: result, error } = await supabase.rpc(
           'archive_item',
           { 
@@ -117,13 +120,13 @@ export function useItemDeletion(
         
         if (deleteError) {
           console.error('Delete error details:', deleteError);
-          throw deleteError;
+          throw new Error(`Failed to delete item: ${deleteError.message || 'Unknown error'}`);
         }
         
         success = Boolean(result);
         
         if (!success) {
-          throw new Error('Failed to delete item');
+          throw new Error('Failed to delete item - operation returned false');
         }
         
         toast({

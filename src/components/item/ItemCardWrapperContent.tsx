@@ -5,6 +5,7 @@ import { ItemCardGallery } from "./ItemCardGallery";
 import { ItemCardActions } from "./ItemCardActions";
 import { ItemCardLayout } from "./layout/ItemCardLayout";
 import { ItemArchivedBanner } from "./status/ItemArchivedBanner";
+import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
 
 export function ItemCardWrapperContent({
   id,
@@ -56,6 +57,9 @@ export function ItemCardWrapperContent({
   const numericItemId = typeof id === 'string' ? parseInt(id, 10) : id;
   const createdAt = new Date().toISOString(); // This is a placeholder, ideally you'd use the actual createdAt from the item
   
+  // Calculate the distance based on provided coordinates
+  const distanceText = useDistanceCalculation(parsedCoordinates);
+  
   return (
     <ItemCardLayout
       id={id}
@@ -65,16 +69,12 @@ export function ItemCardWrapperContent({
       header={
         <ItemCardHeader 
           postedBy={postedBy} 
-          createdAt={createdAt}
+          distanceText={distanceText}
           isOwner={isOwner} 
-          handleReport={handleReportClick} 
-          coordinates={parsedCoordinates} 
-          itemId={numericItemId}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
           isBookmarked={isBookmarked}
           handleBookmark={handleBookmark}
           handleShare={handleShare}
+          handleReport={handleReportClick}
         />
       }
       gallery={
