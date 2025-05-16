@@ -54,6 +54,7 @@ export function ItemCardWrapperContent({
   isRealtimeSubscribed
 }) {
   const numericItemId = typeof id === 'string' ? parseInt(id, 10) : id;
+  const createdAt = new Date().toISOString(); // This is a placeholder, ideally you'd use the actual createdAt from the item
   
   return (
     <ItemCardLayout
@@ -64,12 +65,16 @@ export function ItemCardWrapperContent({
       header={
         <ItemCardHeader 
           postedBy={postedBy} 
+          createdAt={createdAt}
           isOwner={isOwner} 
           handleReport={handleReportClick} 
           coordinates={parsedCoordinates} 
           itemId={numericItemId}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          isBookmarked={isBookmarked}
+          handleBookmark={handleBookmark}
+          handleShare={handleShare}
         />
       }
       gallery={

@@ -63,14 +63,17 @@ export function useItemDeletion(
   }, [id]);
 
   const handleDeleteConfirm = async (reason: string, isSoftDelete: boolean) => {
+    // Ensure id is correctly parsed to a number if it's a string
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    console.log(`Starting ${isSoftDelete ? 'archive' : 'delete'} operation for item ${numericId}, type: ${typeof numericId}`);
+    
     setIsDeleting(true);
     operationCompleteRef.current = false;
 
     try {
       // First check if we're authenticated
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
         throw new Error('You must be signed in to perform this action.');
       }
       
@@ -103,6 +106,7 @@ export function useItemDeletion(
         });
       } else {
         // For permanent deletion, use the database function
+        console.log(`Calling delete_item_with_related_records with ID: ${numericId}, type: ${typeof numericId}`);
         const { data: result, error: deleteError } = await supabase.rpc(
           'delete_item_with_related_records',
           { 
