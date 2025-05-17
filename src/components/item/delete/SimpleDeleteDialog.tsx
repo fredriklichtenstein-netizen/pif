@@ -73,6 +73,13 @@ export function SimpleDeleteDialog({
   
   // Handle confirmation action
   const handleConfirm = async () => {
+    console.log("Confirming action:", { 
+      itemId,
+      isArchived,
+      isSoftDelete,
+      reason
+    });
+    
     if (isArchived) {
       if (isSoftDelete) {
         // Restore archived item

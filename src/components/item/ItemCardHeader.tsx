@@ -26,6 +26,7 @@ interface ItemCardHeaderProps {
   handleShare?: () => void;
   handleReport?: (e: React.MouseEvent) => void;
   handleEdit?: () => void;
+  handleDeleteClick?: () => void;
   onDeleteSuccess?: () => void;
 }
 
@@ -41,6 +42,7 @@ export function ItemCardHeader({
   handleShare,
   handleReport,
   handleEdit,
+  handleDeleteClick,
   onDeleteSuccess
 }: ItemCardHeaderProps) {
   const { toast } = useToast();
@@ -60,8 +62,12 @@ export function ItemCardHeader({
     handleReport({} as React.MouseEvent);
   };
   
-  const handleDeleteClick = () => {
-    setShowDeleteDialog(true);
+  const handleLocalDeleteClick = () => {
+    if (handleDeleteClick) {
+      handleDeleteClick();
+    } else {
+      setShowDeleteDialog(true);
+    }
   };
   
   const handleEditClick = () => {
@@ -123,7 +129,7 @@ export function ItemCardHeader({
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={handleDeleteClick}
+                  onClick={handleLocalDeleteClick}
                   className={isArchived ? "text-primary" : "text-destructive"}
                 >
                   {isArchived ? (
