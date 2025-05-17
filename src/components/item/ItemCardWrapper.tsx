@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { useItemCardWrapper } from "./hooks/useItemCardWrapper";
 import { ItemCardWrapperContent } from "./ItemCardWrapperContent";
-import { ItemCardDialogs } from "./ItemCardDialogs";
 import { ItemCardError } from "./ItemCardError";
 import type { ItemCardProps } from "./types";
 
@@ -30,9 +29,6 @@ export function ItemCardWrapper({
     handleDismissError,
     parsedCoordinates,
     isOwner,
-    showDeleteDialog,
-    handleDeleteClick,
-    setShowDeleteDialog,
     handleEdit,
     handleMessage,
     checkInterestedUsers,
@@ -65,7 +61,6 @@ export function ItemCardWrapper({
     cleanupRealtime,
     handleRefresh,
     isItemDeleted,
-    handleDeleteSuccess,
     handleReportClick
   } = useItemCardWrapper({
     id,
@@ -101,68 +96,52 @@ export function ItemCardWrapper({
     );
   }
   
-  const handleCloseDeleteDialog = () => {
-    console.log("Closing delete dialog...");
-    setShowDeleteDialog(false);
-  };
-  
   return (
-    <>
-      <ItemCardWrapperContent
-        id={id}
-        title={title}
-        description={description}
-        image={image}
-        images={images}
-        location={location}
-        category={category}
-        condition={condition}
-        measurements={measurements}
-        postedBy={postedBy}
-        isOwner={isOwner}
-        isItemArchived={isItemArchived}
-        archived_reason={archived_reason}
-        realtimeError={realtimeError}
-        handleRefresh={handleRefresh}
-        parsedCoordinates={parsedCoordinates}
-        handleReportClick={handleReportClick}
-        handleEdit={handleEdit}
-        handleDeleteClick={handleDeleteClick}
-        isLiked={isLiked}
-        showComments={showComments}
-        isBookmarked={isBookmarked}
-        showInterest={showInterest}
-        commentsCount={commentsCount}
-        likesCount={likesCount}
-        interestsCount={interestsCount}
-        likers={likers}
-        interestedUsers={interestedUsers}
-        commenters={commenters}
-        comments={comments}
-        commentsLoading={commentsLoading}
-        commentsError={commentsError}
-        interactionsLoading={interactionsLoading}
-        isLoadingInterested={isLoadingInterested}
-        interestedError={interestedError}
-        handleLike={handleLike}
-        handleCommentToggle={handleCommentToggle}
-        handleShowInterest={handleShowInterest}
-        handleBookmark={handleBookmark}
-        handleMessage={handleMessage}
-        handleShare={handleShare}
-        handleReport={handleReport}
-        getInterestedUsers={getInterestedUsers}
-        setComments={setComments}
-        isRealtimeSubscribed={isRealtimeSubscribed}
-      />
-
-      <ItemCardDialogs
-        id={id}
-        showDeleteDialog={showDeleteDialog}
-        onCloseDeleteDialog={handleCloseDeleteDialog}
-        checkInterestedUsers={checkInterestedUsers}
-        onDeleteSuccess={handleDeleteSuccess}
-      />
-    </>
+    <ItemCardWrapperContent
+      id={id}
+      title={title}
+      description={description}
+      image={image}
+      images={images}
+      location={location}
+      category={category}
+      condition={condition}
+      measurements={measurements}
+      postedBy={postedBy}
+      isOwner={isOwner}
+      isItemArchived={isItemArchived}
+      archived_reason={archived_reason}
+      realtimeError={realtimeError}
+      handleRefresh={handleRefresh}
+      parsedCoordinates={parsedCoordinates}
+      handleReportClick={handleReportClick}
+      handleEdit={handleEdit}
+      isLiked={isLiked}
+      showComments={showComments}
+      isBookmarked={isBookmarked}
+      showInterest={showInterest}
+      commentsCount={commentsCount}
+      likesCount={likesCount}
+      interestsCount={interestsCount}
+      likers={likers}
+      interestedUsers={interestedUsers}
+      commenters={commenters}
+      comments={comments}
+      commentsLoading={commentsLoading}
+      commentsError={commentsError}
+      interactionsLoading={interactionsLoading}
+      isLoadingInterested={isLoadingInterested}
+      interestedError={interestedError}
+      handleLike={handleLike}
+      handleCommentToggle={handleCommentToggle}
+      handleShowInterest={handleShowInterest}
+      handleBookmark={handleBookmark}
+      handleMessage={handleMessage}
+      handleShare={handleShare}
+      handleReport={handleReport}
+      getInterestedUsers={getInterestedUsers}
+      setComments={setComments}
+      isRealtimeSubscribed={isRealtimeSubscribed}
+    />
   );
 }

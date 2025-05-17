@@ -1,11 +1,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useItemCard } from "@/hooks/useItemCard";
-import { useItemCardActions } from "@/hooks/item/useItemCardActions";
 import { useItemErrorHandler } from "../content/useItemErrorHandler";
 import { useCoordinatesParser } from "../content/useCoordinatesParser";
 import { useItemRefresh } from "../status/ItemRefresh";
-import { useItemDelete } from "@/hooks/item/useItemDelete";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export function useItemCardWrapper({
   id,
@@ -17,26 +16,19 @@ export function useItemCardWrapper({
 }) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemArchived, setIsItemArchived] = useState(!!archived_at);
-  const [interactionEnabled, setInteractionEnabled] = useState(true);
+  const [isItemDeleted, setIsItemDeleted] = useState(false);
   const { errors, showError, handleRetry, handleDismissError } = useItemErrorHandler();
   const { parsedCoordinates } = useCoordinatesParser(coordinates);
+  const { session } = useGlobalAuth();
+  
+  // Check if current user is the owner
+  const isOwner = session?.user?.id === postedBy?.id;
 
   // Update archived status when props change
   useEffect(() => {
     setIsItemArchived(!!archived_at);
   }, [archived_at]);
 
-  // Get card actions and interactions
-  const {
-    isOwner,
-    showDeleteDialog,
-    handleDeleteClick,
-    setShowDeleteDialog,
-    handleEdit,
-    handleMessage,
-    checkInterestedUsers
-  } = useItemCardActions(id, postedBy?.id);
-  
   // Get item interactions
   const {
     isLiked,
@@ -61,6 +53,7 @@ export function useItemCardWrapper({
     handleShare,
     handleReport,
     handleBookmark,
+    handleMessage,
     setComments,
     getInterestedUsers,
     isRealtimeSubscribed,
@@ -71,58 +64,34 @@ export function useItemCardWrapper({
 
   // Refresh handling
   const { isRefreshing, handleRefresh } = useItemRefresh({ refreshItemData });
-
-  // Delete handling with enhanced cleanup
-  const { isItemDeleted, handleDeleteSuccess } = useItemDelete(
-    id, 
-    cleanupRealtime, 
-    onOperationSuccess
-  );
   
-  // Report dialog handling with interaction management
+  // Basic action handlers
+  const handleEdit = useCallback(() => {
+    window.location.href = `/post/edit/${id}`;
+  }, [id]);
+  
+  // Check interested users - now simplified to just count
+  const checkInterestedUsers = useCallback(async (): Promise<number> => {
+    try {
+      return await getInterestedUsers();
+    } catch (error) {
+      console.error("Error checking interested users:", error);
+      return 0;
+    }
+  }, [getInterestedUsers]);
+  
+  // Handle operation success
+  const handleOperationSuccess = useCallback(() => {
+    if (onOperationSuccess) {
+      onOperationSuccess();
+    }
+    setIsItemDeleted(true);
+  }, [onOperationSuccess]);
+  
+  // Report dialog handling
   const handleReportClick = useCallback(() => {
-    if (!interactionEnabled) return;
     setIsReportDialogOpen(true);
-  }, [interactionEnabled]);
-
-  // Fix for delete button functionality
-  const handleDeleteButtonClick = useCallback(() => {
-    console.log("Delete button clicked in useItemCardWrapper");
-    // Always enable interactions when explicitly clicking delete
-    setInteractionEnabled(true);
-    // Call handleDeleteClick immediately
-    handleDeleteClick();
-  }, [handleDeleteClick]);
-
-  // Reset interaction enabled state when dialog closes
-  useEffect(() => {
-    if (!showDeleteDialog) {
-      // Re-enable interactions after dialog closes
-      const timer = setTimeout(() => {
-        setInteractionEnabled(true);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [showDeleteDialog]);
-
-  // Clean up resources when component unmounts or item is deleted
-  useEffect(() => {
-    return () => {
-      try {
-        console.log(`ItemCardWrapper hook cleanup for item ${id}`);
-        cleanupRealtime();
-      } catch (error) {
-        console.error("Error during hook cleanup:", error);
-      }
-    };
-  }, [id, cleanupRealtime]);
-
-  // Force cleanup when component is unmounted due to deletion
-  useEffect(() => {
-    if (isItemDeleted) {
-      cleanupRealtime();
-    }
-  }, [isItemDeleted, cleanupRealtime]);
+  }, []);
 
   return {
     isReportDialogOpen,
@@ -134,9 +103,6 @@ export function useItemCardWrapper({
     handleDismissError,
     parsedCoordinates,
     isOwner,
-    showDeleteDialog,
-    handleDeleteClick: handleDeleteButtonClick,
-    setShowDeleteDialog,
     handleEdit,
     handleMessage,
     checkInterestedUsers,
@@ -171,7 +137,7 @@ export function useItemCardWrapper({
     isRefreshing,
     handleRefresh,
     isItemDeleted,
-    handleDeleteSuccess,
+    handleOperationSuccess,
     handleReportClick
   };
 }

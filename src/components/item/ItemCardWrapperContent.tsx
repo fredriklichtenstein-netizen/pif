@@ -55,7 +55,6 @@ export function ItemCardWrapperContent({
   isRealtimeSubscribed
 }) {
   const numericItemId = typeof id === 'string' ? parseInt(id, 10) : id;
-  const createdAt = new Date().toISOString(); // This is a placeholder, ideally you'd use the actual createdAt from the item
   
   // Calculate the distance based on provided coordinates
   const distanceText = useDistanceCalculation(parsedCoordinates);
@@ -68,13 +67,18 @@ export function ItemCardWrapperContent({
       statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} /> : undefined}
       header={
         <ItemCardHeader 
+          itemId={id}
+          itemTitle={title}
           postedBy={postedBy} 
           distanceText={distanceText}
           isOwner={isOwner} 
           isBookmarked={isBookmarked}
+          isArchived={isItemArchived}
           handleBookmark={handleBookmark}
           handleShare={handleShare}
           handleReport={handleReportClick}
+          handleEdit={handleEdit}
+          onDeleteSuccess={handleRefresh}
         />
       }
       gallery={
@@ -112,8 +116,7 @@ export function ItemCardWrapperContent({
           onMessage={handleMessage} 
           onShare={handleShare} 
           onReport={handleReport} 
-          onEdit={handleEdit} 
-          onDelete={handleDeleteClick} 
+          onEdit={handleEdit}
           getInterestedUsers={getInterestedUsers} 
           setComments={setComments} 
           isRealtimeSubscribed={isRealtimeSubscribed} 
