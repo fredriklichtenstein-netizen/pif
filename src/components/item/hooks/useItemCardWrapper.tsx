@@ -5,6 +5,7 @@ import { useItemErrorHandler } from "../content/useItemErrorHandler";
 import { useCoordinatesParser } from "../content/useCoordinatesParser";
 import { useItemRefresh } from "../status/ItemRefresh";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useItemCardActions } from "@/hooks/item/useItemCardActions";
 
 export function useItemCardWrapper({
   id,
@@ -65,20 +66,37 @@ export function useItemCardWrapper({
   // Refresh handling
   const { isRefreshing, handleRefresh } = useItemRefresh({ refreshItemData });
   
-  // Basic action handlers
-  const handleEdit = useCallback(() => {
-    window.location.href = `/post/edit/${id}`;
-  }, [id]);
+  // Get delete and other action handlers
+  const { 
+    handleDeleteClick, 
+    handleEdit, 
+    checkInterestedUsers,
+    handleMessage: handleMessageAction
+  } = useItemCardActions(id, postedBy?.id);
   
-  // Check interested users - now simplified to just count
-  const checkInterestedUsers = useCallback(async (): Promise<number> => {
+  // Basic action handlers
+  const handleEditLocal = useCallback(() => {
+    if (handleEdit) {
+      handleEdit();
+    } else {
+      window.location.href = `/post/edit/${id}`;
+    }
+  }, [id, handleEdit]);
+  
+  // Check interested users - now returns the count properly
+  const checkInterestedUsersLocal = useCallback(async (): Promise<number> => {
     try {
-      return await getInterestedUsers();
+      if (checkInterestedUsers) {
+        return await checkInterestedUsers();
+      }
+      // Fallback to getting interested users through the item card
+      const users = await getInterestedUsers();
+      return Array.isArray(users) ? users.length : 0;
     } catch (error) {
       console.error("Error checking interested users:", error);
       return 0;
     }
-  }, [getInterestedUsers]);
+  }, [checkInterestedUsers, getInterestedUsers]);
   
   // Handle operation success
   const handleOperationSuccess = useCallback(() => {
@@ -103,9 +121,10 @@ export function useItemCardWrapper({
     handleDismissError,
     parsedCoordinates,
     isOwner,
-    handleEdit,
-    handleMessage,
-    checkInterestedUsers,
+    handleEdit: handleEditLocal,
+    handleMessage: handleMessageAction || handleMessage,
+    checkInterestedUsers: checkInterestedUsersLocal,
+    handleDeleteClick,
     isLiked,
     likesCount,
     showComments,

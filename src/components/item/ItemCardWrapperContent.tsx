@@ -117,6 +117,7 @@ export function ItemCardWrapperContent({
           onShare={handleShare} 
           onReport={handleReport} 
           onEdit={handleEdit}
+          onDelete={handleDeleteClick}
           getInterestedUsers={getInterestedUsers} 
           setComments={setComments} 
           isRealtimeSubscribed={isRealtimeSubscribed} 

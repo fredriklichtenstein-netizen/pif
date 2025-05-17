@@ -61,6 +61,7 @@ export function ItemCardWrapper({
     cleanupRealtime,
     handleRefresh,
     isItemDeleted,
+    handleDeleteClick,
     handleReportClick
   } = useItemCardWrapper({
     id,
@@ -116,6 +117,7 @@ export function ItemCardWrapper({
       parsedCoordinates={parsedCoordinates}
       handleReportClick={handleReportClick}
       handleEdit={handleEdit}
+      handleDeleteClick={handleDeleteClick}
       isLiked={isLiked}
       showComments={showComments}
       isBookmarked={isBookmarked}
