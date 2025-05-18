@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useReducer, useCallback, ReactNode } from "react";
 import { toast } from "@/hooks/use-toast";
 import { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
@@ -32,7 +33,7 @@ type FeedAction =
   | { type: 'DELETE_ITEM'; payload: { id: string | number } }
   | { type: 'ARCHIVE_ITEM'; payload: { id: string | number; reason?: string } }
   | { type: 'RESTORE_ITEM'; payload: { id: string | number } }
-  | { type: 'SET_TRANSITION'; payload: { id: string | number; state: FeedItem['__transitionState'] } }
+  | { type: 'SET_TRANSITION'; payload: { id: string | number; state: 'removing' | 'archiving' | 'restoring' | 'normal' } }
   | { type: 'SYNC_FROM_SERVER'; payload: FeedItem[] };
 
 interface FeedContextValue {
@@ -52,7 +53,7 @@ const feedReducer = (state: FeedItem[], action: FeedAction): FeedItem[] => {
     case 'SET_ITEMS':
       return action.payload.map(item => ({
         ...item,
-        __transitionState: 'normal',
+        __transitionState: 'normal' as const,
       }));
       
     case 'UPDATE_ITEM':
@@ -65,7 +66,7 @@ const feedReducer = (state: FeedItem[], action: FeedAction): FeedItem[] => {
     case 'DELETE_ITEM':
       return state.map(item =>
         item.id.toString() === action.payload.id.toString()
-          ? { ...item, __deleted: true, __transitionState: 'removing' }
+          ? { ...item, __deleted: true, __transitionState: 'removing' as const }
           : item
       ).filter(item => !item.__deleted || item.__transitionState === 'removing');
       
@@ -77,7 +78,7 @@ const feedReducer = (state: FeedItem[], action: FeedAction): FeedItem[] => {
               archived_at: new Date().toISOString(), 
               archived_reason: action.payload.reason || null, 
               __archived: true, 
-              __transitionState: 'archiving',
+              __transitionState: 'archiving' as const,
               __modified: true
             }
           : item
@@ -92,7 +93,7 @@ const feedReducer = (state: FeedItem[], action: FeedAction): FeedItem[] => {
               archived_reason: null, 
               __archived: false, 
               __restored: true,
-              __transitionState: 'restoring',
+              __transitionState: 'restoring' as const,
               __modified: true
             }
           : item
@@ -124,7 +125,7 @@ const feedReducer = (state: FeedItem[], action: FeedAction): FeedItem[] => {
           // Otherwise merge server data with local UI state
           return {
             ...serverItem,
-            __transitionState: item.__transitionState || 'normal',
+            __transitionState: item.__transitionState || 'normal' as const,
             __modified: item.__modified,
             __archived: item.archived_at ? true : false,
             __restored: item.__restored
@@ -137,13 +138,13 @@ const feedReducer = (state: FeedItem[], action: FeedAction): FeedItem[] => {
         }
         
         // Item was removed from server and not in transition, filter it out
-        return { ...item, __deleted: true, __transitionState: 'normal' };
+        return { ...item, __deleted: true, __transitionState: 'normal' as const };
       })
       // Add any new items from server that weren't in our local state
       .concat(
         Array.from(serverItemsMap.values()).map(item => ({
           ...item,
-          __transitionState: 'normal'
+          __transitionState: 'normal' as const
         }))
       )
       // Finally, remove any items that should be gone
