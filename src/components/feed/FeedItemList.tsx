@@ -116,8 +116,9 @@ export function FeedItemList({
   }, [onItemOperationSuccess, toast]);
 
   // Enhanced handler for item operations with operation type
-  const handleItemSuccess = useCallback((itemId?: string | number, operationType?: OperationType) => {
+  const handleItemSuccess = useCallback((operationType?: OperationType) => {
     try {
+      const itemId = arguments[0]; // Explicitly access the first argument
       console.log(`Item ${operationType || 'operation'} success callback triggered for item ${itemId}`);
       
       // Reset any error state
@@ -226,7 +227,7 @@ export function FeedItemList({
                 }}
                 archived_at={post.archived_at}
                 archived_reason={post.archived_reason}
-                onOperationSuccess={(operationType) => handleItemSuccess(post.id, operationType)}
+                onOperationSuccess={handleItemSuccess}
               />
             </div>
           </NetworkStatusWrapper>
