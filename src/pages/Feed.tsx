@@ -9,6 +9,8 @@ import { FeedItemList } from "@/components/feed/FeedItemList";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useOptimisticFeedUpdates } from "@/hooks/feed/useOptimisticFeedUpdates";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 const CATEGORIES = [
   "Furniture",
@@ -40,7 +42,7 @@ export default function Feed() {
   const timeParam = searchParams.get('t');
   
   const { 
-    posts, 
+    posts: rawPosts, 
     isLoading, 
     error, 
     refreshPosts, 
@@ -50,6 +52,15 @@ export default function Feed() {
     loadArchivedPosts,
     loadInterestedPosts
   } = useFeedPosts();
+
+  // New optimistic UI update hook
+  const {
+    recordOperation,
+    applyOptimisticUpdates
+  } = useOptimisticFeedUpdates();
+
+  // Apply optimistic updates to posts
+  const posts = applyOptimisticUpdates(rawPosts);
 
   // Function to force a complete refresh of the feed
   const forceCompleteRefresh = useCallback(() => {
@@ -162,19 +173,30 @@ export default function Feed() {
     }
   }, [timeParam, isInitialLoad, forceCompleteRefresh]);
 
-  // Handle successful item deletion or archiving with more aggressive refresh
-  const handleItemOperationSuccess = useCallback(() => {
-    console.log('Item operation success detected, refreshing feed');
+  // Enhanced handler for successful item operations (delete, archive, restore)
+  const handleItemOperationSuccess = useCallback((itemId?: string | number, operationType?: OperationType) => {
+    console.log('Item operation success detected:', operationType, itemId);
     
-    // First attempt a normal refresh
-    debouncedRefresh(500); 
+    // Apply optimistic UI update if we have item ID and operation type
+    if (itemId && operationType) {
+      recordOperation(itemId, operationType);
+      
+      // Show toast notification
+      const messages = {
+        delete: "Item has been permanently deleted",
+        archive: "Item has been archived and can be restored later",
+        restore: "Item has been restored"
+      };
+      
+      toast({
+        title: `Success! ${operationType === 'archive' ? 'Archived' : operationType === 'delete' ? 'Deleted' : 'Restored'}`,
+        description: messages[operationType],
+      });
+    }
     
-    // If it's after a deletion/major operation, use a more aggressive approach after a delay
-    setTimeout(() => {
-      // Navigate to same route with timestamp to force a full refresh
-      navigate(`/feed?t=${Date.now()}`, { replace: true });
-    }, 300);
-  }, [debouncedRefresh, navigate]);
+    // Still do a background refresh after a delay for data consistency
+    debouncedRefresh(1500);
+  }, [debouncedRefresh, recordOperation, toast]);
 
   // Cleanup function to prevent memory leaks
   useEffect(() => {
@@ -216,7 +238,7 @@ export default function Feed() {
         setViewMode={setViewMode}
       />
 
-      {/* ItemList component */}
+      {/* ItemList component with enhanced prop for operation success */}
       <FeedItemList
         posts={posts}
         selectedCategories={selectedCategories}

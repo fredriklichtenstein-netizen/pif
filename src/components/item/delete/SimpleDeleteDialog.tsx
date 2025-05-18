@@ -7,13 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { useItemOperations } from "@/hooks/item/useItemOperations";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 export interface SimpleDeleteDialogProps {
   itemId: string | number;
   itemTitle?: string;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (operationType?: OperationType) => void;
   isArchived?: boolean;
 }
 
@@ -38,9 +39,9 @@ export function SimpleDeleteDialog({
     deleteItem,
     restoreItem
   } = useItemOperations({
-    onSuccess: () => {
+    onSuccess: (operationType?: OperationType) => {
       onClose();
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(operationType);
     }
   });
 

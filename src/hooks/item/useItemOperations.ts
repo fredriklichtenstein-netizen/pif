@@ -2,9 +2,10 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 
 interface UseItemOperationsProps {
-  onSuccess?: () => void;
+  onSuccess?: (operationType?: OperationType) => void;
 }
 
 export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
@@ -77,7 +78,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         description: "The item has been archived successfully",
       });
       
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess('archive');
       return true;
       
     } catch (err: any) {
@@ -139,7 +140,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         description: "The item has been permanently deleted",
       });
       
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess('delete');
       return true;
       
     } catch (err: any) {
@@ -191,7 +192,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         description: "The item has been restored successfully",
       });
       
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess('restore');
       return true;
       
     } catch (err: any) {

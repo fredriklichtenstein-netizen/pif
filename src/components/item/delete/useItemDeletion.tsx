@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 /**
  * Custom hook to handle item deletion or archiving
@@ -9,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 export function useItemDeletion(
   id: string | number,
   onClose: () => void,
-  onSuccess?: () => void
+  onSuccess?: (operationType?: 'delete' | 'archive') => void
 ) {
   const [isDeleting, setIsDeleting] = useState(false);
   const operationCompleteRef = useRef(false);
@@ -66,6 +67,9 @@ export function useItemDeletion(
     // Always ensure we have a numeric ID for the database functions
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
     console.log(`Starting ${isSoftDelete ? 'archive' : 'delete'} operation for item ${numericId}, type: ${typeof numericId}`);
+    
+    // Track the operation type for optimistic UI updates
+    const operationType: OperationType = isSoftDelete ? 'archive' : 'delete';
     
     setIsDeleting(true);
     operationCompleteRef.current = false;
@@ -149,10 +153,10 @@ export function useItemDeletion(
         // First close the dialog
         onClose();
         
-        // Then after a delay, call the success callback
+        // Then after a delay, call the success callback with the operation type
         const successTimeout = setTimeout(() => {
           if (onSuccess) {
-            onSuccess();
+            onSuccess(operationType);
           }
         }, 100);
         

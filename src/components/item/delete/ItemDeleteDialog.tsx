@@ -3,13 +3,14 @@ import { useItemDeletion } from "./useItemDeletion";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useInterestedCount } from "./useInterestedCount";
 
 interface ItemDeleteDialogProps {
   id: string | number;
   isOpen: boolean;
   onClose: () => void;
   checkInterestedUsers?: () => Promise<number>;
-  onSuccess?: () => void;
+  onSuccess?: (operationType?: 'delete' | 'archive') => void;
 }
 
 /**
@@ -23,9 +24,14 @@ export function ItemDeleteDialog({
   onSuccess
 }: ItemDeleteDialogProps) {
   const mountedRef = useRef(true);
-  const [isLoadingCount, setIsLoadingCount] = useState(false);
-  const [interestedCount, setInterestedCount] = useState(0);
   const [showInterestInfo, setShowInterestInfo] = useState(false);
+  
+  // Use the optimized interest count hook
+  const {
+    isLoadingCount,
+    interestedCount,
+    countError
+  } = useInterestedCount(id, isOpen, checkInterestedUsers);
   
   // Get deletion functionality
   const { 
@@ -35,61 +41,14 @@ export function ItemDeleteDialog({
     cleanupState
   } = useItemDeletion(id, onClose, onSuccess);
 
-  // Check for interested users in the background
+  // Show interest info when count is loaded and greater than 0
   useEffect(() => {
-    if (isOpen) {
+    if (interestedCount > 0) {
+      setShowInterestInfo(true);
+    } else {
       setShowInterestInfo(false);
-      setIsLoadingCount(false);
-      
-      // Only run the check if we have an ID and the component is mounted
-      if (id && mountedRef.current) {
-        setIsLoadingCount(true);
-        
-        // Use the passed function if available, otherwise do a direct query
-        const checkInterested = async () => {
-          try {
-            let count = 0;
-            
-            if (checkInterestedUsers) {
-              count = await checkInterestedUsers();
-            } else {
-              const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-              const { count: dbCount, error } = await supabase
-                .from('interests')
-                .select('*', { count: 'exact', head: true })
-                .eq('item_id', numericId);
-                
-              if (!error) {
-                count = dbCount || 0;
-              }
-            }
-            
-            // Only update if component is still mounted
-            if (mountedRef.current) {
-              setInterestedCount(count);
-              if (count > 0) {
-                setShowInterestInfo(true);
-              }
-              setIsLoadingCount(false);
-            }
-          } catch (error) {
-            console.error('Error checking interested users:', error);
-            // Continue without showing the warning
-            if (mountedRef.current) {
-              setIsLoadingCount(false);
-            }
-          }
-        };
-        
-        checkInterested();
-      }
     }
-    
-    return () => {
-      // Mark component as unmounted
-      mountedRef.current = false;
-    };
-  }, [isOpen, id, checkInterestedUsers]);
+  }, [interestedCount]);
 
   // Ensure cleanup happens on unmount
   useEffect(() => {

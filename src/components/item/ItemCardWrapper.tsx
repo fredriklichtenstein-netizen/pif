@@ -4,6 +4,7 @@ import { useItemCardWrapper } from "./hooks/useItemCardWrapper";
 import { ItemCardWrapperContent } from "./ItemCardWrapperContent";
 import { ItemCardError } from "./ItemCardError";
 import type { ItemCardProps } from "./types";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 export function ItemCardWrapper({
   id,

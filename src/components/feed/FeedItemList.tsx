@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 interface FeedItemListProps {
   posts: any[];
   selectedCategories: string[];
   clearFilters: () => void;
   viewMode: string;
-  onItemOperationSuccess?: () => void;
+  onItemOperationSuccess?: (itemId?: string | number, operationType?: OperationType) => void;
   isLoading?: boolean;
 }
 
@@ -114,10 +115,10 @@ export function FeedItemList({
     }
   }, [onItemOperationSuccess, toast]);
 
-  // Handle successful operations with better error protection and state reset
-  const handleItemSuccess = useCallback(() => {
+  // Enhanced handler for item operations with operation type
+  const handleItemSuccess = useCallback((itemId?: string | number, operationType?: OperationType) => {
     try {
-      console.log("Item operation success callback triggered");
+      console.log(`Item ${operationType || 'operation'} success callback triggered for item ${itemId}`);
       
       // Reset any error state
       if (errorState.hasError) {
@@ -132,21 +133,18 @@ export function FeedItemList({
         clearTimeout(refreshTimerRef.current);
       }
       
-      // Give the UI time to reset before refreshing data
-      refreshTimerRef.current = setTimeout(() => {
-        if (onItemOperationSuccess) {
-          try {
-            onItemOperationSuccess();
-          } catch (err) {
-            console.error("Error in operation success handler:", err);
-            setErrorState({
-              hasError: true,
-              errorMessage: "Error updating feed. Please try refreshing."
-            });
-          }
+      // Pass the operation details to the parent component for optimistic updates
+      if (onItemOperationSuccess) {
+        try {
+          onItemOperationSuccess(itemId, operationType);
+        } catch (err) {
+          console.error("Error in operation success handler:", err);
+          setErrorState({
+            hasError: true,
+            errorMessage: "Error updating feed. Please try refreshing."
+          });
         }
-        refreshTimerRef.current = null;
-      }, 500);
+      }
     } catch (err) {
       console.error("Error in handleItemSuccess:", err);
       setErrorState({
@@ -188,6 +186,9 @@ export function FeedItemList({
   return (
     <div className="space-y-4" key={refreshKey}>
       {posts?.map((post) => {
+        // Skip posts that have been optimistically deleted
+        if (post.__deleted) return null;
+        
         let coordinates;
         if (post.coordinates) {
           try {
@@ -201,28 +202,33 @@ export function FeedItemList({
           }
         }
         
+        // Apply optimistic UI transition class if the item was just modified
+        const transitionClass = post.__modified ? "animate-fade-in" : "";
+        
         return (
           <NetworkStatusWrapper key={post.id}>
-            <ItemCard
-              id={post.id}
-              title={post.title}
-              description={post.description}
-              image={post.images && post.images.length > 0 ? post.images[0] : ''}
-              images={post.images}
-              location={post.location}
-              coordinates={coordinates}
-              category={post.category}
-              condition={post.condition}
-              measurements={post.measurements}
-              postedBy={{
-                id: post.user_id,
-                name: post.user_name || 'Anonymous',
-                avatar: post.user_avatar || '',
-              }}
-              archived_at={post.archived_at}
-              archived_reason={post.archived_reason}
-              onOperationSuccess={handleItemSuccess}
-            />
+            <div className={transitionClass}>
+              <ItemCard
+                id={post.id}
+                title={post.title}
+                description={post.description}
+                image={post.images && post.images.length > 0 ? post.images[0] : ''}
+                images={post.images}
+                location={post.location}
+                coordinates={coordinates}
+                category={post.category}
+                condition={post.condition}
+                measurements={post.measurements}
+                postedBy={{
+                  id: post.user_id,
+                  name: post.user_name || 'Anonymous',
+                  avatar: post.user_avatar || '',
+                }}
+                archived_at={post.archived_at}
+                archived_reason={post.archived_reason}
+                onOperationSuccess={(operationType) => handleItemSuccess(post.id, operationType)}
+              />
+            </div>
           </NetworkStatusWrapper>
         );
       })}
