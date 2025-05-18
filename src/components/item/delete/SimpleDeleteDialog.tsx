@@ -28,7 +28,7 @@ export function SimpleDeleteDialog({
   const [reason, setReason] = useState("");
   const [isSoftDelete, setIsSoftDelete] = useState(true);
   const [interestedCount, setInterestedCount] = useState(0);
-  const [checkingInterests, setCheckingInterests] = useState(false);
+  const [showInterestInfo, setShowInterestInfo] = useState(false);
   
   const {
     isProcessing,
@@ -44,32 +44,29 @@ export function SimpleDeleteDialog({
     }
   });
 
-  // Get interested count when dialog opens
-  useEffect(() => {
-    if (isOpen && !isArchived) {
-      setCheckingInterests(true);
-      checkInterestedCount(itemId)
-        .then(count => {
-          setInterestedCount(count);
-        })
-        .catch(err => {
-          console.error("Failed to check interest count:", err);
-          // If we fail to get the count, we still proceed but don't show the warning
-          setInterestedCount(0);
-        })
-        .finally(() => {
-          setCheckingInterests(false);
-        });
-    }
-  }, [isOpen, itemId, checkInterestedCount, isArchived]);
-  
   // Reset state when dialog opens or closes
   useEffect(() => {
     if (isOpen) {
       setReason("");
       setIsSoftDelete(!isArchived); // Default to archive for normal items, delete for archived items
+      setShowInterestInfo(false);
+
+      // Start interest check in the background
+      if (!isArchived) {
+        checkInterestedCount(itemId)
+          .then(count => {
+            setInterestedCount(count);
+            if (count > 0) {
+              setShowInterestInfo(true);
+            }
+          })
+          .catch(err => {
+            console.error("Failed to check interest count:", err);
+            // Continue without showing the warning
+          });
+      }
     }
-  }, [isOpen, isArchived]);
+  }, [isOpen, itemId, checkInterestedCount, isArchived]);
   
   // Handle confirmation action
   const handleConfirm = async () => {
@@ -132,15 +129,8 @@ export function SimpleDeleteDialog({
           </div>
         )}
         
-        {/* Show interested users warning for non-archived items */}
-        {!isArchived && checkingInterests && (
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Checking if anyone is interested in this item...
-          </div>
-        )}
-        
-        {!isArchived && !checkingInterests && interestedCount > 0 && (
+        {/* Show interested users warning if available */}
+        {showInterestInfo && interestedCount > 0 && (
           <div className="text-amber-600 text-sm font-medium">
             <p>Warning: {interestedCount} {interestedCount === 1 ? 'person is' : 'people are'} interested in this item.</p>
             <p className="text-muted-foreground font-normal">They will be notified if you proceed.</p>
@@ -211,7 +201,7 @@ export function SimpleDeleteDialog({
             type="button"
             variant={isSoftDelete && !isArchived ? "default" : "destructive"}
             onClick={handleConfirm}
-            disabled={isProcessing || checkingInterests}
+            disabled={isProcessing}
           >
             {isProcessing ? (
               <>

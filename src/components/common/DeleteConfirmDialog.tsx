@@ -4,7 +4,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 
 interface DeleteConfirmDialogProps {
@@ -117,7 +116,6 @@ export function DeleteConfirmDialog({
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Checking if anyone is interested in this item...
             </p>
-            <Skeleton className="h-4 w-3/4" />
           </div> : hasInterestedUsers && <div className="mb-4">
             <p className="text-sm text-amber-600 font-medium">
               Warning: {interestCount} {interestCount === 1 ? 'person is' : 'people are'} interested in this item.
