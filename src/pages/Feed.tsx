@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useOptimisticFeedUpdates } from "@/hooks/feed/useOptimisticFeedUpdates";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
+import { FeedProvider } from "@/context/FeedContext";
+import { useRealtimeFeed } from "@/hooks/feed/useRealtimeFeed";
 
 const CATEGORIES = [
   "Furniture",
@@ -24,7 +26,7 @@ const CATEGORIES = [
   "Other"
 ];
 
-export default function Feed() {
+function FeedContent() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState("all");
@@ -35,7 +37,9 @@ export default function Feed() {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  
+  // Set up realtime feed updates
+  useRealtimeFeed();
   
   // Get post ID from URL if present
   const postIdParam = searchParams.get('post');
@@ -249,5 +253,14 @@ export default function Feed() {
       />
       <MainNav />
     </div>
+  );
+}
+
+// Main Feed component wrapped with FeedProvider
+export default function Feed() {
+  return (
+    <FeedProvider>
+      <FeedContent />
+    </FeedProvider>
   );
 }

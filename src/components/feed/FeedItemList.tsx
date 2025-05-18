@@ -1,4 +1,3 @@
-
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
@@ -7,6 +6,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
+import { useFeedContext } from "@/context/FeedContext";
+import { FeedItemTransition } from "./FeedItemTransition";
 
 interface FeedItemListProps {
   posts: any[];
@@ -33,6 +34,15 @@ export function FeedItemList({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
+  const { items, setItems, deleteItem, archiveItem, restoreItem } = useFeedContext();
+
+  // Sync posts from props to context on initial load and updates
+  useEffect(() => {
+    if (posts && posts.length > 0) {
+      // Update the feed context with the latest posts
+      setItems(posts);
+    }
+  }, [posts, setItems]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -61,11 +71,6 @@ export function FeedItemList({
         return "No items found";
     }
   };
-
-  // Log when posts change for debugging
-  useEffect(() => {
-    console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
-  }, [posts, viewMode]);
 
   // Enhanced recovery function with debouncing and complete refresh
   const handleRecoveryAction = useCallback(() => {
@@ -115,7 +120,7 @@ export function FeedItemList({
     }
   }, [onItemOperationSuccess, toast]);
 
-  // Enhanced handler for item operations with operation type
+  // Enhanced handler for item operations
   const handleItemSuccess = useCallback((operationType?: OperationType) => {
     try {
       const itemId = arguments[0]; // Explicitly access the first argument
@@ -126,15 +131,16 @@ export function FeedItemList({
         setErrorState({ hasError: false, errorMessage: '' });
       }
       
-      // Force a re-render first to clear any stale UI
-      setRefreshKey(Date.now());
-      
-      // Clean up any potential timers
-      if (refreshTimerRef.current) {
-        clearTimeout(refreshTimerRef.current);
+      // Use feed context directly for immediate UI update
+      if (operationType === 'delete') {
+        deleteItem(itemId);
+      } else if (operationType === 'archive') {
+        archiveItem(itemId);
+      } else if (operationType === 'restore') {
+        restoreItem(itemId);
       }
       
-      // Pass the operation details to the parent component for optimistic updates
+      // Still pass to parent component for backend updates
       if (onItemOperationSuccess) {
         try {
           onItemOperationSuccess(itemId, operationType);
@@ -153,7 +159,7 @@ export function FeedItemList({
         errorMessage: "Error updating feed. Please try refreshing."
       });
     }
-  }, [onItemOperationSuccess, errorState]);
+  }, [onItemOperationSuccess, errorState, deleteItem, archiveItem, restoreItem]);
 
   if (isLoading || isRefreshing) {
     return (
@@ -184,9 +190,12 @@ export function FeedItemList({
     );
   }
 
+  // Use items from context instead of posts from props
+  const displayItems = items.length > 0 ? items : posts;
+
   return (
     <div className="space-y-4" key={refreshKey}>
-      {posts?.map((post) => {
+      {displayItems.map((post) => {
         // Skip posts that have been optimistically deleted
         if (post.__deleted) return null;
         
@@ -203,12 +212,9 @@ export function FeedItemList({
           }
         }
         
-        // Apply optimistic UI transition class if the item was just modified
-        const transitionClass = post.__modified ? "animate-fade-in" : "";
-        
         return (
           <NetworkStatusWrapper key={post.id}>
-            <div className={transitionClass}>
+            <FeedItemTransition transitionState={post.__transitionState}>
               <ItemCard
                 id={post.id}
                 title={post.title}
@@ -229,12 +235,12 @@ export function FeedItemList({
                 archived_reason={post.archived_reason}
                 onOperationSuccess={handleItemSuccess}
               />
-            </div>
+            </FeedItemTransition>
           </NetworkStatusWrapper>
         );
       })}
       
-      {posts?.length === 0 && (
+      {displayItems.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           <p>{getEmptyStateMessage()}</p>
           {selectedCategories.length > 0 && (
