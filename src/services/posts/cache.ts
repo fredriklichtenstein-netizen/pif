@@ -2,30 +2,41 @@
 import type { Post } from "@/types/post";
 
 const CACHE_KEY = 'posts_cache';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-export const getPostsFromCache = (): Post[] | null => {
-  if (typeof window === 'undefined') return null;
-  
+export function getPostsFromCache(): Post[] | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   const cachedData = localStorage.getItem(CACHE_KEY);
-  if (!cachedData) return null;
-  
+  if (!cachedData) {
+    return null;
+  }
+
   try {
     const { data, timestamp } = JSON.parse(cachedData);
     const isExpired = Date.now() - timestamp > CACHE_EXPIRY;
     
-    return isExpired ? null : data;
+    if (isExpired) {
+      return null;
+    }
+
+    console.log("Using cached posts data");
+    return data;
   } catch (e) {
-    console.warn("Failed to parse cached posts data", e);
+    console.warn("Failed to parse cached data", e);
     return null;
   }
-};
+}
 
-export const cachePostsData = (data: Post[]) => {
-  if (typeof window === 'undefined') return;
-  
+export function cachePostsData(data: Post[]): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   localStorage.setItem(CACHE_KEY, JSON.stringify({
     data,
     timestamp: Date.now()
   }));
-};
+}
