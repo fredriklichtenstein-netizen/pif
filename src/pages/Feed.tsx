@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useOptimisticFeedUpdates } from "@/hooks/feed/useOptimisticFeedUpdates";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
-import { FeedProvider } from "@/context/FeedContext";
+import { FeedProvider } from "@/context/feed"; // Updated import
 import { useRealtimeFeed } from "@/hooks/feed/useRealtimeFeed";
 
 const CATEGORIES = [

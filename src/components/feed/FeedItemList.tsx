@@ -1,3 +1,4 @@
+
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
@@ -6,7 +7,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
-import { useFeedContext } from "@/context/FeedContext";
+import { useFeedContext } from "@/context/feed"; // Updated import
 import { FeedItemTransition } from "./FeedItemTransition";
 
 interface FeedItemListProps {
