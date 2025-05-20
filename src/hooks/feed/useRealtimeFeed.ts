@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeedContext } from "@/context/feed"; 
@@ -24,44 +23,47 @@ export const useRealtimeFeed = () => {
     const updates = pendingUpdatesRef.current.filter(p => p.eventType === 'UPDATE').map(p => p.new);
     const deletes = pendingUpdatesRef.current.filter(p => p.eventType === 'DELETE').map(p => p.old);
     
-    // Apply all updates at once to minimize re-renders
-    setItems((prevItems: FeedItem[]) => {
-      // Create a map for faster lookups
-      const prevItemsMap = new Map(prevItems.map(item => [item.id.toString(), item]));
-      
-      // Apply deletions
-      deletes.forEach(item => {
-        prevItemsMap.delete(item.id.toString());
-      });
-      
-      // Apply updates
-      updates.forEach((update: any) => {
-        const existingItem = prevItemsMap.get(update.id.toString());
-        if (existingItem) {
-          // Preserve UI state
-          prevItemsMap.set(update.id.toString(), {
-            ...update,
-            __transitionState: existingItem.__transitionState || 'normal',
-            __modified: existingItem.__modified,
-            user_name: existingItem.user_name, // Preserve user data
-            user_avatar: existingItem.user_avatar
-          } as FeedItem);
-        }
-      });
-      
-      // Add insertions
-      inserts.forEach((insert: any) => {
-        // Only add if it doesn't already exist
-        if (!prevItemsMap.has(insert.id.toString())) {
-          prevItemsMap.set(insert.id.toString(), {
-            ...insert,
-            __transitionState: 'normal'
-          } as FeedItem);
-        }
-      });
-      
-      return Array.from(prevItemsMap.values());
+    // We need to get the current items first, then apply changes and set the new state
+    // This avoids the TypeScript error by not passing a function to setItems
+    const currentItems = [...items];
+    
+    // Create a map for faster lookups
+    const itemsMap = new Map(currentItems.map(item => [item.id.toString(), item]));
+    
+    // Apply deletions
+    deletes.forEach(item => {
+      itemsMap.delete(item.id.toString());
     });
+    
+    // Apply updates
+    updates.forEach((update: any) => {
+      const existingItem = itemsMap.get(update.id.toString());
+      if (existingItem) {
+        // Preserve UI state
+        itemsMap.set(update.id.toString(), {
+          ...update,
+          __transitionState: existingItem.__transitionState || 'normal',
+          __modified: existingItem.__modified,
+          user_name: existingItem.user_name, // Preserve user data
+          user_avatar: existingItem.user_avatar
+        } as FeedItem);
+      }
+    });
+    
+    // Add insertions
+    inserts.forEach((insert: any) => {
+      // Only add if it doesn't already exist
+      if (!itemsMap.has(insert.id.toString())) {
+        itemsMap.set(insert.id.toString(), {
+          ...insert,
+          __transitionState: 'normal'
+        } as FeedItem);
+      }
+    });
+    
+    // Convert map back to array and update state directly
+    const updatedItems = Array.from(itemsMap.values());
+    setItems(updatedItems);
     
     // Clear pending updates
     pendingUpdatesRef.current = [];
@@ -74,7 +76,7 @@ export const useRealtimeFeed = () => {
         variant: "default",
       });
     }
-  }, [setItems, toast]);
+  }, [items, setItems, toast]);
 
   // Queue an update instead of processing immediately
   const queueRealtimeUpdate = useCallback((payload: any) => {
