@@ -13,12 +13,13 @@ export const useFeedRefresh = ({
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const forceRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounced refresh function with longer default delay (increased from 300ms to 800ms)
-  const debouncedRefresh = useCallback((delay = 800) => {
+  // Debounced refresh function with much longer default delay (increased from 800ms to 3000ms)
+  const debouncedRefresh = useCallback((delay = 3000) => {
     if (refreshTimeoutRef.current !== null) {
       clearTimeout(refreshTimeoutRef.current);
     }
     
+    console.log(`Scheduling debounced refresh with ${delay}ms delay`);
     refreshTimeoutRef.current = setTimeout(() => {
       console.log('Executing debounced feed refresh');
       loadPostsBasedOnViewMode(viewMode);
@@ -39,23 +40,26 @@ export const useFeedRefresh = ({
     // Log the refresh
     console.log("Forcing complete feed refresh");
     
-    // Update the key to force a component remount
+    // Update the key to force a component remount only when absolutely necessary
     setFeedKey(Date.now());
     
-    // Force refresh after a delay (increased from 300ms to 800ms)
+    // Force refresh after a significant delay (increased from 800ms to 2500ms)
     forceRefreshTimeoutRef.current = setTimeout(() => {
       loadPostsBasedOnViewMode(viewMode);
       forceRefreshTimeoutRef.current = null;
-    }, 800);
+    }, 2500);
   }, [viewMode, loadPostsBasedOnViewMode]);
 
   // Cleanup function
   const cleanupRefreshTimers = useCallback(() => {
+    console.log("Cleaning up all refresh timers");
     if (refreshTimeoutRef.current !== null) {
       clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
     }
     if (forceRefreshTimeoutRef.current !== null) {
       clearTimeout(forceRefreshTimeoutRef.current);
+      forceRefreshTimeoutRef.current = null;
     }
   }, []);
 

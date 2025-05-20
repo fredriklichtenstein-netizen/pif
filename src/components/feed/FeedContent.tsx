@@ -20,12 +20,13 @@ export function FeedContent() {
     viewMode,
     setViewMode,
     isInitialLoad,
-    feedKey,
     posts,
     isLoading,
     refreshPosts,
     clearFilters,
-    handleItemOperationSuccess
+    handleItemOperationSuccess,
+    hasNewData,
+    applyPendingUpdates
   } = useFeedState();
 
   if (isLoading && isInitialLoad) {
@@ -33,9 +34,25 @@ export function FeedContent() {
   }
 
   return (
-    <div className="container max-w-md mx-auto px-4 pb-20" key={feedKey}>
+    <div className="container max-w-md mx-auto px-4 pb-20">
       <NetworkStatus onRetry={refreshPosts} />
       <FeedHeader />
+
+      {/* Notification for new content */}
+      {hasNewData && (
+        <button
+          onClick={applyPendingUpdates}
+          className="w-full bg-green-50 py-2 mt-2 mb-3 text-sm text-green-700 
+                    flex items-center justify-center gap-2 rounded-md shadow-sm border border-green-100"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" 
+               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
+               className="animate-bounce">
+            <path d="m18 15-6-6-6 6"/>
+          </svg>
+          New updates available. Tap to refresh
+        </button>
+      )}
 
       {/* Filters component */}
       <FeedFilters
@@ -49,7 +66,7 @@ export function FeedContent() {
         setViewMode={setViewMode}
       />
 
-      {/* ItemList component with enhanced prop for operation success */}
+      {/* ItemList component without key prop to prevent remounts */}
       <FeedItemList
         posts={posts}
         selectedCategories={selectedCategories}

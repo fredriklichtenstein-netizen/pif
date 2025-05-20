@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,8 @@ export function useFeedState() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [feedKey, setFeedKey] = useState(Date.now());
+  const [hasNewData, setHasNewData] = useState(false);
+  const [pendingUpdates, setPendingUpdates] = useState<any[]>([]);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -39,8 +40,8 @@ export function useFeedState() {
     applyOptimisticUpdates
   } = useOptimisticFeedUpdates();
 
-  // Apply optimistic updates to posts
-  const posts = applyOptimisticUpdates(rawPosts);
+  // Apply optimistic updates to posts - memoized to prevent unnecessary re-renders
+  const posts = useMemo(() => applyOptimisticUpdates(rawPosts), [rawPosts, applyOptimisticUpdates]);
 
   // Setup view mode logic
   const { viewMode, setViewMode, loadPostsBasedOnViewMode } = useFeedViewMode({
@@ -52,7 +53,7 @@ export function useFeedState() {
     refreshPosts
   });
 
-  // Setup refresh logic with reduced frequency
+  // Setup refresh logic with significantly increased delay times
   const { 
     debouncedRefresh, 
     forceCompleteRefresh, 
@@ -64,7 +65,24 @@ export function useFeedState() {
 
   // Track the last refresh time to limit frequency
   const lastRefreshTimeRef = useRef<number>(0);
-  const minRefreshInterval = 5000; // 5 seconds minimum between refreshes
+  const minRefreshInterval = 15000; // Increased from 5 seconds to 15 seconds minimum between refreshes
+
+  // Apply pending updates that were deferred
+  const applyPendingUpdates = useCallback(() => {
+    if (pendingUpdates.length > 0) {
+      console.log("Applying pending updates", pendingUpdates.length);
+      refreshPosts();
+      setPendingUpdates([]);
+      setHasNewData(false);
+      lastRefreshTimeRef.current = Date.now();
+    }
+  }, [pendingUpdates, refreshPosts]);
+
+  // Store updates instead of immediately applying them
+  const storePendingUpdate = useCallback((update: any) => {
+    setPendingUpdates(prev => [...prev, update]);
+    setHasNewData(true);
+  }, []);
 
   // Define clearFilters function
   const clearFilters = useCallback(() => {
@@ -83,7 +101,7 @@ export function useFeedState() {
       const now = Date.now();
       if (now - lastRefreshTimeRef.current > minRefreshInterval) {
         lastRefreshTimeRef.current = now;
-        debouncedRefresh(800); // Use a longer delay
+        debouncedRefresh(2500); // Significantly increased delay (from 800ms to 2500ms)
       } else {
         console.log("Skipping refresh, too soon since last refresh");
       }
@@ -98,7 +116,7 @@ export function useFeedState() {
         lastRefreshTimeRef.current = Date.now();
         console.log('Initial feed load complete');
       });
-    }, 800); // Increased from 500ms
+    }, 1500); // Increased to 1.5 seconds
     
     return () => {
       clearTimeout(initialLoadTimer);
@@ -106,23 +124,19 @@ export function useFeedState() {
     };
   }, [refreshPosts, cleanupRefreshTimers]);
 
-  // If there's a timestamp parameter, it's coming from a refresh - force refresh data
-  // But do this less frequently
+  // If there's a timestamp parameter, we mark that new data is available instead of auto-refreshing
   useEffect(() => {
     if (timeParam && !isInitialLoad) {
-      const now = Date.now();
       const timeParamValue = parseInt(timeParam, 10);
+      const now = Date.now();
       
-      // Only refresh if the timestamp is recent and we haven't refreshed too recently
-      if (now - timeParamValue < 60000 && now - lastRefreshTimeRef.current > minRefreshInterval) {
-        console.log("Time parameter detected, forcing refresh");
-        lastRefreshTimeRef.current = now;
-        forceCompleteRefresh(setFeedKey);
-      } else {
-        console.log("Skipping time-based refresh, too soon since last refresh");
+      // Only mark as new data if the timestamp is recent (within last 5 minutes)
+      if (now - timeParamValue < 5 * 60 * 1000) {
+        console.log("Time parameter detected, notifying of new data");
+        setHasNewData(true);
       }
     }
-  }, [timeParam, isInitialLoad, forceCompleteRefresh]);
+  }, [timeParam, isInitialLoad]);
 
   // Enhanced handler for successful item operations (delete, archive, restore)
   const handleItemOperationSuccess = useCallback((itemId?: string | number, operationType?: OperationType) => {
@@ -145,13 +159,13 @@ export function useFeedState() {
       });
     }
     
-    // Still do a background refresh after a longer delay for data consistency
+    // Only do a background refresh after a much longer delay for data consistency
     const now = Date.now();
     if (now - lastRefreshTimeRef.current > minRefreshInterval) {
       lastRefreshTimeRef.current = now;
-      debouncedRefresh(2500); // Even longer delay after operations
+      debouncedRefresh(5000); // Even longer delay after operations (5 seconds)
     }
-  }, [debouncedRefresh, recordOperation, toast]);
+  }, [debouncedRefresh, recordOperation, toast, minRefreshInterval]);
 
   return {
     selectedCategories,
@@ -161,12 +175,14 @@ export function useFeedState() {
     viewMode,
     setViewMode,
     isInitialLoad,
-    feedKey,
     posts,
     isLoading,
     error,
     refreshPosts,
     clearFilters,
-    handleItemOperationSuccess
+    handleItemOperationSuccess,
+    hasNewData,
+    applyPendingUpdates,
+    storePendingUpdate
   };
 }
