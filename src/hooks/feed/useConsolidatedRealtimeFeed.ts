@@ -38,10 +38,10 @@ export function useConsolidatedRealtimeFeed({
           description: item.description,
           images: item.images,
           location: item.location,
-          coordinates: item.coordinates, // Accept coordinates as-is
+          coordinates: item.coordinates, // Accept coordinates as-is without type casting
           category: item.category,
           condition: item.condition,
-          measurements: item.measurements,
+          measurements: item.measurements, // Accept measurements as-is without type casting
           user_id: item.user_id,
           status: item.status,
           archived_at: item.archived_at,

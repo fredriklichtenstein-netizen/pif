@@ -10,7 +10,7 @@ export interface FeedItem {
   coordinates?: any;
   category?: string;
   condition?: string;
-  measurements?: Record<string, string>;
+  measurements?: Record<string, any>; // Changed from Record<string, string> to Record<string, any>
   user_id?: string;
   user_name?: string;
   user_avatar?: string;
