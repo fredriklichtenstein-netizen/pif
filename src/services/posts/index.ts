@@ -4,45 +4,36 @@ import type { CreatePostInput, Post } from "@/types/post";
 import { getPostsFromCache, cachePostsData } from "./cache";
 import { fetchInteractionCounts, fetchMissingCounts } from "./interactions";
 import { transformPostData } from "./transform";
+import { fetchBasePostsData, addPost as addPostApi, fetchPostsNearLocation } from "./api";
+import type { PostServiceOptions } from "./types";
 
+/**
+ * Add a new post to the database
+ */
 export const addPost = async (postData: CreatePostInput) => {
-  const { data, error } = await supabase
-    .from('items')
-    .insert(postData)
-    .select()
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
+  return addPostApi(postData);
 };
 
-export const getPosts = async (): Promise<Post[]> => {
+/**
+ * Get all posts with interaction counts
+ */
+export const getPosts = async (options: PostServiceOptions = {}): Promise<Post[]> => {
   try {
     console.log("Fetching posts from database...");
     
-    // Try cache first
-    const cachedPosts = getPostsFromCache();
-    if (cachedPosts) {
-      console.log("Using cached posts data");
-      return cachedPosts;
+    // Try cache first if no specific options are provided
+    if (!options.includeArchived && !options.nearbyLocation) {
+      const cachedPosts = getPostsFromCache();
+      if (cachedPosts) {
+        console.log("Using cached posts data");
+        return cachedPosts;
+      }
     }
     
     // Fetch base post data
-    const { data, error } = await supabase
-      .from('items')
-      .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
-      .order('created_at', { ascending: false })
-      .limit(20);
+    const data = await fetchBasePostsData(options);
 
-    if (error) {
-      console.error("Supabase error:", error);
-      throw error;
-    }
-
-    if (!data || data.length === 0) {
+    if (data.length === 0) {
       console.log("No posts found in database");
       return [];
     }
@@ -69,8 +60,10 @@ export const getPosts = async (): Promise<Post[]> => {
       })
     );
 
-    // Cache the transformed data
-    cachePostsData(transformedData);
+    // Cache the transformed data if using default options
+    if (!options.includeArchived && !options.nearbyLocation) {
+      cachePostsData(transformedData);
+    }
 
     return transformedData;
   } catch (error) {
@@ -79,8 +72,14 @@ export const getPosts = async (): Promise<Post[]> => {
   }
 };
 
-export const getPostsNearby = async (lat: number, lng: number, radius = 10) => {
-  // In a real implementation, this would use PostGIS or similar
-  // For now, we'll just return all posts as a placeholder
-  return getPosts();
+/**
+ * Get posts near a specific location
+ */
+export const getPostsNearby = async (lat: number, lng: number, radius = 10): Promise<Post[]> => {
+  return getPosts({
+    nearbyLocation: { lat, lng, radius }
+  });
 };
+
+// Re-export everything from the submodules
+export * from "./types";

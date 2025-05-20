@@ -2,6 +2,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { InteractionCounts } from "./types";
 
+/**
+ * Fetch interaction counts for multiple items from the item_interactions table
+ */
 export const fetchInteractionCounts = async (itemIds: number[]): Promise<Map<number, InteractionCounts>> => {
   const interactionsMap = new Map<number, InteractionCounts>();
   
@@ -24,6 +27,9 @@ export const fetchInteractionCounts = async (itemIds: number[]): Promise<Map<num
   return interactionsMap;
 };
 
+/**
+ * Fetch missing interaction counts for items not found in the item_interactions table
+ */
 export const fetchMissingCounts = async (itemIds: number[]): Promise<Map<number, InteractionCounts>> => {
   const countsMap = new Map<number, InteractionCounts>();
   
@@ -46,7 +52,9 @@ export const fetchMissingCounts = async (itemIds: number[]): Promise<Map<number,
   return countsMap;
 };
 
-// Fixed individual count functions to avoid the type error
+/**
+ * Fetch likes count for a specific item
+ */
 const fetchLikesCount = async (itemId: number): Promise<number> => {
   const { count, error } = await supabase
     .from('likes')
@@ -56,6 +64,9 @@ const fetchLikesCount = async (itemId: number): Promise<number> => {
   return error ? 0 : (count || 0);
 };
 
+/**
+ * Fetch interests count for a specific item
+ */
 const fetchInterestsCount = async (itemId: number): Promise<number> => {
   const { count, error } = await supabase
     .from('interests')
@@ -65,6 +76,9 @@ const fetchInterestsCount = async (itemId: number): Promise<number> => {
   return error ? 0 : (count || 0);
 };
 
+/**
+ * Fetch comments count for a specific item
+ */
 const fetchCommentsCount = async (itemId: number): Promise<number> => {
   const { count, error } = await supabase
     .from('comments')
