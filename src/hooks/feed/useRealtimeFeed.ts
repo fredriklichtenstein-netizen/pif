@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeedContext } from "@/context/feed"; 
@@ -23,13 +24,12 @@ export const useRealtimeFeed = () => {
     const updates = pendingUpdatesRef.current.filter(p => p.eventType === 'UPDATE').map(p => p.new);
     const deletes = pendingUpdatesRef.current.filter(p => p.eventType === 'DELETE').map(p => p.old);
     
-    // We need to get the current items first, then apply changes
-    // Use the current items as the base for our updates
-    const newItems: FeedItem[] = [...items];
+    // Create a new array from the current items - crucial for avoiding type issues
+    const newItemsArray = [...items];
     
     // Create a map for faster lookups
     const itemsMap = new Map<string, FeedItem>();
-    newItems.forEach(item => itemsMap.set(item.id.toString(), item));
+    newItemsArray.forEach(item => itemsMap.set(item.id.toString(), item));
     
     // Apply deletions
     deletes.forEach(item => {
@@ -62,11 +62,11 @@ export const useRealtimeFeed = () => {
       }
     });
     
-    // Convert map back to array and update state directly
-    const updatedItems: FeedItem[] = Array.from(itemsMap.values());
+    // Convert map back to array
+    const updatedItemsArray: FeedItem[] = Array.from(itemsMap.values());
     
-    // Direct state update with the new array, not a function
-    setItems(updatedItems);
+    // Call setItems with the direct array value, not a function
+    setItems(updatedItemsArray);
     
     // Clear pending updates
     pendingUpdatesRef.current = [];
