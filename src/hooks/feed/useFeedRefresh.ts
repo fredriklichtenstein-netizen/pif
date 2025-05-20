@@ -12,18 +12,29 @@ export const useFeedRefresh = ({
 }: UseFeedRefreshProps) => {
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const forceRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefreshingRef = useRef(false);
 
-  // Debounced refresh function with much longer default delay (increased from 800ms to 3000ms)
-  const debouncedRefresh = useCallback((delay = 3000) => {
+  // Debounced refresh function with much longer default delay
+  const debouncedRefresh = useCallback((delay = 5000) => {
     if (refreshTimeoutRef.current !== null) {
       clearTimeout(refreshTimeoutRef.current);
+    }
+    
+    if (isRefreshingRef.current) {
+      console.log('Refresh already in progress, postponing');
+      delay += 2000; // Add extra delay if already refreshing
     }
     
     console.log(`Scheduling debounced refresh with ${delay}ms delay`);
     refreshTimeoutRef.current = setTimeout(() => {
       console.log('Executing debounced feed refresh');
-      loadPostsBasedOnViewMode(viewMode);
-      refreshTimeoutRef.current = null;
+      isRefreshingRef.current = true;
+      
+      loadPostsBasedOnViewMode(viewMode)
+        .finally(() => {
+          isRefreshingRef.current = false;
+          refreshTimeoutRef.current = null;
+        });
     }, delay);
   }, [viewMode, loadPostsBasedOnViewMode]);
 
@@ -43,11 +54,15 @@ export const useFeedRefresh = ({
     // Update the key to force a component remount only when absolutely necessary
     setFeedKey(Date.now());
     
-    // Force refresh after a significant delay (increased from 800ms to 2500ms)
+    // Force refresh after a significant delay
     forceRefreshTimeoutRef.current = setTimeout(() => {
-      loadPostsBasedOnViewMode(viewMode);
-      forceRefreshTimeoutRef.current = null;
-    }, 2500);
+      isRefreshingRef.current = true;
+      loadPostsBasedOnViewMode(viewMode)
+        .finally(() => {
+          isRefreshingRef.current = false;
+          forceRefreshTimeoutRef.current = null;
+        });
+    }, 3000);
   }, [viewMode, loadPostsBasedOnViewMode]);
 
   // Cleanup function
@@ -61,12 +76,14 @@ export const useFeedRefresh = ({
       clearTimeout(forceRefreshTimeoutRef.current);
       forceRefreshTimeoutRef.current = null;
     }
+    isRefreshingRef.current = false;
   }, []);
 
   return {
     debouncedRefresh,
     forceCompleteRefresh,
     cleanupRefreshTimers,
+    isRefreshing: isRefreshingRef.current,
     refreshTimeoutRef,
     forceRefreshTimeoutRef
   };

@@ -9,8 +9,8 @@ import { useFeedState } from "./hooks/useFeedState";
 import { FEED_CATEGORIES } from "./utils/constants";
 
 export function FeedContent() {
-  // Set up realtime feed updates
-  useRealtimeFeed();
+  // Set up realtime feed updates with new hasNewUpdates flag
+  const { hasNewUpdates, applyPendingUpdates } = useRealtimeFeed();
   
   const {
     selectedCategories,
@@ -26,8 +26,10 @@ export function FeedContent() {
     clearFilters,
     handleItemOperationSuccess,
     hasNewData,
-    applyPendingUpdates
   } = useFeedState();
+
+  // Combine realtime updates with manual updates
+  const showUpdateNotification = hasNewUpdates || hasNewData;
 
   if (isLoading && isInitialLoad) {
     return <FeedLoadingState />;
@@ -39,7 +41,7 @@ export function FeedContent() {
       <FeedHeader />
 
       {/* Notification for new content */}
-      {hasNewData && (
+      {showUpdateNotification && (
         <button
           onClick={applyPendingUpdates}
           className="w-full bg-green-50 py-2 mt-2 mb-3 text-sm text-green-700 
@@ -66,7 +68,7 @@ export function FeedContent() {
         setViewMode={setViewMode}
       />
 
-      {/* ItemList component without key prop to prevent remounts */}
+      {/* ItemList component with memoization */}
       <FeedItemList
         posts={posts}
         selectedCategories={selectedCategories}

@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeedContext } from "@/context/feed"; 
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ export const useRealtimeFeed = () => {
   const lastUpdateTimeRef = useRef(Date.now());
   const pendingUpdatesRef = useRef<any[]>([]);
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [hasNewUpdates, setHasNewUpdates] = useState(false);
   
   // Process batched updates after a delay
   const processPendingUpdates = useCallback(() => {
@@ -24,12 +25,12 @@ export const useRealtimeFeed = () => {
     const updates = pendingUpdatesRef.current.filter(p => p.eventType === 'UPDATE').map(p => p.new);
     const deletes = pendingUpdatesRef.current.filter(p => p.eventType === 'DELETE').map(p => p.old);
     
-    // Create a new array from the current items - crucial for avoiding type issues
-    const newItemsArray = [...items];
+    // Create a new array from the current items
+    const currentItems = [...items];
     
     // Create a map for faster lookups
     const itemsMap = new Map<string, FeedItem>();
-    newItemsArray.forEach(item => itemsMap.set(item.id.toString(), item));
+    currentItems.forEach(item => itemsMap.set(item.id.toString(), item));
     
     // Apply deletions
     deletes.forEach(item => {
@@ -63,13 +64,14 @@ export const useRealtimeFeed = () => {
     });
     
     // Convert map back to array
-    const updatedItemsArray: FeedItem[] = Array.from(itemsMap.values());
+    const updatedItemsArray = Array.from(itemsMap.values());
     
-    // Call setItems with the direct array value, not a function
+    // Update the state with the new array
     setItems(updatedItemsArray);
     
     // Clear pending updates
     pendingUpdatesRef.current = [];
+    setHasNewUpdates(false);
     
     // Show notification only if significant changes occurred
     if (inserts.length > 0) {
@@ -85,17 +87,18 @@ export const useRealtimeFeed = () => {
   const queueRealtimeUpdate = useCallback((payload: any) => {
     // Add to pending updates
     pendingUpdatesRef.current.push(payload);
+    setHasNewUpdates(true);
     
     // Clear any existing timer
     if (updateTimerRef.current) {
       clearTimeout(updateTimerRef.current);
     }
     
-    // Schedule processing after a delay (batch updates over 5 seconds)
+    // Schedule processing after a longer delay (batch updates over 10 seconds)
     updateTimerRef.current = setTimeout(() => {
       processPendingUpdates();
       updateTimerRef.current = null;
-    }, 5000);
+    }, 10000); // Increased from 5s to 10s to reduce frequency of updates
   }, [processPendingUpdates]);
 
   // Cleanup function for Supabase channel
@@ -136,12 +139,12 @@ export const useRealtimeFeed = () => {
           console.log('Realtime feed update received:', payload.eventType);
           
           const now = Date.now();
-          // Much longer minimum time between updates (from 2s to 10s)
-          if (now - lastUpdateTimeRef.current < 10000) {
+          // Much longer minimum time between updates (20s minimum between processing)
+          if (now - lastUpdateTimeRef.current < 20000) {
             console.log('Update received too soon after last update, queueing');
             queueRealtimeUpdate(payload);
           } else {
-            console.log('Processing update immediately');
+            console.log('Processing update after sufficient delay');
             queueRealtimeUpdate(payload);
             lastUpdateTimeRef.current = now;
           }
@@ -165,14 +168,14 @@ export const useRealtimeFeed = () => {
     return cleanupRealtimeSubscription;
   }, [cleanupRealtimeSubscription, toast, queueRealtimeUpdate]);
 
-  // Effect to set up the realtime subscription
+  // Effect to set up the realtime subscription - with better conditional logic
   useEffect(() => {
-    // Only set up if we have items
-    if (items.length > 0) {
+    // Only set up if we have items and no existing subscription
+    if (items.length > 0 && !realtimeChannelRef.current) {
       return setupRealtimeSubscription();
     }
-    return cleanupRealtimeSubscription;
-  }, [items.length, setupRealtimeSubscription, cleanupRealtimeSubscription]);
+    return undefined;
+  }, [items.length, setupRealtimeSubscription]);
 
   // Process any pending updates when component unmounts
   useEffect(() => {
@@ -184,8 +187,17 @@ export const useRealtimeFeed = () => {
     };
   }, [processPendingUpdates, cleanupRealtimeSubscription]);
 
-  // Return the cleanup function for component unmount
+  // Force process updates
+  const applyPendingUpdates = useCallback(() => {
+    if (pendingUpdatesRef.current.length > 0) {
+      processPendingUpdates();
+    }
+  }, [processPendingUpdates]);
+
+  // Return the cleanup function and status
   return {
-    cleanupRealtimeSubscription
+    cleanupRealtimeSubscription,
+    hasNewUpdates,
+    applyPendingUpdates
   };
 };

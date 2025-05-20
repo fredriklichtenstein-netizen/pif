@@ -1,16 +1,34 @@
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useRealtimeUpdates } from "./realtime/useRealtimeUpdates";
 import { useRealtimeStatus } from "./realtime/useRealtimeStatus";
 import { useRealtimeRefresh } from "./realtime/useRealtimeRefresh";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Main hook for managing real-time functionality for an item
+ * with improved performance and reduced re-renders
  */
 export const useItemRealtime = (
   itemId: string,
   refreshData: () => void,
 ) => {
+  // Tracking last refresh time to avoid excessive refreshes
+  const lastRefreshTimeRef = useRef(Date.now());
+  const refreshThreshold = 15000; // 15 seconds between refreshes
+  
+  // Wrap the refresh function to prevent excessive refreshes
+  const throttledRefresh = useCallback(() => {
+    const now = Date.now();
+    if (now - lastRefreshTimeRef.current > refreshThreshold) {
+      console.log(`Refreshing item ${itemId} after sufficient delay`);
+      refreshData();
+      lastRefreshTimeRef.current = now;
+    } else {
+      console.log(`Skipping refresh for item ${itemId} due to throttling`);
+    }
+  }, [itemId, refreshData, refreshThreshold]);
+
   // Enhanced cleanup function to ensure all resources are released
   const forceCleanup = useCallback(() => {
     console.log(`Force cleaning up all realtime resources for item ${itemId}`);
@@ -36,15 +54,15 @@ export const useItemRealtime = (
     }
   }, [itemId]);
   
-  // Set up real-time updates with debounce for better performance
+  // Set up real-time updates with increased debounce for better performance
   const {
     isSubscribed,
     error,
     cleanup,
     retry
-  } = useRealtimeUpdates(itemId, refreshData, {
-    maxAttempts: 3,
-    debounceMs: 500
+  } = useRealtimeUpdates(itemId, throttledRefresh, {
+    maxAttempts: 2,
+    debounceMs: 2000  // Increased debounce time
   });
   
   // Handle subscription status tracking and user notifications
@@ -55,7 +73,7 @@ export const useItemRealtime = (
   // Handle refresh actions with error handling
   const {
     refreshItemData
-  } = useRealtimeRefresh(itemId, refreshData, retry, () => {});
+  } = useRealtimeRefresh(itemId, throttledRefresh, retry, () => {});
   
   // Combined cleanup function
   const combinedCleanup = useCallback(() => {
@@ -71,6 +89,3 @@ export const useItemRealtime = (
     cleanup: combinedCleanup
   };
 };
-
-// Add missing import
-import { supabase } from "@/integrations/supabase/client";
