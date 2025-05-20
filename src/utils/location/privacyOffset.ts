@@ -1,7 +1,7 @@
 
 import { isUrbanArea } from "./urbanDetection";
 import { isWaterLocation } from "./waterDetection";
-import { getCachedCoordinates, cacheCoordinates } from "./coordinateCache";
+import { getCachedCoordinates, cacheCoordinates } from "./persistentCoordinateCache";
 
 /**
  * Adds privacy offset to coordinates based on urban density
@@ -88,7 +88,7 @@ export async function addLocationPrivacy(
     console.log("Original coordinates:", { lng, lat });
     console.log("Privacy-adjusted coordinates:", { lng: adjustedLng, lat: adjustedLat });
     
-    // Cache the result
+    // Cache the result using our enhanced persistent cache
     const result: [number, number] = [adjustedLng, adjustedLat];
     cacheCoordinates(lng, lat, result);
     

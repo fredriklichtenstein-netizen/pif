@@ -1,29 +1,41 @@
 
-import { useState, useEffect } from "react";
-import { MapContainer } from "@/components/map/MapContainer";
+import { useEffect } from "react";
+import { EnhancedMapContainer } from "@/components/map/EnhancedMapContainer";
 import { getPosts } from "@/services/posts";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { useMapbox } from "@/hooks/useMapbox";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useOptimizedMapboxToken } from "@/hooks/map/useOptimizedMapboxToken";
 import { MainNav } from "@/components/MainNav";
+import { useMapLoadingState, MapLoadingPhase } from "@/hooks/map/useMapLoadingState";
 
 export default function Map() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = searchParams.get("location");
-  const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
+  const { mapToken, error: tokenError, retryFetchToken } = useOptimizedMapboxToken();
   const { toast } = useToast();
+  const { setPhase, setError } = useMapLoadingState();
 
-  // Fixed useQuery implementation with a proper queryFn that ignores the context parameter
-  const { data: posts = [], isLoading: isPostsLoading, error: postsError, refetch: refetchPosts } = useQuery({
+  // Optimized useQuery implementation with more cache control
+  const { 
+    data: posts = [], 
+    error: postsError, 
+    refetch: refetchPosts 
+  } = useQuery({
     queryKey: ['map-posts'],
     queryFn: async () => {
-      return getPosts();
+      setPhase(MapLoadingPhase.POSTS_LOADING);
+      try {
+        return await getPosts();
+      } catch (error) {
+        setError(error as Error);
+        throw error;
+      }
     },
+    staleTime: 60000, // Data remains fresh for 1 minute
+    cacheTime: 300000, // Cache persists for 5 minutes
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
@@ -52,9 +64,6 @@ export default function Map() {
     }
   };
 
-  const isLoading = isTokenLoading || isPostsLoading;
-  const error = tokenError || postsError;
-
   const navHeight = 68;
 
   return (
@@ -65,13 +74,13 @@ export default function Map() {
           bottom: navHeight - 10,
         }}
       >
-        {error ? (
+        {tokenError || postsError ? (
           <div className="w-full h-full bg-gray-50 flex items-center justify-center">
             <div className="text-center p-6 max-w-md">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
               <p className="text-gray-700 mb-2 text-lg font-medium">Failed to load map</p>
               <p className="text-gray-500 text-sm mb-6">
-                {tokenError ? "Failed to send a request to the Edge Function" : error.message}
+                {tokenError ? "Failed to send a request to the Edge Function" : postsError.message}
               </p>
               <Button 
                 onClick={handleRetry} 
@@ -82,17 +91,8 @@ export default function Map() {
               </Button>
             </div>
           </div>
-        ) : isLoading || !mapToken || !posts ? (
-          <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading map...</p>
-              {isTokenLoading && <p className="text-xs text-gray-400 mt-2">Retrieving map credentials...</p>}
-              {isPostsLoading && <p className="text-xs text-gray-400 mt-2">Loading location data...</p>}
-            </div>
-          </div>
         ) : (
-          <MapContainer 
+          <EnhancedMapContainer 
             mapboxToken={mapToken}
             posts={posts}
             onPostClick={handlePostClick}
@@ -106,3 +106,7 @@ export default function Map() {
     </div>
   );
 }
+
+// Import needed components
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
