@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { FeedItemTransition } from "./FeedItemTransition";
 import { Leaf } from "lucide-react";
 import { parseCoordinatesFromDB } from "@/types/post";
+import { getSustainabilityImpact } from "./utils/sustainabilityCalculator";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 interface FeedItemProps {
@@ -29,19 +30,9 @@ export function FeedItem({ post, onOperationSuccess }: FeedItemProps) {
     }
   }
 
-  // Calculate approximate sustainability impact (placeholder logic)
-  const getSustainabilityImpact = () => {
-    // This is a placeholder for actual impact calculation
-    // In a real app, this could be based on item category, condition, etc.
-    return {
-      co2Saved: Math.floor(Math.random() * 50) + 10, // Random value between 10-60kg CO2
-      resourcesSaved: post.category === 'Furniture' ? 'wood' : 
-                     post.category === 'Clothing' ? 'water' :
-                     post.category === 'Electronics' ? 'minerals' : 'resources'
-    };
-  };
-
-  const impact = getSustainabilityImpact();
+  // Calculate sustainability impact with memoization to prevent recalculation on re-renders
+  const impact = useMemo(() => getSustainabilityImpact(post), [post.id, post.category, post.condition]);
+  
   const sustainabilityBadge = (
     <div className="absolute top-2 right-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded-full flex items-center shadow-md">
       <Leaf className="h-3 w-3 mr-1" />

@@ -13,8 +13,8 @@ export const useFeedRefresh = ({
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const forceRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounced refresh function to prevent multiple rapid refreshes
-  const debouncedRefresh = useCallback((delay = 300) => {
+  // Debounced refresh function with longer default delay (increased from 300ms to 800ms)
+  const debouncedRefresh = useCallback((delay = 800) => {
     if (refreshTimeoutRef.current !== null) {
       clearTimeout(refreshTimeoutRef.current);
     }
@@ -42,11 +42,11 @@ export const useFeedRefresh = ({
     // Update the key to force a component remount
     setFeedKey(Date.now());
     
-    // Force refresh after a delay
+    // Force refresh after a delay (increased from 300ms to 800ms)
     forceRefreshTimeoutRef.current = setTimeout(() => {
       loadPostsBasedOnViewMode(viewMode);
       forceRefreshTimeoutRef.current = null;
-    }, 300);
+    }, 800);
   }, [viewMode, loadPostsBasedOnViewMode]);
 
   // Cleanup function

@@ -52,7 +52,7 @@ export function useFeedState() {
     refreshPosts
   });
 
-  // Setup refresh logic
+  // Setup refresh logic with reduced frequency
   const { 
     debouncedRefresh, 
     forceCompleteRefresh, 
@@ -61,6 +61,10 @@ export function useFeedState() {
     loadPostsBasedOnViewMode,
     viewMode
   });
+
+  // Track the last refresh time to limit frequency
+  const lastRefreshTimeRef = useRef<number>(0);
+  const minRefreshInterval = 5000; // 5 seconds minimum between refreshes
 
   // Define clearFilters function
   const clearFilters = useCallback(() => {
@@ -73,9 +77,16 @@ export function useFeedState() {
   }, [selectedCategories, filterByCategories]);
 
   // Load posts whenever view mode changes or user auth state changes
+  // Added throttling to prevent too frequent refreshes
   useEffect(() => {
     if (!isInitialLoad) {  // Skip immediate refresh on first render
-      debouncedRefresh(300);
+      const now = Date.now();
+      if (now - lastRefreshTimeRef.current > minRefreshInterval) {
+        lastRefreshTimeRef.current = now;
+        debouncedRefresh(800); // Use a longer delay
+      } else {
+        console.log("Skipping refresh, too soon since last refresh");
+      }
     }
   }, [viewMode, user, debouncedRefresh, isInitialLoad]);
 
@@ -84,9 +95,10 @@ export function useFeedState() {
     const initialLoadTimer = setTimeout(() => {
       refreshPosts().then(() => {
         setIsInitialLoad(false);  // Mark initial load as complete after first refresh
+        lastRefreshTimeRef.current = Date.now();
         console.log('Initial feed load complete');
       });
-    }, 500);
+    }, 800); // Increased from 500ms
     
     return () => {
       clearTimeout(initialLoadTimer);
@@ -95,10 +107,20 @@ export function useFeedState() {
   }, [refreshPosts, cleanupRefreshTimers]);
 
   // If there's a timestamp parameter, it's coming from a refresh - force refresh data
+  // But do this less frequently
   useEffect(() => {
     if (timeParam && !isInitialLoad) {
-      console.log("Time parameter detected, forcing refresh");
-      forceCompleteRefresh(setFeedKey);
+      const now = Date.now();
+      const timeParamValue = parseInt(timeParam, 10);
+      
+      // Only refresh if the timestamp is recent and we haven't refreshed too recently
+      if (now - timeParamValue < 60000 && now - lastRefreshTimeRef.current > minRefreshInterval) {
+        console.log("Time parameter detected, forcing refresh");
+        lastRefreshTimeRef.current = now;
+        forceCompleteRefresh(setFeedKey);
+      } else {
+        console.log("Skipping time-based refresh, too soon since last refresh");
+      }
     }
   }, [timeParam, isInitialLoad, forceCompleteRefresh]);
 
@@ -123,8 +145,12 @@ export function useFeedState() {
       });
     }
     
-    // Still do a background refresh after a delay for data consistency
-    debouncedRefresh(1500);
+    // Still do a background refresh after a longer delay for data consistency
+    const now = Date.now();
+    if (now - lastRefreshTimeRef.current > minRefreshInterval) {
+      lastRefreshTimeRef.current = now;
+      debouncedRefresh(2500); // Even longer delay after operations
+    }
   }, [debouncedRefresh, recordOperation, toast]);
 
   return {

@@ -73,11 +73,15 @@ export function FeedItemList({
   const displayItems = items.length > 0 ? items : posts;
 
   if (displayItems.length === 0) {
+    // Get the single category if only one is selected
+    const singleCategory = selectedCategories.length === 1 ? selectedCategories[0] : undefined;
+    
     return (
       <FeedEmptyState 
         message={getEcoEmptyStateMessage(viewMode, selectedCategories.length > 0)} 
         showClearFiltersButton={selectedCategories.length > 0}
         onClearFilters={clearFilters}
+        category={singleCategory}
       />
     );
   }
