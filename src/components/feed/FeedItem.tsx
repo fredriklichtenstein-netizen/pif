@@ -49,7 +49,7 @@ export function FeedItem({ post, onOperationSuccess }: FeedItemProps) {
           }}
           archived_at={post.archived_at}
           archived_reason={post.archived_reason}
-          onOperationSuccess={(operationType) => onOperationSuccess(post.id, operationType)}
+          onOperationSuccess={() => onOperationSuccess(post.id)}
         />
       </FeedItemTransition>
     </NetworkStatusWrapper>
