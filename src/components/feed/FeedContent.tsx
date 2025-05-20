@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
@@ -11,6 +10,8 @@ import { useSearchParams } from "react-router-dom";
 import { useOptimisticFeedUpdates } from "@/hooks/feed/useOptimisticFeedUpdates";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 import { useRealtimeFeed } from "@/hooks/feed/useRealtimeFeed";
+import { FeedHeader } from "@/components/feed/FeedHeader";
+import { FeedLoadingState } from "@/components/feed/FeedLoadingState";
 
 export const CATEGORIES = [
   "Furniture",
