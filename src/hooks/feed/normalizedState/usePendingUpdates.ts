@@ -1,7 +1,7 @@
 
-import { useCallback, useRef, useState } from "react";
-import { FeedItem } from "@/context/feed/types";
+import { useRef, useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { FeedItem } from "@/context/feed/types";
 import { NormalizedFeedState } from "./types";
 
 export interface PendingUpdatesHook {

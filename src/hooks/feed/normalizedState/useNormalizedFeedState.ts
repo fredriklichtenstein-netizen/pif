@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { FeedItem } from "@/context/feed/types";
 import { useNormalizedState } from "./useNormalizedState";
 import { usePendingUpdates } from "./usePendingUpdates";
