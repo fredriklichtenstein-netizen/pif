@@ -32,16 +32,33 @@ export function useConsolidatedRealtimeFeed({
       if (item) {
         const user = extractUserFromProfile(item.profiles, item.user_id);
         
+        // Process measurements to ensure it's a valid object
+        let processedMeasurements: Record<string, any> = {};
+        
+        if (item.measurements) {
+          if (typeof item.measurements === 'string') {
+            try {
+              // If it's a JSON string, parse it
+              processedMeasurements = JSON.parse(item.measurements);
+            } catch (e) {
+              console.error("Failed to parse measurements string:", e);
+            }
+          } else if (typeof item.measurements === 'object') {
+            // If it's already an object, use it directly
+            processedMeasurements = item.measurements as Record<string, any>;
+          }
+        }
+        
         const transformedItem: FeedItem = {
           id: item.id,
           title: item.title,
           description: item.description,
           images: item.images,
           location: item.location,
-          coordinates: item.coordinates, // Accept coordinates as-is without type casting
+          coordinates: item.coordinates, 
           category: item.category,
           condition: item.condition,
-          measurements: item.measurements, // Accept measurements as-is without type casting
+          measurements: processedMeasurements,
           user_id: item.user_id,
           status: item.status,
           archived_at: item.archived_at,
