@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { FeedItemTransition } from "./FeedItemTransition";
@@ -13,35 +13,42 @@ interface FeedItemProps {
   onOperationSuccess: (itemId: string | number, operationType?: OperationType) => void;
 }
 
-export function FeedItem({ post, onOperationSuccess }: FeedItemProps) {
+// Use memo to prevent unnecessary re-renders
+export const FeedItem = memo(function FeedItem({ post, onOperationSuccess }: FeedItemProps) {
   // Skip posts that have been optimistically deleted
   if (post.__deleted) return null;
   
-  let coordinates;
-  if (post.coordinates) {
-    try {
-      const coords =
-        typeof post.coordinates === "string"
+  // Use memoized coordinates parsing to prevent recalculation
+  const coordinates = useMemo(() => {
+    if (post.coordinates) {
+      try {
+        return typeof post.coordinates === "string"
           ? parseCoordinatesFromDB(post.coordinates)
           : post.coordinates;
-      coordinates = coords;
-    } catch (e) {
-      console.error("Failed to parse coordinates:", e, post.coordinates);
+      } catch (e) {
+        console.error("Failed to parse coordinates:", e, post.coordinates);
+        return undefined;
+      }
     }
-  }
+    return undefined;
+  }, [post.coordinates]);
 
   // Calculate sustainability impact with memoization to prevent recalculation on re-renders
-  const impact = useMemo(() => getSustainabilityImpact(post), [post.id, post.category, post.condition]);
+  const impact = useMemo(
+    () => getSustainabilityImpact(post),
+    [post.id, post.category, post.condition]
+  );
   
-  const sustainabilityBadge = (
+  // Memo-ize the sustainability badge
+  const sustainabilityBadge = useMemo(() => (
     <div className="absolute top-2 right-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded-full flex items-center shadow-md">
       <Leaf className="h-3 w-3 mr-1" />
       <span>{`${impact.co2Saved}kg CO₂ saved`}</span>
     </div>
-  );
+  ), [impact.co2Saved]);
   
   return (
-    <NetworkStatusWrapper key={post.id}>
+    <NetworkStatusWrapper>
       <FeedItemTransition transitionState={post.__transitionState}>
         <div className="relative">
           {sustainabilityBadge}
@@ -69,4 +76,4 @@ export function FeedItem({ post, onOperationSuccess }: FeedItemProps) {
       </FeedItemTransition>
     </NetworkStatusWrapper>
   );
-}
+});

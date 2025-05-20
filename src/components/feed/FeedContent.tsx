@@ -1,35 +1,122 @@
 
-import { useRealtimeFeed } from "@/hooks/feed/useRealtimeFeed";
+import { useState, useEffect, useCallback } from "react";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { FeedFilters } from "@/components/feed/FeedFilters";
-import { FeedItemList } from "@/components/feed/FeedItemList";
 import { FeedHeader } from "@/components/feed/FeedHeader";
 import { FeedLoadingState } from "@/components/feed/FeedLoadingState";
-import { useFeedState } from "./hooks/useFeedState";
+import { VirtualizedFeedList } from "./VirtualizedFeedList";
 import { FEED_CATEGORIES } from "./utils/constants";
+import { useNormalizedFeedState } from "@/hooks/feed/useNormalizedFeedState";
+import { useConsolidatedRealtimeFeed } from "@/hooks/feed/useConsolidatedRealtimeFeed";
+import { useFeedPosts } from "@/hooks/feed/useFeedPosts";
+import { useFeedViewMode } from "@/hooks/feed/useFeedViewMode";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 export function FeedContent() {
-  // Set up realtime feed updates with new hasNewUpdates flag
-  const { hasNewUpdates, applyPendingUpdates } = useRealtimeFeed();
+  // Set up feed state with normalized data structure
+  const feedState = useNormalizedFeedState();
+  const { 
+    items, 
+    setItems, 
+    queueRealtimeUpdate, 
+    queueRealtimeDelete,
+    hasNewUpdates,
+    applyPendingUpdates,
+    cleanupTimers
+  } = feedState;
   
-  const {
-    selectedCategories,
-    setSelectedCategories,
-    showFilters,
-    setShowFilters,
-    viewMode,
-    setViewMode,
-    isInitialLoad,
-    posts,
+  // Set up filter states
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [errorState, setErrorState] = useState({ hasError: false, errorMessage: '' });
+  
+  // Auth state
+  const { user } = useGlobalAuth();
+  
+  // Set up consolidated realtime subscription
+  const { isSubscribed } = useConsolidatedRealtimeFeed({
+    queueRealtimeUpdate,
+    queueRealtimeDelete
+  });
+  
+  // Set up posts loading with the feed API
+  const { 
+    posts: rawPosts, 
     isLoading,
-    refreshPosts,
-    clearFilters,
-    handleItemOperationSuccess,
-    hasNewData,
-  } = useFeedState();
-
-  // Combine realtime updates with manual updates
-  const showUpdateNotification = hasNewUpdates || hasNewData;
+    error,
+    refreshPosts, 
+    filterByCategories,
+    loadSavedPosts,
+    loadMyPosts,
+    loadArchivedPosts,
+    loadInterestedPosts,
+  } = useFeedPosts();
+  
+  // Setup view mode logic
+  const { viewMode, setViewMode, loadPostsBasedOnViewMode } = useFeedViewMode({
+    user,
+    loadSavedPosts,
+    loadMyPosts,
+    loadArchivedPosts,
+    loadInterestedPosts,
+    refreshPosts
+  });
+  
+  // Update feed state when raw posts change
+  useEffect(() => {
+    if (rawPosts && rawPosts.length > 0) {
+      setItems(rawPosts);
+    }
+  }, [rawPosts, setItems]);
+  
+  // Handle error state updates
+  useEffect(() => {
+    if (error) {
+      setErrorState({ 
+        hasError: true, 
+        errorMessage: error instanceof Error ? error.message : 'Failed to load posts' 
+      });
+    } else {
+      setErrorState({ hasError: false, errorMessage: '' });
+    }
+  }, [error]);
+  
+  // Filter items when categories change
+  useEffect(() => {
+    filterByCategories(selectedCategories);
+  }, [selectedCategories, filterByCategories]);
+  
+  // Initial load
+  useEffect(() => {
+    const initialLoadTimer = setTimeout(() => {
+      refreshPosts().then(() => {
+        setIsInitialLoad(false);
+      });
+    }, 500);
+    
+    return () => {
+      clearTimeout(initialLoadTimer);
+      cleanupTimers();
+    };
+  }, [refreshPosts, cleanupTimers]);
+  
+  // Define clearFilters function
+  const clearFilters = useCallback(() => {
+    setSelectedCategories([]);
+  }, []);
+  
+  // Enhanced handler for item operations
+  const handleItemOperationSuccess = useCallback((itemId?: string | number, operationType?: OperationType) => {
+    console.log("Operation success:", operationType, itemId);
+    // When an item is updated, schedule a delayed fetch for latest data
+    if (itemId && operationType) {
+      setTimeout(() => {
+        refreshPosts();
+      }, 1000);
+    }
+  }, [refreshPosts]);
 
   if (isLoading && isInitialLoad) {
     return <FeedLoadingState />;
@@ -41,7 +128,7 @@ export function FeedContent() {
       <FeedHeader />
 
       {/* Notification for new content */}
-      {showUpdateNotification && (
+      {hasNewUpdates && (
         <button
           onClick={applyPendingUpdates}
           className="w-full bg-green-50 py-2 mt-2 mb-3 text-sm text-green-700 
@@ -68,14 +155,16 @@ export function FeedContent() {
         setViewMode={setViewMode}
       />
 
-      {/* ItemList component with memoization */}
-      <FeedItemList
-        posts={posts}
+      {/* Virtualized list component */}
+      <VirtualizedFeedList
+        posts={items}
         selectedCategories={selectedCategories}
         clearFilters={clearFilters}
         viewMode={viewMode}
-        onItemOperationSuccess={handleItemOperationSuccess}
         isLoading={isLoading && !isInitialLoad}
+        errorState={errorState}
+        onRetry={refreshPosts}
+        onItemOperationSuccess={handleItemOperationSuccess}
       />
     </div>
   );

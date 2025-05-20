@@ -1,11 +1,19 @@
 
+import { Suspense, lazy } from "react";
 import { MainNav } from "@/components/MainNav";
 import { FeedProvider } from "@/context/feed";
-import { FeedContent } from "@/components/feed/FeedContent";
 import { Leaf, Recycle, Earth } from "lucide-react";
 import { useFeedContext } from "@/context/feed";
 import { useEffect, useState } from "react";
 import { calculateTotalCommunityImpact } from "@/components/feed/utils/sustainabilityCalculator";
+import { FeedLoadingState } from "@/components/feed/FeedLoadingState";
+
+// Lazy load the feed content for better performance
+const LazyFeedContent = lazy(() => 
+  import("@/components/feed/FeedContent").then(module => ({ 
+    default: module.FeedContent 
+  }))
+);
 
 // Component for displaying community impact stats
 function CommunityImpactStats() {
@@ -46,7 +54,9 @@ export default function Feed() {
   return (
     <FeedProvider>
       <CommunityImpactStats />
-      <FeedContent />
+      <Suspense fallback={<FeedLoadingState />}>
+        <LazyFeedContent />
+      </Suspense>
       <MainNav />
     </FeedProvider>
   );
