@@ -3,6 +3,7 @@ import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeedContext } from "@/context/feed"; 
 import { useToast } from "@/hooks/use-toast";
+import { FeedItem } from "@/context/feed/types";
 
 export const useRealtimeFeed = () => {
   const { items, syncFromServer, setItems } = useFeedContext();
@@ -24,7 +25,7 @@ export const useRealtimeFeed = () => {
     const deletes = pendingUpdatesRef.current.filter(p => p.eventType === 'DELETE').map(p => p.old);
     
     // Apply all updates at once to minimize re-renders
-    setItems(prevItems => {
+    setItems((prevItems: FeedItem[]) => {
       // Create a map for faster lookups
       const prevItemsMap = new Map(prevItems.map(item => [item.id.toString(), item]));
       
@@ -34,7 +35,7 @@ export const useRealtimeFeed = () => {
       });
       
       // Apply updates
-      updates.forEach(update => {
+      updates.forEach((update: any) => {
         const existingItem = prevItemsMap.get(update.id.toString());
         if (existingItem) {
           // Preserve UI state
@@ -44,18 +45,18 @@ export const useRealtimeFeed = () => {
             __modified: existingItem.__modified,
             user_name: existingItem.user_name, // Preserve user data
             user_avatar: existingItem.user_avatar
-          });
+          } as FeedItem);
         }
       });
       
       // Add insertions
-      inserts.forEach(insert => {
+      inserts.forEach((insert: any) => {
         // Only add if it doesn't already exist
         if (!prevItemsMap.has(insert.id.toString())) {
           prevItemsMap.set(insert.id.toString(), {
             ...insert,
             __transitionState: 'normal'
-          });
+          } as FeedItem);
         }
       });
       
