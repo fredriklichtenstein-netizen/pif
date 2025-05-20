@@ -2,7 +2,7 @@
 import { Suspense, lazy } from "react";
 import { MainNav } from "@/components/MainNav";
 import { FeedProvider } from "@/context/feed";
-import { Leaf, Recycle, Earth } from "lucide-react";
+import { Leaf, Recycle } from "lucide-react";
 import { useFeedContext } from "@/context/feed";
 import { useEffect, useState } from "react";
 import { calculateTotalCommunityImpact } from "@/components/feed/utils/sustainabilityCalculator";
@@ -20,8 +20,7 @@ function CommunityImpactStats() {
   const { items } = useFeedContext();
   const [impact, setImpact] = useState({
     totalCO2Saved: 0,
-    itemCount: 0,
-    localPercentage: 91
+    itemCount: 0
   });
 
   // Calculate impact when items change (not on every render)
@@ -40,10 +39,6 @@ function CommunityImpactStats() {
       <div className="flex items-center gap-1">
         <Recycle className="h-3 w-3" />
         <span>Saved {impact.totalCO2Saved.toLocaleString()} kg CO₂</span>
-      </div>
-      <div className="flex items-center gap-1">
-        <Earth className="h-3 w-3" />
-        <span>Local exchanges: {impact.localPercentage}%</span>
       </div>
     </div>
   );

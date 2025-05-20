@@ -150,8 +150,6 @@ export function calculateTotalCommunityImpact(posts: any[]) {
   
   return {
     totalCO2Saved,
-    itemCount,
-    // Calculate percentage of local exchanges (placeholder logic)
-    localPercentage: 91 // This would ideally be calculated from actual distance data
+    itemCount
   };
 }
