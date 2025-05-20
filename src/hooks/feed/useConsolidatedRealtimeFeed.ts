@@ -38,7 +38,7 @@ export function useConsolidatedRealtimeFeed({
           description: item.description,
           images: item.images,
           location: item.location,
-          coordinates: item.coordinates,
+          coordinates: item.coordinates, // Accept coordinates as-is
           category: item.category,
           condition: item.condition,
           measurements: item.measurements,
