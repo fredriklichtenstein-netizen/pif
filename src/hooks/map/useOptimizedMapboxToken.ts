@@ -62,7 +62,7 @@ export const useOptimizedMapboxToken = () => {
     queryKey: ['mapbox-token'],
     queryFn: fetchMapboxToken,
     staleTime: ONE_HOUR_MS, // Consider the data fresh for 1 hour
-    cacheTime: ONE_DAY_MS,  // Keep it in cache for 1 day
+    gcTime: ONE_DAY_MS,  // Fixed: renamed cacheTime to gcTime (garbage collection time)
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
   });

@@ -86,7 +86,7 @@ export const useEnhancedMapInitialization = (mapboxToken: string) => {
       } else {
         // If still not loaded, set another check
         setTimeout(() => {
-          if (newMap && !newMap.isRemoved()) {
+          if (newMap && !map.current?._removed) { // Fixed: using _removed instead of isRemoved
             setStyleLoaded(newMap.isStyleLoaded());
           }
         }, 500);

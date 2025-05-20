@@ -82,7 +82,7 @@ export const useMarkerProcessor = ({ posts, map, onPostClick }: MarkerProcessorO
                 processedCoordinates.current.set(post.id, privateCoords);
                 
                 // Only create the marker if the map still exists
-                if (map && !map.isRemoved()) {
+                if (map && !map._removed) { // Fixed: using _removed instead of isRemoved
                   const markerElement = createMarkerElement({
                     onClick: () => onPostClick(post.id),
                     onMouseEnter: () => {
@@ -135,7 +135,7 @@ export const useMarkerProcessor = ({ posts, map, onPostClick }: MarkerProcessorO
     
     // When all markers are processed, fit the map to show them
     Promise.all(markerPromises).then(() => {
-      if (!map || map.isRemoved() || markers.current.length === 0) {
+      if (!map || map._removed || markers.current.length === 0) { // Fixed: using _removed instead of isRemoved
         setPhase(MapLoadingPhase.COMPLETE);
         return;
       }

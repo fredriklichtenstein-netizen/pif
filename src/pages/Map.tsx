@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { EnhancedMapContainer } from "@/components/map/EnhancedMapContainer";
 import { getPosts } from "@/services/posts";
@@ -35,7 +34,7 @@ export default function Map() {
       }
     },
     staleTime: 60000, // Data remains fresh for 1 minute
-    cacheTime: 300000, // Cache persists for 5 minutes
+    gcTime: 300000, // Fixed: renamed cacheTime to gcTime (Cache persists for 5 minutes)
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
