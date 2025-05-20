@@ -6,7 +6,7 @@ import { useFeedItemOperations } from "@/hooks/feed/useFeedItemOperations";
 import { FeedItem } from "./FeedItem";
 import { FeedErrorState } from "./FeedErrorState";
 import { FeedEmptyState } from "./FeedEmptyState";
-import { getEmptyStateMessage } from "./utils/feedMessages";
+import { getEcoEmptyStateMessage } from "./utils/sustainabilityMessages";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 interface FeedItemListProps {
@@ -75,7 +75,7 @@ export function FeedItemList({
   if (displayItems.length === 0) {
     return (
       <FeedEmptyState 
-        message={getEmptyStateMessage(viewMode, selectedCategories.length > 0)} 
+        message={getEcoEmptyStateMessage(viewMode, selectedCategories.length > 0)} 
         showClearFiltersButton={selectedCategories.length > 0}
         onClearFilters={clearFilters}
       />
