@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { MainNav } from "@/components/MainNav";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { isNetworkError } from "@/utils/connectionRetryUtils";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { toast } = useToast();
@@ -71,17 +72,53 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="container max-w-md mx-auto px-4 pb-20">
-      <div className="pt-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/10">
+      <div className="container max-w-md mx-auto px-4 pb-20">
         {/* Network status banner */}
         <NetworkStatus onRetry={handleRetry} />
         
-        {/* Welcome message */}
-        <div className="text-center my-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome to PIF</h1>
-          <p className="text-muted-foreground">
-            Pay It Forward - A sustainable sharing community
-          </p>
+        {/* Hero Section with Logo */}
+        <div className="relative pt-8 pb-6">
+          {/* Background Image */}
+          <div className="absolute inset-0 rounded-3xl overflow-hidden opacity-20">
+            <img 
+              src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&auto=format&fit=crop&q=80"
+              alt="Nature background"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          
+          {/* Content over background */}
+          <div className="relative text-center py-12">
+            {/* PiF Logo */}
+            <div className="flex justify-center mb-6">
+              <div className="pif-logo-container">
+                <div className="pif-icon">
+                  <div className="pif-icon-symbol">P</div>
+                  <div className="pif-icon-dot"></div>
+                  <div className="pif-icon-arc pif-icon-arc-top"></div>
+                  <div className="pif-icon-arc pif-icon-arc-bottom"></div>
+                </div>
+                <span className="pif-text text-3xl">iF</span>
+              </div>
+            </div>
+            
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Pay It Forward
+            </h1>
+            <p className="text-lg text-muted-foreground mb-6 max-w-sm mx-auto leading-relaxed">
+              Building a sustainable future through community sharing and circular economy
+            </p>
+            
+            {/* Inspiring Quote */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-primary/20">
+              <blockquote className="text-primary font-medium italic text-center">
+                "The Earth does not belong to us; we belong to the Earth. 
+                All things are connected like the blood that unites one family."
+              </blockquote>
+              <p className="text-sm text-muted-foreground mt-2 text-center">— Chief Seattle</p>
+            </div>
+          </div>
         </div>
         
         {/* Loading state */}
@@ -91,48 +128,106 @@ export default function Home() {
           </div>
         )}
         
-        {/* Content area */}
-        <div className="space-y-6">
-          {/* App features */}
-          <div className="grid grid-cols-2 gap-4">
-            <div 
-              className="bg-primary/10 p-6 rounded-lg text-center cursor-pointer hover:bg-primary/20 transition-colors"
-              onClick={() => navigate("/map")}
-            >
-              <h2 className="text-primary font-medium mb-2">Discover Items</h2>
-              <p className="text-sm">Find items near you on the map</p>
+        {/* Action Cards */}
+        <div className="space-y-4 mb-8">
+          <Button
+            onClick={() => navigate("/feed")}
+            className="w-full h-20 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white rounded-2xl flex items-center justify-between p-6 shadow-lg transform transition-all hover:scale-105"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 rounded-full p-3">
+                <Heart className="h-6 w-6" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-lg">Discover & Share</h3>
+                <p className="text-white/80 text-sm">Browse community items</p>
+              </div>
             </div>
-            
-            <div 
-              className="bg-primary/10 p-6 rounded-lg text-center cursor-pointer hover:bg-primary/20 transition-colors"
-              onClick={() => navigate("/post")}
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              onClick={() => navigate("/map")}
+              variant="outline"
+              className="h-24 border-2 border-primary/30 hover:border-primary rounded-2xl flex flex-col items-center justify-center space-y-2 bg-white/50 backdrop-blur-sm hover:bg-primary/5 transition-all"
             >
-              <h2 className="text-primary font-medium mb-2">Share Items</h2>
-              <p className="text-sm">Post your items to share with others</p>
+              <MapPin className="h-6 w-6 text-primary" />
+              <div className="text-center">
+                <p className="font-medium text-primary">Explore Map</p>
+                <p className="text-xs text-muted-foreground">Find nearby items</p>
+              </div>
+            </Button>
+            
+            <Button
+              onClick={() => navigate("/post")}
+              variant="outline"
+              className="h-24 border-2 border-secondary/30 hover:border-secondary rounded-2xl flex flex-col items-center justify-center space-y-2 bg-white/50 backdrop-blur-sm hover:bg-secondary/5 transition-all"
+            >
+              <Recycle className="h-6 w-6 text-secondary" />
+              <div className="text-center">
+                <p className="font-medium text-secondary">Share Items</p>
+                <p className="text-xs text-muted-foreground">Give items new life</p>
+              </div>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Impact Stats */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-primary/10">
+          <h3 className="text-center text-primary font-semibold mb-4 flex items-center justify-center space-x-2">
+            <Users className="h-5 w-5" />
+            <span>Community Impact</span>
+          </h3>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-primary">🌱</div>
+              <p className="text-xs text-muted-foreground mt-1">Sustainable Living</p>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-secondary">♻️</div>
+              <p className="text-xs text-muted-foreground mt-1">Circular Economy</p>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-primary">🤝</div>
+              <p className="text-xs text-muted-foreground mt-1">Community Building</p>
             </div>
           </div>
-          
-          {/* Value proposition */}
-          <div className="bg-background border rounded-lg p-6 mt-8">
-            <h2 className="text-xl font-semibold mb-4">Why PIF?</h2>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <span className="text-primary mr-2">✓</span>
-                <span>Reduce waste through sharing economy</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">✓</span>
-                <span>Connect with your local community</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">✓</span>
-                <span>Foster sustainable living practices</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-primary mr-2">✓</span>
-                <span>Give items a second life</span>
-              </li>
-            </ul>
+        </div>
+        
+        {/* Mission Statement */}
+        <div className="text-center space-y-4">
+          <h2 className="text-xl font-semibold text-primary">Our Mission</h2>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-4 rounded-xl border border-primary/20">
+              <div className="flex items-start space-x-3">
+                <span className="text-primary text-lg">🌍</span>
+                <div className="text-left">
+                  <h3 className="font-medium text-primary">Reduce Waste</h3>
+                  <p className="text-sm text-muted-foreground">Give items a second life through community sharing</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-secondary/10 to-primary/10 p-4 rounded-xl border border-secondary/20">
+              <div className="flex items-start space-x-3">
+                <span className="text-secondary text-lg">🏘️</span>
+                <div className="text-left">
+                  <h3 className="font-medium text-secondary">Build Community</h3>
+                  <p className="text-sm text-muted-foreground">Connect neighbors and foster local relationships</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-4 rounded-xl border border-primary/20">
+              <div className="flex items-start space-x-3">
+                <span className="text-primary text-lg">💚</span>
+                <div className="text-left">
+                  <h3 className="font-medium text-primary">Sustainable Future</h3>
+                  <p className="text-sm text-muted-foreground">Create a more sustainable world, one share at a time</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

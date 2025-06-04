@@ -575,20 +575,6 @@ export type Database = {
           likes_count: number | null
           share_count: number | null
         }
-        Insert: {
-          comments_count?: never
-          interests_count?: never
-          item_id?: number | null
-          likes_count?: never
-          share_count?: never
-        }
-        Update: {
-          comments_count?: never
-          interests_count?: never
-          item_id?: number | null
-          likes_count?: never
-          share_count?: never
-        }
         Relationships: []
       }
     }
