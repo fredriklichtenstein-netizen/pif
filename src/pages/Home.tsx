@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
@@ -90,17 +89,13 @@ export default function Home() {
           
           {/* Content over background */}
           <div className="relative text-center py-12">
-            {/* PiF Logo */}
+            {/* PiF Logo - Using uploaded image */}
             <div className="flex justify-center mb-6">
-              <div className="pif-logo-container">
-                <div className="pif-icon">
-                  <div className="pif-icon-symbol">P</div>
-                  <div className="pif-icon-dot"></div>
-                  <div className="pif-icon-arc pif-icon-arc-top"></div>
-                  <div className="pif-icon-arc pif-icon-arc-bottom"></div>
-                </div>
-                <span className="pif-text text-3xl">iF</span>
-              </div>
+              <img 
+                src="/lovable-uploads/54270f9e-6b91-4f58-8714-a98239f2d520.png"
+                alt="Pay it Forward Logo"
+                className="w-20 h-20 object-contain"
+              />
             </div>
             
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -113,10 +108,10 @@ export default function Home() {
             {/* Inspiring Quote */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-primary/20">
               <blockquote className="text-primary font-medium italic text-center">
-                "The Earth does not belong to us; we belong to the Earth. 
-                All things are connected like the blood that unites one family."
+                "We do not inherit the Earth from our ancestors; 
+                we borrow it from our children."
               </blockquote>
-              <p className="text-sm text-muted-foreground mt-2 text-center">— Chief Seattle</p>
+              <p className="text-sm text-muted-foreground mt-2 text-center">— Ancient Proverb</p>
             </div>
           </div>
         </div>
