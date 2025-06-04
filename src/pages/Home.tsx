@@ -77,7 +77,7 @@ export default function Home() {
         <NetworkStatus onRetry={handleRetry} />
         
         {/* Hero Section with Logo */}
-        <div className="relative pt-8 pb-6">
+        <div className="relative pt-8 pb-8">
           {/* Background Image */}
           <div className="absolute inset-0 rounded-3xl overflow-hidden opacity-20">
             <img 
@@ -88,20 +88,17 @@ export default function Home() {
           </div>
           
           {/* Content over background */}
-          <div className="relative text-center py-12">
-            {/* PiF Logo - Using uploaded image */}
-            <div className="flex justify-center mb-6">
+          <div className="relative text-center py-8">
+            {/* PiF Logo - Using new uploaded image */}
+            <div className="flex justify-center mb-8">
               <img 
-                src="/lovable-uploads/54270f9e-6b91-4f58-8714-a98239f2d520.png"
+                src="/lovable-uploads/d87837b9-dae7-47d1-b339-e613eb5e4ea7.png"
                 alt="Pay it Forward Logo"
-                className="w-20 h-20 object-contain"
+                className="w-32 h-32 object-contain"
               />
             </div>
             
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Pay It Forward
-            </h1>
-            <p className="text-lg text-muted-foreground mb-6 max-w-sm mx-auto leading-relaxed">
+            <p className="text-lg text-muted-foreground mb-8 max-w-sm mx-auto leading-relaxed">
               Building a sustainable future through community sharing and circular economy
             </p>
             
