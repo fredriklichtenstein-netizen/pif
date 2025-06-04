@@ -226,7 +226,7 @@ export function FeedItemList({
                 }}
                 archived_at={post.archived_at}
                 archived_reason={post.archived_reason}
-                onOperationSuccess={(operationType) => handleItemSuccess(post.id, operationType)}
+                onOperationSuccess={handleItemSuccess}
               />
             </div>
           </NetworkStatusWrapper>
