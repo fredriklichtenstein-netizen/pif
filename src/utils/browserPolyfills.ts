@@ -1,10 +1,11 @@
 
-// Browser-compatible polyfills for Node.js globals
-// This fixes the "global is not defined" error
+// Browser polyfills for compatibility
+console.log('Loading browser polyfills...');
 
-if (typeof window !== 'undefined') {
-  // @ts-ignore
-  window.global = window;
+// Ensure global objects exist
+if (typeof global === 'undefined') {
+  (window as any).global = window;
 }
 
-export {};
+// Add any other necessary polyfills
+console.log('Browser polyfills loaded successfully');

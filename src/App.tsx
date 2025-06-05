@@ -9,7 +9,12 @@ import { GlobalDeleteDialog } from "./components/item/delete/GlobalDeleteDialog"
 
 function App() {
   useEffect(() => {
-    initializeAuth();
+    // Initialize auth with error handling
+    try {
+      initializeAuth();
+    } catch (error) {
+      console.error('Failed to initialize auth:', error);
+    }
     
     // Log application initialization for debugging
     console.log('App initialized with routes:', {
