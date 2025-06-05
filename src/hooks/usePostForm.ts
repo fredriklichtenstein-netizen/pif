@@ -82,6 +82,10 @@ export function usePostForm(initialData?: any) {
       // For now, use images as is - in a real implementation you'd upload them
       const uploadedImages = formData.images;
       
+      // Format coordinates properly for PostgreSQL point type
+      // PostgreSQL expects POINT(longitude latitude) format
+      const coordinatesString = `POINT(${formData.coordinates.lng} ${formData.coordinates.lat})`;
+      
       const insertData = {
         title: formData.title,
         description: formData.description,
@@ -89,11 +93,13 @@ export function usePostForm(initialData?: any) {
         condition: formData.condition,
         item_type: formData.item_type,
         pif_status: 'active',
-        coordinates: `POINT(${formData.coordinates.lng} ${formData.coordinates.lat})`,
+        coordinates: coordinatesString,
         location: formData.location,
         images: uploadedImages,
         measurements: formData.measurements,
       };
+
+      console.log("Submitting data with coordinates:", coordinatesString);
 
       let result;
       if (initialData?.id) {
@@ -107,7 +113,10 @@ export function usePostForm(initialData?: any) {
           .insert([insertData]);
       }
 
-      if (result.error) throw result.error;
+      if (result.error) {
+        console.error("Supabase error:", result.error);
+        throw result.error;
+      }
 
       toast({
         title: "Framgång!",
