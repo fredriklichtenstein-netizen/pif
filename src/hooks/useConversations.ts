@@ -94,20 +94,23 @@ export function useConversations() {
               item: conv.item ? {
                 id: String(conv.item.id),
                 title: conv.item.title,
-                description: "",  // Default value
-                category: "",     // Default value
-                condition: "",    // Default value
-                measurements: {}, // Default value
+                description: "",
+                category: "",
+                condition: "",
+                measurements: {},
                 images: conv.item.images || [],
-                location: "",     // Default value
+                location: "",
                 coordinates: null,
                 postedBy: {
-                  id: "",         // Will be populated if needed
-                  name: "User",   // Default value
-                  avatar: ""      // Default value
+                  id: "",
+                  name: "User",
+                  avatar: ""
                 },
-                createdAt: "",    // Default value
-                status: ""        // Default value
+                createdAt: "",
+                status: "",
+                likesCount: 0,
+                interestsCount: 0,
+                commentsCount: 0
               } : undefined
             };
           });

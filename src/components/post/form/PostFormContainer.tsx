@@ -69,6 +69,13 @@ export function PostFormContainer({
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImageUpload(file);
+    }
+  };
+
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
       <PostFormHeader 
@@ -99,7 +106,7 @@ export function PostFormContainer({
           <CurrentStepComponent
             formData={formData}
             isAnalyzing={isAnalyzing}
-            onImageUpload={onImageUpload}
+            onImageUpload={handleImageUpload}
             onImagesChange={onImagesChange}
             onMeasurementChange={onMeasurementChange}
             setFormData={setFormData}

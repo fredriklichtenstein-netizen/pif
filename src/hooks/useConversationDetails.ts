@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -70,11 +71,14 @@ export function useConversationDetails(conversationId: string | null) {
               coordinates: data.item.coordinates ? String(data.item.coordinates) : null,
               postedBy: {
                 id: data.item.user_id,
-                name: "User", // This will be populated from profile info
-                avatar: ""    // Default empty avatar
+                name: "User",
+                avatar: ""
               },
               createdAt: data.item.created_at,
-              status: data.item.status || ""
+              status: data.item.status || "",
+              likesCount: 0,
+              interestsCount: 0,
+              commentsCount: 0
             } : undefined
           };
           
@@ -110,11 +114,14 @@ export function useConversationDetails(conversationId: string | null) {
               coordinates: data.item.coordinates ? String(data.item.coordinates) : null,
               postedBy: {
                 id: data.item.user_id,
-                name: "User", // This will be populated from profile info
-                avatar: ""    // Default empty avatar
+                name: "User",
+                avatar: ""
               },
               createdAt: data.item.created_at,
-              status: data.item.status || ""
+              status: data.item.status || "",
+              likesCount: 0,
+              interestsCount: 0,
+              commentsCount: 0
             };
             
             setItem(transformedItem);

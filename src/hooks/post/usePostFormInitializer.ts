@@ -10,12 +10,7 @@ const DEFAULT_FORM_DATA: CreatePostInput = {
   images: [],
   location: "",
   coordinates: null,
-  dimensions: {
-    width: "",
-    height: "",
-    depth: "",
-  },
-  weight: "",
+  item_type: "offer",
   measurements: {},
 };
 
@@ -24,18 +19,7 @@ export function usePostFormInitializer(initialData?: any): CreatePostInput {
 
   const coordinates = parseCoordinates(initialData.coordinates);
   const measurements = initialData.measurements || {};
-  
-  // Extract dimension values from measurements if they exist
-  const dimensions = {
-    width: measurements.width || "",
-    height: measurements.height || "",
-    depth: measurements.depth || "",
-  };
-  
-  // Extract weight from measurements
-  const weight = measurements.weight || "";
 
-  // Only use fields that exist in the type
   return {
     title: initialData.title || "",
     description: initialData.description || "",
@@ -44,8 +28,7 @@ export function usePostFormInitializer(initialData?: any): CreatePostInput {
     images: initialData.images || [],
     location: initialData.location || "",
     coordinates: coordinates,
-    dimensions: dimensions,
-    weight: weight,
+    item_type: initialData.item_type || "offer",
     measurements: measurements,
   };
 }
