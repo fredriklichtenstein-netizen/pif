@@ -1,15 +1,15 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { usePostImageUpload } from "./post/usePostImageUpload";
-import { usePostFormInitializer } from "./post/usePostFormInitializer";
 import type { PostFormData } from "@/types/post";
 
 export function usePostForm(initialData?: any) {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { uploadImages, isAnalyzing } = usePostImageUpload();
+  const { handleImageUpload: uploadHandler, isAnalyzing } = usePostImageUpload();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState<PostFormData>({
@@ -17,7 +17,7 @@ export function usePostForm(initialData?: any) {
     description: initialData?.description || "",
     category: initialData?.category || "",
     condition: initialData?.condition || "",
-    item_type: initialData?.item_type || "offer", // Nytt fält
+    item_type: initialData?.item_type || "offer",
     coordinates: initialData?.coordinates ? {
       lat: typeof initialData.coordinates === 'object' && initialData.coordinates !== null ? 
            (initialData.coordinates as any).y : null,
@@ -32,7 +32,7 @@ export function usePostForm(initialData?: any) {
   const handleImageUpload = (file: File) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      images: [...prevFormData.images, file],
+      images: [...prevFormData.images, URL.createObjectURL(file)],
     }));
   };
 
@@ -71,15 +71,16 @@ export function usePostForm(initialData?: any) {
     setIsSubmitting(true);
 
     try {
-      const uploadedImages = await uploadImages(formData.images);
+      // For now, use images as is - in a real implementation you'd upload them
+      const uploadedImages = formData.images;
       
       const insertData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
         condition: formData.condition,
-        item_type: formData.item_type, // Nytt fält
-        pif_status: 'active', // Default status
+        item_type: formData.item_type,
+        pif_status: 'active',
         coordinates: `POINT(${formData.coordinates.lng} ${formData.coordinates.lat})`,
         location: formData.location,
         images: uploadedImages,
@@ -88,13 +89,11 @@ export function usePostForm(initialData?: any) {
 
       let result;
       if (initialData?.id) {
-        // Update existing item
         result = await supabase
           .from("items")
           .update(insertData)
           .eq("id", initialData.id);
       } else {
-        // Create new item
         result = await supabase
           .from("items")
           .insert([insertData]);

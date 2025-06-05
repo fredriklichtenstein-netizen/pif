@@ -17,7 +17,7 @@ interface PostFormContainerProps {
   onFormSubmit: (e: React.FormEvent) => void;
   onImageUpload: (file: File) => void;
   onImagesChange: (images: string[]) => void;
-  onMeasurementChange: (measurements: Record<string, string>) => void;
+  onMeasurementChange: (field: string, value: string) => void;
   setFormData: (data: any) => void;
   onAddressSelect: (address: string, coordinates: { lat: number; lng: number }) => void;
   isFormValid: boolean;
@@ -49,10 +49,10 @@ export function PostFormContainer({
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0: return formData.item_type; // Typ måste väljas
-      case 1: return formData.images?.length > 0; // Minst en bild
-      case 2: return formData.title && formData.category && formData.condition && formData.coordinates; // Grundinfo
-      case 3: return formData.description; // Beskrivning
+      case 0: return formData.item_type;
+      case 1: return formData.images?.length > 0;
+      case 2: return formData.title && formData.category && formData.condition && formData.coordinates;
+      case 3: return formData.description;
       default: return true;
     }
   };

@@ -4,8 +4,8 @@ export interface CreatePostInput {
   description: string;
   category: string;
   condition: string;
-  item_type: 'offer' | 'request'; // Nytt: Piffa vs Önska
-  pif_status?: 'active' | 'completed' | 'cancelled'; // Nytt: PIF-status
+  item_type: 'offer' | 'request';
+  pif_status?: 'active' | 'completed' | 'cancelled';
   coordinates: {
     lat: number;
     lng: number;
@@ -20,7 +20,7 @@ export interface PostFormData {
   description: string;
   category: string;
   condition: string;
-  item_type: 'offer' | 'request'; // Nytt
+  item_type: 'offer' | 'request';
   coordinates: {
     lat: number;
     lng: number;
@@ -28,6 +28,35 @@ export interface PostFormData {
   location: string;
   images: string[];
   measurements: Record<string, string>;
+}
+
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+export interface Post {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  condition: string;
+  item_type?: 'offer' | 'request';
+  pif_status?: 'active' | 'completed' | 'cancelled';
+  measurements: Record<string, string>;
+  images: string[];
+  location: string;
+  coordinates: string | null;
+  postedBy: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  createdAt: string;
+  status: string;
+  likesCount: number;
+  interestsCount: number;
+  commentsCount: number;
 }
 
 export interface Rating {
@@ -49,4 +78,36 @@ export interface Report {
   description?: string;
   status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
   created_at: string;
+}
+
+/**
+ * Parse coordinates from PostGIS database format to lat/lng object
+ */
+export function parseCoordinatesFromDB(coordinates: string): { lat: number; lng: number } | null {
+  if (!coordinates) return null;
+  
+  try {
+    // Match both standard PostGIS format "(lng,lat)" and variations like "POINT(lng lat)"
+    const simpleMatches = coordinates.match(/\(([-\d.]+),([-\d.]+)\)/);
+    const pointMatches = coordinates.match(/POINT\(([-\d.]+) ([-\d.]+)\)/i);
+    
+    if (simpleMatches && simpleMatches.length >= 3) {
+      return {
+        lat: parseFloat(simpleMatches[2]),  // lat is the second value
+        lng: parseFloat(simpleMatches[1]),  // lng is the first value
+      };
+    }
+    
+    if (pointMatches && pointMatches.length >= 3) {
+      return {
+        lng: parseFloat(pointMatches[1]),  // lng is the first value
+        lat: parseFloat(pointMatches[2]),  // lat is the second value
+      };
+    }
+    
+    return null;
+  } catch (err) {
+    console.error("Error parsing coordinates:", err, coordinates);
+    return null;
+  }
 }

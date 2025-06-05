@@ -4,7 +4,6 @@ import { PostFormContainer } from "./form/PostFormContainer";
 import { usePostForm } from "@/hooks/usePostForm";
 import { useMapbox } from "@/hooks/useMapbox";
 import { usePostLocation } from "@/hooks/post/usePostLocation";
-import { CreatePostInput } from "@/types/post";
 
 interface PostFormProps {
   initialData?: any;
