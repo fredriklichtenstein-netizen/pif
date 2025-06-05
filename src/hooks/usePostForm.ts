@@ -9,7 +9,6 @@ import type { PostFormData } from "@/types/post";
 export function usePostForm(initialData?: any) {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { handleImageUpload: uploadHandler, isAnalyzing } = usePostImageUpload();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState<PostFormData>({
@@ -27,6 +26,15 @@ export function usePostForm(initialData?: any) {
     location: initialData?.location || "",
     images: initialData?.images || [],
     measurements: initialData?.measurements || {},
+  });
+
+  const { handleImageUpload: uploadHandler, isAnalyzing } = usePostImageUpload({
+    onImagesUploaded: (urls: string[]) => {
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...urls]
+      }));
+    }
   });
 
   const handleImageUpload = (file: File) => {

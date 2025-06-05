@@ -38,14 +38,12 @@ export function PostFormContainer({
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
-    { title: "Typ", component: PostFormSteps },
-    { title: "Bilder", component: PostFormImages },
-    { title: "Detaljer", component: PostFormDetails },
-    { title: "Beskrivning", component: PostFormDescription },
-    { title: "Mått", component: PostFormMeasurements },
+    { title: "Typ", component: "steps" },
+    { title: "Bilder", component: "images" },
+    { title: "Detaljer", component: "details" },
+    { title: "Beskrivning", component: "description" },
+    { title: "Mått", component: "measurements" },
   ];
-
-  const CurrentStepComponent = steps[currentStep].component;
 
   const canProceed = () => {
     switch (currentStep) {
@@ -76,6 +74,52 @@ export function PostFormContainer({
     }
   };
 
+  const renderCurrentStep = () => {
+    switch (steps[currentStep].component) {
+      case "steps":
+        return (
+          <PostFormSteps
+            formData={formData}
+            setFormData={setFormData}
+          />
+        );
+      case "images":
+        return (
+          <PostFormImages
+            images={formData.images || []}
+            isAnalyzing={isAnalyzing}
+            onImageUpload={handleImageUpload}
+            onImagesChange={onImagesChange}
+          />
+        );
+      case "details":
+        return (
+          <PostFormDetails
+            formData={formData}
+            onMeasurementChange={onMeasurementChange}
+            setFormData={setFormData}
+          />
+        );
+      case "description":
+        return (
+          <PostFormDescription
+            description={formData.description || ""}
+            onDescriptionChange={(description) => setFormData({ ...formData, description })}
+          />
+        );
+      case "measurements":
+        return (
+          <PostFormMeasurements
+            category={formData.category || ""}
+            measurements={formData.measurements || {}}
+            onMeasurementChange={onMeasurementChange}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
       <PostFormHeader 
@@ -103,15 +147,7 @@ export function PostFormContainer({
 
       <form onSubmit={onFormSubmit} className="space-y-6">
         <Card className="p-6">
-          <CurrentStepComponent
-            formData={formData}
-            isAnalyzing={isAnalyzing}
-            onImageUpload={handleImageUpload}
-            onImagesChange={onImagesChange}
-            onMeasurementChange={onMeasurementChange}
-            setFormData={setFormData}
-            onAddressSelect={onAddressSelect}
-          />
+          {renderCurrentStep()}
         </Card>
 
         {/* Navigation buttons */}
