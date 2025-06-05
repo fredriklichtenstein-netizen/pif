@@ -98,6 +98,7 @@ export function PostFormContainer({
             formData={formData}
             onMeasurementChange={onMeasurementChange}
             setFormData={setFormData}
+            onAddressSelect={onAddressSelect}
           />
         );
       case "description":
