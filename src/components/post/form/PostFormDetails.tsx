@@ -108,7 +108,6 @@ export function PostFormDetails({
               onAddressSelect(address, coordinates);
             }
           }}
-          placeholder="Ange din plats"
         />
       </div>
     </div>
