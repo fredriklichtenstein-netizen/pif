@@ -1,145 +1,105 @@
 
 import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useToast } from "@/hooks/use-toast";
-import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { Label } from "@/components/ui/label";
+import { AlertTriangle } from "lucide-react";
 
 interface ReportDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  itemId: number | string;
-  onReportSubmit?: () => void;
+  onClose: () => void;
+  onSubmit: (reason: string, description?: string) => void;
+  isSubmitting?: boolean;
+  type: 'item' | 'user';
 }
 
-const REPORT_REASONS = [
-  { id: "inappropriate", label: "Inappropriate content" },
-  { id: "spam", label: "Spam or misleading" },
-  { id: "offensive", label: "Offensive content" },
-  { id: "illegal", label: "Illegal content" },
-  { id: "other", label: "Other" },
-];
-
-export function ReportDialog({ open, onOpenChange, itemId, onReportSubmit }: ReportDialogProps) {
+export function ReportDialog({ 
+  open, 
+  onClose, 
+  onSubmit, 
+  isSubmitting = false,
+  type 
+}: ReportDialogProps) {
   const [reason, setReason] = useState("");
-  const [details, setDetails] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const { user } = useGlobalAuth();
+  const [description, setDescription] = useState("");
 
-  const handleSubmit = async () => {
-    if (!reason) {
-      toast({
-        title: "Error",
-        description: "Please select a reason for reporting",
-        variant: "destructive",
-      });
-      return;
-    }
+  const reasons = {
+    item: [
+      "Otillåtet innehåll",
+      "Spam eller skräp",
+      "Vilseledande information",
+      "Olämpligt för plattformen",
+      "Annat"
+    ],
+    user: [
+      "Olämpligt beteende",
+      "Trakasserier",
+      "Spam",
+      "Bedrägeri",
+      "Annat"
+    ]
+  };
 
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to report items",
-        variant: "destructive",
-      });
-      onOpenChange(false);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Here you would implement the actual reporting logic to your backend
-      // In a production app, this would save to a reports table
-      console.log("Reporting item", {
-        itemId,
-        reason,
-        details,
-        userId: user.id,
-      });
-      
-      // Wait to simulate network request
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      
-      toast({
-        title: "Report submitted",
-        description: "Thank you for your report. We will review it shortly.",
-      });
-      
-      if (onReportSubmit) {
-        onReportSubmit();
-      }
-      
-      onOpenChange(false);
+  const handleSubmit = () => {
+    if (reason) {
+      onSubmit(reason, description.trim() || undefined);
       setReason("");
-      setDetails("");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit report. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      setDescription("");
+      onClose();
     }
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Report Item</AlertDialogTitle>
-          <AlertDialogDescription>
-            Please let us know why you're reporting this item. Our moderators will review your report.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <span>Rapportera {type === 'item' ? 'inlägg' : 'användare'}</span>
+          </DialogTitle>
+        </DialogHeader>
         
-        <div className="py-4">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="reason" className="text-base font-medium">Reason for reporting</Label>
-              <RadioGroup value={reason} onValueChange={setReason} className="mt-2">
-                {REPORT_REASONS.map((reportReason) => (
-                  <div key={reportReason.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={reportReason.id} id={`reason-${reportReason.id}`} />
-                    <Label htmlFor={`reason-${reportReason.id}`}>{reportReason.label}</Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-            
-            <div>
-              <Label htmlFor="details" className="text-base font-medium">Additional details (optional)</Label>
-              <Textarea
-                id="details"
-                placeholder="Please provide any additional information that might help us understand the issue."
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                className="mt-2"
-              />
-            </div>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-sm font-medium">Anledning</Label>
+            <RadioGroup value={reason} onValueChange={setReason} className="mt-2">
+              {reasons[type].map((r) => (
+                <div key={r} className="flex items-center space-x-2">
+                  <RadioGroupItem value={r} id={r} />
+                  <Label htmlFor={r} className="text-sm">{r}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium">Ytterligare information (valfritt)</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Beskriv problemet mer detaljerat..."
+              rows={3}
+              className="mt-1"
+            />
+          </div>
+
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Avbryt
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={!reason || isSubmitting}
+              variant="destructive"
+              className="flex-1"
+            >
+              {isSubmitting ? "Rapporterar..." : "Rapportera"}
+            </Button>
           </div>
         </div>
-        
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Report"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }

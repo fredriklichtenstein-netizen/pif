@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { MainNav } from "@/components/MainNav";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { isNetworkError } from "@/utils/connectionRetryUtils";
-import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin } from "lucide-react";
+import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -71,7 +71,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/10">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-blue-50">
       <div className="container max-w-md mx-auto px-4 pb-20">
         {/* Network status banner */}
         <NetworkStatus onRetry={handleRetry} />
@@ -79,144 +79,136 @@ export default function Home() {
         {/* Hero Section with Logo */}
         <div className="relative pt-8 pb-8">
           {/* Background Image */}
-          <div className="absolute inset-0 rounded-3xl overflow-hidden opacity-20">
+          <div className="absolute inset-0 rounded-3xl overflow-hidden opacity-10">
             <img 
-              src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&auto=format&fit=crop&q=80"
-              alt="Nature background"
+              src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop&q=80"
+              alt="Community sharing"
               className="w-full h-full object-cover"
             />
           </div>
           
           {/* Content over background */}
           <div className="relative text-center py-8">
-            {/* PiF Logo - Using new uploaded image */}
-            <div className="flex justify-center mb-8">
-              <img 
-                src="/lovable-uploads/d87837b9-dae7-47d1-b339-e613eb5e4ea7.png"
-                alt="Pay it Forward Logo"
-                className="w-32 h-32 object-contain"
-              />
+            {/* PiF Logo */}
+            <div className="flex justify-center mb-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-2xl font-bold text-white">PiF</span>
+              </div>
             </div>
             
-            <p className="text-lg text-muted-foreground mb-8 max-w-sm mx-auto leading-relaxed">
-              Building a sustainable future through community sharing and circular economy
+            <h1 className="text-3xl font-bold mb-4 text-gray-800">
+              Pay It Forward
+            </h1>
+            <p className="text-lg text-gray-600 mb-8 max-w-sm mx-auto leading-relaxed">
+              En plats där grannar hjälper grannar. Dela, ge och ta emot med hjärtat i centrum.
             </p>
-            
-            {/* Inspiring Quote */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-primary/20">
-              <blockquote className="text-primary font-medium italic text-center">
-                "We do not inherit the Earth from our ancestors; 
-                we borrow it from our children."
-              </blockquote>
-              <p className="text-sm text-muted-foreground mt-2 text-center">— Ancient Proverb</p>
-            </div>
           </div>
         </div>
         
         {/* Loading state */}
         {loading && (
           <div className="flex justify-center my-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-green-500" />
           </div>
         )}
         
+        {/* Community Stats */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-green-100 shadow-sm">
+          <h3 className="text-center text-green-700 font-semibold mb-4 flex items-center justify-center space-x-2">
+            <Users className="h-5 w-5" />
+            <span>Vår gemenskap växer</span>
+          </h3>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-green-600">🤝</div>
+              <p className="text-xs text-gray-600 mt-1">Delade PiFar</p>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-blue-600">🌱</div>
+              <p className="text-xs text-gray-600 mt-1">Hållbara val</p>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-purple-600">♻️</div>
+              <p className="text-xs text-gray-600 mt-1">Cirkulär ekonomi</p>
+            </div>
+          </div>
+        </div>
+        
         {/* Action Cards */}
         <div className="space-y-4 mb-8">
+          {/* Main CTA - Browse */}
           <Button
             onClick={() => navigate("/feed")}
-            className="w-full h-20 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white rounded-2xl flex items-center justify-between p-6 shadow-lg transform transition-all hover:scale-105"
+            className="w-full h-20 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded-2xl flex items-center justify-between p-6 shadow-lg transform transition-all hover:scale-105"
           >
             <div className="flex items-center space-x-4">
               <div className="bg-white/20 rounded-full p-3">
                 <Heart className="h-6 w-6" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-lg">Discover & Share</h3>
-                <p className="text-white/80 text-sm">Browse community items</p>
+                <h3 className="font-semibold text-lg">Upptäck PiFar</h3>
+                <p className="text-white/80 text-sm">Se vad som delas i ditt område</p>
               </div>
             </div>
             <ArrowRight className="h-5 w-5" />
           </Button>
           
+          {/* Secondary actions */}
           <div className="grid grid-cols-2 gap-4">
             <Button
-              onClick={() => navigate("/map")}
-              variant="outline"
-              className="h-24 border-2 border-primary/30 hover:border-primary rounded-2xl flex flex-col items-center justify-center space-y-2 bg-white/50 backdrop-blur-sm hover:bg-primary/5 transition-all"
+              onClick={() => navigate("/post")}
+              className="h-24 bg-gradient-to-br from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 border-2 border-green-300 rounded-2xl flex flex-col items-center justify-center space-y-2 text-green-700 transition-all"
             >
-              <MapPin className="h-6 w-6 text-primary" />
+              <Gift className="h-6 w-6" />
               <div className="text-center">
-                <p className="font-medium text-primary">Explore Map</p>
-                <p className="text-xs text-muted-foreground">Find nearby items</p>
+                <p className="font-medium">Piffa</p>
+                <p className="text-xs">Ge bort något</p>
               </div>
             </Button>
             
             <Button
-              onClick={() => navigate("/post")}
-              variant="outline"
-              className="h-24 border-2 border-secondary/30 hover:border-secondary rounded-2xl flex flex-col items-center justify-center space-y-2 bg-white/50 backdrop-blur-sm hover:bg-secondary/5 transition-all"
+              onClick={() => navigate("/map")}
+              className="h-24 bg-gradient-to-br from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 border-2 border-blue-300 rounded-2xl flex flex-col items-center justify-center space-y-2 text-blue-700 transition-all"
             >
-              <Recycle className="h-6 w-6 text-secondary" />
+              <MapPin className="h-6 w-6" />
               <div className="text-center">
-                <p className="font-medium text-secondary">Share Items</p>
-                <p className="text-xs text-muted-foreground">Give items new life</p>
+                <p className="font-medium">Utforska</p>
+                <p className="text-xs">Hitta i din närhet</p>
               </div>
             </Button>
-          </div>
-        </div>
-        
-        {/* Impact Stats */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-primary/10">
-          <h3 className="text-center text-primary font-semibold mb-4 flex items-center justify-center space-x-2">
-            <Users className="h-5 w-5" />
-            <span>Community Impact</span>
-          </h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-primary">🌱</div>
-              <p className="text-xs text-muted-foreground mt-1">Sustainable Living</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-secondary">♻️</div>
-              <p className="text-xs text-muted-foreground mt-1">Circular Economy</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-primary">🤝</div>
-              <p className="text-xs text-muted-foreground mt-1">Community Building</p>
-            </div>
           </div>
         </div>
         
         {/* Mission Statement */}
         <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-primary">Our Mission</h2>
+          <h2 className="text-xl font-semibold text-gray-700">Varför PiF?</h2>
           <div className="grid grid-cols-1 gap-4">
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-4 rounded-xl border border-primary/20">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
               <div className="flex items-start space-x-3">
-                <span className="text-primary text-lg">🌍</span>
+                <span className="text-green-600 text-lg">🌍</span>
                 <div className="text-left">
-                  <h3 className="font-medium text-primary">Reduce Waste</h3>
-                  <p className="text-sm text-muted-foreground">Give items a second life through community sharing</p>
+                  <h3 className="font-medium text-green-700">Minska avfall</h3>
+                  <p className="text-sm text-gray-600">Ge saker nytt liv genom delning</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-gradient-to-r from-secondary/10 to-primary/10 p-4 rounded-xl border border-secondary/20">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200">
               <div className="flex items-start space-x-3">
-                <span className="text-secondary text-lg">🏘️</span>
+                <span className="text-blue-600 text-lg">🏘️</span>
                 <div className="text-left">
-                  <h3 className="font-medium text-secondary">Build Community</h3>
-                  <p className="text-sm text-muted-foreground">Connect neighbors and foster local relationships</p>
+                  <h3 className="font-medium text-blue-700">Bygg gemenskap</h3>
+                  <p className="text-sm text-gray-600">Skapa relationer med dina grannar</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-4 rounded-xl border border-primary/20">
+            <div className="bg-gradient-to-r from-purple-50 to-green-50 p-4 rounded-xl border border-purple-200">
               <div className="flex items-start space-x-3">
-                <span className="text-primary text-lg">💚</span>
+                <span className="text-purple-600 text-lg">💚</span>
                 <div className="text-left">
-                  <h3 className="font-medium text-primary">Sustainable Future</h3>
-                  <p className="text-sm text-muted-foreground">Create a more sustainable world, one share at a time</p>
+                  <h3 className="font-medium text-purple-700">Hållbar framtid</h3>
+                  <p className="text-sm text-gray-600">En delning i taget</p>
                 </div>
               </div>
             </div>

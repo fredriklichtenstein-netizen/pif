@@ -1,76 +1,143 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2, X } from "lucide-react";
-import type { CreatePostInput } from "@/types/post";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { PostFormSteps } from "./PostFormSteps";
+import { PostFormHeader } from "./PostFormHeader";
+import { PostFormImages } from "./PostFormImages";
+import { PostFormDetails } from "./PostFormDetails";
+import { PostFormDescription } from "./PostFormDescription";
+import { PostFormMeasurements } from "./PostFormMeasurements";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface PostFormContainerProps {
-  formData: CreatePostInput;
+  formData: any;
   isSubmitting: boolean;
   isAnalyzing: boolean;
+  onFormSubmit: (e: React.FormEvent) => void;
+  onImageUpload: (file: File) => void;
+  onImagesChange: (images: string[]) => void;
+  onMeasurementChange: (measurements: Record<string, string>) => void;
+  setFormData: (data: any) => void;
+  onAddressSelect: (address: string, coordinates: { lat: number; lng: number }) => void;
   isFormValid: boolean;
-  onFormSubmit: (e: React.FormEvent) => Promise<void>;
-  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onImagesChange: (newImages: string[]) => void;
-  onMeasurementChange: (field: string, value: string) => void;
-  setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
-  onAddressSelect: (address: string, coordinates?: { lat: number; lng: number }) => void;
 }
 
 export function PostFormContainer({
   formData,
   isSubmitting,
   isAnalyzing,
-  isFormValid,
   onFormSubmit,
   onImageUpload,
   onImagesChange,
   onMeasurementChange,
   setFormData,
   onAddressSelect,
+  isFormValid,
 }: PostFormContainerProps) {
-  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const steps = [
+    { title: "Typ", component: PostFormSteps },
+    { title: "Bilder", component: PostFormImages },
+    { title: "Detaljer", component: PostFormDetails },
+    { title: "Beskrivning", component: PostFormDescription },
+    { title: "Mått", component: PostFormMeasurements },
+  ];
+
+  const CurrentStepComponent = steps[currentStep].component;
+
+  const canProceed = () => {
+    switch (currentStep) {
+      case 0: return formData.item_type; // Typ måste väljas
+      case 1: return formData.images?.length > 0; // Minst en bild
+      case 2: return formData.title && formData.category && formData.condition && formData.coordinates; // Grundinfo
+      case 3: return formData.description; // Beskrivning
+      default: return true;
+    }
+  };
+
+  const nextStep = () => {
+    if (currentStep < steps.length - 1 && canProceed()) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   return (
-    <div className="container mx-auto px-4 pb-32 pt-4">
-      <div className="flex justify-end items-center mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="text-gray-500"
-          aria-label="Close form"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <form onSubmit={onFormSubmit} className="space-y-8 max-w-2xl mx-auto">
-        <PostFormSteps
-          formData={formData}
-          isAnalyzing={isAnalyzing}
-          onImageUpload={onImageUpload}
-          onImagesChange={onImagesChange}
-          onMeasurementChange={onMeasurementChange}
-          setFormData={setFormData}
-          onAddressSelect={onAddressSelect}
-        />
+    <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
+      <PostFormHeader 
+        title={formData.item_type === 'request' ? 'Önska något' : 'Piffa något'}
+        subtitle={formData.item_type === 'request' ? 'Berätta vad du behöver' : 'Ge bort något du inte behöver'}
+      />
 
-        <Button
-          type="submit"
-          className="w-full mb-24"
-          disabled={isSubmitting || !isFormValid}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Publishing...
-            </>
+      {/* Progress indicator */}
+      <div className="flex items-center justify-center mb-8">
+        {steps.map((step, index) => (
+          <div key={index} className="flex items-center">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              index <= currentStep ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+            }`}>
+              {index + 1}
+            </div>
+            {index < steps.length - 1 && (
+              <div className={`w-12 h-1 mx-2 ${
+                index < currentStep ? 'bg-primary' : 'bg-muted'
+              }`} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      <form onSubmit={onFormSubmit} className="space-y-6">
+        <Card className="p-6">
+          <CurrentStepComponent
+            formData={formData}
+            isAnalyzing={isAnalyzing}
+            onImageUpload={onImageUpload}
+            onImagesChange={onImagesChange}
+            onMeasurementChange={onMeasurementChange}
+            setFormData={setFormData}
+            onAddressSelect={onAddressSelect}
+          />
+        </Card>
+
+        {/* Navigation buttons */}
+        <div className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={prevStep}
+            disabled={currentStep === 0}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Tillbaka
+          </Button>
+
+          {currentStep < steps.length - 1 ? (
+            <Button
+              type="button"
+              onClick={nextStep}
+              disabled={!canProceed()}
+            >
+              Nästa
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
           ) : (
-            "Publish Post"
+            <Button
+              type="submit"
+              disabled={!isFormValid || isSubmitting}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {isSubmitting ? 'Skapar...' : 'Skapa PIF'}
+            </Button>
           )}
-        </Button>
+        </div>
       </form>
     </div>
   );

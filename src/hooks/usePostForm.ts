@@ -1,148 +1,118 @@
-
-// -- REFACTORED: uses new hooks & utils
-
 import { useState } from "react";
-import { CreatePostInput } from "@/types/post";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { usePostFormInitializer } from "@/hooks/post/usePostFormInitializer";
-import { usePostImageUpload } from "@/hooks/post/usePostImageUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { usePostImageUpload } from "./post/usePostImageUpload";
+import { usePostFormInitializer } from "./post/usePostFormInitializer";
+import type { PostFormData } from "@/types/post";
 
-/**
- * Orchestrates post form logic, wired to new focused hooks.
- */
 export function usePostForm(initialData?: any) {
-  const [formData, setFormData] = useState<CreatePostInput>(usePostFormInitializer(initialData));
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useGlobalAuth();
+  const navigate = useNavigate();
+  const { uploadImages, isAnalyzing } = usePostImageUpload();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Image upload logic delegated to dedicated hook
-  const {
-    handleImageUpload,
-    isAnalyzing,
-    uploadProgress,
-  } = usePostImageUpload({
-    onImagesUploaded: (uploadedUrls) => {
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...uploadedUrls],
-      }));
-    }
+  const [formData, setFormData] = useState<PostFormData>({
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    category: initialData?.category || "",
+    condition: initialData?.condition || "",
+    item_type: initialData?.item_type || "offer", // Nytt fält
+    coordinates: initialData?.coordinates ? {
+      lat: typeof initialData.coordinates === 'object' && initialData.coordinates !== null ? 
+           (initialData.coordinates as any).y : null,
+      lng: typeof initialData.coordinates === 'object' && initialData.coordinates !== null ? 
+           (initialData.coordinates as any).x : null 
+    } : null,
+    location: initialData?.location || "",
+    images: initialData?.images || [],
+    measurements: initialData?.measurements || {},
   });
 
-  // For direct image list changes (used with crop/ordering UI)
-  const handleImagesChange = (newImages: string[]) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: newImages,
+  const handleImageUpload = (file: File) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      images: [...prevFormData.images, file],
     }));
   };
 
-  const handleMeasurementChange = (field: string, value: string) => {
-    setFormData((prev) => {
-      // Create a deep copy of measurements to prevent mutation
-      const updatedMeasurements = { ...prev.measurements };
-      
-      // Update the dimensions field in measurements
-      if (field === 'width' || field === 'height' || field === 'depth') {
-        const dimensions = { ...prev.dimensions };
-        dimensions[field] = value;
-        
-        return {
-          ...prev,
-          dimensions: dimensions,
-          measurements: updatedMeasurements
-        };
-      } else {
-        // For other measurements not related to dimensions
-        updatedMeasurements[field] = value;
-        return {
-          ...prev,
-          measurements: updatedMeasurements
-        };
-      }
-    });
+  const handleImagesChange = (images: string[]) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      images: images,
+    }));
+  };
+
+  const handleMeasurementChange = (
+    name: string,
+    value: string,
+  ) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      measurements: {
+        ...prevFormData.measurements,
+        [name]: value,
+      },
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    const isEditing = !!initialData;
+    e.preventDefault();
+    
+    if (!formData.title || !formData.category || !formData.condition || !formData.coordinates || formData.images.length === 0) {
+      toast({
+        title: "Obligatoriska fält saknas",
+        description: "Vänligen fyll i alla obligatoriska fält och lägg till minst en bild.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      e.preventDefault();
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to create a post",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      const { supabase } = await import("@/integrations/supabase/client");
-
-      // format coordinates for DB: (lng,lat)
-      const dbCoordinates = formData.coordinates ?
-        `(${formData.coordinates.lng},${formData.coordinates.lat})` : null;
-        
-      // Prepare the measurements object with dimensions included
-      const measurementsWithDimensions = {
-        ...formData.measurements,
-        // Include dimensions in the measurements object
-        width: formData.dimensions?.width || "",
-        height: formData.dimensions?.height || "",
-        depth: formData.dimensions?.depth || "",
-        // Include weight in the measurements object
-        weight: formData.weight || "",
-      };
-
-      const postData = {
+      const uploadedImages = await uploadImages(formData.images);
+      
+      const insertData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
         condition: formData.condition,
-        images: formData.images,
+        item_type: formData.item_type, // Nytt fält
+        pif_status: 'active', // Default status
+        coordinates: `POINT(${formData.coordinates.lng} ${formData.coordinates.lat})`,
         location: formData.location,
-        coordinates: dbCoordinates,
-        // Store dimensions and weight in the measurements JSONB field
-        measurements: measurementsWithDimensions,
-        user_id: user.id,
+        images: uploadedImages,
+        measurements: formData.measurements,
       };
 
       let result;
-
-      if (isEditing) {
+      if (initialData?.id) {
+        // Update existing item
         result = await supabase
           .from("items")
-          .update(postData)
+          .update(insertData)
           .eq("id", initialData.id);
       } else {
+        // Create new item
         result = await supabase
           .from("items")
-          .insert(postData);
+          .insert([insertData]);
       }
 
-      if (result.error) {
-        throw result.error;
-      }
+      if (result.error) throw result.error;
 
       toast({
-        title: isEditing ? "Post updated" : "Post created",
-        description: isEditing
-          ? "Your PIF has been updated successfully"
-          : "Your PIF has been created successfully",
+        title: "Framgång!",
+        description: initialData?.id ? "Din PIF har uppdaterats." : "Din PIF har skapats.",
       });
 
-      navigate("/profile");
+      navigate("/feed");
     } catch (error: any) {
-      console.error("Error submitting form:", error);
+      console.error("Error submitting post:", error);
       toast({
-        title: "Error",
-        description: error.message || "An error occurred. Please try again.",
+        title: "Fel",
+        description: error.message || "Något gick fel när din PIF skulle sparas.",
         variant: "destructive",
       });
     } finally {
@@ -152,10 +122,9 @@ export function usePostForm(initialData?: any) {
 
   return {
     formData,
-    setFormData,
     isSubmitting,
     isAnalyzing,
-    uploadProgress,
+    setFormData,
     handleImageUpload,
     handleImagesChange,
     handleMeasurementChange,

@@ -306,8 +306,10 @@ export type Database = {
           description: string | null
           id: number
           images: string[] | null
+          item_type: string | null
           location: string | null
           measurements: Json | null
+          pif_status: string | null
           status: string | null
           title: string
           updated_at: string | null
@@ -323,8 +325,10 @@ export type Database = {
           description?: string | null
           id?: never
           images?: string[] | null
+          item_type?: string | null
           location?: string | null
           measurements?: Json | null
+          pif_status?: string | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -340,8 +344,10 @@ export type Database = {
           description?: string | null
           id?: never
           images?: string[] | null
+          item_type?: string | null
           location?: string | null
           measurements?: Json | null
+          pif_status?: string | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -532,6 +538,127 @@ export type Database = {
         }
         Relationships: []
       }
+      ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          item_id: number
+          rated_user_id: string
+          rater_id: string
+          rating: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          item_id: number
+          rated_user_id: string
+          rater_id: string
+          rating: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          item_id?: number
+          rated_user_id?: string
+          rater_id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "ratings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_rated_user_id_fkey"
+            columns: ["rated_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_rater_id_fkey"
+            columns: ["rater_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          reason: string
+          reported_item_id: number | null
+          reported_user_id: string | null
+          reporter_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason: string
+          reported_item_id?: number | null
+          reported_user_id?: string | null
+          reporter_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          reported_item_id?: number | null
+          reported_user_id?: string | null
+          reporter_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reported_item_id_fkey"
+            columns: ["reported_item_id"]
+            isOneToOne: false
+            referencedRelation: "item_interactions"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "reports_reported_item_id_fkey"
+            columns: ["reported_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       swedish_urban_areas: {
         Row: {
           created_at: string
@@ -620,6 +747,10 @@ export type Database = {
         Returns: number
       }
       get_unread_notifications_count: {
+        Args: { user_id_param: string }
+        Returns: number
+      }
+      get_user_average_rating: {
         Args: { user_id_param: string }
         Returns: number
       }
