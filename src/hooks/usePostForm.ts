@@ -120,7 +120,8 @@ export function usePostForm(initialData?: any) {
 
       toast({
         title: "Framgång!",
-        description: initialData?.id ? "Din PIF har uppdaterats." : "Din PIF har skapats.",
+        description: initialData?.id ? "Din PIF har uppdaterats." : 
+                     formData.item_type === 'request' ? "Din önskan har skapats." : "Din PIF har skapats.",
       });
 
       navigate("/feed");

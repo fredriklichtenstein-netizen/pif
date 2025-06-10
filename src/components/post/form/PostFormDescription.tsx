@@ -1,26 +1,45 @@
 
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface PostFormDescriptionProps {
   description: string;
-  onDescriptionChange: (value: string) => void;
+  onDescriptionChange: (description: string) => void;
+  itemType?: 'offer' | 'request';
 }
 
-export function PostFormDescription({
-  description,
+export function PostFormDescription({ 
+  description, 
   onDescriptionChange,
+  itemType = 'offer'
 }: PostFormDescriptionProps) {
+  const isRequest = itemType === 'request';
+  
+  const placeholder = isRequest 
+    ? "Beskriv vad du söker och eventuella specifika krav eller önskemål..."
+    : "Beskriv varan, dess skick och eventuella defekter...";
+    
+  const label = isRequest ? "Beskrivning av vad du söker *" : "Beskrivning *";
+
   return (
-    <div className="space-y-2">
-      <label htmlFor="description" className="text-sm font-medium">
-        Description (optional)
-      </label>
-      <Textarea
-        id="description"
-        value={description}
-        onChange={(e) => onDescriptionChange(e.target.value)}
-        placeholder="Share any additional details about your item that might be helpful for others to know."
-      />
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="description">{label}</Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder={placeholder}
+          className="min-h-[120px]"
+          required
+        />
+      </div>
+      
+      {isRequest && (
+        <div className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
+          <p><strong>Tips:</strong> Var så specifik som möjligt om vad du söker. Detta hjälper andra att förstå om de har något som passar dina behov.</p>
+        </div>
+      )}
     </div>
   );
 }

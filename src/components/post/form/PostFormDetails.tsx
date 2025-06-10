@@ -34,21 +34,33 @@ const CONDITIONS = [
   "Behöver reparation"
 ];
 
+const REQUEST_CONDITIONS = [
+  "Vilket skick som helst",
+  "Föredrar nytt/som nytt",
+  "Bra skick räcker",
+  "Kan vara slitet"
+];
+
 export function PostFormDetails({
   formData,
   setFormData,
   onAddressSelect,
 }: PostFormDetailsProps) {
+  const isRequest = formData.item_type === 'request';
+  const conditions = isRequest ? REQUEST_CONDITIONS : CONDITIONS;
+  
   return (
     <div className="space-y-6">
       {/* Titel */}
       <div className="space-y-2">
-        <Label htmlFor="title">Titel *</Label>
+        <Label htmlFor="title">
+          {isRequest ? "Vad söker du? *" : "Titel *"}
+        </Label>
         <Input
           id="title"
           value={formData.title}
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          placeholder="Vad vill du piffa?"
+          placeholder={isRequest ? "t.ex. 'Barnstol', 'Cykel för vuxen'" : "Vad vill du piffa?"}
           required
         />
       </div>
@@ -75,16 +87,18 @@ export function PostFormDetails({
 
       {/* Skick */}
       <div className="space-y-2">
-        <Label htmlFor="condition">Skick *</Label>
+        <Label htmlFor="condition">
+          {isRequest ? "Önskat skick *" : "Skick *"}
+        </Label>
         <Select 
           value={formData.condition} 
           onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Välj skick" />
+            <SelectValue placeholder={isRequest ? "Välj önskat skick" : "Välj skick"} />
           </SelectTrigger>
           <SelectContent>
-            {CONDITIONS.map((condition) => (
+            {conditions.map((condition) => (
               <SelectItem key={condition} value={condition}>
                 {condition}
               </SelectItem>
@@ -95,7 +109,9 @@ export function PostFormDetails({
 
       {/* Plats */}
       <div className="space-y-2">
-        <Label htmlFor="location">Plats *</Label>
+        <Label htmlFor="location">
+          {isRequest ? "Var söker du? *" : "Plats *"}
+        </Label>
         <AddressInput
           value={formData.location}
           onChange={(address, coordinates) => {
@@ -109,6 +125,11 @@ export function PostFormDetails({
             }
           }}
         />
+        {isRequest && (
+          <p className="text-sm text-muted-foreground">
+            Ange var du helst vill hämta/få varan
+          </p>
+        )}
       </div>
     </div>
   );

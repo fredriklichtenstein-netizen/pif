@@ -37,6 +37,8 @@ export function PostFormContainer({
 }: PostFormContainerProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
+  const isRequest = formData.item_type === 'request';
+
   const steps = [
     { title: "Typ", component: "steps" },
     { title: "Bilder", component: "images" },
@@ -106,6 +108,7 @@ export function PostFormContainer({
           <PostFormDescription
             description={formData.description || ""}
             onDescriptionChange={(description) => setFormData({ ...formData, description })}
+            itemType={formData.item_type}
           />
         );
       case "measurements":
@@ -114,6 +117,7 @@ export function PostFormContainer({
             category={formData.category || ""}
             measurements={formData.measurements || {}}
             onMeasurementChange={onMeasurementChange}
+            itemType={formData.item_type}
           />
         );
       default:
@@ -124,8 +128,8 @@ export function PostFormContainer({
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
       <PostFormHeader 
-        title={formData.item_type === 'request' ? 'Önska något' : 'Piffa något'}
-        subtitle={formData.item_type === 'request' ? 'Berätta vad du behöver' : 'Ge bort något du inte behöver'}
+        title={isRequest ? 'Önska något' : 'Piffa något'}
+        subtitle={isRequest ? 'Berätta vad du behöver' : 'Ge bort något du inte behöver'}
       />
 
       {/* Progress indicator */}
@@ -178,7 +182,7 @@ export function PostFormContainer({
               disabled={!isFormValid || isSubmitting}
               className="bg-primary hover:bg-primary/90"
             >
-              {isSubmitting ? 'Skapar...' : 'Skapa PIF'}
+              {isSubmitting ? 'Skapar...' : isRequest ? 'Skapa önskan' : 'Skapa PIF'}
             </Button>
           )}
         </div>
