@@ -67,6 +67,16 @@ export function usePostForm(initialData?: any) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("Form submission started");
+    console.log("Form data validation:", {
+      title: !!formData.title,
+      category: !!formData.category,
+      condition: !!formData.condition,
+      coordinates: !!formData.coordinates,
+      images: formData.images.length,
+      item_type: formData.item_type
+    });
+    
     if (!formData.title || !formData.category || !formData.condition || !formData.coordinates || formData.images.length === 0) {
       toast({
         title: "Obligatoriska fält saknas",
@@ -79,10 +89,15 @@ export function usePostForm(initialData?: any) {
     setIsSubmitting(true);
 
     try {
-      // For now, use images as is - in a real implementation you'd upload them
-      const uploadedImages = formData.images;
+      console.log("Starting database insertion...");
       
-      console.log("Original coordinates:", formData.coordinates);
+      // Format coordinates as a string in the format PostgreSQL expects
+      let coordinatesForDB = null;
+      if (formData.coordinates && formData.coordinates.lat !== null && formData.coordinates.lng !== null) {
+        // Use a simple format that PostgreSQL can interpret
+        coordinatesForDB = `(${formData.coordinates.lng},${formData.coordinates.lat})`;
+        console.log("Formatted coordinates for DB:", coordinatesForDB);
+      }
       
       const insertData = {
         title: formData.title,
@@ -91,31 +106,42 @@ export function usePostForm(initialData?: any) {
         condition: formData.condition,
         item_type: formData.item_type,
         pif_status: 'active',
-        coordinates: formData.coordinates, // Send as object, let Supabase handle conversion
+        coordinates: coordinatesForDB,
         location: formData.location,
-        images: uploadedImages,
+        images: formData.images,
         measurements: formData.measurements,
       };
 
-      console.log("Submitting data:", insertData);
+      console.log("Insert data prepared:", insertData);
 
       let result;
       if (initialData?.id) {
+        console.log("Updating existing item:", initialData.id);
         result = await supabase
           .from("items")
           .update(insertData)
           .eq("id", initialData.id);
       } else {
+        console.log("Inserting new item...");
         result = await supabase
           .from("items")
           .insert([insertData]);
       }
 
+      console.log("Database operation result:", result);
+
       if (result.error) {
-        console.error("Supabase error:", result.error);
+        console.error("Supabase error details:", {
+          message: result.error.message,
+          details: result.error.details,
+          hint: result.error.hint,
+          code: result.error.code
+        });
         throw result.error;
       }
 
+      console.log("Success! Showing toast and navigating...");
+      
       toast({
         title: "Framgång!",
         description: initialData?.id ? "Din PIF har uppdaterats." : 
@@ -124,13 +150,29 @@ export function usePostForm(initialData?: any) {
 
       navigate("/feed");
     } catch (error: any) {
-      console.error("Error submitting post:", error);
+      console.error("Error in handleSubmit:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        stack: error.stack
+      });
+      
+      let errorMessage = "Något gick fel när din PIF skulle sparas.";
+      
+      if (error.message?.includes('invalid input syntax for type point')) {
+        errorMessage = "Problem med platsdata. Försök välja en annan adress.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Fel",
-        description: error.message || "Något gick fel när din PIF skulle sparas.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
+      console.log("Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };
