@@ -82,9 +82,7 @@ export function usePostForm(initialData?: any) {
       // For now, use images as is - in a real implementation you'd upload them
       const uploadedImages = formData.images;
       
-      // Format coordinates properly for PostgreSQL point type
-      // PostgreSQL expects POINT(longitude latitude) format
-      const coordinatesString = `POINT(${formData.coordinates.lng} ${formData.coordinates.lat})`;
+      console.log("Original coordinates:", formData.coordinates);
       
       const insertData = {
         title: formData.title,
@@ -93,13 +91,13 @@ export function usePostForm(initialData?: any) {
         condition: formData.condition,
         item_type: formData.item_type,
         pif_status: 'active',
-        coordinates: coordinatesString,
+        coordinates: formData.coordinates, // Send as object, let Supabase handle conversion
         location: formData.location,
         images: uploadedImages,
         measurements: formData.measurements,
       };
 
-      console.log("Submitting data with coordinates:", coordinatesString);
+      console.log("Submitting data:", insertData);
 
       let result;
       if (initialData?.id) {
