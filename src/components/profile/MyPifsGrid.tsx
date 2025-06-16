@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/optimized-image";
@@ -24,7 +25,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
       if (error) throw error;
       setItems(data || []);
     } catch (err) {
-      console.error("Error fetching PIFs:", err);
+      console.error("Error fetching piffar:", err);
     } finally {
       setLoading(false);
     }
@@ -46,14 +47,14 @@ export function MyPifsGrid({ userId }: { userId: string }) {
   };
 
   if (loading) {
-    return <div className="py-12 text-center text-gray-400">Loading your PIFs...</div>;
+    return <div className="py-12 text-center text-gray-400">Laddar dina piffar...</div>;
   }
   
   if (items.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
-        <div className="text-lg font-semibold">No PIFs yet</div>
-        <div className="text-sm text-gray-500">You haven't posted any PIFs yet.</div>
+        <div className="text-lg font-semibold">Inga piffar än</div>
+        <div className="text-sm text-gray-500">Du har inte piffat något än.</div>
       </Card>
     );
   }
@@ -75,7 +76,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                 />
                 {item.status === "piffed" && (
                   <div className="absolute top-0 right-0 bg-green-500 text-white px-2 py-1 text-xs">
-                    Piffed
+                    Piffad
                   </div>
                 )}
                 <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">

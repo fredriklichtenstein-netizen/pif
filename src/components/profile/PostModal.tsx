@@ -87,14 +87,14 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           .eq("status", "selected")
           .single();
           
-        const receiverName = selectedInterest?.users?.first_name || "Someone";
+        const receiverName = selectedInterest?.users?.first_name || "Någon";
         
         for (const interest of interests) {
           await supabase.rpc("create_notification", {
             p_user_id: interest.user_id,
             p_type: "pif_status",
-            p_title: "PIF has been given away",
-            p_content: `The PIF "${post.title}" has been given to ${receiverName}.`,
+            p_title: "Piffen har getts bort",
+            p_content: `Piffen "${post.title}" har getts till ${receiverName}.`,
             p_reference_id: post.id.toString(),
             p_reference_type: "item",
             p_action_url: `/feed?post=${post.id}`
@@ -103,8 +103,8 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       }
       
       toast({
-        title: "Success!",
-        description: "This PIF has been marked as piffed.",
+        title: "Klart!",
+        description: "Denna pif har markerats som piffad.",
       });
       
       setPost({ ...post, status: "piffed" });
@@ -116,8 +116,8 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     } catch (error) {
       console.error("Error marking post as piffed:", error);
       toast({
-        title: "Error",
-        description: "Failed to mark this PIF as piffed. Please try again.",
+        title: "Fel",
+        description: "Misslyckades att markera denna pif som piffad. Försök igen.",
         variant: "destructive",
       });
     } finally {
@@ -130,7 +130,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
           {loading ? (
-            <div className="p-8 text-center">Loading post details...</div>
+            <div className="p-8 text-center">Laddar information...</div>
           ) : post ? (
             <ItemCard 
               id={post.id}
@@ -145,7 +145,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               markAsPiffedAction={() => setMarkAsPiffedOpen(true)}
             />
           ) : (
-            <div className="p-8 text-center">Post not found</div>
+            <div className="p-8 text-center">Posten hittades inte</div>
           )}
         </DialogContent>
       </Dialog>
@@ -153,20 +153,20 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       <AlertDialog open={markAsPiffedOpen} onOpenChange={setMarkAsPiffedOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Mark as Piffed</AlertDialogTitle>
+            <AlertDialogTitle>Markera som piffad</AlertDialogTitle>
             <AlertDialogDescription>
-              This will mark the PIF as given away and notify all interested users.
-              This action cannot be undone.
+              Detta markerar piffen som given och meddelar alla intresserade användare.
+              Denna åtgärd kan inte ångras.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdating}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUpdating}>Avbryt</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleMarkAsPiffed} 
               disabled={isUpdating}
               className="bg-green-600 hover:bg-green-700"
             >
-              {isUpdating ? "Processing..." : "Confirm"}
+              {isUpdating ? "Bearbetar..." : "Bekräfta"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

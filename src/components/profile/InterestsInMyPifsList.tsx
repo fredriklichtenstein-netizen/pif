@@ -26,13 +26,13 @@ export function InterestsInMyPifsList({ userId }: { userId: string }) {
   }, [userId]);
 
   if (loading) {
-    return <div className="py-10 text-center text-gray-400">Loading...</div>;
+    return <div className="py-10 text-center text-gray-400">Laddar...</div>;
   }
   if (items.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
-        <div className="text-lg font-semibold">No PIFs yet</div>
-        <div className="text-sm text-gray-500">You haven't posted any PIFs yet.</div>
+        <div className="text-lg font-semibold">Inga piffar än</div>
+        <div className="text-sm text-gray-500">Du har inte piffat något än.</div>
       </Card>
     );
   }
@@ -44,8 +44,8 @@ export function InterestsInMyPifsList({ userId }: { userId: string }) {
           <div className="text-xs text-gray-400 mb-2">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
           <div className="mb-2 text-sm text-gray-500">
             {item.interests?.length
-              ? `${item.interests.length} user(s) have shown interest`
-              : "No interests yet."}
+              ? `${item.interests.length} användare har visat intresse`
+              : "Inget intresse än."}
           </div>
           <div className="flex flex-col gap-2">
             {item.interests?.map((int) =>
@@ -54,13 +54,13 @@ export function InterestsInMyPifsList({ userId }: { userId: string }) {
                   <span className="font-medium text-base">{int.user_id.slice(0, 6)}...</span>
                   <span>
                     {int.status === "pending" && (
-                      <span className="bg-yellow-100 text-yellow-700 px-2 rounded text-xs">Pending</span>
+                      <span className="bg-yellow-100 text-yellow-700 px-2 rounded text-xs">Väntar</span>
                     )}
                     {int.status === "selected" && (
-                      <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Selected</span>
+                      <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Vald</span>
                     )}
                     {int.status === "not_selected" && (
-                      <span className="bg-gray-200 text-gray-500 px-2 rounded text-xs">Not Selected</span>
+                      <span className="bg-gray-200 text-gray-500 px-2 rounded text-xs">Inte vald</span>
                     )}
                   </span>
                   <span className="ml-auto text-xs text-gray-400">{int.created_at && new Date(int.created_at).toLocaleDateString()}</span>

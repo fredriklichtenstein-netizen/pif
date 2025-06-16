@@ -26,7 +26,7 @@ export function usePostFormSubmission(initialData?: any) {
     if (!user) {
       toast({
         title: "Inte inloggad",
-        description: "Du måste vara inloggad för att skapa en PIF eller önskan.",
+        description: "Du måste vara inloggad för att skapa en pif eller önskning.",
         variant: "destructive",
       });
       navigate("/auth");
@@ -100,10 +100,10 @@ export function usePostFormSubmission(initialData?: any) {
       console.log("Success! Showing toast and navigating...");
       
       toast({
-        title: initialData?.id ? "Din PIF har uppdaterats!" : 
-               formData.item_type === 'request' ? "Din önskning har skapats!" : "Din PIF har skapats!",
+        title: initialData?.id ? "Din pif har uppdaterats!" : 
+               formData.item_type === 'request' ? "Din önskning har skapats!" : "Din pif har skapats!",
         description: initialData?.id ? "Dina ändringar har sparats." : 
-                     formData.item_type === 'request' ? "Andra kan nu se vad du söker." : "Andra kan nu se din PIF.",
+                     formData.item_type === 'request' ? "Andra kan nu se vad du söker." : "Andra kan nu se din pif.",
       });
 
       navigate("/feed");
@@ -116,7 +116,7 @@ export function usePostFormSubmission(initialData?: any) {
         stack: error.stack
       });
       
-      let errorMessage = "Något gick fel när din PIF skulle sparas.";
+      let errorMessage = "Något gick fel när din pif skulle sparas.";
       
       if (error.message?.includes('invalid input syntax for type point')) {
         errorMessage = "Problem med platsdata. Försök välja en annan adress.";

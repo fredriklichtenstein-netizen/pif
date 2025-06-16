@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,12 +45,12 @@ export function UserPifsList({
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const handleDelete = async (itemId: number) => {
-    if (!window.confirm("Are you sure you want to delete this PIF?")) return;
+    if (!window.confirm("Är du säker på att du vill ta bort denna pif?")) return;
     setDeletingId(itemId);
     const { supabase } = await import("@/integrations/supabase/client");
     const { error } = await supabase.from("items").delete().eq("id", itemId);
     if (error) {
-      alert("Error deleting PIF.");
+      alert("Fel vid borttagning av pif.");
     } else {
       setItems((prev) => prev.filter((item) => item.id !== itemId));
     }
@@ -57,13 +58,13 @@ export function UserPifsList({
   };
 
   if (loading) {
-    return <div className="py-12 text-center text-gray-400">Loading your PIFs...</div>;
+    return <div className="py-12 text-center text-gray-400">Laddar dina piffar...</div>;
   }
   if (items.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
-        <div className="text-lg font-semibold">No PIFs yet</div>
-        <div className="text-sm text-gray-500">You haven't posted any PIFs yet.</div>
+        <div className="text-lg font-semibold">Inga piffar än</div>
+        <div className="text-sm text-gray-500">Du har inte piffat något än.</div>
       </Card>
     );
   }
@@ -102,7 +103,7 @@ export function UserPifsList({
                       className="flex items-center gap-2"
                     >
                       <Pencil className="h-4 w-4" />
-                      Edit
+                      Redigera
                     </Button>
                     <Button
                       variant="destructive"
@@ -112,7 +113,7 @@ export function UserPifsList({
                       className="flex items-center gap-2"
                     >
                       <Trash2 className="h-4 w-4" />
-                      {deletingId === item.id ? "Deleting..." : "Delete"}
+                      {deletingId === item.id ? "Tar bort..." : "Ta bort"}
                     </Button>
                   </div>
                 </div>

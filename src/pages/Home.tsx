@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
@@ -24,16 +25,16 @@ export default function Home() {
       
       if (isOnline) {
         toast({
-          title: "Connection restored",
-          description: "Welcome to PIF! You're now connected.",
+          title: "Anslutning återställd",
+          description: "Välkommen till PIF! Du är nu ansluten.",
           duration: 3000,
         });
       } else {
         setHasNetworkError(true);
         toast({
           variant: "destructive",
-          title: "Connection issues",
-          description: "Please check your internet and try again.",
+          title: "Anslutningsproblem",
+          description: "Kontrollera din internetanslutning och försök igen.",
           duration: 5000,
         });
       }
@@ -45,8 +46,8 @@ export default function Home() {
       if (isNetworkError(error)) {
         toast({
           variant: "destructive",
-          title: "Network connectivity issue",
-          description: "Cannot connect to servers. Please check your connection.",
+          title: "Nätverksanslutningsproblem",
+          description: "Kan inte ansluta till servrar. Kontrollera din anslutning.",
         });
       }
     } finally {
@@ -121,7 +122,7 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-green-600">🤝</div>
-              <p className="text-xs text-gray-600 mt-1">Delade PiFar</p>
+              <p className="text-xs text-gray-600 mt-1">Delade piffar</p>
             </div>
             <div>
               <div className="text-2xl font-bold text-blue-600">🌱</div>
@@ -146,7 +147,7 @@ export default function Home() {
                 <Heart className="h-6 w-6" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-lg">Upptäck PiFar</h3>
+                <h3 className="font-semibold text-lg">Upptäck piffar</h3>
                 <p className="text-white/80 text-sm">Se vad som delas i ditt område</p>
               </div>
             </div>
@@ -181,7 +182,7 @@ export default function Home() {
         
         {/* Mission Statement */}
         <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-700">Varför PiF?</h2>
+          <h2 className="text-xl font-semibold text-gray-700">Varför PIF?</h2>
           <div className="grid grid-cols-1 gap-4">
             <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
               <div className="flex items-start space-x-3">
@@ -208,7 +209,7 @@ export default function Home() {
                 <span className="text-purple-600 text-lg">💚</span>
                 <div className="text-left">
                   <h3 className="font-medium text-purple-700">Hållbar framtid</h3>
-                  <p className="text-sm text-gray-600">En delning i taget</p>
+                  <p className="text-sm text-gray-600">En pif i taget</p>
                 </div>
               </div>
             </div>

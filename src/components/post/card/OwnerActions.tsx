@@ -22,7 +22,7 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
         className="flex items-center gap-2"
       >
         <Pencil className="h-4 w-4" />
-        Edit
+        Redigera
       </Button>
       <Button
         variant="destructive"
@@ -32,7 +32,7 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
         className="flex items-center gap-2"
       >
         <Trash2 className="h-4 w-4" />
-        {isDeleting ? "Deleting..." : "Delete"}
+        {isDeleting ? "Tar bort..." : "Ta bort"}
       </Button>
       {markAsPiffedAction && (
         <Button
@@ -42,7 +42,7 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
           className="flex items-center gap-2 ml-auto text-green-600 border-green-200 hover:bg-green-50"
         >
           <Check className="h-4 w-4" />
-          Mark as Piffed
+          Markera som piffad
         </Button>
       )}
     </div>

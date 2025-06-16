@@ -13,7 +13,7 @@ export function FeedHeader({ activeFilter = 'all' }: FeedHeaderProps) {
       case 'request':
         return "Önskningar i närområdet";
       default:
-        return "PiF Community";
+        return "PIF Community";
     }
   };
 
