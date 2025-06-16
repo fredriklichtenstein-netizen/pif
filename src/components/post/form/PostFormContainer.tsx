@@ -77,6 +77,14 @@ export function PostFormContainer({
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Only submit if we're on the last step
+    if (currentStep === steps.length - 1) {
+      onFormSubmit(e);
+    }
+  };
+
   const renderCurrentStep = () => {
     switch (steps[currentStep].component) {
       case "steps":
@@ -152,7 +160,7 @@ export function PostFormContainer({
         ))}
       </div>
 
-      <form onSubmit={onFormSubmit} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <Card className="p-6">
           {renderCurrentStep()}
         </Card>
@@ -184,7 +192,7 @@ export function PostFormContainer({
               disabled={!isFormValid || isSubmitting}
               className="bg-primary hover:bg-primary/90"
             >
-              {isSubmitting ? 'Skapar...' : isRequest ? 'Skapa önskan' : 'Skapa PIF'}
+              {isSubmitting ? 'Skapar...' : isRequest ? 'Skapa önskning' : 'Skapa PIF'}
             </Button>
           )}
         </div>

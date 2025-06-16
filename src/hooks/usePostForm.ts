@@ -37,11 +37,19 @@ export function usePostForm(initialData?: any) {
     }
   });
 
-  const handleImageUpload = (file: File) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      images: [...prevFormData.images, URL.createObjectURL(file)],
-    }));
+  const handleImageUpload = async (file: File) => {
+    // Create a synthetic event for the upload handler
+    const fileList = new DataTransfer();
+    fileList.items.add(file);
+    
+    const syntheticEvent = {
+      target: {
+        files: fileList.files
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    // Use the real upload handler to get permanent URLs
+    await uploadHandler(syntheticEvent);
   };
 
   const handleImagesChange = (images: string[]) => {
