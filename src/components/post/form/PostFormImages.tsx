@@ -22,6 +22,7 @@ export function PostFormImages({
 }: PostFormImagesProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isRequest = itemType === 'request';
 
@@ -103,20 +104,68 @@ export function PostFormImages({
 
   const handleImageDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
+    setDropTargetIndex(null);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', ''); // For Firefox compatibility
+    
+    // Add visual feedback
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '0.5';
   };
 
   const handleImageDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDropTargetIndex(index);
+    }
+  };
+
+  const handleImageDragEnter = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDropTargetIndex(index);
+    }
+  };
+
+  const handleImageDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    // Only clear drop target if we're leaving the entire drag area
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDropTargetIndex(null);
+    }
   };
 
   const handleImageDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     if (draggedIndex !== null && draggedIndex !== dropIndex) {
       moveImage(draggedIndex, dropIndex);
     }
+    
+    // Reset drag state
     setDraggedIndex(null);
+    setDropTargetIndex(null);
+    
+    // Reset visual feedback
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
+  };
+
+  const handleImageDragEnd = (e: React.DragEvent) => {
+    // Reset all drag state
+    setDraggedIndex(null);
+    setDropTargetIndex(null);
+    
+    // Reset visual feedback
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
   };
 
   const getTitle = () => {
@@ -216,11 +265,20 @@ export function PostFormImages({
             {images.map((image, index) => (
               <div 
                 key={index} 
-                className="relative group border rounded-lg overflow-hidden bg-white"
+                className={`relative group border rounded-lg overflow-hidden bg-white transition-all duration-200 ${
+                  draggedIndex === index ? 'opacity-50 scale-95' : ''
+                } ${
+                  dropTargetIndex === index ? 'border-primary border-2 bg-primary/5' : ''
+                } ${
+                  !isRequest && images.length > 1 ? 'cursor-move' : ''
+                }`}
                 draggable={!isRequest && images.length > 1}
                 onDragStart={(e) => handleImageDragStart(e, index)}
                 onDragOver={(e) => handleImageDragOver(e, index)}
+                onDragEnter={(e) => handleImageDragEnter(e, index)}
+                onDragLeave={handleImageDragLeave}
                 onDrop={(e) => handleImageDrop(e, index)}
+                onDragEnd={handleImageDragEnd}
               >
                 {/* Image number badge */}
                 {!isRequest && (
@@ -234,6 +292,15 @@ export function PostFormImages({
                 {!isRequest && images.length > 1 && (
                   <div className="absolute top-2 right-12 z-10 bg-black/70 text-white p-1 rounded cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
                     <GripVertical className="h-4 w-4" />
+                  </div>
+                )}
+
+                {/* Drop indicator */}
+                {dropTargetIndex === index && draggedIndex !== index && (
+                  <div className="absolute inset-0 z-20 bg-primary/10 border-2 border-primary border-dashed rounded-lg flex items-center justify-center">
+                    <div className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Släpp här
+                    </div>
                   </div>
                 )}
 

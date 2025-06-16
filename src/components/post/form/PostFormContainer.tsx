@@ -92,6 +92,7 @@ export function PostFormContainer({
             isAnalyzing={isAnalyzing}
             onImageUpload={handleImageUpload}
             onImagesChange={onImagesChange}
+            itemType={formData.item_type}
           />
         );
       case "details":
