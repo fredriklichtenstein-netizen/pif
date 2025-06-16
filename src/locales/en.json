@@ -15,7 +15,13 @@
     "requests_title": "Wishes in the area", 
     "requests_subtitle": "Items needed in your area",
     "empty_state": "No items found",
-    "clear_filters": "Clear filters"
+    "clear_filters": "Clear filters",
+    "all_pifs": "All PIFs",
+    "saved": "Saved",
+    "my_pifs": "My PIFs",
+    "archived": "Archived",
+    "interested": "Interested",
+    "filter": "Filter"
   },
   "auth": {
     "sign_up_title": "Create an account",
@@ -110,7 +116,9 @@
     "commented": "Commented",
     "share": "Share",
     "interest": "Interest",
-    "interested": "Interested"
+    "interested": "Interested",
+    "show_more": "Show more",
+    "show_less": "Show less"
   },
   "comments": {
     "title": "Comments",

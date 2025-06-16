@@ -15,7 +15,13 @@
     "requests_title": "Önskningar i närområdet",
     "requests_subtitle": "Saker som behövs i din närhet",
     "empty_state": "Inga inlägg hittades",
-    "clear_filters": "Rensa filter"
+    "clear_filters": "Rensa filter",
+    "all_pifs": "Alla PIFar",
+    "saved": "Sparade",
+    "my_pifs": "Mina PIFar",
+    "archived": "Arkiverade",
+    "interested": "Intresserad",
+    "filter": "Filter"
   },
   "auth": {
     "sign_up_title": "Skapa konto",
@@ -110,7 +116,9 @@
     "commented": "Kommenterat",
     "share": "Dela",
     "interest": "Intresse",
-    "interested": "Intresserad"
+    "interested": "Intresserad",
+    "show_more": "Visa mer",
+    "show_less": "Visa mindre"
   },
   "comments": {
     "title": "Kommentarer",
