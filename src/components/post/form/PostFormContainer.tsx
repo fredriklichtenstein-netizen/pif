@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { PostFormSteps } from "./PostFormSteps";
 import { PostFormHeader } from "./PostFormHeader";
 import { PostFormImages } from "./PostFormImages";
@@ -47,28 +47,66 @@ export function PostFormContainer({
     { title: isRequest ? "Preferenser" : "Mått", component: "measurements" },
   ];
 
-  const canProceed = () => {
+  // Explicit validation for each step
+  const validateCurrentStep = useCallback(() => {
+    console.log(`Validating step ${currentStep}:`, {
+      stepName: steps[currentStep]?.title,
+      formData: {
+        item_type: formData.item_type,
+        images: formData.images?.length,
+        title: !!formData.title,
+        category: !!formData.category,
+        condition: !!formData.condition,
+        coordinates: !!formData.coordinates,
+        description: !!formData.description?.trim(),
+      }
+    });
+
     switch (currentStep) {
-      case 0: return formData.item_type;
-      case 1: return formData.images?.length > 0;
-      case 2: return formData.title && formData.category && formData.condition && formData.coordinates;
-      case 3: return formData.description;
-      case 4: return true; // Measurements/Preferences step is optional
-      default: return true;
+      case 0: // Type step
+        return !!formData.item_type;
+      case 1: // Images step
+        return formData.images?.length > 0;
+      case 2: // Details step
+        return !!(formData.title?.trim() && formData.category && formData.condition && formData.coordinates);
+      case 3: // Description step
+        return !!formData.description?.trim();
+      case 4: // Measurements/Preferences step
+        return true; // This step is optional
+      default:
+        return false;
     }
-  };
+  }, [currentStep, formData, steps]);
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1 && canProceed()) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
+  // Enhanced canProceed with better validation
+  const canProceed = useCallback(() => {
+    const isValid = validateCurrentStep();
+    console.log(`Can proceed from step ${currentStep}: ${isValid}`);
+    return isValid;
+  }, [validateCurrentStep, currentStep]);
 
-  const prevStep = () => {
+  const nextStep = useCallback(() => {
+    console.log(`Next step requested from step ${currentStep}`);
+    
+    // Add a small delay to ensure state has updated
+    setTimeout(() => {
+      const canGoNext = canProceed();
+      console.log(`After delay - can proceed: ${canGoNext}`);
+      
+      if (currentStep < steps.length - 1 && canGoNext) {
+        console.log(`Moving to step ${currentStep + 1}`);
+        setCurrentStep(currentStep + 1);
+      } else {
+        console.log(`Cannot proceed: currentStep=${currentStep}, maxStep=${steps.length - 1}, canProceed=${canGoNext}`);
+      }
+    }, 100);
+  }, [currentStep, steps.length, canProceed]);
+
+  const prevStep = useCallback(() => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,13 +115,25 @@ export function PostFormContainer({
     }
   };
 
+  // Enhanced form submit handler with explicit final step check
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Only submit if we're on the last step
+    console.log(`Form submit attempted on step ${currentStep}, final step is ${steps.length - 1}`);
+    
+    // Only submit if we're explicitly on the last step (step 4 for 5 steps total)
     if (currentStep === steps.length - 1) {
+      console.log('Submitting form from final step');
       onFormSubmit(e);
+    } else {
+      console.log('Preventing form submission - not on final step');
     }
   };
+
+  // Enhanced description change handler with immediate state update
+  const handleDescriptionChange = useCallback((description: string) => {
+    console.log('Description changed:', description);
+    setFormData({ ...formData, description });
+  }, [formData, setFormData]);
 
   const renderCurrentStep = () => {
     switch (steps[currentStep].component) {
@@ -117,7 +167,7 @@ export function PostFormContainer({
         return (
           <PostFormDescription
             description={formData.description || ""}
-            onDescriptionChange={(description) => setFormData({ ...formData, description })}
+            onDescriptionChange={handleDescriptionChange}
             itemType={formData.item_type}
           />
         );
@@ -134,6 +184,10 @@ export function PostFormContainer({
         return null;
     }
   };
+
+  // Check if we're on the final step
+  const isOnFinalStep = currentStep === steps.length - 1;
+  const canProceedNow = canProceed();
 
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
@@ -165,7 +219,7 @@ export function PostFormContainer({
           {renderCurrentStep()}
         </Card>
 
-        {/* Navigation buttons */}
+        {/* Enhanced navigation buttons */}
         <div className="flex justify-between">
           <Button
             type="button"
@@ -177,11 +231,11 @@ export function PostFormContainer({
             Tillbaka
           </Button>
 
-          {currentStep < steps.length - 1 ? (
+          {!isOnFinalStep ? (
             <Button
               type="button"
               onClick={nextStep}
-              disabled={!canProceed()}
+              disabled={!canProceedNow}
             >
               Nästa
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -195,6 +249,13 @@ export function PostFormContainer({
               {isSubmitting ? 'Skapar...' : isRequest ? 'Skapa önskning' : 'Skapa PIF'}
             </Button>
           )}
+        </div>
+
+        {/* Debug information (remove in production) */}
+        <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
+          Steg: {currentStep + 1}/{steps.length} ({steps[currentStep]?.title}) | 
+          Kan fortsätta: {canProceedNow ? 'Ja' : 'Nej'} | 
+          Sista steget: {isOnFinalStep ? 'Ja' : 'Nej'}
         </div>
       </form>
     </div>

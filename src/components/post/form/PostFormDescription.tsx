@@ -1,6 +1,7 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useCallback } from "react";
 
 interface PostFormDescriptionProps {
   description: string;
@@ -21,6 +22,13 @@ export function PostFormDescription({
     
   const label = isRequest ? "Beskrivning av vad du söker *" : "Beskrivning *";
 
+  // Enhanced change handler with immediate updates
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    console.log('Description input changed:', value);
+    onDescriptionChange(value);
+  }, [onDescriptionChange]);
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -28,7 +36,7 @@ export function PostFormDescription({
         <Textarea
           id="description"
           value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
+          onChange={handleChange}
           placeholder={placeholder}
           className="min-h-[120px]"
           required
