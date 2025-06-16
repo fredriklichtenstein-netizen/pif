@@ -57,12 +57,17 @@ export function PostFormLocation({
               Ange ditt sökområde (inom 2 km från denna punkt söker du efter varan)
             </p>
             <div className="text-sm text-blue-600 bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <strong>💡 Tips:</strong> Du söker inom 2 km från denna punkt. Personer som har det du söker i närheten kommer att kunna se din önskning.
+              <strong>🔒 Integritetsskydd:</strong> Din exakta position kommer aldrig att delas. Andra användare ser endast ett ungefärligt område för att skydda din integritet.
             </div>
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
-            <p><strong>💡 Tips:</strong> Ange en tydlig plats där intresserade kan hämta varan. Detta gör det lättare för dem att bedöma om de kan hämta.</p>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
+              <p><strong>💡 Tips:</strong> Ange en tydlig plats där intresserade kan hämta varan. Detta gör det lättare för dem att bedöma om de kan hämta.</p>
+            </div>
+            <div className="text-sm text-green-600 bg-green-50 p-4 rounded-lg border border-green-200">
+              <strong>🔒 Integritetsskydd:</strong> Din exakta adress kommer aldrig att delas offentligt. Andra användare ser endast ett ungefärligt område tills du väljer att dela mer detaljer privat.
+            </div>
           </div>
         )}
       </div>

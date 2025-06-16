@@ -165,7 +165,7 @@ export function PostFormInformation({
               onChange={handleDescriptionChange}
               placeholder={isRequest 
                 ? "Beskriv vad du söker och eventuella specifika krav eller önskemål..."
-                : "Beskriv varan, dess skick och eventuella defekter..."
+                : "Beskriv varan, dess funktioner och eventuella särskilda egenskaper..."
               }
               className="min-h-[120px]"
               required

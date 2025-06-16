@@ -7,7 +7,6 @@ import { PostFormInformation } from "./PostFormInformation";
 import { PostFormLocation } from "./PostFormLocation";
 import { PostFormProgress } from "./PostFormProgress";
 import { PostFormNavigation } from "./PostFormNavigation";
-import { PostFormDebugInfo } from "./PostFormDebugInfo";
 import { Card } from "@/components/ui/card";
 import { usePostFormValidation } from "@/hooks/post/usePostFormValidation";
 import { usePostFormNavigation } from "@/hooks/post/usePostFormNavigation";
@@ -149,14 +148,6 @@ export function PostFormContainer({
           isRequest={isRequest}
           onPrevStep={finalPrevStep}
           onNextStep={finalNextStep}
-        />
-
-        <PostFormDebugInfo
-          currentStep={finalCurrentStep}
-          stepsLength={steps.length}
-          currentStepTitle={steps[finalCurrentStep]?.title}
-          canProceedNow={canProceedNow}
-          isOnFinalStep={finalIsOnFinalStep}
         />
       </form>
     </div>
