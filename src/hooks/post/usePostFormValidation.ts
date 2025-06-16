@@ -28,12 +28,10 @@ export function usePostFormValidation(props?: UsePostFormValidationProps) {
         return !!(formData.item_type);
       case "images":
         return formData.images.length > 0;
-      case "details":
-        return !!(formData.title?.trim() && formData.category && formData.condition && formData.coordinates);
-      case "description":
-        return !!(formData.description?.trim());
-      case "measurements":
-        return true; // Measurements are optional
+      case "information":
+        return !!(formData.title?.trim() && formData.category && formData.condition && formData.description?.trim());
+      case "location":
+        return !!(formData.location && formData.coordinates);
       default:
         return false;
     }

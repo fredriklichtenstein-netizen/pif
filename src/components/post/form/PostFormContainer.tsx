@@ -3,9 +3,8 @@ import React, { useCallback } from "react";
 import { PostFormSteps } from "./PostFormSteps";
 import { PostFormHeader } from "./PostFormHeader";
 import { PostFormImages } from "./PostFormImages";
-import { PostFormDetails } from "./PostFormDetails";
-import { PostFormDescription } from "./PostFormDescription";
-import { PostFormMeasurements } from "./PostFormMeasurements";
+import { PostFormInformation } from "./PostFormInformation";
+import { PostFormLocation } from "./PostFormLocation";
 import { PostFormProgress } from "./PostFormProgress";
 import { PostFormNavigation } from "./PostFormNavigation";
 import { PostFormDebugInfo } from "./PostFormDebugInfo";
@@ -43,9 +42,8 @@ export function PostFormContainer({
   const steps = [
     { title: "Typ", component: "steps" },
     { title: isRequest ? "Referensbild" : "Bilder", component: "images" },
-    { title: "Detaljer", component: "details" },
-    { title: "Beskrivning", component: "description" },
-    { title: isRequest ? "Preferenser" : "Mått", component: "measurements" },
+    { title: "Information", component: "information" },
+    { title: isRequest ? "Sökområde" : "Plats", component: "location" },
   ];
 
   // Initialize navigation first
@@ -86,11 +84,6 @@ export function PostFormContainer({
     }
   };
 
-  const handleDescriptionChange = useCallback((description: string) => {
-    console.log('Description changed:', description);
-    setFormData({ ...formData, description });
-  }, [formData, setFormData]);
-
   const renderCurrentStep = () => {
     switch (steps[finalCurrentStep].component) {
       case "steps":
@@ -110,30 +103,20 @@ export function PostFormContainer({
             itemType={formData.item_type}
           />
         );
-      case "details":
+      case "information":
         return (
-          <PostFormDetails
+          <PostFormInformation
             formData={formData}
+            setFormData={setFormData}
             onMeasurementChange={onMeasurementChange}
+          />
+        );
+      case "location":
+        return (
+          <PostFormLocation
+            formData={formData}
             setFormData={setFormData}
             onAddressSelect={onAddressSelect}
-          />
-        );
-      case "description":
-        return (
-          <PostFormDescription
-            description={formData.description || ""}
-            onDescriptionChange={handleDescriptionChange}
-            itemType={formData.item_type}
-          />
-        );
-      case "measurements":
-        return (
-          <PostFormMeasurements
-            category={formData.category || ""}
-            measurements={formData.measurements || {}}
-            onMeasurementChange={onMeasurementChange}
-            itemType={formData.item_type}
           />
         );
       default:
