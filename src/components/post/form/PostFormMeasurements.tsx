@@ -43,8 +43,26 @@ export function PostFormMeasurements({
 
   const isRequest = itemType === 'request';
 
+  const getTitle = () => {
+    return isRequest ? "Preferenser" : "Mått och detaljer";
+  };
+
+  const getDescription = () => {
+    if (isRequest) {
+      return "Ange eventuella preferenser för storlek eller andra viktiga detaljer som kan hjälpa andra att förstå vad du söker.";
+    }
+    return "Lägg till mått och tekniska detaljer för att hjälpa intresserade att förstå varan bättre.";
+  };
+
   return (
     <div className="space-y-6">
+      <div className="space-y-2">
+        <Label className="text-lg font-medium">{getTitle()}</Label>
+        <p className="text-sm text-muted-foreground">
+          {getDescription()}
+        </p>
+      </div>
+
       {category?.toLowerCase().includes("clothing") && (
         <PostFormSizeSelector 
           category={category} 
@@ -55,10 +73,10 @@ export function PostFormMeasurements({
         />
       )}
       
-      {/* Only show detailed measurements for offers, and only if category has measurements */}
+      {/* For offers: show detailed measurements if category has them */}
       {!isRequest && category && CATEGORY_MEASUREMENTS[category] && (
         <div className="space-y-4">
-          <Label className="text-sm font-medium">Detailed Measurements</Label>
+          <Label className="text-sm font-medium">Detaljerade mått</Label>
           <div className="grid grid-cols-2 gap-4">
             {CATEGORY_MEASUREMENTS[category].map((field) => (
               <div key={field} className="space-y-2">
@@ -73,27 +91,46 @@ export function PostFormMeasurements({
           </div>
         </div>
       )}
+
+      {/* For requests: show a simplified preference field */}
+      {isRequest && (
+        <div className="space-y-4">
+          <Label className="text-sm font-medium">Övriga preferenser</Label>
+          <Input
+            value={measurements.preferences || ""}
+            onChange={(e) => onMeasurementChange("preferences", e.target.value)}
+            placeholder="t.ex. 'Helst i röd färg', 'Måste vara barnvänlig'"
+          />
+          <p className="text-xs text-muted-foreground">
+            Frivilligt - beskriv eventuella specifika önskemål
+          </p>
+        </div>
+      )}
       
       {/* Only show weight for offers */}
       {showWeightField && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Weight className="h-4 w-4 text-gray-500" />
-            <Label className="text-sm font-medium">Weight</Label>
+            <Label className="text-sm font-medium">Vikt</Label>
           </div>
           <Input
             value={measurements.weight || ""}
             onChange={(e) => onMeasurementChange("weight", e.target.value)}
-            placeholder="e.g. 5 kg"
+            placeholder="t.ex. 5 kg"
             className="max-w-[200px]"
           />
         </div>
       )}
 
-      {/* For requests, show a helpful message */}
-      {isRequest && (
+      {/* Information boxes */}
+      {isRequest ? (
         <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
-          <p>För önskningar behöver du bara ange grundläggande information. Detaljerade mått kan diskuteras med den som erbjuder varan.</p>
+          <p><strong>💡 Tips:</strong> Du behöver inte fylla i alla detaljer. Grundläggande information räcker - mer specifika detaljer kan ni diskutera när någon svarar på din önskning.</p>
+        </div>
+      ) : (
+        <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
+          <p><strong>💡 Tips:</strong> Ju mer detaljerad information du ger, desto lättare blir det för intresserade att förstå om varan passar deras behov.</p>
         </div>
       )}
     </div>

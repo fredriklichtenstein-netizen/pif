@@ -107,10 +107,10 @@ export function PostFormDetails({
         </Select>
       </div>
 
-      {/* Plats */}
+      {/* Plats/Sökområde */}
       <div className="space-y-2">
         <Label htmlFor="location">
-          {isRequest ? "Var söker du? *" : "Plats *"}
+          {isRequest ? "Sökområde *" : "Plats *"}
         </Label>
         <AddressInput
           value={formData.location}
@@ -125,9 +125,18 @@ export function PostFormDetails({
             }
           }}
         />
-        {isRequest && (
+        {isRequest ? (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Ange ditt sökområde (inom 2 km från denna punkt söker du efter varan)
+            </p>
+            <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <strong>💡 Tips:</strong> Du söker inom 2 km från denna punkt. Personer som har det du söker i närheten kommer att kunna se din önskning.
+            </div>
+          </div>
+        ) : (
           <p className="text-sm text-muted-foreground">
-            Ange var du helst vill hämta/få varan
+            Ange var varan kan hämtas
           </p>
         )}
       </div>

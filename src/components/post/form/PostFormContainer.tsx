@@ -41,10 +41,10 @@ export function PostFormContainer({
 
   const steps = [
     { title: "Typ", component: "steps" },
-    { title: "Bilder", component: "images" },
+    { title: isRequest ? "Referensbild" : "Bilder", component: "images" },
     { title: "Detaljer", component: "details" },
     { title: "Beskrivning", component: "description" },
-    { title: "Mått", component: "measurements" },
+    { title: isRequest ? "Preferenser" : "Mått", component: "measurements" },
   ];
 
   const canProceed = () => {
@@ -130,7 +130,7 @@ export function PostFormContainer({
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
       <PostFormHeader 
         title={isRequest ? 'Önska något' : 'Piffa något'}
-        subtitle={isRequest ? 'Berätta vad du behöver' : 'Ge bort något du inte behöver'}
+        subtitle={isRequest ? 'Beskriv vad du behöver och ditt sökområde' : 'Ge bort något du inte behöver'}
       />
 
       {/* Progress indicator */}
