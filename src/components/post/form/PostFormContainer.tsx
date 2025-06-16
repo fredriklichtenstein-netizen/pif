@@ -48,22 +48,23 @@ export function PostFormContainer({
     { title: isRequest ? "Preferenser" : "Mått", component: "measurements" },
   ];
 
-  const { validateCurrentStep, canProceed } = usePostFormValidation({
-    formData,
-    currentStep: 0, // Will be updated by navigation hook
-    steps
-  });
-
+  // Initialize navigation first
   const { currentStep, nextStep, prevStep, isOnFinalStep } = usePostFormNavigation({
     steps,
-    canProceed
+    canProceed: () => false // Temporary, will be updated below
   });
 
-  // Update validation with current step
-  const validationWithCurrentStep = usePostFormValidation({
+  // Now create validation with current step
+  const validation = usePostFormValidation({
     formData,
     currentStep,
     steps
+  });
+
+  // Update navigation with the real canProceed function
+  const { currentStep: finalCurrentStep, nextStep: finalNextStep, prevStep: finalPrevStep, isOnFinalStep: finalIsOnFinalStep } = usePostFormNavigation({
+    steps,
+    canProceed: validation.canProceed
   });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,9 +76,9 @@ export function PostFormContainer({
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(`Form submit attempted on step ${currentStep}, final step is ${steps.length - 1}`);
+    console.log(`Form submit attempted on step ${finalCurrentStep}, final step is ${steps.length - 1}`);
     
-    if (currentStep === steps.length - 1) {
+    if (finalCurrentStep === steps.length - 1) {
       console.log('Submitting form from final step');
       onFormSubmit(e);
     } else {
@@ -91,7 +92,7 @@ export function PostFormContainer({
   }, [formData, setFormData]);
 
   const renderCurrentStep = () => {
-    switch (steps[currentStep].component) {
+    switch (steps[finalCurrentStep].component) {
       case "steps":
         return (
           <PostFormSteps
@@ -140,7 +141,7 @@ export function PostFormContainer({
     }
   };
 
-  const canProceedNow = validationWithCurrentStep.canProceed();
+  const canProceedNow = validation.canProceed();
 
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
@@ -149,7 +150,7 @@ export function PostFormContainer({
         subtitle={isRequest ? 'Beskriv vad du behöver och ditt sökområde' : 'Ge bort något du inte behöver'}
       />
 
-      <PostFormProgress steps={steps} currentStep={currentStep} />
+      <PostFormProgress steps={steps} currentStep={finalCurrentStep} />
 
       <form onSubmit={handleFormSubmit} className="space-y-6">
         <Card className="p-6">
@@ -157,22 +158,22 @@ export function PostFormContainer({
         </Card>
 
         <PostFormNavigation
-          currentStep={currentStep}
-          isOnFinalStep={isOnFinalStep}
+          currentStep={finalCurrentStep}
+          isOnFinalStep={finalIsOnFinalStep}
           canProceedNow={canProceedNow}
           isFormValid={isFormValid}
           isSubmitting={isSubmitting}
           isRequest={isRequest}
-          onPrevStep={prevStep}
-          onNextStep={nextStep}
+          onPrevStep={finalPrevStep}
+          onNextStep={finalNextStep}
         />
 
         <PostFormDebugInfo
-          currentStep={currentStep}
+          currentStep={finalCurrentStep}
           stepsLength={steps.length}
-          currentStepTitle={steps[currentStep]?.title}
+          currentStepTitle={steps[finalCurrentStep]?.title}
           canProceedNow={canProceedNow}
-          isOnFinalStep={isOnFinalStep}
+          isOnFinalStep={finalIsOnFinalStep}
         />
       </form>
     </div>
