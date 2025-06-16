@@ -49,15 +49,27 @@ export function PostFormImages({
       // Set the files on the input element
       fileInputRef.current.files = dataTransfer.files;
       
-      // Create a proper change event
-      const event = new Event('change', { bubbles: true });
-      Object.defineProperty(event, 'target', {
-        writable: false,
-        value: fileInputRef.current
-      });
+      // Create a synthetic change event
+      const syntheticEvent = {
+        target: fileInputRef.current,
+        currentTarget: fileInputRef.current,
+        nativeEvent: new Event('change'),
+        bubbles: true,
+        cancelable: true,
+        defaultPrevented: false,
+        eventPhase: Event.AT_TARGET,
+        isTrusted: true,
+        preventDefault: () => {},
+        isDefaultPrevented: () => false,
+        stopPropagation: () => {},
+        isPropagationStopped: () => false,
+        persist: () => {},
+        timeStamp: Date.now(),
+        type: 'change'
+      } as React.ChangeEvent<HTMLInputElement>;
       
-      // Trigger the upload handler with the proper event
-      onImageUpload(event as React.ChangeEvent<HTMLInputElement>);
+      // Trigger the upload handler
+      onImageUpload(syntheticEvent);
     }
   };
 
