@@ -115,10 +115,13 @@
     "comment": "Comment", 
     "commented": "Commented",
     "share": "Share",
+    "shared": "Shared",
     "interest": "Interest",
     "interested": "Interested",
     "show_more": "Show more",
-    "show_less": "Show less"
+    "show_less": "Show less",
+    "remove_interest": "Remove interest",
+    "show_interest": "Show interest"
   },
   "comments": {
     "title": "Comments",
@@ -145,7 +148,10 @@
     "online": "Online",
     "offline": "Offline",
     "connection_restored": "Connection restored",
-    "back_online": "You're back online!"
+    "back_online": "You're back online!",
+    "condition": "Condition:",
+    "size_measurements": "Size & Measurements",
+    "size": "Size:"
   },
   "language": {
     "swedish": "Svenska", 

@@ -3,6 +3,7 @@ import { ItemDescription } from "./ItemDescription";
 import { ItemCondition } from "./ItemCondition";
 import { ItemMeasurements } from "./ItemMeasurements";
 import { useExpandableContent } from "./useExpandableContent";
+import { useTranslation } from 'react-i18next';
 
 interface ItemCardContentProps {
   description: string;
@@ -15,6 +16,7 @@ export function ItemCardContent({
   condition,
   measurements = {}
 }: ItemCardContentProps) {
+  const { t } = useTranslation();
   const hasDetails = Object.keys(measurements).length > 0;
   const { expanded, toggleExpanded } = useExpandableContent(description, hasDetails);
 
@@ -25,15 +27,7 @@ export function ItemCardContent({
           onClick={toggleExpanded} 
           className="mb-2 flex items-center text-primary text-xs font-medium"
         >
-          {expanded ? (
-            <>
-              Show less
-            </>
-          ) : (
-            <>
-              Show more
-            </>
-          )}
+          {expanded ? t('interactions.show_less') : t('interactions.show_more')}
         </button>
         
         {expanded && (

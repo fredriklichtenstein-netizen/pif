@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useTranslation } from 'react-i18next';
 
 interface FeedFiltersProps {
   categories: string[];
@@ -25,6 +26,7 @@ export function FeedFilters({
   setViewMode
 }: FeedFiltersProps) {
   const { user } = useGlobalAuth();
+  const { t } = useTranslation();
   const isLoggedIn = !!user;
 
   const handleCategoryToggle = (category: string) => {
@@ -54,7 +56,7 @@ export function FeedFilters({
             size="sm"
             onClick={() => setViewMode("all")}
           >
-            All PIFs
+            {t('feed.all_pifs')}
           </Button>
           
           {isLoggedIn && (
@@ -64,7 +66,7 @@ export function FeedFilters({
                 size="sm"
                 onClick={() => setViewMode("saved")}
               >
-                Saved
+                {t('feed.saved')}
               </Button>
               
               <Button 
@@ -72,7 +74,7 @@ export function FeedFilters({
                 size="sm"
                 onClick={() => setViewMode("myPifs")}
               >
-                My PIFs
+                {t('feed.my_pifs')}
               </Button>
               
               <Button 
@@ -80,7 +82,7 @@ export function FeedFilters({
                 size="sm"
                 onClick={() => setViewMode("archived")}
               >
-                Archived
+                {t('feed.archived')}
               </Button>
               
               <Button 
@@ -88,7 +90,7 @@ export function FeedFilters({
                 size="sm"
                 onClick={() => setViewMode("interested")}
               >
-                Interested
+                {t('feed.interested')}
               </Button>
             </>
           )}
@@ -101,7 +103,7 @@ export function FeedFilters({
           className="flex items-center gap-1"
         >
           <Filter className="w-4 h-4" />
-          <span className="sr-md:inline">Filter</span>
+          <span className="sr-md:inline">{t('feed.filter')}</span>
           {showFilters ? (
             <ChevronUp className="w-4 h-4" />
           ) : (
@@ -120,7 +122,7 @@ export function FeedFilters({
               onClick={handleSelectAll}
               className="h-auto p-0"
             >
-              {allSelected ? "Clear all" : "Select all"}
+              {allSelected ? t('feed.clear_filters') : "Select all"}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">

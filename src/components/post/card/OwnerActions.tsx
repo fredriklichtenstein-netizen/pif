@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Check } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface OwnerActionsProps {
   isOwner: boolean;
@@ -11,6 +12,8 @@ interface OwnerActionsProps {
 }
 
 export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, markAsPiffedAction }: OwnerActionsProps) {
+  const { t } = useTranslation();
+  
   if (!isOwner) return null;
   
   return (
@@ -22,7 +25,7 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
         className="flex items-center gap-2"
       >
         <Pencil className="h-4 w-4" />
-        Redigera
+        {t('profile.edit')}
       </Button>
       <Button
         variant="destructive"
@@ -32,7 +35,7 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
         className="flex items-center gap-2"
       >
         <Trash2 className="h-4 w-4" />
-        {isDeleting ? "Tar bort..." : "Ta bort"}
+        {isDeleting ? t('profile.deleting') : t('profile.delete')}
       </Button>
       {markAsPiffedAction && (
         <Button
@@ -42,7 +45,7 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
           className="flex items-center gap-2 ml-auto text-green-600 border-green-200 hover:bg-green-50"
         >
           <Check className="h-4 w-4" />
-          Markera som piffad
+          {t('profile.mark_as_piffed')}
         </Button>
       )}
     </div>

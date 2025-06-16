@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { useTranslation } from 'react-i18next';
 
 interface FeedEmptyStateProps {
   viewMode: string;
@@ -8,9 +9,11 @@ interface FeedEmptyStateProps {
 }
 
 export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: FeedEmptyStateProps) {
+  const { t } = useTranslation();
+
   const getEmptyStateMessage = () => {
     if (selectedCategories.length > 0) {
-      return "No items found matching your filters";
+      return t('feed.empty_state');
     }
     
     switch (viewMode) {
@@ -23,7 +26,7 @@ export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: F
       case "interested":
         return "You haven't shown interest in any items yet";
       default:
-        return "No items found";
+        return t('feed.empty_state');
     }
   };
 
@@ -36,7 +39,7 @@ export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: F
           className="mt-2"
           onClick={clearFilters}
         >
-          Clear filters
+          {t('feed.clear_filters')}
         </Button>
       )}
     </div>

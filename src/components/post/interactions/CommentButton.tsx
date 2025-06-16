@@ -1,6 +1,7 @@
 
 import { MessageCircle } from "lucide-react";
 import { useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import { LazyCommentsSection } from "@/components/comments/LazyCommentsSection";
 
 interface CommentButtonProps {
@@ -16,6 +17,7 @@ export function CommentButton({
   itemId,
   showComments
 }: CommentButtonProps) {
+  const { t } = useTranslation();
   
   const handleCommentClick = () => {
     console.log(`CommentButton: Toggling comments for item ${itemId}, current state: ${showComments}`);
@@ -32,12 +34,12 @@ export function CommentButton({
       <button 
         onClick={handleCommentClick}
         className="flex items-center gap-2 rounded-md px-3 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
-        aria-label="Toggle comments"
+        aria-label={t('interactions.comment')}
         data-testid="comment-button"
       >
         <MessageCircle className="h-5 w-5" />
         <span className="text-sm font-medium">
-          {commentsCount > 0 ? `Comments (${commentsCount})` : 'Comment'}
+          {commentsCount > 0 ? `${t('interactions.comment')} (${commentsCount})` : t('interactions.comment')}
         </span>
       </button>
       

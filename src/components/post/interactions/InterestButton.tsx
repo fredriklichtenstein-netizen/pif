@@ -1,4 +1,6 @@
 
+import { useTranslation } from 'react-i18next';
+
 interface InterestButtonProps {
   showInterest: boolean;
   onShowInterest: () => void;
@@ -10,6 +12,8 @@ export function InterestButton({
   onShowInterest,
   interestsCount = 0
 }: InterestButtonProps) {
+  const { t } = useTranslation();
+
   return (
     <button 
       onClick={onShowInterest}
@@ -18,9 +22,9 @@ export function InterestButton({
           ? 'bg-primary text-white' 
           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
       }`}
-      aria-label={showInterest ? "Remove interest" : "Show interest"}
+      aria-label={showInterest ? t('interactions.remove_interest') : t('interactions.show_interest')}
     >
-      {showInterest ? 'Interested' : 'Show interest'}
+      {showInterest ? t('interactions.interested') : t('interactions.interest')}
       {interestsCount > 0 && (
         <span className={`px-2 py-0.5 rounded-full text-xs ${
           showInterest ? 'bg-white text-primary' : 'bg-gray-200 text-gray-700'

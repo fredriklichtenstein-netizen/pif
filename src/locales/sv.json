@@ -115,10 +115,13 @@
     "comment": "Kommentera",
     "commented": "Kommenterat",
     "share": "Dela",
+    "shared": "Delad",
     "interest": "Intresse",
     "interested": "Intresserad",
     "show_more": "Visa mer",
-    "show_less": "Visa mindre"
+    "show_less": "Visa mindre",
+    "remove_interest": "Ta bort intresse",
+    "show_interest": "Visa intresse"
   },
   "comments": {
     "title": "Kommentarer",
@@ -145,7 +148,10 @@
     "online": "Online",
     "offline": "Offline",
     "connection_restored": "Anslutning återställd",
-    "back_online": "Du är online igen!"
+    "back_online": "Du är online igen!",
+    "condition": "Skick:",
+    "size_measurements": "Storlek & Mått",
+    "size": "Storlek:"
   },
   "language": {
     "swedish": "Svenska",
