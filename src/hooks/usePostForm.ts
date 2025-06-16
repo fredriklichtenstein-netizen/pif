@@ -156,9 +156,10 @@ export function usePostForm(initialData?: any) {
       console.log("Success! Showing toast and navigating...");
       
       toast({
-        title: "Framgång!",
-        description: initialData?.id ? "Din PIF har uppdaterats." : 
-                     formData.item_type === 'request' ? "Din önskan har skapats." : "Din PIF har skapats.",
+        title: initialData?.id ? "Din PIF har uppdaterats!" : 
+               formData.item_type === 'request' ? "Din önskning har skapats!" : "Din PIF har skapats!",
+        description: initialData?.id ? "Dina ändringar har sparats." : 
+                     formData.item_type === 'request' ? "Andra kan nu se vad du söker." : "Andra kan nu se din PIF.",
       });
 
       navigate("/feed");

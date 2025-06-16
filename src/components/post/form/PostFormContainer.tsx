@@ -53,6 +53,7 @@ export function PostFormContainer({
       case 1: return formData.images?.length > 0;
       case 2: return formData.title && formData.category && formData.condition && formData.coordinates;
       case 3: return formData.description;
+      case 4: return true; // Measurements/Preferences step is optional
       default: return true;
     }
   };
