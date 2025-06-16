@@ -41,15 +41,23 @@ export function PostFormImages({
     const files = Array.from(e.dataTransfer.files);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
-    if (imageFiles.length > 0) {
-      // Simulate the input change event for the first image
-      const mockEvent = {
-        target: {
-          files: [imageFiles[0]]
-        }
-      } as React.ChangeEvent<HTMLInputElement>;
+    if (imageFiles.length > 0 && fileInputRef.current) {
+      // Create a new DataTransfer object and add the file
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(imageFiles[0]);
       
-      onImageUpload(mockEvent);
+      // Set the files on the input element
+      fileInputRef.current.files = dataTransfer.files;
+      
+      // Create a proper change event
+      const event = new Event('change', { bubbles: true });
+      Object.defineProperty(event, 'target', {
+        writable: false,
+        value: fileInputRef.current
+      });
+      
+      // Trigger the upload handler with the proper event
+      onImageUpload(event as React.ChangeEvent<HTMLInputElement>);
     }
   };
 
