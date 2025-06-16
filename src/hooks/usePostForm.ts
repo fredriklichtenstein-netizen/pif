@@ -77,6 +77,18 @@ export function usePostForm(initialData?: any) {
       item_type: formData.item_type
     });
     
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Inte inloggad",
+        description: "Du måste vara inloggad för att skapa en PIF eller önskan.",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+    
     if (!formData.title || !formData.category || !formData.condition || !formData.coordinates || formData.images.length === 0) {
       toast({
         title: "Obligatoriska fält saknas",
@@ -106,6 +118,7 @@ export function usePostForm(initialData?: any) {
         condition: formData.condition,
         item_type: formData.item_type,
         pif_status: 'active',
+        user_id: user.id, // Add user_id to satisfy RLS policy
         coordinates: coordinatesForDB,
         location: formData.location,
         images: formData.images,
