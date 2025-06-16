@@ -1,13 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { Wifi, WifiOff, MessageSquare, User } from "lucide-react";
 import { setupNetworkMonitoring } from "@/hooks/auth/networkUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { AuthStatus } from "@/components/auth/AuthStatus";
+import { LanguageSelector } from "@/components/common/LanguageSelector";
 
 export function MainHeader() {
+  const { t } = useTranslation();
   const [isOnline, setIsOnline] = useState(true);
   const { toast } = useToast();
   
@@ -17,15 +20,15 @@ export function MainHeader() {
       
       if (online && !isOnline) {
         toast({
-          title: "Connection restored",
-          description: "You're back online!",
+          title: t('common.connection_restored'),
+          description: t('common.back_online'),
           duration: 3000,
         });
       }
     });
     
     return cleanup;
-  }, [isOnline, toast]);
+  }, [isOnline, toast, t]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
@@ -39,19 +42,19 @@ export function MainHeader() {
         {/* Main navigation */}
         <nav className="flex items-center space-x-4 lg:space-x-6 mx-6">
           <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
-            Home
+            {t('nav.home')}
           </Link>
           <Link to="/map" className="text-sm font-medium transition-colors hover:text-primary">
-            Map
+            {t('nav.map')}
           </Link>
           <Link to="/post" className="text-sm font-medium transition-colors hover:text-primary">
-            Post Item
+            {t('nav.post')}
           </Link>
           <Link to="/messages" className="text-sm font-medium transition-colors hover:text-primary">
-            Messages
+            {t('nav.messages')}
           </Link>
           <Link to="/profile" className="text-sm font-medium transition-colors hover:text-primary">
-            Profile
+            {t('nav.profile')}
           </Link>
         </nav>
         
@@ -60,17 +63,18 @@ export function MainHeader() {
           {!isOnline && (
             <div className="flex items-center text-destructive text-sm" title="Connection issue">
               <WifiOff className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Offline</span>
+              <span className="hidden sm:inline">{t('common.offline')}</span>
             </div>
           )}
           
           {isOnline && (
             <div className="flex items-center text-green-500 text-sm" title="Connected">
               <Wifi className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Online</span>
+              <span className="hidden sm:inline">{t('common.online')}</span>
             </div>
           )}
           
+          <LanguageSelector />
           <AuthStatus showButton={false} />
         </div>
       </div>

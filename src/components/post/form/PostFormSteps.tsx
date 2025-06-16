@@ -4,6 +4,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Search } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface PostFormStepsProps {
   formData: any;
@@ -11,6 +12,8 @@ interface PostFormStepsProps {
 }
 
 export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
+  const { t } = useTranslation();
+  
   const handleItemTypeChange = (value: 'offer' | 'request') => {
     setFormData({ ...formData, item_type: value });
   };
@@ -20,7 +23,7 @@ export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
       {/* Step 1: Välj typ av PIF */}
       <Card className="border-2 border-primary/20">
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4 text-center">Vad vill du göra?</h3>
+          <h3 className="text-lg font-semibold mb-4 text-center">{t('post.what_do_you_want')}</h3>
           <RadioGroup
             value={formData.item_type || 'offer'}
             onValueChange={handleItemTypeChange}
@@ -34,8 +37,8 @@ export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
                   <Gift className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-primary">Piffa</h4>
-                  <p className="text-sm text-muted-foreground">Ge bort något du inte behöver</p>
+                  <h4 className="font-medium text-primary">{t('post.offer_action')}</h4>
+                  <p className="text-sm text-muted-foreground">{t('post.offer_description')}</p>
                 </div>
               </Label>
             </div>
@@ -48,8 +51,8 @@ export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
                   <Search className="h-6 w-6 text-secondary" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-secondary">Önska</h4>
-                  <p className="text-sm text-muted-foreground">Efterfråga något du behöver</p>
+                  <h4 className="font-medium text-secondary">{t('post.request_action')}</h4>
+                  <p className="text-sm text-muted-foreground">{t('post.request_description')}</p>
                 </div>
               </Label>
             </div>

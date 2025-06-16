@@ -1,30 +1,33 @@
 
 import { Gift, Search } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface FeedHeaderProps {
   activeFilter?: 'all' | 'offer' | 'request';
 }
 
 export function FeedHeader({ activeFilter = 'all' }: FeedHeaderProps) {
+  const { t } = useTranslation();
+
   const getTitle = () => {
     switch (activeFilter) {
       case 'offer':
-        return "Piffar i närområdet";
+        return t('feed.offers_title');
       case 'request':
-        return "Önskningar i närområdet";
+        return t('feed.requests_title');
       default:
-        return "PIF Community";
+        return t('feed.title');
     }
   };
 
   const getSubtitle = () => {
     switch (activeFilter) {
       case 'offer':
-        return "Saker som väntar på nya ägare";
+        return t('feed.offers_subtitle');
       case 'request':
-        return "Saker som behövs i din närhet";
+        return t('feed.requests_subtitle');
       default:
-        return "Sustainable sharing in your neighborhood";
+        return t('feed.subtitle');
     }
   };
 

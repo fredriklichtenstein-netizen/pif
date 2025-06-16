@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function AuthForm({
   onToggleMode, 
   onPasswordReset 
 }: AuthFormProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -147,19 +149,17 @@ export function AuthForm({
     <div className="max-w-md w-full space-y-8">
       <div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {isSignUp ? "Create an account" : "Sign in to your account"}
+          {isSignUp ? t('auth.sign_up_title') : t('auth.sign_in_title')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          {isSignUp
-            ? "Start sharing with your community"
-            : "Welcome back to PIF"}
+          {isSignUp ? t('auth.sign_up_subtitle') : t('auth.sign_in_subtitle')}
         </p>
       </div>
       
       {displayError && (
         <Alert variant={timeoutWarning ? "default" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{timeoutWarning ? "Notice" : "Error"}</AlertTitle>
+          <AlertTitle>{timeoutWarning ? "Notice" : t('common.error')}</AlertTitle>
           <AlertDescription>
             {displayError}
           </AlertDescription>
@@ -193,7 +193,7 @@ export function AuthForm({
               onClick={() => setShowForgotPassword(true)}
               disabled={isLoading}
             >
-              Forgot password?
+              {t('auth.forgot_password')}
             </Button>
           </div>
         )}
