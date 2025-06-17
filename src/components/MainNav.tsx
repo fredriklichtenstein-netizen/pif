@@ -6,12 +6,14 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from 'react-i18next';
 
 export function MainNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useGlobalAuth();
+  const { t } = useTranslation();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const isActive = (path: string) => location.pathname === path;
@@ -64,8 +66,8 @@ export function MainNav() {
       e.preventDefault();
       navigate("/auth");
       toast({
-        title: "Authentication required",
-        description: "Please sign in to access this feature",
+        title: t('nav.auth_required'),
+        description: t('nav.sign_in_required'),
       });
     }
   };
@@ -109,7 +111,7 @@ export function MainNav() {
             }`}
           >
             <House size={24} />
-            <span className="text-xs mt-1">Pifs</span>
+            <span className="text-xs mt-1">{t('nav.pifs')}</span>
           </Link>
           
           <Link
@@ -119,7 +121,7 @@ export function MainNav() {
             }`}
           >
             <Map size={24} />
-            <span className="text-xs mt-1">Map</span>
+            <span className="text-xs mt-1">{t('nav.map')}</span>
           </Link>
           
           <div className="flex justify-center">
@@ -146,7 +148,7 @@ export function MainNav() {
             onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
           >
             <MessageSquare size={24} />
-            <span className="text-xs mt-1">Messages</span>
+            <span className="text-xs mt-1">{t('nav.messages')}</span>
           </Link>
           
           <Link
@@ -177,13 +179,13 @@ export function MainNav() {
                   />
                 </div>
                 <span className="text-xs mt-1">
-                  Profile
+                  {t('nav.profile')}
                 </span>
               </>
             ) : (
               <>
                 <UserIcon size={24} />
-                <span className="text-xs mt-1">Sign In</span>
+                <span className="text-xs mt-1">{t('nav.sign_in')}</span>
               </>
             )}
           </Link>

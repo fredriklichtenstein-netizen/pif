@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
@@ -8,10 +9,12 @@ import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { isNetworkError } from "@/utils/connectionRetryUtils";
 import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from 'react-i18next';
 
 export default function Home() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [hasNetworkError, setHasNetworkError] = useState(false);
   
@@ -25,16 +28,16 @@ export default function Home() {
       
       if (isOnline) {
         toast({
-          title: "Anslutning återställd",
-          description: "Välkommen till PIF! Du är nu ansluten.",
+          title: t('common.connection_restored'),
+          description: t('home.welcome_connected'),
           duration: 3000,
         });
       } else {
         setHasNetworkError(true);
         toast({
           variant: "destructive",
-          title: "Anslutningsproblem",
-          description: "Kontrollera din internetanslutning och försök igen.",
+          title: t('comments.connection_issue'),
+          description: t('home.check_connection'),
           duration: 5000,
         });
       }
@@ -46,8 +49,8 @@ export default function Home() {
       if (isNetworkError(error)) {
         toast({
           variant: "destructive",
-          title: "Nätverksanslutningsproblem",
-          description: "Kan inte ansluta till servrar. Kontrollera din anslutning.",
+          title: t('home.network_connection_problem'),
+          description: t('home.cannot_connect_servers'),
         });
       }
     } finally {
@@ -84,7 +87,7 @@ export default function Home() {
           <div className="absolute inset-0 rounded-3xl overflow-hidden opacity-10">
             <img 
               src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop&q=80"
-              alt="Community sharing"
+              alt={t('home.community_sharing_alt')}
               className="w-full h-full object-cover"
             />
           </div>
@@ -99,10 +102,10 @@ export default function Home() {
             </div>
             
             <h1 className="text-3xl font-bold mb-4 text-gray-800">
-              Pay It Forward
+              {t('home.pay_it_forward')}
             </h1>
             <p className="text-lg text-gray-600 mb-8 max-w-sm mx-auto leading-relaxed">
-              En plats där grannar hjälper grannar. Dela, ge och ta emot med hjärtat i centrum.
+              {t('home.hero_description')}
             </p>
           </div>
         </div>
@@ -118,20 +121,20 @@ export default function Home() {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-green-100 shadow-sm">
           <h3 className="text-center text-green-700 font-semibold mb-4 flex items-center justify-center space-x-2">
             <Users className="h-5 w-5" />
-            <span>Vår gemenskap växer</span>
+            <span>{t('home.community_growing')}</span>
           </h3>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-green-600">🤝</div>
-              <p className="text-xs text-gray-600 mt-1">Delade piffar</p>
+              <p className="text-xs text-gray-600 mt-1">{t('home.shared_pifs')}</p>
             </div>
             <div>
               <div className="text-2xl font-bold text-blue-600">🌱</div>
-              <p className="text-xs text-gray-600 mt-1">Hållbara val</p>
+              <p className="text-xs text-gray-600 mt-1">{t('home.sustainable_choices')}</p>
             </div>
             <div>
               <div className="text-2xl font-bold text-purple-600">♻️</div>
-              <p className="text-xs text-gray-600 mt-1">Cirkulär ekonomi</p>
+              <p className="text-xs text-gray-600 mt-1">{t('home.circular_economy')}</p>
             </div>
           </div>
         </div>
@@ -148,8 +151,8 @@ export default function Home() {
                 <Heart className="h-6 w-6" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-lg">Upptäck piffar</h3>
-                <p className="text-white/80 text-sm">Se vad som delas i ditt område</p>
+                <h3 className="font-semibold text-lg">{t('home.discover_pifs')}</h3>
+                <p className="text-white/80 text-sm">{t('home.discover_description')}</p>
               </div>
             </div>
             <ArrowRight className="h-5 w-5" />
@@ -163,8 +166,8 @@ export default function Home() {
             >
               <Gift className="h-6 w-6" />
               <div className="text-center">
-                <p className="font-medium">Piffa</p>
-                <p className="text-xs">Ge bort något</p>
+                <p className="font-medium">{t('post.offer_action')}</p>
+                <p className="text-xs">{t('home.give_away_something')}</p>
               </div>
             </Button>
             
@@ -174,8 +177,8 @@ export default function Home() {
             >
               <MapPin className="h-6 w-6" />
               <div className="text-center">
-                <p className="font-medium">Utforska</p>
-                <p className="text-xs">Hitta i din närhet</p>
+                <p className="font-medium">{t('home.explore')}</p>
+                <p className="text-xs">{t('home.find_nearby')}</p>
               </div>
             </Button>
           </div>
@@ -183,14 +186,14 @@ export default function Home() {
         
         {/* Mission Statement */}
         <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-700">Varför PIF?</h2>
+          <h2 className="text-xl font-semibold text-gray-700">{t('home.why_pif')}</h2>
           <div className="grid grid-cols-1 gap-4">
             <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
               <div className="flex items-start space-x-3">
                 <span className="text-green-600 text-lg">🌍</span>
                 <div className="text-left">
-                  <h3 className="font-medium text-green-700">Minska avfall</h3>
-                  <p className="text-sm text-gray-600">Ge saker nytt liv genom delning</p>
+                  <h3 className="font-medium text-green-700">{t('home.reduce_waste')}</h3>
+                  <p className="text-sm text-gray-600">{t('home.reduce_waste_description')}</p>
                 </div>
               </div>
             </div>
@@ -199,8 +202,8 @@ export default function Home() {
               <div className="flex items-start space-x-3">
                 <span className="text-blue-600 text-lg">🏘️</span>
                 <div className="text-left">
-                  <h3 className="font-medium text-blue-700">Bygg gemenskap</h3>
-                  <p className="text-sm text-gray-600">Skapa relationer med dina grannar</p>
+                  <h3 className="font-medium text-blue-700">{t('home.build_community')}</h3>
+                  <p className="text-sm text-gray-600">{t('home.build_community_description')}</p>
                 </div>
               </div>
             </div>
@@ -209,8 +212,8 @@ export default function Home() {
               <div className="flex items-start space-x-3">
                 <span className="text-purple-600 text-lg">💚</span>
                 <div className="text-left">
-                  <h3 className="font-medium text-purple-700">Hållbar framtid</h3>
-                  <p className="text-sm text-gray-600">En pif i taget</p>
+                  <h3 className="font-medium text-purple-700">{t('home.sustainable_future')}</h3>
+                  <p className="text-sm text-gray-600">{t('home.sustainable_future_description')}</p>
                 </div>
               </div>
             </div>

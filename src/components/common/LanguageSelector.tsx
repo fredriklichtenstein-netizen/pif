@@ -22,10 +22,13 @@ export function LanguageSelector() {
       await i18n.changeLanguage(lng);
       localStorage.setItem('language', lng);
       
-      // Force a complete re-render of the app
+      // Force re-render of components instead of full page reload
+      window.dispatchEvent(new CustomEvent('languageChanged', { detail: lng }));
+      
+      // Small delay to ensure state updates
       setTimeout(() => {
-        window.location.reload();
-      }, 200);
+        setIsChanging(false);
+      }, 300);
     } catch (error) {
       console.error('Failed to change language:', error);
       setIsChanging(false);
