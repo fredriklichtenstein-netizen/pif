@@ -1,4 +1,3 @@
-
 {
   "nav": {
     "home": "Home",
@@ -39,7 +38,7 @@
   "feed": {
     "title": "pif Community",
     "subtitle": "Sustainable sharing in your neighborhood", 
-    "offers_title": "pifs in the area",
+    "offers_title": "Pifs in the area",
     "offers_subtitle": "Items waiting for new owners",
     "requests_title": "Wishes in the area", 
     "requests_subtitle": "Items needed in your area",
@@ -95,7 +94,7 @@
     "password_min_length": "Password must be at least 6 characters"
   },
   "post": {
-    "create_offer": "pif something",
+    "create_offer": "Pif something",
     "create_request": "Request something", 
     "offer_subtitle": "Give away something you don't need",
     "request_subtitle": "Describe what you need and your search area",
@@ -106,7 +105,7 @@
     "step_location": "Location",
     "step_search_area": "Search area",
     "what_do_you_want": "What do you want to do?",
-    "offer_action": "pif",
+    "offer_action": "Pif",
     "offer_description": "Give away something you don't need",
     "request_action": "Request",
     "request_description": "Request something you need",
@@ -188,7 +187,7 @@
     "status_pending": "Pending",
     "status_selected": "Selected",
     "status_not_selected": "Not selected",
-    "piffed": "piffed"
+    "piffed": "Piffed"
   },
   "interactions": {
     "like": "Like",
