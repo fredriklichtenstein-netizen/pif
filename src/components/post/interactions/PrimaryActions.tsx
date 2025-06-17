@@ -2,6 +2,7 @@
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./button/ShareButton";
+import { useTranslation } from 'react-i18next';
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -44,6 +45,8 @@ export function PrimaryActions({
   fetchLikers,
   fetchInterestedUsers,
 }: PrimaryActionsProps) {
+  const { t } = useTranslation();
+  
   console.log("PrimaryActions rendering for item:", itemId, "with props:", { 
     isLiked, showComments, showInterest, likesCount, commentsCount, interestsCount 
   });
@@ -64,8 +67,8 @@ export function PrimaryActions({
           onClick={onLikeToggle}
           onCounterClick={fetchLikers}
           isOwner={isOwner}
-          labelPassive="Like"
-          labelActive="Liked"
+          labelPassive={t('interactions.like')}
+          labelActive={t('interactions.liked')}
           iconPassive="heart"
           iconActive="heart"
           itemId={itemId}
@@ -79,8 +82,8 @@ export function PrimaryActions({
           count={commentsCount}
           itemId={itemId}
           onClick={onCommentToggle}
-          labelPassive="Comment"
-          labelActive="Commented"
+          labelPassive={t('interactions.comment')}
+          labelActive={t('interactions.commented')}
           iconPassive="message-square"
           iconActive="message-square"
           isOwner={false}
@@ -104,8 +107,8 @@ export function PrimaryActions({
           onClick={onShowInterest}
           onCounterClick={fetchInterestedUsers}
           isOwner={isOwner}
-          labelPassive="Interest"
-          labelActive="Interested"
+          labelPassive={t('interactions.interest')}
+          labelActive={t('interactions.interested')}
           iconPassive="star"
           iconActive="star"
           itemId={itemId}

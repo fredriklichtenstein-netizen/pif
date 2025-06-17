@@ -115,14 +115,14 @@ export function FeedFilters({
       {showFilters && (
         <div className="bg-background border rounded-lg p-4 mb-4 shadow-sm">
           <div className="mb-2 flex justify-between items-center">
-            <h3 className="font-medium">Categories</h3>
+            <h3 className="font-medium">{t('ui.categories')}</h3>
             <Button 
               variant="link" 
               size="sm" 
               onClick={handleSelectAll}
               className="h-auto p-0"
             >
-              {allSelected ? t('feed.clear_filters') : "Select all"}
+              {allSelected ? t('feed.clear_filters') : t('feed.select_all')}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">

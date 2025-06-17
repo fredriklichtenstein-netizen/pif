@@ -21,7 +21,8 @@
     "my_pifs": "Mina PIFar",
     "archived": "Arkiverade",
     "interested": "Intresserad",
-    "filter": "Filter"
+    "filter": "Filter",
+    "select_all": "Välj alla"
   },
   "auth": {
     "sign_up_title": "Skapa konto",
@@ -131,6 +132,28 @@
     "try_again": "Försök igen",
     "local_mode": "Använder lokalt konversationsläge. Dina kommentarer sparas när anslutningen förbättras.",
     "no_live_updates": "Live-uppdateringar inte tillgängliga. Kommentarer kanske inte uppdateras automatiskt."
+  },
+  "ui": {
+    "categories": "Kategorier",
+    "empty_message": "Inget innehåll tillgängligt",
+    "anonymous": "Anonym",
+    "posted_by": "Postad av",
+    "archived": "Arkiverad",
+    "show_on_map": "Visa på karta",
+    "copy_link": "Kopiera länk",
+    "report": "Rapportera",
+    "edit_post": "Redigera inlägg",
+    "delete_post": "Ta bort inlägg"
+  },
+  "status": {
+    "loading": "Laddar...",
+    "error": "Fel",
+    "retry": "Försök igen",
+    "refresh": "Uppdatera",
+    "success": "Framgång",
+    "failed": "Misslyckades",
+    "pending": "Väntar",
+    "completed": "Slutförd"
   },
   "common": {
     "loading": "Laddar...",

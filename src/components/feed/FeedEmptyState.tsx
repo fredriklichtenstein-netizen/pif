@@ -18,13 +18,13 @@ export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: F
     
     switch (viewMode) {
       case "saved":
-        return "You haven't saved any items yet";
+        return t('profile.no_interests_description');
       case "myPifs":
-        return "You haven't posted any items yet";
+        return t('profile.no_pifs_description');
       case "archived":
-        return "You don't have any archived items yet";
+        return t('feed.empty_state');
       case "interested":
-        return "You haven't shown interest in any items yet";
+        return t('profile.no_interests_description');
       default:
         return t('feed.empty_state');
     }

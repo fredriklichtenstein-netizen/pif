@@ -21,7 +21,20 @@ i18n
     fallbackLng: 'sv',
     interpolation: {
       escapeValue: false
+    },
+    // Force re-render when language changes
+    react: {
+      useSuspense: false
     }
   });
+
+// Listen for language changes and force app refresh
+i18n.on('languageChanged', (lng) => {
+  localStorage.setItem('language', lng);
+  // Force a slight delay to ensure all components re-render
+  setTimeout(() => {
+    window.dispatchEvent(new Event('languageChanged'));
+  }, 100);
+});
 
 export default i18n;

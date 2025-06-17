@@ -21,7 +21,8 @@
     "my_pifs": "My PIFs",
     "archived": "Archived",
     "interested": "Interested",
-    "filter": "Filter"
+    "filter": "Filter",
+    "select_all": "Select all"
   },
   "auth": {
     "sign_up_title": "Create an account",
@@ -131,6 +132,28 @@
     "try_again": "Try Again",
     "local_mode": "Using local conversation mode. Your comments will be stored when connection improves.",
     "no_live_updates": "Live updates unavailable. Comments may not refresh automatically."
+  },
+  "ui": {
+    "categories": "Categories",
+    "empty_message": "No content available",
+    "anonymous": "Anonymous",
+    "posted_by": "Posted by",
+    "archived": "Archived",
+    "show_on_map": "Show on map",
+    "copy_link": "Copy link",
+    "report": "Report",
+    "edit_post": "Edit post",
+    "delete_post": "Delete post"
+  },
+  "status": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "success": "Success",
+    "failed": "Failed",
+    "pending": "Pending",
+    "completed": "Completed"
   },
   "common": {
     "loading": "Loading...",
