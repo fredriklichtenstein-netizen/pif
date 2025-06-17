@@ -3,6 +3,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { AddressInput } from "@/components/profile/address/AddressInput";
 import type { CreatePostInput } from "@/types/post";
+import { useTranslation } from 'react-i18next';
 
 interface PostFormLocationProps {
   formData: CreatePostInput;
@@ -15,18 +16,19 @@ export function PostFormLocation({
   setFormData,
   onAddressSelect,
 }: PostFormLocationProps) {
+  const { t } = useTranslation();
   const isRequest = formData.item_type === 'request';
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="text-lg font-semibold">
-          {isRequest ? "Sökområde" : "Plats"}
+          {isRequest ? t('post.step_search_area') : t('post.step_location')}
         </h3>
         <p className="text-sm text-muted-foreground">
           {isRequest 
-            ? "Ange var du söker efter varan"
-            : "Ange var varan kan hämtas"
+            ? t('post.search_area_placeholder')
+            : t('post.location_placeholder')
           }
         </p>
       </div>
@@ -34,7 +36,7 @@ export function PostFormLocation({
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="location">
-            {isRequest ? "Sökområde *" : "Plats *"}
+            {isRequest ? t('post.search_area_label') : t('post.location_label')} *
           </Label>
           <AddressInput
             value={formData.location}
@@ -54,19 +56,19 @@ export function PostFormLocation({
         {isRequest ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Ange ditt sökområde (inom 2 km från denna punkt söker du efter varan)
+              {t('post.search_area_description')}
             </p>
             <div className="text-sm text-blue-600 bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <strong>🔒 Integritetsskydd:</strong> Din exakta position kommer aldrig att delas. Andra användare ser endast ett ungefärligt område för att skydda din integritet.
+              <strong>🔒 {t('post.privacy_notice').split(':')[0]}:</strong> {t('post.privacy_notice').split(':')[1]}
             </div>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
-              <p><strong>💡 Tips:</strong> Ange en tydlig plats där intresserade kan hämta varan. Detta gör det lättare för dem att bedöma om de kan hämta.</p>
+              <p><strong>💡 {t('post.location_tip').split(':')[0]}:</strong> {t('post.location_tip').split(':')[1]}</p>
             </div>
             <div className="text-sm text-green-600 bg-green-50 p-4 rounded-lg border border-green-200">
-              <strong>🔒 Integritetsskydd:</strong> Din exakta adress kommer aldrig att delas offentligt. Andra användare ser endast ett ungefärligt område tills du väljer att dela mer detaljer privat.
+              <strong>🔒 {t('post.privacy_notice').split(':')[0]}:</strong> {t('post.privacy_notice').split(':')[1]}
             </div>
           </div>
         )}

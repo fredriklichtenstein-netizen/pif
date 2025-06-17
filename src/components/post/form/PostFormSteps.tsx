@@ -20,7 +20,7 @@ export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Step 1: Välj typ av PIF */}
+      {/* Step 1: Choose type of PIF */}
       <Card className="border-2 border-primary/20">
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold mb-4 text-center">{t('post.what_do_you_want')}</h3>
@@ -29,7 +29,7 @@ export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
             onValueChange={handleItemTypeChange}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
-            {/* Piffa (Erbjud) */}
+            {/* Offer */}
             <div className="flex items-center space-x-2 p-4 border-2 border-primary/30 rounded-lg hover:border-primary/60 transition-colors cursor-pointer">
               <RadioGroupItem value="offer" id="offer" />
               <Label htmlFor="offer" className="flex items-center space-x-3 cursor-pointer w-full">
@@ -43,7 +43,7 @@ export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
               </Label>
             </div>
 
-            {/* Önska (Efterfråga) */}
+            {/* Request */}
             <div className="flex items-center space-x-2 p-4 border-2 border-secondary/30 rounded-lg hover:border-secondary/60 transition-colors cursor-pointer">
               <RadioGroupItem value="request" id="request" />
               <Label htmlFor="request" className="flex items-center space-x-3 cursor-pointer w-full">

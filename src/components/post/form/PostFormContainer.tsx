@@ -10,6 +10,7 @@ import { PostFormNavigation } from "./PostFormNavigation";
 import { Card } from "@/components/ui/card";
 import { usePostFormValidation } from "@/hooks/post/usePostFormValidation";
 import { usePostFormNavigation } from "@/hooks/post/usePostFormNavigation";
+import { useTranslation } from 'react-i18next';
 
 interface PostFormContainerProps {
   formData: any;
@@ -36,13 +37,14 @@ export function PostFormContainer({
   onAddressSelect,
   isFormValid,
 }: PostFormContainerProps) {
+  const { t } = useTranslation();
   const isRequest = formData.item_type === 'request';
 
   const steps = [
-    { title: "Typ", component: "steps" },
-    { title: isRequest ? "Referensbild" : "Bilder", component: "images" },
-    { title: "Information", component: "information" },
-    { title: isRequest ? "Sökområde" : "Plats", component: "location" },
+    { title: t('post.step_type'), component: "steps" },
+    { title: isRequest ? t('post.step_reference_image') : t('post.step_images'), component: "images" },
+    { title: t('post.step_information'), component: "information" },
+    { title: isRequest ? t('post.step_search_area') : t('post.step_location'), component: "location" },
   ];
 
   // Initialize navigation first
@@ -128,8 +130,8 @@ export function PostFormContainer({
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
       <PostFormHeader 
-        title={isRequest ? 'Önska något' : 'Piffa något'}
-        subtitle={isRequest ? 'Beskriv vad du behöver och ditt sökområde' : 'Ge bort något du inte behöver'}
+        title={isRequest ? t('post.create_request') : t('post.create_offer')}
+        subtitle={isRequest ? t('post.request_subtitle') : t('post.offer_subtitle')}
       />
 
       <PostFormProgress steps={steps} currentStep={finalCurrentStep} />

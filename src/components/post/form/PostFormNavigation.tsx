@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface PostFormNavigationProps {
   currentStep: number;
@@ -23,6 +24,8 @@ export function PostFormNavigation({
   onPrevStep,
   onNextStep
 }: PostFormNavigationProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex justify-between">
       <Button
@@ -32,7 +35,7 @@ export function PostFormNavigation({
         disabled={currentStep === 0}
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Tillbaka
+        {t('post.previous')}
       </Button>
 
       {!isOnFinalStep ? (
@@ -41,7 +44,7 @@ export function PostFormNavigation({
           onClick={onNextStep}
           disabled={!canProceedNow}
         >
-          Nästa
+          {t('post.next')}
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       ) : (
@@ -50,7 +53,7 @@ export function PostFormNavigation({
           disabled={!isFormValid || isSubmitting}
           className="bg-primary hover:bg-primary/90"
         >
-          {isSubmitting ? 'Skapar...' : isRequest ? 'Skapa önskning' : 'Skapa PIF'}
+          {isSubmitting ? t('post.creating') : isRequest ? t('post.create_request_final') : t('post.create_offer_final')}
         </Button>
       )}
     </div>
