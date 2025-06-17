@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
 import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil } from "lucide-react";
@@ -47,6 +48,7 @@ export function ItemCardHeader({
 }: ItemCardHeaderProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const handleBookmarkClick = async () => {
@@ -126,7 +128,7 @@ export function ItemCardHeader({
               <>
                 <DropdownMenuItem onClick={handleEditClick}>
                   <Pencil className="mr-2 h-4 w-4" />
-                  Edit
+                  {t('ui.edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleLocalDeleteClick}
@@ -135,12 +137,12 @@ export function ItemCardHeader({
                   {isArchived ? (
                     <>
                       <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete Archived Item</span>
+                      <span>{t('ui.delete_archived_item')}</span>
                     </>
                   ) : (
                     <>
                       <Archive className="mr-2 h-4 w-4" />
-                      <span>Archive/Delete</span>
+                      <span>{t('ui.archive')}</span>
                     </>
                   )}
                 </DropdownMenuItem>
@@ -152,12 +154,12 @@ export function ItemCardHeader({
                     {isBookmarked ? (
                       <>
                         <BookmarkCheck className="mr-2 h-4 w-4" />
-                        <span>Unsave</span>
+                        <span>{t('ui.unsave')}</span>
                       </>
                     ) : (
                       <>
                         <BookmarkPlus className="mr-2 h-4 w-4" />
-                        <span>Save</span>
+                        <span>{t('ui.save')}</span>
                       </>
                     )}
                   </DropdownMenuItem>
@@ -166,7 +168,7 @@ export function ItemCardHeader({
                 {handleReport && (
                   <DropdownMenuItem onClick={handleReportClick} className="text-destructive">
                     <Flag className="mr-2 h-4 w-4" />
-                    <span>Report</span>
+                    <span>{t('ui.report')}</span>
                   </DropdownMenuItem>
                 )}
               </>
@@ -174,7 +176,7 @@ export function ItemCardHeader({
             
             {handleShare && (
               <DropdownMenuItem onClick={handleShare}>
-                <span>Share</span>
+                <span>{t('interactions.share')}</span>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

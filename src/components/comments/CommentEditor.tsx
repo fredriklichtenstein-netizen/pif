@@ -1,6 +1,7 @@
 
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { useTranslation } from 'react-i18next';
 
 interface CommentEditorProps {
   text: string;
@@ -15,6 +16,8 @@ export function CommentEditor({
   onSave,
   onCancel
 }: CommentEditorProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="mt-2 space-y-2">
       <Textarea
@@ -23,13 +26,13 @@ export function CommentEditor({
         className="min-h-[60px]"
       />
       <div className="flex gap-2">
-        <Button size="sm" onClick={onSave}>Save</Button>
+        <Button size="sm" onClick={onSave}>{t('comments.save')}</Button>
         <Button
           size="sm"
           variant="outline"
           onClick={onCancel}
         >
-          Cancel
+          {t('comments.cancel')}
         </Button>
       </div>
     </div>

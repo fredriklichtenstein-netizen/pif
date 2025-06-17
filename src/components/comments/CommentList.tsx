@@ -1,6 +1,7 @@
 
 import { Comment } from "@/types/comment";
 import { CommentCard } from "./CommentCard";
+import { useTranslation } from 'react-i18next';
 
 interface CommentListProps {
   comments: Comment[];
@@ -23,12 +24,14 @@ export function CommentList({
   onReply,
   onReport
 }: CommentListProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
-    return <div className="mt-4 py-4 text-center text-gray-500">Loading comments...</div>;
+    return <div className="mt-4 py-4 text-center text-gray-500">{t('comments.loading')}</div>;
   }
 
   if (comments.length === 0) {
-    return <div className="py-4 text-center text-gray-500">No comments yet. Be the first to comment!</div>;
+    return <div className="py-4 text-center text-gray-500">{t('comments.no_comments')}</div>;
   }
 
   return (

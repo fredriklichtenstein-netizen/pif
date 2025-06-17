@@ -7,6 +7,7 @@ import {
 } from "../ui/dropdown-menu";
 import { MoreHorizontal, Pencil, Trash2, Flag } from "lucide-react";
 import { Button } from "../ui/button";
+import { useTranslation } from 'react-i18next';
 
 interface CommentActionsProps {
   isCurrentUserAuthor: boolean;
@@ -21,6 +22,8 @@ export function CommentActions({
   onDelete, 
   onReport 
 }: CommentActionsProps) {
+  const { t } = useTranslation();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -33,18 +36,18 @@ export function CommentActions({
           <>
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
-              Edit
+              {t('comments.edit')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onDelete}>
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {t('comments.delete')}
             </DropdownMenuItem>
           </>
         )}
         {!isCurrentUserAuthor && (
           <DropdownMenuItem onClick={onReport}>
             <Flag className="mr-2 h-4 w-4" />
-            Report
+            {t('comments.report')}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

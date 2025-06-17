@@ -1,3 +1,4 @@
+
 {
   "nav": {
     "home": "Home",
@@ -150,7 +151,15 @@
     "error_loading": "Error loading comments",
     "try_again": "Try Again",
     "local_mode": "Using local conversation mode. Your comments will be stored when connection improves.",
-    "no_live_updates": "Live updates unavailable. Comments may not refresh automatically."
+    "no_live_updates": "Live updates unavailable. Comments may not refresh automatically.",
+    "loading": "Loading comments...",
+    "no_comments": "No comments yet. Be the first to comment!",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "report": "Report"
   },
   "ui": {
     "categories": "Categories",
@@ -162,7 +171,13 @@
     "copy_link": "Copy link",
     "report": "Report",
     "edit_post": "Edit post",
-    "delete_post": "Delete post"
+    "delete_post": "Delete post",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "unsave": "Unsave",
+    "archive": "Archive",
+    "delete_archived_item": "Delete Archived Item"
   },
   "status": {
     "loading": "Loading...",
@@ -196,7 +211,15 @@
     "back_online": "You're back online!",
     "condition": "Condition:",
     "size_measurements": "Size & Measurements",
-    "size": "Size:"
+    "size": "Size:",
+    "action_failed": "Action failed",
+    "unable_to_action": "Unable to perform action",
+    "failed_to_load_users": "Failed to load users",
+    "unable_to_load_list": "Unable to load the list of users",
+    "no_likes_yet": "No likes yet",
+    "comment_singular": "comment",
+    "comment_plural": "comments",
+    "interested_users": "interested"
   },
   "language": {
     "swedish": "Svenska", 

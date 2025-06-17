@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from 'react-i18next';
 import { InteractionIcon } from "./button/InteractionIcon";
 import { CounterButton } from "./button/CounterButton";
 import type { User } from "@/hooks/item/useItemInteractions";
@@ -40,6 +41,7 @@ export function InteractionButtonWithPopup({
   const [loading, setLoading] = useState(false);
   const [popupUsers, setPopupUsers] = useState<User[]>(users);
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const ACTIVE_COLOR = "#00D1A0";
   const PASSIVE_COLOR = "#333333";
@@ -59,8 +61,8 @@ export function InteractionButtonWithPopup({
     } catch (error) {
       console.error(`${type} action failed:`, error);
       toast({
-        title: "Action failed",
-        description: error instanceof Error ? error.message : `Unable to ${type} this item`,
+        title: t('common.action_failed'),
+        description: error instanceof Error ? error.message : t('common.unable_to_action'),
         variant: "destructive",
       });
     }
@@ -80,8 +82,8 @@ export function InteractionButtonWithPopup({
       } catch (error) {
         console.error(`Error fetching ${type} users:`, error);
         toast({
-          title: "Failed to load users",
-          description: "Unable to load the list of users",
+          title: t('common.failed_to_load_users'),
+          description: t('common.unable_to_load_list'),
           variant: "destructive",
         });
         return [];

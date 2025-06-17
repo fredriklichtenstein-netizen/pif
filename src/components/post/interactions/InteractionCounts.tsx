@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InteractionsList } from "./InteractionsList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTranslation } from 'react-i18next';
 import type { User } from "@/hooks/item/useItemInteractions";
 import { useState, useEffect } from "react";
 
@@ -32,6 +33,7 @@ export function InteractionCounts({
 }: InteractionCountsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+  const { t } = useTranslation();
   
   // Trigger interested users fetch when dialog opens
   useEffect(() => {
@@ -80,7 +82,7 @@ export function InteractionCounts({
                   </div>
                 ))
               ) : (
-                <div className="text-center py-2 text-gray-500">No likes yet</div>
+                <div className="text-center py-2 text-gray-500">{t('common.no_likes_yet')}</div>
               )}
             </div>
           </PopoverContent>
@@ -90,7 +92,7 @@ export function InteractionCounts({
       <div className="ml-auto flex gap-1"> 
         {commentsCount > 0 && (
           <button onClick={onCommentToggle} className="hover:underline">
-            {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}
+            {commentsCount} {commentsCount === 1 ? t('common.comment_singular') : t('common.comment_plural')}
           </button>
         )}
         
@@ -98,12 +100,12 @@ export function InteractionCounts({
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <button className="hover:underline">
-                {actualInterestCount} interested
+                {actualInterestCount} {t('common.interested_users')}
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>People Interested</DialogTitle>
+                <DialogTitle>{t('common.interested_users')}</DialogTitle>
               </DialogHeader>
               <InteractionsList 
                 interested={interestedUsers} 

@@ -1,5 +1,6 @@
 
 import { ThumbsUp, Reply } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface CommentInteractionsProps {
   likes: number;
@@ -18,6 +19,8 @@ export function CommentInteractions({
   maxReplyLevel,
   level
 }: CommentInteractionsProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center gap-4 mt-2">
       <button
@@ -35,7 +38,7 @@ export function CommentInteractions({
           className="text-sm flex items-center gap-1 text-gray-500"
         >
           <Reply size={14} />
-          Reply
+          {t('comments.reply')}
         </button>
       )}
     </div>

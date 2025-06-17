@@ -1,3 +1,4 @@
+
 {
   "nav": {
     "home": "Hem",
@@ -150,7 +151,15 @@
     "error_loading": "Fel vid laddning av kommentarer",
     "try_again": "Försök igen",
     "local_mode": "Använder lokalt konversationsläge. Dina kommentarer sparas när anslutningen förbättras.",
-    "no_live_updates": "Live-uppdateringar inte tillgängliga. Kommentarer kanske inte uppdateras automatiskt."
+    "no_live_updates": "Live-uppdateringar inte tillgängliga. Kommentarer kanske inte uppdateras automatiskt.",
+    "loading": "Laddar kommentarer...",
+    "no_comments": "Inga kommentarer än. Bli den första att kommentera!",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "reply": "Svara",
+    "edit": "Redigera",
+    "delete": "Ta bort",
+    "report": "Rapportera"
   },
   "ui": {
     "categories": "Kategorier",
@@ -162,7 +171,13 @@
     "copy_link": "Kopiera länk",
     "report": "Rapportera",
     "edit_post": "Redigera inlägg",
-    "delete_post": "Ta bort inlägg"
+    "delete_post": "Ta bort inlägg",
+    "edit": "Redigera",
+    "delete": "Ta bort",
+    "save": "Spara",
+    "unsave": "Ta bort från sparade",
+    "archive": "Arkivera",
+    "delete_archived_item": "Ta bort arkiverat objekt"
   },
   "status": {
     "loading": "Laddar...",
@@ -196,7 +211,15 @@
     "back_online": "Du är online igen!",
     "condition": "Skick:",
     "size_measurements": "Storlek & Mått",
-    "size": "Storlek:"
+    "size": "Storlek:",
+    "action_failed": "Åtgärd misslyckades",
+    "unable_to_action": "Kunde inte utföra åtgärd",
+    "failed_to_load_users": "Misslyckades att ladda användare",
+    "unable_to_load_list": "Kunde inte ladda lista över användare",
+    "no_likes_yet": "Inga gillningar än",
+    "comment_singular": "kommentar",
+    "comment_plural": "kommentarer",
+    "interested_users": "intresserade"
   },
   "language": {
     "swedish": "Svenska",

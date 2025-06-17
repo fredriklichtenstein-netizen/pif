@@ -1,8 +1,8 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Avatar } from '@/components/ui/avatar';
-import type { User } from '@/hooks/item/useItemInteractions';
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTranslation } from 'react-i18next';
+import type { User } from "@/hooks/item/useItemInteractions";
 
 interface UserPopoverContentProps {
   type: "like" | "interest";
@@ -11,49 +11,58 @@ interface UserPopoverContentProps {
   setShowPopup: (show: boolean) => void;
 }
 
-export function UserPopoverContent({ type, users, loading, setShowPopup }: UserPopoverContentProps) {
-  const navigate = useNavigate();
-  
-  const handleUserClick = (userId: string) => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/profile/${userId}`);
-    setShowPopup(false);
-  };
+export function UserPopoverContent({ 
+  type, 
+  users, 
+  loading, 
+  setShowPopup 
+}: UserPopoverContentProps) {
+  const { t } = useTranslation();
 
-  const renderUserRow = (user: User) => {
-    const truncated = user.name.split(" ");
-    const display = truncated.length > 1 
-      ? `${truncated[0]} ${truncated[1].charAt(0).toUpperCase()}` 
-      : user.name;
-    
+  if (loading) {
     return (
-      <button 
-        key={user.id} 
-        className="flex gap-2 items-center w-full py-1 px-2 hover:bg-accent rounded cursor-pointer" 
-        onClick={handleUserClick(user.id)}
-      >
-        <Avatar className="h-6 w-6">
-          <img src={user.avatar} alt={user.name} />
-        </Avatar>
-        <span className="text-sm">{display}</span>
-      </button>
+      <div className="p-4 text-center">
+        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+        <p className="text-sm text-gray-600">{t('status.loading')}</p>
+      </div>
     );
-  };
+  }
 
   return (
-    <>
-      <div className="font-medium text-base mb-2">
-        {type === "like" ? "Liked by" : "Interested"}
+    <div className="max-h-[300px] overflow-y-auto">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-semibold text-sm">
+          {type === "like" ? t('interactions.liked') : t('common.interested_users')}
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowPopup(false)}
+          className="h-6 w-6 p-0"
+        >
+          ×
+        </Button>
       </div>
-      {loading ? (
-        <div className="text-sm text-gray-400 py-2">Loading...</div>
-      ) : users.length > 0 ? (
-        <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
-          {users.map(renderUserRow)}
+      
+      {users.length === 0 ? (
+        <div className="text-center py-4 text-gray-500 text-sm">
+          {type === "like" ? t('common.no_likes_yet') : t('profile.no_interest_yet')}
         </div>
       ) : (
-        <div className="text-center text-gray-400 py-2">No users yet</div>
+        <div className="space-y-2">
+          {users.map((user) => (
+            <div key={user.id} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback>
+                  {user.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium">{user.name}</span>
+            </div>
+          ))}
+        </div>
       )}
-    </>
+    </div>
   );
 }

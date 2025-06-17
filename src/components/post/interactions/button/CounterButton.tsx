@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UserPopoverContent } from './UserPopoverContent';
 import type { User } from '@/hooks/item/useItemInteractions';
@@ -31,6 +32,7 @@ export function CounterButton({
   onCounterClick,
   isInteractive
 }: CounterButtonProps) {
+  const { t } = useTranslation();
   
   if (!isInteractive) {
     return (
@@ -39,7 +41,7 @@ export function CounterButton({
         style={{
           color: isActive ? activeColor : passiveColor
         }}
-        aria-label={`${count} ${type === "like" ? "likes" : "interests"}`}
+        aria-label={`${count} ${type === "like" ? t('interactions.like') : t('interactions.interest')}`}
       >
         {count}
       </span>
@@ -67,7 +69,7 @@ export function CounterButton({
             cursor: "pointer",
             background: "none"
           }}
-          aria-label={`${count} ${type === "like" ? "likes" : "interests"}`}
+          aria-label={`${count} ${type === "like" ? t('interactions.like') : t('interactions.interest')}`}
           tabIndex={-1}
           type="button"
         >

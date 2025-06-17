@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface AuthButtonFooterProps {
   isSignUp: boolean;
@@ -16,9 +17,11 @@ export function AuthButtonFooter({
   onToggleMode,
   disabled
 }: AuthButtonFooterProps) {
+  const { t } = useTranslation();
+  
   const buttonText = isLoading 
-    ? "Processing..." 
-    : (isSignUp ? "Create account" : "Sign in");
+    ? t('auth.processing')
+    : (isSignUp ? t('auth.create_account') : t('auth.sign_in'));
 
   return (
     <>
@@ -48,8 +51,8 @@ export function AuthButtonFooter({
           disabled={disabled}
         >
           {isSignUp
-            ? "Already have an account? Sign in"
-            : "Need an account? Sign up"}
+            ? t('auth.already_have_account')
+            : t('auth.need_account')}
         </Button>
       </div>
     </>
