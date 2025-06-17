@@ -1,4 +1,3 @@
-
 {
   "nav": {
     "home": "Home",
@@ -23,6 +22,26 @@
     "interested": "Interested",
     "filter": "Filter",
     "select_all": "Select all"
+  },
+  "categories": {
+    "electronics": "Electronics",
+    "furniture": "Furniture",
+    "clothing": "Clothing",
+    "books": "Books",
+    "sports": "Sports",
+    "toys": "Toys",
+    "home_garden": "Home & Garden",
+    "vehicles": "Vehicles",
+    "music": "Music",
+    "other": "Other"
+  },
+  "conditions": {
+    "new": "New",
+    "like_new": "Like New",
+    "very_good": "Very Good",
+    "good": "Good",
+    "acceptable": "Acceptable",
+    "poor": "Poor"
   },
   "auth": {
     "sign_up_title": "Create an account",
@@ -153,7 +172,10 @@
     "success": "Success",
     "failed": "Failed",
     "pending": "Pending",
-    "completed": "Completed"
+    "completed": "Completed",
+    "location_unknown": "Location unknown",
+    "location_access_needed": "Enable location to see distance",
+    "location_not_supported": "Location not supported"
   },
   "common": {
     "loading": "Loading...",

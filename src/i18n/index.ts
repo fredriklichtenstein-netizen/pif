@@ -13,11 +13,32 @@ const resources = {
   }
 };
 
+// Detect browser language with fallback
+const detectLanguage = (): string => {
+  // Check localStorage first
+  const storedLang = localStorage.getItem('language');
+  if (storedLang && ['sv', 'en'].includes(storedLang)) {
+    return storedLang;
+  }
+  
+  // Check browser language
+  const browserLang = navigator.language.toLowerCase();
+  if (browserLang.startsWith('sv')) {
+    return 'sv';
+  }
+  if (browserLang.startsWith('en')) {
+    return 'en';
+  }
+  
+  // Default fallback
+  return 'sv';
+};
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: localStorage.getItem('language') || 'sv', // Default to Swedish
+    lng: detectLanguage(),
     fallbackLng: 'sv',
     interpolation: {
       escapeValue: false

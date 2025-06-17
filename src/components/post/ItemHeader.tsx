@@ -1,10 +1,13 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { ItemMetadata } from "./card/ItemMetadata";
 import { ItemContent } from "./card/ItemContent";
 import { PosterInfo } from "./card/PosterInfo";
 import { ItemMeasurements } from "./card/ItemMeasurements";
 import { calculateDistance, formatDistance } from "@/utils/distance";
+import { useCategoryTranslations } from '@/utils/translations/categories';
 
 interface ItemHeaderProps {
   category: string;
@@ -18,7 +21,7 @@ interface ItemHeaderProps {
   description: string;
   postedBy: {
     name: string;
-    avatar?: string; // Changed from required to optional
+    avatar?: string;
   };
   measurements?: Record<string, string>;
 }
@@ -34,14 +37,16 @@ export function ItemHeader({
   measurements = {},
 }: ItemHeaderProps) {
   const navigate = useNavigate();
-  const [distanceText, setDistanceText] = useState<string>(coordinates ? "Calculating..." : "Location unknown");
+  const { t } = useTranslation();
+  const { translateCategory } = useCategoryTranslations();
+  const [distanceText, setDistanceText] = useState<string>(coordinates ? t('common.loading') : t('status.location_unknown'));
   
   useEffect(() => {
     let isMounted = true;
 
     const updateDistance = () => {
       if (!coordinates) {
-        if (isMounted) setDistanceText("Location unknown");
+        if (isMounted) setDistanceText(t('status.location_unknown'));
         return;
       }
 
@@ -72,7 +77,7 @@ export function ItemHeader({
           (error) => {
             console.error("Error getting location:", error);
             if (isMounted) {
-              setDistanceText("Enable location to see distance");
+              setDistanceText(t('status.location_access_needed'));
             }
           },
           // Add options to improve geolocation responsiveness
@@ -84,7 +89,7 @@ export function ItemHeader({
         );
       } else {
         if (isMounted) {
-          setDistanceText("Location not supported");
+          setDistanceText(t('status.location_not_supported'));
         }
       }
     };
@@ -95,7 +100,7 @@ export function ItemHeader({
     return () => {
       isMounted = false;
     };
-  }, [coordinates, location]);
+  }, [coordinates, location, t]);
 
   const handleLocationClick = () => {
     navigate(`/map?location=${encodeURIComponent(location)}`);
@@ -104,7 +109,7 @@ export function ItemHeader({
   return (
     <div className="space-y-3">
       <ItemMetadata 
-        category={category}
+        category={translateCategory(category)}
         condition={condition}
         location={location}
         distanceText={distanceText}

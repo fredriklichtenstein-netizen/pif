@@ -1,4 +1,3 @@
-
 {
   "nav": {
     "home": "Hem",
@@ -23,6 +22,26 @@
     "interested": "Intresserad",
     "filter": "Filter",
     "select_all": "Välj alla"
+  },
+  "categories": {
+    "electronics": "Elektronik",
+    "furniture": "Möbler",
+    "clothing": "Kläder",
+    "books": "Böcker",
+    "sports": "Sport",
+    "toys": "Leksaker",
+    "home_garden": "Hem & Trädgård",
+    "vehicles": "Fordon",
+    "music": "Musik",
+    "other": "Övrigt"
+  },
+  "conditions": {
+    "new": "Nytt",
+    "like_new": "Som nytt",
+    "very_good": "Mycket bra",
+    "good": "Bra",
+    "acceptable": "Acceptabelt",
+    "poor": "Dåligt"
   },
   "auth": {
     "sign_up_title": "Skapa konto",
@@ -153,7 +172,10 @@
     "success": "Framgång",
     "failed": "Misslyckades",
     "pending": "Väntar",
-    "completed": "Slutförd"
+    "completed": "Slutförd",
+    "location_unknown": "Plats okänd",
+    "location_access_needed": "Aktivera platsåtkomst för att se avstånd",
+    "location_not_supported": "Platsdetektering stöds inte"
   },
   "common": {
     "loading": "Laddar...",
