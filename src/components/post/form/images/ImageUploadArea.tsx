@@ -1,8 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Upload, Camera, Image } from "lucide-react";
+import { Upload, Image as ImageIcon } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface ImageUploadAreaProps {
   isRequest: boolean;
@@ -27,63 +27,55 @@ export function ImageUploadArea({
   onImageUpload,
   fileInputRef,
 }: ImageUploadAreaProps) {
-  const getPlaceholder = () => {
-    if (isRequest) {
-      return "Lägg till referensbild som visar vad du söker";
-    }
-    return "Lägg till bilder på varan";
-  };
+  const { t } = useTranslation();
 
   if (!canAddMoreImages) {
     return null;
   }
 
   return (
-    <Card 
-      className={`p-6 border-2 border-dashed transition-colors cursor-pointer ${
+    <div
+      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
         isDragOver 
-          ? 'border-primary bg-primary/5' 
-          : 'border-muted-foreground/25 hover:border-primary/50'
+          ? "border-primary bg-primary/5" 
+          : "border-muted-foreground/25 hover:border-primary/50"
       }`}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      onClick={onClick}
     >
-      <div className="flex flex-col items-center justify-center text-center space-y-4">
-        <div className="bg-muted/50 p-4 rounded-full">
-          {isRequest ? (
-            <Image className="h-8 w-8 text-muted-foreground" />
-          ) : (
-            <Camera className="h-8 w-8 text-muted-foreground" />
-          )}
+      <div className="flex flex-col items-center space-y-4">
+        <div className="p-4 bg-muted rounded-full">
+          <ImageIcon className="h-8 w-8 text-muted-foreground" />
         </div>
         
         <div className="space-y-2">
-          <h3 className="font-medium text-foreground">
-            {getPlaceholder()}
+          <h3 className="font-medium">
+            {isRequest ? t('post.add_reference_image') : t('post.drag_drop_image')}
           </h3>
           <p className="text-sm text-muted-foreground">
-            Dra och släpp en bild här eller klicka för att välja
-          </p>
-          <p className="text-xs text-muted-foreground">
-            PNG, JPG eller WEBP (max 10MB)
+            {t('post.png_jpg_webp')}
           </p>
         </div>
 
-        <Button type="button" variant="outline" className="mt-2">
-          <Upload className="h-4 w-4 mr-2" />
-          Välj bild
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onClick}
+          className="flex items-center space-x-2"
+        >
+          <Upload className="h-4 w-4" />
+          <span>{t('post.choose_image')}</span>
         </Button>
-      </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={onImageUpload}
-        className="hidden"
-      />
-    </Card>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={onImageUpload}
+          className="hidden"
+        />
+      </div>
+    </div>
   );
 }

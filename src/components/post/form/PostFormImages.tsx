@@ -5,6 +5,7 @@ import { ImageUploadArea } from "./images/ImageUploadArea";
 import { ImagePreviewList } from "./images/ImagePreviewList";
 import { ImageFormTips } from "./images/ImageFormTips";
 import { useImageDragAndDrop } from "./images/useImageDragAndDrop";
+import { useTranslation } from 'react-i18next';
 
 interface PostFormImagesProps {
   images: string[];
@@ -21,6 +22,7 @@ export function PostFormImages({
   onImagesChange,
   itemType = 'offer',
 }: PostFormImagesProps) {
+  const { t } = useTranslation();
   const isRequest = itemType === 'request';
   
   const {
@@ -48,14 +50,14 @@ export function PostFormImages({
   });
 
   const getTitle = () => {
-    return isRequest ? "Referensbild" : "Bilder";
+    return isRequest ? t('post.step_reference_image') : t('post.step_images');
   };
 
   const getDescription = () => {
     if (isRequest) {
-      return "Ladda upp en bild som visar vad du söker eller något liknande för att hjälpa andra förstå din önskning bättre.";
+      return t('post.reference_image_description');
     }
-    return "Ladda upp bilder på varan du vill piffa. Första bilden visas i flödet.";
+    return t('post.images_description');
   };
 
   const canAddMoreImages = !isRequest || images.length === 0;
@@ -101,7 +103,7 @@ export function PostFormImages({
       {isAnalyzing && (
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-          <span>Analyserar bild...</span>
+          <span>{t('post.analyzing_image')}</span>
         </div>
       )}
     </div>
