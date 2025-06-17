@@ -6,6 +6,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import PostForm from "@/components/post/PostForm";
 import { MainNav } from "@/components/MainNav";
+import { MainHeader } from "@/components/layout/MainHeader";
 
 function PostEdit() {
   const { id } = useParams<{ id: string }>();
@@ -57,32 +58,40 @@ function PostEdit() {
 
   if (loading) {
     return (
-      <div className="container max-w-2xl mx-auto py-8 px-4 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex flex-col">
+        <MainHeader />
+        <div className="container max-w-2xl mx-auto py-8 px-4 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container max-w-2xl mx-auto py-8 px-4">
-        <Card className="p-8 flex flex-col items-center">
-          <AlertCircle className="text-destructive h-10 w-10 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Error</h2>
-          <p className="text-gray-600">{error}</p>
-        </Card>
+      <div className="min-h-screen flex flex-col">
+        <MainHeader />
+        <div className="container max-w-2xl mx-auto py-8 px-4">
+          <Card className="p-8 flex flex-col items-center">
+            <AlertCircle className="text-destructive h-10 w-10 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Error</h2>
+            <p className="text-gray-600">{error}</p>
+          </Card>
+        </div>
+        <MainNav />
       </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
+      <MainHeader />
       <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
         <h1 className="text-2xl font-bold mb-6">Edit PIF</h1>
         <PostForm initialData={item} />
       </div>
       <MainNav />
-    </>
+    </div>
   );
 }
 

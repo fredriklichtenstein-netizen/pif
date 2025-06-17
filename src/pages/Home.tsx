@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
 import { useNavigate } from "react-router-dom";
 import { MainNav } from "@/components/MainNav";
+import { MainHeader } from "@/components/layout/MainHeader";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { isNetworkError } from "@/utils/connectionRetryUtils";
 import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin, Gift } from "lucide-react";
@@ -73,6 +73,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-blue-50">
+      <MainHeader />
       <div className="container max-w-md mx-auto px-4 pb-20">
         {/* Network status banner */}
         <NetworkStatus onRetry={handleRetry} />
