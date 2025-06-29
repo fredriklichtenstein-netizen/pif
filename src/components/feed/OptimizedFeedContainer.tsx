@@ -1,88 +1,56 @@
 
-import React, { memo, useCallback } from 'react';
+import { useState } from 'react';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
+import { FeedItemList } from './FeedItemList';
+import { FeedLoadingState } from './FeedLoadingState';
+import { FeedErrorState } from './FeedErrorState';
+import { FeedEmptyState } from './FeedEmptyState';
+import { RealtimeIndicator } from './RealtimeIndicator';
+import { PerformanceMonitor } from '@/components/debug/PerformanceMonitor';
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
-import { OptimizedList } from '@/components/ui/optimized-list';
-import { FeedItemCard } from './FeedItemCard';
-import { Loader2 } from 'lucide-react';
-import { CardSkeleton } from '@/components/ui/skeleton';
 
-const OptimizedFeedContainer = memo(function OptimizedFeedContainer() {
+export function OptimizedFeedContainer() {
+  const { posts, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
-  
-  const { 
-    posts, 
-    isLoading, 
-    isLoadingMore, 
-    hasMore, 
-    loadMore, 
-    refresh 
-  } = useOptimizedFeed();
 
-  const renderItem = useCallback((post: any, index: number) => (
-    <FeedItemCard key={post.id} post={post} />
-  ), []);
+  const handleRefresh = async () => {
+    await measureFetch(refresh);
+  };
 
-  const keyExtractor = useCallback((post: any, index: number) => post.id, []);
+  const handleLoadMore = async () => {
+    await measureFetch(loadMore);
+  };
 
-  const handleEndReached = useCallback(() => {
-    if (hasMore && !isLoadingMore) {
-      measureFetch(loadMore);
-    }
-  }, [hasMore, isLoadingMore, loadMore, measureFetch]);
-
-  const handleRefresh = useCallback(() => {
-    measureFetch(refresh);
-  }, [refresh, measureFetch]);
+  const handlePostUpdate = (updatedPosts: any[]) => {
+    // Handle real-time post updates
+    console.log('Posts updated via real-time:', updatedPosts.length);
+  };
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
-      </div>
-    );
+    return <FeedLoadingState />;
   }
 
-  if (!posts.length) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">No posts available</p>
-        <button 
-          onClick={handleRefresh}
-          className="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-        >
-          Refresh
-        </button>
-      </div>
-    );
+  if (error) {
+    return <FeedErrorState onRetry={handleRefresh} />;
+  }
+
+  if (posts.length === 0) {
+    return <FeedEmptyState />;
   }
 
   return (
     <div className="space-y-4">
-      <OptimizedList
-        items={posts}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReached={handleEndReached}
-        containerHeight={window.innerHeight - 200}
-        itemHeight={400}
+      <RealtimeIndicator posts={posts} onPostUpdate={handlePostUpdate} />
+      
+      <FeedItemList
+        posts={posts}
+        isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
+        onLoadMore={handleLoadMore}
+        onRefresh={handleRefresh}
       />
       
-      {isLoadingMore && (
-        <div className="flex justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </div>
-      )}
-      
-      {!hasMore && posts.length > 0 && (
-        <div className="text-center py-4 text-gray-500">
-          No more posts to load
-        </div>
-      )}
+      <PerformanceMonitor />
     </div>
   );
-});
-
-export { OptimizedFeedContainer };
+}
