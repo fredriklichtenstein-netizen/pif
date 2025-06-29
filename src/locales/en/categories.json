@@ -1,0 +1,25 @@
+
+{
+  "categories": {
+    "electronics": "Electronics",
+    "furniture": "Furniture",
+    "clothing": "Clothing",
+    "books": "Books",
+    "sports": "Sports",
+    "toys": "Toys",
+    "home_garden": "Home & Garden",
+    "vehicles": "Vehicles",
+    "music": "Music",
+    "kitchen": "Kitchen",
+    "garden": "Garden",
+    "other": "Other"
+  },
+  "conditions": {
+    "new": "New",
+    "like_new": "Like New",
+    "very_good": "Very Good",
+    "good": "Good",
+    "acceptable": "Acceptable",
+    "poor": "Poor"
+  }
+}

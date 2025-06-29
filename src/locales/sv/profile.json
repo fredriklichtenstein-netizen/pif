@@ -1,0 +1,24 @@
+
+{
+  "profile": {
+    "my_pifs": "Mina Piffar",
+    "my_interests": "Mina intressen",
+    "interests_in_my_pifs": "Intresse för mina Piffar",
+    "no_pifs_title": "Inga Piffar än",
+    "no_pifs_description": "Du har inte piffat något än.",
+    "no_interests_title": "Inga intressen än", 
+    "no_interests_description": "Du har inte visat intresse för några Piffar än.",
+    "loading_pifs": "Laddar dina Piffar...",
+    "loading_interests": "Laddar...",
+    "edit": "Redigera",
+    "delete": "Ta bort",
+    "deleting": "Tar bort...",
+    "mark_as_piffed": "Markera som piffad",
+    "users_interested": "användare har visat intresse",
+    "no_interest_yet": "Inget intresse än.",
+    "status_pending": "Väntar",
+    "status_selected": "Vald", 
+    "status_not_selected": "Inte vald",
+    "piffed": "Piffad"
+  }
+}

@@ -1,0 +1,37 @@
+
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete", 
+    "edit": "Edit",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No",
+    "online": "Online",
+    "offline": "Offline",
+    "connection_restored": "Connection restored",
+    "back_online": "You're back online!",
+    "condition": "Condition:",
+    "size_measurements": "Size & Measurements",
+    "size": "Size:",
+    "action_failed": "Action failed",
+    "unable_to_action": "Unable to perform action",
+    "failed_to_load_users": "Failed to load users",
+    "unable_to_load_list": "Unable to load the list of users",
+    "no_likes_yet": "No likes yet",
+    "comment_singular": "comment",
+    "comment_plural": "comments",
+    "interested_users": "interested",
+    "width": "Width",
+    "height": "Height",
+    "length": "Length", 
+    "depth": "Depth",
+    "weight": "Weight"
+  }
+}

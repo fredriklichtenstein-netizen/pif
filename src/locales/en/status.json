@@ -1,0 +1,16 @@
+
+{
+  "status": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "success": "Success",
+    "failed": "Failed",
+    "pending": "Pending",
+    "completed": "Completed",
+    "location_unknown": "Location unknown",
+    "location_access_needed": "Enable location to see distance",
+    "location_not_supported": "Location not supported"
+  }
+}

@@ -1,0 +1,25 @@
+
+{
+  "categories": {
+    "electronics": "Elektronik",
+    "furniture": "Möbler",
+    "clothing": "Kläder",
+    "books": "Böcker",
+    "sports": "Sport",
+    "toys": "Leksaker",
+    "home_garden": "Hem & Trädgård",
+    "vehicles": "Fordon",
+    "music": "Musik",
+    "kitchen": "Kök",
+    "garden": "Trädgård",
+    "other": "Övrigt"
+  },
+  "conditions": {
+    "new": "Nytt",
+    "like_new": "Som nytt",
+    "very_good": "Mycket bra",
+    "good": "Bra",
+    "acceptable": "Acceptabelt",
+    "poor": "Dåligt"
+  }
+}

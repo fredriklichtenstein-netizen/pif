@@ -1,0 +1,37 @@
+
+{
+  "common": {
+    "loading": "Laddar...",
+    "error": "Fel",
+    "retry": "Försök igen",
+    "refresh": "Uppdatera",
+    "close": "Stäng",
+    "cancel": "Avbryt",
+    "save": "Spara",
+    "delete": "Ta bort",
+    "edit": "Redigera",
+    "ok": "OK",
+    "yes": "Ja",
+    "no": "Nej",
+    "online": "Online",
+    "offline": "Offline",
+    "connection_restored": "Anslutning återställd",
+    "back_online": "Du är online igen!",
+    "condition": "Skick:",
+    "size_measurements": "Storlek & Mått",
+    "size": "Storlek:",
+    "action_failed": "Åtgärd misslyckades",
+    "unable_to_action": "Kunde inte utföra åtgärd",
+    "failed_to_load_users": "Misslyckades att ladda användare",
+    "unable_to_load_list": "Kunde inte ladda lista över användare",
+    "no_likes_yet": "Inga gillningar än",
+    "comment_singular": "kommentar",
+    "comment_plural": "kommentarer",
+    "interested_users": "intresserade",
+    "width": "Bredd",
+    "height": "Höjd", 
+    "length": "Längd",
+    "depth": "Djup",
+    "weight": "Vikt"
+  }
+}

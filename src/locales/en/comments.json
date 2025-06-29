@@ -1,0 +1,20 @@
+
+{
+  "comments": {
+    "title": "Comments",
+    "live": "Live",
+    "connection_issue": "Connection Issue",
+    "error_loading": "Error loading comments",
+    "try_again": "Try Again",
+    "local_mode": "Using local conversation mode. Your comments will be stored when connection improves.",
+    "no_live_updates": "Live updates unavailable. Comments may not refresh automatically.",
+    "loading": "Loading comments...",
+    "no_comments": "No comments yet. Be the first to comment!",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "report": "Report"
+  }
+}

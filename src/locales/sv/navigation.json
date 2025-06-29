@@ -1,0 +1,14 @@
+
+{
+  "nav": {
+    "home": "Hem",
+    "map": "Karta",
+    "post": "Piffa",
+    "messages": "Meddelanden", 
+    "profile": "Profil",
+    "pifs": "PIFfar",
+    "sign_in": "Logga in",
+    "auth_required": "Autentisering krävs",
+    "sign_in_required": "Vänligen logga in för att komma åt denna funktion"
+  }
+}

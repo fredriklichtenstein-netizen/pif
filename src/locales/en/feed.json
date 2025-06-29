@@ -1,0 +1,20 @@
+
+{
+  "feed": {
+    "title": "PIF Community",
+    "subtitle": "Sustainable sharing in your neighborhood", 
+    "offers_title": "Pifs in the area",
+    "offers_subtitle": "Items waiting for new owners",
+    "requests_title": "Wishes in the area", 
+    "requests_subtitle": "Items needed in your area",
+    "empty_state": "No items found",
+    "clear_filters": "Clear filters",
+    "all_pifs": "All Pifs",
+    "saved": "Saved",
+    "my_pifs": "My Pifs",
+    "archived": "Archived",
+    "interested": "Interested",
+    "filter": "Filter",
+    "select_all": "Select all"
+  }
+}

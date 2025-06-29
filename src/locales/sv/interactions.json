@@ -1,0 +1,17 @@
+
+{
+  "interactions": {
+    "like": "Gilla",
+    "liked": "Gillad",
+    "comment": "Kommentera",
+    "commented": "Kommenterat",
+    "share": "Dela",
+    "shared": "Delad",
+    "interest": "Intresse",
+    "interested": "Intresserad",
+    "show_more": "Visa mer",
+    "show_less": "Visa mindre",
+    "remove_interest": "Ta bort intresse",
+    "show_interest": "Visa intresse"
+  }
+}

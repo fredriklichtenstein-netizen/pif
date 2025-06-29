@@ -1,0 +1,17 @@
+
+{
+  "interactions": {
+    "like": "Like",
+    "liked": "Liked",
+    "comment": "Comment", 
+    "commented": "Commented",
+    "share": "Share",
+    "shared": "Shared",
+    "interest": "Interest",
+    "interested": "Interested",
+    "show_more": "Show more",
+    "show_less": "Show less",
+    "remove_interest": "Remove interest",
+    "show_interest": "Show interest"
+  }
+}

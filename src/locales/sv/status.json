@@ -1,0 +1,16 @@
+
+{
+  "status": {
+    "loading": "Laddar...",
+    "error": "Fel",
+    "retry": "Försök igen",
+    "refresh": "Uppdatera",
+    "success": "Framgång",
+    "failed": "Misslyckades",
+    "pending": "Väntar",
+    "completed": "Slutförd",
+    "location_unknown": "Plats okänd",
+    "location_access_needed": "Aktivera platsåtkomst för att se avstånd",
+    "location_not_supported": "Platsdetektering stöds inte"
+  }
+}

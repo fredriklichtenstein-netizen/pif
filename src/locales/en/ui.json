@@ -1,0 +1,21 @@
+
+{
+  "ui": {
+    "categories": "Categories",
+    "empty_message": "No content available",
+    "anonymous": "Anonymous",
+    "posted_by": "Posted by",
+    "archived": "Archived",
+    "show_on_map": "Show on map",
+    "copy_link": "Copy link",
+    "report": "Report",
+    "edit_post": "Edit post",
+    "delete_post": "Delete post",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "unsave": "Unsave",
+    "archive": "Archive",
+    "delete_archived_item": "Delete Archived Item"
+  }
+}

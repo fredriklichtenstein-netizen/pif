@@ -1,0 +1,14 @@
+
+{
+  "nav": {
+    "home": "Home",
+    "map": "Map", 
+    "post": "Post Item",
+    "messages": "Messages",
+    "profile": "Profile",
+    "pifs": "PIFs",
+    "sign_in": "Sign In",
+    "auth_required": "Authentication required",
+    "sign_in_required": "Please sign in to access this feature"
+  }
+}

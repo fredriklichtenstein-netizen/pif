@@ -1,0 +1,20 @@
+
+{
+  "comments": {
+    "title": "Kommentarer",
+    "live": "Live",
+    "connection_issue": "Anslutningsproblem",
+    "error_loading": "Fel vid laddning av kommentarer",
+    "try_again": "Försök igen",
+    "local_mode": "Använder lokalt konversationsläge. Dina kommentarer sparas när anslutningen förbättras.",
+    "no_live_updates": "Live-uppdateringar inte tillgängliga. Kommentarer kanske inte uppdateras automatiskt.",
+    "loading": "Laddar kommentarer...",
+    "no_comments": "Inga kommentarer än. Bli den första att kommentera!",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "reply": "Svara",
+    "edit": "Redigera",
+    "delete": "Ta bort",
+    "report": "Rapportera"
+  }
+}

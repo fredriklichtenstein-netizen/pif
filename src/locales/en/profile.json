@@ -1,0 +1,24 @@
+
+{
+  "profile": {
+    "my_pifs": "My Pifs",
+    "my_interests": "My interests",
+    "interests_in_my_pifs": "Interest in my Pifs",
+    "no_pifs_title": "No Pifs yet",
+    "no_pifs_description": "You haven't posted any Pifs yet.",
+    "no_interests_title": "No interests yet",
+    "no_interests_description": "You haven't shown interest in any Pifs yet.",
+    "loading_pifs": "Loading your Pifs...",
+    "loading_interests": "Loading...",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "mark_as_piffed": "Mark as piffed",
+    "users_interested": "users have shown interest",
+    "no_interest_yet": "No interest yet.",
+    "status_pending": "Pending",
+    "status_selected": "Selected",
+    "status_not_selected": "Not selected",
+    "piffed": "Piffed"
+  }
+}
