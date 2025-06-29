@@ -30,12 +30,12 @@ function VirtualizedList<T>({
     
     const container = containerRef.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll);
+      container.addEventListener('scroll', handleScroll, { passive: true });
       return () => container.removeEventListener('scroll', handleScroll);
     }
   }, []);
   
-  // Calculate visible range
+  // Calculate visible range with safety checks
   const totalHeight = items.length * itemHeight;
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const endIndex = Math.min(
@@ -45,6 +45,10 @@ function VirtualizedList<T>({
   
   // Only render items that are visible
   const visibleItems = items.slice(startIndex, endIndex + 1);
+  
+  if (items.length === 0) {
+    return <div className={className}>No items to display</div>;
+  }
   
   return (
     <div

@@ -730,6 +730,15 @@ export type Database = {
         Args: { p_item_id: number; p_reason?: string }
         Returns: boolean
       }
+      get_bulk_interaction_counts: {
+        Args: { item_ids: number[] }
+        Returns: {
+          item_id: number
+          likes_count: number
+          interests_count: number
+          comments_count: number
+        }[]
+      }
       get_follower_count: {
         Args: { user_id: string }
         Returns: number

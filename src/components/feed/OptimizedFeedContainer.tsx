@@ -1,12 +1,15 @@
 
 import React, { memo, useCallback } from 'react';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
+import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
 import { OptimizedList } from '@/components/ui/optimized-list';
 import { FeedItemCard } from './FeedItemCard';
 import { Loader2 } from 'lucide-react';
 import { CardSkeleton } from '@/components/ui/skeleton';
 
 const OptimizedFeedContainer = memo(function OptimizedFeedContainer() {
+  const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
+  
   const { 
     posts, 
     isLoading, 
@@ -24,9 +27,13 @@ const OptimizedFeedContainer = memo(function OptimizedFeedContainer() {
 
   const handleEndReached = useCallback(() => {
     if (hasMore && !isLoadingMore) {
-      loadMore();
+      measureFetch(loadMore);
     }
-  }, [hasMore, isLoadingMore, loadMore]);
+  }, [hasMore, isLoadingMore, loadMore, measureFetch]);
+
+  const handleRefresh = useCallback(() => {
+    measureFetch(refresh);
+  }, [refresh, measureFetch]);
 
   if (isLoading) {
     return (
@@ -43,7 +50,7 @@ const OptimizedFeedContainer = memo(function OptimizedFeedContainer() {
       <div className="text-center py-8">
         <p className="text-gray-500">No posts available</p>
         <button 
-          onClick={refresh}
+          onClick={handleRefresh}
           className="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
         >
           Refresh

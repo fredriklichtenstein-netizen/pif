@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { InteractionCounts } from "./types";
 
@@ -27,7 +28,7 @@ export const fetchAllInteractionCounts = async (itemIds: number[]): Promise<Map<
     const interactionsMap = new Map<number, InteractionCounts>();
     
     try {
-      // Use a single query to get all counts at once
+      // Use RPC to call our new database function
       const { data, error } = await supabase.rpc('get_bulk_interaction_counts', {
         item_ids: itemIds
       });
@@ -37,7 +38,7 @@ export const fetchAllInteractionCounts = async (itemIds: number[]): Promise<Map<
         return await fetchInteractionCountsFallback(itemIds);
       }
       
-      if (data) {
+      if (data && Array.isArray(data)) {
         data.forEach((item: any) => {
           interactionsMap.set(item.item_id, {
             likesCount: item.likes_count || 0,
