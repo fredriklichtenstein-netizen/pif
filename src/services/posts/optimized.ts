@@ -23,7 +23,7 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
     // Use optimized query
     const data = await OptimizedQueries.getPosts({ limit, offset });
     
-    if (!data || data.length === 0) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
       return [];
     }
 
