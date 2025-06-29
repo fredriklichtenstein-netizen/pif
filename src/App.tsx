@@ -1,58 +1,60 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { useEffect } from "react";
-import { initializeAuth } from "@/hooks/useGlobalAuth";
-import { NetworkStatusDebugger } from "@/components/debug/NetworkStatusDebugger";
-import { publicRoutes, privateRoutes } from "./routes/routes";
-import { GlobalDeleteDialog } from "./components/item/delete/GlobalDeleteDialog";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import { Routes } from "./routes/routes";
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
+import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { SkipToContent } from "@/components/accessibility/SkipToContent";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
+import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import "./App.css";
 
-// Create a QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = error.status as number;
+          if (status >= 400 && status < 500) {
+            return false;
+          }
+        }
+        return failureCount < 3;
+      },
     },
   },
 });
 
 function App() {
-  useEffect(() => {
-    // Initialize auth with error handling
-    try {
-      initializeAuth();
-    } catch (error) {
-      console.error('Failed to initialize auth:', error);
-    }
-    
-    // Log application initialization for debugging
-    console.log('App initialized with routes:', {
-      publicRoutes: publicRoutes.map(r => r.path),
-      privateRoutes: privateRoutes.map(r => r.path),
-    });
-  }, []);
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <main>
-          <Routes>
-            {publicRoutes.map((route, index) => (
-              <Route key={`public-${index}`} path={route.path} element={route.element} />
-            ))}
-            {privateRoutes.map((route, index) => (
-              <Route key={`private-${index}`} path={route.path} element={route.element} />
-            ))}
-          </Routes>
-        </main>
-        <Toaster />
-        <GlobalDeleteDialog />
-        {process.env.NODE_ENV === 'development' && <NetworkStatusDebugger />}
-      </Router>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <I18nextProvider i18n={i18n}>
+          <TooltipProvider>
+            <BrowserRouter>
+              <SkipToContent />
+              <OfflineIndicator />
+              <PWAInstallPrompt />
+              <NetworkStatusWrapper>
+                <main id="main-content" role="main">
+                  <Routes />
+                </main>
+              </NetworkStatusWrapper>
+              <Toaster />
+              <Sonner />
+            </BrowserRouter>
+          </TooltipProvider>
+        </I18nextProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
