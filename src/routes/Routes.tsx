@@ -1,7 +1,6 @@
 
-
 import { Routes as ReactRouterRoutes, Route } from "react-router-dom";
-import { publicRoutes, privateRoutes } from "./routes";
+import { publicRoutes, privateRoutes } from "../routes/routes";
 
 export function Routes() {
   return (
@@ -15,4 +14,3 @@ export function Routes() {
     </ReactRouterRoutes>
   );
 }
-
