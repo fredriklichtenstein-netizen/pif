@@ -17,31 +17,31 @@ class RealtimePerformanceManager {
 
   private setupConnectionMonitoring() {
     // Monitor Supabase connection health
-    const healthCheck = () => {
+    const healthCheck = async () => {
       const start = performance.now();
       
-      supabase.from('profiles').select('id').limit(1)
-        .then(() => {
-          const duration = performance.now() - start;
-          performanceMetrics.recordMetric({
-            id: `db-health-${Date.now()}`,
-            name: 'database-ping',
-            value: duration,
-            timestamp: Date.now(),
-            category: 'network',
-            tags: { type: 'health-check' }
-          });
-          
-          this.connectionHealth.connected = true;
-          this.connectionHealth.lastHeartbeat = Date.now();
-          this.connectionHealth.reconnectAttempts = 0;
-        })
-        .catch(() => {
-          this.connectionHealth.connected = false;
-          this.connectionHealth.reconnectAttempts++;
-          
-          console.warn(`Database connection lost. Reconnect attempts: ${this.connectionHealth.reconnectAttempts}`);
+      try {
+        await supabase.from('profiles').select('id').limit(1);
+        
+        const duration = performance.now() - start;
+        performanceMetrics.recordMetric({
+          id: `db-health-${Date.now()}`,
+          name: 'database-ping',
+          value: duration,
+          timestamp: Date.now(),
+          category: 'network',
+          tags: { type: 'health-check' }
         });
+        
+        this.connectionHealth.connected = true;
+        this.connectionHealth.lastHeartbeat = Date.now();
+        this.connectionHealth.reconnectAttempts = 0;
+      } catch (error) {
+        this.connectionHealth.connected = false;
+        this.connectionHealth.reconnectAttempts++;
+        
+        console.warn(`Database connection lost. Reconnect attempts: ${this.connectionHealth.reconnectAttempts}`);
+      }
     };
 
     // Health check every 30 seconds
