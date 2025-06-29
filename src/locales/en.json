@@ -1,3 +1,4 @@
+
 {
   "nav": {
     "home": "Home",
@@ -20,7 +21,7 @@
     "circular_economy": "Circular economy",
     "discover_pifs": "Discover Pifs",
     "discover_description": "See what's being shared in your area",
-    "give_away_something": "Give something away",
+    "give_away_something": "Pif something",
     "explore": "Explore",
     "find_nearby": "Find nearby",
     "why_pif": "Why pif?",
@@ -30,13 +31,13 @@
     "build_community_description": "Create relationships with your neighbors",
     "sustainable_future": "Sustainable future",
     "sustainable_future_description": "One Pif at a time",
-    "welcome_connected": "Welcome to pif! You are now connected.",
+    "welcome_connected": "Welcome to PIF! You are now connected.",
     "check_connection": "Check your internet connection and try again.",
     "network_connection_problem": "Network connection problem",
     "cannot_connect_servers": "Cannot connect to servers. Check your connection."
   },
   "feed": {
-    "title": "pif Community",
+    "title": "PIF Community",
     "subtitle": "Sustainable sharing in your neighborhood", 
     "offers_title": "Pifs in the area",
     "offers_subtitle": "Items waiting for new owners",

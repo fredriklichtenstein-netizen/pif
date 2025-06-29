@@ -1,3 +1,4 @@
+
 {
   "nav": {
     "home": "Hem",
@@ -20,7 +21,7 @@
     "circular_economy": "Cirkulär ekonomi",
     "discover_pifs": "Upptäck Piffar",
     "discover_description": "Se vad som delas i ditt område",
-    "give_away_something": "Ge bort något",
+    "give_away_something": "Piffa något",
     "explore": "Utforska",
     "find_nearby": "Hitta i din närhet",
     "why_pif": "Varför piffa?",
@@ -30,13 +31,13 @@
     "build_community_description": "Skapa relationer med dina grannar",
     "sustainable_future": "Hållbar framtid",
     "sustainable_future_description": "En Pif i taget",
-    "welcome_connected": "Välkommen till pif! Du är nu ansluten.",
+    "welcome_connected": "Välkommen till PIF! Du är nu ansluten.",
     "check_connection": "Kontrollera din internetanslutning och försök igen.",
     "network_connection_problem": "Nätverksanslutningsproblem",
     "cannot_connect_servers": "Kan inte ansluta till servrar. Kontrollera din anslutning."
   },
   "feed": {
-    "title": "pif Community",
+    "title": "PIF Community",
     "subtitle": "Hållbar delning i ditt närområde",
     "offers_title": "Piffar i närområdet",
     "offers_subtitle": "Saker som väntar på nya ägare",
