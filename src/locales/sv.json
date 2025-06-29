@@ -5,7 +5,7 @@
     "post": "Piffa",
     "messages": "Meddelanden", 
     "profile": "Profil",
-    "pifs": "Piffar",
+    "pifs": "PIFfar",
     "sign_in": "Logga in",
     "auth_required": "Autentisering krävs",
     "sign_in_required": "Vänligen logga in för att komma åt denna funktion"
@@ -278,7 +278,12 @@
     "no_likes_yet": "Inga gillningar än",
     "comment_singular": "kommentar",
     "comment_plural": "kommentarer",
-    "interested_users": "intresserade"
+    "interested_users": "intresserade",
+    "width": "Bredd",
+    "height": "Höjd", 
+    "length": "Längd",
+    "depth": "Djup",
+    "weight": "Vikt"
   },
   "language": {
     "swedish": "Svenska",

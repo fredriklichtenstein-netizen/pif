@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { optimizeImageUrl, preloadImages } from "@/utils/image";
+import { useCategoryTranslations } from "@/utils/translations/categories";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -15,6 +16,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const mountedRef = useRef(true);
+  const { translateCategory } = useCategoryTranslations();
 
   useEffect(() => {
     const validImages = images
@@ -79,7 +81,7 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
             {title}
           </h3>
           <h2 className="text-white text-3xl font-display font-bold tracking-wide drop-shadow-md uppercase">
-            {category}
+            {translateCategory(category)}
           </h2>
         </div>
       </div>
@@ -114,4 +116,3 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
     </div>
   );
 }
-

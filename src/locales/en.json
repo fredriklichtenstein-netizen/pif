@@ -5,7 +5,7 @@
     "post": "Post Item",
     "messages": "Messages",
     "profile": "Profile",
-    "pifs": "Pifs",
+    "pifs": "PIFs",
     "sign_in": "Sign In",
     "auth_required": "Authentication required",
     "sign_in_required": "Please sign in to access this feature"
@@ -278,7 +278,12 @@
     "no_likes_yet": "No likes yet",
     "comment_singular": "comment",
     "comment_plural": "comments",
-    "interested_users": "interested"
+    "interested_users": "interested",
+    "width": "Width",
+    "height": "Height",
+    "length": "Length", 
+    "depth": "Depth",
+    "weight": "Weight"
   },
   "language": {
     "swedish": "Svenska", 

@@ -8,19 +8,8 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 import { useOptimisticFeedUpdates } from "@/hooks/feed/useOptimisticFeedUpdates";
+import { useTranslation } from 'react-i18next';
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
-
-const CATEGORIES = [
-  "Furniture",
-  "Electronics", 
-  "Clothing",
-  "Kitchen",
-  "Books",
-  "Toys",
-  "Garden",
-  "Sports",
-  "Other"
-];
 
 export function FeedContainer() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -33,6 +22,20 @@ export function FeedContainer() {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
+  
+  // Get translated categories
+  const CATEGORIES = [
+    t('categories.furniture'),
+    t('categories.electronics'), 
+    t('categories.clothing'),
+    t('categories.kitchen'),
+    t('categories.books'),
+    t('categories.toys'),
+    t('categories.garden'),
+    t('categories.sports'),
+    t('categories.other')
+  ];
   
   // Get post ID from URL if present
   const postIdParam = searchParams.get('post');
@@ -109,8 +112,8 @@ export function FeedContainer() {
   const loadPostsBasedOnViewMode = useCallback(async (mode: string) => {
     if (!user && mode !== "all") {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to use this filter",
+        title: t('nav.auth_required'),
+        description: t('nav.sign_in_required'),
         variant: "destructive"
       });
       setViewMode("all");
@@ -133,7 +136,7 @@ export function FeedContainer() {
       default:
         await refreshPosts();
     }
-  }, [user, loadSavedPosts, loadMyPosts, loadArchivedPosts, loadInterestedPosts, refreshPosts, toast]);
+  }, [user, loadSavedPosts, loadMyPosts, loadArchivedPosts, loadInterestedPosts, refreshPosts, toast, t]);
 
   // Load posts whenever view mode changes or user auth state changes
   useEffect(() => {
