@@ -1,5 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { OptimizedQueries, batchQueries, DatabaseCache } from "@/services/database";
 import type { InteractionCounts } from "./types";
 
 // Create a Map to store pending requests to avoid duplicate calls
@@ -19,44 +19,29 @@ const deduplicateRequest = <T>(key: string, requestFn: () => Promise<T>): Promis
   return promise;
 };
 
+// Use the optimized queries from our database service
 export const fetchAllInteractionCounts = async (itemIds: number[]): Promise<Map<number, InteractionCounts>> => {
   if (itemIds.length === 0) return new Map();
   
   const cacheKey = `interactions-${itemIds.sort().join(',')}`;
   
-  return deduplicateRequest(cacheKey, async () => {
-    const interactionsMap = new Map<number, InteractionCounts>();
+  // Try cache first
+  const cached = DatabaseCache.get<Map<number, InteractionCounts>>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  
+  try {
+    const interactionsMap = await OptimizedQueries.getInteractionCounts(itemIds);
     
-    try {
-      // Use RPC to call our database function with explicit typing
-      const { data, error } = await supabase.rpc('get_bulk_interaction_counts' as any, {
-        item_ids: itemIds
-      });
-      
-      if (error) {
-        console.warn('Bulk interaction counts failed, falling back to individual queries:', error);
-        return await fetchInteractionCountsFallback(itemIds);
-      }
-      
-      // Ensure data is an array and handle the response properly
-      if (Array.isArray(data)) {
-        data.forEach((item: any) => {
-          if (item && typeof item === 'object' && 'item_id' in item) {
-            interactionsMap.set(Number(item.item_id), {
-              likesCount: Number(item.likes_count) || 0,
-              interestsCount: Number(item.interests_count) || 0,
-              commentsCount: Number(item.comments_count) || 0
-            });
-          }
-        });
-      }
-      
-      return interactionsMap;
-    } catch (error) {
-      console.error('Error fetching interaction counts:', error);
-      return await fetchInteractionCountsFallback(itemIds);
-    }
-  });
+    // Cache the results
+    DatabaseCache.set(cacheKey, interactionsMap, 2 * 60 * 1000); // 2 minutes cache
+    
+    return interactionsMap;
+  } catch (error) {
+    console.error('Error fetching interaction counts:', error);
+    return new Map();
+  }
 };
 
 const fetchInteractionCountsFallback = async (itemIds: number[]): Promise<Map<number, InteractionCounts>> => {
