@@ -31,11 +31,11 @@ export function OptimizedFeedContainer() {
   }
 
   if (error) {
-    return <FeedErrorState onRetry={handleRefresh} />;
+    return <FeedErrorState errorMessage={error.message || 'An error occurred'} onRetry={handleRefresh} />;
   }
 
   if (posts.length === 0) {
-    return <FeedEmptyState />;
+    return <FeedEmptyState viewMode="all" selectedCategories={[]} clearFilters={() => {}} />;
   }
 
   return (
@@ -44,11 +44,24 @@ export function OptimizedFeedContainer() {
       
       <FeedItemList
         posts={posts}
-        isLoadingMore={isLoadingMore}
-        hasMore={hasMore}
-        onLoadMore={handleLoadMore}
-        onRefresh={handleRefresh}
+        selectedCategories={[]}
+        clearFilters={() => {}}
+        viewMode="all"
+        isLoading={isLoadingMore}
+        onItemOperationSuccess={handleRefresh}
       />
+      
+      {hasMore && (
+        <div className="flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={isLoadingMore}
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isLoadingMore ? 'Loading...' : 'Load More'}
+          </button>
+        </div>
+      )}
       
       <PerformanceMonitor />
     </div>

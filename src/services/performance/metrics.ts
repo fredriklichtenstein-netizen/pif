@@ -1,3 +1,4 @@
+
 // Performance metrics collection and analysis
 interface PerformanceMetric {
   id: string;
@@ -42,7 +43,7 @@ class PerformanceMetricsCollector {
             this.recordMetric({
               id: `nav-${Date.now()}`,
               name: 'page-load',
-              value: navEntry.loadEventEnd - navEntry.navigationStart,
+              value: navEntry.loadEventEnd - navEntry.fetchStart,
               timestamp: Date.now(),
               category: 'network',
               tags: { type: 'navigation' }

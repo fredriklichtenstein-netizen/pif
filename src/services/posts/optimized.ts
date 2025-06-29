@@ -49,7 +49,7 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
 
     // Transform all posts with memoization
     const transformedPosts = data.map(item => {
-      const cacheKey = `transform-${item.id}-${item.updated_at || item.created_at}`;
+      const cacheKey = `transform-${item.id}-${item.created_at}`;
       const cached = transformCache.get(cacheKey);
       
       if (cached) {
