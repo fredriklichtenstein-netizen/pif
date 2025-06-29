@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { withRetry, DatabaseError } from "./connection";
 import { batchQueries } from "./batch";
@@ -15,48 +16,72 @@ export class OptimizedQueries {
   }) {
     return monitorQuery('getPosts', () => 
       withRetry(async () => {
-        let query = supabase
-          .from('items')
-          .select(`
-            id, title, description, images, location, coordinates, 
-            category, condition, measurements, user_id, status, 
-            archived_at, archived_reason, created_at,
-            profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)
-          `)
-          .is('archived_at', null)
-          .order('created_at', { ascending: false });
-
-        if (options.categories?.length) {
-          query = query.in('category', options.categories);
-        }
-
-        if (options.userId) {
-          query = query.eq('user_id', options.userId);
-        }
-
+        // Handle geospatial queries separately using RPC
         if (options.coordinates) {
-          // Use PostGIS functions for geospatial queries
           const { lat, lng, radius = 5000 } = options.coordinates;
-          query = query.rpc('items_within_radius', {
+          
+          // Use direct RPC call for geospatial filtering
+          const { data, error } = await supabase.rpc('items_within_radius', {
             center_lat: lat,
             center_lng: lng,
-            radius_meters: radius
+            radius_meters: radius,
+            limit_count: options.limit || 20,
+            offset_count: options.offset || 0,
+            user_filter: options.userId || null,
+            category_filter: options.categories || null
           } as any);
-        }
-
-        if (options.limit) {
-          query = query.range(options.offset || 0, (options.offset || 0) + options.limit - 1);
-        }
-
-        const { data, error } = await query;
-        
-        if (error) {
-          throw new DatabaseError('Failed to fetch posts', error.code, error);
+          
+          if (error) {
+            console.warn('Geospatial RPC failed, falling back to regular query:', error);
+            // Fallback to regular query without geospatial filtering
+            return await this.getPostsFallback(options);
+          }
+          
+          return data || [];
         }
         
-        return data || [];
+        // Regular query for non-geospatial requests
+        return await this.getPostsFallback(options);
       })
     );
+  }
+
+  private static async getPostsFallback(options: {
+    limit?: number;
+    offset?: number;
+    userId?: string;
+    categories?: string[];
+  }) {
+    let query = supabase
+      .from('items')
+      .select(`
+        id, title, description, images, location, coordinates, 
+        category, condition, measurements, user_id, status, 
+        archived_at, archived_reason, created_at,
+        profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)
+      `)
+      .is('archived_at', null)
+      .order('created_at', { ascending: false });
+
+    if (options.categories?.length) {
+      query = query.in('category', options.categories);
+    }
+
+    if (options.userId) {
+      query = query.eq('user_id', options.userId);
+    }
+
+    if (options.limit) {
+      query = query.range(options.offset || 0, (options.offset || 0) + options.limit - 1);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) {
+      throw new DatabaseError('Failed to fetch posts', error.code, error);
+    }
+    
+    return data || [];
   }
 
   // Batch get interaction counts for multiple items
@@ -67,7 +92,7 @@ export class OptimizedQueries {
         
         try {
           // Use our optimized RPC function
-          const { data, error } = await supabase.rpc('get_bulk_interaction_counts' as any, {
+          const { data, error } = await supabase.rpc('get_bulk_interaction_counts', {
             item_ids: itemIds
           });
           
