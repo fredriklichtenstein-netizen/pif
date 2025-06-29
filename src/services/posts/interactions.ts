@@ -28,8 +28,8 @@ export const fetchAllInteractionCounts = async (itemIds: number[]): Promise<Map<
     const interactionsMap = new Map<number, InteractionCounts>();
     
     try {
-      // Use RPC to call our new database function
-      const { data, error } = await supabase.rpc('get_bulk_interaction_counts', {
+      // Use RPC to call our database function with explicit typing
+      const { data, error } = await supabase.rpc('get_bulk_interaction_counts' as any, {
         item_ids: itemIds
       });
       
@@ -38,13 +38,16 @@ export const fetchAllInteractionCounts = async (itemIds: number[]): Promise<Map<
         return await fetchInteractionCountsFallback(itemIds);
       }
       
-      if (data && Array.isArray(data)) {
+      // Ensure data is an array and handle the response properly
+      if (Array.isArray(data)) {
         data.forEach((item: any) => {
-          interactionsMap.set(item.item_id, {
-            likesCount: item.likes_count || 0,
-            interestsCount: item.interests_count || 0,
-            commentsCount: item.comments_count || 0
-          });
+          if (item && typeof item === 'object' && 'item_id' in item) {
+            interactionsMap.set(Number(item.item_id), {
+              likesCount: Number(item.likes_count) || 0,
+              interestsCount: Number(item.interests_count) || 0,
+              commentsCount: Number(item.comments_count) || 0
+            });
+          }
         });
       }
       
