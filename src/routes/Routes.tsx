@@ -1,6 +1,5 @@
-
 import { Routes as ReactRouterRoutes, Route } from "react-router-dom";
-import { publicRoutes, privateRoutes } from "./routes.tsx";
+import { publicRoutes, privateRoutes } from "./routeConfig";
 
 export function Routes() {
   return (
