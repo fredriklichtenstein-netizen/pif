@@ -1,3 +1,4 @@
+
 import { Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -48,6 +49,7 @@ const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 const EnhancedProfile = enhancedLazy(() => import("@/pages/EnhancedProfile"));
+const GamificationHub = enhancedLazy(() => import("@/pages/GamificationHub"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -63,7 +65,8 @@ export const publicRoutes = [
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
   { path: "/item/:id", element: withSuspense(ItemDetail) },
-  { path: "/share/:id", element: withSuspense(ShareRedirect) }, // New share redirect route
+  { path: "/share/:id", element: withSuspense(ShareRedirect) },
+  { path: "/community", element: withSuspense(GamificationHub) }, // Public access to community features
   { path: "*", element: withSuspense(NotFound) },
 ];
 
