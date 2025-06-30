@@ -1,4 +1,3 @@
-
 import { Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -50,6 +49,7 @@ const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 const EnhancedProfile = enhancedLazy(() => import("@/pages/EnhancedProfile"));
 const GamificationHub = enhancedLazy(() => import("@/pages/GamificationHub"));
+const AdvancedAuth = enhancedLazy(() => import("@/pages/AdvancedAuth"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -98,5 +98,9 @@ export const privateRoutes = [
   { 
     path: "/enhanced-profile", 
     element: <PrivateRoute>{withSuspense(EnhancedProfile)}</PrivateRoute>
+  },
+  { 
+    path: "/advanced-auth", 
+    element: <PrivateRoute>{withSuspense(AdvancedAuth)}</PrivateRoute>
   },
 ];
