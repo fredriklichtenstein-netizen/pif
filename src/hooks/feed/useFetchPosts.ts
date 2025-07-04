@@ -58,7 +58,9 @@ export function useFetchPosts(options = { includeArchived: false }) {
 
       // Transform data to match the expected format
       const transformedData = data?.map(item => {
+        console.log('Debug - item.profiles:', item.profiles, 'item.user_id:', item.user_id);
         const user = extractUserFromProfile(item.profiles, item.user_id);
+        console.log('Debug - extracted user:', user);
         return {
           id: item.id,
           title: item.title,
