@@ -29,6 +29,8 @@ export class OptimizedQueries {
           .is('archived_at', null)
           .order('created_at', { ascending: false });
 
+        console.log('🔍 CRITICAL DEBUG: About to execute query...');
+        
         if (options.categories?.length) {
           query = query.in('category', options.categories);
         }
@@ -42,6 +44,8 @@ export class OptimizedQueries {
         }
 
         const { data, error } = await query;
+        console.log('🔍 CRITICAL DEBUG: Query result data sample:', data?.[0]);
+        console.log('🔍 CRITICAL DEBUG: Profiles data sample:', data?.[0]?.profiles);
         
         if (error) {
           throw new DatabaseError('Failed to fetch posts', error.code, error);
