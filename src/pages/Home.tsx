@@ -95,11 +95,11 @@ export default function Home() {
           {/* Content over background */}
           <div className="relative text-center py-8">
             {/* PiF Logo */}
-            <div className="flex flex-col items-center mb-6">
+            <div className="flex justify-center mb-6">
               <img 
-                src="/lovable-uploads/c266e578-dc07-4e70-ac87-e42941b7a75e.png"
+                src="/lovable-uploads/a139121f-d6c7-4487-bd2e-4f530bea4e21.png"
                 alt="Pay it Forward Logo"
-                className="w-24 h-24 shadow-lg"
+                className="h-32 w-auto object-contain"
               />
             </div>
             <p className="text-lg text-gray-600 mb-8 max-w-sm mx-auto leading-relaxed">
