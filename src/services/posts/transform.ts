@@ -27,8 +27,7 @@ export const transformPostData = (
     : {};
 
   // DEBUG: Log the profile data to identify the issue
-  console.log('🔍 DEBUG transformPostData - item.profiles:', item.profiles);
-  console.log('🔍 DEBUG transformPostData - item.user_id:', item.user_id);
+  console.log('🔍 DEBUG transformPostData - profiles:', item.profiles);
   const extractedUser = extractUserFromProfile(item.profiles, item.user_id);
   console.log('🔍 DEBUG transformPostData - extractedUser:', extractedUser);
   
