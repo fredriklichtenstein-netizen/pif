@@ -26,6 +26,12 @@ export const transformPostData = (
     ? item.measurements
     : {};
 
+  // DEBUG: Log the profile data to identify the issue
+  console.log('🔍 DEBUG transformPostData - item.profiles:', item.profiles);
+  console.log('🔍 DEBUG transformPostData - item.user_id:', item.user_id);
+  const extractedUser = extractUserFromProfile(item.profiles, item.user_id);
+  console.log('🔍 DEBUG transformPostData - extractedUser:', extractedUser);
+  
   return {
     id: item.id.toString(),
     title: item.title,
@@ -37,8 +43,8 @@ export const transformPostData = (
     location: item.location || '',
     coordinates: parsedCoordinates,
     postedBy: {
-      ...extractUserFromProfile(item.profiles, item.user_id),
-      avatar: extractUserFromProfile(item.profiles, item.user_id).avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
+      ...extractedUser,
+      avatar: extractedUser.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
     },
     createdAt: item.created_at || '',
     status: item.status || '',
