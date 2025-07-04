@@ -280,7 +280,7 @@ export const CommunityHub = () => {
               {communityMembers.map((member) => (
                 <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    <div className="h-12 w-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
                       {member.username.charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -359,9 +359,9 @@ export const CommunityHub = () => {
                       <span>Progress</span>
                       <span>{challenge.progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all" 
+                        className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all" 
                         style={{ width: `${challenge.progress}%` }}
                       ></div>
                     </div>

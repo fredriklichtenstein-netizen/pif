@@ -126,12 +126,12 @@ export const SecurityDashboard = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Shield className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-accent rounded-lg">
+                <Shield className="h-5 w-5 text-accent-foreground" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Account Security</p>
-                <p className="text-lg font-semibold text-green-600">Strong</p>
+                <p className="text-sm text-muted-foreground">Account Security</p>
+                <p className="text-lg font-semibold text-accent-foreground">Strong</p>
               </div>
             </div>
           </CardContent>
@@ -140,11 +140,11 @@ export const SecurityDashboard = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Globe className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Globe className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Active Sessions</p>
+                <p className="text-sm text-muted-foreground">Active Sessions</p>
                 <p className="text-lg font-semibold">{loginSessions.length}</p>
               </div>
             </div>
@@ -154,11 +154,11 @@ export const SecurityDashboard = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <div className="p-2 bg-destructive/10 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Security Alerts</p>
+                <p className="text-sm text-muted-foreground">Security Alerts</p>
                 <p className="text-lg font-semibold">
                   {securityEvents.filter(e => e.severity === 'high').length}
                 </p>
