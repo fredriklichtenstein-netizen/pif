@@ -95,15 +95,20 @@ export default function Home() {
           {/* Content over background */}
           <div className="relative text-center py-8">
             {/* PiF Logo */}
-            <div className="flex justify-center mb-6">
-              <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-2xl font-bold text-white">PiF</span>
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center shadow-lg mb-3">
+                <div className="flex items-center gap-1 text-white font-bold text-xl">
+                  <span>P</span>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  <span>F</span>
+                </div>
               </div>
+              <h1 className="text-xl font-semibold text-primary">
+                Pay it Forward
+              </h1>
             </div>
-            
-            <h1 className="text-3xl font-bold mb-4 text-gray-800">
-              {t('home.pay_it_forward')}
-            </h1>
             <p className="text-lg text-gray-600 mb-8 max-w-sm mx-auto leading-relaxed">
               {t('home.hero_description')}
             </p>
