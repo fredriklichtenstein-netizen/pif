@@ -1,14 +1,14 @@
 
 {
   "profile": {
-    "my_pifs": "Mina piffar",
+    "my_pifs": "Mina Piffar",
     "my_interests": "Mina intressen",
-    "interests_in_my_pifs": "Intresse för mina piffar",
-    "no_pifs_title": "Inga piffar än",
+    "interests_in_my_pifs": "Intresse för mina Piffar",
+    "no_pifs_title": "Inga Piffar än",
     "no_pifs_description": "Du har inte piffat något än.",
     "no_interests_title": "Inga intressen än", 
-    "no_interests_description": "Du har inte visat intresse för några piffar än.",
-    "loading_pifs": "Laddar dina piffar...",
+    "no_interests_description": "Du har inte visat intresse för några Piffar än.",
+    "loading_pifs": "Laddar dina Piffar...",
     "loading_interests": "Laddar...",
     "edit": "Redigera",
     "delete": "Ta bort",
