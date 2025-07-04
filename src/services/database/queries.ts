@@ -29,7 +29,8 @@ export class OptimizedQueries {
           .is('archived_at', null)
           .order('created_at', { ascending: false });
 
-        console.log('🔍 CRITICAL DEBUG: About to execute query...');
+        console.log('🔍 CRITICAL DEBUG: About to execute query...', Date.now());
+        console.log('🔍 CRITICAL DEBUG: Query options:', options);
         
         if (options.categories?.length) {
           query = query.in('category', options.categories);
@@ -44,8 +45,16 @@ export class OptimizedQueries {
         }
 
         const { data, error } = await query;
-        console.log('🔍 CRITICAL DEBUG: Query result data sample:', data?.[0]);
-        console.log('🔍 CRITICAL DEBUG: Profiles data sample:', data?.[0]?.profiles);
+        console.log('🔍 CRITICAL DEBUG: Query completed. Items found:', data?.length);
+        console.log('🔍 CRITICAL DEBUG: First item raw data:', data?.[0]);
+        console.log('🔍 CRITICAL DEBUG: First item profiles:', data?.[0]?.profiles);
+        if (data?.[0]?.profiles) {
+          console.log('🔍 CRITICAL DEBUG: Profile details:', {
+            first_name: data[0].profiles.first_name,
+            last_name: data[0].profiles.last_name,
+            username: data[0].profiles.username
+          });
+        }
         
         if (error) {
           throw new DatabaseError('Failed to fetch posts', error.code, error);

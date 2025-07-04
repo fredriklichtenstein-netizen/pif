@@ -17,11 +17,11 @@ export function useOptimizedFeed() {
     error,
     refetch
   } = useQuery({
-    queryKey: ['posts', 'optimized', page],
+    queryKey: ['posts', 'optimized', page, Date.now()], // Add timestamp to force refresh
     queryFn: () => getOptimizedPosts(POSTS_PER_PAGE, page * POSTS_PER_PAGE),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
+    staleTime: 0, // Force immediate refresh for debugging
+    gcTime: 0, // No cache for debugging  
+    refetchOnWindowFocus: true, // Enable refetch
     retry: 2
   });
 
