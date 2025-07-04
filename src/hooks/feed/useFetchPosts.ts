@@ -37,7 +37,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
+        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
         .order('created_at', { ascending: false })
         .abortSignal(signal);
       

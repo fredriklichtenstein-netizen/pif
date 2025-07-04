@@ -24,7 +24,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     try {
       const { data, error } = await supabase
         .from("items")
-        .select("*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)")
+        .select("*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)")
         .eq("user_id", userId)
         .eq("status", "archived")
         .order("archived_at", { ascending: false });

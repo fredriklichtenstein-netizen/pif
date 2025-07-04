@@ -24,7 +24,7 @@ export class OptimizedQueries {
             id, title, description, images, location, coordinates, 
             category, condition, measurements, user_id, status, 
             archived_at, archived_reason, created_at,
-            profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)
+            profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)
           `)
           .is('archived_at', null)
           .order('created_at', { ascending: false });
@@ -157,7 +157,7 @@ export class OptimizedQueries {
           .from('comments')
           .select(`
             id, content, created_at, parent_id,
-            profiles!comments_user_id_fkey(id, first_name, last_name, avatar_url)
+            profiles!comments_user_id_fkey(id, first_name, last_name, username, avatar_url)
           `)
           .eq('item_id', itemId)
           .order('created_at', { ascending: false })

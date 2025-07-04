@@ -33,11 +33,24 @@ export const extractUserFromProfile = (
     ? userProfile.last_name as string || ""
     : "";
 
-  // Format as "First L"
-  let displayName = firstName;
+  const username = "username" in userProfile
+    ? (userProfile.username as string || "")
+    : "";
+
+  // Format name with fallback hierarchy
+  let displayName = "";
+  
   if (firstName && lastName.length > 0) {
+    // Preferred: "First L"
     displayName = `${firstName} ${lastName.charAt(0)}`;
-  } else if (!firstName) {
+  } else if (firstName) {
+    // Fallback: Just first name
+    displayName = firstName;
+  } else if (username) {
+    // Fallback: Username
+    displayName = username;
+  } else {
+    // Last resort: Anonymous
     displayName = "Anonymous";
   }
 

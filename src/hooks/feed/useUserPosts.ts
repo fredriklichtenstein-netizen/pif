@@ -62,7 +62,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
 
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
+        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
         .in('id', itemIds)
         .order('created_at', { ascending: false })
         .abortSignal(signal);
@@ -126,7 +126,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
+        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
         .abortSignal(signal);
@@ -190,7 +190,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       const { data: items, error: itemsError } = await supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
+        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
         .eq('user_id', currentUser.id)
         .not('archived_at', 'is', null) // Only archived items
         .order('created_at', { ascending: false })
@@ -264,7 +264,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
+        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
         .in('id', itemIds)
         .order('created_at', { ascending: false })
         .abortSignal(signal);

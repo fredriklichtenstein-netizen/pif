@@ -33,7 +33,7 @@ export const getPosts = async (): Promise<Post[]> => {
     // Fetch base post data
     const { data, error } = await supabase
       .from('items')
-      .select('*, profiles!items_user_id_fkey(id, first_name, last_name, avatar_url)')
+      .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
       .order('created_at', { ascending: false })
       .limit(20);
 

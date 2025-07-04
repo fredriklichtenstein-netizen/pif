@@ -2,6 +2,7 @@
 import { parseCoordinatesFromDB } from "@/types/post";
 import type { Post } from "@/types/post";
 import type { InteractionCounts } from "./types";
+import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 
 export const transformPostData = (
   item: any,
@@ -36,11 +37,8 @@ export const transformPostData = (
     location: item.location || '',
     coordinates: parsedCoordinates,
     postedBy: {
-      id: item.user_id,
-      name: item.profiles 
-        ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Unknown User'
-        : 'Unknown User',
-      avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
+      ...extractUserFromProfile(item.profiles, item.user_id),
+      avatar: extractUserFromProfile(item.profiles, item.user_id).avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
     },
     createdAt: item.created_at || '',
     status: item.status || '',
