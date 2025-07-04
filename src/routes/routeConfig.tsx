@@ -36,7 +36,6 @@ const enhancedLazy = (importFn: () => Promise<any>) => {
 const Home = enhancedLazy(() => import("@/pages/Home"));
 const Map = enhancedLazy(() => import("@/pages/Map"));
 const Messages = enhancedLazy(() => import("@/pages/Messages"));
-const EnhancedMessages = enhancedLazy(() => import("@/pages/EnhancedMessages"));
 const Post = enhancedLazy(() => import("@/pages/Post"));
 const PostEdit = enhancedLazy(() => import("@/pages/PostEdit"));
 const Profile = enhancedLazy(() => import("@/pages/Profile"));
@@ -49,9 +48,6 @@ const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
-const EnhancedProfile = enhancedLazy(() => import("@/pages/EnhancedProfile"));
-const GamificationHub = enhancedLazy(() => import("@/pages/GamificationHub"));
-const AdvancedAuth = enhancedLazy(() => import("@/pages/AdvancedAuth"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -67,8 +63,7 @@ export const publicRoutes = [
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
   { path: "/item/:id", element: withSuspense(ItemDetail) },
-  { path: "/share/:id", element: withSuspense(ShareRedirect) },
-  { path: "/community", element: withSuspense(GamificationHub) },
+  { path: "/share/:id", element: withSuspense(ShareRedirect) }, // New share redirect route
   { path: "*", element: withSuspense(NotFound) },
 ];
 
@@ -76,10 +71,6 @@ export const privateRoutes = [
   { 
     path: "/messages", 
     element: <PrivateRoute>{withSuspense(Messages)}</PrivateRoute>
-  },
-  { 
-    path: "/messages/enhanced", 
-    element: <PrivateRoute>{withSuspense(EnhancedMessages)}</PrivateRoute>
   },
   { 
     path: "/post", 
@@ -100,13 +91,5 @@ export const privateRoutes = [
   { 
     path: "/create-profile", 
     element: <PrivateRoute>{withSuspense(CreateProfile)}</PrivateRoute>
-  },
-  { 
-    path: "/enhanced-profile", 
-    element: <PrivateRoute>{withSuspense(EnhancedProfile)}</PrivateRoute>
-  },
-  { 
-    path: "/advanced-auth", 
-    element: <PrivateRoute>{withSuspense(AdvancedAuth)}</PrivateRoute>
   },
 ];
