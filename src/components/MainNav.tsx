@@ -7,6 +7,7 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from 'react-i18next';
+import { ExpandedNav } from "@/components/layout/ExpandedNav";
 
 export function MainNav() {
   const location = useLocation();
@@ -151,44 +152,7 @@ export function MainNav() {
             <span className="text-xs mt-1">{t('nav.messages')}</span>
           </Link>
           
-          <Link
-            to="/profile"
-            className={`flex flex-col items-center ${
-              isProfileActive ? "text-primary" : "text-gray-500"
-            }`}
-            onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
-          >
-            {user ? (
-              <>
-                <div
-                  className={`h-8 w-8 ${
-                    isProfileActive ? "border-2 border-primary" : ""
-                  } overflow-hidden`}
-                  style={{ 
-                    borderRadius: "50%", // Use 50% border radius for elliptical/circular shape
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  <AvatarImage
-                    src={avatarUrl}
-                    alt={user.email || "User"}
-                    size={32}
-                    className="h-8 w-8 object-cover rounded-full" // Ensure full elliptical shape
-                  />
-                </div>
-                <span className="text-xs mt-1">
-                  {t('nav.profile')}
-                </span>
-              </>
-            ) : (
-              <>
-                <UserIcon size={24} />
-                <span className="text-xs mt-1">{t('nav.sign_in')}</span>
-              </>
-            )}
-          </Link>
+          <ExpandedNav className="text-gray-500" />
         </div>
       </div>
     </nav>

@@ -50,6 +50,8 @@ const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
 const Analytics = enhancedLazy(() => import("@/pages/Analytics"));
+const SecurityDashboard = enhancedLazy(() => import("@/pages/SecurityDashboard"));
+const CommunityHub = enhancedLazy(() => import("@/pages/CommunityHub"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -101,5 +103,13 @@ export const privateRoutes = [
   { 
     path: "/analytics", 
     element: <PrivateRoute>{withSuspense(Analytics)}</PrivateRoute>
+  },
+  { 
+    path: "/security", 
+    element: <PrivateRoute>{withSuspense(SecurityDashboard)}</PrivateRoute>
+  },
+  { 
+    path: "/community", 
+    element: <PrivateRoute>{withSuspense(CommunityHub)}</PrivateRoute>
   },
 ];
