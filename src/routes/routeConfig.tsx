@@ -48,6 +48,8 @@ const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
+const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
+const Analytics = enhancedLazy(() => import("@/pages/Analytics"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -91,5 +93,13 @@ export const privateRoutes = [
   { 
     path: "/create-profile", 
     element: <PrivateRoute>{withSuspense(CreateProfile)}</PrivateRoute>
+  },
+  { 
+    path: "/gamification", 
+    element: <PrivateRoute>{withSuspense(Gamification)}</PrivateRoute>
+  },
+  { 
+    path: "/analytics", 
+    element: <PrivateRoute>{withSuspense(Analytics)}</PrivateRoute>
   },
 ];

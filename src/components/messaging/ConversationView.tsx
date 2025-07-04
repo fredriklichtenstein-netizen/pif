@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversationDetails } from "@/hooks/useConversationDetails";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EnhancedMessageInput } from "./EnhancedMessageInput";
+import { RealtimeIndicators } from "./RealtimeIndicators";
 
 interface ConversationViewProps {
   conversationId: string;
@@ -127,25 +129,22 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
         )}
       </div>
 
-      {/* Message input */}
-      <div className="border-t p-3">
-        <div className="flex gap-2 items-end">
-          <Textarea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            className="min-h-[60px] flex-1 resize-none"
-          />
-          <Button 
-            type="button" 
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
-            className="h-12 w-12"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
-        </div>
+      {/* Enhanced Message input with emoji support */}
+      <EnhancedMessageInput
+        value={newMessage}
+        onChange={setNewMessage}
+        onSend={handleSendMessage}
+        placeholder="Type a message..."
+        showTypingIndicator={true}
+      />
+      
+      {/* Real-time indicators */}
+      <div className="px-3 py-1 border-t bg-gray-50">
+        <RealtimeIndicators 
+          conversationId={conversationId}
+          showOnlineStatus={true}
+          showTypingIndicator={true}
+        />
       </div>
     </div>
   );
