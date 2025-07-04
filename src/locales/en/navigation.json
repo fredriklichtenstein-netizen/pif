@@ -3,10 +3,10 @@
   "nav": {
     "home": "Home",
     "map": "Map", 
-    "post": "Post Item",
+    "post": "Pif",
     "messages": "Messages",
     "profile": "Profile",
-    "pifs": "PIFs",
+    "pifs": "Pifs",
     "sign_in": "Sign In",
     "auth_required": "Authentication required",
     "sign_in_required": "Please sign in to access this feature"
