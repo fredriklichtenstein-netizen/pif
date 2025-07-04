@@ -16,22 +16,15 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
   const start = performance.now();
   const cacheKey = `posts-${limit}-${offset}`;
   
-  // Try cache first
-  const cached = DatabaseCache.get<Post[]>(cacheKey);
-  if (cached) {
-    console.log(`Cache hit for ${cacheKey}`);
-    
-    performanceMetrics.recordMetric({
-      id: `cache-hit-${Date.now()}`,
-      name: 'cache-hit',
-      value: performance.now() - start,
-      timestamp: Date.now(),
-      category: 'network',
-      tags: { type: 'posts-cache' }
-    });
-    
-    return cached;
-  }
+  // TEMPORARILY DISABLE CACHE to debug the Anonymous user issue
+  console.log(`🚫 DEBUGGING: Cache disabled, forcing fresh query for posts`);
+  
+  // Try cache first (DISABLED FOR DEBUGGING)
+  // const cached = DatabaseCache.get<Post[]>(cacheKey);
+  // if (cached) {
+  //   console.log(`Cache hit for ${cacheKey}`);
+  //   return cached;
+  // }
   
   console.log(`Fetching optimized posts: limit=${limit}, offset=${offset}`);
   
@@ -47,14 +40,16 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
     const itemIds = data.map(item => item.id);
     const interactionsMap = await OptimizedQueries.getInteractionCounts(itemIds);
 
-    // Transform all posts with memoization
+    // Transform all posts with memoization (DISABLED FOR DEBUGGING)
     const transformedPosts = data.map(item => {
-      const cacheKey = `transform-${item.id}-${item.created_at}`;
-      const cached = transformCache.get(cacheKey);
+      console.log(`🔍 DEBUGGING: About to transform item ${item.id}, profiles:`, item.profiles);
       
-      if (cached) {
-        return cached;
-      }
+      // Disable transform cache for debugging
+      // const cacheKey = `transform-${item.id}-${item.created_at}`;
+      // const cached = transformCache.get(cacheKey);
+      // if (cached) {
+      //   return cached;
+      // }
       
       const transformed = transformPostData(item, interactionsMap.get(item.id) || {
         likesCount: 0,
@@ -62,12 +57,15 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
         commentsCount: 0
       });
       
-      transformCache.set(cacheKey, transformed);
+      console.log(`🔍 DEBUGGING: Transformed item ${item.id}, postedBy:`, transformed.postedBy);
+      
+      // transformCache.set(cacheKey, transformed);
       return transformed;
     });
     
-    // Cache the results
-    DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
+    // Cache the results (DISABLED FOR DEBUGGING)
+    // DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
+    console.log(`🚫 DEBUGGING: Skipping cache to force fresh queries`);
     
     // Record performance metrics
     performanceMetrics.recordMetric({
