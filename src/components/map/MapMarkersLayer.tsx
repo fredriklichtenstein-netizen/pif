@@ -33,7 +33,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
         }
 
         try {
-          const coords = parseCoordinatesFromDB(post.coordinates);
+          const coords = post.coordinates; // coordinates are already parsed objects
           if (!coords) {
             console.log("Invalid coordinates format for post:", post.id);
             continue;

@@ -46,7 +46,7 @@ export interface Post {
   measurements: Record<string, string>;
   images: string[];
   location: string;
-  coordinates: string | null;
+  coordinates: { lat: number; lng: number } | null;
   postedBy: {
     id: string;
     name: string;

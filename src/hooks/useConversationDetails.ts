@@ -5,6 +5,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import type { Conversation, ConversationParticipant } from "@/types/messaging";
 import type { Post } from "@/types/post";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 export function useConversationDetails(conversationId: string | null) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -68,7 +69,17 @@ export function useConversationDetails(conversationId: string | null) {
                 ) : {},
               images: data.item.images || [],
               location: data.item.location || "",
-              coordinates: data.item.coordinates ? String(data.item.coordinates) : null,
+              coordinates: (() => {
+                if (!data.item.coordinates) return null;
+                try {
+                  return typeof data.item.coordinates === 'string' ? 
+                    parseCoordinatesFromDB(data.item.coordinates) : 
+                    (data.item.coordinates && typeof data.item.coordinates === 'object' && 'lat' in data.item.coordinates && 'lng' in data.item.coordinates) ?
+                    data.item.coordinates as { lat: number; lng: number } : null;
+                } catch {
+                  return null;
+                }
+              })(),
               postedBy: {
                 id: data.item.user_id,
                 name: "User",
@@ -111,7 +122,17 @@ export function useConversationDetails(conversationId: string | null) {
                 ) : {},
               images: data.item.images || [],
               location: data.item.location || "",
-              coordinates: data.item.coordinates ? String(data.item.coordinates) : null,
+              coordinates: (() => {
+                if (!data.item.coordinates) return null;
+                try {
+                  return typeof data.item.coordinates === 'string' ? 
+                    parseCoordinatesFromDB(data.item.coordinates) : 
+                    (data.item.coordinates && typeof data.item.coordinates === 'object' && 'lat' in data.item.coordinates && 'lng' in data.item.coordinates) ?
+                    data.item.coordinates as { lat: number; lng: number } : null;
+                } catch {
+                  return null;
+                }
+              })(),
               postedBy: {
                 id: data.item.user_id,
                 name: "User",

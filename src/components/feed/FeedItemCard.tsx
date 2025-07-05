@@ -2,7 +2,6 @@
 import { memo } from "react";
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
-import { parseCoordinatesFromDB } from "@/types/post";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 interface FeedItemCardProps {
@@ -14,18 +13,8 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
   // Skip posts that have been optimistically deleted
   if (post.__deleted) return null;
   
-  let coordinates;
-  if (post.coordinates) {
-    try {
-      const coords =
-        typeof post.coordinates === "string"
-          ? parseCoordinatesFromDB(post.coordinates)
-          : post.coordinates;
-      coordinates = coords;
-    } catch (e) {
-      console.error("Failed to parse coordinates:", e, post.coordinates);
-    }
-  }
+  // Coordinates are now already parsed objects from the transform function
+  const coordinates = post.coordinates;
   
   // Apply optimistic UI transition class if the item was just modified
   const transitionClass = post.__modified ? "animate-fade-in" : "";

@@ -13,9 +13,7 @@ export const transformPostData = (
     try {
       const coordsStr = String(item.coordinates);
       const coords = parseCoordinatesFromDB(coordsStr);
-      if (coords) {
-        parsedCoordinates = JSON.stringify(coords);
-      }
+      parsedCoordinates = coords; // Keep as object, don't stringify
     } catch (err) {
       console.error("Error parsing coordinates:", err, item.coordinates);
     }
