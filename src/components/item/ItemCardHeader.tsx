@@ -20,6 +20,11 @@ interface ItemCardHeaderProps {
   itemId: string | number;
   itemTitle?: string;
   distanceText?: string;
+  location?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   isOwner: boolean;
   isBookmarked: boolean;
   isArchived?: boolean;
@@ -36,6 +41,8 @@ export function ItemCardHeader({
   itemId,
   itemTitle,
   distanceText,
+  location,
+  coordinates,
   isOwner,
   isBookmarked,
   isArchived = false,
@@ -80,42 +87,43 @@ export function ItemCardHeader({
     }
   };
 
+  const handleLocationClick = () => {
+    if (location) {
+      navigate(`/map?location=${encodeURIComponent(location)}`);
+    }
+  };
+
   return (
     <>
       <div className="p-3 flex items-center justify-between">
-        {postedBy.id ? (
-          <Link to={`/user/${postedBy.id}`} className="flex items-center">
-            <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
-              <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
-            </Avatar>
-            <div>
+        <div className="flex items-center gap-2">
+          {postedBy.id ? (
+            <Link to={`/user/${postedBy.id}`} className="flex items-center">
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
+                <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
+              </Avatar>
               <div className="text-sm font-medium">{postedBy.name}</div>
-              {distanceText && (
-                <div className="text-xs text-gray-500 flex items-center">
-                  <MapPin size={12} className="mr-1" />
-                  {distanceText}
-                </div>
-              )}
-            </div>
-          </Link>
-        ) : (
-          <div className="flex items-center">
-            <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
-              <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
-            </Avatar>
-            <div>
+            </Link>
+          ) : (
+            <div className="flex items-center">
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
+                <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
+              </Avatar>
               <div className="text-sm font-medium">{postedBy.name}</div>
-              {distanceText && (
-                <div className="text-xs text-gray-500 flex items-center">
-                  <MapPin size={12} className="mr-1" />
-                  {distanceText}
-                </div>
-              )}
             </div>
-          </div>
-        )}
+          )}
+          {distanceText && (
+            <button
+              onClick={handleLocationClick}
+              className="text-xs text-gray-500 flex items-center hover:text-primary transition-colors"
+            >
+              <MapPin size={12} className="mr-1" />
+              {distanceText}
+            </button>
+          )}
+        </div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

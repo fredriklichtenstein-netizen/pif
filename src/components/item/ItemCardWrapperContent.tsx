@@ -71,6 +71,8 @@ export function ItemCardWrapperContent({
           itemTitle={title}
           postedBy={postedBy} 
           distanceText={distanceText}
+          location={location}
+          coordinates={parsedCoordinates}
           isOwner={isOwner} 
           isBookmarked={isBookmarked}
           isArchived={isItemArchived}
