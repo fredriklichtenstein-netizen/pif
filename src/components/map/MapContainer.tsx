@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Locate, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
+import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -55,7 +56,16 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
         return;
       }
       
-      const { lng, lat } = targetPost.coordinates;
+      // Use robust coordinate extraction
+      const coords = extractCoordinates(targetPost.coordinates);
+      console.log("MapContainer: Extracted coordinates:", coords);
+      
+      if (!coords) {
+        console.error("MapContainer: Failed to extract coordinates");
+        return;
+      }
+      
+      const { lng, lat } = coords;
       
       if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
         console.error("MapContainer: Invalid coordinates:", { lng, lat, type: typeof lng, coords: targetPost.coordinates });

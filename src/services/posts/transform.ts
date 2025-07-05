@@ -3,6 +3,7 @@ import { parseCoordinatesFromDB } from "@/types/post";
 import type { Post } from "@/types/post";
 import type { InteractionCounts } from "./types";
 import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
+import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 
 export const transformPostData = (
   item: any,
@@ -13,10 +14,16 @@ export const transformPostData = (
   let parsedCoordinates = null;
   if (item.coordinates) {
     try {
-      const coordsStr = String(item.coordinates);
-      const coords = parseCoordinatesFromDB(coordsStr);
-      console.log("Transform - Parsed coordinates:", coords);
-      parsedCoordinates = coords; // Keep as object, don't stringify
+      // First try the robust coordinate extractor
+      parsedCoordinates = extractCoordinates(item.coordinates);
+      
+      // Fallback to string parsing if needed
+      if (!parsedCoordinates) {
+        const coordsStr = String(item.coordinates);
+        parsedCoordinates = parseCoordinatesFromDB(coordsStr);
+      }
+      
+      console.log("Transform - Final parsed coordinates:", parsedCoordinates);
     } catch (err) {
       console.error("Error parsing coordinates:", err, item.coordinates);
     }

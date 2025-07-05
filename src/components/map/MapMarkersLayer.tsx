@@ -5,7 +5,7 @@ import type { Post } from "@/types/post";
 import { createMapPopup } from "./MapPopup";
 import { createMarkerElement } from "./MapMarkerElement";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
-import { parseCoordinatesFromDB } from "@/types/post";
+import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 
 interface MapMarkersLayerProps {
   map: mapboxgl.Map;
@@ -36,8 +36,9 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
         }
 
         try {
-          const coords = post.coordinates; // coordinates are already parsed objects
-          console.log("Coords object:", coords, "lng:", coords?.lng, "lat:", coords?.lat);
+          // Use robust coordinate extraction
+          const coords = extractCoordinates(post.coordinates);
+          console.log("Extracted coordinates for post:", post.id, coords);
           
           if (!coords || typeof coords.lng !== 'number' || typeof coords.lat !== 'number' || isNaN(coords.lng) || isNaN(coords.lat)) {
             console.log("Invalid coordinates format for post:", post.id, coords);
