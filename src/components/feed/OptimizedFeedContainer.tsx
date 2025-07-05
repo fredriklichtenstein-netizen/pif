@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
 import { FeedItemList } from './FeedItemList';
 import { FeedLoadingState } from './FeedLoadingState';
@@ -19,6 +19,27 @@ export function OptimizedFeedContainer() {
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
   
+  // Memoize posts to prevent unnecessary re-renders and reduce API calls
+  const memoizedPosts = useMemo(() => posts, [posts]);
+  
+  // Memoize callbacks to prevent FeedItemList re-renders
+  const handleRefresh = useCallback(async () => {
+    announce("Refreshing feed", "polite");
+    await measureFetch(refresh);
+    announce("Feed refreshed", "polite");
+  }, [announce, measureFetch, refresh]);
+
+  const handleLoadMore = useCallback(async () => {
+    announce("Loading more posts", "polite");
+    await measureFetch(loadMore);
+  }, [announce, measureFetch, loadMore]);
+
+  const handlePostUpdate = useCallback((updatedPosts: any[]) => {
+    // Handle real-time post updates
+    console.log('Posts updated via real-time:', updatedPosts.length);
+    announce(`${updatedPosts.length} new posts available`, "polite");
+  }, [announce]);
+  
   // Swipe gestures for mobile
   useSwipeGestures({
     onSwipeDown: () => {
@@ -28,23 +49,6 @@ export function OptimizedFeedContainer() {
       }
     }
   });
-
-  const handleRefresh = async () => {
-    announce("Refreshing feed", "polite");
-    await measureFetch(refresh);
-    announce("Feed refreshed", "polite");
-  };
-
-  const handleLoadMore = async () => {
-    announce("Loading more posts", "polite");
-    await measureFetch(loadMore);
-  };
-
-  const handlePostUpdate = (updatedPosts: any[]) => {
-    // Handle real-time post updates
-    console.log('Posts updated via real-time:', updatedPosts.length);
-    announce(`${updatedPosts.length} new posts available`, "polite");
-  };
 
   if (isLoading) {
     return (
@@ -79,7 +83,7 @@ export function OptimizedFeedContainer() {
       
       <section role="feed" aria-label="Community posts">
         <FeedItemList
-          posts={posts}
+          posts={memoizedPosts}
           selectedCategories={[]}
           clearFilters={() => {}}
           viewMode="all"

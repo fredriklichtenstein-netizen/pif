@@ -1,4 +1,5 @@
 
+import { memo } from "react";
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { parseCoordinatesFromDB } from "@/types/post";
@@ -9,7 +10,7 @@ interface FeedItemCardProps {
   onItemOperationSuccess?: (itemId?: string | number, operationType?: OperationType) => void;
 }
 
-export function FeedItemCard({ post, onItemOperationSuccess }: FeedItemCardProps) {
+function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardProps) {
   // Skip posts that have been optimistically deleted
   if (post.__deleted) return null;
   
@@ -43,10 +44,10 @@ export function FeedItemCard({ post, onItemOperationSuccess }: FeedItemCardProps
           category={post.category}
           condition={post.condition}
           measurements={post.measurements}
-          postedBy={{
+          postedBy={post.postedBy || {
             id: post.user_id,
-            name: post.user_name || 'Anonymous',
-            avatar: post.user_avatar || '',
+            name: 'Anonymous',
+            avatar: '',
           }}
           archived_at={post.archived_at}
           archived_reason={post.archived_reason}
@@ -56,3 +57,14 @@ export function FeedItemCard({ post, onItemOperationSuccess }: FeedItemCardProps
     </NetworkStatusWrapper>
   );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const FeedItemCard = memo(FeedItemCardComponent, (prevProps, nextProps) => {
+  // Only re-render if post data has actually changed
+  return (
+    prevProps.post.id === nextProps.post.id &&
+    prevProps.post.created_at === nextProps.post.created_at &&
+    prevProps.post.__deleted === nextProps.post.__deleted &&
+    prevProps.post.__modified === nextProps.post.__modified
+  );
+});
