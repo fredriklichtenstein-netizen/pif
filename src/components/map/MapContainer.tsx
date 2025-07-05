@@ -30,35 +30,54 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     }
   }, [isMapReady, map]);
 
-  // Handle target item centering
+  // Handle target item centering with retry mechanism
   useEffect(() => {
-    if (isMapReady && map && targetItemId) {
-      console.log("Centering map on target item:", targetItemId);
-      
-      // Find the specific post by ID
+    if (!isMapReady || !map || !targetItemId) return;
+    
+    console.log("MapContainer: Attempting to center on target item:", targetItemId);
+    console.log("MapContainer: Posts available:", posts.length);
+    console.log("MapContainer: Posts IDs:", posts.map(p => p.id));
+    
+    const centerOnTarget = () => {
       const targetPost = posts.find(post => post.id === targetItemId);
       
-      if (targetPost && targetPost.coordinates) {
-        console.log("Found target post, coordinates:", targetPost.coordinates);
-        
-        // Validate coordinates before using them
-        const lng = targetPost.coordinates.lng;
-        const lat = targetPost.coordinates.lat;
-        
-        if (typeof lng === 'number' && typeof lat === 'number' && !isNaN(lng) && !isNaN(lat)) {
-          console.log("Valid coordinates, centering map:", { lng, lat });
-          map.flyTo({
-            center: [lng, lat],
-            zoom: 14,
-            duration: 2000
-          });
-        } else {
-          console.error("Invalid coordinates for target post:", { lng, lat, coordinates: targetPost.coordinates });
-        }
-      } else {
-        console.log("Target post not found or has no coordinates:", targetItemId);
+      if (!targetPost) {
+        console.log("MapContainer: Target post not found, retrying in 500ms");
+        setTimeout(centerOnTarget, 500);
+        return;
       }
-    }
+      
+      console.log("MapContainer: Found target post:", targetPost.id);
+      console.log("MapContainer: Target post coordinates:", targetPost.coordinates);
+      
+      if (!targetPost.coordinates) {
+        console.error("MapContainer: Target post has no coordinates");
+        return;
+      }
+      
+      const { lng, lat } = targetPost.coordinates;
+      
+      if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
+        console.error("MapContainer: Invalid coordinates:", { lng, lat, type: typeof lng, coords: targetPost.coordinates });
+        return;
+      }
+      
+      console.log("MapContainer: Centering map on valid coordinates:", { lng, lat });
+      
+      try {
+        map.flyTo({
+          center: [lng, lat],
+          zoom: 15,
+          duration: 1500
+        });
+        console.log("MapContainer: Successfully initiated flyTo");
+      } catch (error) {
+        console.error("MapContainer: Error during flyTo:", error);
+      }
+    };
+    
+    // Start centering process
+    centerOnTarget();
   }, [isMapReady, map, targetItemId, posts]);
 
   return (
