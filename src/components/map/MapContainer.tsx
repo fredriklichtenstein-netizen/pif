@@ -11,10 +11,10 @@ interface MapContainerProps {
   mapboxToken: string;
   posts: Post[];
   onPostClick: (postId: string) => void;
-  targetLocation?: string | null;
+  targetItemId?: string | null;
 }
 
-export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetLocation }: MapContainerProps) => {
+export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemId }: MapContainerProps) => {
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
@@ -30,28 +30,36 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetLocat
     }
   }, [isMapReady, map]);
 
-  // Handle target location centering
+  // Handle target item centering
   useEffect(() => {
-    if (isMapReady && map && targetLocation) {
-      console.log("Centering map on target location:", targetLocation);
+    if (isMapReady && map && targetItemId) {
+      console.log("Centering map on target item:", targetItemId);
       
-      // Try to find a post with matching location
-      const matchingPost = posts.find(post => 
-        post.location && post.location.toLowerCase().includes(targetLocation.toLowerCase())
-      );
+      // Find the specific post by ID
+      const targetPost = posts.find(post => post.id === targetItemId);
       
-      if (matchingPost && matchingPost.coordinates) {
-        console.log("Found matching post, centering on coordinates:", matchingPost.coordinates);
-        map.flyTo({
-          center: [matchingPost.coordinates.lng, matchingPost.coordinates.lat],
-          zoom: 12,
-          duration: 2000
-        });
+      if (targetPost && targetPost.coordinates) {
+        console.log("Found target post, coordinates:", targetPost.coordinates);
+        
+        // Validate coordinates before using them
+        const lng = targetPost.coordinates.lng;
+        const lat = targetPost.coordinates.lat;
+        
+        if (typeof lng === 'number' && typeof lat === 'number' && !isNaN(lng) && !isNaN(lat)) {
+          console.log("Valid coordinates, centering map:", { lng, lat });
+          map.flyTo({
+            center: [lng, lat],
+            zoom: 14,
+            duration: 2000
+          });
+        } else {
+          console.error("Invalid coordinates for target post:", { lng, lat, coordinates: targetPost.coordinates });
+        }
       } else {
-        console.log("No matching post found for location:", targetLocation);
+        console.log("Target post not found or has no coordinates:", targetItemId);
       }
     }
-  }, [isMapReady, map, targetLocation, posts]);
+  }, [isMapReady, map, targetItemId, posts]);
 
   return (
     <div className="h-full w-full relative">
@@ -96,7 +104,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetLocat
             map={map}
             posts={posts}
             onPostClick={onPostClick}
-            targetLocation={targetLocation}
+            targetItemId={targetItemId}
           />
           <Button
             onClick={locationTracking.toggleLocationTracking}

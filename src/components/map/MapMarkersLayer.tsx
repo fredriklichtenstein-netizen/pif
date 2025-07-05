@@ -11,10 +11,10 @@ interface MapMarkersLayerProps {
   map: mapboxgl.Map;
   posts: Post[];
   onPostClick: (postId: string) => void;
-  targetLocation?: string | null;
+  targetItemId?: string | null;
 }
 
-export const MapMarkersLayer = ({ map, posts, onPostClick, targetLocation }: MapMarkersLayerProps) => {
+export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMarkersLayerProps) => {
   const markers = useRef<mapboxgl.Marker[]>([]);
   const processedCoordinates = useRef<Map<string, [number, number]>>(new Map());
 
@@ -90,8 +90,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetLocation }: Map
         }
       }
 
-      // Fit map to show all markers if there are any (only if no target location specified)
-      if (markers.current.length > 0 && !targetLocation) {
+      // Fit map to show all markers if there are any (only if no target item specified)
+      if (markers.current.length > 0 && !targetItemId) {
         try {
           const bounds = new mapboxgl.LngLatBounds();
           markers.current.forEach(marker => {

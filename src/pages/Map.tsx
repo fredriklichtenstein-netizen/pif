@@ -13,11 +13,11 @@ import { MainNav } from "@/components/MainNav";
 export default function Map() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = searchParams.get("location");
+  const itemId = searchParams.get("item");
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
   const { toast } = useToast();
 
-  console.log("Map page - Location parameter:", location);
+  console.log("Map page - Item ID parameter:", itemId);
 
   const { data: posts = [], isLoading: isPostsLoading, error: postsError, refetch: refetchPosts } = useQuery({
     queryKey: ['map-posts'],
@@ -94,7 +94,7 @@ export default function Map() {
             mapboxToken={mapToken}
             posts={posts}
             onPostClick={handlePostClick}
-            targetLocation={location}
+            targetItemId={itemId}
           />
         )}
       </div>

@@ -88,8 +88,8 @@ export function ItemCardHeader({
   };
 
   const handleLocationClick = () => {
-    if (location) {
-      navigate(`/map?location=${encodeURIComponent(location)}`);
+    if (itemId) {
+      navigate(`/map?item=${itemId}`);
     }
   };
 
