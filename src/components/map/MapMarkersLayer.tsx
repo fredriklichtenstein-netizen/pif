@@ -11,9 +11,10 @@ interface MapMarkersLayerProps {
   map: mapboxgl.Map;
   posts: Post[];
   onPostClick: (postId: string) => void;
+  targetLocation?: string | null;
 }
 
-export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProps) => {
+export const MapMarkersLayer = ({ map, posts, onPostClick, targetLocation }: MapMarkersLayerProps) => {
   const markers = useRef<mapboxgl.Marker[]>([]);
   const processedCoordinates = useRef<Map<string, [number, number]>>(new Map());
 
@@ -27,6 +28,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
       
       // Process all posts
       for (const post of posts) {
+        console.log("Processing post:", post.id, "coordinates:", post.coordinates);
+        
         if (!post.coordinates) {
           console.log("Skipping post without coordinates:", post.id);
           continue;
@@ -34,8 +37,10 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
 
         try {
           const coords = post.coordinates; // coordinates are already parsed objects
-          if (!coords) {
-            console.log("Invalid coordinates format for post:", post.id);
+          console.log("Coords object:", coords, "lng:", coords?.lng, "lat:", coords?.lat);
+          
+          if (!coords || typeof coords.lng !== 'number' || typeof coords.lat !== 'number' || isNaN(coords.lng) || isNaN(coords.lat)) {
+            console.log("Invalid coordinates format for post:", post.id, coords);
             continue;
           }
 
@@ -85,8 +90,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick }: MapMarkersLayerProp
         }
       }
 
-      // Fit map to show all markers if there are any
-      if (markers.current.length > 0) {
+      // Fit map to show all markers if there are any (only if no target location specified)
+      if (markers.current.length > 0 && !targetLocation) {
         try {
           const bounds = new mapboxgl.LngLatBounds();
           markers.current.forEach(marker => {

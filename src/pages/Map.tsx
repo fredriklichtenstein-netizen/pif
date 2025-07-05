@@ -17,6 +17,8 @@ export default function Map() {
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
   const { toast } = useToast();
 
+  console.log("Map page - Location parameter:", location);
+
   const { data: posts = [], isLoading: isPostsLoading, error: postsError, refetch: refetchPosts } = useQuery({
     queryKey: ['map-posts'],
     queryFn: getPosts,
@@ -92,6 +94,7 @@ export default function Map() {
             mapboxToken={mapToken}
             posts={posts}
             onPostClick={handlePostClick}
+            targetLocation={location}
           />
         )}
       </div>

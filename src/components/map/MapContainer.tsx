@@ -11,9 +11,10 @@ interface MapContainerProps {
   mapboxToken: string;
   posts: Post[];
   onPostClick: (postId: string) => void;
+  targetLocation?: string | null;
 }
 
-export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContainerProps) => {
+export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetLocation }: MapContainerProps) => {
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
@@ -28,6 +29,29 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
       return () => clearTimeout(timer);
     }
   }, [isMapReady, map]);
+
+  // Handle target location centering
+  useEffect(() => {
+    if (isMapReady && map && targetLocation) {
+      console.log("Centering map on target location:", targetLocation);
+      
+      // Try to find a post with matching location
+      const matchingPost = posts.find(post => 
+        post.location && post.location.toLowerCase().includes(targetLocation.toLowerCase())
+      );
+      
+      if (matchingPost && matchingPost.coordinates) {
+        console.log("Found matching post, centering on coordinates:", matchingPost.coordinates);
+        map.flyTo({
+          center: [matchingPost.coordinates.lng, matchingPost.coordinates.lat],
+          zoom: 12,
+          duration: 2000
+        });
+      } else {
+        console.log("No matching post found for location:", targetLocation);
+      }
+    }
+  }, [isMapReady, map, targetLocation, posts]);
 
   return (
     <div className="h-full w-full relative">
@@ -72,6 +96,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick }: MapContai
             map={map}
             posts={posts}
             onPostClick={onPostClick}
+            targetLocation={targetLocation}
           />
           <Button
             onClick={locationTracking.toggleLocationTracking}
