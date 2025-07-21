@@ -8,8 +8,9 @@ import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { FadeIn } from "@/components/animation/FadeIn";
 import { SlideIn } from "@/components/animation/SlideIn";
 import { useAnnouncement } from "@/hooks/accessibility/useAnnouncement";
-
-const MAPBOX_TOKEN = "pk.eyJ1IjoibG92YWJsZWRldiIsImEiOiJjbTNrY3lldzEwaXdsMnBxNjR4bnJ5N3ozIn0.8zM8RINXmyDqrH0e2S0VBw";
+import { useMapbox } from "@/hooks/useMapbox";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, AlertCircle } from "lucide-react";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function Map() {
   const { announce } = useAnnouncement();
   const { posts, isLoading, refreshPosts } = useFeedPosts();
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
+  const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
 
   // Get target item from URL parameters
   useEffect(() => {
@@ -40,6 +42,52 @@ export default function Map() {
     navigate(`/feed?post=${postId}&t=${Date.now()}`);
   };
 
+  // Show loading state while token is being fetched
+  if (isTokenLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <MainHeader />
+        <Separator />
+        
+        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label="Map loading">
+          <div className="text-center p-6">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">Loading map credentials...</p>
+            <p className="text-gray-500 text-sm mt-2">Initializing secure connection</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show error state if token fetch failed
+  if (tokenError || !mapToken) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <MainHeader />
+        <Separator />
+        
+        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label="Map error">
+          <div className="text-center p-6 max-w-md">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Map Unavailable</h2>
+            <p className="text-gray-600 mb-4">
+              {tokenError?.message || "Unable to load map credentials. Please try again."}
+            </p>
+            <Button 
+              onClick={retryFetchToken} 
+              className="flex items-center gap-2"
+              variant="default"
+            >
+              <RefreshCw className="h-4 w-4" /> 
+              Retry
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <MainHeader />
@@ -50,7 +98,7 @@ export default function Map() {
           <div className="absolute inset-0 z-0">
             <SlideIn direction="up">
               <MapContainer
-                mapboxToken={MAPBOX_TOKEN}
+                mapboxToken={mapToken}
                 posts={posts}
                 onPostClick={handlePostClick}
                 targetItemId={targetItemId}
