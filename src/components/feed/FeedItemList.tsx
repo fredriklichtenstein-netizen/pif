@@ -5,6 +5,7 @@ import { FeedItemCard } from "./FeedItemCard";
 import { FeedEmptyState } from "./FeedEmptyState";
 import { FeedErrorState } from "./FeedErrorState";
 import { FeedLoadingState } from "./FeedLoadingState";
+import { useSearchParams } from "react-router-dom";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 interface FeedItemListProps {
@@ -32,6 +33,8 @@ export function FeedItemList({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const targetPostId = searchParams.get('post');
 
   // Cleanup on unmount
   useEffect(() => {
@@ -46,6 +49,27 @@ export function FeedItemList({
   useEffect(() => {
     console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
   }, [posts, viewMode]);
+
+  // Scroll to target post when available
+  useEffect(() => {
+    if (targetPostId && posts && posts.length > 0) {
+      console.log('Attempting to scroll to post:', targetPostId);
+      const timer = setTimeout(() => {
+        const targetElement = document.getElementById(`post-${targetPostId}`);
+        if (targetElement) {
+          console.log('Found target element, scrolling to post:', targetPostId);
+          targetElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        } else {
+          console.log('Target post element not found:', targetPostId);
+        }
+      }, 500); // Wait for posts to render
+      
+      return () => clearTimeout(timer);
+    }
+  }, [targetPostId, posts]);
 
   // Enhanced recovery function with debouncing and complete refresh
   const handleRecoveryAction = useCallback(() => {
@@ -150,11 +174,12 @@ export function FeedItemList({
   return (
     <div className="space-y-4" key={refreshKey}>
       {posts?.map((post) => (
-        <FeedItemCard
-          key={post.id}
-          post={post}
-          onItemOperationSuccess={handleItemSuccess}
-        />
+        <div key={post.id} id={`post-${post.id}`}>
+          <FeedItemCard
+            post={post}
+            onItemOperationSuccess={handleItemSuccess}
+          />
+        </div>
       ))}
       
       {posts?.length === 0 && (

@@ -1,6 +1,7 @@
-
 import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
+import { useLocationStorage } from "@/components/map/location/useLocationStorage";
+import { calculateDistance, formatDistance } from "@/utils/distance";
 
 interface MapPopupProps {
   post: Post;
@@ -19,6 +20,31 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
     maxWidth: '200px',
     className: 'map-item-popup enhanced-popup',
   });
+
+  // Calculate distance using stored location
+  const getDistanceText = (): string => {
+    try {
+      const stored = localStorage.getItem('pif_user_location');
+      if (!stored || !post.coordinates) return '';
+      
+      const userLocation = JSON.parse(stored);
+      if (!Array.isArray(userLocation) || userLocation.length !== 2) return '';
+      
+      const distance = calculateDistance(
+        userLocation[0], // lat
+        userLocation[1], // lng
+        post.coordinates.lat,
+        post.coordinates.lng
+      );
+      
+      return formatDistance(distance);
+    } catch (error) {
+      console.error('Error calculating distance for popup:', error);
+      return '';
+    }
+  };
+
+  const distanceText = getDistanceText();
 
   // Determine correct item type label
   const getItemTypeLabel = (itemType: string | undefined): string => {
@@ -43,7 +69,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
   const category = post.category ? post.category.charAt(0).toUpperCase() + post.category.slice(1) : '';
   const itemTypeLabel = getItemTypeLabel(post.item_type);
   
-  console.log('Popup - Item type:', post.item_type, 'Label:', itemTypeLabel);
+  console.log('Popup - Item type:', post.item_type, 'Label:', itemTypeLabel, 'Distance:', distanceText);
   
   popup.setHTML(`
     <div style="
@@ -194,11 +220,25 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
           margin-top: 8px;
           padding-top: 8px;
           border-top: 1px solid #f3f4f6;
-          font-size: 10px;
-          color: #9ca3af;
-          text-align: center;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         ">
-          Klicka för att visa detaljer
+          ${distanceText ? `
+            <span style="
+              font-size: 10px;
+              color: #6b7280;
+              font-weight: 500;
+            ">
+              ${distanceText}
+            </span>
+          ` : '<span></span>'}
+          <span style="
+            font-size: 10px;
+            color: #9ca3af;
+          ">
+            Klicka för att visa detaljer
+          </span>
         </div>
       </div>
     </div>

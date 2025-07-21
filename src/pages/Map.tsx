@@ -110,7 +110,7 @@ export default function Map() {
 
   const handlePostClick = (postId: string) => {
     console.log('Navigating to post:', postId);
-    // Improved navigation with better UX
+    // Navigate to the specific post in the feed
     navigate(`/feed?post=${postId}`, { 
       state: { fromMap: true, mapItemId: itemId }
     });

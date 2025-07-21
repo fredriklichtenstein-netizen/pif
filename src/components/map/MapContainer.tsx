@@ -158,10 +158,12 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       
       {isMapReady && !error && map && (
         <>
-          <LocationPermissionManager
-            onLocationEnabled={handleLocationEnabled}
-            onLocationDenied={handleLocationDenied}
-          />
+          {!locationTracking.isTracking && (
+            <LocationPermissionManager
+              onLocationEnabled={handleLocationEnabled}
+              onLocationDenied={handleLocationDenied}
+            />
+          )}
 
           <LocationAccuracyIndicator
             accuracy={locationTracking.accuracy || 0}
