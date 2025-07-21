@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useMapbox = () => {
   const { toast } = useToast();
@@ -14,16 +15,33 @@ export const useMapbox = () => {
         setIsLoading(true);
         setError(null);
         
-        // Use the fallback token directly for now
-        const fallbackToken = "pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2xvNXAyMXgyMDF6NjJrcWR4ZXpmMzRzaSJ9.4ZhgGVjk8xfNQnvwtcMrcw";
+        console.log("Fetching Mapbox token from edge function...");
         
-        console.log("Using Mapbox token");
-        setMapToken(fallbackToken);
+        const { data, error: functionError } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (functionError) {
+          console.error("Edge function error:", functionError);
+          throw new Error(`Failed to get Mapbox token: ${functionError.message}`);
+        }
+        
+        if (!data || !data.token) {
+          console.error("No token in response:", data);
+          throw new Error("No Mapbox token received from server");
+        }
+        
+        console.log("Successfully retrieved Mapbox token");
+        setMapToken(data.token);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error with Mapbox token:", error);
+        console.error("Error fetching Mapbox token:", error);
         setError(error as Error);
         setIsLoading(false);
+        
+        toast({
+          title: "Map Error",
+          description: "Failed to load map credentials. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
@@ -32,7 +50,7 @@ export const useMapbox = () => {
 
   const retryFetchToken = () => {
     setError(null);
-    setIsLoading(true);
+    fetchMapToken();
   };
 
   return { mapToken, isLoading, error, retryFetchToken };
