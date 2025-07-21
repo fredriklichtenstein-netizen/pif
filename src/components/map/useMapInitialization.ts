@@ -186,11 +186,11 @@ export const useMapInitialization = (mapboxToken: string) => {
 
       // Additional debugging events
       newMap.on('dataloading', (e) => {
-        console.log("📥 [Map Init] Data loading:", e.sourceDataType);
+        console.log("📥 [Map Init] Data loading:", 'sourceDataType' in e ? e.sourceDataType : 'style');
       });
 
       newMap.on('data', (e) => {
-        console.log("📦 [Map Init] Data loaded:", e.sourceDataType);
+        console.log("📦 [Map Init] Data loaded:", 'sourceDataType' in e ? e.sourceDataType : 'style');
       });
 
     } catch (error) {
