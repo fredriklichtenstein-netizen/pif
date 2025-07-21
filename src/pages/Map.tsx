@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
-import { getPosts } from "@/services/posts";
+import { getPosts } from "@/services/posts/simplePosts";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -18,13 +19,15 @@ export default function Map() {
   const { toast } = useToast();
 
   console.log("Map page - Item ID parameter:", itemId);
+  console.log("Map page - Token status:", { hasToken: !!mapToken, isLoading: isTokenLoading, error: tokenError });
 
   const { data: posts = [], isLoading: isPostsLoading, error: postsError, refetch: refetchPosts } = useQuery({
-    queryKey: ['map-posts'],
+    queryKey: ['simple-posts'],
     queryFn: getPosts,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
+    retry: 1
   });
+
+  console.log("Map page - Posts:", posts.length, "items loaded");
 
   useEffect(() => {
     if (postsError) {
@@ -69,7 +72,7 @@ export default function Map() {
               <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
               <p className="text-gray-700 mb-2 text-lg font-medium">Failed to load map</p>
               <p className="text-gray-500 text-sm mb-6">
-                {tokenError ? "Failed to send a request to the Edge Function" : error.message}
+                {error.message}
               </p>
               <Button 
                 onClick={handleRetry} 
@@ -80,7 +83,7 @@ export default function Map() {
               </Button>
             </div>
           </div>
-        ) : isLoading || !mapToken || !posts ? (
+        ) : isLoading || !mapToken ? (
           <div className="w-full h-full bg-gray-50 flex items-center justify-center">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>

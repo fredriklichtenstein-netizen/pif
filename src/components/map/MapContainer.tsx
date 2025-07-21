@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Locate, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
-import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -23,7 +22,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   useEffect(() => {
     if (isMapReady && map) {
       console.log("Map is ready, making it visible");
-      // Short delay to ensure styles are loaded
       const timer = setTimeout(() => {
         setIsMapVisible(true);
       }, 100);
@@ -31,63 +29,44 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     }
   }, [isMapReady, map]);
 
-  // Handle target item centering with retry mechanism
+  // Handle target item centering
   useEffect(() => {
-    if (!isMapReady || !map || !targetItemId) return;
+    if (!isMapReady || !map || !targetItemId || !posts.length) return;
     
-    console.log("MapContainer: Attempting to center on target item:", targetItemId);
-    console.log("MapContainer: Posts available:", posts.length);
-    console.log("MapContainer: Posts IDs:", posts.map(p => p.id));
+    console.log("Attempting to center on target item:", targetItemId);
+    console.log("Available posts:", posts.map(p => ({ id: p.id, coords: p.coordinates })));
     
-    const centerOnTarget = () => {
-      const targetPost = posts.find(post => post.id === targetItemId);
-      
-      if (!targetPost) {
-        console.log("MapContainer: Target post not found, retrying in 500ms");
-        setTimeout(centerOnTarget, 500);
-        return;
-      }
-      
-      console.log("MapContainer: Found target post:", targetPost.id);
-      console.log("MapContainer: Target post coordinates:", targetPost.coordinates);
-      
-      if (!targetPost.coordinates) {
-        console.error("MapContainer: Target post has no coordinates");
-        return;
-      }
-      
-      // Use robust coordinate extraction
-      const coords = extractCoordinates(targetPost.coordinates);
-      console.log("MapContainer: Extracted coordinates:", coords);
-      
-      if (!coords) {
-        console.error("MapContainer: Failed to extract coordinates");
-        return;
-      }
-      
-      const { lng, lat } = coords;
-      
-      if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
-        console.error("MapContainer: Invalid coordinates:", { lng, lat, type: typeof lng, coords: targetPost.coordinates });
-        return;
-      }
-      
-      console.log("MapContainer: Centering map on valid coordinates:", { lng, lat });
-      
-      try {
-        map.flyTo({
-          center: [lng, lat],
-          zoom: 15,
-          duration: 1500
-        });
-        console.log("MapContainer: Successfully initiated flyTo");
-      } catch (error) {
-        console.error("MapContainer: Error during flyTo:", error);
-      }
-    };
+    const targetPost = posts.find(post => post.id === targetItemId);
     
-    // Start centering process
-    centerOnTarget();
+    if (!targetPost) {
+      console.log("Target post not found:", targetItemId);
+      return;
+    }
+    
+    if (!targetPost.coordinates) {
+      console.log("Target post has no coordinates:", targetItemId);
+      return;
+    }
+    
+    const { lng, lat } = targetPost.coordinates;
+    
+    if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
+      console.error("Invalid coordinates for target post:", { lng, lat });
+      return;
+    }
+    
+    console.log("Centering map on target coordinates:", { lng, lat });
+    
+    try {
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 15,
+        duration: 1500
+      });
+      console.log("Successfully initiated flyTo for target item");
+    } catch (error) {
+      console.error("Error during flyTo:", error);
+    }
   }, [isMapReady, map, targetItemId, posts]);
 
   return (

@@ -4,8 +4,6 @@ import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
 import { createMapPopup } from "./MapPopup";
 import { createMarkerElement } from "./MapMarkerElement";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
-import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 
 interface MapMarkersLayerProps {
   map: mapboxgl.Map;
@@ -16,10 +14,9 @@ interface MapMarkersLayerProps {
 
 export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMarkersLayerProps) => {
   const markers = useRef<mapboxgl.Marker[]>([]);
-  const processedCoordinates = useRef<Map<string, [number, number]>>(new Map());
 
   useEffect(() => {
-    const createMarkers = async () => {
+    const createMarkers = () => {
       console.log("Creating markers for posts:", posts.length);
       
       // Clear existing markers
@@ -35,39 +32,22 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
           continue;
         }
 
+        const { lng, lat } = post.coordinates;
+        
+        if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
+          console.log("Invalid coordinates for post:", post.id, { lng, lat });
+          continue;
+        }
+
+        console.log("Creating marker for post:", post.id, "at", { lng, lat });
+
         try {
-          // Use robust coordinate extraction
-          const coords = extractCoordinates(post.coordinates);
-          console.log("Extracted coordinates for post:", post.id, coords);
-          
-          if (!coords || typeof coords.lng !== 'number' || typeof coords.lat !== 'number' || isNaN(coords.lng) || isNaN(coords.lat)) {
-            console.log("Invalid coordinates format for post:", post.id, coords);
-            continue;
-          }
-
-          // Use cached privacy-adjusted coordinates if they exist
-          let privateLng: number, privateLat: number;
-          const cachedCoords = processedCoordinates.current.get(post.id);
-          
-          if (cachedCoords) {
-            [privateLng, privateLat] = cachedCoords;
-            console.log("Using cached coordinates for post:", post.id);
-          } else {
-            // Calculate new privacy-adjusted coordinates - fix: removing the third argument (map)
-            [privateLng, privateLat] = await addLocationPrivacy(
-              coords.lng,
-              coords.lat
-            );
-            console.log("Generated new private coordinates for post:", post.id, [privateLng, privateLat]);
-            processedCoordinates.current.set(post.id, [privateLng, privateLat]);
-          }
-
           const markerElement = createMarkerElement({
             onClick: () => onPostClick(post.id),
             onMouseEnter: () => {
               const popup = createMapPopup({ 
                 post,
-                displayCoordinates: { lng: privateLng, lat: privateLat }
+                displayCoordinates: { lng, lat }
               });
               popup.addTo(map);
             },
@@ -81,7 +61,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
             element: markerElement,
             anchor: 'center'
           })
-            .setLngLat([privateLng, privateLat])
+            .setLngLat([lng, lat])
             .addTo(map);
 
           console.log("Successfully added marker for post:", post.id);
@@ -91,7 +71,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
         }
       }
 
-      // Fit map to show all markers if there are any (only if no target item specified)
+      // Fit map to show all markers if there are any
       if (markers.current.length > 0 && !targetItemId) {
         try {
           const bounds = new mapboxgl.LngLatBounds();
@@ -112,7 +92,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
     };
 
     createMarkers();
-  }, [posts, map, onPostClick]);
+  }, [posts, map, onPostClick, targetItemId]);
 
   return null;
 };

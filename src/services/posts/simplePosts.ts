@@ -1,0 +1,67 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import type { Post } from "@/types/post";
+import { parseCoordinates } from "@/utils/coordinates/simpleCoordinateParser";
+
+export const getPosts = async (): Promise<Post[]> => {
+  try {
+    console.log("Fetching posts from database...");
+    
+    // Simple database query without complex caching
+    const { data, error } = await supabase
+      .from('items')
+      .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error("Database error:", error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      console.log("No posts found in database");
+      return [];
+    }
+
+    console.log("Raw database data:", data);
+
+    // Transform data to Post format
+    const transformedData: Post[] = data.map(item => {
+      console.log("Processing item:", item.id, "coordinates:", item.coordinates);
+      
+      // Parse coordinates using simple parser
+      const coordinates = parseCoordinates(item.coordinates);
+      
+      return {
+        id: item.id.toString(),
+        title: item.title,
+        description: item.description || '',
+        category: item.category || '',
+        condition: item.condition || '',
+        measurements: item.measurements || {},
+        images: item.images || [],
+        location: item.location || '',
+        coordinates: coordinates,
+        postedBy: {
+          id: item.user_id,
+          name: item.profiles 
+            ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Unknown User'
+            : 'Unknown User',
+          avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
+        },
+        createdAt: item.created_at || '',
+        status: item.status || '',
+        likesCount: 0,
+        interestsCount: 0,
+        commentsCount: 0
+      };
+    });
+
+    console.log("Transformed posts:", transformedData);
+    return transformedData;
+  } catch (error) {
+    console.error("Error in getPosts:", error);
+    throw error;
+  }
+};
