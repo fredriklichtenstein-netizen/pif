@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -47,9 +46,24 @@ export const useMapInitialization = (mapboxToken: string) => {
   const [isMapReady, setIsMapReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const initializationAttempt = useRef(0);
+  const isInitializing = useRef(false);
+  const isMapReadyRef = useRef(false);
+
+  // Keep isMapReadyRef in sync with state
+  useEffect(() => {
+    isMapReadyRef.current = isMapReady;
+  }, [isMapReady]);
 
   const initializeMap = useCallback(() => {
     console.log("🚀 [Map Init] Starting map initialization...");
+    
+    // Prevent multiple simultaneous initialization attempts
+    if (isInitializing.current) {
+      console.log("⏸️ [Map Init] Initialization already in progress, skipping");
+      return;
+    }
+    
+    isInitializing.current = true;
     
     // Cleanup existing map instance if it exists
     if (map.current) {
@@ -68,12 +82,14 @@ export const useMapInitialization = (mapboxToken: string) => {
     if (!mapContainer.current) {
       console.error("🚨 [Map Init] No map container ref available");
       setError(new Error("Map container not available"));
+      isInitializing.current = false;
       return;
     }
     
     if (!mapboxToken) {
       console.error("🚨 [Map Init] No Mapbox token available");
       setError(new Error("No Mapbox token available"));
+      isInitializing.current = false;
       return;
     }
     
@@ -146,6 +162,7 @@ export const useMapInitialization = (mapboxToken: string) => {
             if (newMap.isStyleLoaded()) {
               console.log("✅ [Map Init] Style now fully loaded on idle");
               setIsMapReady(true);
+              isInitializing.current = false;
               newMap.off('idle', checkStyleLoaded);
             } else {
               console.log("⏳ [Map Init] Still waiting for style to load...");
@@ -153,17 +170,19 @@ export const useMapInitialization = (mapboxToken: string) => {
           };
           newMap.on('idle', checkStyleLoaded);
           
-          // Fallback timeout
+          // Fallback timeout - use ref to get current state
           setTimeout(() => {
-            if (!isMapReady) {
+            if (!isMapReadyRef.current) {
               console.log("⚠️ [Map Init] Timeout reached, forcing map ready state");
               setIsMapReady(true);
+              isInitializing.current = false;
               newMap.off('idle', checkStyleLoaded);
             }
           }, 10000);
         } else {
           console.log("✅ [Map Init] Style already loaded, map ready");
           setIsMapReady(true);
+          isInitializing.current = false;
         }
         
         map.current = newMap;
@@ -182,6 +201,7 @@ export const useMapInitialization = (mapboxToken: string) => {
         console.error('🚨 [Map Init] Map error event:', e);
         setError(new Error(`Map error: ${e.error?.message || 'Unknown error'}`));
         setIsMapReady(false);
+        isInitializing.current = false;
       });
 
       // Additional debugging events
@@ -197,14 +217,15 @@ export const useMapInitialization = (mapboxToken: string) => {
       console.error('🚨 [Map Init] Error during map creation:', error);
       setError(error instanceof Error ? error : new Error("Failed to initialize map"));
       setIsMapReady(false);
+      isInitializing.current = false;
     }
-  }, [mapboxToken, isMapReady]);
+  }, [mapboxToken]); // Only depend on mapboxToken, not on isMapReady
 
   useEffect(() => {
-    if (mapboxToken) {
+    if (mapboxToken && !isInitializing.current) {
       console.log("🔄 [Map Init] Token received, initializing map...");
       initializeMap();
-    } else {
+    } else if (!mapboxToken) {
       console.log("⏳ [Map Init] Waiting for token...");
     }
 
@@ -224,12 +245,14 @@ export const useMapInitialization = (mapboxToken: string) => {
         map.current.remove();
         map.current = null;
         setIsMapReady(false);
+        isInitializing.current = false;
       }
     };
   }, [mapboxToken, initializeMap]);
 
   const retryInitialization = useCallback(() => {
     console.log("🔄 [Map Init] Manual retry requested");
+    isInitializing.current = false; // Reset initialization guard
     initializeMap();
   }, [initializeMap]);
 
