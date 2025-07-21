@@ -106,6 +106,12 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
           }
         }
 
+        // Force map repaint after adding all markers
+        if (markers.current.length > 0) {
+          console.log(`Added ${markers.current.length} markers, forcing map repaint`);
+          map.triggerRepaint();
+        }
+
         // Improved map bounds fitting with better padding and zoom levels
         if (markers.current.length > 0 && !targetItemId) {
           try {

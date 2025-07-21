@@ -44,6 +44,7 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
       await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            console.log('Location permission granted, position:', position);
             setPermissionState('granted');
             onLocationEnabled();
             resolve(position);
