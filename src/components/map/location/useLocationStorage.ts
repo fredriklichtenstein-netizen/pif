@@ -19,8 +19,17 @@ export const useLocationStorage = (): LocationStorage => {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length === 2 && 
           typeof parsed[0] === 'number' && typeof parsed[1] === 'number') {
-        console.log('Retrieved stored location:', parsed);
-        return parsed as [number, number];
+        // Ensure coordinates are in [lng, lat] format for Mapbox compatibility
+        const [lng, lat] = parsed;
+        
+        // Validate coordinate ranges
+        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+          console.log('Retrieved stored location (lng, lat):', [lng, lat]);
+          return [lng, lat];
+        } else {
+          console.warn('Invalid coordinate ranges:', { lng, lat });
+          return null;
+        }
       }
       return null;
     } catch (error) {
@@ -32,8 +41,18 @@ export const useLocationStorage = (): LocationStorage => {
   const setStoredLocation = (location: [number, number] | null): void => {
     try {
       if (location) {
-        localStorage.setItem(LOCATION_KEY, JSON.stringify(location));
-        console.log('Stored location:', location);
+        const [lng, lat] = location;
+        
+        // Validate coordinates before storing
+        if (typeof lng === 'number' && typeof lat === 'number' && 
+            lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+          // Store as serializable array only
+          const serializableLocation = [lng, lat];
+          localStorage.setItem(LOCATION_KEY, JSON.stringify(serializableLocation));
+          console.log('Stored location (lng, lat):', serializableLocation);
+        } else {
+          console.error('Invalid coordinates for storage:', { lng, lat });
+        }
       } else {
         localStorage.removeItem(LOCATION_KEY);
         console.log('Cleared stored location');

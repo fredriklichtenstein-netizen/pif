@@ -1,7 +1,7 @@
+
 import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
-import { useLocationStorage } from "@/components/map/location/useLocationStorage";
-import { calculateDistance, formatDistance } from "@/utils/distance";
+import { calculateDistanceFromUser, formatDistance } from "@/utils/distance";
 
 interface MapPopupProps {
   post: Post;
@@ -21,21 +21,28 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
     className: 'map-item-popup enhanced-popup',
   });
 
-  // Calculate distance using stored location
+  // Calculate distance using original post coordinates for accuracy
   const getDistanceText = (): string => {
     try {
-      const stored = localStorage.getItem('pif_user_location');
-      if (!stored || !post.coordinates) return '';
+      if (!post.coordinates) {
+        console.log('No coordinates available for distance calculation');
+        return '';
+      }
       
-      const userLocation = JSON.parse(stored);
-      if (!Array.isArray(userLocation) || userLocation.length !== 2) return '';
+      const { lng, lat } = post.coordinates;
       
-      const distance = calculateDistance(
-        userLocation[0], // lat
-        userLocation[1], // lng
-        post.coordinates.lat,
-        post.coordinates.lng
-      );
+      if (typeof lng !== 'number' || typeof lat !== 'number' || 
+          isNaN(lng) || isNaN(lat)) {
+        console.log('Invalid coordinates for distance calculation:', { lng, lat });
+        return '';
+      }
+      
+      const distance = calculateDistanceFromUser(lng, lat);
+      
+      if (isNaN(distance) || distance < 0) {
+        console.log('Invalid distance result:', distance);
+        return '';
+      }
       
       return formatDistance(distance);
     } catch (error) {
@@ -63,13 +70,97 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
     return normalizedType.includes('sök') || normalizedType.includes('request') ? 'Söker' : 'Erbjuder';
   };
 
+  // Enhanced image handling with better fallback
+  const getImageHtml = (): string => {
+    const hasImage = post.images && post.images.length > 0 && post.images[0];
+    const itemTypeLabel = getItemTypeLabel(post.item_type);
+    
+    if (hasImage) {
+      const imageUrl = post.images[0];
+      
+      // Check if it's a valid URL format
+      const isValidImageUrl = imageUrl && 
+        (imageUrl.startsWith('http') || imageUrl.startsWith('data:') || imageUrl.startsWith('/'));
+      
+      if (isValidImageUrl) {
+        return `
+          <div style="
+            width: 180px; 
+            height: 120px; 
+            overflow: hidden; 
+            box-sizing: border-box;
+            position: relative;
+          ">
+            <img 
+              src="${imageUrl}" 
+              alt="${post.title}" 
+              style="
+                width: 100%; 
+                height: 100%; 
+                object-fit: cover; 
+                box-sizing: border-box;
+                display: block;
+              "
+              onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\"width: 100%; height: 100%; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); display: flex; align-items: center; justify-content: center; color: #0284c7; font-size: 14px; font-weight: 600;\\">📦 ${itemTypeLabel}</div>';"
+            />
+            <div style="
+              position: absolute;
+              top: 8px;
+              right: 8px;
+              background: rgba(0,0,0,0.7);
+              color: white;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-size: 10px;
+              font-weight: 500;
+            ">
+              ${itemTypeLabel}
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // Fallback for no image or invalid image
+    return `
+      <div style="
+        width: 180px; 
+        height: 80px; 
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      ">
+        <div style="
+          color: #0284c7;
+          font-size: 14px;
+          font-weight: 600;
+        ">
+          ${itemTypeLabel === 'Erbjuder' ? '📦 Erbjuder' : '🔍 Söker'}
+        </div>
+        <div style="
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: rgba(2,132,199,0.9);
+          color: white;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 10px;
+          font-weight: 500;
+        ">
+          ${itemTypeLabel}
+        </div>
+      </div>
+    `;
+  };
+
   // Create enhanced HTML content with better styling and more information
-  const hasImage = post.images && post.images.length > 0;
   const condition = post.condition ? post.condition.charAt(0).toUpperCase() + post.condition.slice(1) : '';
   const category = post.category ? post.category.charAt(0).toUpperCase() + post.category.slice(1) : '';
-  const itemTypeLabel = getItemTypeLabel(post.item_type);
   
-  console.log('Popup - Item type:', post.item_type, 'Label:', itemTypeLabel, 'Distance:', distanceText);
+  console.log('Popup - Item type:', post.item_type, 'Distance:', distanceText);
   
   popup.setHTML(`
     <div style="
@@ -86,72 +177,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
       background: white;
       border: 1px solid rgba(0,0,0,0.08);
     ">
-      ${hasImage ? `
-        <div style="
-          width: 180px; 
-          height: 120px; 
-          overflow: hidden; 
-          box-sizing: border-box;
-          position: relative;
-        ">
-          <img 
-            src="${post.images[0]}" 
-            alt="${post.title}" 
-            style="
-              width: 100%; 
-              height: 100%; 
-              object-fit: cover; 
-              box-sizing: border-box;
-              display: block;
-            "
-            onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\"width: 100%; height: 100%; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); display: flex; align-items: center; justify-content: center; color: #0284c7; font-size: 14px; font-weight: 600;\\">📦 ${itemTypeLabel}</div>';"
-          />
-          <div style="
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 500;
-          ">
-            ${itemTypeLabel}
-          </div>
-        </div>
-      ` : `
-        <div style="
-          width: 180px; 
-          height: 80px; 
-          background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        ">
-          <div style="
-            color: #0284c7;
-            font-size: 14px;
-            font-weight: 600;
-          ">
-            ${itemTypeLabel === 'Erbjuder' ? '📦 Erbjuder' : '🔍 Söker'}
-          </div>
-          <div style="
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(2,132,199,0.9);
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 500;
-          ">
-            ${itemTypeLabel}
-          </div>
-        </div>
-      `}
+      ${getImageHtml()}
       <div style="
         width: 180px; 
         padding: 12px; 

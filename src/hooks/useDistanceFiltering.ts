@@ -31,8 +31,10 @@ export const useDistanceFiltering = ({ posts, userLocation }: UseDistanceFilteri
         return false;
       }
 
-      const distance = calculateDistance(userLocation[1], userLocation[0], lat, lng);
-      const withinDistance = distance <= selectedDistance;
+      // Use corrected coordinate order: lng, lat
+      const [userLng, userLat] = userLocation;
+      const distance = calculateDistance(userLng, userLat, lng, lat);
+      const withinDistance = !isNaN(distance) && distance <= selectedDistance;
       
       if (!withinDistance) {
         console.log('Post filtered out by distance:', post.id, { distance, maxDistance: selectedDistance });
@@ -50,6 +52,8 @@ export const useDistanceFiltering = ({ posts, userLocation }: UseDistanceFilteri
       return posts.map(post => ({ ...post, distance: null }));
     }
 
+    const [userLng, userLat] = userLocation;
+
     return posts.map(post => {
       if (!post.coordinates) {
         return { ...post, distance: null };
@@ -60,8 +64,8 @@ export const useDistanceFiltering = ({ posts, userLocation }: UseDistanceFilteri
         return { ...post, distance: null };
       }
 
-      const distance = calculateDistance(userLocation[1], userLocation[0], lat, lng);
-      return { ...post, distance };
+      const distance = calculateDistance(userLng, userLat, lng, lat);
+      return { ...post, distance: isNaN(distance) ? null : distance };
     });
   }, [posts, userLocation]);
 

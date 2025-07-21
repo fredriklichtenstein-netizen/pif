@@ -1,9 +1,11 @@
+
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { FeedItemCard } from "./FeedItemCard";
 import { FeedEmptyState } from "./FeedEmptyState";
 import { FeedErrorState } from "./FeedErrorState";
 import { FeedLoadingState } from "./FeedLoadingState";
+import { FeedErrorBoundary } from "./FeedErrorBoundary";
 import { useSearchParams } from "react-router-dom";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
@@ -15,6 +17,40 @@ interface FeedItemListProps {
   onItemOperationSuccess?: (itemId?: string | number, operationType?: OperationType) => void;
   isLoading?: boolean;
 }
+
+// Helper function to validate post data
+const validatePostData = (post: any): boolean => {
+  try {
+    // Basic validation
+    if (!post || typeof post !== 'object') {
+      console.warn('Invalid post object:', post);
+      return false;
+    }
+
+    // Required fields
+    if (!post.id || !post.title) {
+      console.warn('Missing required post fields:', { id: post.id, title: post.title });
+      return false;
+    }
+
+    // Validate coordinates if present
+    if (post.coordinates) {
+      const { lng, lat } = post.coordinates;
+      if (typeof lng !== 'number' || typeof lat !== 'number' || 
+          isNaN(lng) || isNaN(lat) ||
+          lng < -180 || lng > 180 || lat < -90 || lat > 90) {
+        console.warn('Invalid coordinates:', post.coordinates);
+        // Don't reject the post, just clear invalid coordinates
+        post.coordinates = null;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error validating post data:', error, post);
+    return false;
+  }
+};
 
 export function FeedItemList({
   posts,
@@ -35,6 +71,9 @@ export function FeedItemList({
   const [searchParams] = useSearchParams();
   const targetPostId = searchParams.get('post');
 
+  // Validate and filter posts
+  const validPosts = posts?.filter(validatePostData) || [];
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -46,12 +85,16 @@ export function FeedItemList({
 
   // Log when posts change for debugging
   useEffect(() => {
-    console.log('FeedItemList: Posts updated', { count: posts?.length, viewMode });
-  }, [posts, viewMode]);
+    console.log('FeedItemList: Posts updated', { 
+      count: posts?.length, 
+      validCount: validPosts.length,
+      viewMode 
+    });
+  }, [posts, validPosts.length, viewMode]);
 
   // Scroll to target post when available
   useEffect(() => {
-    if (targetPostId && posts && posts.length > 0) {
+    if (targetPostId && validPosts && validPosts.length > 0) {
       console.log('Attempting to scroll to post:', targetPostId);
       const timer = setTimeout(() => {
         const targetElement = document.getElementById(`post-${targetPostId}`);
@@ -64,11 +107,11 @@ export function FeedItemList({
         } else {
           console.log('Target post element not found:', targetPostId);
         }
-      }, 500); // Wait for posts to render
+      }, 500);
       
       return () => clearTimeout(timer);
     }
-  }, [targetPostId, posts]);
+  }, [targetPostId, validPosts]);
 
   // Enhanced recovery function with debouncing and complete refresh
   const handleRecoveryAction = useCallback(() => {
@@ -97,7 +140,6 @@ export function FeedItemList({
             console.log("Feed data refresh completed");
           } catch (err) {
             console.error("Error during recovery refresh:", err);
-            // If the callback fails, we'll still try to recover UI
             setRefreshKey(Date.now() + 1);
           } finally {
             setIsRefreshing(false);
@@ -106,7 +148,7 @@ export function FeedItemList({
         } else {
           setIsRefreshing(false);
         }
-      }, 800); // Longer delay for more complete refresh
+      }, 800);
     } catch (err) {
       console.error("Error during recovery action:", err);
       toast({
@@ -171,23 +213,25 @@ export function FeedItemList({
   }
 
   return (
-    <div className="space-y-4" key={refreshKey}>
-      {posts?.map((post) => (
-        <div key={post.id} id={`post-${post.id}`}>
-          <FeedItemCard
-            post={post}
-            onItemOperationSuccess={handleItemSuccess}
+    <FeedErrorBoundary onReset={handleRecoveryAction}>
+      <div className="space-y-4" key={refreshKey}>
+        {validPosts?.map((post) => (
+          <div key={post.id} id={`post-${post.id}`}>
+            <FeedItemCard
+              post={post}
+              onItemOperationSuccess={handleItemSuccess}
+            />
+          </div>
+        ))}
+        
+        {validPosts?.length === 0 && (
+          <FeedEmptyState
+            viewMode={viewMode}
+            selectedCategories={selectedCategories}
+            clearFilters={clearFilters}
           />
-        </div>
-      ))}
-      
-      {posts?.length === 0 && (
-        <FeedEmptyState
-          viewMode={viewMode}
-          selectedCategories={selectedCategories}
-          clearFilters={clearFilters}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    </FeedErrorBoundary>
   );
 }

@@ -1,182 +1,75 @@
 
 import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
-import { getPosts } from "@/services/posts/simplePosts";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { useMapbox } from "@/hooks/useMapbox";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MainNav } from "@/components/MainNav";
-import { supabase } from "@/integrations/supabase/client";
+import { MainHeader } from "@/components/layout/MainHeader";
+import { Separator } from "@/components/ui/separator";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFeedPosts } from "@/hooks/useFeedPosts";
+import { FadeIn } from "@/components/animation/FadeIn";
+import { SlideIn } from "@/components/animation/SlideIn";
+import { useAnnouncement } from "@/hooks/accessibility/useAnnouncement";
+
+const MAPBOX_TOKEN = "pk.eyJ1IjoibG92YWJsZWRldiIsImEiOiJjbTNrY3lldzEwaXdsMnBxNjR4bnJ5N3ozIn0.8zM8RINXmyDqrH0e2S0VBw";
 
 export default function Map() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const itemId = searchParams.get("item");
-  const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
-  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const { announce } = useAnnouncement();
+  const { posts, isLoading, refreshPosts } = useFeedPosts();
+  const [targetItemId, setTargetItemId] = useState<string | null>(null);
 
-  console.log("Map page - Item ID parameter:", itemId);
-  console.log("Map page - Token status:", { hasToken: !!mapToken, isLoading: isTokenLoading, error: tokenError });
-
-  const { data: posts = [], isLoading: isPostsLoading, error: postsError, refetch: refetchPosts } = useQuery({
-    queryKey: ['simple-posts'],
-    queryFn: getPosts,
-    retry: 1
-  });
-
-  console.log("Map page - Posts:", posts.length, "items loaded");
-
-  // Set up real-time subscriptions for new posts
+  // Get target item from URL parameters
   useEffect(() => {
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'items'
-        },
-        (payload) => {
-          console.log('New post detected:', payload);
-          
-          // Invalidate and refetch posts to include the new item
-          queryClient.invalidateQueries({ queryKey: ['simple-posts'] });
-          
-          // Show a toast notification for new posts
-          toast({
-            title: "Nytt inlägg",
-            description: "Ett nytt inlägg har lagts till på kartan.",
-            duration: 3000,
-          });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'items'
-        },
-        (payload) => {
-          console.log('Post updated:', payload);
-          
-          // Invalidate posts to reflect updates
-          queryClient.invalidateQueries({ queryKey: ['simple-posts'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'items'
-        },
-        (payload) => {
-          console.log('Post deleted:', payload);
-          
-          // Invalidate posts to remove deleted items
-          queryClient.invalidateQueries({ queryKey: ['simple-posts'] });
-          
-          toast({
-            title: "Inlägg borttaget",
-            description: "Ett inlägg har tagits bort från kartan.",
-            duration: 3000,
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, toast]);
-
-  useEffect(() => {
-    if (postsError) {
-      console.error("Error loading posts:", postsError);
-      toast({
-        title: "Error loading items",
-        description: "Could not load items. Please try again later.",
-        variant: "destructive",
-      });
+    const itemId = searchParams.get('item');
+    if (itemId) {
+      console.log('Map: Target item ID from URL:', itemId);
+      setTargetItemId(itemId);
+    } else {
+      setTargetItemId(null);
     }
-  }, [postsError, toast]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    announce("Map page loaded, showing community posts on map");
+    refreshPosts();
+  }, [announce, refreshPosts]);
 
   const handlePostClick = (postId: string) => {
-    console.log('Navigating to post:', postId);
-    // Navigate to the specific post in the feed
-    navigate(`/feed?post=${postId}`, { 
-      state: { fromMap: true, mapItemId: itemId }
-    });
+    console.log('Map: Post clicked, navigating to feed with post:', postId);
+    // Navigate to feed with the specific post ID and timestamp
+    navigate(`/feed?post=${postId}&t=${Date.now()}`);
   };
-  
-  const handleRetry = () => {
-    if (tokenError) {
-      retryFetchToken();
-    }
-    if (postsError) {
-      refetchPosts();
-    }
-  };
-
-  const isLoading = isTokenLoading || isPostsLoading;
-  const error = tokenError || postsError;
-
-  const navHeight = 68;
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 z-0">
-      <div
-        className="absolute top-0 left-0 right-0"
-        style={{
-          bottom: navHeight - 10,
-        }}
-      >
-        {error ? (
-          <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-            <div className="text-center p-6 max-w-md">
-              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <p className="text-gray-700 mb-2 text-lg font-medium">Failed to load map</p>
-              <p className="text-gray-500 text-sm mb-6">
-                {error.message}
-              </p>
-              <Button 
-                onClick={handleRetry} 
-                className="flex items-center gap-2"
-                variant="default"
-              >
-                <RefreshCw className="h-4 w-4" /> Try again
-              </Button>
+    <div className="min-h-screen bg-gray-50">
+      <MainHeader />
+      <Separator />
+      
+      <main className="relative h-[calc(100vh-73px)]" role="main" aria-label="Interactive map">
+        <FadeIn>
+          <div className="absolute inset-0 z-0">
+            <SlideIn direction="up">
+              <MapContainer
+                mapboxToken={MAPBOX_TOKEN}
+                posts={posts}
+                onPostClick={handlePostClick}
+                targetItemId={targetItemId}
+              />
+            </SlideIn>
+          </div>
+        </FadeIn>
+        
+        {isLoading && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-600">Loading posts...</span>
+              </div>
             </div>
           </div>
-        ) : isLoading || !mapToken ? (
-          <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading map...</p>
-              {isTokenLoading && <p className="text-xs text-gray-400 mt-2">Retrieving map credentials...</p>}
-              {isPostsLoading && <p className="text-xs text-gray-400 mt-2">Loading location data...</p>}
-            </div>
-          </div>
-        ) : (
-          <MapContainer 
-            mapboxToken={mapToken}
-            posts={posts}
-            onPostClick={handlePostClick}
-            targetItemId={itemId}
-          />
         )}
-      </div>
-      <div className="fixed left-0 right-0 bottom-0 z-10">
-        <MainNav />
-      </div>
-      <Toaster />
+      </main>
     </div>
   );
 }
