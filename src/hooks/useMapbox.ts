@@ -10,7 +10,7 @@ export const useMapbox = () => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchMapToken = async () => {
+    const fetchMapboxToken = async () => {
       try {
         setIsLoading(true);
         setError(null);
@@ -45,12 +45,12 @@ export const useMapbox = () => {
       }
     };
 
-    fetchMapToken();
+    fetchMapboxToken();
   }, [toast]);
 
   const retryFetchToken = () => {
     setError(null);
-    fetchMapToken();
+    fetchMapboxToken();
   };
 
   return { mapToken, isLoading, error, retryFetchToken };
