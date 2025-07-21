@@ -87,7 +87,7 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
     }
   };
 
-  const createCircle = (center: [number, number], radiusKm: number) => {
+  const createCircle = (center: [number, number], radiusKm: number): GeoJSON.Polygon => {
     const points = 64;
     const coords: number[][] = [];
     
@@ -107,7 +107,7 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
     coords.push(coords[0]);
     
     return {
-      type: 'Polygon',
+      type: 'Polygon' as const,
       coordinates: [coords]
     };
   };
