@@ -14,25 +14,31 @@ export const useMapbox = () => {
       setIsLoading(true);
       setError(null);
       
-      console.log("Fetching Mapbox token from edge function...");
+      console.log("🗺️ [Mapbox Hook] Starting token fetch...");
       
       const { data, error: functionError } = await supabase.functions.invoke('get-mapbox-token');
       
       if (functionError) {
-        console.error("Edge function error:", functionError);
+        console.error("🚨 [Mapbox Hook] Edge function error:", functionError);
         throw new Error(`Failed to get Mapbox token: ${functionError.message}`);
       }
       
       if (!data || !data.token) {
-        console.error("No token in response:", data);
+        console.error("🚨 [Mapbox Hook] No token in response:", data);
         throw new Error("No Mapbox token received from server");
       }
       
-      console.log("Successfully retrieved Mapbox token");
+      // Validate token format
+      if (!data.token.startsWith('pk.')) {
+        console.error("🚨 [Mapbox Hook] Invalid token format:", data.token.substring(0, 10) + "...");
+        throw new Error("Invalid Mapbox token format received");
+      }
+      
+      console.log("✅ [Mapbox Hook] Successfully retrieved valid token");
       setMapToken(data.token);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching Mapbox token:", error);
+      console.error("🚨 [Mapbox Hook] Token fetch failed:", error);
       setError(error as Error);
       setIsLoading(false);
       
@@ -49,6 +55,7 @@ export const useMapbox = () => {
   }, [toast]);
 
   const retryFetchToken = () => {
+    console.log("🔄 [Mapbox Hook] Retrying token fetch...");
     setError(null);
     fetchMapboxToken();
   };

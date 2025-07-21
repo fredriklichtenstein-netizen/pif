@@ -20,11 +20,13 @@ export default function Map() {
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
 
+  console.log("🗺️ [Map Page] Render - Posts:", posts.length, "Token loading:", isTokenLoading, "Token:", mapToken ? "✅" : "❌");
+
   // Get target item from URL parameters
   useEffect(() => {
     const itemId = searchParams.get('item');
     if (itemId) {
-      console.log('Map: Target item ID from URL:', itemId);
+      console.log('🎯 [Map Page] Target item ID from URL:', itemId);
       setTargetItemId(itemId);
     } else {
       setTargetItemId(null);
@@ -37,13 +39,13 @@ export default function Map() {
   }, [announce, refreshPosts]);
 
   const handlePostClick = (postId: string) => {
-    console.log('Map: Post clicked, navigating to feed with post:', postId);
-    // Navigate to feed with the specific post ID and timestamp
+    console.log('🔗 [Map Page] Post clicked, navigating to feed with post:', postId);
     navigate(`/feed?post=${postId}&t=${Date.now()}`);
   };
 
   // Show loading state while token is being fetched
   if (isTokenLoading) {
+    console.log("⏳ [Map Page] Showing token loading state");
     return (
       <div className="min-h-screen bg-gray-50">
         <MainHeader />
@@ -53,7 +55,7 @@ export default function Map() {
           <div className="text-center p-6">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading map credentials...</p>
-            <p className="text-gray-500 text-sm mt-2">Initializing secure connection</p>
+            <p className="text-gray-500 text-sm mt-2">Fetching secure Mapbox token</p>
           </div>
         </main>
       </div>
@@ -62,6 +64,7 @@ export default function Map() {
 
   // Show error state if token fetch failed
   if (tokenError || !mapToken) {
+    console.log("🚨 [Map Page] Showing token error state:", tokenError?.message);
     return (
       <div className="min-h-screen bg-gray-50">
         <MainHeader />
@@ -87,6 +90,8 @@ export default function Map() {
       </div>
     );
   }
+
+  console.log("✅ [Map Page] Rendering main map interface");
 
   return (
     <div className="min-h-screen bg-gray-50">
