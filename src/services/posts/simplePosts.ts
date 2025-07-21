@@ -33,13 +33,31 @@ export const getPosts = async (): Promise<Post[]> => {
       // Parse coordinates using simple parser
       const coordinates = parseCoordinates(item.coordinates);
       
+      // Safely convert measurements to Record<string, string>
+      let measurements: Record<string, string> = {};
+      if (item.measurements && typeof item.measurements === 'object' && !Array.isArray(item.measurements)) {
+        try {
+          // Convert all values to strings
+          Object.entries(item.measurements).forEach(([key, value]) => {
+            if (typeof value === 'string') {
+              measurements[key] = value;
+            } else if (value !== null && value !== undefined) {
+              measurements[key] = String(value);
+            }
+          });
+        } catch (e) {
+          console.warn("Failed to parse measurements:", item.measurements, e);
+          measurements = {};
+        }
+      }
+      
       return {
         id: item.id.toString(),
         title: item.title,
         description: item.description || '',
         category: item.category || '',
         condition: item.condition || '',
-        measurements: item.measurements || {},
+        measurements: measurements,
         images: item.images || [],
         location: item.location || '',
         coordinates: coordinates,
