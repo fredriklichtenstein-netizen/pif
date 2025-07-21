@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Locate, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
+import { LocationAccuracyIndicator } from "./location/LocationAccuracyIndicator";
+import { LocationPermissionManager } from "./location/LocationPermissionManager";
+import { DistanceRings } from "./distance/DistanceRings";
+import { DistanceFilters } from "./distance/DistanceFilters";
+import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import "./MapStyles.css";
 
 interface MapContainerProps {
@@ -19,15 +24,26 @@ interface MapContainerProps {
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemId }: MapContainerProps) => {
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
+  const [showDistanceRings, setShowDistanceRings] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
+
+  // Distance filtering
+  const {
+    filteredPosts,
+    selectedDistance,
+    setSelectedDistance
+  } = useDistanceFiltering({
+    posts,
+    userLocation: locationTracking.userLocation
+  });
 
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [selectedItemTypes, setSelectedItemTypes] = useState<string[]>([]);
 
-  // Filter posts based on selected filters
-  const filteredPosts = posts.filter(post => {
+  // Apply all filters including distance
+  const finalFilteredPosts = filteredPosts.filter(post => {
     if (selectedItemTypes.length > 0 && !selectedItemTypes.includes(post.item_type || 'offer')) {
       return false;
     }
@@ -44,6 +60,15 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     setSelectedCategories([]);
     setSelectedConditions([]);
     setSelectedItemTypes([]);
+    setSelectedDistance(null);
+  };
+
+  const handleLocationEnabled = () => {
+    console.log('Location enabled');
+  };
+
+  const handleLocationDenied = () => {
+    console.log('Location denied');
   };
 
   useEffect(() => {
@@ -135,6 +160,22 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       
       {isMapReady && !error && map && (
         <>
+          <LocationPermissionManager
+            onLocationEnabled={handleLocationEnabled}
+            onLocationDenied={handleLocationDenied}
+          />
+
+          <LocationAccuracyIndicator
+            accuracy={locationTracking.accuracy || 0}
+            isVisible={locationTracking.isTracking && locationTracking.accuracy !== null}
+          />
+
+          <DistanceFilters
+            selectedDistance={selectedDistance}
+            onDistanceChange={setSelectedDistance}
+            userLocation={locationTracking.userLocation}
+          />
+
           <MapFilters
             selectedCategories={selectedCategories}
             selectedConditions={selectedConditions}
@@ -144,23 +185,45 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             onItemTypeChange={setSelectedItemTypes}
             onClearFilters={handleClearFilters}
           />
+
+          <DistanceRings
+            map={map}
+            center={locationTracking.userLocation}
+            visible={showDistanceRings && selectedDistance !== null}
+            rings={selectedDistance ? [selectedDistance] : [1, 5, 10]}
+          />
+
           <MapMarkersLayer 
             map={map}
-            posts={filteredPosts}
+            posts={finalFilteredPosts}
             onPostClick={onPostClick}
             targetItemId={targetItemId}
           />
-          <Button
-            onClick={locationTracking.toggleLocationTracking}
-            className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
-            size="icon"
-            variant="outline"
-          >
-            <Locate 
-              className={`h-4 w-4 ${locationTracking.isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
-              strokeWidth={1.5}
-            />
-          </Button>
+
+          <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+            <Button
+              onClick={locationTracking.toggleLocationTracking}
+              className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
+              size="icon"
+              variant="outline"
+            >
+              <Locate 
+                className={`h-4 w-4 ${locationTracking.isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
+                strokeWidth={1.5}
+              />
+            </Button>
+            
+            {locationTracking.userLocation && (
+              <Button
+                onClick={() => setShowDistanceRings(!showDistanceRings)}
+                className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
+                size="icon"
+                variant="outline"
+              >
+                <div className={`w-4 h-4 rounded-full border-2 ${showDistanceRings ? 'border-blue-500 bg-blue-100' : 'border-gray-400'}`} />
+              </Button>
+            )}
+          </div>
         </>
       )}
     </div>

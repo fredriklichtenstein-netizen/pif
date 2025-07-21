@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +9,7 @@ interface LocationTrackingResult {
   userLocation: [number, number] | null;
   isLoadingLocation: boolean;
   isTracking: boolean;
+  accuracy: number | null;
   toggleLocationTracking: () => void;
 }
 
@@ -24,6 +24,8 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     storage.getStoredLocation()
   );
+
+  const [accuracy, setAccuracy] = useState<number | null>(null);
 
   const [isTracking, setIsTracking] = useState(
     storage.getStoredTrackingState()
@@ -46,6 +48,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   const handleLocationUpdate = (result: LocationResult) => {
     console.log('Got position:', result.coords, 'Accuracy:', result.accuracy, 'meters');
     setUserLocation(result.coords);
+    setAccuracy(result.accuracy);
     storage.setStoredLocation(result.coords);
     
     if (map) {
@@ -116,6 +119,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       locationMarker.current = null;
     }
     setIsTracking(false);
+    setAccuracy(null);
     storage.setStoredTrackingState(false);
     storage.setStoredLocation(null);
     setUserLocation(null);
@@ -153,6 +157,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     userLocation,
     isLoadingLocation: locationProvider.isLoading,
     isTracking,
+    accuracy,
     toggleLocationTracking: isTracking ? stopLocationTracking : startLocationTracking,
   };
 };
