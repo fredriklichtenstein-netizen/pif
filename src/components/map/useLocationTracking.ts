@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useToast } from "@/hooks/use-toast";
@@ -64,6 +65,9 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         });
       }
     }
+
+    // Reset retry count on successful location update
+    retryCount.current = 0;
   };
 
   const handleLocationError = (error: GeolocationPositionError) => {
@@ -93,7 +97,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
           });
         }
         console.log(`Retrying location tracking (attempt ${retryCount.current}/3)`);
-        startLocationTracking();
+        // Don't call startLocationTracking again, let the provider handle retries
       } else {
         stopLocationTracking();
         toast({
@@ -106,23 +110,30 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   };
 
   const startLocationTracking = () => {
-    if (!map) return;
+    if (!map) {
+      console.log('Cannot start location tracking: map not ready');
+      return;
+    }
+    console.log('Starting location tracking');
     setIsTracking(true);
     storage.setStoredTrackingState(true);
     locationProvider.startTracking(handleLocationUpdate, handleLocationError);
   };
 
   const stopLocationTracking = () => {
+    console.log('Stopping location tracking');
     locationProvider.stopTracking();
     if (locationMarker.current) {
-      locationMarker.current.remove();
+      try {
+        locationMarker.current.remove();
+      } catch (error) {
+        console.error("Error removing location marker:", error);
+      }
       locationMarker.current = null;
     }
     setIsTracking(false);
     setAccuracy(null);
     storage.setStoredTrackingState(false);
-    storage.setStoredLocation(null);
-    setUserLocation(null);
     retryCount.current = 0;
   };
 
@@ -130,6 +141,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   useEffect(() => {
     if (!map) {
       if (isTracking) {
+        console.log('Map not ready, stopping location tracking');
         stopLocationTracking();
       }
       return;
@@ -147,7 +159,11 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
       // Only clean up marker, don't stop tracking
       if (locationMarker.current) {
         console.log('Cleaning up location marker for map instance change');
-        locationMarker.current.remove();
+        try {
+          locationMarker.current.remove();
+        } catch (error) {
+          console.error("Error cleaning up location marker:", error);
+        }
         locationMarker.current = null;
       }
     };

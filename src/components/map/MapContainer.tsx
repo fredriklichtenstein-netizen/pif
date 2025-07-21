@@ -63,9 +63,10 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   };
 
   const handleLocationEnabled = () => {
-    console.log('Location enabled successfully');
+    console.log('Location enabled successfully in MapContainer');
     // Start location tracking when permission is granted
     if (!locationTracking.isTracking) {
+      console.log('Starting location tracking after permission granted');
       locationTracking.toggleLocationTracking();
     }
   };

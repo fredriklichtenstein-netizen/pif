@@ -1,7 +1,6 @@
 
 import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
-import { parseCoordinatesFromDB } from "@/types/post";
 
 interface MapPopupProps {
   post: Post;
@@ -21,10 +20,30 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
     className: 'map-item-popup enhanced-popup',
   });
 
+  // Determine correct item type label
+  const getItemTypeLabel = (itemType: string | undefined): string => {
+    if (!itemType) return 'Erbjuder'; // Default fallback
+    
+    // Handle both 'offer'/'request' and 'erbjuder'/'söker' formats
+    const normalizedType = itemType.toLowerCase();
+    
+    if (normalizedType === 'offer' || normalizedType === 'erbjuder') {
+      return 'Erbjuder';
+    } else if (normalizedType === 'request' || normalizedType === 'söker') {
+      return 'Söker';
+    }
+    
+    // Fallback based on common patterns
+    return normalizedType.includes('sök') || normalizedType.includes('request') ? 'Söker' : 'Erbjuder';
+  };
+
   // Create enhanced HTML content with better styling and more information
   const hasImage = post.images && post.images.length > 0;
   const condition = post.condition ? post.condition.charAt(0).toUpperCase() + post.condition.slice(1) : '';
   const category = post.category ? post.category.charAt(0).toUpperCase() + post.category.slice(1) : '';
+  const itemTypeLabel = getItemTypeLabel(post.item_type);
+  
+  console.log('Popup - Item type:', post.item_type, 'Label:', itemTypeLabel);
   
   popup.setHTML(`
     <div style="
@@ -59,6 +78,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
               box-sizing: border-box;
               display: block;
             "
+            onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\"width: 100%; height: 100%; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); display: flex; align-items: center; justify-content: center; color: #0284c7; font-size: 14px; font-weight: 600;\\">📦 ${itemTypeLabel}</div>';"
           />
           <div style="
             position: absolute;
@@ -71,7 +91,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
             font-size: 10px;
             font-weight: 500;
           ">
-            ${post.item_type === 'offer' ? 'Erbjuder' : 'Söker'}
+            ${itemTypeLabel}
           </div>
         </div>
       ` : `
@@ -89,7 +109,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
             font-size: 14px;
             font-weight: 600;
           ">
-            ${post.item_type === 'offer' ? '📦 Erbjuder' : '🔍 Söker'}
+            ${itemTypeLabel === 'Erbjuder' ? '📦 Erbjuder' : '🔍 Söker'}
           </div>
           <div style="
             position: absolute;
@@ -102,7 +122,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
             font-size: 10px;
             font-weight: 500;
           ">
-            ${post.item_type === 'offer' ? 'Erbjuder' : 'Söker'}
+            ${itemTypeLabel}
           </div>
         </div>
       `}

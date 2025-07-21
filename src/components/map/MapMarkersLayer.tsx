@@ -21,7 +21,13 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
       console.log("Creating privacy-enhanced markers for posts:", posts.length);
       
       // Clear existing markers
-      markers.current.forEach(marker => marker.remove());
+      markers.current.forEach(marker => {
+        try {
+          marker.remove();
+        } catch (error) {
+          console.error("Error removing marker:", error);
+        }
+      });
       markers.current = [];
       
       // Process all posts with privacy enhancement
@@ -39,6 +45,13 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
         
         return true;
       });
+
+      console.log("Valid posts for markers:", validPosts.length);
+
+      if (validPosts.length === 0) {
+        console.log("No valid posts to create markers for");
+        return;
+      }
 
       // Apply privacy distortion to all valid posts concurrently
       const privacyPromises = validPosts.map(async (post) => {
@@ -69,6 +82,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
 
       try {
         const enhancedPosts = await Promise.all(privacyPromises);
+        console.log("Enhanced posts ready for marker creation:", enhancedPosts.length);
         
         // Create markers using privacy-enhanced coordinates
         for (const { post, privacyCoordinates } of enhancedPosts) {
@@ -109,7 +123,16 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
         // Force map repaint after adding all markers
         if (markers.current.length > 0) {
           console.log(`Added ${markers.current.length} markers, forcing map repaint`);
-          map.triggerRepaint();
+          // Use requestAnimationFrame to ensure DOM updates are complete
+          requestAnimationFrame(() => {
+            try {
+              map.triggerRepaint();
+              // Additional force refresh
+              map.getCanvas().style.transform = map.getCanvas().style.transform;
+            } catch (error) {
+              console.error("Error during map repaint:", error);
+            }
+          });
         }
 
         // Improved map bounds fitting with better padding and zoom levels
@@ -178,6 +201,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
       }
     };
 
+    // Always create markers when posts or map changes
     createMarkersWithPrivacy();
   }, [posts, map, onPostClick, targetItemId]);
 
