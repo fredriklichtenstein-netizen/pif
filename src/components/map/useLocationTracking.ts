@@ -54,9 +54,8 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     
     if (map) {
       updateLocationMarker(result.coords);
-      // Only fly to location on initial position or when explicitly requested
-      if (!userLocation || isFirstMount.current) {
-        isFirstMount.current = false;
+      // Only fly to location on first time getting a position
+      if (!userLocation) {
         map.flyTo({
           center: result.coords,
           zoom: 14,

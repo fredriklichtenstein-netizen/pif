@@ -158,7 +158,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       
       {isMapReady && !error && map && (
         <>
-          {!locationTracking.isTracking && (
+          {!locationTracking.isTracking && !locationTracking.userLocation && (
             <LocationPermissionManager
               onLocationEnabled={handleLocationEnabled}
               onLocationDenied={handleLocationDenied}
