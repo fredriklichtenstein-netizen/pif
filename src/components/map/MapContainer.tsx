@@ -24,7 +24,6 @@ interface MapContainerProps {
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemId }: MapContainerProps) => {
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
-  const [showDistanceRings, setShowDistanceRings] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
 
   // Distance filtering
@@ -64,11 +63,11 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   };
 
   const handleLocationEnabled = () => {
-    console.log('Location enabled');
+    console.log('Location enabled successfully');
   };
 
   const handleLocationDenied = () => {
-    console.log('Location denied');
+    console.log('Location access denied by user');
   };
 
   useEffect(() => {
@@ -86,17 +85,11 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     if (!isMapReady || !map || !targetItemId || !posts.length) return;
     
     console.log("Attempting to center on target item:", targetItemId);
-    console.log("Available posts:", posts.map(p => ({ id: p.id, coords: p.coordinates })));
     
     const targetPost = posts.find(post => post.id === targetItemId);
     
-    if (!targetPost) {
-      console.log("Target post not found:", targetItemId);
-      return;
-    }
-    
-    if (!targetPost.coordinates) {
-      console.log("Target post has no coordinates:", targetItemId);
+    if (!targetPost?.coordinates) {
+      console.log("Target post not found or has no coordinates:", targetItemId);
       return;
     }
     
@@ -189,8 +182,8 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
           <DistanceRings
             map={map}
             center={locationTracking.userLocation}
-            visible={showDistanceRings && selectedDistance !== null}
-            rings={selectedDistance ? [selectedDistance] : [1, 5, 10]}
+            visible={selectedDistance !== null && locationTracking.userLocation !== null}
+            rings={selectedDistance ? [selectedDistance] : []}
           />
 
           <MapMarkersLayer 
@@ -206,23 +199,13 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
               variant="outline"
+              title={locationTracking.isTracking ? "Stop location tracking" : "Start location tracking"}
             >
               <Locate 
                 className={`h-4 w-4 ${locationTracking.isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
                 strokeWidth={1.5}
               />
             </Button>
-            
-            {locationTracking.userLocation && (
-              <Button
-                onClick={() => setShowDistanceRings(!showDistanceRings)}
-                className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
-                size="icon"
-                variant="outline"
-              >
-                <div className={`w-4 h-4 rounded-full border-2 ${showDistanceRings ? 'border-blue-500 bg-blue-100' : 'border-gray-400'}`} />
-              </Button>
-            )}
           </div>
         </>
       )}

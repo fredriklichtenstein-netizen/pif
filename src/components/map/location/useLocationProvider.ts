@@ -58,6 +58,13 @@ export const useLocationProvider = (): LocationProvider => {
     setIsLoading(true);
 
     const handlePosition = (position: GeolocationPosition) => {
+      console.log('Location update received:', {
+        coords: [position.coords.longitude, position.coords.latitude],
+        accuracy: position.coords.accuracy
+      });
+      
+      setIsLoading(false);
+      
       const result: LocationResult = {
         coords: [position.coords.longitude, position.coords.latitude],
         accuracy: position.coords.accuracy
@@ -65,25 +72,34 @@ export const useLocationProvider = (): LocationProvider => {
       onLocation(result);
     };
 
+    const handleError = (error: GeolocationPositionError) => {
+      console.error('Location error:', error);
+      setIsLoading(false);
+      onError(error);
+    };
+
     // First get current position with high accuracy
     navigator.geolocation.getCurrentPosition(
       handlePosition,
-      onError,
+      handleError,
       getLocationOptions(true)
     );
 
     // Then start watching position
     watchId.current = navigator.geolocation.watchPosition(
       handlePosition,
-      onError,
+      handleError,
       getLocationOptions(true)
     );
+
+    console.log('Started location tracking with watch ID:', watchId.current);
   };
 
   const stopTracking = () => {
     clearExistingTracking();
     setIsTracking(false);
     setIsLoading(false);
+    console.log('Stopped location tracking');
   };
 
   return {
