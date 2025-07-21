@@ -106,7 +106,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
           }
         }
 
-        // Fit map to show all markers if there are any
+        // Improved map bounds fitting with better padding and zoom levels
         if (markers.current.length > 0 && !targetItemId) {
           try {
             const bounds = new mapboxgl.LngLatBounds();
@@ -114,14 +114,57 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
               bounds.extend(marker.getLngLat());
             });
             
+            // Calculate optimal padding and zoom based on number of markers
+            const markerCount = markers.current.length;
+            let padding = 50;
+            let maxZoom = 14;
+            
+            if (markerCount === 1) {
+              // Single marker - use moderate zoom
+              padding = 100;
+              maxZoom = 13;
+            } else if (markerCount <= 5) {
+              // Few markers - allow closer zoom
+              padding = 80;
+              maxZoom = 14;
+            } else if (markerCount <= 20) {
+              // Many markers - more padding
+              padding = 100;
+              maxZoom = 12;
+            } else {
+              // Very many markers - wide view
+              padding = 150;
+              maxZoom = 11;
+            }
+            
             map.fitBounds(bounds, { 
-              padding: 50,
-              maxZoom: 14,
-              duration: 1000
+              padding: {
+                top: padding,
+                bottom: padding + 60, // Extra bottom padding for navigation
+                left: padding,
+                right: padding
+              },
+              maxZoom,
+              duration: 1500
             });
-            console.log("Successfully fitted map to bounds with", markers.current.length, "privacy-enhanced markers");
+            console.log(`Successfully fitted map to bounds with ${markers.current.length} privacy-enhanced markers`);
           } catch (error) {
             console.error("Error fitting bounds:", error);
+          }
+        } else if (targetItemId && markers.current.length > 0) {
+          // If targeting a specific item, focus on that marker with privacy consideration
+          try {
+            const targetMarker = markers.current[0]; // Assuming the target is the first/only marker
+            if (targetMarker) {
+              map.flyTo({
+                center: targetMarker.getLngLat(),
+                zoom: 15,
+                duration: 2000
+              });
+              console.log('Focused on target item with privacy-enhanced coordinates');
+            }
+          } catch (error) {
+            console.error("Error focusing on target item:", error);
           }
         }
       } catch (error) {

@@ -2,10 +2,12 @@
 import type { Post } from "@/types/post";
 import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
+import { MapFilters } from "./MapFilters";
 import { Button } from "@/components/ui/button";
 import { Locate, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
+import "./MapStyles.css";
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -18,6 +20,31 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
+
+  // Filter states
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
+  const [selectedItemTypes, setSelectedItemTypes] = useState<string[]>([]);
+
+  // Filter posts based on selected filters
+  const filteredPosts = posts.filter(post => {
+    if (selectedItemTypes.length > 0 && !selectedItemTypes.includes(post.item_type || 'offer')) {
+      return false;
+    }
+    if (selectedCategories.length > 0 && (!post.category || !selectedCategories.includes(post.category))) {
+      return false;
+    }
+    if (selectedConditions.length > 0 && (!post.condition || !selectedConditions.includes(post.condition))) {
+      return false;
+    }
+    return true;
+  });
+
+  const handleClearFilters = () => {
+    setSelectedCategories([]);
+    setSelectedConditions([]);
+    setSelectedItemTypes([]);
+  };
 
   useEffect(() => {
     if (isMapReady && map) {
@@ -70,13 +97,13 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   }, [isMapReady, map, targetItemId, posts]);
 
   return (
-    <div className="h-full w-full relative">
+    <div className="map-container">
       <div 
         ref={mapContainer} 
         className="w-full h-full"
         style={{ 
           opacity: isMapVisible ? 1 : 0,
-          transition: 'opacity 0.3s ease-in-out'
+          transition: 'opacity 0.5s ease-in-out'
         }}
       />
       
@@ -108,9 +135,18 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       
       {isMapReady && !error && map && (
         <>
+          <MapFilters
+            selectedCategories={selectedCategories}
+            selectedConditions={selectedConditions}
+            selectedItemTypes={selectedItemTypes}
+            onCategoryChange={setSelectedCategories}
+            onConditionChange={setSelectedConditions}
+            onItemTypeChange={setSelectedItemTypes}
+            onClearFilters={handleClearFilters}
+          />
           <MapMarkersLayer 
             map={map}
-            posts={posts}
+            posts={filteredPosts}
             onPostClick={onPostClick}
             targetItemId={targetItemId}
           />

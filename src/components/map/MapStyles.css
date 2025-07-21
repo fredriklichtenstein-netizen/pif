@@ -1,0 +1,112 @@
+/* Enhanced Map Popup Styles */
+.enhanced-popup .mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  overflow: hidden !important;
+}
+
+.enhanced-popup .mapboxgl-popup-tip {
+  border-top-color: white !important;
+}
+
+/* Improve marker hover effects */
+.map-marker-element:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Responsive map container */
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Loading state for markers */
+.marker-loading {
+  opacity: 0.7;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  .enhanced-popup .mapboxgl-popup-content {
+    max-width: 160px !important;
+  }
+  
+  .enhanced-popup {
+    font-size: 12px !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .enhanced-popup .mapboxgl-popup-content {
+    background-color: #1f2937 !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: white !important;
+  }
+  
+  .enhanced-popup .mapboxgl-popup-tip {
+    border-top-color: #1f2937 !important;
+  }
+}
+
+/* Privacy indicator styles */
+.privacy-radius-indicator {
+  border: 2px dashed rgba(47, 82, 51, 0.4);
+  border-radius: 50%;
+  background: rgba(47, 82, 51, 0.1);
+  pointer-events: none;
+}
+
+/* Cluster marker styles */
+.cluster-marker {
+  background: #2F5233;
+  border: 3px solid white;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.cluster-marker:hover {
+  transform: scale(1.1);
+}
+
+/* Real-time update animation */
+.new-marker {
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

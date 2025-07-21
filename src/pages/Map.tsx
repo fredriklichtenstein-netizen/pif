@@ -3,17 +3,19 @@ import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { getPosts } from "@/services/posts/simplePosts";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useMapbox } from "@/hooks/useMapbox";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MainNav } from "@/components/MainNav";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Map() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const itemId = searchParams.get("item");
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken } = useMapbox();
   const { toast } = useToast();
@@ -29,6 +31,72 @@ export default function Map() {
 
   console.log("Map page - Posts:", posts.length, "items loaded");
 
+  // Set up real-time subscriptions for new posts
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'items'
+        },
+        (payload) => {
+          console.log('New post detected:', payload);
+          
+          // Invalidate and refetch posts to include the new item
+          queryClient.invalidateQueries({ queryKey: ['simple-posts'] });
+          
+          // Show a toast notification for new posts
+          toast({
+            title: "Nytt inlägg",
+            description: "Ett nytt inlägg har lagts till på kartan.",
+            duration: 3000,
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'items'
+        },
+        (payload) => {
+          console.log('Post updated:', payload);
+          
+          // Invalidate posts to reflect updates
+          queryClient.invalidateQueries({ queryKey: ['simple-posts'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'items'
+        },
+        (payload) => {
+          console.log('Post deleted:', payload);
+          
+          // Invalidate posts to remove deleted items
+          queryClient.invalidateQueries({ queryKey: ['simple-posts'] });
+          
+          toast({
+            title: "Inlägg borttaget",
+            description: "Ett inlägg har tagits bort från kartan.",
+            duration: 3000,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, toast]);
+
   useEffect(() => {
     if (postsError) {
       console.error("Error loading posts:", postsError);
@@ -41,7 +109,11 @@ export default function Map() {
   }, [postsError, toast]);
 
   const handlePostClick = (postId: string) => {
-    navigate(`/?post=${postId}`);
+    console.log('Navigating to post:', postId);
+    // Improved navigation with better UX
+    navigate(`/feed?post=${postId}`, { 
+      state: { fromMap: true, mapItemId: itemId }
+    });
   };
   
   const handleRetry = () => {
