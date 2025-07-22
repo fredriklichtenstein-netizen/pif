@@ -99,9 +99,9 @@ export default function Map() {
       <Separator />
       
       <main className="relative h-[calc(100vh-73px)]" role="main" aria-label="Interactive map">
-        <FadeIn>
+        <FadeIn className="h-full">
           <div className="absolute inset-0 z-0">
-            <SlideIn direction="up">
+            <SlideIn direction="up" className="h-full">
               <MapContainer
                 mapboxToken={mapToken}
                 posts={posts}
