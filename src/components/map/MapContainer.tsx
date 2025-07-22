@@ -130,8 +130,9 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
         ref={mapContainer} 
         className="w-full h-full"
         style={{ 
+          visibility: isMapReady ? 'visible' : 'hidden',
           opacity: isMapVisible ? 1 : 0,
-          transition: 'opacity 0.5s ease-in-out'
+          transition: isMapReady ? 'opacity 0.5s ease-in-out' : 'none'
         }}
       />
       
