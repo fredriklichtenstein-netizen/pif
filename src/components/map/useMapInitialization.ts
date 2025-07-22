@@ -65,9 +65,10 @@ const checkBrowserCapabilities = () => {
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (gl) {
       results.webgl = true;
-      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      const webglContext = gl as WebGLRenderingContext;
+      const debugInfo = webglContext.getExtension('WEBGL_debug_renderer_info');
       if (debugInfo) {
-        results.webglVersion = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        results.webglVersion = webglContext.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
       }
       console.log("🎮 [Map Init] WebGL support confirmed:", results.webglVersion || 'Basic WebGL');
     } else {
@@ -333,7 +334,7 @@ export const useMapInitialization = (mapboxToken: string) => {
 
       newMap.on('error', (e) => {
         console.error('🚨 [Map Init] Map error event:', e);
-        const errorMessage = e.error?.message || e.message || 'Unknown map error';
+        const errorMessage = e.error?.message || 'Unknown map error';
         setError(new Error(`Map error: ${errorMessage}`));
         setIsMapReady(false);
         isInitializing.current = false;
