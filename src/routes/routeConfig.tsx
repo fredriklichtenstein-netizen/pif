@@ -49,7 +49,8 @@ const PublicProfile = enhancedLazy(() => import("@/pages/PublicProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
-const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
+// Gamification hidden for v1 - keeping code for future use
+// const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
 const Analytics = enhancedLazy(() => import("@/pages/Analytics"));
 const SecurityDashboard = enhancedLazy(() => import("@/pages/SecurityDashboard"));
 const CommunityHub = enhancedLazy(() => import("@/pages/CommunityHub"));
@@ -98,10 +99,11 @@ export const privateRoutes = [
     path: "/create-profile", 
     element: <PrivateRoute>{withSuspense(CreateProfile)}</PrivateRoute>
   },
-  { 
-    path: "/gamification", 
-    element: <PrivateRoute>{withSuspense(Gamification)}</PrivateRoute>
-  },
+  // Gamification hidden for v1 - keeping code for future use
+  // { 
+  //   path: "/gamification", 
+  //   element: <PrivateRoute>{withSuspense(Gamification)}</PrivateRoute>
+  // },
   { 
     path: "/analytics", 
     element: <PrivateRoute>{withSuspense(Analytics)}</PrivateRoute>

@@ -2,10 +2,6 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   MoreHorizontal, 
-  Gamepad2, 
-  BarChart3, 
-  Shield, 
-  Users,
   User,
   ChevronRight
 } from "lucide-react";
@@ -22,36 +18,13 @@ export const ExpandedNav = ({ className }: ExpandedNavProps) => {
   const location = useLocation();
   const { t } = useTranslation();
 
+  // Gamification, Analytics, Security, and Community hidden for v1
   const additionalPages = [
-    { 
-      path: "/gamification", 
-      icon: Gamepad2, 
-      label: "Rewards & Achievements",
-      description: "Track your progress and earn badges"
-    },
-    { 
-      path: "/analytics", 
-      icon: BarChart3, 
-      label: "Analytics Dashboard",
-      description: "View community insights and trends"
-    },
-    { 
-      path: "/security", 
-      icon: Shield, 
-      label: "Security Center",
-      description: "Manage 2FA and security settings"
-    },
     { 
       path: "/profile", 
       icon: User, 
       label: "My Profile",
       description: "View and edit your profile"
-    },
-    { 
-      path: "/community", 
-      icon: Users, 
-      label: "Community Hub",
-      description: "Discover people, challenges, and stories"
     },
   ];
 
