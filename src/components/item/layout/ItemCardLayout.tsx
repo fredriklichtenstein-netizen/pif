@@ -2,9 +2,11 @@
 import { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
+import type { ItemType } from "../types";
 
 interface ItemCardLayoutProps {
   id: string | number;
+  item_type?: ItemType;
   isRealtimeError: boolean;
   refreshItemData: () => void;
   statusBanner?: ReactNode;
@@ -17,6 +19,7 @@ interface ItemCardLayoutProps {
 
 export function ItemCardLayout({
   id,
+  item_type,
   isRealtimeError,
   refreshItemData,
   statusBanner,
@@ -28,8 +31,14 @@ export function ItemCardLayout({
 }: ItemCardLayoutProps) {
   const numericItemId = typeof id === 'string' ? parseInt(id, 10) : id;
   
+  // Determine styling based on item type
+  const isWish = item_type === 'request';
+  const borderClass = isWish 
+    ? "border-l-4 border-l-pif-wish" 
+    : "border-l-4 border-l-pif-offer";
+  
   return (
-    <Card id={`item-card-${id}`} className="overflow-hidden transition-shadow hover:shadow-md rounded-xl">
+    <Card id={`item-card-${id}`} className={`overflow-hidden transition-shadow hover:shadow-md rounded-xl ${borderClass}`}>
       {isRealtimeError && (
         <div className="p-2 bg-gray-50 py-0">
           <NetworkStatus onRetry={refreshItemData} />

@@ -1,4 +1,6 @@
 
+export type ItemType = 'offer' | 'request';
+
 export interface ItemCardProps {
   id: string | number;
   title: string;
@@ -12,6 +14,7 @@ export interface ItemCardProps {
   };
   category?: string;
   condition?: string;
+  item_type?: ItemType;
   measurements?: Record<string, string>;
   postedBy: {
     id: string;

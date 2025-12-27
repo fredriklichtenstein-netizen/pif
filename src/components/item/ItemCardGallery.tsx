@@ -1,22 +1,26 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Gift, Search } from "lucide-react";
 import { optimizeImageUrl, preloadImages } from "@/utils/image";
 import { useCategoryTranslations } from "@/utils/translations/categories";
+import type { ItemType } from "./types";
+import { useTranslation } from "react-i18next";
 
 interface ItemCardGalleryProps {
   images: string[];
   title: string;
   category: string;
+  item_type?: ItemType;
 }
 
-export function ItemCardGallery({ images, title, category }: ItemCardGalleryProps) {
+export function ItemCardGallery({ images, title, category, item_type }: ItemCardGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const mountedRef = useRef(true);
   const { translateCategory } = useCategoryTranslations();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const validImages = images
@@ -73,6 +77,29 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
         }}
         loading="lazy"
       />
+      
+      {/* Type Badge */}
+      <div className="absolute top-3 left-3">
+        <Badge 
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium shadow-lg ${
+            item_type === 'request'
+              ? 'bg-pif-wish text-pif-wish-foreground'
+              : 'bg-pif-offer text-pif-offer-foreground'
+          }`}
+        >
+          {item_type === 'request' ? (
+            <>
+              <Search className="h-3.5 w-3.5" />
+              {t('common.wish', 'Önskning')}
+            </>
+          ) : (
+            <>
+              <Gift className="h-3.5 w-3.5" />
+              {t('common.pif', 'Pif')}
+            </>
+          )}
+        </Badge>
+      </div>
       
       {/* Title and Category Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent">

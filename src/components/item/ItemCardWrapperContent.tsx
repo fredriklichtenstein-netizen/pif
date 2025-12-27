@@ -16,6 +16,7 @@ export function ItemCardWrapperContent({
   location,
   category,
   condition,
+  item_type,
   measurements,
   postedBy,
   isOwner,
@@ -62,6 +63,7 @@ export function ItemCardWrapperContent({
   return (
     <ItemCardLayout
       id={id}
+      item_type={item_type}
       isRealtimeError={!!realtimeError}
       refreshItemData={handleRefresh}
       statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} /> : undefined}
@@ -87,7 +89,8 @@ export function ItemCardWrapperContent({
         <ItemCardGallery 
           images={images.length > 0 ? images : image ? [image] : []} 
           title={title} 
-          category={category} 
+          category={category}
+          item_type={item_type}
         />
       }
       actions={

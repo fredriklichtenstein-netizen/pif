@@ -16,6 +16,7 @@ export function ItemCardWrapper({
   coordinates,
   category,
   condition,
+  item_type,
   measurements = {},
   postedBy,
   archived_at,
@@ -108,6 +109,7 @@ export function ItemCardWrapper({
       location={location}
       category={category}
       condition={condition}
+      item_type={item_type}
       measurements={measurements}
       postedBy={postedBy}
       isOwner={isOwner}

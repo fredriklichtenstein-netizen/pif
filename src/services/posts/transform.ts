@@ -44,6 +44,7 @@ export const transformPostData = (
     description: item.description || '',
     category: item.category || '',
     condition: item.condition || '',
+    item_type: item.item_type || 'offer',
     measurements: measurements,
     images: item.images || [],
     location: item.location || '',
