@@ -1,11 +1,15 @@
 
+import mockBookshelf from "@/assets/mock/mock-bookshelf.jpg";
+import mockBicycle from "@/assets/mock/mock-bicycle.jpg";
+import mockMoving from "@/assets/mock/mock-moving.jpg";
+
 // Mock data for offline/demo mode
 export const MOCK_POSTS = [
   {
     id: "mock-1",
     title: "Vintage wooden bookshelf",
     description: "Beautiful solid oak bookshelf in great condition. Has some character marks that add to its charm. Perfect for a living room or home office.",
-    images: ["https://images.unsplash.com/photo-1594620302200-9a762244a156?w=400&h=300&fit=crop"],
+    images: [mockBookshelf],
     location: "Södermalm, Stockholm",
     coordinates: { lng: 18.0686, lat: 59.3142 },
     category: "Furniture",
@@ -23,7 +27,7 @@ export const MOCK_POSTS = [
     id: "mock-2", 
     title: "Looking for a bicycle",
     description: "I'm looking for a bicycle for commuting. Any size works, as long as it's functional. Happy to pick up anywhere in Stockholm!",
-    images: ["https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400&h=300&fit=crop"],
+    images: [mockBicycle],
     location: "Kungsholmen, Stockholm",
     coordinates: { lng: 18.0259, lat: 59.3326 },
     category: "Sports",
@@ -59,7 +63,7 @@ export const MOCK_POSTS = [
     id: "mock-4",
     title: "Need help with moving",
     description: "Looking for someone who can help me carry a sofa down 2 flights of stairs this weekend. Will take about 30 minutes. Coffee and snacks provided!",
-    images: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"],
+    images: [mockMoving],
     location: "Östermalm, Stockholm",
     coordinates: { lng: 18.0850, lat: 59.3400 },
     category: "Other",
