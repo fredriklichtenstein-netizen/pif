@@ -32,6 +32,7 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           coordinates={coordinates}
           category={post.category}
           condition={post.condition}
+          item_type={post.item_type}
           measurements={post.measurements}
           postedBy={post.postedBy || {
             id: post.user_id,

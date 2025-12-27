@@ -103,7 +103,8 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
               onMouseLeave: () => {
                 const popups = document.getElementsByClassName('mapboxgl-popup');
                 while (popups[0]) popups[0].remove();
-              }
+              },
+              itemType: post.item_type || 'offer'
             });
 
             const marker = new mapboxgl.Marker({

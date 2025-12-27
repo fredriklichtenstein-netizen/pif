@@ -4,40 +4,66 @@ interface MapMarkerElementProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   highlighted?: boolean;
+  itemType?: 'offer' | 'request';
 }
 
+// Color configurations for different item types
+const MARKER_COLORS = {
+  offer: {
+    main: "#0D9488", // teal for pifs
+    pulse: "rgba(13, 148, 136, 0.2)",
+  },
+  request: {
+    main: "#F59E0B", // amber for wishes
+    pulse: "rgba(245, 158, 11, 0.2)",
+  },
+};
+
 // Create and cache element templates to improve performance
-const createElementTemplate = (): HTMLDivElement => {
+const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDivElement => {
+  const colors = MARKER_COLORS[itemType];
+  
   const el = document.createElement("div");
   el.className = "cursor-pointer";
   
   // Create an outer container for the marker with a shadow
   const markerContainer = document.createElement("div");
   markerContainer.className = "relative";
-  markerContainer.style.width = "24px";
-  markerContainer.style.height = "24px";
+  markerContainer.style.width = "28px";
+  markerContainer.style.height = "28px";
   
   // Create the main marker dot
   const markerDot = document.createElement("div");
   markerDot.style.position = "absolute";
   markerDot.style.top = "0";
   markerDot.style.left = "0";
-  markerDot.style.width = "24px";
-  markerDot.style.height = "24px";
-  markerDot.style.backgroundColor = "#2F5233";
+  markerDot.style.width = "28px";
+  markerDot.style.height = "28px";
+  markerDot.style.backgroundColor = colors.main;
   markerDot.style.borderRadius = "50%";
   markerDot.style.border = "3px solid white";
-  markerDot.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+  markerDot.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+  markerDot.style.display = "flex";
+  markerDot.style.alignItems = "center";
+  markerDot.style.justifyContent = "center";
+  
+  // Add icon inside marker
+  const icon = document.createElement("span");
+  icon.style.color = "white";
+  icon.style.fontSize = "12px";
+  icon.style.fontWeight = "bold";
+  icon.innerHTML = itemType === 'request' ? '?' : '♥';
+  markerDot.appendChild(icon);
   
   // Add a pulse animation effect
   const pulse = document.createElement("div");
   pulse.style.position = "absolute";
   pulse.style.top = "-4px";
   pulse.style.left = "-4px";
-  pulse.style.width = "32px";
-  pulse.style.height = "32px";
+  pulse.style.width = "36px";
+  pulse.style.height = "36px";
   pulse.style.borderRadius = "50%";
-  pulse.style.backgroundColor = "rgba(47, 82, 51, 0.2)";
+  pulse.style.backgroundColor = colors.pulse;
   pulse.style.animation = "pulse 2s infinite";
   
   markerContainer.appendChild(pulse);
@@ -76,31 +102,32 @@ const ensureAnimationStyles = (() => {
   };
 })();
 
-// Element template cache
-let elementTemplate: HTMLDivElement | null = null;
+// Element template caches for each type
+const elementTemplates: { [key: string]: HTMLDivElement } = {};
 
 export const createMarkerElement = ({
   onClick,
   onMouseEnter,
   onMouseLeave,
   highlighted = false,
+  itemType = 'offer',
 }: MapMarkerElementProps): HTMLDivElement => {
   // Ensure animation styles are added to the document
   ensureAnimationStyles();
   
-  // Create or clone from template
-  if (!elementTemplate) {
-    elementTemplate = createElementTemplate();
+  // Create or clone from template based on item type
+  if (!elementTemplates[itemType]) {
+    elementTemplates[itemType] = createElementTemplate(itemType);
   }
   
-  const el = elementTemplate.cloneNode(true) as HTMLDivElement;
+  const el = elementTemplates[itemType].cloneNode(true) as HTMLDivElement;
   
   // Apply highlighting if needed
   if (highlighted) {
     const markerDot = el.querySelector('div > div:nth-child(2)') as HTMLDivElement;
     if (markerDot) {
-      markerDot.style.backgroundColor = "#FF5722";
-      markerDot.style.transform = "scale(1.1)";
+      markerDot.style.transform = "scale(1.2)";
+      markerDot.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
     }
   }
 

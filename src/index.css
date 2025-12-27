@@ -47,6 +47,18 @@
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
     --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--muted)));
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 69% 58%));
+
+    /* PIF (Offer) - Warm teal/green tones */
+    --pif-offer: 168 76% 36%;
+    --pif-offer-foreground: 0 0% 100%;
+    --pif-offer-light: 168 76% 92%;
+    --pif-offer-border: 168 60% 70%;
+
+    /* Wish (Request) - Warm amber/orange tones */
+    --pif-wish: 32 95% 50%;
+    --pif-wish-foreground: 0 0% 100%;
+    --pif-wish-light: 32 95% 92%;
+    --pif-wish-border: 32 80% 70%;
   }
 
   .dark {
@@ -86,6 +98,18 @@
     --sidebar-accent-foreground: 168 20% 95%;
     --sidebar-border: 168 30% 20%;
     --sidebar-ring: 168 40% 60%;
+
+    /* PIF (Offer) - Teal tones for dark mode */
+    --pif-offer: 168 76% 45%;
+    --pif-offer-foreground: 168 50% 10%;
+    --pif-offer-light: 168 40% 20%;
+    --pif-offer-border: 168 50% 35%;
+
+    /* Wish (Request) - Amber tones for dark mode */
+    --pif-wish: 32 90% 55%;
+    --pif-wish-foreground: 32 50% 10%;
+    --pif-wish-light: 32 40% 20%;
+    --pif-wish-border: 32 50% 35%;
   }
 }
 

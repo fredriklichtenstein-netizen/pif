@@ -53,21 +53,20 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
 
   const distanceText = getDistanceText();
 
-  // Determine correct item type label
+  // Determine correct item type label and colors
+  const isWish = post.item_type === 'request';
+  const typeColor = isWish ? '#F59E0B' : '#0D9488'; // amber for wishes, teal for pifs
+  const typeBgColor = isWish ? 'rgba(245, 158, 11, 0.9)' : 'rgba(13, 148, 136, 0.9)';
+  
   const getItemTypeLabel = (itemType: string | undefined): string => {
-    if (!itemType) return 'Erbjuder'; // Default fallback
-    
-    // Handle both 'offer'/'request' and 'erbjuder'/'söker' formats
+    if (!itemType) return 'Pif';
     const normalizedType = itemType.toLowerCase();
-    
     if (normalizedType === 'offer' || normalizedType === 'erbjuder') {
-      return 'Erbjuder';
+      return 'Pif';
     } else if (normalizedType === 'request' || normalizedType === 'söker') {
-      return 'Söker';
+      return 'Önskning';
     }
-    
-    // Fallback based on common patterns
-    return normalizedType.includes('sök') || normalizedType.includes('request') ? 'Söker' : 'Erbjuder';
+    return normalizedType.includes('sök') || normalizedType.includes('request') ? 'Önskning' : 'Pif';
   };
 
   // Enhanced image handling with better fallback
@@ -107,14 +106,17 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
               position: absolute;
               top: 8px;
               right: 8px;
-              background: rgba(0,0,0,0.7);
+              background: ${typeBgColor};
               color: white;
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 10px;
-              font-weight: 500;
+              padding: 3px 8px;
+              border-radius: 6px;
+              font-size: 11px;
+              font-weight: 600;
+              display: flex;
+              align-items: center;
+              gap: 4px;
             ">
-              ${itemTypeLabel}
+              ${isWish ? '🔍' : '🎁'} ${itemTypeLabel}
             </div>
           </div>
         `;
@@ -126,29 +128,29 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
       <div style="
         width: 180px; 
         height: 80px; 
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        background: ${isWish ? 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)' : 'linear-gradient(135deg, #CCFBF1 0%, #99F6E4 100%)'};
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
       ">
         <div style="
-          color: #0284c7;
+          color: ${typeColor};
           font-size: 14px;
           font-weight: 600;
         ">
-          ${itemTypeLabel === 'Erbjuder' ? '📦 Erbjuder' : '🔍 Söker'}
+          ${isWish ? '🔍 Önskning' : '🎁 Pif'}
         </div>
         <div style="
           position: absolute;
           top: 8px;
           right: 8px;
-          background: rgba(2,132,199,0.9);
+          background: ${typeBgColor};
           color: white;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 10px;
-          font-weight: 500;
+          padding: 3px 8px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
         ">
           ${itemTypeLabel}
         </div>

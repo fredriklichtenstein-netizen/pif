@@ -55,6 +55,19 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // PIF type colors
+        "pif-offer": {
+          DEFAULT: "hsl(var(--pif-offer))",
+          foreground: "hsl(var(--pif-offer-foreground))",
+          light: "hsl(var(--pif-offer-light))",
+          border: "hsl(var(--pif-offer-border))",
+        },
+        "pif-wish": {
+          DEFAULT: "hsl(var(--pif-wish))",
+          foreground: "hsl(var(--pif-wish-foreground))",
+          light: "hsl(var(--pif-wish-light))",
+          border: "hsl(var(--pif-wish-border))",
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
