@@ -36,5 +36,11 @@
     "piffer": "Piffer",
     "receiver": "Receiver",
     "wisher": "Wisher"
+  },
+  "offline": {
+    "title": "You're currently offline",
+    "mock_data_notice": "Showing example content. Connect to see real pifs and wishes.",
+    "reconnecting": "Reconnecting...",
+    "connection_failed": "Unable to connect to server"
   }
 }

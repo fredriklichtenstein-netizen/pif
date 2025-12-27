@@ -36,5 +36,11 @@
     "piffer": "Piffare",
     "receiver": "Mottagare",
     "wisher": "Önskare"
+  },
+  "offline": {
+    "title": "Du är offline just nu",
+    "mock_data_notice": "Visar exempelinnehåll. Anslut för att se riktiga piffar och önskningar.",
+    "reconnecting": "Återansluter...",
+    "connection_failed": "Kunde inte ansluta till servern"
   }
 }
