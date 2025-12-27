@@ -27,11 +27,14 @@
     "no_likes_yet": "Inga gillningar än",
     "comment_singular": "kommentar",
     "comment_plural": "kommentarer",
-    "interested_users": "intresserade",
+    "interested_users": "intresserade mottagare",
     "width": "Bredd",
     "height": "Höjd", 
     "length": "Längd",
     "depth": "Djup",
-    "weight": "Vikt"
+    "weight": "Vikt",
+    "piffer": "Piffare",
+    "receiver": "Mottagare",
+    "wisher": "Önskare"
   }
 }
