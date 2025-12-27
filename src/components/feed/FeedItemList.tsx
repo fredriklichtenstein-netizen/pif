@@ -16,6 +16,7 @@ interface FeedItemListProps {
   viewMode: string;
   onItemOperationSuccess?: (itemId?: string | number, operationType?: OperationType) => void;
   isLoading?: boolean;
+  isShowingMockData?: boolean;
 }
 
 // Helper function to validate post data
@@ -58,7 +59,8 @@ export function FeedItemList({
   clearFilters,
   viewMode,
   onItemOperationSuccess,
-  isLoading = false
+  isLoading = false,
+  isShowingMockData = false
 }: FeedItemListProps) {
   const [refreshKey, setRefreshKey] = useState(Date.now());
   const [errorState, setErrorState] = useState<{ hasError: boolean, errorMessage: string }>({ 
@@ -216,15 +218,19 @@ export function FeedItemList({
     <FeedErrorBoundary onReset={handleRecoveryAction}>
       <div className="space-y-4" key={refreshKey}>
         {validPosts?.map((post) => (
-          <div key={post.id} id={`post-${post.id}`}>
+          <div 
+            key={post.id} 
+            id={`post-${post.id}`}
+            className={post.__isMock ? "opacity-90 pointer-events-none" : ""}
+          >
             <FeedItemCard
               post={post}
-              onItemOperationSuccess={handleItemSuccess}
+              onItemOperationSuccess={isShowingMockData ? undefined : handleItemSuccess}
             />
           </div>
         ))}
         
-        {validPosts?.length === 0 && (
+        {validPosts?.length === 0 && !isShowingMockData && (
           <FeedEmptyState
             viewMode={viewMode}
             selectedCategories={selectedCategories}

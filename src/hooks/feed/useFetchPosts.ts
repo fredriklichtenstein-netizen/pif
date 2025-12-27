@@ -87,6 +87,8 @@ export function useFetchPosts(options = { includeArchived: false }) {
       if (err.name !== 'AbortError' && !signal.aborted) {
         console.error('Error fetching posts:', err);
         setError(err);
+        setIsLoading(false);
+        setIsFetching(false);
 
         // Only show toast for network errors, not for component unmount
         if (err.code !== 'ABORT_ERR') {

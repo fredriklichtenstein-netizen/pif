@@ -4,10 +4,12 @@ import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { Loader2 } from "lucide-react";
 import { FeedFilters } from "./FeedFilters";
 import { FeedItemList } from "./FeedItemList";
+import { OfflineBanner } from "./OfflineBanner";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 import { useOptimisticFeedUpdates } from "@/hooks/feed/useOptimisticFeedUpdates";
+import { useOfflineAwareFeed } from "@/hooks/useOfflineAwareFeed";
 import { useTranslation } from 'react-i18next';
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
@@ -17,12 +19,21 @@ export function FeedContainer() {
   const [viewMode, setViewMode] = useState("all");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [feedKey, setFeedKey] = useState(Date.now());
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const forceRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
+  
+  // Timeout to show mock data if loading takes too long (3 seconds)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingTimeout(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Get translated categories
   const CATEGORIES = [
@@ -53,14 +64,36 @@ export function FeedContainer() {
     loadInterestedPosts
   } = useFeedPosts();
 
+  // Offline awareness
+  const {
+    shouldShowOfflineMode,
+    mockPosts,
+    markConnectionError
+  } = useOfflineAwareFeed();
+
   // New optimistic UI update hook
   const {
     recordOperation,
     applyOptimisticUpdates
   } = useOptimisticFeedUpdates();
 
-  // Apply optimistic updates to posts
-  const posts = applyOptimisticUpdates(rawPosts);
+  // Apply optimistic updates to posts - use mock data when offline/error
+  const realPosts = applyOptimisticUpdates(rawPosts);
+  
+  // Show mock data if: offline mode OR (error AND no real posts) OR loading timeout with no data
+  const hasError = !!error;
+  const hasNoData = realPosts.length === 0;
+  const showMockFallback = shouldShowOfflineMode || (hasError && hasNoData) || (loadingTimeout && hasNoData && isLoading);
+  
+  const posts = showMockFallback ? mockPosts : realPosts;
+  const isShowingMockData = showMockFallback;
+
+  // Mark connection error if we have an error from the feed
+  useEffect(() => {
+    if (error) {
+      markConnectionError();
+    }
+  }, [error, markConnectionError]);
 
   // Function to force a complete refresh of the feed
   const forceCompleteRefresh = useCallback(() => {
@@ -210,7 +243,8 @@ export function FeedContainer() {
     };
   }, []);
 
-  if (isLoading && isInitialLoad) {
+  // Only show loading spinner on initial load if we're not showing mock data and no error
+  if (isLoading && isInitialLoad && !isShowingMockData && !error) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -220,6 +254,9 @@ export function FeedContainer() {
 
   return (
     <div key={feedKey}>
+      {/* Offline banner */}
+      {isShowingMockData && <OfflineBanner showMockData={true} />}
+      
       {/* Filters component */}
       <FeedFilters
         categories={CATEGORIES}
@@ -240,6 +277,7 @@ export function FeedContainer() {
         viewMode={viewMode}
         onItemOperationSuccess={handleItemOperationSuccess}
         isLoading={isLoading && !isInitialLoad}
+        isShowingMockData={isShowingMockData}
       />
     </div>
   );
