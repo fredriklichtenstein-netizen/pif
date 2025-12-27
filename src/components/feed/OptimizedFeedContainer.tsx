@@ -1,10 +1,12 @@
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
+import { useOfflineAwareFeed } from '@/hooks/useOfflineAwareFeed';
 import { FeedItemList } from './FeedItemList';
 import { FeedLoadingState } from './FeedLoadingState';
 import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
+import { OfflineBanner } from './OfflineBanner';
 import { RealtimeIndicator } from './RealtimeIndicator';
 import { PerformanceMonitor } from '@/components/debug/PerformanceMonitor';
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
@@ -15,13 +17,32 @@ import { EnhancedLoading } from '@/components/ui/enhanced-loading';
 
 export function OptimizedFeedContainer() {
   const { posts, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
+  const { isOnline, mockPosts } = useOfflineAwareFeed();
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
-  
+  const [fallbackTimeoutReached, setFallbackTimeoutReached] = useState(false);
+
+  // If the backend is unreachable, don't keep users stuck on a spinner.
+  useEffect(() => {
+    if (!isLoading) {
+      setFallbackTimeoutReached(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setFallbackTimeoutReached(true);
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [isLoading]);
+
+  const shouldShowMockData = posts.length === 0 && (fallbackTimeoutReached || !!error || !isOnline);
+  const bannerMode = !isOnline ? 'offline' : 'unreachable';
+
   // Memoize posts to prevent unnecessary re-renders and reduce API calls
   const memoizedPosts = useMemo(() => posts, [posts]);
-  
+
   // Memoize callbacks to prevent FeedItemList re-renders
   const handleRefresh = useCallback(async () => {
     announce("Refreshing feed", "polite");
@@ -39,7 +60,7 @@ export function OptimizedFeedContainer() {
     console.log('Posts updated via real-time:', updatedPosts.length);
     announce(`${updatedPosts.length} new posts available`, "polite");
   }, [announce]);
-  
+
   // Swipe gestures for mobile
   useSwipeGestures({
     onSwipeDown: () => {
@@ -49,6 +70,24 @@ export function OptimizedFeedContainer() {
       }
     }
   });
+
+  if (shouldShowMockData) {
+    return (
+      <div className="space-y-4">
+        <OfflineBanner mode={bannerMode} showMockData={true} />
+        <section role="feed" aria-label="Community posts (example)">
+          <FeedItemList
+            posts={mockPosts}
+            selectedCategories={[]}
+            clearFilters={() => {}}
+            viewMode="all"
+            isLoading={false}
+            isShowingMockData={true}
+          />
+        </section>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
