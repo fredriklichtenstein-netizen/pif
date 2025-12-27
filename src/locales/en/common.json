@@ -27,11 +27,14 @@
     "no_likes_yet": "No likes yet",
     "comment_singular": "comment",
     "comment_plural": "comments",
-    "interested_users": "interested",
+    "interested_users": "interested receivers",
     "width": "Width",
     "height": "Height",
     "length": "Length", 
     "depth": "Depth",
-    "weight": "Weight"
+    "weight": "Weight",
+    "piffer": "Piffer",
+    "receiver": "Receiver",
+    "wisher": "Wisher"
   }
 }

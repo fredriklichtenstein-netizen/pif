@@ -4,18 +4,18 @@
     "categories": "Kategorier",
     "empty_message": "Inget innehåll tillgängligt",
     "anonymous": "Anonym",
-    "posted_by": "Postad av",
+    "posted_by": "Piffad av",
     "archived": "Arkiverad",
     "show_on_map": "Visa på karta",
     "copy_link": "Kopiera länk",
     "report": "Rapportera",
-    "edit_post": "Redigera inlägg",
-    "delete_post": "Ta bort inlägg",
+    "edit_post": "Redigera pif",
+    "delete_post": "Ta bort pif",
     "edit": "Redigera",
     "delete": "Ta bort",
     "save": "Spara",
     "unsave": "Ta bort från sparade",
     "archive": "Arkivera",
-    "delete_archived_item": "Ta bort arkiverat objekt"
+    "delete_archived_item": "Ta bort arkiverad pif"
   }
 }
