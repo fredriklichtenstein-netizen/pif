@@ -3,14 +3,28 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthCheck } from "./utils/authCheck";
+import { DEMO_MODE } from "@/config/demoMode";
+import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 
 export const useBookmarks = (id: string, userId?: string | null) => {
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const demoStore = useDemoInteractionsStore();
+  const demoIsBookmarked = demoStore.isBookmarked(id);
+  
+  const [isBookmarked, setIsBookmarked] = useState(DEMO_MODE ? demoIsBookmarked : false);
+  const [loading, setLoading] = useState(!DEMO_MODE);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
 
+  // Sync demo state
   useEffect(() => {
+    if (DEMO_MODE) {
+      setIsBookmarked(demoIsBookmarked);
+    }
+  }, [demoIsBookmarked]);
+
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    
     const fetchBookmarks = async () => {
       const numericId = parseInt(id, 10);
       if (isNaN(numericId) || !userId) {
@@ -41,6 +55,18 @@ export const useBookmarks = (id: string, userId?: string | null) => {
   }, [id, userId]);
 
   const handleBookmark = async () => {
+    // Demo mode: toggle locally
+    if (DEMO_MODE) {
+      const newState = demoStore.toggleBookmark(id);
+      toast({
+        title: newState ? "Saved to your items" : "Removed from saved items",
+        description: newState 
+          ? "You can find this item in your saved items" 
+          : "This item has been removed from your saved items",
+      });
+      return;
+    }
+    
     if (!await checkAuth("bookmark this item")) return;
     
     const numericId = parseInt(id, 10);

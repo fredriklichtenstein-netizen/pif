@@ -3,18 +3,44 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthCheck } from "./utils/authCheck";
+import { DEMO_MODE } from "@/config/demoMode";
+import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
+import { DEMO_USER } from "@/data/mockUser";
 import type { User } from "./utils/userUtils";
 
 export const useLikes = (id: string, userId?: string | null) => {
-  const [isLiked, setIsLiked] = useState(false);
+  const demoStore = useDemoInteractionsStore();
+  const demoIsLiked = demoStore.isLiked(id);
+  
+  const [isLiked, setIsLiked] = useState(DEMO_MODE ? demoIsLiked : false);
   const [likesCount, setLikesCount] = useState(0);
   const [likers, setLikers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!DEMO_MODE);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
 
+  // Sync demo state
+  useEffect(() => {
+    if (DEMO_MODE) {
+      setIsLiked(demoIsLiked);
+      const count = demoIsLiked ? 1 : 0;
+      setLikesCount(count);
+      if (demoIsLiked) {
+        setLikers([{
+          id: DEMO_USER.id,
+          name: DEMO_USER.user_metadata.full_name || "Demo User",
+          avatar: DEMO_USER.user_metadata.avatar_url || ""
+        }]);
+      } else {
+        setLikers([]);
+      }
+    }
+  }, [demoIsLiked]);
+
   // Initial fetch of like status and count
   useEffect(() => {
+    if (DEMO_MODE) return;
+    
     const fetchLikes = async () => {
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) {
@@ -110,6 +136,16 @@ export const useLikes = (id: string, userId?: string | null) => {
   };
 
   const handleLike = async () => {
+    // Demo mode: toggle locally
+    if (DEMO_MODE) {
+      const newState = demoStore.toggleLike(id);
+      toast({
+        title: newState ? "Liked!" : "Like removed",
+        description: newState ? "You liked this item" : "You removed your like",
+      });
+      return;
+    }
+    
     if (!await checkAuth("like this item")) return;
     
     const numericId = parseInt(id, 10);

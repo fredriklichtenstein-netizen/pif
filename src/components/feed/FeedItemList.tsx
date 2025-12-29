@@ -221,7 +221,6 @@ export function FeedItemList({
           <div 
             key={post.id} 
             id={`post-${post.id}`}
-            className={post.__isMock ? "opacity-90 pointer-events-none" : ""}
           >
             <FeedItemCard
               post={post}
