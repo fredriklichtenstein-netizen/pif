@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Conversation } from "@/types/messaging";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { DEMO_MODE } from "@/config/demoMode";
+import { MOCK_CONVERSATIONS } from "@/data/mockConversations";
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -15,6 +17,22 @@ export function useConversations() {
   useEffect(() => {
     let mounted = true;
     let channel: ReturnType<typeof supabase.channel>;
+    
+    // Demo mode: return mock conversations
+    if (DEMO_MODE) {
+      // Simulate loading delay for realism
+      const timer = setTimeout(() => {
+        if (mounted) {
+          setConversations(MOCK_CONVERSATIONS);
+          setIsLoading(false);
+        }
+      }, 300);
+      
+      return () => {
+        mounted = false;
+        clearTimeout(timer);
+      };
+    }
     
     const fetchConversations = async () => {
       // Don't attempt to fetch if auth is still loading or user is not authenticated
