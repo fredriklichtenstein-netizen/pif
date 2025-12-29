@@ -177,8 +177,19 @@ export default function Map() {
           </div>
         </FadeIn>
         
+        {/* Demo mode banner */}
+        {DEMO_MODE && (
+          <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
+            <div className="bg-amber-50/95 backdrop-blur-sm border border-amber-200 rounded-lg px-4 py-2 shadow-lg pointer-events-auto">
+              <p className="text-xs text-amber-800 text-center">
+                <strong>Demo Mode</strong> — Viewing example locations in Stockholm
+              </p>
+            </div>
+          </div>
+        )}
+        
         {isLoading && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50" style={{ marginTop: DEMO_MODE ? '48px' : 0 }}>
             <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
