@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -10,8 +10,10 @@ import {
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Filter, X } from "lucide-react";
+import type { Post } from "@/types/post";
 
 interface MapFiltersProps {
+  posts: Post[];
   selectedCategories: string[];
   selectedConditions: string[];
   selectedItemTypes: string[];
@@ -49,6 +51,7 @@ const ITEM_TYPES = [
 ];
 
 export const MapFilters = ({
+  posts,
   selectedCategories,
   selectedConditions,
   selectedItemTypes,
@@ -58,6 +61,13 @@ export const MapFilters = ({
   onClearFilters
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Calculate counts for each item type
+  const counts = useMemo(() => {
+    const pifCount = posts.filter(p => (p.item_type || 'offer') === 'offer').length;
+    const wishCount = posts.filter(p => (p.item_type || 'offer') === 'request').length;
+    return { all: posts.length, pifs: pifCount, wishes: wishCount };
+  }, [posts]);
   
   // Count only category and condition filters (not item types since they have dedicated toggles)
   const activeFiltersCount = selectedCategories.length + selectedConditions.length;
@@ -102,7 +112,7 @@ export const MapFilters = ({
           onClick={() => onItemTypeChange([])}
           className={`text-xs px-3 ${showingAll ? "bg-primary text-primary-foreground" : "hover:bg-gray-100"}`}
         >
-          Alla
+          Alla ({counts.all})
         </Button>
         <Button
           variant={isOnlyPifs ? "default" : "ghost"}
@@ -110,7 +120,7 @@ export const MapFilters = ({
           onClick={() => onItemTypeChange(["offer"])}
           className={`text-xs px-3 ${isOnlyPifs ? "bg-teal-600 hover:bg-teal-700 text-white" : "hover:bg-teal-50 text-teal-700"}`}
         >
-          🎁 Pifs
+          🎁 Pifs ({counts.pifs})
         </Button>
         <Button
           variant={isOnlyWishes ? "default" : "ghost"}
@@ -118,7 +128,7 @@ export const MapFilters = ({
           onClick={() => onItemTypeChange(["request"])}
           className={`text-xs px-3 ${isOnlyWishes ? "bg-amber-500 hover:bg-amber-600 text-white" : "hover:bg-amber-50 text-amber-700"}`}
         >
-          ✨ Önskningar
+          ✨ Önskningar ({counts.wishes})
         </Button>
       </div>
 

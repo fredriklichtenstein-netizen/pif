@@ -185,6 +185,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
           />
 
           <MapFilters
+            posts={filteredPosts}
             selectedCategories={selectedCategories}
             selectedConditions={selectedConditions}
             selectedItemTypes={selectedItemTypes}
