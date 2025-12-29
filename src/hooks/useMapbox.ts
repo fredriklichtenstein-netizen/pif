@@ -4,25 +4,35 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_MODE } from "@/config/demoMode";
 
-// Mapbox public demo token for demo mode
-// This is a restricted public token that works for basic map display
-const DEMO_MAPBOX_TOKEN = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
+// Storage key for user-provided demo token
+const DEMO_TOKEN_KEY = 'pif_demo_mapbox_token';
 
 export const useMapbox = () => {
   const { toast } = useToast();
   const [mapToken, setMapToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [needsToken, setNeedsToken] = useState(false);
 
   const fetchMapboxToken = async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // In demo mode, use the demo token directly
+      // In demo mode, check for stored token first
       if (DEMO_MODE) {
-        console.log("🗺️ [Mapbox Hook] Demo mode - using public demo token");
-        setMapToken(DEMO_MAPBOX_TOKEN);
+        console.log("🗺️ [Mapbox Hook] Demo mode - checking for stored token");
+        const storedToken = localStorage.getItem(DEMO_TOKEN_KEY);
+        if (storedToken && storedToken.startsWith('pk.')) {
+          console.log("✅ [Mapbox Hook] Using stored demo token");
+          setMapToken(storedToken);
+          setIsLoading(false);
+          return;
+        }
+        
+        // No valid token available in demo mode
+        console.log("⚠️ [Mapbox Hook] Demo mode - no token available, prompting user");
+        setNeedsToken(true);
         setIsLoading(false);
         return;
       }
@@ -63,6 +73,15 @@ export const useMapbox = () => {
     }
   };
 
+  const setDemoToken = (token: string) => {
+    if (token && token.startsWith('pk.')) {
+      localStorage.setItem(DEMO_TOKEN_KEY, token);
+      setMapToken(token);
+      setNeedsToken(false);
+      console.log("✅ [Mapbox Hook] Demo token saved and applied");
+    }
+  };
+
   useEffect(() => {
     fetchMapboxToken();
   }, [toast]);
@@ -73,5 +92,5 @@ export const useMapbox = () => {
     fetchMapboxToken();
   };
 
-  return { mapToken, isLoading, error, retryFetchToken };
+  return { mapToken, isLoading, error, retryFetchToken, needsToken, setDemoToken };
 };
