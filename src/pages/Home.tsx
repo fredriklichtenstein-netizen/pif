@@ -10,16 +10,20 @@ import { isNetworkError } from "@/utils/connectionRetryUtils";
 import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
+import { DEMO_MODE } from "@/config/demoMode";
 
 export default function Home() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
+  // In demo mode, skip loading since we don't need to check network
+  const [loading, setLoading] = useState(!DEMO_MODE);
   const [hasNetworkError, setHasNetworkError] = useState(false);
   
   // Function to handle network retries
   const handleRetry = async () => {
+    if (DEMO_MODE) return; // Skip in demo mode
+    
     setLoading(true);
     setHasNetworkError(false);
     
@@ -58,8 +62,10 @@ export default function Home() {
     }
   };
   
-  // Initial network check
+  // Initial network check - skip in demo mode
   useEffect(() => {
+    if (DEMO_MODE) return;
+    
     handleRetry();
     
     // Listen for online/offline events
