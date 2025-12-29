@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 type PostModalProps = {
-  postId: number | null;
+  postId: number | string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusChange?: () => void;

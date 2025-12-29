@@ -1,20 +1,38 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { AvatarImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { PostModal } from "./PostModal";
 import { InterestUsersPopover } from "./interest/InterestUsersPopover";
 import { formatRelativeTime } from "@/utils/formatDate";
+import { DEMO_MODE } from "@/config/demoMode";
+import { useDemoPostsStore } from "@/stores/demoPostsStore";
+import { MOCK_POSTS } from "@/data/mockPosts";
+import { DEMO_USER } from "@/data/mockUser";
 
 export function MyPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [selectedPostId, setSelectedPostId] = useState<number | string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const demoUserPosts = useDemoPostsStore((state) => state.getUserPosts);
 
   const fetchPifs = async () => {
     setLoading(true);
+    
+    // Demo mode: show user-created demo posts + mock posts from "demo user"
+    if (DEMO_MODE) {
+      const userCreatedPosts = demoUserPosts(userId);
+      // In demo mode, if viewing demo user's profile, show their mock posts
+      const mockUserPosts = userId === DEMO_USER.id 
+        ? MOCK_POSTS.filter(p => p.item_type === 'pif' || p.item_type === 'offer').slice(0, 2)
+        : [];
+      
+      setItems([...userCreatedPosts, ...mockUserPosts]);
+      setLoading(false);
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from("items")
@@ -36,7 +54,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
     fetchPifs();
   }, [userId]);
 
-  const handlePostClick = (postId: number) => {
+  const handlePostClick = (postId: number | string) => {
     setSelectedPostId(postId);
     setModalOpen(true);
   };
@@ -84,7 +102,8 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                 </div>
               </div>
               <div className="p-3">
-                <InterestUsersPopover itemId={item.id} itemOwnerId={userId} />
+                <h3 className="font-medium truncate mb-2">{item.title}</h3>
+                {!DEMO_MODE && <InterestUsersPopover itemId={item.id} itemOwnerId={userId} />}
               </div>
             </Card>
           );

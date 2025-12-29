@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Message } from "@/types/messaging";
+import { DEMO_MODE } from "@/config/demoMode";
+import { MOCK_MESSAGES } from "@/data/mockConversations";
+import { DEMO_USER } from "@/data/mockUser";
 
 export function useMessages(conversationId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -15,6 +18,17 @@ export function useMessages(conversationId: string) {
       setMessages([]);
       setIsLoading(false);
       return;
+    }
+
+    // Demo mode: return mock messages
+    if (DEMO_MODE) {
+      const timer = setTimeout(() => {
+        const mockMessages = MOCK_MESSAGES[conversationId] || [];
+        setMessages(mockMessages as Message[]);
+        setIsLoading(false);
+      }, 200);
+      
+      return () => clearTimeout(timer);
     }
 
     const fetchMessages = async () => {
@@ -87,6 +101,9 @@ export function useMessages(conversationId: string) {
 
   // Function to mark a single message as read
   const markMessageAsRead = async (messageId: string) => {
+    // Skip in demo mode
+    if (DEMO_MODE) return;
+    
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
@@ -108,6 +125,9 @@ export function useMessages(conversationId: string) {
 
   // Function to mark all unread messages in the conversation as read
   const markMessagesAsRead = async () => {
+    // Skip in demo mode
+    if (DEMO_MODE) return;
+    
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
@@ -136,6 +156,27 @@ export function useMessages(conversationId: string) {
   const sendMessage = async (content: string) => {
     if (!conversationId || !content.trim()) {
       return;
+    }
+
+    // Demo mode: add message locally
+    if (DEMO_MODE) {
+      const newMessage: Message = {
+        id: `demo-msg-${Date.now()}`,
+        conversation_id: conversationId,
+        sender_id: DEMO_USER.id,
+        content: content.trim(),
+        created_at: new Date().toISOString(),
+        read_at: null,
+      };
+      
+      setMessages(currentMessages => [...currentMessages, newMessage]);
+      
+      toast({
+        title: "Meddelande skickat",
+        description: "Detta är en demo – meddelandet sparas endast lokalt.",
+      });
+      
+      return newMessage;
     }
 
     try {
