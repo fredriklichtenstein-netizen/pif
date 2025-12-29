@@ -6,6 +6,14 @@ import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 
+// Normalize item_type to match map marker expectations
+const normalizeItemType = (itemType: string): 'offer' | 'request' => {
+  if (itemType === 'request' || itemType === 'wish') {
+    return 'request';
+  }
+  return 'offer'; // 'pif' or anything else becomes 'offer'
+};
+
 // Transform mock posts to the expected format
 const transformMockPosts = () => {
   return MOCK_POSTS.map(post => ({
@@ -17,7 +25,7 @@ const transformMockPosts = () => {
     coordinates: post.coordinates,
     category: post.category,
     condition: post.condition,
-    item_type: post.item_type,
+    item_type: normalizeItemType(post.item_type),
     user_id: post.postedBy.id,
     user_name: post.postedBy.name,
     user_avatar: post.postedBy.avatar,
