@@ -59,8 +59,9 @@ export const MapFilters = ({
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  const activeFiltersCount = selectedCategories.length + selectedConditions.length + selectedItemTypes.length;
-  const hasActiveFilters = activeFiltersCount > 0;
+  // Count only category and condition filters (not item types since they have dedicated toggles)
+  const activeFiltersCount = selectedCategories.length + selectedConditions.length;
+  const hasActiveFilters = activeFiltersCount > 0 || selectedItemTypes.length > 0;
 
   const toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
@@ -86,8 +87,42 @@ export const MapFilters = ({
     }
   };
 
+  // Check if a specific type is active (when it's the only one selected)
+  const isOnlyPifs = selectedItemTypes.length === 1 && selectedItemTypes.includes("offer");
+  const isOnlyWishes = selectedItemTypes.length === 1 && selectedItemTypes.includes("request");
+  const showingAll = selectedItemTypes.length === 0 || selectedItemTypes.length === 2;
+
   return (
     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+      {/* Item type toggle buttons */}
+      <div className="flex items-center gap-1 bg-white rounded-lg shadow-md p-1">
+        <Button
+          variant={showingAll ? "default" : "ghost"}
+          size="sm"
+          onClick={() => onItemTypeChange([])}
+          className={`text-xs px-3 ${showingAll ? "bg-primary text-primary-foreground" : "hover:bg-gray-100"}`}
+        >
+          Alla
+        </Button>
+        <Button
+          variant={isOnlyPifs ? "default" : "ghost"}
+          size="sm"
+          onClick={() => onItemTypeChange(["offer"])}
+          className={`text-xs px-3 ${isOnlyPifs ? "bg-teal-600 hover:bg-teal-700 text-white" : "hover:bg-teal-50 text-teal-700"}`}
+        >
+          🎁 Pifs
+        </Button>
+        <Button
+          variant={isOnlyWishes ? "default" : "ghost"}
+          size="sm"
+          onClick={() => onItemTypeChange(["request"])}
+          className={`text-xs px-3 ${isOnlyWishes ? "bg-amber-500 hover:bg-amber-600 text-white" : "hover:bg-amber-50 text-amber-700"}`}
+        >
+          ✨ Önskningar
+        </Button>
+      </div>
+
+      {/* Category/condition filters */}
       <div className="flex items-center gap-2">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
@@ -98,7 +133,7 @@ export const MapFilters = ({
             >
               <Filter className="h-4 w-4 mr-2" />
               Filter
-              {hasActiveFilters && (
+              {activeFiltersCount > 0 && (
                 <Badge 
                   variant="secondary" 
                   className="ml-2 h-5 min-w-5 p-0 flex items-center justify-center text-xs"
@@ -109,19 +144,6 @@ export const MapFilters = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
-            <DropdownMenuLabel>Typ av inlägg</DropdownMenuLabel>
-            {ITEM_TYPES.map((type) => (
-              <DropdownMenuCheckboxItem
-                key={type.value}
-                checked={selectedItemTypes.includes(type.value)}
-                onCheckedChange={() => toggleItemType(type.value)}
-              >
-                {type.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-            
-            <DropdownMenuSeparator />
-            
             <DropdownMenuLabel>Kategorier</DropdownMenuLabel>
             {CATEGORIES.map((category) => (
               <DropdownMenuCheckboxItem
@@ -161,22 +183,9 @@ export const MapFilters = ({
         )}
       </div>
 
-      {/* Active filter badges */}
-      {hasActiveFilters && (
+      {/* Active filter badges (only for categories and conditions) */}
+      {(selectedCategories.length > 0 || selectedConditions.length > 0) && (
         <div className="flex flex-wrap gap-1 max-w-72">
-          {selectedItemTypes.map((type) => (
-            <Badge 
-              key={type} 
-              variant="secondary" 
-              className="text-xs bg-white shadow-sm border"
-            >
-              {ITEM_TYPES.find(t => t.value === type)?.label}
-              <X 
-                className="h-3 w-3 ml-1 cursor-pointer" 
-                onClick={() => toggleItemType(type)}
-              />
-            </Badge>
-          ))}
           {selectedCategories.map((category) => (
             <Badge 
               key={category} 
