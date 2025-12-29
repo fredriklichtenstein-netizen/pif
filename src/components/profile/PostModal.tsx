@@ -26,7 +26,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       supabase
         .from("items")
         .select("*, profiles!items_user_id_fkey(*)")
-        .eq("id", postId)
+        .eq("id", typeof postId === 'string' ? parseInt(postId, 10) : postId)
         .single()
         .then(({ data, error }) => {
           if (error) {

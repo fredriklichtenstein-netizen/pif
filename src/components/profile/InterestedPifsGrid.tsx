@@ -96,7 +96,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
       const { error } = await supabase
         .from("interests")
         .delete()
-        .eq("id", selectedInterestId);
+        .eq("id", typeof selectedInterestId === 'string' ? parseInt(selectedInterestId, 10) : selectedInterestId);
         
       if (error) throw error;
       
