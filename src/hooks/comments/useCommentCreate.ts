@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCommentFromDB } from "@/hooks/item/utils/commentFormatters";
 import { v4 as uuidv4 } from "uuid";
+import { DEMO_MODE } from "@/config/demoMode";
+import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 
 export const useCommentCreate = (
   itemId: string,
@@ -19,6 +21,7 @@ export const useCommentCreate = (
 ) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const addDemoComment = useDemoInteractionsStore(state => state.addComment);
 
   // Format user name as "First name + first letter of last name"
   const formatUserName = (fullName: string): string => {
@@ -44,6 +47,26 @@ export const useCommentCreate = (
     setIsLoading(true);
     
     try {
+      // Demo mode: add to local store
+      if (DEMO_MODE) {
+        const displayName = formatUserName(currentUser.name || 'Demo User');
+        const newComment = addDemoComment(itemId, text.trim(), {
+          id: currentUser.id,
+          name: displayName,
+          avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
+        });
+        
+        setComments([...comments, newComment]);
+        
+        toast({
+          title: "Comment added",
+          description: "Your comment has been posted",
+        });
+        
+        setIsLoading(false);
+        return;
+      }
+      
       // If in fallback mode, create a local comment
       if (useFallbackMode) {
         console.log("Creating local comment in fallback mode");

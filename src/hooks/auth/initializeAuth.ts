@@ -8,7 +8,7 @@ export const initializeAuth = async () => {
   const auth = useAuthStore.getState();
   if (auth.initialized) return;
 
-  // In demo mode, skip Supabase and set demo user immediately
+  // In demo mode, skip Supabase entirely and set demo user immediately
   if (DEMO_MODE) {
     console.log('Demo mode: Setting demo user');
     auth.setUser(DEMO_USER);
@@ -16,7 +16,8 @@ export const initializeAuth = async () => {
     auth.setProfileCompleted(true);
     auth.setLoading(false);
     auth.setInitialized(true);
-    return;
+    // No subscription needed in demo mode
+    return undefined;
   }
 
   try {
