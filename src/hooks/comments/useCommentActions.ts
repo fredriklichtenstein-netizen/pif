@@ -6,6 +6,9 @@ import { useCommentDelete } from "./useCommentDelete";
 import { useCommentEdit } from "./useCommentEdit";
 import { useCommentInteractions } from "./useCommentInteractions";
 import { useCommentRefresh } from "./useCommentRefresh";
+import { DEMO_MODE } from "@/config/demoMode";
+import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
+import { useToast } from "@/hooks/use-toast";
 
 export const useCommentActions = (
   itemId: string,
@@ -19,6 +22,9 @@ export const useCommentActions = (
   useFallbackMode = false
 ) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const deleteDemoComment = useDemoInteractionsStore(state => state.deleteComment);
+  const toggleDemoCommentLike = useDemoInteractionsStore(state => state.toggleCommentLike);
 
   // Format user name helper
   const formatUserName = (fullName: string): string => {
@@ -49,12 +55,42 @@ export const useCommentActions = (
   const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser, useFallbackMode);
   const { deleteComment } = useCommentDelete();
   const { handleEditComment } = useCommentEdit(comments, setComments);
-  const { handleLikeComment, handleReplyToComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
+  const { handleLikeComment: baseLikeComment, handleReplyToComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
   const { refreshComments, isRefreshing } = useCommentRefresh(itemId, setComments, currentUser);
+
+  // Demo mode like handler
+  const handleLikeComment = (commentId: string) => {
+    if (DEMO_MODE) {
+      toggleDemoCommentLike(itemId, commentId);
+      // Update local state
+      const updatedComments = comments.map(comment => {
+        if (comment.id === commentId) {
+          const liked = !comment.isLiked;
+          return { ...comment, isLiked: liked, likes: liked ? comment.likes + 1 : Math.max(0, comment.likes - 1) };
+        }
+        return comment;
+      });
+      setComments(updatedComments);
+      return;
+    }
+    baseLikeComment(commentId);
+  };
 
   // Enhanced delete comment handler to update the comments state properly
   const handleDeleteComment = async (commentId: string) => {
     try {
+      // Demo mode: delete from local store
+      if (DEMO_MODE) {
+        deleteDemoComment(itemId, commentId);
+        const updatedComments = comments.filter(c => c.id !== commentId);
+        setComments(updatedComments);
+        toast({
+          title: "Comment deleted",
+          description: "Your comment has been removed",
+        });
+        return true;
+      }
+      
       // First perform the server-side deletion
       const success = await deleteComment(commentId);
       

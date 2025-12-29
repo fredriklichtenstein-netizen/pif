@@ -1,25 +1,55 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { Comment } from "@/types/comment";
+
+interface DemoComment {
+  id: string;
+  text: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  createdAt: string;
+  likes: number;
+  isLiked: boolean;
+}
 
 interface DemoInteractionsState {
   likedItems: string[];
   bookmarkedItems: string[];
   interestedItems: string[];
-  comments: Record<string, { id: string; text: string; userId: string; createdAt: string }[]>;
+  comments: Record<string, DemoComment[]>;
   
   // Actions
   toggleLike: (itemId: string) => boolean;
   toggleBookmark: (itemId: string) => boolean;
   toggleInterest: (itemId: string) => boolean;
-  addComment: (itemId: string, text: string) => void;
+  addComment: (itemId: string, text: string, author: { id: string; name: string; avatar: string }) => Comment;
+  deleteComment: (itemId: string, commentId: string) => void;
+  toggleCommentLike: (itemId: string, commentId: string) => void;
   
   // Getters
   isLiked: (itemId: string) => boolean;
   isBookmarked: (itemId: string) => boolean;
   isInterested: (itemId: string) => boolean;
-  getComments: (itemId: string) => { id: string; text: string; userId: string; createdAt: string }[];
+  getComments: (itemId: string) => Comment[];
 }
+
+// Helper to convert stored comment to Comment type
+const toComment = (dc: DemoComment, currentUserId: string): Comment => ({
+  id: dc.id,
+  text: dc.text,
+  author: {
+    id: dc.authorId,
+    name: dc.authorName,
+    avatar: dc.authorAvatar,
+  },
+  createdAt: new Date(dc.createdAt),
+  likes: dc.likes,
+  isLiked: dc.isLiked,
+  replies: [],
+  isOwn: dc.authorId === currentUserId,
+});
 
 export const useDemoInteractionsStore = create<DemoInteractionsState>()(
   persist(
@@ -62,18 +92,48 @@ export const useDemoInteractionsStore = create<DemoInteractionsState>()(
         return !isCurrentlyInterested;
       },
 
-      addComment: (itemId: string, text: string) => {
+      addComment: (itemId: string, text: string, author: { id: string; name: string; avatar: string }) => {
         const current = get().comments;
-        const newComment = {
+        const newDemoComment: DemoComment = {
           id: `demo-comment-${Date.now()}`,
           text,
-          userId: "demo-user-id",
-          createdAt: new Date().toISOString()
+          authorId: author.id,
+          authorName: author.name,
+          authorAvatar: author.avatar,
+          createdAt: new Date().toISOString(),
+          likes: 0,
+          isLiked: false,
         };
         set({
           comments: {
             ...current,
-            [itemId]: [...(current[itemId] || []), newComment]
+            [itemId]: [...(current[itemId] || []), newDemoComment]
+          }
+        });
+        return toComment(newDemoComment, author.id);
+      },
+
+      deleteComment: (itemId: string, commentId: string) => {
+        const current = get().comments;
+        set({
+          comments: {
+            ...current,
+            [itemId]: (current[itemId] || []).filter(c => c.id !== commentId)
+          }
+        });
+      },
+
+      toggleCommentLike: (itemId: string, commentId: string) => {
+        const current = get().comments;
+        const itemComments = current[itemId] || [];
+        set({
+          comments: {
+            ...current,
+            [itemId]: itemComments.map(c => 
+              c.id === commentId 
+                ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
+                : c
+            )
           }
         });
       },
@@ -81,7 +141,10 @@ export const useDemoInteractionsStore = create<DemoInteractionsState>()(
       isLiked: (itemId: string) => get().likedItems.includes(itemId),
       isBookmarked: (itemId: string) => get().bookmarkedItems.includes(itemId),
       isInterested: (itemId: string) => get().interestedItems.includes(itemId),
-      getComments: (itemId: string) => get().comments[itemId] || [],
+      getComments: (itemId: string) => {
+        const stored = get().comments[itemId] || [];
+        return stored.map(dc => toComment(dc, "demo-user-id"));
+      },
     }),
     {
       name: "pif-demo-interactions",

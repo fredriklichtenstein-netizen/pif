@@ -4,6 +4,8 @@ import { Comment } from '@/types/comment';
 import { useComments } from '@/hooks/item/useComments';
 import { useToast } from '@/hooks/use-toast';
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { DEMO_MODE } from "@/config/demoMode";
+import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 
 export function useLazyComments(itemId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,6 +19,7 @@ export function useLazyComments(itemId: string) {
   const { user } = useGlobalAuth();
   
   const { fetchComments, useFallbackMode: fetchFallbackMode } = useComments(itemId);
+  const getComments = useDemoInteractionsStore(state => state.getComments);
 
   // Format user name as "First name + first letter of last name"
   const formatUserName = (fullName: string): string => {
@@ -47,6 +50,9 @@ export function useLazyComments(itemId: string) {
 
   // Process pending comments from localStorage
   useEffect(() => {
+    // Skip in demo mode
+    if (DEMO_MODE) return;
+    
     // Only process local comments if in fallback mode and we have a current user
     if (useFallbackMode && user?.id && isInitialized) {
       try {
@@ -94,6 +100,15 @@ export function useLazyComments(itemId: string) {
 
   const loadComments = useCallback(async (forceRefresh = false) => {
     if (isInitialized && !forceRefresh) return;
+    
+    // Demo mode: load from local store immediately
+    if (DEMO_MODE) {
+      const demoComments = getComments(itemId);
+      setComments(demoComments);
+      setIsInitialized(true);
+      setIsLoading(false);
+      return;
+    }
     
     console.log(`[useLazyComments] Starting to load comments for item ${itemId}`);
     setIsLoading(true);
@@ -192,7 +207,7 @@ export function useLazyComments(itemId: string) {
         });
       }
     }
-  }, [fetchComments, isInitialized, itemId, retryCount, toast, fetchFallbackMode]);
+  }, [fetchComments, isInitialized, itemId, retryCount, toast, fetchFallbackMode, getComments]);
 
   const refreshComments = useCallback(() => {
     console.log(`[useLazyComments] Refreshing comments for item ${itemId}`);
