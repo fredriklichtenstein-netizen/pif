@@ -2,6 +2,11 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { DEMO_MODE } from "@/config/demoMode";
+
+// Mapbox public demo token for demo mode
+// This is a restricted public token that works for basic map display
+const DEMO_MAPBOX_TOKEN = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
 
 export const useMapbox = () => {
   const { toast } = useToast();
@@ -13,6 +18,14 @@ export const useMapbox = () => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // In demo mode, use the demo token directly
+      if (DEMO_MODE) {
+        console.log("🗺️ [Mapbox Hook] Demo mode - using public demo token");
+        setMapToken(DEMO_MAPBOX_TOKEN);
+        setIsLoading(false);
+        return;
+      }
       
       console.log("🗺️ [Mapbox Hook] Starting token fetch...");
       

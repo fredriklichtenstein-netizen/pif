@@ -1,8 +1,30 @@
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
+import { DEMO_MODE } from "@/config/demoMode";
+import { MOCK_POSTS } from "@/data/mockPosts";
+
+// Transform mock posts to the expected format
+const transformMockPosts = () => {
+  return MOCK_POSTS.map(post => ({
+    id: post.id,
+    title: post.title,
+    description: post.description,
+    images: post.images,
+    location: post.location,
+    coordinates: post.coordinates,
+    category: post.category,
+    condition: post.condition,
+    item_type: post.item_type,
+    user_id: post.postedBy.id,
+    user_name: post.postedBy.name,
+    user_avatar: post.postedBy.avatar,
+    created_at: post.created_at,
+    __isMock: true
+  }));
+};
 
 export function useFetchPosts(options = { includeArchived: false }) {
   const [posts, setPosts] = useState<any[]>([]);
@@ -12,7 +34,26 @@ export function useFetchPosts(options = { includeArchived: false }) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
 
+  // In demo mode, immediately load mock posts
+  useEffect(() => {
+    if (DEMO_MODE) {
+      console.log("📦 [FetchPosts] Demo mode - loading mock posts");
+      const mockData = transformMockPosts();
+      setPosts(mockData);
+      setIsLoading(false);
+    }
+  }, []);
+
   const fetchPosts = useCallback(async () => {
+    // In demo mode, just return mock posts
+    if (DEMO_MODE) {
+      console.log("📦 [FetchPosts] Demo mode - refreshing mock posts");
+      const mockData = transformMockPosts();
+      setPosts(mockData);
+      setIsLoading(false);
+      return;
+    }
+
     // Prevent concurrent fetches
     if (isFetching) {
       console.log("Fetch already in progress, skipping redundant call");
@@ -106,7 +147,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
         setIsFetching(false);
       }
     }
-  }, [toast, options.includeArchived]);
+  }, [toast, options.includeArchived, isFetching]);
 
   // Cleanup function to abort any pending requests
   const cleanup = useCallback(() => {
