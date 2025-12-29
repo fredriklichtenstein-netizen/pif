@@ -42,5 +42,9 @@
     "mock_data_notice": "Visar exempelinnehåll. Anslut för att se riktiga piffar och önskningar.",
     "reconnecting": "Återansluter...",
     "connection_failed": "Kunde inte ansluta till servern"
+  },
+  "demo": {
+    "title": "Du tittar på demoinnehåll",
+    "description": "Detta är exempeldata för att visa appen. Anslut en backend för att se riktiga inlägg."
   }
 }

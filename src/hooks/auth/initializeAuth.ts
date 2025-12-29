@@ -1,10 +1,23 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "./authStore";
+import { DEMO_MODE } from "@/config/demoMode";
+import { DEMO_USER, DEMO_SESSION } from "@/data/mockUser";
 
 export const initializeAuth = async () => {
   const auth = useAuthStore.getState();
   if (auth.initialized) return;
+
+  // In demo mode, skip Supabase and set demo user immediately
+  if (DEMO_MODE) {
+    console.log('Demo mode: Setting demo user');
+    auth.setUser(DEMO_USER);
+    auth.setSession(DEMO_SESSION);
+    auth.setProfileCompleted(true);
+    auth.setLoading(false);
+    auth.setInitialized(true);
+    return;
+  }
 
   try {
     console.log('Initializing auth state...');

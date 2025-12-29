@@ -42,5 +42,9 @@
     "mock_data_notice": "Showing example content. Connect to see real pifs and wishes.",
     "reconnecting": "Reconnecting...",
     "connection_failed": "Unable to connect to server"
+  },
+  "demo": {
+    "title": "You're viewing demo content",
+    "description": "This is example data to showcase the app. Connect a backend to see real community posts."
   }
 }

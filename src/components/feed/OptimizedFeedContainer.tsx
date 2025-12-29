@@ -1,12 +1,11 @@
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
-import { useOfflineAwareFeed } from '@/hooks/useOfflineAwareFeed';
 import { FeedItemList } from './FeedItemList';
 import { FeedLoadingState } from './FeedLoadingState';
 import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
-import { OfflineBanner } from './OfflineBanner';
+import { DemoModeBanner } from './DemoModeBanner';
 import { RealtimeIndicator } from './RealtimeIndicator';
 import { PerformanceMonitor } from '@/components/debug/PerformanceMonitor';
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
@@ -14,31 +13,13 @@ import { useAnnouncement } from '@/hooks/accessibility/useAnnouncement';
 import { useSwipeGestures } from '@/hooks/mobile/useSwipeGestures';
 import { useVibration } from '@/hooks/mobile/useVibration';
 import { EnhancedLoading } from '@/components/ui/enhanced-loading';
+import { DEMO_MODE } from '@/config/demoMode';
 
 export function OptimizedFeedContainer() {
   const { posts, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
-  const { isOnline, mockPosts } = useOfflineAwareFeed();
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
-  const [fallbackTimeoutReached, setFallbackTimeoutReached] = useState(false);
-
-  // If the backend is unreachable, don't keep users stuck on a spinner.
-  useEffect(() => {
-    if (!isLoading) {
-      setFallbackTimeoutReached(false);
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setFallbackTimeoutReached(true);
-    }, 2500);
-
-    return () => window.clearTimeout(timer);
-  }, [isLoading]);
-
-  const shouldShowMockData = posts.length === 0 && (fallbackTimeoutReached || !!error || !isOnline);
-  const bannerMode = !isOnline ? 'offline' : 'unreachable';
 
   // Memoize posts to prevent unnecessary re-renders and reduce API calls
   const memoizedPosts = useMemo(() => posts, [posts]);
@@ -71,13 +52,14 @@ export function OptimizedFeedContainer() {
     }
   });
 
-  if (shouldShowMockData) {
+  // In demo mode, show demo banner and mock posts
+  if (DEMO_MODE) {
     return (
       <div className="space-y-4">
-        <OfflineBanner mode={bannerMode} showMockData={true} />
-        <section role="feed" aria-label="Community posts (example)">
+        <DemoModeBanner />
+        <section role="feed" aria-label="Community posts (demo)">
           <FeedItemList
-            posts={mockPosts}
+            posts={memoizedPosts}
             selectedCategories={[]}
             clearFilters={() => {}}
             viewMode="all"
