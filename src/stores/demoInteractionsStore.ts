@@ -51,13 +51,73 @@ const toComment = (dc: DemoComment, currentUserId: string): Comment => ({
   isOwn: dc.authorId === currentUserId,
 });
 
+// Pre-populated demo comments for mock posts
+const INITIAL_DEMO_COMMENTS: Record<string, DemoComment[]> = {
+  "mock-1": [
+    {
+      id: "demo-comment-1",
+      text: "This bookshelf is beautiful! Is it still available?",
+      authorId: "mock-user-2",
+      authorName: "Erik L.",
+      authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+      likes: 2,
+      isLiked: false,
+    },
+    {
+      id: "demo-comment-2",
+      text: "Love the vintage look! Would fit perfectly in my home office 📚",
+      authorId: "mock-user-3",
+      authorName: "Maria K.",
+      authorAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+      createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      likes: 1,
+      isLiked: false,
+    },
+  ],
+  "mock-3": [
+    {
+      id: "demo-comment-3",
+      text: "My daughter would love these! Are the puzzles complete with all pieces?",
+      authorId: "mock-user-5",
+      authorName: "Lisa A.",
+      authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
+      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+      likes: 0,
+      isLiked: false,
+    },
+  ],
+  "mock-5": [
+    {
+      id: "demo-comment-4",
+      text: "What a gorgeous chair! The green velvet looks amazing. Can you share the dimensions?",
+      authorId: "mock-user-6",
+      authorName: "Oscar M.",
+      authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
+      createdAt: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
+      likes: 3,
+      isLiked: false,
+    },
+    {
+      id: "demo-comment-5",
+      text: "This is exactly what I've been looking for!",
+      authorId: "mock-user-1",
+      authorName: "Anna S.",
+      authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+      createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+      likes: 1,
+      isLiked: false,
+    },
+  ],
+};
+
 export const useDemoInteractionsStore = create<DemoInteractionsState>()(
   persist(
     (set, get) => ({
       likedItems: [],
       bookmarkedItems: [],
       interestedItems: [],
-      comments: {},
+      comments: INITIAL_DEMO_COMMENTS,
 
       toggleLike: (itemId: string) => {
         const current = get().likedItems;
@@ -142,7 +202,7 @@ export const useDemoInteractionsStore = create<DemoInteractionsState>()(
       isBookmarked: (itemId: string) => get().bookmarkedItems.includes(itemId),
       isInterested: (itemId: string) => get().interestedItems.includes(itemId),
       getComments: (itemId: string) => {
-        const stored = get().comments[itemId] || [];
+        const stored = get().comments[itemId] || INITIAL_DEMO_COMMENTS[itemId] || [];
         return stored.map(dc => toComment(dc, "demo-user-id"));
       },
     }),
