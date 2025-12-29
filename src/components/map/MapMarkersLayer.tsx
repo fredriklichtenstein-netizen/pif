@@ -91,6 +91,11 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
           console.log("Creating privacy-enhanced marker for post:", post.id, "at privacy coordinates:", { lng: privacyLng, lat: privacyLat });
 
           try {
+            // Normalize item_type defensively - handle any string value
+            const rawType = String(post.item_type || 'offer');
+            const itemType: 'offer' | 'request' = 
+              (rawType === 'request' || rawType === 'wish') ? 'request' : 'offer';
+            
             const markerElement = createMarkerElement({
               onClick: () => onPostClick(post.id),
               onMouseEnter: () => {
@@ -104,7 +109,7 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
                 const popups = document.getElementsByClassName('mapboxgl-popup');
                 while (popups[0]) popups[0].remove();
               },
-              itemType: post.item_type || 'offer'
+              itemType
             });
 
             const marker = new mapboxgl.Marker({

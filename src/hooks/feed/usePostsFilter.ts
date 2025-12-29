@@ -1,22 +1,22 @@
 
-import { useState, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 
 export function usePostsFilter(allPosts: any[]) {
-  const [filteredPosts, setFilteredPosts] = useState<any[]>(allPosts);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Compute filtered posts whenever allPosts or selectedCategories change
+  const filteredPosts = useMemo(() => {
+    if (!selectedCategories.length) {
+      return allPosts;
+    }
+    return allPosts.filter(post => 
+      post.category && selectedCategories.includes(post.category)
+    );
+  }, [allPosts, selectedCategories]);
   
   const filterByCategories = useCallback((categories: string[]) => {
-    if (!categories.length) {
-      // If no categories selected, show all posts
-      setFilteredPosts(allPosts);
-      return;
-    }
-
-    const filtered = allPosts.filter(post => 
-      post.category && categories.includes(post.category)
-    );
-    
-    setFilteredPosts(filtered);
-  }, [allPosts]);
+    setSelectedCategories(categories);
+  }, []);
 
   return {
     filteredPosts,
