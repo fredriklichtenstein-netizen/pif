@@ -95,6 +95,35 @@ const ensureAnimationStyles = (() => {
             opacity: 0;
           }
         }
+        @keyframes markerPopIn {
+          0% {
+            transform: scale(0) translateY(10px);
+            opacity: 0;
+          }
+          60% {
+            transform: scale(1.1) translateY(-2px);
+          }
+          100% {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes markerPopOut {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(0);
+            opacity: 0;
+          }
+        }
+        .marker-animated {
+          animation: markerPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .marker-exit {
+          animation: markerPopOut 0.2s ease-out forwards;
+        }
       `;
       document.head.appendChild(style);
       initialized = true;
@@ -121,6 +150,9 @@ export const createMarkerElement = ({
   }
   
   const el = elementTemplates[itemType].cloneNode(true) as HTMLDivElement;
+  
+  // Add animation class
+  el.classList.add("marker-animated");
   
   // Apply highlighting if needed
   if (highlighted) {
