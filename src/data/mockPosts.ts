@@ -4,6 +4,7 @@ import mockBicycle from "@/assets/mock/mock-bicycle.jpg";
 import mockMoving from "@/assets/mock/mock-moving.jpg";
 
 // Mock data for offline/demo mode
+// All coordinates are in central Stockholm for demo visibility
 export const MOCK_POSTS = [
   {
     id: "mock-1",
@@ -11,7 +12,7 @@ export const MOCK_POSTS = [
     description: "Beautiful solid oak bookshelf in great condition. Has some character marks that add to its charm. Perfect for a living room or home office.",
     images: [mockBookshelf],
     location: "Södermalm, Stockholm",
-    coordinates: { lng: 18.0686, lat: 59.3142 },
+    coordinates: { lng: 18.0730, lat: 59.3180 },
     category: "Furniture",
     condition: "Good",
     item_type: "pif",
@@ -29,7 +30,7 @@ export const MOCK_POSTS = [
     description: "I'm looking for a bicycle for commuting. Any size works, as long as it's functional. Happy to pick up anywhere in Stockholm!",
     images: [mockBicycle],
     location: "Kungsholmen, Stockholm",
-    coordinates: { lng: 18.0259, lat: 59.3326 },
+    coordinates: { lng: 18.0350, lat: 59.3350 },
     category: "Sports",
     condition: null,
     item_type: "wish",
@@ -47,7 +48,7 @@ export const MOCK_POSTS = [
     description: "A collection of toys suitable for ages 3-6. Includes building blocks, puzzles, and some stuffed animals. All in good condition.",
     images: ["https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400&h=300&fit=crop"],
     location: "Vasastan, Stockholm",
-    coordinates: { lng: 18.0500, lat: 59.3450 },
+    coordinates: { lng: 18.0550, lat: 59.3450 },
     category: "Toys",
     condition: "Good",
     item_type: "pif",
@@ -65,7 +66,7 @@ export const MOCK_POSTS = [
     description: "Looking for someone who can help me carry a sofa down 2 flights of stairs this weekend. Will take about 30 minutes. Coffee and snacks provided!",
     images: [mockMoving],
     location: "Östermalm, Stockholm",
-    coordinates: { lng: 18.0850, lat: 59.3400 },
+    coordinates: { lng: 18.0850, lat: 59.3380 },
     category: "Other",
     condition: null,
     item_type: "wish",
@@ -82,8 +83,8 @@ export const MOCK_POSTS = [
     title: "Cozy reading chair",
     description: "Comfortable armchair, perfect for reading. Green velvet fabric, no stains or tears. Pick up only.",
     images: ["https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=300&fit=crop"],
-    location: "Hornstull, Stockholm",
-    coordinates: { lng: 18.0340, lat: 59.3150 },
+    location: "Gamla Stan, Stockholm",
+    coordinates: { lng: 18.0710, lat: 59.3250 },
     category: "Furniture",
     condition: "Excellent",
     item_type: "pif",
@@ -100,8 +101,8 @@ export const MOCK_POSTS = [
     title: "Kitchen appliances set",
     description: "Blender, toaster, and coffee maker. All working perfectly. Moving abroad so need to find new homes for these.",
     images: ["https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop"],
-    location: "Gamla Stan, Stockholm",
-    coordinates: { lng: 18.0710, lat: 59.3250 },
+    location: "Norrmalm, Stockholm",
+    coordinates: { lng: 18.0650, lat: 59.3320 },
     category: "Kitchen",
     condition: "Good",
     item_type: "pif",
