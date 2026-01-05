@@ -13,6 +13,8 @@ import { ProfileBasicInfo } from "@/components/profile/info/ProfileBasicInfo";
 import { MainNav } from "@/components/MainNav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArchivedPifsGrid } from "@/components/profile/ArchivedPifsGrid";
+import { DEMO_MODE } from "@/config/demoMode";
+import { DEMO_PROFILE } from "@/data/mockProfiles";
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
@@ -30,6 +32,14 @@ const Profile = () => {
 
   const fetchProfileData = async () => {
     if (!user) return;
+    
+    // Demo mode: use mock profile data
+    if (DEMO_MODE) {
+      setProfileData(DEMO_PROFILE);
+      setCoordinates({ lng: 18.0686, lat: 59.3293 });
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {

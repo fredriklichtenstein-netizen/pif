@@ -1,0 +1,68 @@
+
+import type { Notification } from "@/hooks/useNotifications";
+
+/**
+ * Mock notifications for demo mode
+ */
+export const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: "notif-1",
+    user_id: "demo-user-id",
+    type: "interest",
+    title: "New interest in your pif",
+    content: "Anna S. is interested in your Vintage bookshelf",
+    reference_id: "1",
+    reference_type: "item",
+    is_read: false,
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    action_url: "/item/1",
+  },
+  {
+    id: "notif-2",
+    user_id: "demo-user-id",
+    type: "selection",
+    title: "You were selected!",
+    content: "Great news! You've been selected for the Kitchen appliances set",
+    reference_id: "2",
+    reference_type: "item",
+    is_read: false,
+    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    action_url: "/item/2",
+  },
+  {
+    id: "notif-3",
+    user_id: "demo-user-id",
+    type: "message",
+    title: "New message",
+    content: "Erik L. sent you a message about the pickup",
+    reference_id: "conv-1",
+    reference_type: "conversation",
+    is_read: true,
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    action_url: "/messages",
+  },
+  {
+    id: "notif-4",
+    user_id: "demo-user-id",
+    type: "completion",
+    title: "Pif completed!",
+    content: "Your Children's books set has been successfully piffed to Maria K.",
+    reference_id: "3",
+    reference_type: "item",
+    is_read: true,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    action_url: "/item/3",
+  },
+  {
+    id: "notif-5",
+    user_id: "demo-user-id",
+    type: "interest",
+    title: "New interest in your pif",
+    content: "Johan P. is interested in your Desk lamp",
+    reference_id: "4",
+    reference_type: "item",
+    is_read: true,
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    action_url: "/item/4",
+  },
+];

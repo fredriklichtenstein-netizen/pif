@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
+import { DEMO_MODE } from "@/config/demoMode";
+import { MOCK_NOTIFICATIONS } from "@/data/mockNotifications";
 
 export interface Notification {
   id: string;
@@ -27,6 +29,15 @@ export function useNotifications() {
 
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
+    
+    // Demo mode: use mock notifications
+    if (DEMO_MODE) {
+      setNotifications(MOCK_NOTIFICATIONS);
+      setUnreadCount(MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length);
+      setIsLoading(false);
+      return;
+    }
+    
     setIsLoading(true);
     setFetchError(null);
 
@@ -57,7 +68,7 @@ export function useNotifications() {
   // Realtime notifications
   useEffect(() => {
     fetchNotifications();
-    if (!user?.id) return;
+    if (!user?.id || DEMO_MODE) return;
 
     const channel = supabase
       .channel(`public:notifications:${user.id}`)
@@ -82,6 +93,14 @@ export function useNotifications() {
 
   const markAllAsRead = async () => {
     if (!user?.id) return;
+    
+    // Demo mode: mark all as read locally
+    if (DEMO_MODE) {
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      return;
+    }
+    
     const { error } = await supabase.rpc("mark_all_notifications_read");
     if (error) {
       toast({

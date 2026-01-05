@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Heart } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AvatarImage } from "@/components/ui/optimized-image";
@@ -17,9 +17,13 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TrustIndicator } from "./interest/TrustIndicator";
+import { DEMO_MODE } from "@/config/demoMode";
+import { MOCK_INTERESTED_USERS } from "@/data/mockProfiles";
+import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
 
 interface InterestUsersPopoverProps {
-  itemId: number;
+  itemId: number | string;
   itemOwnerId: string;
 }
 
@@ -30,9 +34,16 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  
+  // Demo mode selection store
+  const { selectUser: demoSelectUser, getSelectedUser, hasSelection } = useDemoSelectionsStore();
 
   useEffect(() => {
     const getCurrentUser = async () => {
+      if (DEMO_MODE) {
+        setCurrentUser("demo-user-id");
+        return;
+      }
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user?.id || null);
     };
@@ -41,11 +52,29 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
 
   const fetchInterests = async () => {
     setLoading(true);
+    
+    // Demo mode: use mock data with selection state
+    if (DEMO_MODE) {
+      const selectedUserId = getSelectedUser(itemId);
+      const mockUsers = MOCK_INTERESTED_USERS.map((u) => ({
+        ...u,
+        status: selectedUserId === u.user_id 
+          ? "selected" 
+          : selectedUserId 
+            ? "not_selected" 
+            : "pending",
+      }));
+      setUsers(mockUsers);
+      setLoading(false);
+      return;
+    }
+    
     try {
+      const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
       const { data, error } = await supabase
         .from("interests")
         .select("id,user_id,status,message,created_at,users:profiles!interests_user_id_fkey(*)")
-        .eq("item_id", itemId)
+        .eq("item_id", numericId)
         .order("created_at", { ascending: false });
         
       if (error) throw error;
@@ -67,8 +96,20 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
     fetchInterests();
   }, [itemId]);
 
-  const handleSelectReceiver = async (interestId: number) => {
+  const handleSelectReceiver = async (interestId: number, userId: string) => {
     setConfirmDialogOpen(false);
+    
+    // Demo mode: use local store
+    if (DEMO_MODE) {
+      demoSelectUser(itemId, userId);
+      fetchInterests();
+      toast({
+        title: "Receiver selected!",
+        description: "You can now message this person to coordinate pickup.",
+      });
+      return;
+    }
+    
     try {
       await supabase
         .from("interests")
@@ -78,13 +119,13 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
       await supabase
         .from("interests")
         .update({ status: "not_selected" })
-        .eq("item_id", itemId)
+        .eq("item_id", typeof itemId === 'string' ? parseInt(itemId as string, 10) : itemId)
         .neq("id", interestId);
         
       fetchInterests();
       toast({
-        title: "Success",
-        description: "Receiver has been selected",
+        title: "Receiver selected!",
+        description: "You can now message this person to coordinate pickup.",
       });
     } catch (err) {
       console.error("Error selecting receiver:", err);
@@ -97,7 +138,7 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
   };
 
   if (loading) {
-    return <div className="text-xs py-1 text-gray-400">Loading...</div>;
+    return <div className="text-xs py-1 text-muted-foreground">Loading...</div>;
   }
   
   if (users.length === 0) {
@@ -116,21 +157,24 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
   };
 
   const isOwner = currentUser === itemOwnerId;
+  const hasSelectedUser = hasSelection(itemId);
 
   return (
     <>
       <Popover>
         <PopoverTrigger asChild>
-          <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mt-2">
+          <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mt-2">
             <Heart className="h-5 w-5 text-primary fill-primary" />
             <span className="hover:underline">{getInterestText()}</span>
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-2" align="start">
-          <div className="font-bold text-sm mb-2">Interested Users</div>
+          <div className="font-bold text-sm mb-2">
+            {isOwner ? "Choose a receiver" : "Interested Users"}
+          </div>
           <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
             {users.map((u) => (
-              <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md transition-all">
+              <div key={u.id} className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded-md transition-all">
                 <Link 
                   to={`/user/${u.user_id}`}
                   className="flex items-center gap-2 hover:underline"
@@ -146,16 +190,43 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                     <span className="text-sm font-medium truncate">
                       {u.users?.first_name} {u.users?.last_name?.[0] || ""}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {format(new Date(u.created_at), "MMM d, HH:mm")}
                     </span>
                   </div>
                 </Link>
+                
+                {/* Trust indicator - only shown to owner during selection */}
+                {isOwner && u.status === "pending" && (
+                  <TrustIndicator
+                    reliabilityScore={u.users?.reliability_score}
+                    completedPifs={u.users?.completed_pifs}
+                    noShows={u.users?.no_shows}
+                    compact
+                  />
+                )}
+                
                 <div className="ml-auto flex items-center gap-2">
                   {u.status === "selected" && (
-                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
-                      Selected
-                    </span>
+                    <>
+                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                        Selected
+                      </span>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                        onClick={() => {
+                          toast({
+                            title: "Messaging coming soon",
+                            description: "Direct messaging will be available in the next update.",
+                          });
+                        }}
+                      >
+                        <MessageCircle className="h-3 w-3 mr-1" />
+                        Message
+                      </Button>
+                    </>
                   )}
                   {u.status === "pending" && isOwner && (
                     <Button 
@@ -166,11 +237,11 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                       }} 
                       className="text-xs py-1 px-2 h-auto whitespace-nowrap"
                     >
-                      I Choose You
+                      Select
                     </Button>
                   )}
                   {u.status === "not_selected" && (
-                    <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                    <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-xs whitespace-nowrap">
                       Not Selected
                     </span>
                   )}
@@ -178,6 +249,13 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
               </div>
             ))}
           </div>
+          
+          {/* Message gate info */}
+          {!hasSelectedUser && isOwner && (
+            <p className="text-xs text-muted-foreground mt-3 border-t pt-2">
+              Select a receiver to unlock messaging
+            </p>
+          )}
         </PopoverContent>
       </Popover>
 
@@ -186,13 +264,20 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Selection</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to pif to this user?
+              Are you sure you want to pif to this user? They will be notified and you'll be able to message them to coordinate pickup.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => selectedUserId && handleSelectReceiver(selectedUserId)}>
-              Confirm
+            <AlertDialogAction 
+              onClick={() => {
+                const user = users.find((u) => u.id === selectedUserId);
+                if (user) {
+                  handleSelectReceiver(selectedUserId!, user.user_id);
+                }
+              }}
+            >
+              Confirm Selection
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
