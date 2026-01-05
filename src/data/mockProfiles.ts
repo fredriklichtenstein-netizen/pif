@@ -16,6 +16,15 @@ export const DEMO_PROFILE = {
 };
 
 /**
+ * Demo user in simpler format for interaction stores
+ */
+export const DEMO_USER = {
+  id: "demo-user-id",
+  name: "Demo User",
+  avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
+};
+
+/**
  * Mock interested users for demo mode
  */
 export const MOCK_INTERESTED_USERS = [

@@ -8,7 +8,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
+import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
+import { useDemoCompletionStore, type CompletionStatus } from "@/stores/demoCompletionStore";
 import { MOCK_POSTS } from "@/data/mockPosts";
+import { ReceiverConfirmation } from "./completion/ReceiverConfirmation";
+import { CompletionStatusBadge } from "./completion/CompletionStatusBadge";
+import { Check } from "lucide-react";
+import { DEMO_USER } from "@/data/mockProfiles";
 
 export function InterestedPifsGrid({ userId }: { userId: string }) {
   const [interests, setInterests] = useState<any[]>([]);
@@ -18,10 +24,13 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
   const [regretDialogOpen, setRegretDialogOpen] = useState(false);
   const [selectedInterestId, setSelectedInterestId] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [confirmationItem, setConfirmationItem] = useState<any | null>(null);
   const { toast } = useToast();
   
   const interestedItems = useDemoInteractionsStore((state) => state.interestedItems);
   const toggleInterest = useDemoInteractionsStore((state) => state.toggleInterest);
+  const isUserSelected = useDemoSelectionsStore((state) => state.isUserSelected);
+  const getStatus = useDemoCompletionStore((state) => state.getStatus);
 
   const fetchInterests = async () => {
     setLoading(true);
@@ -30,13 +39,24 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     if (DEMO_MODE) {
       const interestedPosts = MOCK_POSTS
         .filter(post => interestedItems.includes(post.id))
-        .map(post => ({
-          id: `interest-${post.id}`,
-          item_id: post.id,
-          created_at: new Date().toISOString(),
-          status: null,
-          item: post,
-        }));
+        .map(post => {
+          const isSelected = isUserSelected(post.id, DEMO_USER.id);
+          const completionStatus = getStatus(post.id);
+          
+          return {
+            id: `interest-${post.id}`,
+            item_id: post.id,
+            created_at: new Date().toISOString(),
+            status: isSelected ? "selected" : null,
+            completionStatus,
+            item: {
+              ...post,
+              status: completionStatus === "pending_confirmation" ? "piffed" : 
+                      completionStatus === "completed" ? "completed" :
+                      completionStatus === "archived" ? "archived" : "active",
+            },
+          };
+        });
       
       setInterests(interestedPosts);
       setLoading(false);
@@ -63,6 +83,14 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     if (!userId) return;
     fetchInterests();
   }, [userId, interestedItems]);
+
+  // Re-fetch when completion status changes
+  const completions = useDemoCompletionStore((state) => state.completions);
+  useEffect(() => {
+    if (DEMO_MODE && userId) {
+      fetchInterests();
+    }
+  }, [completions]);
 
   const handlePostClick = (postId: number | string) => {
     setSelectedPostId(postId);
@@ -120,15 +148,37 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     }
   };
 
+  const handleConfirmReceipt = (interest: any) => {
+    setConfirmationItem(interest.item);
+  };
+
+  const getItemStatus = (interest: any): CompletionStatus => {
+    if (DEMO_MODE) {
+      return interest.completionStatus || "active";
+    }
+    // Map database status to completion status
+    const dbStatus = interest.item?.status;
+    if (dbStatus === "piffed") return "pending_confirmation";
+    if (dbStatus === "completed") return "completed";
+    if (dbStatus === "archived") return "archived";
+    return "active";
+  };
+
+  const canConfirmReceipt = (interest: any): boolean => {
+    const status = getItemStatus(interest);
+    const isSelected = interest.status === "selected";
+    return isSelected && status === "pending_confirmation";
+  };
+
   if (loading) {
-    return <div className="py-8 text-center text-gray-400">Laddar...</div>;
+    return <div className="py-8 text-center text-muted-foreground">Laddar...</div>;
   }
   
   if (interests.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
         <div className="text-lg font-semibold">Inga intressen än</div>
-        <div className="text-sm text-gray-500">Du har inte visat intresse för några piffar än.</div>
+        <div className="text-sm text-muted-foreground">Du har inte visat intresse för några piffar än.</div>
       </Card>
     );
   }
@@ -140,6 +190,9 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
           const item = interest.item || {};
           const imageUrl = item.images?.[0] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
           const itemId = DEMO_MODE ? item.id : item.id;
+          const itemStatus = getItemStatus(interest);
+          const showConfirmButton = canConfirmReceipt(interest);
+          
           return (
             <Card key={interest.id} className="overflow-hidden hover:shadow-lg transition">
               <div className="relative">
@@ -150,31 +203,49 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
                   onClick={() => handlePostClick(itemId)}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
                 />
-                {interest.status === "selected" && (
-                  <div className="absolute top-0 right-0 bg-green-500 text-white px-2 py-1 text-xs">
+                {interest.status === "selected" && itemStatus === "active" && (
+                  <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded">
                     Vald
                   </div>
                 )}
-                {item.status === "piffed" && (
-                  <div className="absolute top-0 left-0 bg-green-500 text-white px-2 py-1 text-xs">
-                    Piffad
+                {itemStatus !== "active" && (
+                  <div className="absolute top-2 left-2">
+                    <CompletionStatusBadge status={itemStatus} />
                   </div>
                 )}
               </div>
               <div className="p-3">
                 <h3 className="font-semibold truncate">{item.title}</h3>
-                <div className="text-xs text-gray-500 mb-2">
+                <div className="text-xs text-muted-foreground mb-2">
                   {interest.created_at && new Date(interest.created_at).toLocaleDateString('sv-SE')}
                 </div>
-                <div className="mt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full text-red-500 border-red-200 hover:bg-red-50"
-                    onClick={(e) => handleRegretClick(interest.id, item.id, e)}
-                  >
-                    Ångra intresse
-                  </Button>
+                
+                <div className="mt-2 space-y-2">
+                  {showConfirmButton && (
+                    <Button 
+                      variant="default"
+                      size="sm" 
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConfirmReceipt(interest);
+                      }}
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Bekräfta mottagande
+                    </Button>
+                  )}
+                  
+                  {itemStatus === "active" && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-red-500 border-red-200 hover:bg-red-50"
+                      onClick={(e) => handleRegretClick(interest.id, item.id, e)}
+                    >
+                      Ångra intresse
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
@@ -208,6 +279,20 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {confirmationItem && (
+        <ReceiverConfirmation
+          itemId={confirmationItem.id}
+          itemTitle={confirmationItem.title}
+          pifferName={confirmationItem.postedBy?.name || "Piffern"}
+          open={!!confirmationItem}
+          onOpenChange={(open) => !open && setConfirmationItem(null)}
+          onConfirmed={() => {
+            setConfirmationItem(null);
+            fetchInterests();
+          }}
+        />
+      )}
     </>
   );
 }

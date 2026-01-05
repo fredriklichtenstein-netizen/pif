@@ -44,6 +44,18 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: "notif-4",
     user_id: "demo-user-id",
+    type: "pending_confirmation",
+    title: "Bekräfta mottagande",
+    content: "Lisa A. har markerat Cozy reading chair som piffad. Bekräfta att du har fått den!",
+    reference_id: "mock-5",
+    reference_type: "item",
+    is_read: false,
+    created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    action_url: "/profile?tab=interests",
+  },
+  {
+    id: "notif-5",
+    user_id: "demo-user-id",
     type: "completion",
     title: "Pif completed!",
     content: "Your Children's books set has been successfully piffed to Maria K.",
@@ -54,7 +66,7 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     action_url: "/item/3",
   },
   {
-    id: "notif-5",
+    id: "notif-6",
     user_id: "demo-user-id",
     type: "interest",
     title: "New interest in your pif",

@@ -5,6 +5,10 @@ import { ItemCard } from "@/components/post/ItemCard";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { DEMO_MODE } from "@/config/demoMode";
+import { MOCK_POSTS } from "@/data/mockPosts";
+import { useDemoCompletionStore } from "@/stores/demoCompletionStore";
+import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -19,10 +23,31 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
   const [markAsPiffedOpen, setMarkAsPiffedOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+  
+  const { markAsPiffed: demoMarkAsPiffed, getStatus } = useDemoCompletionStore();
+  const { getSelectedUser } = useDemoSelectionsStore();
 
   useEffect(() => {
     if (open && postId) {
       setLoading(true);
+      
+      // Demo mode: find post in mock data
+      if (DEMO_MODE) {
+        const mockPost = MOCK_POSTS.find(p => String(p.id) === String(postId));
+        if (mockPost) {
+          const completionStatus = getStatus(mockPost.id);
+          setPost({
+            ...mockPost,
+            image: mockPost.images?.[0] || "",
+            status: completionStatus === "pending_confirmation" ? "piffed" :
+                    completionStatus === "completed" ? "completed" :
+                    completionStatus === "archived" ? "archived" : "active",
+          });
+        }
+        setLoading(false);
+        return;
+      }
+      
       supabase
         .from("items")
         .select("*, profiles!items_user_id_fkey(*)")
@@ -66,6 +91,23 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     setIsUpdating(true);
     
     try {
+      // Demo mode: update in local store
+      if (DEMO_MODE) {
+        const selectedReceiverId = getSelectedUser(post.id);
+        demoMarkAsPiffed(post.id, selectedReceiverId || undefined);
+        
+        toast({
+          title: "Klart!",
+          description: "Piffen har markerats som piffad. Mottagaren kan nu bekräfta.",
+        });
+        
+        setPost({ ...post, status: "piffed" });
+        if (onStatusChange) onStatusChange();
+        setMarkAsPiffedOpen(false);
+        setIsUpdating(false);
+        return;
+      }
+      
       const { error } = await supabase
         .from("items")
         .update({ status: "piffed" })
@@ -142,7 +184,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               category={post.category}
               condition={post.condition}
               postedBy={post.postedBy}
-              markAsPiffedAction={() => setMarkAsPiffedOpen(true)}
+              markAsPiffedAction={post.status !== "piffed" && post.status !== "completed" && post.status !== "archived" ? () => setMarkAsPiffedOpen(true) : undefined}
             />
           ) : (
             <div className="p-8 text-center">Posten hittades inte</div>
@@ -155,8 +197,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           <AlertDialogHeader>
             <AlertDialogTitle>Markera som piffad</AlertDialogTitle>
             <AlertDialogDescription>
-              Detta markerar piffen som given och meddelar alla intresserade användare.
-              Denna åtgärd kan inte ångras.
+              Detta markerar piffen som given. Mottagaren kommer att kunna bekräfta att de har fått den.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
