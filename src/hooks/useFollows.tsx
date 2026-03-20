@@ -78,7 +78,7 @@ export const useFollows = () => {
     try {
       const { data, error } = await supabase.rpc(
         'is_following',
-        { follower: user.id, following: userToCheck }
+        { p_following_id: userToCheck }
       );
       
       if (error) throw error;
