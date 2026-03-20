@@ -46,10 +46,10 @@ export function ReceiverConfirmation({
       if (DEMO_MODE) {
         confirmReceipt(itemId, feedback || undefined);
       } else {
-        // Update item status to completed
+        // Update item pif_status to completed
         const { error: itemError } = await supabase
           .from("items")
-          .update({ status: "completed" })
+          .update({ pif_status: "completed" })
           .eq("id", typeof itemId === "string" ? parseInt(itemId, 10) : itemId);
 
         if (itemError) throw itemError;

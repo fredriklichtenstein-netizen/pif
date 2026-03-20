@@ -135,11 +135,13 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           await supabase.rpc("create_notification", {
             p_user_id: interest.user_id,
             p_type: "pif_status",
-            p_title: "Piffen har getts bort",
-            p_content: `Piffen "${post.title}" har getts till ${receiverName}.`,
-            p_reference_id: post.id.toString(),
-            p_reference_type: "item",
-            p_action_url: `/feed?post=${post.id}`
+            p_payload: {
+              title: "Piffen har getts bort",
+              content: `Piffen "${post.title}" har getts till ${receiverName}.`,
+              reference_id: post.id.toString(),
+              reference_type: "item",
+              action_url: `/feed?post=${post.id}`
+            }
           });
         }
       }
