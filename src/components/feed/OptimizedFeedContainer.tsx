@@ -7,7 +7,7 @@ import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
 import { DemoModeBanner } from './DemoModeBanner';
 import { RealtimeIndicator } from './RealtimeIndicator';
-import { PerformanceMonitor } from '@/components/debug/PerformanceMonitor';
+
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
 import { useAnnouncement } from '@/hooks/accessibility/useAnnouncement';
 import { useSwipeGestures } from '@/hooks/mobile/useSwipeGestures';
@@ -126,7 +126,7 @@ export function OptimizedFeedContainer() {
         </div>
       )}
       
-      <PerformanceMonitor />
+      
     </div>
   );
 }

@@ -51,7 +51,6 @@ const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 // Gamification hidden for v1 - keeping code for future use
 // const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
-const Analytics = enhancedLazy(() => import("@/pages/Analytics"));
 const SecurityDashboard = enhancedLazy(() => import("@/pages/SecurityDashboard"));
 const CommunityHub = enhancedLazy(() => import("@/pages/CommunityHub"));
 
@@ -104,10 +103,6 @@ export const privateRoutes = [
   //   path: "/gamification", 
   //   element: <PrivateRoute>{withSuspense(Gamification)}</PrivateRoute>
   // },
-  { 
-    path: "/analytics", 
-    element: <PrivateRoute>{withSuspense(Analytics)}</PrivateRoute>
-  },
   { 
     path: "/security", 
     element: <PrivateRoute>{withSuspense(SecurityDashboard)}</PrivateRoute>

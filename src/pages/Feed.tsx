@@ -2,7 +2,7 @@
 import { OptimizedFeedContainer } from "@/components/feed/OptimizedFeedContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Separator } from "@/components/ui/separator";
-import { performanceMetrics } from "@/services/performance/metrics";
+
 import { useEffect } from "react";
 import { FadeIn } from "@/components/animation/FadeIn";
 import { SlideIn } from "@/components/animation/SlideIn";
@@ -12,22 +12,7 @@ export default function Feed() {
   const { announce } = useAnnouncement();
 
   useEffect(() => {
-    const start = performance.now();
-    
-    // Announce page load for screen readers
     announce("Feed page loaded, showing community posts");
-    
-    return () => {
-      const duration = performance.now() - start;
-      performanceMetrics.recordMetric({
-        id: `feed-page-${Date.now()}`,
-        name: 'page-load',
-        value: duration,
-        timestamp: Date.now(),
-        category: 'render',
-        tags: { page: 'feed' }
-      });
-    };
   }, [announce]);
 
   return (
