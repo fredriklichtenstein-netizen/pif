@@ -86,7 +86,7 @@ export function useConversationDetails(conversationId: string | null) {
                 avatar: ""
               },
               createdAt: data.item.created_at,
-              status: data.item.status || "",
+              status: data.item.pif_status || "",
               likesCount: 0,
               interestsCount: 0,
               commentsCount: 0
