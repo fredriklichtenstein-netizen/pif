@@ -89,10 +89,10 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
       const { error } = await supabase
         .from("items")
         .update({
-          status: null,
+          pif_status: null,
           archived_at: null,
           archived_reason: null
-        })
+        } as any)
         .eq("id", itemId);
         
       if (error) {

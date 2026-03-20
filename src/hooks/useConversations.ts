@@ -102,13 +102,17 @@ export function useConversations() {
 
           // Transform to match our Conversation type
           const transformedConversations = conversationsData.map(conv => {
+            const participants = (participantsByConversation[conv.id] || []).map((p: any) => ({
+              ...p,
+              id: String(p.id),
+            }));
             return {
               id: conv.id,
               created_at: conv.created_at,
               updated_at: conv.updated_at,
               item_id: conv.item_id,
               last_message_text: conv.last_message_text,
-              participants: participantsByConversation[conv.id] || [],
+              participants,
               item: conv.item ? {
                 id: String(conv.item.id),
                 title: conv.item.title,
@@ -133,7 +137,7 @@ export function useConversations() {
             };
           });
           
-          setConversations(transformedConversations);
+          setConversations(transformedConversations as Conversation[]);
         }
       } catch (err) {
         console.error('Error fetching conversations:', err);

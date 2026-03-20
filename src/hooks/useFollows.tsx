@@ -112,7 +112,7 @@ export const useFollows = () => {
     try {
       const { data, error } = await supabase.rpc(
         'get_following_count',
-        { user_id: userId }
+        { p_user_id: userId }
       );
       
       if (error) throw error;

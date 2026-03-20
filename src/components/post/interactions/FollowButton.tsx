@@ -33,7 +33,7 @@ export const FollowButton = ({
   useEffect(() => {
     const checkStatus = async () => {
       const status = await checkFollowStatus(userId);
-      setIsFollowing(status);
+      setIsFollowing(status as boolean);
     };
     
     if (user && userId) {

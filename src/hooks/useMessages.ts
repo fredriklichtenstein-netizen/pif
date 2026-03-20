@@ -116,7 +116,7 @@ export function useMessages(conversationId: string) {
         await supabase
           .from('messages')
           .update({ read_at: new Date().toISOString() })
-          .eq('id', messageId);
+          .eq('id', Number(messageId));
       }
     } catch (err) {
       console.error('Error marking message as read:', err);
