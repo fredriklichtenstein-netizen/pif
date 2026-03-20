@@ -51,8 +51,6 @@ const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 // Gamification hidden for v1 - keeping code for future use
 // const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
-const SecurityDashboard = enhancedLazy(() => import("@/pages/SecurityDashboard"));
-
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -103,8 +101,4 @@ export const privateRoutes = [
   //   path: "/gamification", 
   //   element: <PrivateRoute>{withSuspense(Gamification)}</PrivateRoute>
   // },
-  { 
-    path: "/security", 
-    element: <PrivateRoute>{withSuspense(SecurityDashboard)}</PrivateRoute>
-  },
 ];
