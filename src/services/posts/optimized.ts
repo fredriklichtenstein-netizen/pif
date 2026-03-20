@@ -34,11 +34,11 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
     }
 
     // Get all interaction counts in a single batch
-    const itemIds = data.map(item => item.id);
+    const itemIds = (data as any[]).map((item: any) => item.id);
     const interactionsMap = await OptimizedQueries.getInteractionCounts(itemIds);
 
     // Transform all posts with memoization
-    const transformedPosts = data.map(item => {
+    const transformedPosts = (data as any[]).map((item: any) => {
       const cacheKey = `transform-${item.id}-${item.created_at}`;
       const cached = transformCache.get(cacheKey);
       if (cached) {

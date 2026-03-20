@@ -79,7 +79,7 @@ export class OptimizedQueries {
         
         try {
           // Use our optimized RPC function
-          const { data, error } = await supabase.rpc('get_bulk_interaction_counts', {
+          const { data, error } = await (supabase.rpc as any)('get_bulk_interaction_counts', {
             item_ids: itemIds
           });
           

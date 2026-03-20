@@ -180,7 +180,7 @@ export const getPosts = async (): Promise<Post[]> => {
           avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
         },
         createdAt: item.created_at || '',
-        status: item.status || '',
+        status: item.pif_status || '',
         likesCount,
         interestsCount,
         commentsCount

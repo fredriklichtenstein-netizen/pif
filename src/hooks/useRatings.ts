@@ -41,8 +41,8 @@ export function useRatings(userId?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .from('ratings')
+      const { data, error } = await (supabase
+        .from as any)('ratings')
         .insert({
           rater_id: user.id,
           rated_user_id: ratedUserId,

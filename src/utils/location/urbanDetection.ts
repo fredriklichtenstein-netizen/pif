@@ -90,8 +90,8 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
  */
 async function fallbackToDatabaseCheck(lat: number, lng: number): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('swedish_urban_areas')
+    const { data, error } = await (supabase
+      .from as any)('swedish_urban_areas')
       .select('id')
       .gte('min_lat', lat)
       .lte('max_lat', lat)
