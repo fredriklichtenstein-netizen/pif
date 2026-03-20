@@ -22,11 +22,11 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("items")
-        .select("*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)")
+        .select("*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)") as any)
         .eq("user_id", userId)
-        .eq("status", "archived")
+        .eq("pif_status", "archived")
         .order("archived_at", { ascending: false });
         
       if (error) {
