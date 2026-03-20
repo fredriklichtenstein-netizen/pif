@@ -38,7 +38,7 @@ export function useMessages(conversationId: string) {
 
         // Using a database function to safely check permissions
         const { data: isParticipant, error: accessError } = await supabase
-          .rpc('is_conversation_participant', { conversation_id: conversationId });
+          .rpc('is_conversation_participant', { p_conversation_id: conversationId });
           
         if (accessError) throw accessError;
         
@@ -55,7 +55,7 @@ export function useMessages(conversationId: string) {
 
         if (messagesError) throw messagesError;
 
-        setMessages(data || []);
+        setMessages((data || []).map((m: any) => ({ ...m, id: String(m.id) })));
 
         // Mark messages as read after retrieving them
         markMessagesAsRead();
@@ -116,7 +116,7 @@ export function useMessages(conversationId: string) {
         await supabase
           .from('messages')
           .update({ read_at: new Date().toISOString() })
-          .eq('id', messageId);
+          .eq('id', Number(messageId));
       }
     } catch (err) {
       console.error('Error marking message as read:', err);

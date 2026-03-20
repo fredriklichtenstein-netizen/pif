@@ -40,8 +40,8 @@ export function ConversationHandler({
       const { data, error } = await supabase.rpc(
         'create_conversation',
         { 
-          item_id_param: parseInt(itemId, 10),
-          receiver_id_param: receiverId
+          p_item_id: parseInt(itemId, 10),
+          p_recipient_id: receiverId
         }
       );
       

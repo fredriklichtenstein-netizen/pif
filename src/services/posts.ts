@@ -7,9 +7,9 @@ import { parseCoordinatesFromDB } from "@/types/post";
  * Add a new post to the database
  */
 export const addPost = async (postData: CreatePostInput) => {
-  const { data, error } = await supabase
-    .from('items')
-    .insert(postData)
+  const { data, error } = await (supabase
+    .from('items') as any)
+    .insert(postData as any)
     .select()
     .single();
 
@@ -54,7 +54,7 @@ export const getPosts = async (): Promise<Post[]> => {
       .from('items')
       .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
       .order('created_at', { ascending: false })
-      .limit(20); // Limit to 20 most recent posts for performance
+      .limit(20) as any;
 
     if (error) {
       console.error("Supabase error:", error);
@@ -70,8 +70,8 @@ export const getPosts = async (): Promise<Post[]> => {
     const itemIds = data.map(item => item.id);
     
     // Use the item_interactions table to get all counts at once if available
-    const { data: interactionData, error: interactionError } = await supabase
-      .from('item_interactions')
+    const { data: interactionData, error: interactionError } = await (supabase
+      .from as any)('item_interactions')
       .select('*')
       .in('item_id', itemIds);
       
@@ -180,7 +180,7 @@ export const getPosts = async (): Promise<Post[]> => {
           avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
         },
         createdAt: item.created_at || '',
-        status: item.status || '',
+        status: item.pif_status || '',
         likesCount,
         interestsCount,
         commentsCount

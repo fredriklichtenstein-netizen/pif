@@ -25,7 +25,7 @@ export const useFollows = () => {
       // Check if already following
       const { data: isFollowing } = await supabase.rpc(
         'is_following',
-        { follower: user.id, following: userToFollow }
+        { p_following_id: userToFollow }
       );
       
       if (isFollowing) {
@@ -78,7 +78,7 @@ export const useFollows = () => {
     try {
       const { data, error } = await supabase.rpc(
         'is_following',
-        { follower: user.id, following: userToCheck }
+        { p_following_id: userToCheck }
       );
       
       if (error) throw error;
@@ -95,7 +95,7 @@ export const useFollows = () => {
     try {
       const { data, error } = await supabase.rpc(
         'get_follower_count',
-        { user_id: userId }
+        { p_user_id: userId }
       );
       
       if (error) throw error;
@@ -112,7 +112,7 @@ export const useFollows = () => {
     try {
       const { data, error } = await supabase.rpc(
         'get_following_count',
-        { user_id: userId }
+        { p_user_id: userId }
       );
       
       if (error) throw error;

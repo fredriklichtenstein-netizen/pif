@@ -58,7 +58,7 @@ serve(async (req) => {
     });
 
     // Race between the analysis and the timeout
-    const response = await Promise.race([analysisPromise, timeoutPromise]);
+    const response = await Promise.race([analysisPromise, timeoutPromise]) as Response;
     const data = await response.json();
 
     if (!data.choices || !data.choices[0]) {

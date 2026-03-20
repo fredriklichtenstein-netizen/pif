@@ -52,7 +52,7 @@ export function useConversationDetails(conversationId: string | null) {
             updated_at: data.updated_at,
             item_id: data.item_id,
             last_message_text: data.last_message_text,
-            participants: data.participants,
+            participants: (data.participants || []).map((p: any) => ({ ...p, id: String(p.id) })),
             item: data.item ? {
               id: String(data.item.id),
               title: data.item.title,
@@ -86,7 +86,7 @@ export function useConversationDetails(conversationId: string | null) {
                 avatar: ""
               },
               createdAt: data.item.created_at,
-              status: data.item.status || "",
+              status: data.item.pif_status || "",
               likesCount: 0,
               interestsCount: 0,
               commentsCount: 0
@@ -98,10 +98,10 @@ export function useConversationDetails(conversationId: string | null) {
           // Find the other participant (not the current user)
           if (data.participants) {
             const other = data.participants.find(
-              p => p.user_id !== currentUserId
+              (p: any) => p.user_id !== currentUserId
             ) || null;
             
-            setOtherParticipant(other);
+            setOtherParticipant(other ? { ...other, id: String(other.id) } as ConversationParticipant : null);
           }
           
           // Set item details (transformed to match Post type)
@@ -139,7 +139,7 @@ export function useConversationDetails(conversationId: string | null) {
                 avatar: ""
               },
               createdAt: data.item.created_at,
-              status: data.item.status || "",
+              status: data.item.pif_status || "",
               likesCount: 0,
               interestsCount: 0,
               commentsCount: 0

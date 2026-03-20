@@ -18,11 +18,11 @@ export class OptimizedQueries {
       withRetry(async () => {
         // For now, we'll handle all queries the same way since we don't have geospatial RPC
         // In the future, we can add proper geospatial filtering with PostGIS
-        let query = supabase
-          .from('items')
+        let query = (supabase
+          .from('items') as any)
           .select(`
             id, title, description, images, location, coordinates, 
-            category, condition, measurements, user_id, status, 
+            category, condition, measurements, user_id, pif_status, 
             archived_at, archived_reason, created_at,
             profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)
           `)
@@ -79,7 +79,7 @@ export class OptimizedQueries {
         
         try {
           // Use our optimized RPC function
-          const { data, error } = await supabase.rpc('get_bulk_interaction_counts', {
+          const { data, error } = await (supabase.rpc as any)('get_bulk_interaction_counts', {
             item_ids: itemIds
           });
           

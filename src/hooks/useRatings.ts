@@ -15,8 +15,8 @@ export function useRatings(userId?: string) {
     queryFn: async () => {
       if (!userId) return 0;
       
-      const { data, error } = await supabase
-        .rpc('get_user_average_rating', { user_id_param: userId });
+      const { data, error } = await (supabase.rpc as any)(
+        'get_user_average_rating', { user_id_param: userId });
       
       if (error) throw error;
       return data || 0;
@@ -41,8 +41,8 @@ export function useRatings(userId?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .from('ratings')
+      const { data, error } = await (supabase
+        .from as any)('ratings')
         .insert({
           rater_id: user.id,
           rated_user_id: ratedUserId,
