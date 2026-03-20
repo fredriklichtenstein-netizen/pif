@@ -18,7 +18,6 @@ export const ExpandedNav = ({ className }: ExpandedNavProps) => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  // Gamification, Analytics, Security, and Community hidden for v1
   const additionalPages = [
     { 
       path: "/profile", 
