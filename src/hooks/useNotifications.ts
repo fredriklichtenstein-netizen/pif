@@ -57,11 +57,19 @@ export function useNotifications() {
       setIsLoading(false);
       return;
     }
-    setNotifications(data || []);
+    const transformed: Notification[] = (data || []).map((n: any) => ({
+      id: String(n.id),
+      user_id: n.user_id,
+      type: n.type,
+      title: n.type,
+      is_read: n.read ?? false,
+      created_at: n.created_at,
+      content: typeof n.payload === 'object' ? JSON.stringify(n.payload) : undefined,
+    }));
+    setNotifications(transformed);
     setIsLoading(false);
 
-    // Count unread
-    const unread = (data || []).filter((n) => !n.is_read).length;
+    const unread = transformed.filter((n) => !n.is_read).length;
     setUnreadCount(unread);
   }, [user?.id, toast]);
 
