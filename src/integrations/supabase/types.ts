@@ -315,20 +315,62 @@ export type Database = {
           }
         ]
       }
+      follows: {
+        Row: {
+          id: number
+          follower_id: string
+          following_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          follower_id: string
+          following_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          follower_id?: string
+          following_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       conversations: {
         Row: {
           id: string
           item_id: number | null
+          updated_at: string
+          last_message_text: string | null
           created_at: string
         }
         Insert: {
           id?: string
           item_id?: number | null
+          updated_at?: string
+          last_message_text?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           item_id?: number | null
+          updated_at?: string
+          last_message_text?: string | null
           created_at?: string
         }
         Relationships: [
@@ -346,16 +388,22 @@ export type Database = {
           id: number
           conversation_id: string
           user_id: string
+          created_at: string
+          last_read_at: string | null
         }
         Insert: {
           id?: never
           conversation_id: string
           user_id: string
+          created_at?: string
+          last_read_at?: string | null
         }
         Update: {
           id?: never
           conversation_id?: string
           user_id?: string
+          created_at?: string
+          last_read_at?: string | null
         }
         Relationships: [
           {
@@ -380,6 +428,7 @@ export type Database = {
           conversation_id: string
           sender_id: string
           content: string
+          read_at: string | null
           created_at: string
         }
         Insert: {
@@ -387,6 +436,7 @@ export type Database = {
           conversation_id: string
           sender_id: string
           content: string
+          read_at?: string | null
           created_at?: string
         }
         Update: {
@@ -394,6 +444,7 @@ export type Database = {
           conversation_id?: string
           sender_id?: string
           content?: string
+          read_at?: string | null
           created_at?: string
         }
         Relationships: [
@@ -510,6 +561,26 @@ export type Database = {
       create_notification: {
         Args: { p_user_id: string; p_type: string; p_payload?: Json }
         Returns: number
+      }
+      is_following: {
+        Args: { p_following_id: string }
+        Returns: boolean
+      }
+      get_follower_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      get_following_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      get_user_conversation_ids: {
+        Args: Record<string, never>
+        Returns: string[]
+      }
+      is_conversation_participant: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
       }
     }
     Enums: {
