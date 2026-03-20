@@ -55,7 +55,7 @@ export function useMessages(conversationId: string) {
 
         if (messagesError) throw messagesError;
 
-        setMessages(data || []);
+        setMessages((data || []).map((m: any) => ({ ...m, id: String(m.id) })));
 
         // Mark messages as read after retrieving them
         markMessagesAsRead();
