@@ -52,7 +52,7 @@ const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 // Gamification hidden for v1 - keeping code for future use
 // const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
 const SecurityDashboard = enhancedLazy(() => import("@/pages/SecurityDashboard"));
-const CommunityHub = enhancedLazy(() => import("@/pages/CommunityHub"));
+
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
