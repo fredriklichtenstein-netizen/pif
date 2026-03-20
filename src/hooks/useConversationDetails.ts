@@ -98,10 +98,10 @@ export function useConversationDetails(conversationId: string | null) {
           // Find the other participant (not the current user)
           if (data.participants) {
             const other = data.participants.find(
-              p => p.user_id !== currentUserId
+              (p: any) => p.user_id !== currentUserId
             ) || null;
             
-            setOtherParticipant(other);
+            setOtherParticipant(other ? { ...other, id: String(other.id) } as ConversationParticipant : null);
           }
           
           // Set item details (transformed to match Post type)
