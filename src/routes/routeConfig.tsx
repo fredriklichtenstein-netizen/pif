@@ -104,10 +104,6 @@ export const privateRoutes = [
   //   element: <PrivateRoute>{withSuspense(Gamification)}</PrivateRoute>
   // },
   { 
-    path: "/analytics", 
-    element: <PrivateRoute>{withSuspense(Analytics)}</PrivateRoute>
-  },
-  { 
     path: "/security", 
     element: <PrivateRoute>{withSuspense(SecurityDashboard)}</PrivateRoute>
   },

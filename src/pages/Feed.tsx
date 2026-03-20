@@ -12,22 +12,7 @@ export default function Feed() {
   const { announce } = useAnnouncement();
 
   useEffect(() => {
-    const start = performance.now();
-    
-    // Announce page load for screen readers
     announce("Feed page loaded, showing community posts");
-    
-    return () => {
-      const duration = performance.now() - start;
-      performanceMetrics.recordMetric({
-        id: `feed-page-${Date.now()}`,
-        name: 'page-load',
-        value: duration,
-        timestamp: Date.now(),
-        category: 'render',
-        tags: { page: 'feed' }
-      });
-    };
   }, [announce]);
 
   return (

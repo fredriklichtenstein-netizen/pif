@@ -126,7 +126,7 @@ export function OptimizedFeedContainer() {
         </div>
       )}
       
-      <PerformanceMonitor />
+      
     </div>
   );
 }
