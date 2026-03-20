@@ -49,8 +49,6 @@ const PublicProfile = enhancedLazy(() => import("@/pages/PublicProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
-// Gamification hidden for v1 - keeping code for future use
-// const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
