@@ -110,7 +110,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       
       const { error } = await supabase
         .from("items")
-        .update({ status: "piffed" })
+        .update({ pif_status: "piffed" })
         .eq("id", post.id);
         
       if (error) throw error;
