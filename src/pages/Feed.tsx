@@ -2,7 +2,7 @@
 import { OptimizedFeedContainer } from "@/components/feed/OptimizedFeedContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Separator } from "@/components/ui/separator";
-import { performanceMetrics } from "@/services/performance/metrics";
+
 import { useEffect } from "react";
 import { FadeIn } from "@/components/animation/FadeIn";
 import { SlideIn } from "@/components/animation/SlideIn";
