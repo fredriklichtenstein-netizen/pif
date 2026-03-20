@@ -107,8 +107,4 @@ export const privateRoutes = [
     path: "/security", 
     element: <PrivateRoute>{withSuspense(SecurityDashboard)}</PrivateRoute>
   },
-  { 
-    path: "/community", 
-    element: <PrivateRoute>{withSuspense(CommunityHub)}</PrivateRoute>
-  },
 ];
