@@ -70,8 +70,8 @@ export const getPosts = async (): Promise<Post[]> => {
     const itemIds = data.map(item => item.id);
     
     // Use the item_interactions table to get all counts at once if available
-    const { data: interactionData, error: interactionError } = await supabase
-      .from('item_interactions')
+    const { data: interactionData, error: interactionError } = await (supabase
+      .from as any)('item_interactions')
       .select('*')
       .in('item_id', itemIds);
       
