@@ -25,7 +25,7 @@ export const useFollows = () => {
       // Check if already following
       const { data: isFollowing } = await supabase.rpc(
         'is_following',
-        { follower: user.id, following: userToFollow }
+        { p_following_id: userToFollow }
       );
       
       if (isFollowing) {
