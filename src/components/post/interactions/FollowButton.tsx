@@ -24,13 +24,10 @@ export const FollowButton = ({
   const { toggleFollow, checkFollowStatus, loading } = useFollows();
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
 
-  // Don't show if it's the current user or if no user is logged in
-  if (!user || user.id === userId) {
-    return null;
-  }
-
   // Check initial follow status
   useEffect(() => {
+    if (!user || user.id === userId) return;
+    
     const checkStatus = async () => {
       const status = await checkFollowStatus(userId);
       setIsFollowing(status as boolean);
@@ -40,6 +37,11 @@ export const FollowButton = ({
       checkStatus();
     }
   }, [user, userId]);
+
+  // Don't show if it's the current user or if no user is logged in
+  if (!user || user.id === userId) {
+    return null;
+  }
 
   const handleToggleFollow = async () => {
     const result = await toggleFollow(userId);
