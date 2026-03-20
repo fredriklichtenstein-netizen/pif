@@ -22,6 +22,7 @@ export type Database = {
           date_of_birth: string | null
           location: string | null
           onboarding_completed: boolean
+          notification_preferences: Json
           created_at: string
         }
         Insert: {
@@ -36,6 +37,7 @@ export type Database = {
           date_of_birth?: string | null
           location?: string | null
           onboarding_completed?: boolean
+          notification_preferences?: Json
           created_at?: string
         }
         Update: {
@@ -50,6 +52,7 @@ export type Database = {
           date_of_birth?: string | null
           location?: string | null
           onboarding_completed?: boolean
+          notification_preferences?: Json
           created_at?: string
         }
         Relationships: []
@@ -66,6 +69,7 @@ export type Database = {
           pif_status: string
           images: string[] | null
           location: string | null
+          coordinates: Json | null
           measurements: Json | null
           archived_at: string | null
           archived_reason: string | null
@@ -82,6 +86,7 @@ export type Database = {
           pif_status?: string
           images?: string[] | null
           location?: string | null
+          coordinates?: Json | null
           measurements?: Json | null
           archived_at?: string | null
           archived_reason?: string | null
@@ -98,6 +103,7 @@ export type Database = {
           pif_status?: string
           images?: string[] | null
           location?: string | null
+          coordinates?: Json | null
           measurements?: Json | null
           archived_at?: string | null
           archived_reason?: string | null
@@ -239,18 +245,21 @@ export type Database = {
           id: number
           item_id: number
           user_id: string
+          status: string
           created_at: string
         }
         Insert: {
           id?: never
           item_id: number
           user_id: string
+          status?: string
           created_at?: string
         }
         Update: {
           id?: never
           item_id?: number
           user_id?: string
+          status?: string
           created_at?: string
         }
         Relationships: [
@@ -493,6 +502,14 @@ export type Database = {
       delete_item_with_related_records: {
         Args: { p_item_id: number; p_reason?: string }
         Returns: boolean
+      }
+      create_conversation: {
+        Args: { p_item_id: number; p_recipient_id: string }
+        Returns: string
+      }
+      create_notification: {
+        Args: { p_user_id: string; p_type: string; p_payload?: Json }
+        Returns: number
       }
     }
     Enums: {
