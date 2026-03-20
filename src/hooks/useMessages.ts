@@ -38,7 +38,7 @@ export function useMessages(conversationId: string) {
 
         // Using a database function to safely check permissions
         const { data: isParticipant, error: accessError } = await supabase
-          .rpc('is_conversation_participant', { conversation_id: conversationId });
+          .rpc('is_conversation_participant', { p_conversation_id: conversationId });
           
         if (accessError) throw accessError;
         
