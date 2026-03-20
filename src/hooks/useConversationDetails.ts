@@ -52,7 +52,7 @@ export function useConversationDetails(conversationId: string | null) {
             updated_at: data.updated_at,
             item_id: data.item_id,
             last_message_text: data.last_message_text,
-            participants: data.participants,
+            participants: (data.participants || []).map((p: any) => ({ ...p, id: String(p.id) })),
             item: data.item ? {
               id: String(data.item.id),
               title: data.item.title,
