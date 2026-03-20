@@ -121,7 +121,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
           condition: item.condition,
           measurements: item.measurements,
           user_id: item.user_id,
-          status: item.status, 
+          status: item.pif_status, 
           archived_at: item.archived_at,
           archived_reason: item.archived_reason,
           user_name: user.name,
