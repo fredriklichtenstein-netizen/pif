@@ -9,33 +9,287 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      bookmarks: {
+      profiles: {
         Row: {
-          created_at: string | null
-          id: number
-          item_id: number | null
-          user_id: string | null
+          id: string
+          username: string | null
+          first_name: string | null
+          last_name: string | null
+          gender: string | null
+          phone: string | null
+          address: string | null
+          avatar_url: string | null
+          date_of_birth: string | null
+          location: string | null
+          onboarding_completed: boolean
+          created_at: string
         }
         Insert: {
-          created_at?: string | null
-          id?: never
-          item_id?: number | null
-          user_id?: string | null
+          id: string
+          username?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          gender?: string | null
+          phone?: string | null
+          address?: string | null
+          avatar_url?: string | null
+          date_of_birth?: string | null
+          location?: string | null
+          onboarding_completed?: boolean
+          created_at?: string
         }
         Update: {
-          created_at?: string | null
+          id?: string
+          username?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          gender?: string | null
+          phone?: string | null
+          address?: string | null
+          avatar_url?: string | null
+          date_of_birth?: string | null
+          location?: string | null
+          onboarding_completed?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          id: number
+          user_id: string
+          title: string
+          description: string | null
+          category: string | null
+          condition: string | null
+          item_type: string
+          pif_status: string
+          images: string[] | null
+          location: string | null
+          measurements: Json | null
+          archived_at: string | null
+          archived_reason: string | null
+          created_at: string
+        }
+        Insert: {
           id?: never
-          item_id?: number | null
-          user_id?: string | null
+          user_id: string
+          title: string
+          description?: string | null
+          category?: string | null
+          condition?: string | null
+          item_type?: string
+          pif_status?: string
+          images?: string[] | null
+          location?: string | null
+          measurements?: Json | null
+          archived_at?: string | null
+          archived_reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          user_id?: string
+          title?: string
+          description?: string | null
+          category?: string | null
+          condition?: string | null
+          item_type?: string
+          pif_status?: string
+          images?: string[] | null
+          location?: string | null
+          measurements?: Json | null
+          archived_at?: string | null
+          archived_reason?: string | null
+          created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "bookmarks_item_id_fkey"
+            foreignKeyName: "items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      comments: {
+        Row: {
+          id: number
+          item_id: number
+          user_id: string
+          parent_id: number | null
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          item_id: number
+          user_id: string
+          parent_id?: number | null
+          content: string
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          item_id?: number
+          user_id?: string
+          parent_id?: number | null
+          content?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
+            referencedRelation: "items"
+            referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      likes: {
+        Row: {
+          id: number
+          item_id: number
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          item_id: number
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          item_id?: number
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      comment_likes: {
+        Row: {
+          id: number
+          comment_id: number
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          comment_id: number
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          comment_id?: number
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      interests: {
+        Row: {
+          id: number
+          item_id: number
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          item_id: number
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          item_id?: number
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      bookmarks: {
+        Row: {
+          id: number
+          item_id: number
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          item_id: number
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          item_id?: number
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
           {
             foreignKeyName: "bookmarks_item_id_fkey"
             columns: ["item_id"]
@@ -49,85 +303,49 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
-      comments: {
+      conversations: {
         Row: {
-          content: string
-          created_at: string | null
-          id: number
+          id: string
           item_id: number | null
-          parent_id: number | null
-          user_id: string | null
+          created_at: string
         }
         Insert: {
-          content: string
-          created_at?: string | null
-          id?: never
+          id?: string
           item_id?: number | null
-          parent_id?: number | null
-          user_id?: string | null
+          created_at?: string
         }
         Update: {
-          content?: string
-          created_at?: string | null
-          id?: never
+          id?: string
           item_id?: number | null
-          parent_id?: number | null
-          user_id?: string | null
+          created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "comments_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "comments_item_id_fkey"
+            foreignKeyName: "conversations_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "comments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
+          }
         ]
       }
       conversation_participants: {
         Row: {
+          id: number
           conversation_id: string
-          created_at: string
-          id: string
-          last_read_at: string | null
           user_id: string
         }
         Insert: {
+          id?: never
           conversation_id: string
-          created_at?: string
-          id?: string
-          last_read_at?: string | null
           user_id: string
         }
         Update: {
+          id?: never
           conversation_id?: string
-          created_at?: string
-          id?: string
-          last_read_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -144,292 +362,30 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          created_at: string
-          id: string
-          item_id: number | null
-          last_message_text: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          item_id?: number | null
-          last_message_text?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          item_id?: number | null
-          last_message_text?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "conversations_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      follows: {
-        Row: {
-          created_at: string
-          follower_id: string
-          following_id: string
-          id: string
-        }
-        Insert: {
-          created_at?: string
-          follower_id: string
-          following_id: string
-          id?: string
-        }
-        Update: {
-          created_at?: string
-          follower_id?: string
-          following_id?: string
-          id?: string
-        }
-        Relationships: []
-      }
-      interests: {
-        Row: {
-          created_at: string | null
-          id: number
-          item_id: number | null
-          message: string | null
-          status: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: never
-          item_id?: number | null
-          message?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: never
-          item_id?: number | null
-          message?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interests_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "interests_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "interests_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      item_shares: {
-        Row: {
-          created_at: string | null
-          id: number
-          item_id: number | null
-          share_type: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: number
-          item_id?: number | null
-          share_type: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: number
-          item_id?: number | null
-          share_type?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "item_shares_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "item_shares_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      items: {
-        Row: {
-          archived_at: string | null
-          archived_reason: string | null
-          category: string | null
-          condition: string | null
-          coordinates: unknown | null
-          created_at: string | null
-          description: string | null
-          id: number
-          images: string[] | null
-          item_type: string | null
-          location: string | null
-          measurements: Json | null
-          pif_status: string | null
-          status: string | null
-          title: string
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          archived_at?: string | null
-          archived_reason?: string | null
-          category?: string | null
-          condition?: string | null
-          coordinates?: unknown | null
-          created_at?: string | null
-          description?: string | null
-          id?: never
-          images?: string[] | null
-          item_type?: string | null
-          location?: string | null
-          measurements?: Json | null
-          pif_status?: string | null
-          status?: string | null
-          title: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          archived_at?: string | null
-          archived_reason?: string | null
-          category?: string | null
-          condition?: string | null
-          coordinates?: unknown | null
-          created_at?: string | null
-          description?: string | null
-          id?: never
-          images?: string[] | null
-          item_type?: string | null
-          location?: string | null
-          measurements?: Json | null
-          pif_status?: string | null
-          status?: string | null
-          title?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_user_profile"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      likes: {
-        Row: {
-          created_at: string
-          id: string
-          item_id: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          item_id: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          item_id?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "likes_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "likes_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
+          }
         ]
       }
       messages: {
         Row: {
-          content: string
+          id: number
           conversation_id: string
-          created_at: string
-          id: string
-          read_at: string | null
           sender_id: string
+          content: string
+          created_at: string
         }
         Insert: {
-          content: string
+          id?: never
           conversation_id: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
           sender_id: string
+          content: string
+          created_at?: string
         }
         Update: {
-          content?: string
+          id?: never
           conversation_id?: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
           sender_id?: string
+          content?: string
+          created_at?: string
         }
         Relationships: [
           {
@@ -445,211 +401,70 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       notifications: {
         Row: {
-          action_url: string | null
-          content: string | null
-          created_at: string | null
-          id: string
-          is_read: boolean | null
-          reference_id: string | null
-          reference_type: string | null
-          title: string
-          type: string
+          id: number
           user_id: string
-        }
-        Insert: {
-          action_url?: string | null
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          is_read?: boolean | null
-          reference_id?: string | null
-          reference_type?: string | null
-          title: string
           type: string
-          user_id: string
-        }
-        Update: {
-          action_url?: string | null
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          is_read?: boolean | null
-          reference_id?: string | null
-          reference_type?: string | null
-          title?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          address: string | null
-          avatar_url: string | null
-          created_at: string | null
-          date_of_birth: string | null
-          first_name: string | null
-          gender: string | null
-          id: string
-          last_name: string | null
-          location: string | null
-          notification_preferences: Json | null
-          onboarding_completed: boolean
-          phone: string | null
-          updated_at: string | null
-          username: string
-        }
-        Insert: {
-          address?: string | null
-          avatar_url?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          first_name?: string | null
-          gender?: string | null
-          id: string
-          last_name?: string | null
-          location?: string | null
-          notification_preferences?: Json | null
-          onboarding_completed?: boolean
-          phone?: string | null
-          updated_at?: string | null
-          username: string
-        }
-        Update: {
-          address?: string | null
-          avatar_url?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          first_name?: string | null
-          gender?: string | null
-          id?: string
-          last_name?: string | null
-          location?: string | null
-          notification_preferences?: Json | null
-          onboarding_completed?: boolean
-          phone?: string | null
-          updated_at?: string | null
-          username?: string
-        }
-        Relationships: []
-      }
-      ratings: {
-        Row: {
-          comment: string | null
+          payload: Json | null
+          read: boolean
           created_at: string
-          id: string
-          item_id: number
-          rated_user_id: string
-          rater_id: string
-          rating: number
         }
         Insert: {
-          comment?: string | null
+          id?: never
+          user_id: string
+          type: string
+          payload?: Json | null
+          read?: boolean
           created_at?: string
-          id?: string
-          item_id: number
-          rated_user_id: string
-          rater_id: string
-          rating: number
         }
         Update: {
-          comment?: string | null
+          id?: never
+          user_id?: string
+          type?: string
+          payload?: Json | null
+          read?: boolean
           created_at?: string
-          id?: string
-          item_id?: number
-          rated_user_id?: string
-          rater_id?: string
-          rating?: number
         }
         Relationships: [
           {
-            foreignKeyName: "ratings_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "ratings_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ratings_rated_user_id_fkey"
-            columns: ["rated_user_id"]
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ratings_rater_id_fkey"
-            columns: ["rater_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
+          }
         ]
       }
       reports: {
         Row: {
-          created_at: string
-          description: string | null
-          id: string
-          reason: string
-          reported_item_id: number | null
-          reported_user_id: string | null
+          id: number
           reporter_id: string
-          status: string | null
+          item_id: number | null
+          reason: string
+          description: string | null
+          created_at: string
         }
         Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          reason: string
-          reported_item_id?: number | null
-          reported_user_id?: string | null
+          id?: never
           reporter_id: string
-          status?: string | null
+          item_id?: number | null
+          reason: string
+          description?: string | null
+          created_at?: string
         }
         Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          reason?: string
-          reported_item_id?: number | null
-          reported_user_id?: string | null
+          id?: never
           reporter_id?: string
-          status?: string | null
+          item_id?: number | null
+          reason?: string
+          description?: string | null
+          created_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "reports_reported_item_id_fkey"
-            columns: ["reported_item_id"]
-            isOneToOne: false
-            referencedRelation: "item_interactions"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "reports_reported_item_id_fkey"
-            columns: ["reported_item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_reported_user_id_fkey"
-            columns: ["reported_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
@@ -657,143 +472,27 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reports_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          }
         ]
-      }
-      swedish_urban_areas: {
-        Row: {
-          created_at: string
-          id: number
-          max_lat: number
-          max_lng: number
-          min_lat: number
-          min_lng: number
-          name: string
-          population: number | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          max_lat: number
-          max_lng: number
-          min_lat: number
-          min_lng: number
-          name: string
-          population?: number | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          max_lat?: number
-          max_lng?: number
-          min_lat?: number
-          min_lng?: number
-          name?: string
-          population?: number | null
-        }
-        Relationships: []
       }
     }
     Views: {
-      item_interactions: {
-        Row: {
-          comments_count: number | null
-          interests_count: number | null
-          item_id: number | null
-          likes_count: number | null
-          share_count: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       archive_item: {
         Args: { p_item_id: number; p_reason?: string }
         Returns: boolean
       }
-      create_conversation: {
-        Args: { item_id_param: number; receiver_id_param: string }
-        Returns: string
-      }
-      create_notification: {
-        Args: {
-          p_user_id: string
-          p_type: string
-          p_title: string
-          p_content: string
-          p_reference_id?: string
-          p_reference_type?: string
-          p_action_url?: string
-        }
-        Returns: string
-      }
       delete_item_with_related_records: {
         Args: { p_item_id: number; p_reason?: string }
         Returns: boolean
-      }
-      get_bulk_interaction_counts: {
-        Args: { item_ids: number[] }
-        Returns: {
-          item_id: number
-          likes_count: number
-          interests_count: number
-          comments_count: number
-        }[]
-      }
-      get_follower_count: {
-        Args: { user_id: string }
-        Returns: number
-      }
-      get_following_count: {
-        Args: { user_id: string }
-        Returns: number
-      }
-      get_item_interests_count: {
-        Args: { item_id_param: number }
-        Returns: number
-      }
-      get_item_likes_count: {
-        Args: { item_id_param: number }
-        Returns: number
-      }
-      get_unread_notifications_count: {
-        Args: { user_id_param: string }
-        Returns: number
-      }
-      get_user_average_rating: {
-        Args: { user_id_param: string }
-        Returns: number
-      }
-      get_user_conversation_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
-      has_user_liked_item: {
-        Args: { item_id_param: number }
-        Returns: boolean
-      }
-      has_user_shown_interest: {
-        Args: { item_id_param: number }
-        Returns: boolean
-      }
-      is_conversation_participant: {
-        Args: { conversation_id: string }
-        Returns: boolean
-      }
-      is_following: {
-        Args: { follower: string; following: string }
-        Returns: boolean
-      }
-      mark_all_notifications_read: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      mark_notification_read: {
-        Args: { notification_id: string }
-        Returns: boolean
-      }
-      notify_interested_users_on_delete: {
-        Args: { item_id_param: number }
-        Returns: undefined
       }
     }
     Enums: {
@@ -805,29 +504,27 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -835,22 +532,20 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -858,22 +553,20 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -881,23 +574,21 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof PublicSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -906,12 +597,6 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const
