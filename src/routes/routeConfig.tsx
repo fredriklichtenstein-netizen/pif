@@ -52,7 +52,7 @@ const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
 // Gamification hidden for v1 - keeping code for future use
 // const Gamification = enhancedLazy(() => import("@/pages/Gamification"));
 const SecurityDashboard = enhancedLazy(() => import("@/pages/SecurityDashboard"));
-const CommunityHub = enhancedLazy(() => import("@/pages/CommunityHub"));
+
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -106,9 +106,5 @@ export const privateRoutes = [
   { 
     path: "/security", 
     element: <PrivateRoute>{withSuspense(SecurityDashboard)}</PrivateRoute>
-  },
-  { 
-    path: "/community", 
-    element: <PrivateRoute>{withSuspense(CommunityHub)}</PrivateRoute>
   },
 ];
