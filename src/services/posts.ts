@@ -7,9 +7,9 @@ import { parseCoordinatesFromDB } from "@/types/post";
  * Add a new post to the database
  */
 export const addPost = async (postData: CreatePostInput) => {
-  const { data, error } = await supabase
-    .from('items')
-    .insert(postData)
+  const { data, error } = await (supabase
+    .from('items') as any)
+    .insert(postData as any)
     .select()
     .single();
 
