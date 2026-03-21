@@ -11,4 +11,4 @@
  * 3. Run migrations to set up the database
  */
 
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
