@@ -11,10 +11,22 @@ import { useNetworkMonitor } from "./auth/useNetworkMonitor";
  */
 export function useAuth() {
   const { isSignUp, toggleMode } = useAuthModeToggle();
-  const { session, isLoading: authStateLoading } = useGlobalAuth();
+  const { session, isLoading: authStateLoading, initialized } = useGlobalAuth();
   const { handleSignUp, loading: signUpLoading } = useSignUp();
   const { handleSignIn, handlePasswordReset, loading: signInLoading, error: signInError } = useSignIn();
   const { networkError, clearNetworkError, connectionStatus } = useNetworkMonitor();
+  const [authTimeout, setAuthTimeout] = useState(false);
+
+  // Safety timeout: if auth loading hasn't resolved within 3 seconds, force it off
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!initialized) {
+        console.warn("Auth safety timeout: forcing loading to false after 3s");
+        setAuthTimeout(true);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [initialized]);
 
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
     console.log("Auth initiated with:", { email, isSignUp });
