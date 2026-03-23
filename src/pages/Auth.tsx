@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useGlobalAuth, initializeAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -19,6 +19,11 @@ export default function Auth() {
   const { toast } = useToast();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(true);
   
+  // Initialize auth on mount so the store resolves its loading state
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
   // Check for network connection on mount and periodically
   useEffect(() => {
     let isMounted = true;
