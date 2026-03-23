@@ -33,7 +33,7 @@ export const initializeAuth = async () => {
       auth.setNetworkError(true);
       auth.setLoading(false);
       auth.setInitialized(true);
-    }, 10000); // Reduced from 15000ms
+    }, 5000);
     
     // Use Promise.race to enforce timeout
     const sessionResult = await Promise.race([
