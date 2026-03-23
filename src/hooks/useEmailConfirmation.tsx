@@ -13,73 +13,48 @@ export function useEmailConfirmation() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleEmailConfirmation = async () => {
-      if (location.hash) {
-        try {
-          const hashParams = new URLSearchParams(location.hash.substring(1));
-          const accessToken = hashParams.get('access_token');
-          
-          if (accessToken) {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: hashParams.get('refresh_token') || '',
-            });
-
-            if (error) throw error;
-
-            if (data.user) {
-              const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('onboarding_completed')
-                .eq('id', data.user.id)
-                .maybeSingle();
-
-              if (profileError || !profileData?.onboarding_completed) {
-                navigate("/create-profile");
-                return;
-              }
-
-              toast({
-                title: "Welcome back!",
-                description: "You have successfully signed in.",
-              });
-              navigate("/");
-            }
-          }
-        } catch (error: any) {
-          console.error('Error confirming email:', error);
-          toast({
-            title: "Error",
-            description: "There was an error confirming your email. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }
-    };
-
-    handleEmailConfirmation();
+    // If there's a hash with access_token, let Supabase auto-process it.
+    // We rely on onAuthStateChange below to handle the redirect.
 
     const getEmailFromParams = () => {
       const email = searchParams.get('email');
       if (email) setUserEmail(email);
     };
 
+    const checkAndRedirect = async (userId: string) => {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (!error && profile?.onboarding_completed) {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully signed in.",
+          });
+          navigate("/feed");
+        } else {
+          toast({
+            title: "Complete your profile",
+            description: "Let's set up your profile to get started.",
+          });
+          navigate("/create-profile");
+        }
+      } catch (err) {
+        console.error('Error checking profile:', err);
+        navigate("/create-profile");
+      }
+    };
+
+    // Check if user is already signed in and confirmed
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
         if (session.user.email_confirmed_at) {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (!error && profile?.onboarding_completed) {
-            navigate("/");
-          } else {
-            navigate("/create-profile");
-          }
+          await checkAndRedirect(session.user.id);
         }
       } else {
         getEmailFromParams();
@@ -88,36 +63,18 @@ export function useEmailConfirmation() {
 
     getSession();
 
+    // Listen for auth state changes (fires when Supabase processes the hash token)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        if (session?.user?.email_confirmed_at) {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (!error && profile?.onboarding_completed) {
-            toast({
-              title: "Welcome back!",
-              description: "You have successfully signed in.",
-            });
-            navigate("/");
-          } else {
-            toast({
-              title: "Complete your profile",
-              description: "Let's set up your profile to get started.",
-            });
-            navigate("/create-profile");
-          }
-        }
+      console.log('EmailConfirmation auth event:', event);
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user?.email_confirmed_at) {
+        await checkAndRedirect(session.user.id);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, searchParams, location.hash, toast]);
+  }, [navigate, searchParams, toast]);
 
   const handleResendConfirmation = async () => {
     if (!userEmail) {
