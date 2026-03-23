@@ -19,6 +19,11 @@ export default function Auth() {
   const { toast } = useToast();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(true);
   
+  // Initialize auth on mount so the store resolves its loading state
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
   // Check for network connection on mount and periodically
   useEffect(() => {
     let isMounted = true;

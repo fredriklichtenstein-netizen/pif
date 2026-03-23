@@ -39,7 +39,7 @@ export const initializeAuth = async () => {
     const sessionResult = await Promise.race([
       supabase.auth.getSession(),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout getting session')), 8000)
+        setTimeout(() => reject(new Error('Timeout getting session')), 4000)
       )
     ]);
     
