@@ -61,7 +61,9 @@ export function useAuth() {
     }
   };
 
-  const loading = authStateLoading || signUpLoading || signInLoading;
+  // If safety timeout fired, ignore authStateLoading to unblock the form
+  const effectiveAuthLoading = authTimeout ? false : authStateLoading;
+  const loading = effectiveAuthLoading || signUpLoading || signInLoading;
   
   // CRITICAL FIX: Only use networkError if there's no specific auth error AND we have a confirmed network issue
   // This ensures specific auth errors (like wrong password) take precedence over generic network errors
