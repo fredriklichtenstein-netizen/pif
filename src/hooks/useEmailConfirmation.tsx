@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 
 export function useEmailConfirmation() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
