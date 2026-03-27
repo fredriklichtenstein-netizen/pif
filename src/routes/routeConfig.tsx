@@ -45,6 +45,7 @@ const Auth = enhancedLazy(() => import("@/pages/Auth"));
 const EmailConfirmation = enhancedLazy(() => import("@/pages/EmailConfirmation"));
 const ResetPassword = enhancedLazy(() => import("@/pages/ResetPassword"));
 const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
+const ProfileEdit = enhancedLazy(() => import("@/pages/ProfileEdit"));
 const PublicProfile = enhancedLazy(() => import("@/pages/PublicProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
