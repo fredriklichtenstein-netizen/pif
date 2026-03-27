@@ -24,6 +24,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ formData, onChange }: ProfileFormProps) {
+  const { t } = useTranslation();
   const handleChange = (updates: Partial<ProfileFormData>) => {
     onChange({
       ...formData,
