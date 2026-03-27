@@ -9,6 +9,7 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
+import { useTranslation } from "react-i18next";
 
 export default function CreateProfile() {
   const navigate = useNavigate();

@@ -6,6 +6,7 @@ import { NameFields } from "@/components/forms/fields/NameFields";
 import { GenderSelector } from "@/components/forms/fields/GenderSelector";
 import { Label } from "@/components/ui/label";
 import { Map } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ProfileFormData {
   firstName: string;

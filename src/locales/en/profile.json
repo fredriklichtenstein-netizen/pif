@@ -25,6 +25,16 @@
     "account_settings": "Account Settings",
     "profile_not_found": "Profile not found",
     "loading_user_pifs": "Loading user PIFs...",
-    "no_pifs_posted": "No PIFs posted yet."
+    "no_pifs_posted": "No PIFs posted yet.",
+    "create_title": "Create your profile",
+    "create_subtitle": "Help others get to know you better",
+    "creating": "Creating profile...",
+    "create": "Create profile",
+    "created": "Profile created!",
+    "created_description": "Your profile has been created successfully.",
+    "create_error": "Error creating profile",
+    "unexpected_error": "An unexpected error occurred",
+    "mobile_phone": "Mobile phone (optional)",
+    "primary_address": "Primary PIF address"
   }
 }
