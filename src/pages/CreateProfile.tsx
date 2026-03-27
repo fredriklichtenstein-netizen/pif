@@ -120,14 +120,14 @@ export default function CreateProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 pb-24">
+    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 pb-24">
       <div className="max-w-3xl mx-auto space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Create your profile
+          <h1 className="text-3xl font-bold text-foreground">
+            {t('profile.create_title')}
           </h1>
-          <p className="mt-2 text-gray-600">
-            Help others get to know you better
+          <p className="mt-2 text-muted-foreground">
+            {t('profile.create_subtitle')}
           </p>
         </div>
 
