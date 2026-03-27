@@ -9,6 +9,7 @@ export const useCommentEdit = (
   setComments: (comments: Comment[]) => void
 ) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   // Edit a comment
