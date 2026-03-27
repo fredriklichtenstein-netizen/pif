@@ -7,9 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Check } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
 
 export function EmailPasswordSettings() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -18,7 +20,6 @@ export function EmailPasswordSettings() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Fetch current email
   useState(() => {
     const fetchUserEmail = async () => {
       const { data } = await supabase.auth.getUser();
@@ -37,18 +38,17 @@ export function EmailPasswordSettings() {
 
     try {
       const { error } = await supabase.auth.updateUser({ email });
-
       if (error) throw error;
 
-      setSuccess("Email update requested. Please check your new email for a confirmation link.");
+      setSuccess(t('settings.email_update_requested_description'));
       toast({
-        title: "Email update requested",
-        description: "Please check your new email for a confirmation link.",
+        title: t('settings.email_update_requested'),
+        description: t('settings.email_update_requested_description'),
       });
     } catch (error: any) {
       setError(error.message);
       toast({
-        title: "Email update failed",
+        title: t('settings.email_update_failed'),
         description: error.message,
         variant: "destructive",
       });
@@ -64,38 +64,35 @@ export function EmailPasswordSettings() {
     setSuccess(null);
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords don't match");
+      setError(t('settings.passwords_dont_match'));
       setLoading(false);
       return;
     }
 
     try {
-      // First verify the current password by trying to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: currentPassword,
       });
 
-      if (signInError) throw new Error("Current password is incorrect");
+      if (signInError) throw new Error(t('settings.current_password_incorrect'));
 
-      // Then update to the new password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-
       if (error) throw error;
 
-      setSuccess("Password updated successfully");
+      setSuccess(t('settings.password_updated'));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       
       toast({
-        title: "Success",
-        description: "Your password has been updated",
+        title: t('status.success'),
+        description: t('settings.password_update_success'),
       });
     } catch (error: any) {
       setError(error.message);
       toast({
-        title: "Password update failed",
+        title: t('settings.password_update_failed'),
         description: error.message,
         variant: "destructive",
       });
@@ -114,15 +111,15 @@ export function EmailPasswordSettings() {
       )}
       
       {success && (
-        <Alert className="bg-green-50 text-green-800 border-green-200">
-          <Check className="h-4 w-4 text-green-600" />
+        <Alert className="bg-primary/10 text-primary border-primary/20">
+          <Check className="h-4 w-4 text-primary" />
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
 
       <form onSubmit={updateEmail} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email">{t('settings.email_address')}</Label>
           <Input
             id="email"
             type="email"
@@ -132,15 +129,15 @@ export function EmailPasswordSettings() {
           />
         </div>
         <Button type="submit" disabled={loading}>
-          Update Email
+          {t('settings.update_email')}
         </Button>
       </form>
 
-      <div className="my-6 border-t border-gray-200" />
+      <div className="my-6 border-t border-border" />
 
       <form onSubmit={updatePassword} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="current-password">Current Password</Label>
+          <Label htmlFor="current-password">{t('settings.current_password')}</Label>
           <Input
             id="current-password"
             type="password"
@@ -151,7 +148,7 @@ export function EmailPasswordSettings() {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="new-password">New Password</Label>
+          <Label htmlFor="new-password">{t('settings.new_password')}</Label>
           <Input
             id="new-password"
             type="password"
@@ -163,7 +160,7 @@ export function EmailPasswordSettings() {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="confirm-password">Confirm New Password</Label>
+          <Label htmlFor="confirm-password">{t('settings.confirm_new_password')}</Label>
           <Input
             id="confirm-password"
             type="password"
@@ -175,7 +172,7 @@ export function EmailPasswordSettings() {
         </div>
         
         <Button type="submit" disabled={loading}>
-          Update Password
+          {t('settings.update_password')}
         </Button>
       </form>
     </div>

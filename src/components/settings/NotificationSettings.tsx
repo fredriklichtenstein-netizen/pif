@@ -4,9 +4,11 @@ import { Separator } from "@/components/ui/separator";
 import { EmailNotifications } from "./EmailNotifications";
 import { PushNotifications } from "./PushNotifications";
 import { useNotificationPreferences } from "./useNotificationPreferences";
+import { useTranslation } from "react-i18next";
 
 export function NotificationSettings() {
   const { preferences, loading, handleToggle, savePreferences } = useNotificationPreferences();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-6">
@@ -27,7 +29,7 @@ export function NotificationSettings() {
         disabled={loading}
         className="w-full mt-4"
       >
-        {loading ? "Saving..." : "Save Preferences"}
+        {loading ? t('common.saving') : t('settings.save_preferences')}
       </Button>
     </div>
   );
