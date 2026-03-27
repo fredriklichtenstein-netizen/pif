@@ -60,17 +60,21 @@ function parseCoordinates(raw: any): { lng: number; lat: number } | null {
 function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number } }) {
   useEffect(() => {
     if (!MAPBOX_TOKEN) return;
-    const privacyCoords = addLocationPrivacy(coordinates);
-    const map = new mapboxgl.Map({
-      container: "public-profile-map",
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [privacyCoords.lng, privacyCoords.lat],
-      zoom: 12,
-      accessToken: MAPBOX_TOKEN,
-      interactive: false,
+    let mapInstance: mapboxgl.Map | null = null;
+    
+    addLocationPrivacy(coordinates.lng, coordinates.lat).then(([privLng, privLat]) => {
+      mapInstance = new mapboxgl.Map({
+        container: "public-profile-map",
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [privLng, privLat],
+        zoom: 12,
+        accessToken: MAPBOX_TOKEN,
+        interactive: false,
+      });
+      new mapboxgl.Marker().setLngLat([privLng, privLat]).addTo(mapInstance);
     });
-    new mapboxgl.Marker().setLngLat([privacyCoords.lng, privacyCoords.lat]).addTo(map);
-    return () => { map.remove(); };
+    
+    return () => { mapInstance?.remove(); };
   }, [coordinates]);
 
   return <div id="public-profile-map" className="w-full h-[250px] rounded-lg mt-4" />;
