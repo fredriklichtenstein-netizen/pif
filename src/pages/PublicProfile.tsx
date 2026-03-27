@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useTranslation } from "react-i18next";
 
 interface Profile {
   id: string;
@@ -48,63 +49,43 @@ function parseCoordinates(raw: any): { lng: number; lat: number } | null {
     }
   }
   if (typeof raw === "object" && "coordinates" in raw) {
-    return {
-      lng: raw.coordinates[0],
-      lat: raw.coordinates[1],
-    };
+    return { lng: raw.coordinates[0], lat: raw.coordinates[1] };
+  }
+  if (typeof raw === "object" && "x" in raw && "y" in raw) {
+    return { lng: raw.x, lat: raw.y };
   }
   return null;
 }
 
 function ProfileMap({ coordinates }: { coordinates: { lng: number; lat: number } }) {
-  const mapRef = useState<HTMLDivElement | null>(null)[0];
   useEffect(() => {
-    if (!coordinates || !MAPBOX_TOKEN) return;
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    let map: mapboxgl.Map;
-    let marker: mapboxgl.Marker | null = null;
-    let destroyed = false;
-
-    (async () => {
-      const [lng, lat] = await addLocationPrivacy(coordinates.lng, coordinates.lat);
-      if (destroyed) return;
-      map = new mapboxgl.Map({
-        container: "public-profile-map",
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [lng, lat],
-        zoom: 14,
-        interactive: false,
-        accessToken: MAPBOX_TOKEN,
-      });
-      marker = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-    })();
-
-    return () => {
-      destroyed = true;
-      if (marker) marker.remove();
-      if (map) map.remove();
-    };
+    if (!MAPBOX_TOKEN) return;
+    const privacyCoords = addLocationPrivacy(coordinates);
+    const map = new mapboxgl.Map({
+      container: "public-profile-map",
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [privacyCoords.lng, privacyCoords.lat],
+      zoom: 12,
+      accessToken: MAPBOX_TOKEN,
+      interactive: false,
+    });
+    new mapboxgl.Marker().setLngLat([privacyCoords.lng, privacyCoords.lat]).addTo(map);
+    return () => { map.remove(); };
   }, [coordinates]);
-  return (
-    <div
-      ref={mapRef as any}
-      id="public-profile-map"
-      className="w-full h-[250px] rounded-lg border"
-    />
-  );
+
+  return <div id="public-profile-map" className="w-full h-[250px] rounded-lg mt-4" />;
 }
 
 function UserPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
-    if (!userId) return;
-    setLoading(true);
     import("@/integrations/supabase/client").then(({ supabase }) => {
       supabase
         .from("items")
-        .select("id,title,description,category,images,created_at")
+        .select("id, title, description, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .then(({ data }) => {
@@ -115,26 +96,26 @@ function UserPifsGrid({ userId }: { userId: string }) {
   }, [userId]);
 
   if (loading) {
-    return <div className="py-4 text-center text-gray-400">Loading user PIFs...</div>;
+    return <div className="py-4 text-center text-muted-foreground">{t('profile.loading_user_pifs')}</div>;
   }
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center p-4 gap-2">
-        <div className="text-sm text-gray-500">No PIFs posted yet.</div>
+        <div className="text-sm text-muted-foreground">{t('profile.no_pifs_posted')}</div>
       </div>
     );
   }
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mt-4 mb-2">My PIFs</h3>
+      <h3 className="text-lg font-semibold mt-4 mb-2">{t('profile.my_pifs')}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map((item) => (
           <Link to={`/post/${item.id}`} key={item.id} aria-label={item.title}>
             <Card className="p-4 hover:ring-2 ring-primary transition flex flex-col gap-2">
               <div className="font-bold text-lg">{item.title}</div>
-              <div className="text-xs text-gray-500">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
-              <div className="text-sm text-gray-700">{item.description}</div>
+              <div className="text-xs text-muted-foreground">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
+              <div className="text-sm text-foreground/70">{item.description}</div>
             </Card>
           </Link>
         ))}
@@ -148,6 +129,7 @@ export default function PublicProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!id) return;
@@ -172,8 +154,8 @@ export default function PublicProfile() {
   }
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-red-500">
-        Profile not found
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-destructive">
+        {t('profile.profile_not_found')}
       </div>
     );
   }
@@ -189,15 +171,15 @@ export default function PublicProfile() {
             className="mb-3 border"
           />
           <div className="text-xl font-semibold">{formatPublicName(profile)}</div>
-          <div className="text-gray-600 mb-2 capitalize">{profile.gender || "Gender undisclosed"}</div>
+          <div className="text-muted-foreground mb-2 capitalize">{profile.gender || t('common.gender_undisclosed')}</div>
           {coordinates && (
             <div className="w-full">
               <ProfileMap coordinates={coordinates} />
             </div>
           )}
           {!coordinates && (
-            <div className="w-full text-center text-xs text-gray-400 mt-6">
-              No PIF location available.
+            <div className="w-full text-center text-xs text-muted-foreground mt-6">
+              {t('common.no_location_available')}
             </div>
           )}
         </div>

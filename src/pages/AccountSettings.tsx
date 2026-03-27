@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainNav } from "@/components/MainNav";
+import { useTranslation } from "react-i18next";
 
 const SettingsSkeleton = () => (
   <div className="space-y-4">
@@ -24,37 +25,38 @@ const SettingsSkeleton = () => (
 
 export default function AccountSettings() {
   const [activeTab, setActiveTab] = useState("account");
+  const { t } = useTranslation();
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 pb-24">
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 pb-24">
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="flex items-center">
             <Link to="/profile">
               <Button variant="ghost" size="sm" className="gap-1">
                 <ArrowLeft size={16} />
-                Back to Profile
+                {t('nav.back_to_profile')}
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold text-gray-900 mx-auto pr-10">
-              Account Settings
+            <h1 className="text-3xl font-bold text-foreground mx-auto pr-10">
+              {t('settings.title')}
             </h1>
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
-              <TabsTrigger value="privacy">Privacy</TabsTrigger>
-              <TabsTrigger value="danger" className="text-destructive">Danger Zone</TabsTrigger>
+              <TabsTrigger value="account">{t('settings.account')}</TabsTrigger>
+              <TabsTrigger value="notifications">{t('settings.notifications')}</TabsTrigger>
+              <TabsTrigger value="privacy">{t('settings.privacy')}</TabsTrigger>
+              <TabsTrigger value="danger" className="text-destructive">{t('settings.danger_zone')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="account" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Email & Password</CardTitle>
+                  <CardTitle>{t('settings.email_password')}</CardTitle>
                   <CardDescription>
-                    Manage your email address and password
+                    {t('settings.email_password_description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -66,9 +68,9 @@ export default function AccountSettings() {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>Sign Out</CardTitle>
+                  <CardTitle>{t('settings.sign_out')}</CardTitle>
                   <CardDescription>
-                    Sign out from your current session
+                    {t('settings.sign_out_description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -80,9 +82,9 @@ export default function AccountSettings() {
             <TabsContent value="notifications" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
+                  <CardTitle>{t('settings.notification_preferences')}</CardTitle>
                   <CardDescription>
-                    Control how and when you receive notifications
+                    {t('settings.notification_preferences_description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -96,9 +98,9 @@ export default function AccountSettings() {
             <TabsContent value="privacy" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Privacy Settings</CardTitle>
+                  <CardTitle>{t('settings.privacy_settings')}</CardTitle>
                   <CardDescription>
-                    Review our privacy policies and manage your data
+                    {t('settings.privacy_settings_description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -112,9 +114,9 @@ export default function AccountSettings() {
             <TabsContent value="danger" className="space-y-6">
               <Card className="border-destructive/50">
                 <CardHeader className="text-destructive">
-                  <CardTitle>Danger Zone</CardTitle>
+                  <CardTitle>{t('settings.danger_zone')}</CardTitle>
                   <CardDescription>
-                    Irreversible actions that affect your account
+                    {t('settings.danger_zone_description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

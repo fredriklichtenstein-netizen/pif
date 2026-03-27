@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, AlertTriangle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface LocationPermissionManagerProps {
   onLocationEnabled: () => void;
@@ -13,6 +14,7 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
   const [permissionState, setPermissionState] = useState<'unknown' | 'granted' | 'denied' | 'prompt'>('unknown');
   const [isRequesting, setIsRequesting] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     checkPermissionState();
@@ -44,7 +46,6 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
       await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            console.log('Location permission granted, position:', position);
             setPermissionState('granted');
             onLocationEnabled();
             resolve(position);
@@ -67,8 +68,8 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
       console.error('Location request failed:', error);
       toast({
         variant: "destructive",
-        title: "Location Error",
-        description: "Could not access your location. Please check your browser settings.",
+        title: t('map.location_error'),
+        description: t('map.location_error_description'),
       });
     } finally {
       setIsRequesting(false);
@@ -77,8 +78,8 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
 
   const openBrowserSettings = () => {
     toast({
-      title: "Enable Location",
-      description: "Please enable location permissions in your browser settings and refresh the page.",
+      title: t('map.enable_location'),
+      description: t('map.enable_location_description'),
       duration: 5000,
     });
   };
@@ -89,12 +90,12 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
 
   if (permissionState === 'denied') {
     return (
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg p-4 shadow-lg border border-red-200 max-w-sm">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background rounded-lg p-4 shadow-lg border border-destructive/30 max-w-sm">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
+          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Location Blocked</p>
-            <p className="text-xs text-gray-600">Enable location to see distances and nearby items</p>
+            <p className="text-sm font-medium text-foreground">{t('map.location_blocked')}</p>
+            <p className="text-xs text-muted-foreground">{t('map.location_blocked_description')}</p>
           </div>
         </div>
         <Button 
@@ -104,19 +105,19 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
           className="w-full mt-3 flex items-center gap-2"
         >
           <Settings className="h-4 w-4" />
-          Browser Settings
+          {t('map.browser_settings')}
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg p-4 shadow-lg border border-blue-200 max-w-sm">
+    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-background rounded-lg p-4 shadow-lg border border-primary/30 max-w-sm">
       <div className="flex items-center gap-3">
-        <MapPin className="h-5 w-5 text-blue-500 flex-shrink-0" />
+        <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900">Enable Location</p>
-          <p className="text-xs text-gray-600">See distances and find nearby items</p>
+          <p className="text-sm font-medium text-foreground">{t('map.enable_location')}</p>
+          <p className="text-xs text-muted-foreground">{t('map.see_distances')}</p>
         </div>
       </div>
       <Button 
@@ -125,7 +126,7 @@ export const LocationPermissionManager = ({ onLocationEnabled, onLocationDenied 
         size="sm" 
         className="w-full mt-3"
       >
-        {isRequesting ? 'Requesting...' : 'Enable Location'}
+        {isRequesting ? t('map.requesting') : t('map.enable_location')}
       </Button>
     </div>
   );
