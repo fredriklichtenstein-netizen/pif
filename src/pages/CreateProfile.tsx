@@ -93,6 +93,9 @@ export default function CreateProfile() {
 
       if (updateError) throw updateError;
 
+      // Update global auth state so PrivateRoute won't redirect back
+      useGlobalAuth.getState().setProfileCompleted(true);
+
       toast({
         title: "Profile created!",
         description: "Your profile has been created successfully.",
