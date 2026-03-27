@@ -26,6 +26,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
+  const { t } = useTranslation();
 
   console.log("🗺️ [MapContainer] Render - Token:", mapboxToken ? "✅" : "❌", "Posts:", posts.length, "Ready:", isMapReady);
 
