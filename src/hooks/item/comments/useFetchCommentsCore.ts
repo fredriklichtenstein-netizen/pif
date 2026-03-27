@@ -2,7 +2,7 @@
 // Extracted core fetchComments functionality
 
 import { useCallback } from "react";
-import { FALLBACK_COMMENTS } from "./fallbackComments";
+import { getFallbackComments } from "./fallbackComments";
 import { runCommentQuery } from "./commentQuery";
 import { useGlobalAuth } from "../../useGlobalAuth";
 
