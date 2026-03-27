@@ -99,8 +99,8 @@ export default function CreateProfile() {
       useGlobalAuth.getState().setProfileCompleted(true);
 
       toast({
-        title: "Profile created!",
-        description: "Your profile has been created successfully.",
+        title: t('profile.created'),
+        description: t('profile.created_description'),
       });
 
       setTimeout(() => {
