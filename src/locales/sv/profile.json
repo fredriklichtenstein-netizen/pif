@@ -25,6 +25,16 @@
     "account_settings": "Kontoinställningar",
     "profile_not_found": "Profil hittades inte",
     "loading_user_pifs": "Laddar användarens piffar...",
-    "no_pifs_posted": "Inga piffar publicerade än."
+    "no_pifs_posted": "Inga piffar publicerade än.",
+    "create_title": "Skapa din profil",
+    "create_subtitle": "Hjälp andra att lära känna dig bättre",
+    "creating": "Skapar profil...",
+    "create": "Skapa profil",
+    "created": "Profil skapad!",
+    "created_description": "Din profil har skapats.",
+    "create_error": "Fel vid skapande av profil",
+    "unexpected_error": "Ett oväntat fel inträffade",
+    "mobile_phone": "Mobilnummer (valfritt)",
+    "primary_address": "Primär PIF-adress"
   }
 }

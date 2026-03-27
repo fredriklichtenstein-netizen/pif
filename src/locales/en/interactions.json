@@ -15,6 +15,9 @@
     "show_interest": "Show interest",
     "become_receiver": "Become receiver"
   },
+  "comments": {
+    "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."
+  },
   "messages": {
     "title": "Messages",
     "loading_conversation": "Loading conversation...",

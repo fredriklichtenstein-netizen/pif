@@ -9,8 +9,10 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
+import { useTranslation } from "react-i18next";
 
 export default function CreateProfile() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -97,8 +99,8 @@ export default function CreateProfile() {
       useGlobalAuth.getState().setProfileCompleted(true);
 
       toast({
-        title: "Profile created!",
-        description: "Your profile has been created successfully.",
+        title: t('profile.created'),
+        description: t('profile.created_description'),
       });
 
       setTimeout(() => {
@@ -108,8 +110,8 @@ export default function CreateProfile() {
     } catch (error: any) {
       console.error("Profile creation error:", error);
       toast({
-        title: "Error creating profile",
-        description: error.message || "An unexpected error occurred",
+        title: t('profile.create_error'),
+        description: error.message || t('profile.unexpected_error'),
         variant: "destructive",
       });
     } finally {
@@ -118,14 +120,14 @@ export default function CreateProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 pb-24">
+    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 pb-24">
       <div className="max-w-3xl mx-auto space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Create your profile
+          <h1 className="text-3xl font-bold text-foreground">
+            {t('profile.create_title')}
           </h1>
-          <p className="mt-2 text-gray-600">
-            Help others get to know you better
+          <p className="mt-2 text-muted-foreground">
+            {t('profile.create_subtitle')}
           </p>
         </div>
 
@@ -166,7 +168,7 @@ export default function CreateProfile() {
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Creating profile..." : "Create profile"}
+            {loading ? t('profile.creating') : t('profile.create')}
           </Button>
         </form>
       </div>

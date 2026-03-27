@@ -6,6 +6,7 @@ import { NameFields } from "@/components/forms/fields/NameFields";
 import { GenderSelector } from "@/components/forms/fields/GenderSelector";
 import { Label } from "@/components/ui/label";
 import { Map } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ProfileFormData {
   firstName: string;
@@ -23,6 +24,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ formData, onChange }: ProfileFormProps) {
+  const { t } = useTranslation();
   const handleChange = (updates: Partial<ProfileFormData>) => {
     onChange({
       ...formData,
@@ -49,7 +51,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
             />
 
             <div className="space-y-2">
-              <Label>Mobile phone (optional)</Label>
+              <Label>{t('profile.mobile_phone')}</Label>
               <PhoneInput
                 value={formData.phone}
                 countryCode={formData.countryCode}
@@ -60,7 +62,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Primary PIF address</Label>
+              <Label>{t('profile.primary_address')}</Label>
               <AddressInput
                 value={formData.address}
                 onChange={(address) => handleChange({ address })}

@@ -15,6 +15,9 @@
     "show_interest": "Visa intresse",
     "become_receiver": "Bli mottagare"
   },
+  "comments": {
+    "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."
+  },
   "messages": {
     "title": "Meddelanden",
     "loading_conversation": "Laddar konversation...",

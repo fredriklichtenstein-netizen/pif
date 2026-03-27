@@ -2,7 +2,7 @@
 // Extracted core fetchComments functionality
 
 import { useCallback } from "react";
-import { FALLBACK_COMMENTS } from "./fallbackComments";
+import { getFallbackComments } from "./fallbackComments";
 import { runCommentQuery } from "./commentQuery";
 import { useGlobalAuth } from "../../useGlobalAuth";
 
@@ -43,14 +43,14 @@ export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) =
       setUseFallbackMode(true);
       setIsLoading(false);
       cleanUp();
-      return FALLBACK_COMMENTS;
+      return getFallbackComments();
     }
 
     if (isMaxAttemptsReached()) {
       setUseFallbackMode(true);
       setIsLoading(false);
       cleanUp();
-      return FALLBACK_COMMENTS;
+      return getFallbackComments();
     }
 
     const controller = createAbortController();
@@ -78,7 +78,7 @@ export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) =
 
       if (getCurrentAttempts() >= maxAttempts) {
         setUseFallbackMode(true);
-        return FALLBACK_COMMENTS;
+        return getFallbackComments();
       }
       return [];
     } finally {

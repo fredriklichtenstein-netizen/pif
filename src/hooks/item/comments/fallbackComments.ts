@@ -1,9 +1,10 @@
 import { Comment } from "@/types/comment";
+import i18n from "@/i18n";
 
-export const FALLBACK_COMMENTS: Comment[] = [
+export const getFallbackComments = (): Comment[] => [
   {
     id: "fallback-1",
-    text: "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing.",
+    text: i18n.t('interactions:comments.welcome_message'),
     author: {
       name: "PiF Team",
       avatar: "https://ui-avatars.com/api/?name=PiF&background=random",
