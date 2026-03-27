@@ -110,8 +110,8 @@ export default function CreateProfile() {
     } catch (error: any) {
       console.error("Profile creation error:", error);
       toast({
-        title: "Error creating profile",
-        description: error.message || "An unexpected error occurred",
+        title: t('profile.create_error'),
+        description: error.message || t('profile.unexpected_error'),
         variant: "destructive",
       });
     } finally {
