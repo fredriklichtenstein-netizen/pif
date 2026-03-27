@@ -9,6 +9,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { useDemoCompletionStore } from "@/stores/demoCompletionStore";
 import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
+import { useTranslation } from "react-i18next";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -23,6 +24,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
   const [markAsPiffedOpen, setMarkAsPiffedOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const { markAsPiffed: demoMarkAsPiffed, getStatus } = useDemoCompletionStore();
   const { getSelectedUser } = useDemoSelectionsStore();
@@ -31,7 +33,6 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     if (open && postId) {
       setLoading(true);
       
-      // Demo mode: find post in mock data
       if (DEMO_MODE) {
         const mockPost = MOCK_POSTS.find(p => String(p.id) === String(postId));
         if (mockPost) {
@@ -65,7 +66,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
                 id: data.user_id,
                 name: data.profiles?.first_name 
                   ? `${data.profiles.first_name} ${data.profiles.last_name?.[0] || ""}`
-                  : "User",
+                  : t('common.user'),
                 avatar: data.profiles?.avatar_url || "",
               },
               image: data.images?.[0] || "",
@@ -91,14 +92,13 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     setIsUpdating(true);
     
     try {
-      // Demo mode: update in local store
       if (DEMO_MODE) {
         const selectedReceiverId = getSelectedUser(post.id);
         demoMarkAsPiffed(post.id, selectedReceiverId || undefined);
         
         toast({
-          title: "Klart!",
-          description: "Piffen har markerats som piffad. Mottagaren kan nu bekräfta.",
+          title: t('ui.done'),
+          description: t('ui.pif_marked_piffed_receiver'),
         });
         
         setPost({ ...post, status: "piffed" });
@@ -129,15 +129,15 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           .eq("status", "selected")
           .single();
           
-        const receiverName = selectedInterest?.users?.first_name || "Någon";
+        const receiverName = selectedInterest?.users?.first_name || t('common.user');
         
         for (const interest of interests) {
           await supabase.rpc("create_notification", {
             p_user_id: interest.user_id,
             p_type: "pif_status",
             p_payload: {
-              title: "Piffen har getts bort",
-              content: `Piffen "${post.title}" har getts till ${receiverName}.`,
+              title: t('ui.pif_given_away'),
+              content: t('ui.pif_given_to', { title: post.title, name: receiverName }),
               reference_id: post.id.toString(),
               reference_type: "item",
               action_url: `/feed?post=${post.id}`
@@ -147,8 +147,8 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       }
       
       toast({
-        title: "Klart!",
-        description: "Denna pif har markerats som piffad.",
+        title: t('ui.done'),
+        description: t('ui.pif_marked_piffed'),
       });
       
       setPost({ ...post, status: "piffed" });
@@ -160,8 +160,8 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     } catch (error) {
       console.error("Error marking post as piffed:", error);
       toast({
-        title: "Fel",
-        description: "Misslyckades att markera denna pif som piffad. Försök igen.",
+        title: t('common.error'),
+        description: t('ui.failed_mark_piffed'),
         variant: "destructive",
       });
     } finally {
@@ -174,7 +174,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
           {loading ? (
-            <div className="p-8 text-center">Laddar information...</div>
+            <div className="p-8 text-center">{t('ui.loading_info')}</div>
           ) : post ? (
             <ItemCard 
               id={post.id}
@@ -189,7 +189,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               markAsPiffedAction={post.status !== "piffed" && post.status !== "completed" && post.status !== "archived" ? () => setMarkAsPiffedOpen(true) : undefined}
             />
           ) : (
-            <div className="p-8 text-center">Posten hittades inte</div>
+            <div className="p-8 text-center">{t('ui.post_not_found')}</div>
           )}
         </DialogContent>
       </Dialog>
@@ -197,19 +197,19 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       <AlertDialog open={markAsPiffedOpen} onOpenChange={setMarkAsPiffedOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Markera som piffad</AlertDialogTitle>
+            <AlertDialogTitle>{t('ui.mark_as_piffed_title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Detta markerar piffen som given. Mottagaren kommer att kunna bekräfta att de har fått den.
+              {t('ui.mark_as_piffed_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdating}>Avbryt</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUpdating}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleMarkAsPiffed} 
               disabled={isUpdating}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-primary hover:bg-primary/90"
             >
-              {isUpdating ? "Bearbetar..." : "Bekräfta"}
+              {isUpdating ? t('common.processing') : t('common.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

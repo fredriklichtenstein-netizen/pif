@@ -1,5 +1,6 @@
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmationStatusProps {
   userEmail: string | null;
@@ -14,16 +15,17 @@ export function ConfirmationStatus({
   loading,
   onResend,
 }: ConfirmationStatusProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="max-w-md w-full space-y-8 text-center">
-      <div className="mx-auto w-fit p-4 bg-blue-50 rounded-full">
-        <Mail className="h-12 w-12 text-blue-500" />
+      <div className="mx-auto w-fit p-4 bg-primary/10 rounded-full">
+        <Mail className="h-12 w-12 text-primary" />
       </div>
-      <h2 className="text-3xl font-bold text-gray-900">Check your email</h2>
-      <p className="text-gray-600">
-        We've sent you a confirmation link to{" "}
-        <span className="font-medium">{userEmail}</span>. Please check your inbox
-        and click the link to continue with your profile creation.
+      <h2 className="text-3xl font-bold text-foreground">{t('email_confirmation.check_email')}</h2>
+      <p className="text-muted-foreground">
+        {t('email_confirmation.sent_confirmation')}{" "}
+        <span className="font-medium">{userEmail}</span>. {t('email_confirmation.check_inbox')}
       </p>
       <Button
         onClick={onResend}
@@ -32,10 +34,10 @@ export function ConfirmationStatus({
         className="w-full"
       >
         {resendCooldown > 0
-          ? `Resend in ${resendCooldown}s`
+          ? t('email_confirmation.resend_in', { seconds: resendCooldown })
           : loading
-          ? "Sending..."
-          : "Resend confirmation email"}
+          ? t('email_confirmation.sending')
+          : t('email_confirmation.resend_confirmation')}
       </Button>
     </div>
   );

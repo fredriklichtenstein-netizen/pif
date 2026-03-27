@@ -12,6 +12,7 @@ import { LocationPermissionManager } from "./location/LocationPermissionManager"
 import { DistanceRings } from "./distance/DistanceRings";
 import { DistanceFilters } from "./distance/DistanceFilters";
 import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
+import { useTranslation } from "react-i18next";
 import "./MapStyles.css";
 
 interface MapContainerProps {
@@ -25,6 +26,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
+  const { t } = useTranslation();
 
   console.log("🗺️ [MapContainer] Render - Token:", mapboxToken ? "✅" : "❌", "Posts:", posts.length, "Ready:", isMapReady);
 
@@ -136,29 +138,29 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       />
       
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
           <div className="text-center p-6">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-gray-700 mb-2 font-medium">Error initializing map</p>
-            <p className="text-gray-500 text-sm mb-6">{error.message}</p>
+            <p className="text-foreground mb-2 font-medium">{t('map.error_initializing')}</p>
+            <p className="text-muted-foreground text-sm mb-6">{error.message}</p>
             <Button 
               onClick={retryInitialization} 
               className="flex items-center gap-2"
               variant="default"
             >
-              <RefreshCw className="h-4 w-4" /> Retry
+              <RefreshCw className="h-4 w-4" /> {t('common.retry')}
             </Button>
           </div>
         </div>
       )}
       
       {!isMapReady && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+        <div className="absolute inset-0 flex items-center justify-center bg-background">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Initializing map...</p>
-            <p className="text-gray-500 text-sm mt-2">
-              {mapboxToken ? "Token loaded, setting up map..." : "Loading credentials..."}
+            <p className="text-muted-foreground">{t('map.initializing')}</p>
+            <p className="text-muted-foreground text-sm mt-2">
+              {mapboxToken ? t('map.token_loaded') : t('map.loading_credentials')}
             </p>
           </div>
         </div>
@@ -215,7 +217,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
               variant="outline"
-              title={locationTracking.isTracking ? "Stop location tracking" : "Start location tracking"}
+              title={locationTracking.isTracking ? t('map.stop_tracking') : t('map.start_tracking')}
             >
               <Locate 
                 className={`h-4 w-4 ${locationTracking.isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 

@@ -3,12 +3,14 @@ import { useState } from "react";
 import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export const useCommentEdit = (
   comments: Comment[],
   setComments: (comments: Comment[]) => void
 ) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   // Edit a comment
@@ -37,8 +39,8 @@ export const useCommentEdit = (
     } catch (error) {
       console.error("Error editing comment:", error);
       toast({
-        title: "Error",
-        description: "Failed to update comment",
+        title: t('common.error'),
+        description: t('common.action_failed'),
         variant: "destructive"
       });
     } finally {

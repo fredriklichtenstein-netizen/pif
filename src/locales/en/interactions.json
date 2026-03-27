@@ -14,5 +14,67 @@
     "remove_interest": "Remove interest",
     "show_interest": "Show interest",
     "become_receiver": "Become receiver"
+  },
+  "messages": {
+    "title": "Messages",
+    "loading_conversation": "Loading conversation...",
+    "failed_load_conversation": "Failed to load conversation",
+    "no_messages_yet": "No messages yet. Start the conversation!",
+    "type_message": "Type a message...",
+    "no_conversations_title": "No conversations yet",
+    "no_conversations_description": "When you message someone about an item, it will appear here.",
+    "failed_load_conversations": "Failed to load conversations",
+    "try_refreshing": "Please try refreshing the page",
+    "regarding": "Re:"
+  },
+  "map": {
+    "error_initializing": "Error initializing map",
+    "initializing": "Initializing map...",
+    "token_loaded": "Token loaded, setting up map...",
+    "loading_credentials": "Loading credentials...",
+    "stop_tracking": "Stop location tracking",
+    "start_tracking": "Start location tracking",
+    "location_error": "Location Error",
+    "location_error_description": "Could not access your location. Please check your browser settings.",
+    "enable_location": "Enable Location",
+    "enable_location_description": "Please enable location permissions in your browser settings and refresh the page.",
+    "location_blocked": "Location Blocked",
+    "location_blocked_description": "Enable location to see distances and nearby items",
+    "browser_settings": "Browser Settings",
+    "see_distances": "See distances and find nearby items",
+    "requesting": "Requesting..."
+  },
+  "email_confirmation": {
+    "check_email": "Check your email",
+    "sent_confirmation": "We've sent you a confirmation link to",
+    "check_inbox": "Please check your inbox and click the link to continue with your profile creation.",
+    "resend_in": "Resend in {{seconds}}s",
+    "sending": "Sending...",
+    "resend_confirmation": "Resend confirmation email"
+  },
+  "share": {
+    "validating_item": "Validating item...",
+    "please_wait": "Please wait while we locate the shared item.",
+    "item_not_found": "Item not found.",
+    "item_removed_or_invalid": "The item may have been removed or the link is invalid.",
+    "retrying": "Retrying...",
+    "browse_feed": "Browse Feed",
+    "redirecting": "Redirecting to item..."
+  },
+  "settings": {
+    "title": "Account Settings",
+    "account": "Account",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "danger_zone": "Danger Zone",
+    "email_password": "Email & Password",
+    "email_password_description": "Manage your email address and password",
+    "sign_out": "Sign Out",
+    "sign_out_description": "Sign out from your current session",
+    "notification_preferences": "Notification Preferences",
+    "notification_preferences_description": "Control how and when you receive notifications",
+    "privacy_settings": "Privacy Settings",
+    "privacy_settings_description": "Review our privacy policies and manage your data",
+    "danger_zone_description": "Irreversible actions that affect your account"
   }
 }

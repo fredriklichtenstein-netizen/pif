@@ -16,6 +16,16 @@
     "save": "Spara",
     "unsave": "Ta bort från sparade",
     "archive": "Arkivera",
-    "delete_archived_item": "Ta bort arkiverad pif"
+    "delete_archived_item": "Ta bort arkiverad pif",
+    "loading_info": "Laddar information...",
+    "post_not_found": "Posten hittades inte",
+    "mark_as_piffed_title": "Markera som piffad",
+    "mark_as_piffed_description": "Detta markerar piffen som given. Mottagaren kommer att kunna bekräfta att de har fått den.",
+    "done": "Klart!",
+    "pif_marked_piffed": "Denna pif har markerats som piffad.",
+    "pif_marked_piffed_receiver": "Piffen har markerats som piffad. Mottagaren kan nu bekräfta.",
+    "failed_mark_piffed": "Misslyckades att markera denna pif som piffad. Försök igen.",
+    "pif_given_away": "Piffen har getts bort",
+    "pif_given_to": "Piffen \"{{title}}\" har getts till {{name}}."
   }
 }

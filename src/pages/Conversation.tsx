@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Conversation() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +18,7 @@ export default function Conversation() {
   const { user } = useGlobalAuth();
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const { t } = useTranslation();
   
   const { 
     conversation, 
@@ -31,7 +33,6 @@ export default function Conversation() {
     sendMessage
   } = useMessages(id);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (!messagesLoading) {
       const messagesContainer = document.getElementById("messages-container");
@@ -67,10 +68,7 @@ export default function Conversation() {
     return conversation.participants.find(p => p.user_id !== user.id)?.profile;
   };
 
-  // Define a refresh function
   const refreshMessages = async () => {
-    // If we navigate back to the messages page and then return,
-    // the page will reload and fetch fresh data
     navigate(`/messages`);
     setTimeout(() => navigate(`/conversation/${id}`), 10);
   };
@@ -79,7 +77,7 @@ export default function Conversation() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Loading conversation...</p>
+        <p className="mt-4 text-muted-foreground">{t('messages.loading_conversation')}</p>
       </div>
     );
   }
@@ -89,14 +87,14 @@ export default function Conversation() {
       <div className="container max-w-md mx-auto px-4 py-8">
         <NetworkStatus onRetry={refreshMessages} />
         <div className="bg-destructive/10 p-4 rounded-md mb-4">
-          <p className="text-destructive">Failed to load conversation</p>
+          <p className="text-destructive">{t('messages.failed_load_conversation')}</p>
           <Button 
             variant="outline" 
             size="sm" 
             className="mt-2"
             onClick={() => navigate("/messages")}
           >
-            Back to Messages
+            {t('nav.back_to_messages')}
           </Button>
         </div>
       </div>
@@ -109,7 +107,6 @@ export default function Conversation() {
     <div className="container max-w-md mx-auto px-4 py-2 pt-4 pb-20">
       <NetworkStatus onRetry={refreshMessages} />
       
-      {/* Header */}
       <div className="flex items-center mb-4">
         <Button 
           variant="ghost" 
@@ -121,24 +118,23 @@ export default function Conversation() {
         </Button>
         <div>
           <h1 className="text-lg font-semibold">
-            {otherParticipant?.username || "Conversation"}
+            {otherParticipant?.username || t('common.conversation')}
           </h1>
           {conversation?.item && (
             <p className="text-sm text-muted-foreground">
-              Re: {conversation.item.title}
+              {t('messages.regarding')} {conversation.item.title}
             </p>
           )}
         </div>
       </div>
 
-      {/* Messages container */}
       <div 
         id="messages-container"
         className="flex flex-col space-y-4 h-[calc(100vh-240px)] overflow-y-auto mb-4 p-2"
       >
         {messages.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            No messages yet. Start the conversation!
+            {t('messages.no_messages_yet')}
           </p>
         ) : (
           messages.map(message => (
@@ -151,14 +147,13 @@ export default function Conversation() {
         )}
       </div>
 
-      {/* Message input */}
       <div className="fixed bottom-14 left-0 right-0 bg-background border-t p-2">
         <div className="container max-w-md mx-auto flex">
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder={t('messages.type_message')}
             className="min-h-[60px] resize-none"
             disabled={isSending}
           />

@@ -9,6 +9,11 @@
     "pifs": "Pifs",
     "sign_in": "Sign In",
     "auth_required": "Authentication required",
-    "sign_in_required": "Please sign in to access this feature"
+    "sign_in_required": "Please sign in to access this feature",
+    "more": "More",
+    "explore_more": "Explore More Features",
+    "notifications": "Notifications",
+    "back_to_profile": "Back to Profile",
+    "back_to_messages": "Back to Messages"
   }
 }
