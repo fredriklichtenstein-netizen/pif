@@ -217,7 +217,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
               variant="outline"
-              title={locationTracking.isTracking ? "Stop location tracking" : "Start location tracking"}
+              title={locationTracking.isTracking ? t('map.stop_tracking') : t('map.start_tracking')}
             >
               <Locate 
                 className={`h-4 w-4 ${locationTracking.isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
