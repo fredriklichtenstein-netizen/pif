@@ -9,6 +9,11 @@
     "pifs": "Piffar",
     "sign_in": "Logga in",
     "auth_required": "Autentisering krävs",
-    "sign_in_required": "Vänligen logga in för att komma åt denna funktion"
+    "sign_in_required": "Vänligen logga in för att komma åt denna funktion",
+    "more": "Mer",
+    "explore_more": "Utforska fler funktioner",
+    "notifications": "Aviseringar",
+    "back_to_profile": "Tillbaka till profil",
+    "back_to_messages": "Tillbaka till meddelanden"
   }
 }

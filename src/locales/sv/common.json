@@ -35,7 +35,21 @@
     "weight": "Vikt",
     "piffer": "Piffare",
     "receiver": "Mottagare",
-    "wisher": "Önskare"
+    "wisher": "Önskare",
+    "back": "Tillbaka",
+    "confirm": "Bekräfta",
+    "processing": "Bearbetar...",
+    "saving": "Sparar...",
+    "save_changes": "Spara ändringar",
+    "something_went_wrong": "Något gick fel",
+    "unexpected_error": "Vi stötte på ett oväntat fel. Försök igen eller uppdatera sidan.",
+    "try_again": "Försök igen",
+    "refresh_page": "Uppdatera sidan",
+    "error_details": "Feldetaljer",
+    "gender_undisclosed": "Kön ej angivet",
+    "user": "Användare",
+    "conversation": "Konversation",
+    "no_location_available": "Ingen PIF-plats tillgänglig."
   },
   "offline": {
     "title": "Du är offline just nu",

@@ -35,7 +35,21 @@
     "weight": "Weight",
     "piffer": "Piffer",
     "receiver": "Receiver",
-    "wisher": "Wisher"
+    "wisher": "Wisher",
+    "back": "Back",
+    "confirm": "Confirm",
+    "processing": "Processing...",
+    "saving": "Saving...",
+    "save_changes": "Save Changes",
+    "something_went_wrong": "Something went wrong",
+    "unexpected_error": "We encountered an unexpected error. Please try again or refresh the page.",
+    "try_again": "Try Again",
+    "refresh_page": "Refresh Page",
+    "error_details": "Error Details",
+    "gender_undisclosed": "Gender undisclosed",
+    "user": "User",
+    "conversation": "Conversation",
+    "no_location_available": "No PIF location available."
   },
   "offline": {
     "title": "You're currently offline",

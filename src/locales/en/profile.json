@@ -19,6 +19,12 @@
     "status_pending": "Pending",
     "status_selected": "Selected as receiver",
     "status_not_selected": "Not selected",
-    "piffed": "Piffed"
+    "piffed": "Piffed",
+    "edit_profile": "Edit Profile",
+    "edit_pif": "Edit PIF",
+    "account_settings": "Account Settings",
+    "profile_not_found": "Profile not found",
+    "loading_user_pifs": "Loading user PIFs...",
+    "no_pifs_posted": "No PIFs posted yet."
   }
 }

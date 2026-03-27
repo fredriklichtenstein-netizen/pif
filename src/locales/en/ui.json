@@ -16,6 +16,16 @@
     "save": "Save",
     "unsave": "Unsave",
     "archive": "Archive",
-    "delete_archived_item": "Delete archived pif"
+    "delete_archived_item": "Delete archived pif",
+    "loading_info": "Loading information...",
+    "post_not_found": "Post not found",
+    "mark_as_piffed_title": "Mark as piffed",
+    "mark_as_piffed_description": "This marks the pif as given away. The receiver will be able to confirm they received it.",
+    "done": "Done!",
+    "pif_marked_piffed": "This pif has been marked as piffed.",
+    "pif_marked_piffed_receiver": "The pif has been marked as piffed. The receiver can now confirm.",
+    "failed_mark_piffed": "Failed to mark this pif as piffed. Please try again.",
+    "pif_given_away": "The pif has been given away",
+    "pif_given_to": "The pif \"{{title}}\" has been given to {{name}}."
   }
 }

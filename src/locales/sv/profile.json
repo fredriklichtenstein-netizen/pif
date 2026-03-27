@@ -19,6 +19,12 @@
     "status_pending": "Väntar",
     "status_selected": "Vald som mottagare", 
     "status_not_selected": "Inte vald",
-    "piffed": "Piffad"
+    "piffed": "Piffad",
+    "edit_profile": "Redigera profil",
+    "edit_pif": "Redigera PIF",
+    "account_settings": "Kontoinställningar",
+    "profile_not_found": "Profil hittades inte",
+    "loading_user_pifs": "Laddar användarens piffar...",
+    "no_pifs_posted": "Inga piffar publicerade än."
   }
 }
