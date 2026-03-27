@@ -51,7 +51,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
             />
 
             <div className="space-y-2">
-              <Label>Mobile phone (optional)</Label>
+              <Label>{t('profile.mobile_phone')}</Label>
               <PhoneInput
                 value={formData.phone}
                 countryCode={formData.countryCode}
