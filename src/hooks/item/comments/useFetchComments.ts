@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useGlobalAuth } from "../../useGlobalAuth";
-import { FALLBACK_COMMENTS } from "./fallbackComments";
+import { getFallbackComments } from "./fallbackComments";
 import { useFetchCommentsCore } from "./useFetchCommentsCore";
 import { useCommentRetry } from "./useCommentRetry";
 
