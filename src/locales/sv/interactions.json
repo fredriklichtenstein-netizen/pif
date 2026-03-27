@@ -14,5 +14,67 @@
     "remove_interest": "Ta bort intresse",
     "show_interest": "Visa intresse",
     "become_receiver": "Bli mottagare"
+  },
+  "messages": {
+    "title": "Meddelanden",
+    "loading_conversation": "Laddar konversation...",
+    "failed_load_conversation": "Misslyckades att ladda konversation",
+    "no_messages_yet": "Inga meddelanden än. Starta konversationen!",
+    "type_message": "Skriv ett meddelande...",
+    "no_conversations_title": "Inga konversationer än",
+    "no_conversations_description": "När du skickar meddelande till någon om en pif visas det här.",
+    "failed_load_conversations": "Misslyckades att ladda konversationer",
+    "try_refreshing": "Försök att uppdatera sidan",
+    "regarding": "Ang:"
+  },
+  "map": {
+    "error_initializing": "Fel vid initiering av karta",
+    "initializing": "Initierar karta...",
+    "token_loaded": "Token laddad, sätter upp karta...",
+    "loading_credentials": "Laddar uppgifter...",
+    "stop_tracking": "Sluta spåra plats",
+    "start_tracking": "Börja spåra plats",
+    "location_error": "Platsfel",
+    "location_error_description": "Kunde inte komma åt din plats. Kontrollera dina webbläsarinställningar.",
+    "enable_location": "Aktivera plats",
+    "enable_location_description": "Aktivera platsbehörigheter i dina webbläsarinställningar och uppdatera sidan.",
+    "location_blocked": "Plats blockerad",
+    "location_blocked_description": "Aktivera plats för att se avstånd och närliggande saker",
+    "browser_settings": "Webbläsarinställningar",
+    "see_distances": "Se avstånd och hitta närliggande saker",
+    "requesting": "Begär..."
+  },
+  "email_confirmation": {
+    "check_email": "Kolla din e-post",
+    "sent_confirmation": "Vi har skickat en bekräftelselänk till",
+    "check_inbox": "Kontrollera din inkorg och klicka på länken för att fortsätta med att skapa din profil.",
+    "resend_in": "Skicka igen om {{seconds}}s",
+    "sending": "Skickar...",
+    "resend_confirmation": "Skicka bekräftelsemail igen"
+  },
+  "share": {
+    "validating_item": "Validerar objekt...",
+    "please_wait": "Vänta medan vi hittar det delade objektet.",
+    "item_not_found": "Objektet hittades inte.",
+    "item_removed_or_invalid": "Objektet kan ha tagits bort eller länken är ogiltig.",
+    "retrying": "Försöker igen...",
+    "browse_feed": "Bläddra i flödet",
+    "redirecting": "Omdirigerar till objekt..."
+  },
+  "settings": {
+    "title": "Kontoinställningar",
+    "account": "Konto",
+    "notifications": "Aviseringar",
+    "privacy": "Integritet",
+    "danger_zone": "Farozon",
+    "email_password": "E-post & Lösenord",
+    "email_password_description": "Hantera din e-postadress och ditt lösenord",
+    "sign_out": "Logga ut",
+    "sign_out_description": "Logga ut från din nuvarande session",
+    "notification_preferences": "Aviseringsinställningar",
+    "notification_preferences_description": "Kontrollera hur och när du får aviseringar",
+    "privacy_settings": "Integritetsinställningar",
+    "privacy_settings_description": "Granska våra integritetspolicyer och hantera din data",
+    "danger_zone_description": "Oåterkalleliga åtgärder som påverkar ditt konto"
   }
 }
