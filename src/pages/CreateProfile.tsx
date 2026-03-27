@@ -168,7 +168,7 @@ export default function CreateProfile() {
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Creating profile..." : "Create profile"}
+            {loading ? t('profile.creating') : t('profile.create')}
           </Button>
         </form>
       </div>
