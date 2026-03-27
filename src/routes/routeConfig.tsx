@@ -95,4 +95,8 @@ export const privateRoutes = [
     path: "/create-profile", 
     element: <PrivateRoute>{withSuspense(CreateProfile)}</PrivateRoute>
   },
+  { 
+    path: "/profile/edit", 
+    element: <PrivateRoute>{withSuspense(ProfileEdit)}</PrivateRoute>
+  },
 ];
