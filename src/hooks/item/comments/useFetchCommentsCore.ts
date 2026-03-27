@@ -43,7 +43,7 @@ export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) =
       setUseFallbackMode(true);
       setIsLoading(false);
       cleanUp();
-      return FALLBACK_COMMENTS;
+      return getFallbackComments();
     }
 
     if (isMaxAttemptsReached()) {
