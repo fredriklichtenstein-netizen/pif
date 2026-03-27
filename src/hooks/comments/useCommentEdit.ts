@@ -39,8 +39,8 @@ export const useCommentEdit = (
     } catch (error) {
       console.error("Error editing comment:", error);
       toast({
-        title: "Error",
-        description: "Failed to update comment",
+        title: t('common.error'),
+        description: t('common.action_failed'),
         variant: "destructive"
       });
     } finally {
