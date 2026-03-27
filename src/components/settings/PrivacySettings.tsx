@@ -5,9 +5,11 @@ import { Download, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function PrivacySettings() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const requestDataExport = async () => {
@@ -16,16 +18,13 @@ export function PrivacySettings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not found");
 
-      // In a real app, this would trigger a background job
-      // For now, we'll just simulate the request with a toast
-      
       toast({
-        title: "Data export requested",
-        description: "We'll email you when your data is ready to download",
+        title: t('settings.data_export_requested'),
+        description: t('settings.data_export_requested_description'),
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -37,34 +36,34 @@ export function PrivacySettings() {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Privacy Policies</h3>
-        <p className="text-sm text-gray-500">
-          Review our privacy policy and terms of service.
+        <h3 className="text-lg font-medium">{t('settings.privacy_policies')}</h3>
+        <p className="text-sm text-muted-foreground">
+          {t('settings.privacy_policies_description')}
         </p>
         <div className="space-y-2">
           <a 
             href="#privacy-policy" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center text-blue-600 hover:underline"
+            className="flex items-center text-primary hover:underline"
           >
-            Privacy Policy <ExternalLink className="ml-1 h-4 w-4" />
+            {t('settings.privacy_policy')} <ExternalLink className="ml-1 h-4 w-4" />
           </a>
           <a 
             href="#terms-of-service" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center text-blue-600 hover:underline"
+            className="flex items-center text-primary hover:underline"
           >
-            Terms of Service <ExternalLink className="ml-1 h-4 w-4" />
+            {t('settings.terms_of_service')} <ExternalLink className="ml-1 h-4 w-4" />
           </a>
           <a 
             href="#cookie-policy" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center text-blue-600 hover:underline"
+            className="flex items-center text-primary hover:underline"
           >
-            Cookie Policy <ExternalLink className="ml-1 h-4 w-4" />
+            {t('settings.cookie_policy')} <ExternalLink className="ml-1 h-4 w-4" />
           </a>
         </div>
       </div>
@@ -72,9 +71,9 @@ export function PrivacySettings() {
       <Separator />
 
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Your Data</h3>
-        <p className="text-sm text-gray-500">
-          Download a copy of your data or request data deletion.
+        <h3 className="text-lg font-medium">{t('settings.your_data')}</h3>
+        <p className="text-sm text-muted-foreground">
+          {t('settings.your_data_description')}
         </p>
         
         <Button
@@ -84,7 +83,7 @@ export function PrivacySettings() {
           disabled={loading}
         >
           <Download className="h-4 w-4" />
-          {loading ? "Requesting..." : "Request data export"}
+          {loading ? t('settings.requesting_export') : t('settings.request_data_export')}
         </Button>
       </div>
     </div>

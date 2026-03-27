@@ -5,11 +5,13 @@ import { LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export function SignOutButton() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleSignOut = async () => {
     setLoading(true);
@@ -18,12 +20,12 @@ export function SignOutButton() {
       if (error) throw error;
       navigate("/auth");
       toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account",
+        title: t('settings.signed_out'),
+        description: t('settings.signed_out_description'),
       });
     } catch (error: any) {
       toast({
-        title: "Error signing out",
+        title: t('settings.error_signing_out'),
         description: error.message,
         variant: "destructive",
       });
@@ -40,7 +42,7 @@ export function SignOutButton() {
       disabled={loading}
     >
       <LogOut className="mr-2 h-4 w-4" />
-      {loading ? "Signing out..." : "Sign out"}
+      {loading ? t('settings.signing_out') : t('settings.sign_out')}
     </Button>
   );
 }
