@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
@@ -91,6 +92,9 @@ export default function CreateProfile() {
         .select();
 
       if (updateError) throw updateError;
+
+      // Update global auth state so PrivateRoute won't redirect back
+      useGlobalAuth.getState().setProfileCompleted(true);
 
       toast({
         title: "Profile created!",
