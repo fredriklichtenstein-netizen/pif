@@ -12,6 +12,7 @@ import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 
 export default function CreateProfile() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
