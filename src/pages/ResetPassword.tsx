@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -19,8 +20,8 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
-  // Check if we have the access token in the URL
   useEffect(() => {
     const checkToken = async () => {
       const hash = window.location.hash;
@@ -28,7 +29,7 @@ export default function ResetPassword() {
       if (!hash || !hash.includes("access_token")) {
         console.error("Invalid or missing token in URL:", window.location.href);
         setTokenVerified(false);
-        setError("Invalid or expired password reset link. Please request a new one.");
+        setError(t('auth.link_expired_description'));
         return;
       }
       
@@ -40,7 +41,6 @@ export default function ResetPassword() {
           throw new Error("No access token found in URL");
         }
         
-        // Verify the token by trying to set the session
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: hashParams.get('refresh_token') || '',
@@ -61,7 +61,7 @@ export default function ResetPassword() {
       } catch (err: any) {
         console.error("Token verification failed:", err);
         setTokenVerified(false);
-        setError(err.message || "Invalid or expired password reset link. Please request a new one.");
+        setError(err.message || t('auth.link_expired_description'));
       }
     };
     
@@ -70,12 +70,12 @@ export default function ResetPassword() {
 
   const validateForm = () => {
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t('auth.password_min_length'));
       return false;
     }
     
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t('auth.passwords_do_not_match'));
       return false;
     }
     
@@ -102,50 +102,47 @@ export default function ResetPassword() {
       
       setSuccess(true);
       toast({
-        title: "Password updated",
-        description: "Your password has been updated successfully.",
+        title: t('auth.password_updated'),
+        description: t('auth.password_updated_description'),
       });
       
-      // Redirect to login page after short delay
       setTimeout(() => {
         navigate("/auth");
       }, 3000);
     } catch (error: any) {
       console.error("Error resetting password:", error);
-      setError(error.message || "Failed to reset password. Please try again.");
+      setError(error.message || t('auth.failed_reset_password'));
     } finally {
       setLoading(false);
     }
   };
 
-  // Loading state while token verification is in progress
   if (tokenVerified === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 text-center">
           <div className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">Verifying your reset link</h2>
-          <p className="text-gray-600">Please wait while we verify your password reset link.</p>
+          <h2 className="text-2xl font-bold">{t('auth.verifying_reset_link')}</h2>
+          <p className="text-muted-foreground">{t('auth.verifying_reset_link_description')}</p>
         </div>
       </div>
     );
   }
 
-  // Error state for invalid or expired token
   if (tokenVerified === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Link expired or invalid</AlertTitle>
-            <AlertDescription>{error || "Your password reset link is invalid or has expired. Please request a new one."}</AlertDescription>
+            <AlertTitle>{t('auth.link_expired')}</AlertTitle>
+            <AlertDescription>{error || t('auth.link_expired_description')}</AlertDescription>
           </Alert>
           <div className="flex justify-center">
-            <Button onClick={() => navigate("/auth")} className="bg-green-500 hover:bg-green-600">
-              Back to Login
+            <Button onClick={() => navigate("/auth")} className="bg-primary hover:bg-primary/90">
+              {t('auth.back_to_login')}
             </Button>
           </div>
         </div>
@@ -155,17 +152,17 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 text-center">
           <div className="flex justify-center">
-            <CheckCircle className="h-16 w-16 text-green-500" />
+            <CheckCircle className="h-16 w-16 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">Password Reset Successful</h2>
-          <p className="text-gray-600">
-            Your password has been updated. You will be redirected to the login page shortly.
+          <h2 className="text-2xl font-bold">{t('auth.password_reset_successful')}</h2>
+          <p className="text-muted-foreground">
+            {t('auth.password_reset_redirect')}
           </p>
-          <Button onClick={() => navigate("/auth")} className="bg-green-500 hover:bg-green-600">
-            Go to Login
+          <Button onClick={() => navigate("/auth")} className="bg-primary hover:bg-primary/90">
+            {t('auth.go_to_login')}
           </Button>
         </div>
       </div>
@@ -173,21 +170,21 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset Your Password
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
+            {t('auth.reset_password_title')}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Please enter a new password for your account.
+          <p className="mt-2 text-center text-sm text-muted-foreground">
+            {t('auth.reset_password_subtitle')}
           </p>
         </div>
         
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>{t('common.error')}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -195,7 +192,7 @@ export default function ResetPassword() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <Label htmlFor="password">New Password</Label>
+              <Label htmlFor="password">{t('auth.new_password')}</Label>
               <Input
                 id="password"
                 name="password"
@@ -204,15 +201,14 @@ export default function ResetPassword() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Enter your new password (min 6 characters)"
+                placeholder={t('auth.new_password_placeholder')}
                 minLength={6}
                 disabled={loading}
               />
             </div>
             
             <div>
-              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Label htmlFor="confirm-password">{t('auth.confirm_password')}</Label>
               <Input
                 id="confirm-password"
                 name="confirm-password"
@@ -221,8 +217,7 @@ export default function ResetPassword() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Confirm your new password"
+                placeholder={t('auth.confirm_password_placeholder')}
                 minLength={6}
                 disabled={loading}
               />
@@ -232,16 +227,16 @@ export default function ResetPassword() {
           <div>
             <Button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 bg-green-500 hover:bg-green-600"
+              className="w-full flex justify-center py-2 px-4"
               disabled={loading}
             >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  {t('common.processing')}
                 </>
               ) : (
-                "Reset Password"
+                t('auth.reset_password')
               )}
             </Button>
           </div>

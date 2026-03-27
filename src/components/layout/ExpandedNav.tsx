@@ -22,8 +22,8 @@ export const ExpandedNav = ({ className }: ExpandedNavProps) => {
     { 
       path: "/profile", 
       icon: User, 
-      label: "My Profile",
-      description: "View and edit your profile"
+      labelKey: "nav.profile",
+      descriptionKey: "profile.edit_profile"
     },
   ];
 
@@ -38,12 +38,12 @@ export const ExpandedNav = ({ className }: ExpandedNavProps) => {
           className={`flex flex-col items-center p-1 ${className}`}
         >
           <MoreHorizontal size={24} />
-          <span className="text-xs mt-1">More</span>
+          <span className="text-xs mt-1">{t('nav.more')}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[50vh] rounded-t-lg">
         <SheetHeader>
-          <SheetTitle className="text-left">Explore More Features</SheetTitle>
+          <SheetTitle className="text-left">{t('nav.explore_more')}</SheetTitle>
         </SheetHeader>
         <div className="grid gap-3 mt-6">
           {additionalPages.map((page) => {
@@ -53,28 +53,28 @@ export const ExpandedNav = ({ className }: ExpandedNavProps) => {
                 key={page.path}
                 to={page.path}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-gray-50 ${
-                  isActive(page.path) ? "bg-blue-50 border-blue-200" : "border-gray-200"
+                className={`flex items-center justify-between p-4 rounded-lg border transition-colors hover:bg-accent ${
+                  isActive(page.path) ? "bg-primary/10 border-primary/30" : "border-border"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${
-                    isActive(page.path) ? "bg-blue-100" : "bg-gray-100"
+                    isActive(page.path) ? "bg-primary/20" : "bg-muted"
                   }`}>
                     <Icon className={`h-5 w-5 ${
-                      isActive(page.path) ? "text-blue-600" : "text-gray-600"
+                      isActive(page.path) ? "text-primary" : "text-muted-foreground"
                     }`} />
                   </div>
                   <div>
                     <h3 className={`font-medium ${
-                      isActive(page.path) ? "text-blue-900" : "text-gray-900"
+                      isActive(page.path) ? "text-primary" : "text-foreground"
                     }`}>
-                      {page.label}
+                      {t(page.labelKey)}
                     </h3>
-                    <p className="text-sm text-gray-600">{page.description}</p>
+                    <p className="text-sm text-muted-foreground">{t(page.descriptionKey)}</p>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>
             );
           })}

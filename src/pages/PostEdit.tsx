@@ -7,6 +7,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import PostForm from "@/components/post/PostForm";
 import { MainNav } from "@/components/MainNav";
 import { MainHeader } from "@/components/layout/MainHeader";
+import { useTranslation } from "react-i18next";
 
 function PostEdit() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ function PostEdit() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useGlobalAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!id) {
@@ -74,8 +76,8 @@ function PostEdit() {
         <div className="container max-w-2xl mx-auto py-8 px-4">
           <Card className="p-8 flex flex-col items-center">
             <AlertCircle className="text-destructive h-10 w-10 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Error</h2>
-            <p className="text-gray-600">{error}</p>
+            <h2 className="text-xl font-semibold mb-2">{t('common.error')}</h2>
+            <p className="text-muted-foreground">{error}</p>
           </Card>
         </div>
         <MainNav />
@@ -87,7 +89,7 @@ function PostEdit() {
     <div className="min-h-screen flex flex-col">
       <MainHeader />
       <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
-        <h1 className="text-2xl font-bold mb-6">Edit PIF</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('profile.edit_pif')}</h1>
         <PostForm initialData={item} />
       </div>
       <MainNav />
