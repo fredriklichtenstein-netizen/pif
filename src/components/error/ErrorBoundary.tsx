@@ -3,6 +3,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RefreshCw, Bug } from 'lucide-react';
+import i18n from '@/i18n';
 
 interface Props {
   children: ReactNode;
@@ -27,7 +28,6 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
-    // In a real app, you would send this to your error reporting service
     if (typeof window !== 'undefined' && 'navigator' in window && 'sendBeacon' in navigator) {
       const errorData = JSON.stringify({
         error: error.message,
@@ -54,6 +54,8 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const t = i18n.t.bind(i18n);
+
       return (
         <div className="flex items-center justify-center min-h-[400px] p-4">
           <Card className="max-w-md w-full p-6 text-center">
@@ -61,15 +63,15 @@ export class ErrorBoundary extends Component<Props, State> {
               <Bug className="h-12 w-12 text-destructive" />
             </div>
             
-            <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('common.something_went_wrong')}</h2>
             
             <p className="text-muted-foreground mb-4">
-              We encountered an unexpected error. Please try again or refresh the page.
+              {t('common.unexpected_error')}
             </p>
             
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="text-left mb-4 p-2 bg-muted rounded text-xs">
-                <summary className="cursor-pointer mb-2 font-medium">Error Details</summary>
+                <summary className="cursor-pointer mb-2 font-medium">{t('common.error_details')}</summary>
                 <pre className="whitespace-pre-wrap break-words">
                   {this.state.error.message}
                   {this.state.error.stack}
@@ -79,11 +81,11 @@ export class ErrorBoundary extends Component<Props, State> {
             
             <div className="flex gap-2 justify-center">
               <Button onClick={this.handleRetry} variant="outline">
-                Try Again
+                {t('common.try_again')}
               </Button>
               <Button onClick={this.handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Page
+                {t('common.refresh_page')}
               </Button>
             </div>
           </Card>
