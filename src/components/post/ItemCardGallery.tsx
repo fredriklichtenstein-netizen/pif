@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { optimizeImageUrl, preloadImages } from "@/utils/image";
+import { useTranslation } from "react-i18next";
 
 interface ItemCardGalleryProps {
   images: string[];
