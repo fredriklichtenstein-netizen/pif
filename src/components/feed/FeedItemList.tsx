@@ -127,8 +127,8 @@ export function FeedItemList({
       setErrorState({ hasError: false, errorMessage: '' });
       
       toast({
-        title: "Refreshing",
-        description: "Attempting to recover and refresh the feed",
+        title: t('interactions.refreshing'),
+        description: t('interactions.refreshing_description'),
       });
       
       // Clean up any potential timers
