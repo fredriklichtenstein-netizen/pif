@@ -89,8 +89,8 @@ export function useEmailConfirmation() {
 
     if (resendCooldown > 0) {
       toast({
-        title: "Please wait",
-        description: `You can request another confirmation email in ${resendCooldown} seconds.`,
+        title: t('interactions.please_wait_resend'),
+        description: t('interactions.resend_cooldown', { seconds: resendCooldown }),
       });
       return;
     }
