@@ -8,6 +8,7 @@ import { FeedLoadingState } from "./FeedLoadingState";
 import { FeedErrorBoundary } from "./FeedErrorBoundary";
 import { useSearchParams } from "react-router-dom";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
+import { useTranslation } from "react-i18next";
 
 interface FeedItemListProps {
   posts: any[];
@@ -70,6 +71,7 @@ export function FeedItemList({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const targetPostId = searchParams.get('post');
 
@@ -125,8 +127,8 @@ export function FeedItemList({
       setErrorState({ hasError: false, errorMessage: '' });
       
       toast({
-        title: "Refreshing",
-        description: "Attempting to recover and refresh the feed",
+        title: t('interactions.refreshing'),
+        description: t('interactions.refreshing_description'),
       });
       
       // Clean up any potential timers
@@ -154,8 +156,8 @@ export function FeedItemList({
     } catch (err) {
       console.error("Error during recovery action:", err);
       toast({
-        title: "Recovery failed",
-        description: "Please try refreshing the page manually",
+        title: t('interactions.recovery_failed'),
+        description: t('interactions.recovery_failed_description'),
         variant: "destructive",
       });
       setIsRefreshing(false);
@@ -188,7 +190,7 @@ export function FeedItemList({
           console.error("Error in operation success handler:", err);
           setErrorState({
             hasError: true,
-            errorMessage: "Error updating feed. Please try refreshing."
+            errorMessage: t('interactions.feed_update_error')
           });
         }
       }
@@ -196,7 +198,7 @@ export function FeedItemList({
       console.error("Error in handleItemSuccess:", err);
       setErrorState({
         hasError: true,
-        errorMessage: "Error updating feed. Please try refreshing."
+        errorMessage: t('interactions.feed_update_error')
       });
     }
   }, [onItemOperationSuccess, errorState]);

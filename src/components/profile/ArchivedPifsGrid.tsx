@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArchiveRestore, Loader2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
+import { useTranslation } from "react-i18next";
 
 export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const [restoring, setRestoring] = useState<number | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const isOwner = user && user.id === userId;
 
   const fetchArchivedItems = async () => {
@@ -29,11 +31,8 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         .eq("pif_status", "archived")
         .order("archived_at", { ascending: false });
         
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      // Transform data to match the expected format
       const transformedData = data?.map(item => {
         let coordinates;
         if (item.coordinates) {
@@ -68,8 +67,8 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     } catch (err) {
       console.error("Error fetching archived items:", err);
       toast({
-        title: "Error",
-        description: "Failed to load archived items",
+        title: t('post.error'),
+        description: t('interactions.error_load_archived'),
         variant: "destructive"
       });
     } finally {
@@ -95,22 +94,19 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         } as any)
         .eq("id", itemId);
         
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
       toast({
-        title: "Item restored",
-        description: "Your PIF has been restored and is now visible in your active PIFs"
+        title: t('interactions.item_restored'),
+        description: t('interactions.item_restored_description'),
       });
       
-      // Remove the restored item from the list
       setItems(items.filter(item => item.id !== itemId));
     } catch (err) {
       console.error("Error restoring item:", err);
       toast({
-        title: "Error",
-        description: "Failed to restore item",
+        title: t('post.error'),
+        description: t('interactions.restore_error'),
         variant: "destructive"
       });
     } finally {
@@ -120,9 +116,9 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
   if (loading) {
     return (
-      <div className="py-12 text-center text-gray-400">
+      <div className="py-12 text-center text-muted-foreground">
         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-        Loading archived PIFs...
+        {t('interactions.loading_archived')}
       </div>
     );
   }
@@ -130,8 +126,8 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   if (items.length === 0) {
     return (
       <Card className="p-8 text-center">
-        <p className="text-lg font-semibold mb-2">No archived PIFs</p>
-        <p className="text-gray-500">You don't have any archived PIFs at the moment.</p>
+        <p className="text-lg font-semibold mb-2">{t('interactions.no_archived')}</p>
+        <p className="text-muted-foreground">{t('interactions.no_archived_description')}</p>
       </Card>
     );
   }
@@ -156,14 +152,14 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
                 ) : (
                   <ArchiveRestore className="h-4 w-4 mr-1" />
                 )}
-                Restore
+                {t('interactions.restore')}
               </Button>
             </div>
           )}
           
           {item.archived_reason && (
-            <div className="mt-2 text-sm text-gray-500 italic px-3">
-              <span className="font-medium">Archived reason:</span> {item.archived_reason}
+            <div className="mt-2 text-sm text-muted-foreground italic px-3">
+              <span className="font-medium">{t('interactions.archived_reason')}</span> {item.archived_reason}
             </div>
           )}
         </div>

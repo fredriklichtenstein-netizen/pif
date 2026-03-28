@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Share, Link2, Copy, Check } from "lucide-react";
 import { useShare } from "@/hooks/useShare";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface ShareButtonProps {
   title: string;
@@ -25,8 +26,8 @@ export function ShareButton({
   const [isCopied, setIsCopied] = useState(false);
   const { shareContent, isSharing, isShareSupported } = useShare();
   const { toast } = useToast();
+  const { t } = useTranslation();
   
-  // Reset copy state when popover closes
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
@@ -40,9 +41,7 @@ export function ShareButton({
     
     await shareContent({ title, text: message, url });
     setIsOpen(false);
-    if (onShareComplete) {
-      onShareComplete();
-    }
+    if (onShareComplete) onShareComplete();
   };
   
   const handleCopyLink = async (e: React.MouseEvent) => {
@@ -55,17 +54,13 @@ export function ShareButton({
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url);
         setIsCopied(true);
-        toast({ title: "Link copied", description: "Link has been copied to clipboard" });
+        toast({ title: t('interactions.link_copied'), description: t('interactions.link_copied_description') });
         
-        // Close popover after a brief delay
         setTimeout(() => {
           setIsOpen(false);
-          if (onShareComplete) {
-            onShareComplete();
-          }
+          if (onShareComplete) onShareComplete();
         }, 1000);
       } else {
-        // Fallback for browsers without clipboard API
         const textArea = document.createElement('textarea');
         textArea.value = url;
         textArea.style.position = 'fixed';
@@ -80,12 +75,12 @@ export function ShareButton({
         
         if (successful) {
           setIsCopied(true);
-          toast({ title: "Link copied", description: "Link has been copied to clipboard" });
+          toast({ title: t('interactions.link_copied'), description: t('interactions.link_copied_description') });
           setTimeout(() => setIsOpen(false), 1000);
         } else {
           toast({ 
-            title: "Failed to copy link", 
-            description: "Please try another sharing method",
+            title: t('interactions.copy_failed'), 
+            description: t('interactions.copy_failed_description'),
             variant: "destructive" 
           });
         }
@@ -93,30 +88,28 @@ export function ShareButton({
     } catch (error) {
       console.error("Error copying to clipboard:", error);
       toast({ 
-        title: "Failed to copy link", 
-        description: "Please try another sharing method",
+        title: t('interactions.copy_failed'), 
+        description: t('interactions.copy_failed_description'),
         variant: "destructive" 
       });
     }
   };
 
-  // Compact button for mobile or space-constrained UIs
   if (compact) {
     return (
       <Button
         variant="ghost"
         size="sm"
-        className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-transparent text-gray-600 hover:text-primary"
+        className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-transparent text-muted-foreground hover:text-primary"
         onClick={handleCopyLink}
         disabled={isSharing}
       >
         <Share className="h-5 w-5" />
-        <span className="text-xs font-medium">Share</span>
+        <span className="text-xs font-medium">{t('interactions.share')}</span>
       </Button>
     );
   }
 
-  // Full sharing popover for desktop
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -127,18 +120,18 @@ export function ShareButton({
           disabled={isSharing}
         >
           <Share className="h-4 w-4" />
-          Share
+          {t('interactions.share')}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-4">
-        <h3 className="font-medium mb-3 text-center">Share this item</h3>
+        <h3 className="font-medium mb-3 text-center">{t('interactions.share_this_item')}</h3>
         
         <Button 
           className="w-full mb-4 flex items-center justify-center gap-2" 
           onClick={handleCopyLink}
         >
           <Copy className="h-4 w-4" />
-          Copy link to clipboard
+          {t('interactions.copy_link')}
         </Button>
         
         {isShareSupported && (
@@ -148,7 +141,7 @@ export function ShareButton({
             onClick={handleShare}
           >
             <Share className="h-4 w-4" />
-            Share using device options
+            {t('interactions.share_device')}
           </Button>
         )}
         
@@ -166,7 +159,7 @@ export function ShareButton({
         </div>
         
         <p className="text-xs text-muted-foreground mt-3 text-center">
-          Share with friends or copy the link directly
+          {t('interactions.share_hint')}
         </p>
       </PopoverContent>
     </Popover>

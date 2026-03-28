@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationPreferences } from "./types";
+import { useTranslation } from "react-i18next";
 
 export function useNotificationPreferences() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     email_messages: true,
@@ -33,10 +35,8 @@ export function useNotificationPreferences() {
       }
       
       if (userProfile?.notification_preferences) {
-        // Type check the notification_preferences to ensure it's a valid object
         const notificationPrefs = userProfile.notification_preferences as Record<string, boolean>;
         
-        // Create a new preferences object that matches our NotificationPreferences type
         const typedPreferences: NotificationPreferences = {
           email_messages: Boolean(notificationPrefs.email_messages),
           email_mentions: Boolean(notificationPrefs.email_mentions),
@@ -80,12 +80,12 @@ export function useNotificationPreferences() {
       }
 
       toast({
-        title: "Preferences updated",
-        description: "Your notification preferences have been saved",
+        title: t('interactions.preferences_updated'),
+        description: t('interactions.preferences_updated_description'),
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('post.error'),
         description: error.message,
         variant: "destructive",
       });

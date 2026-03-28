@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,7 @@ import { ReceiverConfirmation } from "./completion/ReceiverConfirmation";
 import { CompletionStatusBadge } from "./completion/CompletionStatusBadge";
 import { Check } from "lucide-react";
 import { DEMO_USER } from "@/data/mockProfiles";
+import { useTranslation } from "react-i18next";
 
 export function InterestedPifsGrid({ userId }: { userId: string }) {
   const [interests, setInterests] = useState<any[]>([]);
@@ -26,6 +26,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
   const [removing, setRemoving] = useState(false);
   const [confirmationItem, setConfirmationItem] = useState<any | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const interestedItems = useDemoInteractionsStore((state) => state.interestedItems);
   const toggleInterest = useDemoInteractionsStore((state) => state.toggleInterest);
@@ -35,7 +36,6 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
   const fetchInterests = async () => {
     setLoading(true);
     
-    // Demo mode: show mock posts that user has shown interest in
     if (DEMO_MODE) {
       const interestedPosts = MOCK_POSTS
         .filter(post => interestedItems.includes(post.id))
@@ -84,7 +84,6 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     fetchInterests();
   }, [userId, interestedItems]);
 
-  // Re-fetch when completion status changes
   const completions = useDemoCompletionStore((state) => state.completions);
   useEffect(() => {
     if (DEMO_MODE && userId) {
@@ -108,12 +107,11 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     
     setRemoving(true);
     
-    // Demo mode: toggle interest off
     if (DEMO_MODE) {
       toggleInterest(selectedInterestId);
       toast({
-        title: "Intresse borttaget",
-        description: "Du är inte längre intresserad av denna PIF.",
+        title: t('interactions.interest_removed'),
+        description: t('interactions.interest_removed_description'),
       });
       setRemoving(false);
       setRegretDialogOpen(false);
@@ -129,17 +127,16 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
       if (error) throw error;
       
       toast({
-        title: "Interest removed",
-        description: "You are no longer interested in this PIF."
+        title: t('interactions.interest_removed'),
+        description: t('interactions.interest_removed_description'),
       });
       
-      // Refresh the interests list
       fetchInterests();
     } catch (err) {
       console.error("Error removing interest:", err);
       toast({
-        title: "Error",
-        description: "Failed to remove interest. Please try again.",
+        title: t('post.error'),
+        description: t('interactions.interest_remove_error'),
         variant: "destructive"
       });
     } finally {
@@ -156,7 +153,6 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     if (DEMO_MODE) {
       return interest.completionStatus || "active";
     }
-    // Map database status to completion status
     const dbStatus = interest.item?.status;
     if (dbStatus === "piffed") return "pending_confirmation";
     if (dbStatus === "completed") return "completed";
@@ -171,14 +167,14 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
   };
 
   if (loading) {
-    return <div className="py-8 text-center text-muted-foreground">Laddar...</div>;
+    return <div className="py-8 text-center text-muted-foreground">{t('interactions.loading')}</div>;
   }
   
   if (interests.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
-        <div className="text-lg font-semibold">Inga intressen än</div>
-        <div className="text-sm text-muted-foreground">Du har inte visat intresse för några piffar än.</div>
+        <div className="text-lg font-semibold">{t('interactions.no_interests_title')}</div>
+        <div className="text-sm text-muted-foreground">{t('interactions.no_interests_description')}</div>
       </Card>
     );
   }
@@ -205,7 +201,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
                 />
                 {interest.status === "selected" && itemStatus === "active" && (
                   <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded">
-                    Vald
+                    {t('interactions.selected')}
                   </div>
                 )}
                 {itemStatus !== "active" && (
@@ -232,7 +228,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
                       }}
                     >
                       <Check className="h-4 w-4 mr-2" />
-                      Bekräfta mottagande
+                      {t('interactions.confirm_receipt')}
                     </Button>
                   )}
                   
@@ -243,7 +239,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
                       className="w-full text-red-500 border-red-200 hover:bg-red-50"
                       onClick={(e) => handleRegretClick(interest.id, item.id, e)}
                     >
-                      Ångra intresse
+                      {t('interactions.regret_interest')}
                     </Button>
                   )}
                 </div>
@@ -262,19 +258,19 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
       <AlertDialog open={regretDialogOpen} onOpenChange={setRegretDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ta bort intresse</AlertDialogTitle>
+            <AlertDialogTitle>{t('interactions.remove_interest_title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Är du säker på att du vill ta bort ditt intresse för denna PIF?
+              {t('interactions.remove_interest_confirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={removing}>Avbryt</AlertDialogCancel>
+            <AlertDialogCancel disabled={removing}>{t('interactions.cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmRegret} 
               disabled={removing}
               className="bg-red-600 hover:bg-red-700"
             >
-              {removing ? "Tar bort..." : "Bekräfta"}
+              {removing ? t('interactions.removing') : t('interactions.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
