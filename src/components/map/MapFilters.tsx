@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import {
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Filter, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Post } from "@/types/post";
 
 interface MapFiltersProps {
@@ -23,31 +25,13 @@ interface MapFiltersProps {
   onClearFilters: () => void;
 }
 
-const CATEGORIES = [
-  "Elektronik",
-  "Möbler", 
-  "Kläder",
-  "Böcker",
-  "Sport",
-  "Verktyg",
-  "Leksaker",
-  "Trädgård",
-  "Husgeråd",
-  "Övrigt"
+const CATEGORY_KEYS = [
+  "electronics", "furniture", "clothing", "books", "sports",
+  "tools", "toys", "garden", "household", "other"
 ];
 
-const CONDITIONS = [
-  "Nytt",
-  "Som nytt", 
-  "Mycket bra",
-  "Bra",
-  "Okej",
-  "Dåligt"
-];
-
-const ITEM_TYPES = [
-  { value: "offer", label: "Erbjudanden" },
-  { value: "request", label: "Önskemål" }
+const CONDITION_KEYS = [
+  "new", "like_new", "very_good", "good", "ok", "poor"
 ];
 
 export const MapFilters = ({
@@ -61,15 +45,24 @@ export const MapFilters = ({
   onClearFilters
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
   
-  // Calculate counts for each item type
   const counts = useMemo(() => {
     const pifCount = posts.filter(p => (p.item_type || 'offer') === 'offer').length;
     const wishCount = posts.filter(p => (p.item_type || 'offer') === 'request').length;
     return { all: posts.length, pifs: pifCount, wishes: wishCount };
   }, [posts]);
   
-  // Count only category and condition filters (not item types since they have dedicated toggles)
+  const categories = CATEGORY_KEYS.map(key => ({
+    key,
+    label: t(`categories.${key}`)
+  }));
+
+  const conditions = CONDITION_KEYS.map(key => ({
+    key,
+    label: t(`conditions.${key}`)
+  }));
+
   const activeFiltersCount = selectedCategories.length + selectedConditions.length;
   const hasActiveFilters = activeFiltersCount > 0 || selectedItemTypes.length > 0;
 
@@ -89,30 +82,20 @@ export const MapFilters = ({
     }
   };
 
-  const toggleItemType = (type: string) => {
-    if (selectedItemTypes.includes(type)) {
-      onItemTypeChange(selectedItemTypes.filter(t => t !== type));
-    } else {
-      onItemTypeChange([...selectedItemTypes, type]);
-    }
-  };
-
-  // Check if a specific type is active (when it's the only one selected)
   const isOnlyPifs = selectedItemTypes.length === 1 && selectedItemTypes.includes("offer");
   const isOnlyWishes = selectedItemTypes.length === 1 && selectedItemTypes.includes("request");
   const showingAll = selectedItemTypes.length === 0 || selectedItemTypes.length === 2;
 
   return (
     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-      {/* Item type toggle buttons */}
-      <div className="flex items-center gap-1 bg-white rounded-lg shadow-md p-1">
+      <div className="flex items-center gap-1 bg-background rounded-lg shadow-md p-1">
         <Button
           variant={showingAll ? "default" : "ghost"}
           size="sm"
           onClick={() => onItemTypeChange([])}
-          className={`text-xs px-3 ${showingAll ? "bg-primary text-primary-foreground" : "hover:bg-gray-100"}`}
+          className={`text-xs px-3 ${showingAll ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
         >
-          Alla ({counts.all})
+          {t('map_filters.all')} ({counts.all})
         </Button>
         <Button
           variant={isOnlyPifs ? "default" : "ghost"}
@@ -120,7 +103,7 @@ export const MapFilters = ({
           onClick={() => onItemTypeChange(["offer"])}
           className={`text-xs px-3 ${isOnlyPifs ? "bg-teal-600 hover:bg-teal-700 text-white" : "hover:bg-teal-50 text-teal-700"}`}
         >
-          🎁 Pifs ({counts.pifs})
+          🎁 {t('map_filters.pifs')} ({counts.pifs})
         </Button>
         <Button
           variant={isOnlyWishes ? "default" : "ghost"}
@@ -128,21 +111,20 @@ export const MapFilters = ({
           onClick={() => onItemTypeChange(["request"])}
           className={`text-xs px-3 ${isOnlyWishes ? "bg-amber-500 hover:bg-amber-600 text-white" : "hover:bg-amber-50 text-amber-700"}`}
         >
-          ✨ Önskningar ({counts.wishes})
+          ✨ {t('map_filters.wishes')} ({counts.wishes})
         </Button>
       </div>
 
-      {/* Category/condition filters */}
       <div className="flex items-center gap-2">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="outline" 
               size="sm"
-              className="bg-white shadow-md hover:bg-gray-50 relative"
+              className="bg-background shadow-md hover:bg-accent relative"
             >
               <Filter className="h-4 w-4 mr-2" />
-              Filter
+              {t('map_filters.filter')}
               {activeFiltersCount > 0 && (
                 <Badge 
                   variant="secondary" 
@@ -154,27 +136,27 @@ export const MapFilters = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
-            <DropdownMenuLabel>Kategorier</DropdownMenuLabel>
-            {CATEGORIES.map((category) => (
+            <DropdownMenuLabel>{t('map_filters.categories_label')}</DropdownMenuLabel>
+            {categories.map((cat) => (
               <DropdownMenuCheckboxItem
-                key={category}
-                checked={selectedCategories.includes(category)}
-                onCheckedChange={() => toggleCategory(category)}
+                key={cat.key}
+                checked={selectedCategories.includes(cat.key)}
+                onCheckedChange={() => toggleCategory(cat.key)}
               >
-                {category}
+                {cat.label}
               </DropdownMenuCheckboxItem>
             ))}
             
             <DropdownMenuSeparator />
             
-            <DropdownMenuLabel>Skick</DropdownMenuLabel>
-            {CONDITIONS.map((condition) => (
+            <DropdownMenuLabel>{t('map_filters.condition_label')}</DropdownMenuLabel>
+            {conditions.map((cond) => (
               <DropdownMenuCheckboxItem
-                key={condition}
-                checked={selectedConditions.includes(condition)}
-                onCheckedChange={() => toggleCondition(condition)}
+                key={cond.key}
+                checked={selectedConditions.includes(cond.key)}
+                onCheckedChange={() => toggleCondition(cond.key)}
               >
-                {condition}
+                {cond.label}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
@@ -185,40 +167,39 @@ export const MapFilters = ({
             variant="outline"
             size="sm"
             onClick={onClearFilters}
-            className="bg-white shadow-md hover:bg-gray-50"
+            className="bg-background shadow-md hover:bg-accent"
           >
             <X className="h-4 w-4 mr-1" />
-            Rensa
+            {t('map_filters.clear')}
           </Button>
         )}
       </div>
 
-      {/* Active filter badges (only for categories and conditions) */}
       {(selectedCategories.length > 0 || selectedConditions.length > 0) && (
         <div className="flex flex-wrap gap-1 max-w-72">
-          {selectedCategories.map((category) => (
+          {selectedCategories.map((catKey) => (
             <Badge 
-              key={category} 
+              key={catKey} 
               variant="secondary" 
-              className="text-xs bg-white shadow-sm border"
+              className="text-xs bg-background shadow-sm border"
             >
-              {category}
+              {t(`categories.${catKey}`)}
               <X 
                 className="h-3 w-3 ml-1 cursor-pointer" 
-                onClick={() => toggleCategory(category)}
+                onClick={() => toggleCategory(catKey)}
               />
             </Badge>
           ))}
-          {selectedConditions.map((condition) => (
+          {selectedConditions.map((condKey) => (
             <Badge 
-              key={condition} 
+              key={condKey} 
               variant="secondary" 
-              className="text-xs bg-white shadow-sm border"
+              className="text-xs bg-background shadow-sm border"
             >
-              {condition}
+              {t(`conditions.${condKey}`)}
               <X 
                 className="h-3 w-3 ml-1 cursor-pointer" 
-                onClick={() => toggleCondition(condition)}
+                onClick={() => toggleCondition(condKey)}
               />
             </Badge>
           ))}
