@@ -1,17 +1,5 @@
 
 {
-  "feed": {
-    "title": "Flöde",
-    "subtitle": "Upptäck vad som händer i ditt grannskap",
-    "announcement": "Flödessidan laddad, visar gemenskapens inlägg"
-  },
-  "auth": {
-    "connection_issue": "Anslutningsproblem",
-    "connection_description": "Kan inte ansluta till servern. Kontrollera din internetanslutning.",
-    "try_again": "Försök igen",
-    "check_connection_toast_title": "Anslutningsproblem",
-    "check_connection_toast_description": "Kontrollera din internetanslutning och försök igen."
-  },
   "not_found": {
     "title": "404",
     "page_not_found": "Hoppsan! Sidan hittades inte",
@@ -30,14 +18,5 @@
     "try_again": "Försök igen",
     "browse_feed": "Bläddra i flödet",
     "browse_map": "Bläddra på kartan"
-  },
-  "profile": {
-    "loading": "Laddar profil...",
-    "auth_required": "Autentisering krävs",
-    "sign_in_to_view": "Logga in för att se din profil",
-    "sign_in": "Logga in",
-    "my_pifs_tab": "Mina PIFs",
-    "interested_tab": "Intresserad",
-    "archived_tab": "Arkiverade"
   }
 }
