@@ -44,8 +44,8 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
 
   if (!imageUrls || imageUrls.length === 0) {
     return (
-      <div className="relative h-72 bg-gray-200 flex items-center justify-center">
-        <p className="text-gray-500">No image available</p>
+      <div className="relative h-72 bg-muted flex items-center justify-center">
+        <p className="text-muted-foreground">{t('interactions.no_image_available')}</p>
       </div>
     );
   }
