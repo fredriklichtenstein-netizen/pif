@@ -14,6 +14,7 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   const navigate = useNavigate();
   const { session } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const isOwner = session?.user?.id === postedById;
 
   // Helper method used by the dialog component to check interested users
