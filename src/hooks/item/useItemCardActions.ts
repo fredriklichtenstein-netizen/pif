@@ -51,8 +51,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
         console.error('Interested users check timed out');
         toast({
           variant: "destructive",
-          title: "Operation timed out",
-          description: "Checking interested users took too long. Proceeding with limited information."
+          title: t('interactions.operation_timed_out'),
+          description: t('interactions.check_interested_timeout')
         });
       } else {
         console.error('Error checking interested users:', error);
