@@ -11,6 +11,7 @@ export const useProfileSubmit = (
   clearCache?: () => void
 ) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<Error | null>(null);
 
