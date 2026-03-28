@@ -45,7 +45,7 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
 
   // Update allPosts when fetchedPosts changes (in "all" mode)
   useEffect(() => {
-    if (viewMode === "all" && fetchedPosts.length > 0) {
+    if (viewMode === "all") {
       setAllPosts(fetchedPosts);
     }
   }, [fetchedPosts, viewMode]);
