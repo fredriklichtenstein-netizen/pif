@@ -3,22 +3,21 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { withRetry } from '@/utils/connectionRetryUtils';
+import { useTranslation } from 'react-i18next';
 
 export function useItemDetail(id: string) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   return useQuery({
     queryKey: ['item', id],
     queryFn: async () => {
       try {
-        // Convert the ID to a number since the database expects a numeric ID
         const numericId = parseInt(id, 10);
-        
         if (isNaN(numericId)) {
           throw new Error('Invalid item ID');
         }
         
-        // Use withRetry utility for better network resilience 
         const { data, error } = await withRetry(
           async () => {
             return await supabase
@@ -47,8 +46,8 @@ export function useItemDetail(id: string) {
             },
             onFail: () => {
               toast({
-                title: "Connection issue",
-                description: "Had trouble loading the item details. Please check your connection.",
+                title: t('interactions.connection_issue'),
+                description: t('interactions.connection_issue_description'),
                 variant: "destructive"
               });
             }
@@ -65,9 +64,7 @@ export function useItemDetail(id: string) {
           throw new Error('Item not found');
         }
 
-        // Add some debug info
         console.log('Item detail loaded:', data);
-        
         return data;
       } catch (err) {
         console.error('Error in useItemDetail:', err);
@@ -75,20 +72,15 @@ export function useItemDetail(id: string) {
       }
     },
     retry: (failureCount, error) => {
-      // Only retry specific errors that might be temporary
       if (error instanceof Error) {
         const errorMessage = error.message.toLowerCase();
-        if (
-          errorMessage.includes('network') || 
-          errorMessage.includes('timeout') || 
-          errorMessage.includes('connection')
-        ) {
-          return failureCount < 2; // Retry up to 2 times for network errors
+        if (errorMessage.includes('network') || errorMessage.includes('timeout') || errorMessage.includes('connection')) {
+          return failureCount < 2;
         }
       }
-      return false; // Don't retry other errors
+      return false;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000), // Exponential backoff
-    staleTime: 30000 // Keep data fresh for 30 seconds
+    retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000),
+    staleTime: 30000
   });
 }

@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export const useItemDelete = (
   id: string | number,
@@ -12,10 +13,9 @@ export const useItemDelete = (
   const navigate = useNavigate();
   const { toast } = useToast();
   const isProcessingRef = useRef(false);
+  const { t } = useTranslation();
 
-  // Handle successful delete or archive
   const handleDeleteSuccess = useCallback(() => {
-    // Prevent duplicate calls during the same operation
     if (isProcessingRef.current) {
       console.log("Operation already in progress, skipping duplicate call");
       return;
@@ -25,41 +25,34 @@ export const useItemDelete = (
     console.log("Item was successfully deleted or archived");
     
     try {
-      // Clean up any realtime connections or subscriptions
       cleanupRealtime();
-      
-      // Mark item as deleted in the UI to remove it
       setIsItemDeleted(true);
       
-      // Call the parent's success callback
       if (onOperationSuccess) {
         try {
           onOperationSuccess();
         } catch (error) {
           console.error("Error in onOperationSuccess callback:", error);
           toast({
-            title: "Update Error",
-            description: "Something went wrong while refreshing. Please refresh manually if needed.",
+            title: t('interactions.update_error'),
+            description: t('interactions.update_error_description'),
             variant: "destructive",
           });
         }
       }
     } catch (error) {
       console.error("Error handling delete success:", error);
-      
-      // Even if there's an error, try to reset the UI state
       toast({
-        title: "Warning",
-        description: "Operation completed but there was an issue refreshing the view",
+        title: t('interactions.warning'),
+        description: t('interactions.warning_refresh'),
         variant: "destructive",
       });
     } finally {
-      // Reset the processing flag after a delay to prevent any race conditions
       setTimeout(() => {
         isProcessingRef.current = false;
       }, 500);
     }
-  }, [onOperationSuccess, toast, cleanupRealtime]);
+  }, [onOperationSuccess, toast, cleanupRealtime, t]);
 
   return {
     isItemDeleted,

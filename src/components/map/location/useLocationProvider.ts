@@ -1,6 +1,7 @@
 
 import { useState, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from 'react-i18next';
 
 interface LocationOptions {
   enableHighAccuracy: boolean;
@@ -31,6 +32,7 @@ export const useLocationProvider = (): LocationProvider => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const clearExistingTracking = () => {
     if (watchId.current !== null) {
@@ -45,11 +47,7 @@ export const useLocationProvider = (): LocationProvider => {
     onError: (error: GeolocationPositionError) => void
   ) => {
     if (!navigator.geolocation) {
-      toast({
-        variant: "destructive",
-        title: "Location Error",
-        description: "Geolocation is not supported in your browser.",
-      });
+      toast({ variant: "destructive", title: t('map.location_error'), description: t('interactions.geolocation_not_supported') });
       return;
     }
 
@@ -58,17 +56,9 @@ export const useLocationProvider = (): LocationProvider => {
     setIsLoading(true);
 
     const handlePosition = (position: GeolocationPosition) => {
-      console.log('Location update received:', {
-        coords: [position.coords.longitude, position.coords.latitude],
-        accuracy: position.coords.accuracy
-      });
-      
+      console.log('Location update received:', { coords: [position.coords.longitude, position.coords.latitude], accuracy: position.coords.accuracy });
       setIsLoading(false);
-      
-      const result: LocationResult = {
-        coords: [position.coords.longitude, position.coords.latitude],
-        accuracy: position.coords.accuracy
-      };
+      const result: LocationResult = { coords: [position.coords.longitude, position.coords.latitude], accuracy: position.coords.accuracy };
       onLocation(result);
     };
 
@@ -78,20 +68,8 @@ export const useLocationProvider = (): LocationProvider => {
       onError(error);
     };
 
-    // First get current position with high accuracy
-    navigator.geolocation.getCurrentPosition(
-      handlePosition,
-      handleError,
-      getLocationOptions(true)
-    );
-
-    // Then start watching position
-    watchId.current = navigator.geolocation.watchPosition(
-      handlePosition,
-      handleError,
-      getLocationOptions(true)
-    );
-
+    navigator.geolocation.getCurrentPosition(handlePosition, handleError, getLocationOptions(true));
+    watchId.current = navigator.geolocation.watchPosition(handlePosition, handleError, getLocationOptions(true));
     console.log('Started location tracking with watch ID:', watchId.current);
   };
 
@@ -102,10 +80,5 @@ export const useLocationProvider = (): LocationProvider => {
     console.log('Stopped location tracking');
   };
 
-  return {
-    startTracking,
-    stopTracking,
-    isTracking,
-    isLoading
-  };
+  return { startTracking, stopTracking, isTracking, isLoading };
 };

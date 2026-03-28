@@ -3,22 +3,22 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 export function useSignUp() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleSignUp = async (email: string, password: string, phone?: string, countryCode?: string) => {
     setLoading(true);
     try {
       console.log("Starting signup process with:", { email, phone, countryCode });
       
-      // Format phone number with country code if provided
       const formattedPhone = phone && countryCode ? `${countryCode}${phone}` : null;
       console.log("Formatted phone:", formattedPhone);
 
-      // Create the user with metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -33,7 +33,7 @@ export function useSignUp() {
       if (error) {
         console.error("Signup error:", error);
         toast({
-          title: "Sign up failed",
+          title: t('auth.signup_failed'),
           description: error.message,
           variant: "destructive",
         });
@@ -43,13 +43,10 @@ export function useSignUp() {
 
       if (data.user) {
         console.log("User created:", data.user);
-        
-        // We don't need to create a profile here anymore since the database trigger will handle it
-        // The phone is now optional in the profiles table
 
         toast({
-          title: "Account created successfully!",
-          description: "Please check your email to confirm your account.",
+          title: t('auth.account_created'),
+          description: t('auth.account_created_description'),
         });
         navigate("/email-confirmation?email=" + encodeURIComponent(email));
         setLoading(false);
@@ -61,8 +58,8 @@ export function useSignUp() {
     } catch (error: any) {
       console.error("Unexpected signup error:", error);
       toast({
-        title: "Sign up failed",
-        description: "An unexpected error occurred. Please try again.",
+        title: t('auth.signup_failed'),
+        description: t('auth.signup_unexpected'),
         variant: "destructive",
       });
       setLoading(false);

@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthErrorMessage, isNetworkError } from "./authErrorHandlers";
 import { usePasswordReset } from "./usePasswordReset";
+import { useTranslation } from "react-i18next";
 
 export function useSignIn() {
   const { toast } = useToast();
@@ -11,6 +12,7 @@ export function useSignIn() {
   const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const { handlePasswordReset: resetPassword, loading: resettingPassword } = usePasswordReset();
+  const { t } = useTranslation();
 
   const handleSignIn = async (email: string, password: string) => {
     try {
@@ -20,11 +22,8 @@ export function useSignIn() {
       
       let timeoutId: NodeJS.Timeout | null = null;
       
-      // Use a shorter timeout for sign in - 10 seconds is sufficient
       timeoutId = setTimeout(() => {
         console.log("Sign in is taking longer than expected - possible network issues");
-        // Don't automatically set error or stop signin process yet,
-        // just log the warning
       }, 10000);
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -32,7 +31,6 @@ export function useSignIn() {
         password,
       });
 
-      // Clear the timeout as we got a response
       if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
@@ -45,39 +43,35 @@ export function useSignIn() {
         
         if (error.message.includes("Email not confirmed")) {
           toast({
-            title: "Email not confirmed",
-            description: "Please check your inbox and confirm your email before signing in.",
+            title: t('auth.email_not_confirmed_toast'),
+            description: t('auth.email_not_confirmed_description'),
             variant: "destructive",
           });
           navigate("/email-confirmation?email=" + encodeURIComponent(email));
           setSigningIn(false);
-          setAuthError("Email not confirmed");
+          setAuthError(t('auth.email_not_confirmed_toast'));
           return false;
         }
         
-        // Check if it's specifically an invalid credentials error before 
-        // setting the error message - this is a CRITICAL check to ensure
-        // auth errors aren't mistaken for network errors
         if (error.message.includes("Invalid login credentials")) {
-          setAuthError("Invalid email or password. Please check your credentials and try again.");
+          setAuthError(t('auth.invalid_credentials_description'));
           toast({
-            title: "Authentication failed",
-            description: "Invalid email or password. Please check your credentials and try again.",
+            title: t('auth.auth_failed'),
+            description: t('auth.invalid_credentials_description'),
             variant: "destructive",
           });
         } else if (isNetworkError(error)) {
-          setAuthError("Connection issue. Please check your internet and try again.");
+          setAuthError(t('auth.connection_description_signin'));
           toast({
-            title: "Connection issue",
-            description: "Please check your internet and try again.",
+            title: t('auth.connection_issue_signin'),
+            description: t('auth.connection_description_signin'),
             variant: "destructive",
           });
         } else {
-          // Use the error message utility for other errors
           const errorMsg = getAuthErrorMessage(error);
           setAuthError(errorMsg);
           toast({
-            title: "Authentication failed",
+            title: t('auth.auth_failed'),
             description: errorMsg,
             variant: "destructive",
           });
@@ -89,10 +83,10 @@ export function useSignIn() {
 
       if (!data || !data.user) {
         console.error("Sign in failed: No user data returned");
-        setAuthError("Authentication failed but no error was returned. Please try again.");
+        setAuthError(t('auth.signin_no_data'));
         toast({
-          title: "Sign in failed",
-          description: "Authentication failed but no error was returned. Please try again.",
+          title: t('auth.signin_failed'),
+          description: t('auth.signin_no_data'),
           variant: "destructive",
         });
         setSigningIn(false);
@@ -102,10 +96,10 @@ export function useSignIn() {
       return await handleSuccessfulSignIn(data.user.id);
     } catch (error) {
       console.error("Unexpected error during sign in:", error);
-      setAuthError("An unexpected error occurred. Please try again.");
+      setAuthError(t('auth.signin_unexpected'));
       toast({
-        title: "Sign in failed",
-        description: "An unexpected error occurred. Please try again.",
+        title: t('auth.signin_failed'),
+        description: t('auth.signin_unexpected'),
         variant: "destructive",
       });
       setSigningIn(false);
@@ -115,7 +109,6 @@ export function useSignIn() {
 
   const handleSuccessfulSignIn = async (userId: string) => {
     try {
-      // Clear any previous error state
       setAuthError(null);
 
       const { data: profile, error: profileError } = await supabase
@@ -126,12 +119,11 @@ export function useSignIn() {
 
       console.log("Profile check result:", { profile, profileError });
 
-      // Always redirect to home ("/") after sign-in successful, no matter what
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         toast({
-          title: "Welcome back!",
-          description: "Successfully signed in, but couldn't check your profile status.",
+          title: t('auth.welcome_back'),
+          description: t('auth.welcome_back_description'),
         });
         navigate("/");
         setSigningIn(false);
@@ -140,21 +132,19 @@ export function useSignIn() {
 
       if (!profile || !profile.onboarding_completed) {
         toast({
-          title: "Complete your profile",
-          description: "Let's set up your profile to get started.",
+          title: t('auth.complete_profile'),
+          description: t('auth.complete_profile_description'),
         });
-        // Optionally: if you want users to setup profile, keep this, but always show Home after ("navigate("/")"), otherwise comment out the next line
         navigate("/create-profile");
       }
-      // Always show home after any sign in
       navigate("/");
       setSigningIn(false);
       return true;
     } catch (profileError) {
       console.error("Error in profile check:", profileError);
       toast({
-        title: "Welcome back!",
-        description: "Successfully signed in, but we couldn't check your profile status.",
+        title: t('auth.welcome_back'),
+        description: t('auth.welcome_back_description'),
       });
       navigate("/");
       setSigningIn(false);

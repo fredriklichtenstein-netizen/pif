@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createLocationMarker } from './LocationMarker';
 import { useLocationProvider, type LocationResult } from './location/useLocationProvider';
 import { useLocationStorage } from './location/useLocationStorage';
+import { useTranslation } from 'react-i18next';
 
 interface LocationTrackingResult {
   userLocation: [number, number] | null;
@@ -20,30 +21,19 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   const storage = useLocationStorage();
   const locationProvider = useLocationProvider();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const isFirstMount = useRef(true);
 
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    storage.getStoredLocation()
-  );
-
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(storage.getStoredLocation());
   const [accuracy, setAccuracy] = useState<number | null>(null);
-
-  const [isTracking, setIsTracking] = useState(
-    storage.getStoredTrackingState()
-  );
+  const [isTracking, setIsTracking] = useState(storage.getStoredTrackingState());
 
   const updateLocationMarker = (lngLat: [number, number]) => {
     if (!map) return;
-
     try {
-      // Only remove the old marker if it's attached to a map
-      if (locationMarker.current?.getElement()?.parentNode) {
-        locationMarker.current.remove();
-      }
+      if (locationMarker.current?.getElement()?.parentNode) locationMarker.current.remove();
       locationMarker.current = createLocationMarker(map, lngLat);
-    } catch (error) {
-      console.error("Error updating location marker:", error);
-    }
+    } catch (error) { console.error("Error updating location marker:", error); }
   };
 
   const handleLocationUpdate = (result: LocationResult) => {
@@ -51,68 +41,39 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     setUserLocation(result.coords);
     setAccuracy(result.accuracy);
     storage.setStoredLocation(result.coords);
-    
     if (map) {
       updateLocationMarker(result.coords);
-      // Only fly to location on first time getting a position
       if (!userLocation) {
-        map.flyTo({
-          center: result.coords,
-          zoom: 14,
-          duration: 2000,
-          essential: true
-        });
+        map.flyTo({ center: result.coords, zoom: 14, duration: 2000, essential: true });
       }
     }
-
-    // Reset retry count on successful location update
     retryCount.current = 0;
   };
 
   const handleLocationError = (error: GeolocationPositionError) => {
     console.error("Geolocation error:", error);
-    
     if (error.code === error.PERMISSION_DENIED) {
       stopLocationTracking();
-      toast({
-        variant: "destructive",
-        title: "Location Permission Denied",
-        description: "Please enable location permissions in your browser settings and refresh the page.",
-      });
+      toast({ variant: "destructive", title: t('interactions.location_permission_denied'), description: t('interactions.location_permission_description') });
     } else if (error.code === error.POSITION_UNAVAILABLE) {
       stopLocationTracking();
-      toast({
-        variant: "destructive",
-        title: "Location Unavailable",
-        description: "Could not determine your location. Please check your device's location services.",
-      });
+      toast({ variant: "destructive", title: t('interactions.location_unavailable'), description: t('interactions.location_unavailable_description') });
     } else if (error.code === error.TIMEOUT) {
       retryCount.current += 1;
       if (retryCount.current <= 3) {
         if (retryCount.current === 1) {
-          toast({
-            title: "Location Taking Longer",
-            description: "Still trying to get your location...",
-          });
+          toast({ title: t('interactions.location_taking_longer'), description: t('interactions.location_taking_longer_description') });
         }
         console.log(`Retrying location tracking (attempt ${retryCount.current}/3)`);
-        // Don't call startLocationTracking again, let the provider handle retries
       } else {
         stopLocationTracking();
-        toast({
-          variant: "destructive",
-          title: "Location Unavailable",
-          description: "Unable to get your location after several attempts. Please try again later.",
-        });
+        toast({ variant: "destructive", title: t('interactions.location_unavailable'), description: t('interactions.location_unavailable_retry') });
       }
     }
   };
 
   const startLocationTracking = () => {
-    if (!map) {
-      console.log('Cannot start location tracking: map not ready');
-      return;
-    }
+    if (!map) { console.log('Cannot start location tracking: map not ready'); return; }
     console.log('Starting location tracking');
     setIsTracking(true);
     storage.setStoredTrackingState(true);
@@ -123,56 +84,26 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     console.log('Stopping location tracking');
     locationProvider.stopTracking();
     if (locationMarker.current) {
-      try {
-        locationMarker.current.remove();
-      } catch (error) {
-        console.error("Error removing location marker:", error);
-      }
+      try { locationMarker.current.remove(); } catch (error) { console.error("Error removing location marker:", error); }
       locationMarker.current = null;
     }
-    setIsTracking(false);
-    setAccuracy(null);
+    setIsTracking(false); setAccuracy(null);
     storage.setStoredTrackingState(false);
     retryCount.current = 0;
   };
 
-  // Handle tracking state when map changes
   useEffect(() => {
-    if (!map) {
-      if (isTracking) {
-        console.log('Map not ready, stopping location tracking');
-        stopLocationTracking();
-      }
-      return;
-    }
-
-    // Restore tracking state if needed
+    if (!map) { if (isTracking) { console.log('Map not ready, stopping location tracking'); stopLocationTracking(); } return; }
     const shouldTrack = storage.getStoredTrackingState();
-    if (shouldTrack && !locationProvider.isTracking) {
-      console.log('Initializing location tracking with new map instance');
-      startLocationTracking();
-    }
-    
-    // Cleanup function
+    if (shouldTrack && !locationProvider.isTracking) { console.log('Initializing location tracking with new map instance'); startLocationTracking(); }
     return () => {
-      // Only clean up marker, don't stop tracking
       if (locationMarker.current) {
         console.log('Cleaning up location marker for map instance change');
-        try {
-          locationMarker.current.remove();
-        } catch (error) {
-          console.error("Error cleaning up location marker:", error);
-        }
+        try { locationMarker.current.remove(); } catch (error) { console.error("Error cleaning up location marker:", error); }
         locationMarker.current = null;
       }
     };
   }, [map]);
 
-  return {
-    userLocation,
-    isLoadingLocation: locationProvider.isLoading,
-    isTracking,
-    accuracy,
-    toggleLocationTracking: isTracking ? stopLocationTracking : startLocationTracking,
-  };
+  return { userLocation, isLoadingLocation: locationProvider.isLoading, isTracking, accuracy, toggleLocationTracking: isTracking ? stopLocationTracking : startLocationTracking };
 };

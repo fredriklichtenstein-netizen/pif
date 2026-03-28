@@ -5,11 +5,13 @@ import { useItemDetail } from '@/hooks/item/useItemDetail';
 import { useToast } from '@/hooks/use-toast';
 import { parseCoordinatesFromDB } from '@/types/post';
 import { useItemCard } from '@/hooks/useItemCard';
+import { useTranslation } from 'react-i18next';
 
 export function useItemDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [retryCount, setRetryCount] = useState(0);
   const [hasCheckedLocalStorage, setHasCheckedLocalStorage] = useState(false);
   const [localItem, setLocalItem] = useState<any>(null);
@@ -95,8 +97,8 @@ export function useItemDetailPage() {
   useEffect(() => {
     if (localItem && item) {
       toast({
-        title: "Item details refreshed",
-        description: "Latest information has been loaded",
+        title: t('interactions.item_refreshed'),
+        description: t('interactions.item_refreshed_description'),
       });
     }
   }, [item, localItem, toast]);
