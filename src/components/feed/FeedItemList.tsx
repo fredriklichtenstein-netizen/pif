@@ -156,8 +156,8 @@ export function FeedItemList({
     } catch (err) {
       console.error("Error during recovery action:", err);
       toast({
-        title: "Recovery failed",
-        description: "Please try refreshing the page manually",
+        title: t('interactions.recovery_failed'),
+        description: t('interactions.recovery_failed_description'),
         variant: "destructive",
       });
       setIsRefreshing(false);
