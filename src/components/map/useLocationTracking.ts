@@ -36,6 +36,8 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     } catch (error) { console.error("Error updating location marker:", error); }
   };
 
+  const shouldFlyRef = useRef(false);
+
   const handleLocationUpdate = (result: LocationResult) => {
     console.log('Got position:', result.coords, 'Accuracy:', result.accuracy, 'meters');
     setUserLocation(result.coords);
@@ -43,8 +45,9 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     storage.setStoredLocation(result.coords);
     if (map) {
       updateLocationMarker(result.coords);
-      if (!userLocation) {
-        map.flyTo({ center: result.coords, zoom: 14, duration: 2000, essential: true });
+      if (!userLocation || shouldFlyRef.current) {
+        map.flyTo({ center: result.coords, zoom: 13, duration: 1500, essential: true });
+        shouldFlyRef.current = false;
       }
     }
     retryCount.current = 0;
