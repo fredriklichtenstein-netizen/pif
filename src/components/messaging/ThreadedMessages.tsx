@@ -173,6 +173,7 @@ export const ThreadedMessages = ({
   onSendReply
 }: ThreadedMessagesProps) => {
   const [newMessage, setNewMessage] = useState("");
+  const { t } = useTranslation();
 
   // Filter out top-level messages (no parentId)
   const topLevelMessages = messages.filter(msg => !msg.parentId);
