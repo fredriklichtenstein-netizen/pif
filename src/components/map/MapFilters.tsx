@@ -150,7 +150,7 @@ export const MapFilters = ({
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64">
+          <DropdownMenuContent align="start" className="w-64 max-h-80 overflow-y-auto">
             <DropdownMenuLabel>{t('map_filters.categories_label')}</DropdownMenuLabel>
             {categories.map((cat) => (
               <DropdownMenuCheckboxItem

@@ -78,6 +78,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   const startLocationTracking = () => {
     if (!map) { console.log('Cannot start location tracking: map not ready'); return; }
     console.log('Starting location tracking');
+    shouldFlyRef.current = true;
     setIsTracking(true);
     storage.setStoredTrackingState(true);
     locationProvider.startTracking(handleLocationUpdate, handleLocationError);
