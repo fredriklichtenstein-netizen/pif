@@ -24,6 +24,7 @@ export const useCommentActions = (
 ) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const deleteDemoComment = useDemoInteractionsStore(state => state.deleteComment);
   const toggleDemoCommentLike = useDemoInteractionsStore(state => state.toggleCommentLike);
 
