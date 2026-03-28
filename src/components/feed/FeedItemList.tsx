@@ -198,7 +198,7 @@ export function FeedItemList({
       console.error("Error in handleItemSuccess:", err);
       setErrorState({
         hasError: true,
-        errorMessage: "Error updating feed. Please try refreshing."
+        errorMessage: t('interactions.feed_update_error')
       });
     }
   }, [onItemOperationSuccess, errorState]);
