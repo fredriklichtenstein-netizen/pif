@@ -7,13 +7,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
 
 interface PhoneInputProps {
   value: string;
   countryCode: string;
   onPhoneChange: (phone: string, countryCode: string) => void;
   required?: boolean;
-  disabled?: boolean; // Add the disabled prop
+  disabled?: boolean;
 }
 
 const countryCodes = [
@@ -24,9 +25,9 @@ const countryCodes = [
 ];
 
 export function PhoneInput({ value, countryCode, onPhoneChange, required, disabled }: PhoneInputProps) {
-  // Handle phone number input change
+  const { t } = useTranslation();
+  
   const handlePhoneChange = (newPhone: string) => {
-    // If the phone number starts with a leading zero, remove it
     if (newPhone.startsWith('0')) {
       newPhone = newPhone.substring(1);
     }
@@ -42,7 +43,7 @@ export function PhoneInput({ value, countryCode, onPhoneChange, required, disabl
         disabled={disabled}
       >
         <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Country code" />
+          <SelectValue placeholder={t('interactions.country_code')} />
         </SelectTrigger>
         <SelectContent>
           {countryCodes.map((country) => (
@@ -56,7 +57,7 @@ export function PhoneInput({ value, countryCode, onPhoneChange, required, disabl
         type="tel"
         value={value}
         onChange={(e) => handlePhoneChange(e.target.value)}
-        placeholder="Phone number"
+        placeholder={t('interactions.phone_number')}
         required={required}
         disabled={disabled}
         className="flex-1"

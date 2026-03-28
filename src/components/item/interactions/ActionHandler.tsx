@@ -2,6 +2,7 @@
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useTranslation } from "react-i18next";
 
 interface ActionHandlerProps {
   children: (handleAction: (action: () => void, requiresAuth?: boolean) => void) => React.ReactNode;
@@ -11,6 +12,7 @@ export const ActionHandler = ({ children }: ActionHandlerProps) => {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const handleAction = async (action: () => void, requiresAuth: boolean = true) => {
     console.log("handleAction called, requiresAuth:", requiresAuth, "user:", !!user);
@@ -18,8 +20,8 @@ export const ActionHandler = ({ children }: ActionHandlerProps) => {
     if (requiresAuth && !user) {
       console.log("Authentication required but no user is logged in");
       toast({
-        title: "Authentication required",
-        description: "Please sign in to perform this action",
+        title: t('interactions.auth_required_title'),
+        description: t('interactions.auth_required_description', { action: t('interactions.sign_in') }),
         variant: "destructive",
       });
       navigate("/auth");
@@ -33,8 +35,8 @@ export const ActionHandler = ({ children }: ActionHandlerProps) => {
     } catch (error) {
       console.error('Action failed:', error);
       toast({
-        title: "Action failed",
-        description: error instanceof Error ? error.message : "Unable to complete action",
+        title: t('auth.action_failed'),
+        description: error instanceof Error ? error.message : t('auth.action_failed_description'),
         variant: "destructive",
       });
     }

@@ -1,5 +1,6 @@
 
 import { InterestUserItem } from "./InterestUserItem";
+import { useTranslation } from "react-i18next";
 
 interface InterestPopoverContentProps {
   users: any[];
@@ -8,9 +9,11 @@ interface InterestPopoverContentProps {
 }
 
 export function InterestPopoverContent({ users, isOwner, onSelectUser }: InterestPopoverContentProps) {
+  const { t } = useTranslation();
+  
   return (
     <>
-      <div className="font-bold text-sm mb-2">Interested Users</div>
+      <div className="font-bold text-sm mb-2">{t('interactions.interested_users')}</div>
       <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
         {users.map((user) => (
           <InterestUserItem

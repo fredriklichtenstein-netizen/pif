@@ -10,6 +10,7 @@ import { useConversationDetails } from "@/hooks/useConversationDetails";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EnhancedMessageInput } from "./EnhancedMessageInput";
 import { RealtimeIndicators } from "./RealtimeIndicators";
+import { useTranslation } from "react-i18next";
 
 interface ConversationViewProps {
   conversationId: string;
@@ -20,6 +21,7 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
   const currentUserId = session?.user?.id;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [newMessage, setNewMessage] = useState("");
+  const { t } = useTranslation();
   const { 
     messages, 
     isLoading: messagesLoading, 
@@ -32,7 +34,6 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
     isLoading: detailsLoading 
   } = useConversationDetails(conversationId);
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -78,7 +79,7 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
       {/* Conversation header */}
       <div className="border-b p-3">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+          <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0 overflow-hidden">
             {otherParticipant?.profile?.avatar_url ? (
               <img 
                 src={otherParticipant.profile.avatar_url} 
@@ -86,7 +87,7 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="h-full w-full flex items-center justify-center text-gray-500">
+              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
                 {(otherParticipant?.profile?.username || "U").charAt(0).toUpperCase()}
               </div>
             )}
@@ -96,8 +97,8 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
               {otherParticipant?.profile?.username || "User"}
             </h3>
             {item && (
-              <p className="text-xs text-gray-500">
-                About: {item.title}
+              <p className="text-xs text-muted-foreground">
+                {t('interactions.about_item', { title: item.title })}
               </p>
             )}
           </div>
@@ -111,9 +112,9 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            <p>No messages yet</p>
-            <p className="text-sm mt-2">Send a message to start the conversation</p>
+          <div className="text-center text-muted-foreground py-8">
+            <p>{t('interactions.no_messages')}</p>
+            <p className="text-sm mt-2">{t('interactions.send_to_start')}</p>
           </div>
         ) : (
           <>
@@ -134,12 +135,12 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
         value={newMessage}
         onChange={setNewMessage}
         onSend={handleSendMessage}
-        placeholder="Type a message..."
+        placeholder={t('messages.type_message')}
         showTypingIndicator={true}
       />
       
       {/* Real-time indicators */}
-      <div className="px-3 py-1 border-t bg-gray-50">
+      <div className="px-3 py-1 border-t bg-muted/50">
         <RealtimeIndicators 
           conversationId={conversationId}
           showOnlineStatus={true}

@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface AddressSearchBarProps {
   value: string;
@@ -16,10 +17,12 @@ export function AddressSearchBar({
   onLocationClick, 
   locationButtonLabel 
 }: AddressSearchBarProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="flex gap-2 mb-2">
       <Input
-        placeholder="Enter your address"
+        placeholder={t('interactions.enter_address')}
         value={value}
         onChange={(e) => onAddressChange(e.target.value)}
         className="flex-1"

@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 interface GenderSelectorProps {
   value: string;
@@ -14,31 +15,33 @@ interface GenderSelectorProps {
   required?: boolean;
 }
 
-const genderOptions = [
-  { value: "female", label: "Female" },
-  { value: "male", label: "Male" },
-  { value: "transgender", label: "Transgender" },
-  { value: "non_binary", label: "Non-binary" },
-  { value: "other", label: "Other" },
-  { value: "prefer_not_to_say", label: "Prefer not to say" },
+const genderKeys = [
+  { value: "female", labelKey: "profile.gender_female" },
+  { value: "male", labelKey: "profile.gender_male" },
+  { value: "transgender", labelKey: "profile.gender_transgender" },
+  { value: "non_binary", labelKey: "profile.gender_non_binary" },
+  { value: "other", labelKey: "profile.gender_other" },
+  { value: "prefer_not_to_say", labelKey: "profile.gender_prefer_not_to_say" },
 ];
 
 export function GenderSelector({ value, onChange, required }: GenderSelectorProps) {
+  const { t } = useTranslation();
+  
   return (
     <div>
-      <Label htmlFor="gender">Gender</Label>
+      <Label htmlFor="gender">{t('profile.gender')}</Label>
       <Select
         value={value}
         onValueChange={onChange}
         required={required}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select your gender" />
+          <SelectValue placeholder={t('profile.select_gender')} />
         </SelectTrigger>
         <SelectContent>
-          {genderOptions.map((option) => (
+          {genderKeys.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </SelectItem>
           ))}
         </SelectContent>

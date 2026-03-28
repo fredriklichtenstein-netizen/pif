@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface RatingInputProps {
   onSubmit: (rating: number, comment?: string) => void;
@@ -15,6 +16,15 @@ export function RatingInput({ onSubmit, isSubmitting = false, recipientName }: R
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
+  const { t } = useTranslation();
+
+  const ratingLabels = [
+    t('interactions.rating_very_bad'),
+    t('interactions.rating_bad'),
+    t('interactions.rating_ok'),
+    t('interactions.rating_good'),
+    t('interactions.rating_excellent'),
+  ];
 
   const handleSubmit = () => {
     if (rating > 0) {
@@ -25,10 +35,9 @@ export function RatingInput({ onSubmit, isSubmitting = false, recipientName }: R
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Betygsätt {recipientName}</CardTitle>
+        <CardTitle className="text-lg">{t('interactions.rate_user', { name: recipientName })}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Star rating */}
         <div className="flex flex-col items-center space-y-2">
           <div className="flex space-x-1">
             {Array.from({ length: 5 }, (_, i) => (
@@ -44,7 +53,7 @@ export function RatingInput({ onSubmit, isSubmitting = false, recipientName }: R
                   className={`h-8 w-8 transition-colors ${
                     i < (hoverRating || rating)
                       ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-300 hover:text-yellow-200'
+                      : 'text-muted-foreground hover:text-yellow-200'
                   }`}
                 />
               </button>
@@ -52,34 +61,28 @@ export function RatingInput({ onSubmit, isSubmitting = false, recipientName }: R
           </div>
           {rating > 0 && (
             <p className="text-sm text-muted-foreground">
-              {rating === 1 && "Mycket dåligt"}
-              {rating === 2 && "Dåligt"}
-              {rating === 3 && "Okej"}
-              {rating === 4 && "Bra"}
-              {rating === 5 && "Utmärkt"}
+              {ratingLabels[rating - 1]}
             </p>
           )}
         </div>
 
-        {/* Comment */}
         <div>
-          <label className="text-sm font-medium">Kommentar (valfritt)</label>
+          <label className="text-sm font-medium">{t('interactions.comment_optional')}</label>
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Skriv en kommentar om din upplevelse..."
+            placeholder={t('interactions.write_comment_experience')}
             rows={3}
             className="mt-1"
           />
         </div>
 
-        {/* Submit button */}
         <Button
           onClick={handleSubmit}
           disabled={rating === 0 || isSubmitting}
           className="w-full"
         >
-          {isSubmitting ? "Skickar..." : "Skicka betyg"}
+          {isSubmitting ? t('interactions.submitting_rating') : t('interactions.submit_rating')}
         </Button>
       </CardContent>
     </Card>

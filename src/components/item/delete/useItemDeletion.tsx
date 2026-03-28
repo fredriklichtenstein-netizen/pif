@@ -2,11 +2,9 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
-/**
- * Custom hook to handle item deletion or archiving
- */
 export function useItemDeletion(
   id: string | number,
   onClose: () => void,
@@ -16,36 +14,24 @@ export function useItemDeletion(
   const operationCompleteRef = useRef(false);
   const timeoutRefs = useRef<Array<NodeJS.Timeout>>([]);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
-  // Cleanup function to ensure all pending operations are properly terminated
   const cleanupState = useCallback(() => {
-    // Clear all pending timeouts
     timeoutRefs.current.forEach(timeoutId => {
       if (timeoutId) clearTimeout(timeoutId);
     });
-    
-    // Reset the timeout refs array
     timeoutRefs.current = [];
-    
-    // Reset state
     setIsDeleting(false);
   }, []);
 
-  // Function to cleanup all realtime connections for this item
   const cleanupRealtimeConnections = useCallback(() => {
     try {
       console.log(`Starting cleanup for item ${id} realtime connections`);
-      
-      // Get all channels
       const allChannels = supabase.getChannels();
-      
-      // Find and remove channels related to this item
       const itemChannels = allChannels.filter(channel => 
         channel.topic.includes(`item-`) && channel.topic.includes(`${id}`)
       );
-      
       console.log(`Found ${itemChannels.length} realtime channels to clean up for item ${id}`);
-      
       if (itemChannels.length > 0) {
         itemChannels.forEach(channel => {
           try {
@@ -55,8 +41,6 @@ export function useItemDeletion(
             console.error(`Error removing channel ${channel.topic}:`, e);
           }
         });
-      } else {
-        console.log("No realtime channels found for cleanup");
       }
     } catch (e) {
       console.error("Error in cleanup process:", e);
@@ -64,126 +48,71 @@ export function useItemDeletion(
   }, [id]);
 
   const handleDeleteConfirm = async (reason: string, isSoftDelete: boolean) => {
-    // Always ensure we have a numeric ID for the database functions
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-    console.log(`Starting ${isSoftDelete ? 'archive' : 'delete'} operation for item ${numericId}, type: ${typeof numericId}`);
-    
-    // Track the operation type for optimistic UI updates
+    console.log(`Starting ${isSoftDelete ? 'archive' : 'delete'} operation for item ${numericId}`);
     const operationType: OperationType = isSoftDelete ? 'archive' : 'delete';
     
     setIsDeleting(true);
     operationCompleteRef.current = false;
 
     try {
-      // First check if we're authenticated
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
-        console.error("Authentication error: No active session found");
         throw new Error('You must be signed in to perform this action.');
       }
       
-      console.log(`Using authenticated session for user: ${sessionData.session.user.id}`);
       let success = false;
       
       if (isSoftDelete) {
-        // Use the database function for archiving
-        console.log(`Calling archive_item with ID: ${numericId}, type: ${typeof numericId}`);
-        const { data: result, error } = await supabase.rpc(
-          'archive_item',
-          { 
-            p_item_id: numericId,
-            p_reason: reason || null
-          }
-        );
-        
-        if (error) {
-          console.error('Archive error details:', error);
-          throw error;
-        }
-        
+        const { data: result, error } = await supabase.rpc('archive_item', { 
+          p_item_id: numericId, p_reason: reason || null 
+        });
+        if (error) throw error;
         success = Boolean(result);
-        
-        if (!success) {
-          throw new Error('Failed to archive item');
-        }
+        if (!success) throw new Error('Failed to archive item');
         
         toast({
-          title: "Item archived",
-          description: "The item has been archived and can be restored later",
+          title: t('interactions.item_archived'),
+          description: t('interactions.item_archived_restore'),
         });
       } else {
-        // For permanent deletion, use the database function
-        console.log(`Calling delete_item_with_related_records with ID: ${numericId}, type: ${typeof numericId}`);
-        const { data: result, error: deleteError } = await supabase.rpc(
-          'delete_item_with_related_records',
-          { 
-            p_item_id: numericId,
-            p_reason: reason || null
-          }
-        );
-        
-        if (deleteError) {
-          console.error('Delete error details:', deleteError);
-          throw new Error(`Failed to delete item: ${deleteError.message || 'Unknown error'}`);
-        }
-        
+        const { data: result, error: deleteError } = await supabase.rpc('delete_item_with_related_records', { 
+          p_item_id: numericId, p_reason: reason || null 
+        });
+        if (deleteError) throw new Error(`Failed to delete item: ${deleteError.message || 'Unknown error'}`);
         success = Boolean(result);
-        
-        if (!success) {
-          throw new Error('Failed to delete item - operation returned false');
-        }
+        if (!success) throw new Error('Failed to delete item');
         
         toast({
-          title: "Item deleted",
-          description: "The item has been permanently deleted",
+          title: t('interactions.item_deleted'),
+          description: t('interactions.item_permanently_deleted'),
         });
       }
 
-      // Mark operation as complete to prevent state conflicts
       operationCompleteRef.current = true;
-      
-      // Important: Cleanup all realtime connections first
       cleanupRealtimeConnections();
-      
-      // Always reset pointer events
       document.body.style.pointerEvents = '';
       
-      // Defer state changes to allow React to process events properly
       const closeTimeout = setTimeout(() => {
-        // First close the dialog
         onClose();
-        
-        // Then after a delay, call the success callback with the operation type
         const successTimeout = setTimeout(() => {
-          if (onSuccess) {
-            onSuccess(operationType);
-          }
+          if (onSuccess) onSuccess(operationType);
         }, 100);
-        
         timeoutRefs.current.push(successTimeout);
       }, 50);
-      
       timeoutRefs.current.push(closeTimeout);
       
     } catch (error: any) {
       console.error('Error deleting/archiving item:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to complete operation. Please try again.",
+        title: t('interactions.error_title'),
+        description: error.message || t('interactions.delete_error_description'),
         variant: "destructive",
       });
-      
-      // Reset pointer events
       document.body.style.pointerEvents = '';
-      
-      // Even on error, ensure we close the dialog
-      const errorTimeout = setTimeout(() => {
-        onClose();
-      }, 50);
-      
+      const errorTimeout = setTimeout(() => { onClose(); }, 50);
       timeoutRefs.current.push(errorTimeout);
     } finally {
-      // Set deleting state to false to update UI
       setIsDeleting(false);
     }
   };

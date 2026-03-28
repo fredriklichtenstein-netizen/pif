@@ -7,6 +7,7 @@ import { useAddress } from "@/hooks/address/useAddress";
 import { AddressSuggestions } from "./AddressSuggestions";
 import { AddressMap } from "./AddressMap";
 import { AddressSearchBar } from "./AddressSearchBar";
+import { useTranslation } from "react-i18next";
 
 interface AddressInputProps {
   value: string;
@@ -23,6 +24,7 @@ export function AddressInputContainer({
   mapButtonLabel = <Map className="w-4 h-4" />,
   hideSearch 
 }: AddressInputProps) {
+  const { t } = useTranslation();
   const { mapToken } = useMapbox();
   const {
     suggestions,
@@ -42,7 +44,7 @@ export function AddressInputContainer({
 
   const handleSuggestionSelect = async (suggestion: string) => {
     console.log("Suggestion selected:", suggestion);
-    setSuggestions([]); // Clear immediately
+    setSuggestions([]);
     const coords = await handleShowMap(suggestion);
     onChange(suggestion, coords);
   };
@@ -70,7 +72,7 @@ export function AddressInputContainer({
           <Input
             value={value}
             onChange={(e) => handleAddressInput(e.target.value)}
-            placeholder="Enter your address"
+            placeholder={t('interactions.enter_address')}
             className="flex-1"
           />
           <Button

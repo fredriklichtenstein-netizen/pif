@@ -1,6 +1,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
 
 interface NameFieldsProps {
   firstName: string;
@@ -15,10 +16,12 @@ export function NameFields({
   onFirstNameChange,
   onLastNameChange,
 }: NameFieldsProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <Label htmlFor="firstName">First name</Label>
+        <Label htmlFor="firstName">{t('profile.first_name')}</Label>
         <Input
           id="firstName"
           value={firstName}
@@ -28,7 +31,7 @@ export function NameFields({
       </div>
 
       <div>
-        <Label htmlFor="lastName">Last name</Label>
+        <Label htmlFor="lastName">{t('profile.last_name')}</Label>
         <Input
           id="lastName"
           value={lastName}

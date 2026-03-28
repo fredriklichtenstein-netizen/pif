@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { X, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ImagePreviewItemProps {
   image: string;
@@ -36,11 +37,13 @@ export function ImagePreviewItem({
   onMoveImage,
   onRemoveImage,
 }: ImagePreviewItemProps) {
+  const { t } = useTranslation();
   const canDrag = !isRequest && totalImages > 1;
+  const imageLabel = isRequest ? t('interactions.reference_image') : t('interactions.image_number', { number: index + 1 });
 
   return (
     <div 
-      className={`relative group border rounded-lg overflow-hidden bg-white transition-all duration-200 ${
+      className={`relative group border rounded-lg overflow-hidden bg-background transition-all duration-200 ${
         draggedIndex === index ? 'opacity-50 scale-95' : ''
       } ${
         dropTargetIndex === index ? 'border-primary border-2 bg-primary/5' : ''
@@ -55,7 +58,6 @@ export function ImagePreviewItem({
       onDrop={(e) => onDrop(e, index)}
       onDragEnd={onDragEnd}
     >
-      {/* Image number badge */}
       {!isRequest && (
         <div className="absolute top-2 left-2 z-10 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-full">
           {index + 1}
@@ -63,18 +65,16 @@ export function ImagePreviewItem({
         </div>
       )}
 
-      {/* Drag handle for non-requests with multiple images */}
       {canDrag && (
         <div className="absolute top-2 right-12 z-10 bg-black/70 text-white p-1 rounded cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
           <GripVertical className="h-4 w-4" />
         </div>
       )}
 
-      {/* Drop indicator */}
       {dropTargetIndex === index && draggedIndex !== index && (
         <div className="absolute inset-0 z-20 bg-primary/10 border-2 border-primary border-dashed rounded-lg flex items-center justify-center">
-          <div className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
-            Släpp här
+          <div className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+            {t('interactions.drop_here')}
           </div>
         </div>
       )}
@@ -82,16 +82,16 @@ export function ImagePreviewItem({
       <div className="flex">
         <img
           src={image}
-          alt={`${isRequest ? 'Referensbild' : `Bild ${index + 1}`}`}
+          alt={imageLabel}
           className="w-24 h-24 object-cover"
         />
         <div className="flex-1 p-3 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">
-              {isRequest ? 'Referensbild' : `Bild ${index + 1}`}
+              {imageLabel}
             </p>
             {!isRequest && index === 0 && (
-              <p className="text-xs text-muted-foreground">Visas i flödet</p>
+              <p className="text-xs text-muted-foreground">{t('interactions.shown_in_feed')}</p>
             )}
           </div>
           
