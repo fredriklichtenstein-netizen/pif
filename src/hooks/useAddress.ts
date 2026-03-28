@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export const useAddress = (mapToken: string, onAddressChange: (address: string) => void) => {
   const { toast } = useToast();
