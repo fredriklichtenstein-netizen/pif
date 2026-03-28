@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 
 interface DistanceRingsProps {
@@ -9,85 +9,15 @@ interface DistanceRingsProps {
   rings?: number[]; // distances in km
 }
 
+const SOURCE_ID = 'distance-radius';
+const FILL_LAYER_ID = 'distance-radius-fill';
+const LINE_LAYER_ID = 'distance-radius-line';
+
 export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: DistanceRingsProps) => {
-  const ringsAdded = useRef(false);
+  const addedRef = useRef(false);
+  const prevRingsKey = useRef('');
 
-  useEffect(() => {
-    if (!map || !center || !visible) {
-      removeRings();
-      return;
-    }
-
-    addRings();
-    
-    return () => removeRings();
-  }, [map, center, visible, rings]);
-
-  const addRings = () => {
-    if (!map || !center || ringsAdded.current) return;
-
-    try {
-      rings.forEach((distance, index) => {
-        const sourceId = `distance-ring-${distance}`;
-        const layerId = `distance-ring-layer-${distance}`;
-
-        // Create circle geometry
-        const circle = createCircle(center, distance);
-        
-        if (!map.getSource(sourceId)) {
-          map.addSource(sourceId, {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              geometry: circle,
-              properties: { distance }
-            }
-          });
-        }
-
-        if (!map.getLayer(layerId)) {
-          map.addLayer({
-            id: layerId,
-            type: 'line',
-            source: sourceId,
-            paint: {
-              'line-color': '#3b82f6',
-              'line-width': 2,
-              'line-opacity': 0.6 - (index * 0.15)
-            }
-          });
-        }
-      });
-      
-      ringsAdded.current = true;
-    } catch (error) {
-      console.error('Error adding distance rings:', error);
-    }
-  };
-
-  const removeRings = () => {
-    if (!map || !ringsAdded.current) return;
-
-    try {
-      rings.forEach((distance) => {
-        const sourceId = `distance-ring-${distance}`;
-        const layerId = `distance-ring-layer-${distance}`;
-
-        if (map.getLayer(layerId)) {
-          map.removeLayer(layerId);
-        }
-        if (map.getSource(sourceId)) {
-          map.removeSource(sourceId);
-        }
-      });
-      
-      ringsAdded.current = false;
-    } catch (error) {
-      console.error('Error removing distance rings:', error);
-    }
-  };
-
-  const createCircle = (center: [number, number], radiusKm: number): GeoJSON.Polygon => {
+  const createCircle = useCallback((center: [number, number], radiusKm: number): GeoJSON.Polygon => {
     const points = 64;
     const coords: number[][] = [];
     
@@ -95,22 +25,89 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
       const angle = (i / points) * 2 * Math.PI;
       const dx = radiusKm * Math.cos(angle);
       const dy = radiusKm * Math.sin(angle);
-      
-      // Convert km to degrees (approximate)
       const deltaLat = dy / 110.54;
       const deltaLng = dx / (110.54 * Math.cos(center[1] * Math.PI / 180));
-      
       coords.push([center[0] + deltaLng, center[1] + deltaLat]);
     }
-    
-    // Close the ring
     coords.push(coords[0]);
     
-    return {
-      type: 'Polygon' as const,
-      coordinates: [coords]
+    return { type: 'Polygon' as const, coordinates: [coords] };
+  }, []);
+
+  const removeAll = useCallback(() => {
+    if (!map || !addedRef.current) return;
+    try {
+      if (map.getLayer(FILL_LAYER_ID)) map.removeLayer(FILL_LAYER_ID);
+      if (map.getLayer(LINE_LAYER_ID)) map.removeLayer(LINE_LAYER_ID);
+      if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID);
+      addedRef.current = false;
+    } catch (e) {
+      console.error('Error removing distance radius:', e);
+    }
+  }, [map]);
+
+  useEffect(() => {
+    if (!map || !center || !visible || rings.length === 0) {
+      removeAll();
+      prevRingsKey.current = '';
+      return;
+    }
+
+    const radiusKm = rings[rings.length - 1]; // use largest ring
+    const key = `${center[0]},${center[1]},${radiusKm}`;
+    if (key === prevRingsKey.current) return;
+    prevRingsKey.current = key;
+
+    const circle = createCircle(center, radiusKm);
+    const geojson: GeoJSON.Feature = {
+      type: 'Feature',
+      geometry: circle,
+      properties: { distance: radiusKm }
     };
-  };
+
+    try {
+      if (addedRef.current) {
+        // Update existing source
+        const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
+        if (source) {
+          source.setData(geojson as any);
+          return;
+        }
+      }
+
+      // Remove stale layers first
+      removeAll();
+
+      map.addSource(SOURCE_ID, { type: 'geojson', data: geojson as any });
+
+      map.addLayer({
+        id: FILL_LAYER_ID,
+        type: 'fill',
+        source: SOURCE_ID,
+        paint: {
+          'fill-color': '#3b82f6',
+          'fill-opacity': 0.08
+        }
+      });
+
+      map.addLayer({
+        id: LINE_LAYER_ID,
+        type: 'line',
+        source: SOURCE_ID,
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': 2,
+          'line-opacity': 0.5
+        }
+      });
+
+      addedRef.current = true;
+    } catch (error) {
+      console.error('Error adding distance radius:', error);
+    }
+
+    return () => removeAll();
+  }, [map, center, visible, rings, createCircle, removeAll]);
 
   return null;
 };

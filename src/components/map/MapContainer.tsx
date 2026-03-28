@@ -180,12 +180,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             isVisible={locationTracking.isTracking && locationTracking.accuracy !== null}
           />
 
-          <DistanceFilters
-            selectedDistance={selectedDistance}
-            onDistanceChange={setSelectedDistance}
-            userLocation={locationTracking.userLocation}
-          />
-
           <MapFilters
             posts={filteredPosts}
             selectedCategories={selectedCategories}

@@ -1,8 +1,7 @@
 
-import { useState } from 'react';
-import { MapPin, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useMemo } from 'react';
+import { MapPin } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import { useTranslation } from 'react-i18next';
 
 interface DistanceFiltersProps {
@@ -11,70 +10,57 @@ interface DistanceFiltersProps {
   userLocation: [number, number] | null;
 }
 
-const DISTANCE_OPTIONS = [
-  { value: 1, label: '1km' },
-  { value: 5, label: '5km' },
-  { value: 10, label: '10km' },
-  { value: 25, label: '25km' }
-];
+// Slider steps: 1, 2, 3, 5, 10, 15, 25, null(All)
+const DISTANCE_STEPS = [1, 2, 3, 5, 10, 15, 25];
+const MAX_STEP = DISTANCE_STEPS.length; // index for "All"
+
+function distanceToStep(distance: number | null): number {
+  if (distance === null) return MAX_STEP;
+  const idx = DISTANCE_STEPS.indexOf(distance);
+  return idx >= 0 ? idx : MAX_STEP;
+}
+
+function stepToDistance(step: number): number | null {
+  if (step >= MAX_STEP) return null;
+  return DISTANCE_STEPS[step];
+}
 
 export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocation }: DistanceFiltersProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
+
+  const currentStep = useMemo(() => distanceToStep(selectedDistance), [selectedDistance]);
+
+  const handleSliderChange = (value: number[]) => {
+    onDistanceChange(stepToDistance(value[0]));
+  };
 
   if (!userLocation) {
     return (
-      <div className="absolute top-20 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <MapPin className="h-4 w-4" />
-          <span className="text-sm">{t('interactions.enable_location_filters')}</span>
-        </div>
+      <div className="flex items-center gap-2 text-muted-foreground px-1">
+        <MapPin className="h-3.5 w-3.5 shrink-0" />
+        <span className="text-xs">{t('interactions.enable_location_filters')}</span>
       </div>
     );
   }
 
-  return (
-    <div className="absolute top-20 left-4 bg-background/90 backdrop-blur-sm rounded-lg shadow-lg border">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 p-3"
-      >
-        <Filter className="h-4 w-4" />
-        <span className="text-sm font-medium">{t('interactions.distance')}</span>
-        {selectedDistance && (
-          <Badge variant="secondary" className="ml-1">
-            {selectedDistance}km
-          </Badge>
-        )}
-      </Button>
+  const label = selectedDistance ? `${selectedDistance} km` : t('interactions.all');
 
-      {isExpanded && (
-        <div className="border-t p-2">
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={selectedDistance === null ? "default" : "outline"}
-              size="sm"
-              onClick={() => onDistanceChange(null)}
-              className="text-xs"
-            >
-              {t('interactions.all')}
-            </Button>
-            {DISTANCE_OPTIONS.map((option) => (
-              <Button
-                key={option.value}
-                variant={selectedDistance === option.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => onDistanceChange(option.value)}
-                className="text-xs"
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
+        {t('interactions.distance')}:
+      </span>
+      <Slider
+        value={[currentStep]}
+        min={0}
+        max={MAX_STEP}
+        step={1}
+        onValueChange={handleSliderChange}
+        className="w-32"
+      />
+      <span className="text-xs font-semibold text-foreground whitespace-nowrap shrink-0 min-w-[3rem] text-right">
+        {label}
+      </span>
     </div>
   );
 };
