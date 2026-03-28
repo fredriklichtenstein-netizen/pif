@@ -13,6 +13,7 @@ import {
 import { Filter, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/types/post";
+import { DistanceFilters } from "./distance/DistanceFilters";
 
 interface MapFiltersProps {
   posts: Post[];
@@ -23,6 +24,9 @@ interface MapFiltersProps {
   onConditionChange: (conditions: string[]) => void;
   onItemTypeChange: (types: string[]) => void;
   onClearFilters: () => void;
+  selectedDistance: number | null;
+  onDistanceChange: (distance: number | null) => void;
+  userLocation: [number, number] | null;
 }
 
 const CATEGORY_KEYS = [
@@ -42,7 +46,10 @@ export const MapFilters = ({
   onCategoryChange,
   onConditionChange,
   onItemTypeChange,
-  onClearFilters
+  onClearFilters,
+  selectedDistance,
+  onDistanceChange,
+  userLocation
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
@@ -113,6 +120,14 @@ export const MapFilters = ({
         >
           ✨ {t('map_filters.wishes')} ({counts.wishes})
         </Button>
+      </div>
+
+      <div className="bg-background/90 backdrop-blur-sm rounded-lg shadow-md p-2">
+        <DistanceFilters
+          selectedDistance={selectedDistance}
+          onDistanceChange={onDistanceChange}
+          userLocation={userLocation}
+        />
       </div>
 
       <div className="flex items-center gap-2">

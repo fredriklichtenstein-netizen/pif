@@ -10,7 +10,6 @@ import { useLocationTracking } from "./useLocationTracking";
 import { LocationAccuracyIndicator } from "./location/LocationAccuracyIndicator";
 import { LocationPermissionManager } from "./location/LocationPermissionManager";
 import { DistanceRings } from "./distance/DistanceRings";
-import { DistanceFilters } from "./distance/DistanceFilters";
 import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import { useTranslation } from "react-i18next";
 import "./MapStyles.css";
@@ -180,12 +179,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             isVisible={locationTracking.isTracking && locationTracking.accuracy !== null}
           />
 
-          <DistanceFilters
-            selectedDistance={selectedDistance}
-            onDistanceChange={setSelectedDistance}
-            userLocation={locationTracking.userLocation}
-          />
-
           <MapFilters
             posts={filteredPosts}
             selectedCategories={selectedCategories}
@@ -195,6 +188,9 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             onConditionChange={setSelectedConditions}
             onItemTypeChange={setSelectedItemTypes}
             onClearFilters={handleClearFilters}
+            selectedDistance={selectedDistance}
+            onDistanceChange={setSelectedDistance}
+            userLocation={locationTracking.userLocation}
           />
 
           <DistanceRings
