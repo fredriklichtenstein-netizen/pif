@@ -105,8 +105,8 @@ export function useEmailConfirmation() {
       if (error) throw error;
 
       toast({
-        title: "Email sent",
-        description: "Please check your inbox for the confirmation link.",
+        title: t('interactions.email_sent'),
+        description: t('interactions.email_sent_description'),
       });
       
       setResendCooldown(60);
