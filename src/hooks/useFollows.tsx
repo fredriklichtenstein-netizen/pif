@@ -40,8 +40,8 @@ export const useFollows = () => {
         if (error) throw error;
         
         toast({
-          title: "Unfollowed",
-          description: "You have unfollowed this user",
+          title: t('interactions.unfollowed'),
+          description: t('interactions.unfollowed_description'),
         });
         
         return false;
