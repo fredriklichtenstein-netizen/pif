@@ -37,6 +37,26 @@ export default function CreateProfile() {
     setFormData(prev => ({ ...prev, ...data }));
   };
 
+  const geocodeAddress = async (address: string): Promise<string | null> => {
+    if (!address) return null;
+    try {
+      const { data: tokenData } = await supabase.functions.invoke('get-mapbox-token');
+      if (!tokenData?.token) return null;
+      const encoded = encodeURIComponent(address);
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${tokenData.token}&country=SE&limit=1`
+      );
+      const json = await res.json();
+      if (json.features?.length > 0) {
+        const [lng, lat] = json.features[0].center;
+        return `${lng},${lat}`;
+      }
+    } catch (err) {
+      console.error("Geocoding error:", err);
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -74,8 +94,11 @@ export default function CreateProfile() {
 
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
 
+      // Geocode address to get coordinates
+      const location = await geocodeAddress(formData.address);
+
       // Prepare profile data with proper date formatting
-      const profileData = {
+      const profileData: any = {
         id: user.id,
         username: username,
         first_name: formData.firstName,
@@ -85,7 +108,8 @@ export default function CreateProfile() {
         address: formData.address,
         avatar_url: avatarPath,
         date_of_birth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : null,
-        onboarding_completed: true
+        onboarding_completed: true,
+        location: location,
       };
 
       const { data: createdProfile, error: updateError } = await supabase
