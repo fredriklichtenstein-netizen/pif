@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_MODE } from "@/config/demoMode";
+import { useTranslation } from "react-i18next";
+import { DEMO_MODE } from "@/config/demoMode";
 
 // Storage key for user-provided demo token
 const DEMO_TOKEN_KEY = 'pif_demo_mapbox_token';
