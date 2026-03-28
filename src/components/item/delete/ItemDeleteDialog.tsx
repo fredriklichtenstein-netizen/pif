@@ -104,8 +104,8 @@ export function ItemDeleteDialog({
         }
       }}
       onConfirm={handleDeleteConfirm}
-      title="Delete Item"
-      description="Are you sure you want to delete this item? This action may not be reversible."
+      title={t('interactions.delete_item_title')}
+      description={t('interactions.delete_item_description')}
       hasInterestedUsers={showInterestInfo && interestedCount > 0}
       interestCount={interestedCount}
       isLoading={isDeleting}

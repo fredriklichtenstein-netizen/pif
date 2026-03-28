@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { optimizeImageUrl } from "@/utils/imageProcessing";
+import { useTranslation } from "react-i18next";
 
 interface ItemImageGalleryProps {
   images: string[];
@@ -12,6 +13,7 @@ interface ItemImageGalleryProps {
 export function ItemImageGallery({ images, title, category }: ItemImageGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([]);
+  const { t } = useTranslation();
   
   const validImages = images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [];
   const allImages = validImages.length > 0 ? validImages : [];
@@ -20,11 +22,7 @@ export function ItemImageGallery({ images, title, category }: ItemImageGalleryPr
     if (currentImageIndex >= allImages.length) {
       setCurrentImageIndex(0);
     }
-    
-    // Initialize image loading states
     setImagesLoaded(new Array(allImages.length).fill(false));
-    
-    // Preload next image
     if (allImages.length > 1) {
       const nextIndex = (currentImageIndex + 1) % allImages.length;
       const img = new Image();
@@ -52,13 +50,12 @@ export function ItemImageGallery({ images, title, category }: ItemImageGalleryPr
 
   if (allImages.length === 0) {
     return (
-      <div className="w-full h-[240px] bg-gray-200 flex items-center justify-center">
-        <span className="text-gray-400">No image available</span>
+      <div className="w-full h-[240px] bg-muted flex items-center justify-center">
+        <span className="text-muted-foreground">{t('interactions.no_image_available')}</span>
       </div>
     );
   }
 
-  // Get optimized version of the current image
   const currentImage = optimizeImageUrl(allImages[currentImageIndex], 800);
 
   return (
@@ -85,14 +82,14 @@ export function ItemImageGallery({ images, title, category }: ItemImageGalleryPr
           <button 
             onClick={handlePrevImage}
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 rounded-full p-1 text-white hover:bg-black/50 transition-colors"
-            aria-label="Previous image"
+            aria-label={t('interactions.previous_image')}
           >
             <ChevronLeft size={20} />
           </button>
           <button 
             onClick={handleNextImage}
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 rounded-full p-1 text-white hover:bg-black/50 transition-colors"
-            aria-label="Next image"
+            aria-label={t('interactions.next_image')}
           >
             <ChevronRight size={20} />
           </button>

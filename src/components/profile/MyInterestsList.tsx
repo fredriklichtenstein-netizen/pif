@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function MyInterestsList({ userId }: { userId: string }) {
   const [interests, setInterests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!userId) return;
@@ -25,13 +27,13 @@ export function MyInterestsList({ userId }: { userId: string }) {
   }, [userId]);
 
   if (loading) {
-    return <div className="py-8 text-center text-gray-400">Laddar...</div>;
+    return <div className="py-8 text-center text-muted-foreground">{t('interactions.loading')}</div>;
   }
   if (interests.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
-        <div className="text-lg font-semibold">Inga intressen än</div>
-        <div className="text-sm text-gray-500">Du har inte visat intresse för några piffar än.</div>
+        <div className="text-lg font-semibold">{t('interactions.no_interests_yet_title')}</div>
+        <div className="text-sm text-muted-foreground">{t('interactions.no_interests_yet_description')}</div>
       </Card>
     );
   }
@@ -55,19 +57,19 @@ export function MyInterestsList({ userId }: { userId: string }) {
             </Link>
             <div className="flex-1 flex flex-col p-3">
               <Link to={`/feed?post=${item.id}`} className="font-semibold text-base hover:underline">{item.title}</Link>
-              <div className="text-xs text-gray-400 mb-1">
+              <div className="text-xs text-muted-foreground mb-1">
                 {int.created_at && new Date(int.created_at).toLocaleDateString()}
               </div>
-              <div className="mb-1 text-gray-600 text-sm line-clamp-2">{item.description}</div>
+              <div className="mb-1 text-muted-foreground text-sm line-clamp-2">{item.description}</div>
               <div>
                 {int.status === "pending" && (
-                  <span className="bg-yellow-100 text-yellow-700 px-2 rounded text-xs">Väntar</span>
+                  <span className="bg-yellow-100 text-yellow-700 px-2 rounded text-xs">{t('interactions.status_waiting')}</span>
                 )}
                 {int.status === "selected" && (
-                  <span className="bg-green-100 text-green-700 px-2 rounded text-xs">Vald</span>
+                  <span className="bg-green-100 text-green-700 px-2 rounded text-xs">{t('interactions.status_selected_label')}</span>
                 )}
                 {int.status === "not_selected" && (
-                  <span className="bg-gray-200 text-gray-500 px-2 rounded text-xs">Inte vald</span>
+                  <span className="bg-muted text-muted-foreground px-2 rounded text-xs">{t('interactions.status_not_selected_label')}</span>
                 )}
               </div>
             </div>

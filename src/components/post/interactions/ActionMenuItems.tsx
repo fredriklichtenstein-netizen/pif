@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ActionMenuItemsProps {
   isBookmarked: boolean;
@@ -37,15 +38,11 @@ export function ActionMenuItems({
   onDelete
 }: ActionMenuItemsProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const handleEdit = useCallback((e: React.MouseEvent) => {
-    // Prevent default behavior
     e.preventDefault();
     e.stopPropagation();
-    
-    console.log("Edit clicked in ActionMenuItems");
-    
-    // Add a small delay to ensure the dropdown closes properly
     setTimeout(() => {
       if (onEdit) {
         onEdit();
@@ -56,17 +53,12 @@ export function ActionMenuItems({
   }, [onEdit, itemId, navigate]);
   
   const handleDelete = useCallback((e: React.MouseEvent) => {
-    // Prevent default behavior
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("Delete clicked in ActionMenuItems for item:", itemId);
-    
-    // Try to use the global dialog manager first (most direct approach)
     const dialogManager = getDeleteDialogManager();
     
     if (dialogManager && itemId) {
-      console.log("Using global dialog manager to open delete dialog");
       dialogManager.openDeleteDialog({
         id: itemId,
         onSuccess: onDelete
@@ -74,23 +66,16 @@ export function ActionMenuItems({
       return;
     }
     
-    // Fallback to the custom event approach if global manager not ready
-    console.log("Global dialog manager not available, using custom event");
-    
-    // Create and dispatch a direct event to trigger deletion
     const deleteEvent = new CustomEvent("global-delete-dialog-open", {
       detail: { itemId, onSuccess: onDelete },
       bubbles: true,
       cancelable: true
     });
     
-    // Dispatch the event to trigger dialog opening
     document.dispatchEvent(deleteEvent);
     
-    // Also try the regular callback as a final fallback
     setTimeout(() => {
       if (onDelete) {
-        console.log("Calling onDelete callback");
         onDelete();
       }
     }, 50);
@@ -103,12 +88,12 @@ export function ActionMenuItems({
           {isBookmarked ? (
             <>
               <BookmarkCheck className="mr-2 h-4 w-4 text-primary" />
-              <span>Remove from saved</span>
+              <span>{t('interactions.remove_from_saved')}</span>
             </>
           ) : (
             <>
               <BookmarkPlus className="mr-2 h-4 w-4" />
-              <span>Save</span>
+              <span>{t('interactions.save')}</span>
             </>
           )}
         </DropdownMenuItem>
@@ -116,7 +101,7 @@ export function ActionMenuItems({
       
       <DropdownMenuItem onClick={onShare} className="cursor-pointer">
         <Share className="mr-2 h-4 w-4" />
-        <span>Share</span>
+        <span>{t('interactions.share')}</span>
       </DropdownMenuItem>
       
       {isOwner && (
@@ -128,7 +113,7 @@ export function ActionMenuItems({
             data-action="edit-item"
           >
             <Pencil className="mr-2 h-4 w-4" />
-            <span>Edit</span>
+            <span>{t('interactions.edit')}</span>
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={handleDelete} 
@@ -136,7 +121,7 @@ export function ActionMenuItems({
             data-action="delete-item"
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            <span>Delete</span>
+            <span>{t('interactions.delete')}</span>
           </DropdownMenuItem>
         </>
       )}
@@ -146,7 +131,7 @@ export function ActionMenuItems({
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onReportClick} className="cursor-pointer text-destructive focus:text-destructive">
             <Flag className="mr-2 h-4 w-4" />
-            <span>Report</span>
+            <span>{t('interactions.report')}</span>
           </DropdownMenuItem>
         </>
       )}
