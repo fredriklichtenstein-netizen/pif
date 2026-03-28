@@ -13,6 +13,7 @@ export const useRealtimeRefresh = (
   handleReconnect: () => void
 ) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   // Enhanced refresh with proper error handling
   const refreshItemData = useCallback(() => {
