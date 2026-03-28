@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, ChevronRight, ChevronDown } from "lucide-react";
@@ -172,6 +173,7 @@ export const ThreadedMessages = ({
   onSendReply
 }: ThreadedMessagesProps) => {
   const [newMessage, setNewMessage] = useState("");
+  const { t } = useTranslation();
 
   // Filter out top-level messages (no parentId)
   const topLevelMessages = messages.filter(msg => !msg.parentId);
@@ -210,7 +212,7 @@ export const ThreadedMessages = ({
           value={newMessage}
           onChange={setNewMessage}
           onSend={handleSendMessage}
-          placeholder="Type a message..."
+          placeholder={t('messages.type_message')}
           showTypingIndicator={true}
         />
       </div>

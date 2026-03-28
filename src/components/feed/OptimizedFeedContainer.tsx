@@ -14,50 +14,47 @@ import { useSwipeGestures } from '@/hooks/mobile/useSwipeGestures';
 import { useVibration } from '@/hooks/mobile/useVibration';
 import { EnhancedLoading } from '@/components/ui/enhanced-loading';
 import { DEMO_MODE } from '@/config/demoMode';
+import { useTranslation } from 'react-i18next';
 
 export function OptimizedFeedContainer() {
   const { posts, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
+  const { t } = useTranslation();
 
-  // Memoize posts to prevent unnecessary re-renders and reduce API calls
   const memoizedPosts = useMemo(() => posts, [posts]);
 
-  // Memoize callbacks to prevent FeedItemList re-renders
   const handleRefresh = useCallback(async () => {
-    announce("Refreshing feed", "polite");
+    announce(t('interactions.refreshing_feed'), "polite");
     await measureFetch(refresh);
-    announce("Feed refreshed", "polite");
-  }, [announce, measureFetch, refresh]);
+    announce(t('interactions.feed_refreshed'), "polite");
+  }, [announce, measureFetch, refresh, t]);
 
   const handleLoadMore = useCallback(async () => {
-    announce("Loading more posts", "polite");
+    announce(t('interactions.loading_more_posts'), "polite");
     await measureFetch(loadMore);
-  }, [announce, measureFetch, loadMore]);
+  }, [announce, measureFetch, loadMore, t]);
 
   const handlePostUpdate = useCallback((updatedPosts: any[]) => {
-    // Handle real-time post updates
     console.log('Posts updated via real-time:', updatedPosts.length);
-    announce(`${updatedPosts.length} new posts available`, "polite");
-  }, [announce]);
+    announce(t('interactions.new_posts_available', { count: updatedPosts.length }), "polite");
+  }, [announce, t]);
 
-  // Swipe gestures for mobile
   useSwipeGestures({
     onSwipeDown: () => {
       if (!isLoading) {
         handleRefresh();
-        vibrate(50); // Short vibration feedback
+        vibrate(50);
       }
     }
   });
 
-  // In demo mode, show demo banner and mock posts
   if (DEMO_MODE) {
     return (
       <div className="space-y-4">
         <DemoModeBanner />
-        <section role="feed" aria-label="Community posts (demo)">
+        <section role="feed" aria-label={t('interactions.community_posts_demo')}>
           <FeedItemList
             posts={memoizedPosts}
             selectedCategories={[]}
@@ -73,8 +70,8 @@ export function OptimizedFeedContainer() {
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading feed">
-        <EnhancedLoading size="lg" text="Loading your community feed..." />
+      <div role="status" aria-label={t('interactions.loading_feed')}>
+        <EnhancedLoading size="lg" text={t('interactions.loading_feed')} />
       </div>
     );
   }
@@ -82,7 +79,7 @@ export function OptimizedFeedContainer() {
   if (error) {
     return (
       <FeedErrorState 
-        errorMessage={error.message || 'An error occurred'} 
+        errorMessage={error.message || t('interactions.error_label')} 
         onRetry={handleRefresh} 
       />
     );
@@ -102,7 +99,7 @@ export function OptimizedFeedContainer() {
     <div className="space-y-4">
       <RealtimeIndicator posts={posts} onPostUpdate={handlePostUpdate} />
       
-      <section role="feed" aria-label="Community posts">
+      <section role="feed" aria-label={t('interactions.community_posts')}>
         <FeedItemList
           posts={memoizedPosts}
           selectedCategories={[]}
@@ -114,14 +111,14 @@ export function OptimizedFeedContainer() {
       </section>
       
       {hasMore && (
-        <div className="flex justify-center" role="navigation" aria-label="Load more posts">
+        <div className="flex justify-center" role="navigation" aria-label={t('interactions.load_more_posts')}>
           <button
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50 focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            aria-label={isLoadingMore ? "Loading more posts..." : "Load more posts"}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            aria-label={isLoadingMore ? t('interactions.loading_more') : t('interactions.load_more_posts')}
           >
-            {isLoadingMore ? <EnhancedLoading size="sm" text="Loading..." /> : 'Load More'}
+            {isLoadingMore ? <EnhancedLoading size="sm" text={t('interactions.loading_more')} /> : t('interactions.load_more')}
           </button>
         </div>
       )}

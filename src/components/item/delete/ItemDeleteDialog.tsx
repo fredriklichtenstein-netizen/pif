@@ -4,6 +4,7 @@ import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInterestedCount } from "./useInterestedCount";
+import { useTranslation } from "react-i18next";
 
 interface ItemDeleteDialogProps {
   id: string | number;
@@ -25,6 +26,7 @@ export function ItemDeleteDialog({
 }: ItemDeleteDialogProps) {
   const mountedRef = useRef(true);
   const [showInterestInfo, setShowInterestInfo] = useState(false);
+  const { t } = useTranslation();
   
   // Use the optimized interest count hook
   const {
@@ -102,8 +104,8 @@ export function ItemDeleteDialog({
         }
       }}
       onConfirm={handleDeleteConfirm}
-      title="Delete Item"
-      description="Are you sure you want to delete this item? This action may not be reversible."
+      title={t('interactions.delete_item_title')}
+      description={t('interactions.delete_item_description')}
       hasInterestedUsers={showInterestInfo && interestedCount > 0}
       interestCount={interestedCount}
       isLoading={isDeleting}

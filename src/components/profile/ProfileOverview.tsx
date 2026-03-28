@@ -2,9 +2,11 @@
 import { Card } from "@/components/ui/card";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { AvatarImage } from "@/components/ui/optimized-image";
+import { useTranslation } from "react-i18next";
 
 export function ProfileOverview({ user }: { user: any }) {
-  // Add actual stats queries as needed!
+  const { t } = useTranslation();
+  
   return (
     <Card className="p-6 flex flex-col items-center mb-4">
       <AvatarImage
@@ -14,23 +16,21 @@ export function ProfileOverview({ user }: { user: any }) {
         className="mb-3 border"
       />
       <div className="text-2xl font-semibold">{user.first_name} {user.last_name?.[0]}</div>
-      <div className="text-gray-500 mb-2">{user.email}</div>
-      {/* Stats and sustainability info can go here */}
+      <div className="text-muted-foreground mb-2">{user.email}</div>
       <div className="flex gap-6 mt-4">
         <div className="text-center">
           <div className="font-bold text-lg">–</div>
-          <div className="text-xs text-gray-400">PIFs posted</div>
+          <div className="text-xs text-muted-foreground">{t('interactions.pifs_posted')}</div>
         </div>
         <div className="text-center">
           <div className="font-bold text-lg">–</div>
-          <div className="text-xs text-gray-400">Interests shown</div>
+          <div className="text-xs text-muted-foreground">{t('interactions.interests_shown')}</div>
         </div>
         <div className="text-center">
           <div className="font-bold text-lg">–</div>
-          <div className="text-xs text-gray-400">Items received</div>
+          <div className="text-xs text-muted-foreground">{t('interactions.items_received')}</div>
         </div>
       </div>
-      {/* Add more stats and summary for sustainability, circularity here */}
     </Card>
   );
 }
