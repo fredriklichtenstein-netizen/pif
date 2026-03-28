@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Comment } from "@/types/comment";
 import { useToast } from "../use-toast";
+import { useTranslation } from "react-i18next";
 import { useGlobalAuth } from "../useGlobalAuth";
 import { useAuthCheck } from "./utils/authCheck";
 import { formatCommentFromDB } from "../item/utils/commentFormatters";
