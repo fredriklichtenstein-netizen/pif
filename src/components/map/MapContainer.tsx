@@ -189,6 +189,9 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             onConditionChange={setSelectedConditions}
             onItemTypeChange={setSelectedItemTypes}
             onClearFilters={handleClearFilters}
+            selectedDistance={selectedDistance}
+            onDistanceChange={setSelectedDistance}
+            userLocation={locationTracking.userLocation}
           />
 
           <DistanceRings
