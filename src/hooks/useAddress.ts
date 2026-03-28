@@ -54,8 +54,8 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
           } catch (error) {
             console.error("Error reverse geocoding:", error);
             toast({
-              title: "Error",
-              description: "Could not determine your address. Please enter it manually.",
+              title: t('interactions.address_error'),
+              description: t('interactions.address_reverse_geocode_error'),
               variant: "destructive",
             });
           }
