@@ -32,14 +32,14 @@ export function useEmailConfirmation() {
 
         if (!error && profile?.onboarding_completed) {
           toast({
-            title: "Welcome back!",
-            description: "You have successfully signed in.",
+            title: t('interactions.welcome_back'),
+            description: t('interactions.welcome_back_description'),
           });
           navigate("/feed");
         } else {
           toast({
-            title: "Complete your profile",
-            description: "Let's set up your profile to get started.",
+            title: t('interactions.complete_profile'),
+            description: t('interactions.complete_profile_description'),
           });
           navigate("/create-profile");
         }
