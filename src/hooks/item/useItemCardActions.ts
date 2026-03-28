@@ -131,8 +131,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     if (!isOwner) {
       toast({
         variant: "destructive",
-        title: "Permission Denied",
-        description: "You can only edit your own items"
+        title: t('interactions.permission_denied'),
+        description: t('interactions.only_edit_own')
       });
       return;
     }
