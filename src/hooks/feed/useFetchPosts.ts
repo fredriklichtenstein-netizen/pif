@@ -66,6 +66,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       console.log("Fetch already in progress, skipping redundant call");
       return;
     }
+
     
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
