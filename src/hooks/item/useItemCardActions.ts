@@ -39,8 +39,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
         console.error('Error checking interested users:', error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to check interested users. Proceeding anyway."
+          title: t('interactions.error_title'),
+          description: t('interactions.error_check_interested')
         });
         return 0;
       }
