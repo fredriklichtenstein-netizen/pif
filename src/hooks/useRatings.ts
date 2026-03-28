@@ -8,6 +8,7 @@ import type { Rating } from "@/types/post";
 
 export function useRatings(userId?: string) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Fetch user's average rating
