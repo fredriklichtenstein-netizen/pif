@@ -35,6 +35,13 @@
     "create_error": "Error creating profile",
     "unexpected_error": "An unexpected error occurred",
     "mobile_phone": "Mobile phone (optional)",
-    "primary_address": "Primary PIF address"
+    "primary_address": "Primary PIF address",
+    "loading": "Loading profile...",
+    "auth_required": "Authentication required",
+    "sign_in_to_view": "Please sign in to view your profile",
+    "sign_in": "Sign In",
+    "my_pifs_tab": "My PIFs",
+    "interested_tab": "Interested",
+    "archived_tab": "Archived"
   }
 }
