@@ -13,6 +13,7 @@ import {
 import { Filter, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/types/post";
+import { DistanceFilters } from "./distance/DistanceFilters";
 
 interface MapFiltersProps {
   posts: Post[];
@@ -23,6 +24,9 @@ interface MapFiltersProps {
   onConditionChange: (conditions: string[]) => void;
   onItemTypeChange: (types: string[]) => void;
   onClearFilters: () => void;
+  selectedDistance: number | null;
+  onDistanceChange: (distance: number | null) => void;
+  userLocation: [number, number] | null;
 }
 
 const CATEGORY_KEYS = [
