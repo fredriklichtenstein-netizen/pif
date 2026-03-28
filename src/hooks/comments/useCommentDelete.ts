@@ -7,6 +7,7 @@ import { useAuthCheck } from "./utils/authCheck";
 
 export const useCommentDelete = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { user } = useGlobalAuth();
   const { checkAuth } = useAuthCheck();
   
