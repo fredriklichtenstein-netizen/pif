@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../use-toast";
+import { useTranslation } from "react-i18next";
 import { useGlobalAuth } from "../useGlobalAuth";
 import { useAuthCheck } from "./utils/authCheck";
 
