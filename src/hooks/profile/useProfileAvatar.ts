@@ -2,10 +2,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export const useProfileAvatar = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { user } = useGlobalAuth();
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
@@ -104,13 +106,13 @@ export const useProfileAvatar = () => {
       console.log("Profile updated with new avatar_url");
 
       toast({
-        title: "Success",
-        description: "Profile picture updated successfully",
+        title: t('interactions.avatar_updated'),
+        description: t('interactions.avatar_updated_description'),
       });
     } catch (error: any) {
       console.error("Error updating profile picture:", error);
       toast({
-        title: "Error",
+        title: t('interactions.error_title'),
         description: error.message,
         variant: "destructive",
       });

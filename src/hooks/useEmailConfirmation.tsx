@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export function useEmailConfirmation() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -30,14 +32,14 @@ export function useEmailConfirmation() {
 
         if (!error && profile?.onboarding_completed) {
           toast({
-            title: "Welcome back!",
-            description: "You have successfully signed in.",
+            title: t('interactions.welcome_back'),
+            description: t('interactions.welcome_back_description'),
           });
           navigate("/feed");
         } else {
           toast({
-            title: "Complete your profile",
-            description: "Let's set up your profile to get started.",
+            title: t('interactions.complete_profile'),
+            description: t('interactions.complete_profile_description'),
           });
           navigate("/create-profile");
         }
@@ -78,8 +80,8 @@ export function useEmailConfirmation() {
   const handleResendConfirmation = async () => {
     if (!userEmail) {
       toast({
-        title: "Error",
-        description: "No email found. Please try signing up again.",
+        title: t('interactions.error_title'),
+        description: t('interactions.no_email_found'),
         variant: "destructive",
       });
       return;
@@ -87,8 +89,8 @@ export function useEmailConfirmation() {
 
     if (resendCooldown > 0) {
       toast({
-        title: "Please wait",
-        description: `You can request another confirmation email in ${resendCooldown} seconds.`,
+        title: t('interactions.please_wait_resend'),
+        description: t('interactions.resend_cooldown', { seconds: resendCooldown }),
       });
       return;
     }
@@ -103,8 +105,8 @@ export function useEmailConfirmation() {
       if (error) throw error;
 
       toast({
-        title: "Email sent",
-        description: "Please check your inbox for the confirmation link.",
+        title: t('interactions.email_sent'),
+        description: t('interactions.email_sent_description'),
       });
       
       setResendCooldown(60);
@@ -119,7 +121,7 @@ export function useEmailConfirmation() {
       }, 1000);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('interactions.error_title'),
         description: error.message,
         variant: "destructive",
       });

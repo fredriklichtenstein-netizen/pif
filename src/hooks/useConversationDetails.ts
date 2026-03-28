@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import type { Conversation, ConversationParticipant } from "@/types/messaging";
 import type { Post } from "@/types/post";
 import { parseCoordinatesFromDB } from "@/types/post";
@@ -15,6 +16,7 @@ export function useConversationDetails(conversationId: string | null) {
   const [error, setError] = useState<Error | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const currentUserId = user?.id;
 
   useEffect(() => {
@@ -153,7 +155,7 @@ export function useConversationDetails(conversationId: string | null) {
         setError(err as Error);
         toast({
           variant: "destructive",
-          title: "Failed to load conversation details",
+          title: t('interactions.failed_load_conversation_details'),
           description: (err as Error).message,
         });
       } finally {

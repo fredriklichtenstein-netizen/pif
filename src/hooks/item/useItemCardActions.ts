@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { getDeleteDialogManager } from './useItemDeleteDialog';
 
 export const useItemCardActions = (id: string | number, postedById?: string) => {
@@ -13,6 +14,7 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   const navigate = useNavigate();
   const { session } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const isOwner = session?.user?.id === postedById;
 
   // Helper method used by the dialog component to check interested users
@@ -37,8 +39,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
         console.error('Error checking interested users:', error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to check interested users. Proceeding anyway."
+          title: t('interactions.error_title'),
+          description: t('interactions.error_check_interested')
         });
         return 0;
       }
@@ -49,8 +51,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
         console.error('Interested users check timed out');
         toast({
           variant: "destructive",
-          title: "Operation timed out",
-          description: "Checking interested users took too long. Proceeding with limited information."
+          title: t('interactions.operation_timed_out'),
+          description: t('interactions.check_interested_timeout')
         });
       } else {
         console.error('Error checking interested users:', error);
@@ -96,8 +98,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     if (!isOwner) {
       toast({
         variant: "destructive",
-        title: "Permission Denied",
-        description: "You can only delete your own items"
+        title: t('interactions.permission_denied'),
+        description: t('interactions.only_delete_own')
       });
       return;
     }
@@ -129,8 +131,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     if (!isOwner) {
       toast({
         variant: "destructive",
-        title: "Permission Denied",
-        description: "You can only edit your own items"
+        title: t('interactions.permission_denied'),
+        description: t('interactions.only_edit_own')
       });
       return;
     }
@@ -141,8 +143,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   const handleMessage = () => {
     if (!session) {
       toast({
-        title: "Sign in required",
-        description: "You need to sign in to send messages",
+        title: t('interactions.sign_in_required'),
+        description: t('interactions.sign_in_to_message'),
         variant: "destructive"
       });
       return;

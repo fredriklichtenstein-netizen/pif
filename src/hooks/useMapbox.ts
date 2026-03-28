@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_MODE } from "@/config/demoMode";
+import { useTranslation } from "react-i18next";
 
 // Storage key for user-provided demo token
 const DEMO_TOKEN_KEY = 'pif_demo_mapbox_token';
 
 export const useMapbox = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [mapToken, setMapToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -66,8 +68,8 @@ export const useMapbox = () => {
       setIsLoading(false);
       
       toast({
-        title: "Map Error",
-        description: "Failed to load map credentials. Please try again.",
+        title: t('interactions.map_error'),
+        description: t('interactions.map_error_description'),
         variant: "destructive",
       });
     }

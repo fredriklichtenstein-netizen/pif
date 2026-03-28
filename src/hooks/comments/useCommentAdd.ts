@@ -2,12 +2,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Comment } from "@/types/comment";
 import { useToast } from "../use-toast";
+import { useTranslation } from "react-i18next";
 import { useGlobalAuth } from "../useGlobalAuth";
 import { useAuthCheck } from "./utils/authCheck";
 import { formatCommentFromDB } from "../item/utils/commentFormatters";
 
 export const useCommentAdd = (itemId: string) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { user } = useGlobalAuth();
   const { checkAuth } = useAuthCheck();
   
@@ -55,7 +57,7 @@ export const useCommentAdd = (itemId: string) => {
     } catch (error: any) {
       console.error("Error adding comment:", error);
       toast({
-        title: "Error",
+        title: t('interactions.error_adding_comment'),
         description: error.message,
         variant: "destructive",
       });

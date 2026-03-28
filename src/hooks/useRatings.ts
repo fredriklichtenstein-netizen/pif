@@ -3,10 +3,12 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import type { Rating } from "@/types/post";
 
 export function useRatings(userId?: string) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Fetch user's average rating
@@ -56,15 +58,15 @@ export function useRatings(userId?: string) {
     },
     onSuccess: () => {
       toast({
-        title: "Tack för ditt betyg!",
-        description: "Ditt betyg har sparats.",
+        title: t('interactions.rating_thanks'),
+        description: t('interactions.rating_saved'),
       });
       queryClient.invalidateQueries({ queryKey: ['userRating'] });
     },
     onError: (error: any) => {
       toast({
-        title: "Fel",
-        description: error.message || "Kunde inte spara betyget.",
+        title: t('interactions.rating_error'),
+        description: error.message || t('interactions.rating_save_failed'),
         variant: "destructive",
       });
     },

@@ -9,6 +9,7 @@ import { useCommentRefresh } from "./useCommentRefresh";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export const useCommentActions = (
   itemId: string,
@@ -23,6 +24,7 @@ export const useCommentActions = (
 ) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const deleteDemoComment = useDemoInteractionsStore(state => state.deleteComment);
   const toggleDemoCommentLike = useDemoInteractionsStore(state => state.toggleCommentLike);
 
@@ -85,8 +87,8 @@ export const useCommentActions = (
         const updatedComments = comments.filter(c => c.id !== commentId);
         setComments(updatedComments);
         toast({
-          title: "Comment deleted",
-          description: "Your comment has been removed",
+          title: t('interactions.comment_deleted'),
+          description: t('interactions.comment_deleted_description'),
         });
         return true;
       }

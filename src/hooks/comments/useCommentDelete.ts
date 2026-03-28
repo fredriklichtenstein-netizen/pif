@@ -1,11 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../use-toast";
+import { useTranslation } from "react-i18next";
 import { useGlobalAuth } from "../useGlobalAuth";
 import { useAuthCheck } from "./utils/authCheck";
 
 export const useCommentDelete = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { user } = useGlobalAuth();
   const { checkAuth } = useAuthCheck();
   
@@ -30,7 +32,7 @@ export const useCommentDelete = () => {
     } catch (error: any) {
       console.error("Error deleting comment:", error);
       toast({
-        title: "Error",
+        title: t('interactions.error_title'),
         description: error.message,
         variant: "destructive",
       });

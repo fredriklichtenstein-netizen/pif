@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export function useInterestSelection() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
@@ -23,8 +25,8 @@ export function useInterestSelection() {
         .neq("id", interestId);
         
       toast({
-        title: "Success",
-        description: "Receiver has been selected",
+        title: t('interactions.receiver_selected_success'),
+        description: t('interactions.receiver_selected_success_description'),
       });
 
       return true;
@@ -32,8 +34,8 @@ export function useInterestSelection() {
       console.error("Error selecting receiver:", err);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to select receiver",
+        title: t('interactions.error_title'),
+        description: t('interactions.receiver_select_error'),
       });
       return false;
     }

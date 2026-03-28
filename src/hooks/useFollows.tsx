@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "./useGlobalAuth";
 import { useToast } from "./use-toast";
+import { useTranslation } from "react-i18next";
 
 export type FollowUser = {
   id: string;
@@ -13,6 +14,7 @@ export type FollowUser = {
 export const useFollows = () => {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   // Toggle follow status for a user
@@ -38,8 +40,8 @@ export const useFollows = () => {
         if (error) throw error;
         
         toast({
-          title: "Unfollowed",
-          description: "You have unfollowed this user",
+          title: t('interactions.unfollowed'),
+          description: t('interactions.unfollowed_description'),
         });
         
         return false;
@@ -52,8 +54,8 @@ export const useFollows = () => {
         if (error) throw error;
         
         toast({
-          title: "Following",
-          description: "You are now following this user",
+          title: t('interactions.following'),
+          description: t('interactions.following_description'),
         });
         
         return true;
@@ -61,7 +63,7 @@ export const useFollows = () => {
     } catch (error: any) {
       console.error("Error toggling follow:", error);
       toast({
-        title: "Error",
+        title: t('interactions.error_title'),
         description: error.message,
         variant: "destructive",
       });

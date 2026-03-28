@@ -5,6 +5,7 @@ import { Comment } from '@/types/comment';
 import { formatCommentFromDB } from '@/hooks/item/utils/commentFormatters';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export const useCommentRealtime = (
   itemId: string,
@@ -17,6 +18,7 @@ export const useCommentRealtime = (
   const [channel, setChannel] = useState<ReturnType<typeof supabase.channel> | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const MAX_SUBSCRIPTION_ATTEMPTS = 3;
 
   // Add comment to the list (for inserts)
@@ -32,8 +34,8 @@ export const useCommentRealtime = (
       // Show toast for new comments from others
       if (newComment.user_id !== user?.id) {
         toast({
-          title: "New Comment",
-          description: `${formattedComment.author.name} added a comment`,
+          title: t('interactions.new_comment'),
+          description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
         });
       }
     }

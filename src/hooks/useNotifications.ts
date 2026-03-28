@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_NOTIFICATIONS } from "@/data/mockNotifications";
 
@@ -26,6 +27,7 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
@@ -50,7 +52,7 @@ export function useNotifications() {
     if (error) {
       setFetchError(error);
       toast({
-        title: "Failed to load notifications",
+        title: t('interactions.failed_load_notifications'),
         description: error.message,
         variant: "destructive",
       });
@@ -112,7 +114,7 @@ export function useNotifications() {
     const { error } = await (supabase.rpc as any)("mark_all_notifications_read");
     if (error) {
       toast({
-        title: "Failed to mark notifications as read",
+        title: t('interactions.failed_mark_read'),
         description: error.message,
         variant: "destructive",
       });

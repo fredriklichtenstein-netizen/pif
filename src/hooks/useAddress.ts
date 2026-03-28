@@ -1,9 +1,11 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export const useAddress = (mapToken: string, onAddressChange: (address: string) => void) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -52,8 +54,8 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
           } catch (error) {
             console.error("Error reverse geocoding:", error);
             toast({
-              title: "Error",
-              description: "Could not determine your address. Please enter it manually.",
+              title: t('interactions.address_error'),
+              description: t('interactions.address_reverse_geocode_error'),
               variant: "destructive",
             });
           }
@@ -61,8 +63,8 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
         (error) => {
           console.error("Geolocation error:", error);
           toast({
-            title: "Error",
-            description: "Could not access your location. Please enter your address manually.",
+            title: t('interactions.address_error'),
+            description: t('interactions.address_location_error'),
             variant: "destructive",
           });
         }
@@ -85,15 +87,15 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
       } catch (error) {
         console.error("Error geocoding address:", error);
         toast({
-          title: "Error",
-          description: "Could not locate the address on the map. Please verify the address.",
+          title: t('interactions.address_error'),
+          description: t('interactions.address_geocode_error'),
           variant: "destructive",
         });
       }
     } else {
       toast({
-        title: "Error",
-        description: "Please enter an address first.",
+        title: t('interactions.address_error'),
+        description: t('interactions.address_empty_error'),
         variant: "destructive",
       });
     }
