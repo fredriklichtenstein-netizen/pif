@@ -46,7 +46,10 @@ export const MapFilters = ({
   onCategoryChange,
   onConditionChange,
   onItemTypeChange,
-  onClearFilters
+  onClearFilters,
+  selectedDistance,
+  onDistanceChange,
+  userLocation
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
