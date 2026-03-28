@@ -2,6 +2,7 @@
 import React from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "react-i18next";
 
 interface ImageUploadProps {
   isAnalyzing?: boolean;
@@ -19,6 +20,7 @@ export function ImageUpload({
   variant
 }: ImageUploadProps) {
   const isPrimary = variant === 'primary';
+  const { t } = useTranslation();
 
   return (
     <label className={`
@@ -26,7 +28,7 @@ export function ImageUpload({
       transition-colors
       ${isPrimary 
         ? 'h-60 border-primary hover:bg-primary/5' 
-        : 'h-40 aspect-square border-gray-300 hover:border-primary'
+        : 'h-40 aspect-square border-border hover:border-primary'
       }
       ${isAnalyzing ? 'opacity-70 cursor-wait' : ''}
     `}>
@@ -34,28 +36,28 @@ export function ImageUpload({
         {isAnalyzing ? (
           <>
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-            <span className="text-sm text-primary font-medium">Uploading...</span>
+            <span className="text-sm text-primary font-medium">{t('interactions.uploading')}</span>
             {uploadProgress > 0 && (
               <div className="w-4/5 mt-2">
                 <Progress value={uploadProgress} className="h-2" />
-                <span className="text-xs text-muted-foreground mt-1">{uploadProgress}% complete</span>
+                <span className="text-xs text-muted-foreground mt-1">{t('interactions.percent_complete', { percent: uploadProgress })}</span>
               </div>
             )}
             {!uploadProgress && (
-              <span className="text-xs text-muted-foreground mt-1">Please wait</span>
+              <span className="text-xs text-muted-foreground mt-1">{t('interactions.please_wait')}</span>
             )}
           </>
         ) : (
           <>
-            <ImagePlus className={`mb-2 ${isPrimary ? 'h-10 w-10 text-primary' : 'h-8 w-8 text-gray-400'}`} />
-            <span className={`text-sm text-center ${isPrimary ? 'text-primary font-medium' : 'text-gray-500'}`}>
+            <ImagePlus className={`mb-2 ${isPrimary ? 'h-10 w-10 text-primary' : 'h-8 w-8 text-muted-foreground'}`} />
+            <span className={`text-sm text-center ${isPrimary ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
               {isPrimaryImageRequired 
-                ? "Upload primary photo (Required)" 
-                : "Add more photos"}
+                ? t('interactions.upload_primary_photo')
+                : t('interactions.add_more_photos')}
             </span>
             {isPrimary && (
               <span className="text-xs text-muted-foreground mt-1">
-                Click or drag and drop
+                {t('interactions.click_or_drag')}
               </span>
             )}
           </>
@@ -68,7 +70,7 @@ export function ImageUpload({
         className="hidden"
         onChange={onImageUpload}
         required={isPrimaryImageRequired}
-        aria-label={isPrimaryImageRequired ? "Upload primary image" : "Upload additional images"}
+        aria-label={isPrimaryImageRequired ? t('interactions.upload_primary_aria') : t('interactions.upload_additional_aria')}
         disabled={isAnalyzing}
       />
     </label>

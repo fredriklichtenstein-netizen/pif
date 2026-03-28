@@ -2,6 +2,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface InteractionsListProps {
@@ -20,6 +21,7 @@ export function InteractionsList({
   onRetry
 }: InteractionsListProps) {
   const users = likers.length > 0 ? likers : interested;
+  const { t } = useTranslation();
   
   if (isLoading) {
     return (
@@ -32,10 +34,10 @@ export function InteractionsList({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-destructive mb-4">Failed to load users</p>
+        <p className="text-destructive mb-4">{t('interactions.failed_load_users')}</p>
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
-            Try Again
+            {t('interactions.try_again')}
           </Button>
         )}
       </div>
@@ -45,7 +47,7 @@ export function InteractionsList({
   if (users.length === 0) {
     return (
       <div className="text-center py-6 text-muted-foreground">
-        No users yet
+        {t('interactions.no_users_yet')}
       </div>
     );
   }

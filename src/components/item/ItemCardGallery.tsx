@@ -119,14 +119,14 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
           <button 
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handlePrev}
-            aria-label="Previous image"
+            aria-label={t('interactions.previous_image')}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button 
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
             onClick={handleNext}
-            aria-label="Next image"
+            aria-label={t('interactions.next_image')}
           >
             <ChevronRight className="h-4 w-4" />
           </button>

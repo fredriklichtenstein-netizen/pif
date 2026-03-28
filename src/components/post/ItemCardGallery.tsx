@@ -50,8 +50,8 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   
   if (!imageUrls || imageUrls.length === 0) {
     return (
-      <div className="relative h-48 bg-gray-200 flex items-center justify-center">
-        <p className="text-gray-500">No image available</p>
+      <div className="relative h-48 bg-muted flex items-center justify-center">
+        <p className="text-muted-foreground">{t('interactions.no_image_available')}</p>
         <div className="absolute top-2 right-2">
           <Badge variant="secondary" className="text-xs">{category}</Badge>
         </div>

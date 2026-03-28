@@ -3,22 +3,23 @@ import { Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
+import i18n from "@/i18n";
 
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh]">
     <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-    <p className="text-gray-500">Loading...</p>
+    <p className="text-muted-foreground">{i18n.t('interactions.loading')}</p>
   </div>
 );
 
 const ErrorFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-    <p className="text-red-500 font-semibold mb-2">Failed to load the page</p>
+    <p className="text-destructive font-semibold mb-2">{i18n.t('interactions.failed_load_page')}</p>
     <button 
       onClick={() => window.location.reload()}
-      className="mt-2 px-4 py-2 bg-primary text-white rounded"
+      className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded"
     >
-      Try Again
+      {i18n.t('interactions.try_again')}
     </button>
   </div>
 );
@@ -66,7 +67,7 @@ export const publicRoutes = [
   { path: "/reset-password", element: withSuspense(ResetPassword) },
   { path: "/item/:id", element: withSuspense(ItemDetail) },
   { path: "/user/:id", element: withSuspense(PublicProfile) },
-  { path: "/share/:id", element: withSuspense(ShareRedirect) }, // New share redirect route
+  { path: "/share/:id", element: withSuspense(ShareRedirect) },
   { path: "*", element: withSuspense(NotFound) },
 ];
 
