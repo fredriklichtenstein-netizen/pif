@@ -7,28 +7,30 @@ import { useEffect } from "react";
 import { FadeIn } from "@/components/animation/FadeIn";
 import { SlideIn } from "@/components/animation/SlideIn";
 import { useAnnouncement } from "@/hooks/accessibility/useAnnouncement";
+import { useTranslation } from "react-i18next";
 
 export default function Feed() {
   const { announce } = useAnnouncement();
+  const { t } = useTranslation();
 
   useEffect(() => {
-    announce("Feed page loaded, showing community posts");
-  }, [announce]);
+    announce(t('feed.announcement'));
+  }, [announce, t]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <MainHeader />
       <Separator />
       
-      <main className="container mx-auto px-4 py-6" role="main" aria-label="Community feed">
+      <main className="container mx-auto px-4 py-6" role="main" aria-label={t('feed.announcement')}>
         <div className="max-w-2xl mx-auto">
           <FadeIn>
             <header className="mb-6">
               <SlideIn direction="down">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Feed</h1>
+                <h1 className="text-2xl font-bold text-foreground mb-2">{t('feed.title')}</h1>
               </SlideIn>
               <SlideIn direction="down" delay={100}>
-                <p className="text-gray-600">Discover what's happening in your community</p>
+                <p className="text-muted-foreground">{t('feed.subtitle')}</p>
               </SlideIn>
             </header>
           </FadeIn>

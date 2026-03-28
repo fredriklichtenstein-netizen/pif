@@ -4,18 +4,18 @@ import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const hashParams = new URLSearchParams(location.hash.substring(1));
   
-  // Check for auth errors in the URL hash
   const authError = hashParams.get("error");
   const errorCode = hashParams.get("error_code");
   const errorDescription = hashParams.get("error_description");
 
-  // Extract referrer information for better debugging
   const referrer = document.referrer;
   const fromState = location.state as { 
     from?: string;
@@ -28,37 +28,24 @@ const NotFound = () => {
   const errorMsg = fromState?.error || 'unknown';
 
   useEffect(() => {
-    // Enhanced logging for better debugging
     if (!authError) {
-      console.error(
-        "404 Error detected:", 
-        {
-          path: location.pathname,
-          search: location.search,
-          hash: location.hash,
-          referrer,
-          fromPath,
-          itemId,
-          errorMsg,
-          state: location.state,
-          userAgent: navigator.userAgent,
-          timestamp: new Date().toISOString(),
-          isOnline: navigator.onLine
-        }
-      );
+      console.error("404 Error detected:", {
+        path: location.pathname,
+        search: location.search,
+        hash: location.hash,
+        referrer,
+        fromPath,
+        itemId,
+        errorMsg,
+        state: location.state,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        isOnline: navigator.onLine
+      });
     } else {
-      console.error(
-        "Auth error:", 
-        { 
-          authError, 
-          errorCode, 
-          errorDescription, 
-          url: window.location.href 
-        }
-      );
+      console.error("Auth error:", { authError, errorCode, errorDescription, url: window.location.href });
     }
     
-    // Log to localStorage for persistent debugging across sessions
     try {
       const errorLog = JSON.parse(localStorage.getItem('pif_error_log') || '[]');
       errorLog.push({
@@ -70,7 +57,6 @@ const NotFound = () => {
           { authError, errorCode, errorDescription } : 
           { state: location.state, fromPath, itemId, errorMsg }
       });
-      // Keep last 10 errors only
       while (errorLog.length > 10) errorLog.shift();
       localStorage.setItem('pif_error_log', JSON.stringify(errorLog));
     } catch (err) {
@@ -87,24 +73,22 @@ const NotFound = () => {
 
   const getErrorMessage = () => {
     if (errorCode === "otp_expired") {
-      return "Your password reset link has expired. Please request a new password reset link.";
+      return t('not_found.otp_expired');
     }
     
     if (fromPath === 'share' || fromPath === 'item') {
       if (errorMsg === 'Invalid item ID format - not a number') {
-        return `The link contains an invalid item ID format. Item IDs should be numbers.`;
+        return t('not_found.invalid_item_id');
       }
-      
       if (errorMsg?.includes('Database error')) {
-        return `We're having trouble connecting to our database. Please try again in a moment.`;
+        return t('not_found.database_error');
       }
-      
-      return `The item you're looking for (ID: ${itemId}) couldn't be found. It may have been removed or is no longer available.`;
+      return t('not_found.item_not_found_detail', { itemId });
     }
     
     return errorDescription 
       ? decodeURIComponent(errorDescription.replace(/\+/g, ' ')) 
-      : "The page you're looking for doesn't exist.";
+      : t('not_found.page_doesnt_exist');
   };
 
   const handleReturnToAuth = () => {
@@ -112,7 +96,6 @@ const NotFound = () => {
   };
 
   const getNavigationOptions = () => {
-    // Suggest relevant pages based on the failed URL path
     const path = location.pathname.toLowerCase();
     
     if (path.includes('item') || path.includes('share')) {
@@ -125,14 +108,14 @@ const NotFound = () => {
               variant="outline"
             >
               <RefreshCw className="h-4 w-4" />
-              <span>Try Again</span>
+              <span>{t('not_found.try_again')}</span>
             </Button>
           )}
           <Button 
             onClick={() => navigate("/feed")} 
             className="bg-green-500 hover:bg-green-600"
           >
-            Browse Feed
+            {t('not_found.browse_feed')}
           </Button>
           <Button 
             onClick={() => navigate("/map")} 
@@ -140,7 +123,7 @@ const NotFound = () => {
             className="flex items-center gap-2"
           >
             <Search className="h-4 w-4" />
-            <span>Browse Map</span>
+            <span>{t('not_found.browse_map')}</span>
           </Button>
         </div>
       );
@@ -151,7 +134,7 @@ const NotFound = () => {
         onClick={() => navigate("/")}
         className="bg-green-500 hover:bg-green-600 mt-4"
       >
-        Return to Home
+        {t('not_found.return_to_home')}
       </Button>
     );
   };
@@ -163,38 +146,38 @@ const NotFound = () => {
           <>
             <Alert variant="destructive" className="text-left">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Authentication Error</AlertTitle>
+              <AlertTitle>{t('not_found.auth_error')}</AlertTitle>
               <AlertDescription>{getErrorMessage()}</AlertDescription>
             </Alert>
             <Button 
               onClick={handleReturnToAuth}
               className="bg-green-500 hover:bg-green-600"
             >
-              Return to Sign In
+              {t('not_found.return_to_sign_in')}
             </Button>
           </>
         ) : (
           <>
-            <h1 className="text-4xl font-bold mb-4">404</h1>
-            <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
+            <h1 className="text-4xl font-bold mb-4">{t('not_found.title')}</h1>
+            <p className="text-xl text-muted-foreground mb-4">{t('not_found.page_not_found')}</p>
             
             {fromPath === 'share' && (
               <Alert variant="destructive" className="text-left mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Item Not Found</AlertTitle>
+                <AlertTitle>{t('not_found.item_not_found_title')}</AlertTitle>
                 <AlertDescription>
                   {errorMsg === 'Invalid item ID format - not a number' 
-                    ? 'The shared link contains an invalid item ID.' 
+                    ? t('not_found.invalid_item_link')
                     : errorMsg?.includes('Database error')
-                      ? 'We\'re having trouble connecting to the database. Please try again.'
-                      : `The shared item (ID: ${itemId}) couldn't be found or may have been removed.`}
+                      ? t('not_found.database_trouble')
+                      : t('not_found.shared_item_not_found', { itemId })}
                 </AlertDescription>
               </Alert>
             )}
             
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {fromPath === 'unknown' 
-                ? "The page you're looking for doesn't exist or may have been moved" 
+                ? t('not_found.page_doesnt_exist')
                 : getErrorMessage()}
             </p>
             {getNavigationOptions()}
