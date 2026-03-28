@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import type { Conversation, ConversationParticipant } from "@/types/messaging";
 import type { Post } from "@/types/post";
 import { parseCoordinatesFromDB } from "@/types/post";
