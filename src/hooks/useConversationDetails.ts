@@ -16,6 +16,7 @@ export function useConversationDetails(conversationId: string | null) {
   const [error, setError] = useState<Error | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const currentUserId = user?.id;
 
   useEffect(() => {
