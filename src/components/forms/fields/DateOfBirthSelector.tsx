@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface DateOfBirthSelectorProps {
   dateOfBirth?: Date;
@@ -17,12 +18,16 @@ interface DateOfBirthSelectorProps {
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
-const months = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+
+const monthKeys = [
+  "profile.month_january", "profile.month_february", "profile.month_march",
+  "profile.month_april", "profile.month_may", "profile.month_june",
+  "profile.month_july", "profile.month_august", "profile.month_september",
+  "profile.month_october", "profile.month_november", "profile.month_december"
 ];
 
 export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelectorProps) {
+  const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState<number | null>(
     dateOfBirth ? dateOfBirth.getFullYear() : null
   );
@@ -34,15 +39,12 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
   );
   const [daysInMonth, setDaysInMonth] = useState<number[]>([]);
 
-  // Update days in month when year or month changes
   useEffect(() => {
     if (selectedYear !== null && selectedMonth !== null) {
-      // Get number of days in the selected month
       const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
       const days = Array.from({ length: lastDay }, (_, i) => i + 1);
       setDaysInMonth(days);
       
-      // If currently selected day is invalid for the new month, reset it
       if (selectedDay !== null && selectedDay > lastDay) {
         setSelectedDay(null);
       }
@@ -51,39 +53,25 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
     }
   }, [selectedYear, selectedMonth, selectedDay]);
 
-  // Update the date whenever any part changes
   useEffect(() => {
     if (selectedYear !== null && selectedMonth !== null && selectedDay !== null) {
       const newDate = new Date(selectedYear, selectedMonth, selectedDay);
       onChange(newDate);
     } else if (selectedYear === null && selectedMonth === null && selectedDay === null) {
-      // Only clear if all values are null
       onChange(undefined);
     }
   }, [selectedYear, selectedMonth, selectedDay, onChange]);
 
-  const handleYearChange = (year: number) => {
-    setSelectedYear(year);
-  };
-
-  const handleMonthChange = (month: number) => {
-    setSelectedMonth(month);
-  };
-
-  const handleDayChange = (day: number) => {
-    setSelectedDay(day);
-  };
-
   return (
     <div className="space-y-2">
-      <Label>Date of birth (optional)</Label>
+      <Label>{t('profile.date_of_birth')}</Label>
       <div className="grid grid-cols-3 gap-4">
         <Select 
           value={selectedYear?.toString()} 
-          onValueChange={(value) => handleYearChange(parseInt(value))}
+          onValueChange={(value) => setSelectedYear(parseInt(value))}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Year" />
+            <SelectValue placeholder={t('profile.year')} />
           </SelectTrigger>
           <SelectContent>
             {years.map((year) => (
@@ -96,15 +84,15 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
 
         <Select 
           value={selectedMonth !== null ? selectedMonth.toString() : undefined}
-          onValueChange={(value) => handleMonthChange(parseInt(value))}
+          onValueChange={(value) => setSelectedMonth(parseInt(value))}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Month" />
+            <SelectValue placeholder={t('profile.month')} />
           </SelectTrigger>
           <SelectContent>
-            {months.map((month, index) => (
+            {monthKeys.map((key, index) => (
               <SelectItem key={index} value={index.toString()}>
-                {month}
+                {t(key)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -112,11 +100,11 @@ export function DateOfBirthSelector({ dateOfBirth, onChange }: DateOfBirthSelect
 
         <Select 
           value={selectedDay?.toString()}
-          onValueChange={(value) => handleDayChange(parseInt(value))}
+          onValueChange={(value) => setSelectedDay(parseInt(value))}
           disabled={selectedYear === null || selectedMonth === null}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Day" />
+            <SelectValue placeholder={t('profile.day')} />
           </SelectTrigger>
           <SelectContent>
             {daysInMonth.map((day) => (

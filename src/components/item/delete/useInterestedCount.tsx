@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
-/**
- * Custom hook to fetch the count of users interested in an item
- * with optimizations to run the check in the background
- */
 export function useInterestedCount(
   id: string | number,
   isOpen: boolean,
@@ -16,50 +13,35 @@ export function useInterestedCount(
   const [countError, setCountError] = useState<Error | null>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
-  // Fetch interested count when dialog opens, but don't block UI
   useEffect(() => {
     let isMounted = true;
     
     if (isOpen && !hasLoadedOnce) {
-      // Set loading state but don't wait for result before showing dialog
       setIsLoadingCount(true);
-      
-      // Start the check in the background
       fetchInterestedCount().finally(() => {
-        if (isMounted) {
-          setHasLoadedOnce(true);
-        }
+        if (isMounted) setHasLoadedOnce(true);
       });
     }
     
-    // Reset states if dialog is closed
-    if (!isOpen) {
-      setHasLoadedOnce(false);
-    }
+    if (!isOpen) setHasLoadedOnce(false);
     
-    // Cleanup function to prevent memory leaks and stale state
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [isOpen]);
   
-  // Function to fetch interested count
   const fetchInterestedCount = async () => {
     setCountError(null);
     
     try {
-      // Use AbortController to handle timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       let count = 0;
       
       if (checkInterestedUsers) {
-        // Use the passed function if available
         count = await checkInterestedUsers();
       } else {
-        // Otherwise do the direct DB query with abort signal
         const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
         const { count: dbCount, error } = await supabase
           .from('interests')
@@ -68,18 +50,13 @@ export function useInterestedCount(
           .abortSignal(controller.signal);
           
         if (error) {
-          if (error.message.includes('aborted')) {
-            throw new Error('Request timed out');
-          }
+          if (error.message.includes('aborted')) throw new Error('Request timed out');
           throw error;
         }
-        
         count = dbCount || 0;
       }
       
-      // Clear the timeout since we got a response
       clearTimeout(timeoutId);
-      
       setInterestedCount(count);
       setIsLoadingCount(false);
       return count;
@@ -87,11 +64,10 @@ export function useInterestedCount(
       console.error('Error fetching interested count:', error);
       setCountError(error as Error);
       
-      // Only show a toast for timeout errors
       if (error.message === 'Request timed out' || error.name === 'AbortError') {
         toast({
-          title: "Request timed out",
-          description: "Could not check who's interested in this item",
+          title: t('interactions.request_timed_out'),
+          description: t('interactions.check_interested_timeout_description'),
           variant: "destructive",
         });
       }

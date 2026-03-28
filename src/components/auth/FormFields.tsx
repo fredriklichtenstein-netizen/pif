@@ -3,6 +3,7 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/profile/PhoneInput";
+import { useTranslation } from "react-i18next";
 
 interface FormFieldsProps {
   email: string;
@@ -29,10 +30,12 @@ export function FormFields({
   disabled,
   clearFormError
 }: FormFieldsProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="rounded-md shadow-sm space-y-4">
       <div>
-        <Label htmlFor="email">Email address</Label>
+        <Label htmlFor="email">{t('auth.email_label')}</Label>
         <Input
           id="email"
           name="email"
@@ -44,14 +47,14 @@ export function FormFields({
             setEmail(e.target.value);
             clearFormError();
           }}
-          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-          placeholder="Enter your email"
+          className="appearance-none relative block w-full px-3 py-2 border border-input placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+          placeholder={t('auth.enter_email')}
           disabled={disabled}
         />
       </div>
       
       <div>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t('auth.password_label')}</Label>
         <Input
           id="password"
           name="password"
@@ -63,8 +66,8 @@ export function FormFields({
             setPassword(e.target.value);
             clearFormError();
           }}
-          className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-          placeholder={isSignUp ? "Create a password (min 6 characters)" : "Enter your password"}
+          className="appearance-none relative block w-full px-3 py-2 border border-input placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+          placeholder={isSignUp ? t('auth.create_password') : t('auth.enter_password')}
           minLength={6}
           disabled={disabled}
         />
@@ -72,7 +75,7 @@ export function FormFields({
       
       {isSignUp && (
         <div>
-          <Label htmlFor="phone">Phone number (optional)</Label>
+          <Label htmlFor="phone">{t('auth.phone_label')}</Label>
           <PhoneInput
             value={phone}
             countryCode={countryCode}
