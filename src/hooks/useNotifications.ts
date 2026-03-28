@@ -52,7 +52,7 @@ export function useNotifications() {
     if (error) {
       setFetchError(error);
       toast({
-        title: "Failed to load notifications",
+        title: t('interactions.failed_load_notifications'),
         description: error.message,
         variant: "destructive",
       });
