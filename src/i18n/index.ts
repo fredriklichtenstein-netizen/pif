@@ -32,6 +32,7 @@ import svUI from '../locales/sv/ui.json';
 import svStatus from '../locales/sv/status.json';
 import svCommon from '../locales/sv/common.json';
 import svLanguage from '../locales/sv/language.json';
+import svPages from '../locales/sv/pages.json';
 
 const resources = {
   en: {
