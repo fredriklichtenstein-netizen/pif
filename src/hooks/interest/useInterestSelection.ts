@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 export function useInterestSelection() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
