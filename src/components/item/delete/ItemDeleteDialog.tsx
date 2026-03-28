@@ -4,6 +4,7 @@ import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInterestedCount } from "./useInterestedCount";
+import { useTranslation } from "react-i18next";
 
 interface ItemDeleteDialogProps {
   id: string | number;
