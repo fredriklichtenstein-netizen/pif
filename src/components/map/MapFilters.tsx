@@ -122,6 +122,14 @@ export const MapFilters = ({
         </Button>
       </div>
 
+      <div className="bg-background/90 backdrop-blur-sm rounded-lg shadow-md p-2">
+        <DistanceFilters
+          selectedDistance={selectedDistance}
+          onDistanceChange={onDistanceChange}
+          userLocation={userLocation}
+        />
+      </div>
+
       <div className="flex items-center gap-2">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
