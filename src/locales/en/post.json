@@ -73,6 +73,25 @@
     "add_reference_image": "Add reference image showing what you wish for",
     "drag_drop_image": "Drag and drop an image here or click to select",
     "choose_image": "Choose image",
-    "png_jpg_webp": "PNG, JPG or WEBP (max 10MB)"
+    "png_jpg_webp": "PNG, JPG or WEBP (max 10MB)",
+    "not_logged_in": "Not logged in",
+    "not_logged_in_description": "You must be logged in to create a pif or request.",
+    "pif_updated": "Your pif has been updated!",
+    "pif_updated_description": "Your changes have been saved.",
+    "pif_updated_demo_description": "Your changes have been saved (demo mode).",
+    "request_created": "Your request has been created!",
+    "request_created_description": "Others can now see what you're looking for.",
+    "request_created_demo_description": "Others can now see what you're looking for (demo mode).",
+    "pif_created": "Your pif has been created!",
+    "pif_created_description": "Others can now see your pif.",
+    "pif_created_demo_description": "Others can now see your pif (demo mode).",
+    "error": "Error",
+    "error_demo": "Something went wrong in demo mode.",
+    "error_saving": "Something went wrong while saving your pif.",
+    "error_location": "Problem with location data. Try selecting a different address.",
+    "address_error": "Could not determine your address. Please enter it manually.",
+    "location_access_error": "Could not access your location. Please enter your address manually.",
+    "enter_address_first": "Please enter an address first.",
+    "address_locate_error": "Could not locate the address on the map. Please verify the address."
   }
 }
