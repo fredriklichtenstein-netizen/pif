@@ -87,8 +87,8 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
       } catch (error) {
         console.error("Error geocoding address:", error);
         toast({
-          title: "Error",
-          description: "Could not locate the address on the map. Please verify the address.",
+          title: t('interactions.address_error'),
+          description: t('interactions.address_geocode_error'),
           variant: "destructive",
         });
       }
