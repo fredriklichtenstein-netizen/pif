@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
