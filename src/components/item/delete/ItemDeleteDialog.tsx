@@ -26,6 +26,7 @@ export function ItemDeleteDialog({
 }: ItemDeleteDialogProps) {
   const mountedRef = useRef(true);
   const [showInterestInfo, setShowInterestInfo] = useState(false);
+  const { t } = useTranslation();
   
   // Use the optimized interest count hook
   const {
