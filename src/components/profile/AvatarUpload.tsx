@@ -8,6 +8,7 @@ import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
 import { getCroppedImg } from "@/utils/image";
 import { Button } from "../ui/button";
+import { useTranslation } from "react-i18next";
 
 interface AvatarUploadProps {
   avatarUrl: string | null;
@@ -16,19 +17,18 @@ interface AvatarUploadProps {
 
 export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl);
 
-  // Update preview when avatarUrl prop changes
   useEffect(() => {
     console.log("AvatarUpload received avatarUrl:", avatarUrl);
     setPreviewUrl(avatarUrl);
   }, [avatarUrl]);
 
-  // Generate a fallback based on timestamp to avoid caching issues
   const fallbackSrc = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`;
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,29 +59,24 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     try {
       const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels);
       if (croppedImage) {
-        // Create a temporary preview URL for the cropped image
         const tempPreviewUrl = URL.createObjectURL(croppedImage);
         setPreviewUrl(tempPreviewUrl);
-        
-        // Pass the file to parent component for upload
         onFileChange(croppedImage);
         setShowCropper(false);
         setTempImage(null);
         setIsEditing(false);
-        
-        console.log("Created temporary preview URL:", tempPreviewUrl);
       } else {
         throw new Error('Failed to process image');
       }
     } catch (e) {
       console.error('Cropping error:', e);
       toast({
-        title: "Error",
-        description: "Failed to crop image. Please try again.",
+        title: t('post.error'),
+        description: t('interactions.crop_error'),
         variant: "destructive",
       });
     }
-  }, [tempImage, onFileChange, toast]);
+  }, [tempImage, onFileChange, toast, t]);
 
   const handleCancel = useCallback(() => {
     setShowCropper(false);
@@ -95,7 +90,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
       <Dialog open={showCropper} onOpenChange={setShowCropper}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Profile Picture</DialogTitle>
+            <DialogTitle>{t('interactions.edit_profile_picture')}</DialogTitle>
           </DialogHeader>
           
           {tempImage ? (
@@ -118,7 +113,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
       <Dialog open={showOptions} onOpenChange={setShowOptions}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Profile Picture Options</DialogTitle>
+            <DialogTitle>{t('interactions.profile_picture_options')}</DialogTitle>
           </DialogHeader>
           <UploadOptions
             onFileSelect={() => {

@@ -1,6 +1,7 @@
 
 import { Star, AlertTriangle, CheckCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 interface TrustIndicatorProps {
   reliabilityScore?: number;
@@ -9,27 +10,18 @@ interface TrustIndicatorProps {
   compact?: boolean;
 }
 
-/**
- * Contextual trust indicator shown only during selection process
- * Displays abstracted reliability signals without exposing exact ratings
- */
 export function TrustIndicator({ 
   reliabilityScore = 0, 
   completedPifs = 0, 
   noShows = 0,
   compact = false 
 }: TrustIndicatorProps) {
-  // Determine trust level based on metrics
+  const { t } = useTranslation();
+  
   const getTrustLevel = () => {
-    if (completedPifs >= 10 && noShows === 0 && reliabilityScore >= 4.5) {
-      return "high";
-    }
-    if (completedPifs >= 3 && noShows <= 1 && reliabilityScore >= 3.5) {
-      return "medium";
-    }
-    if (noShows >= 2 || reliabilityScore < 3) {
-      return "low";
-    }
+    if (completedPifs >= 10 && noShows === 0 && reliabilityScore >= 4.5) return "high";
+    if (completedPifs >= 3 && noShows <= 1 && reliabilityScore >= 3.5) return "medium";
+    if (noShows >= 2 || reliabilityScore < 3) return "low";
     return "new";
   };
 
@@ -38,31 +30,31 @@ export function TrustIndicator({
   const trustConfig = {
     high: {
       icon: CheckCircle,
-      label: "Trusted",
+      label: t('interactions.trust_high'),
       color: "text-green-600",
       bgColor: "bg-green-50",
-      description: "Reliable community member with many successful pifs",
+      description: t('interactions.trust_high_description'),
     },
     medium: {
       icon: Star,
-      label: "Active",
+      label: t('interactions.trust_medium'),
       color: "text-amber-600",
       bgColor: "bg-amber-50",
-      description: "Active member with good track record",
+      description: t('interactions.trust_medium_description'),
     },
     low: {
       icon: AlertTriangle,
-      label: "Caution",
+      label: t('interactions.trust_low'),
       color: "text-red-500",
       bgColor: "bg-red-50",
-      description: "Has had some no-shows or issues",
+      description: t('interactions.trust_low_description'),
     },
     new: {
       icon: Star,
-      label: "New",
+      label: t('interactions.trust_new'),
       color: "text-muted-foreground",
       bgColor: "bg-muted",
-      description: "New to the community",
+      description: t('interactions.trust_new_description'),
     },
   };
 
@@ -99,7 +91,11 @@ export function TrustIndicator({
         <TooltipContent>
           <p className="text-xs text-muted-foreground">{config.description}</p>
           {completedPifs > 0 && (
-            <p className="text-xs mt-1">{completedPifs} successful pif{completedPifs !== 1 ? 's' : ''}</p>
+            <p className="text-xs mt-1">
+              {completedPifs === 1 
+                ? t('interactions.successful_pifs', { count: completedPifs })
+                : t('interactions.successful_pifs_plural', { count: completedPifs })}
+            </p>
           )}
         </TooltipContent>
       </Tooltip>

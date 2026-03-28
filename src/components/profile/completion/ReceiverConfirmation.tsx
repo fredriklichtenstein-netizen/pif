@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDemoCompletionStore } from "@/stores/demoCompletionStore";
 import { DEMO_MODE } from "@/config/demoMode";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface ReceiverConfirmationProps {
   itemId: string | number;
@@ -38,6 +39,7 @@ export function ReceiverConfirmation({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { confirmReceipt } = useDemoCompletionStore();
+  const { t } = useTranslation();
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
@@ -46,7 +48,6 @@ export function ReceiverConfirmation({
       if (DEMO_MODE) {
         confirmReceipt(itemId, feedback || undefined);
       } else {
-        // Update item pif_status to completed
         const { error: itemError } = await supabase
           .from("items")
           .update({ pif_status: "completed" })
@@ -54,16 +55,14 @@ export function ReceiverConfirmation({
 
         if (itemError) throw itemError;
 
-        // Store feedback if provided
         if (feedback) {
-          // Could store in a feedback table in the future
           console.log("Feedback for item", itemId, ":", feedback);
         }
       }
 
       toast({
-        title: "Bekräftad!",
-        description: "Tack för att du bekräftade mottagandet. Piffen är nu slutförd!",
+        title: t('interactions.confirmed_toast'),
+        description: t('interactions.confirmed_description'),
       });
 
       onOpenChange(false);
@@ -71,8 +70,8 @@ export function ReceiverConfirmation({
     } catch (error) {
       console.error("Error confirming receipt:", error);
       toast({
-        title: "Fel",
-        description: "Kunde inte bekräfta mottagandet. Försök igen.",
+        title: t('post.error'),
+        description: t('interactions.confirm_error'),
         variant: "destructive",
       });
     } finally {
@@ -86,18 +85,17 @@ export function ReceiverConfirmation({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Check className="h-5 w-5 text-green-600" />
-            Bekräfta mottagande
+            {t('interactions.confirm_receipt_title')}
           </DialogTitle>
           <DialogDescription>
-            Bekräfta att du har mottagit "{itemTitle}" från {pifferName}.
+            {t('interactions.confirm_receipt_description', { itemTitle, pifferName })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="rounded-lg bg-muted p-4">
             <p className="text-sm text-muted-foreground">
-              Genom att bekräfta hjälper du bygga förtroende i communityn och
-              låter piffern veta att allt gick bra.
+              {t('interactions.confirm_trust_message')}
             </p>
           </div>
 
@@ -109,21 +107,21 @@ export function ReceiverConfirmation({
               className="text-muted-foreground"
             >
               <MessageSquare className="h-4 w-4 mr-2" />
-              Lägg till privat feedback (valfritt)
+              {t('interactions.add_feedback')}
             </Button>
           ) : (
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Privat feedback till {pifferName}
+                {t('interactions.private_feedback_to', { name: pifferName })}
               </label>
               <Textarea
-                placeholder="T.ex. 'Tack så mycket! Bokhyllan passar perfekt!'"
+                placeholder={t('interactions.feedback_placeholder')}
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 className="min-h-[80px]"
               />
               <p className="text-xs text-muted-foreground">
-                Denna feedback är endast synlig för piffern.
+                {t('interactions.feedback_private_note')}
               </p>
             </div>
           )}
@@ -135,14 +133,14 @@ export function ReceiverConfirmation({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            Avbryt
+            {t('interactions.cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={isSubmitting}
             className="bg-green-600 hover:bg-green-700"
           >
-            {isSubmitting ? "Bekräftar..." : "Bekräfta mottagande"}
+            {isSubmitting ? t('interactions.confirming') : t('interactions.confirm_receipt')}
           </Button>
         </DialogFooter>
       </DialogContent>

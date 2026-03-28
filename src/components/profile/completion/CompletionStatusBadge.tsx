@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Clock, Check, CheckCheck, Archive } from "lucide-react";
 import type { CompletionStatus } from "@/stores/demoCompletionStore";
+import { useTranslation } from "react-i18next";
 
 interface CompletionStatusBadgeProps {
   status: CompletionStatus;
@@ -9,27 +10,29 @@ interface CompletionStatusBadgeProps {
 }
 
 export function CompletionStatusBadge({ status, className }: CompletionStatusBadgeProps) {
+  const { t } = useTranslation();
+  
   const config = {
     active: {
-      label: "Aktiv",
+      label: t('interactions.status_active'),
       icon: null,
       variant: "outline" as const,
       className: "",
     },
     pending_confirmation: {
-      label: "Väntar på bekräftelse",
+      label: t('interactions.status_pending'),
       icon: Clock,
       variant: "secondary" as const,
       className: "bg-amber-100 text-amber-800 border-amber-200",
     },
     completed: {
-      label: "Slutförd",
+      label: t('interactions.status_completed'),
       icon: CheckCheck,
       variant: "secondary" as const,
       className: "bg-green-100 text-green-800 border-green-200",
     },
     archived: {
-      label: "Arkiverad",
+      label: t('interactions.status_archived'),
       icon: Archive,
       variant: "secondary" as const,
       className: "bg-muted text-muted-foreground",
