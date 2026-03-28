@@ -5,6 +5,7 @@ import { Comment } from '@/types/comment';
 import { formatCommentFromDB } from '@/hooks/item/utils/commentFormatters';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export const useCommentRealtime = (
   itemId: string,
