@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 export function useEmailConfirmation() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
