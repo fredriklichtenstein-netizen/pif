@@ -7,6 +7,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export const useProfileAvatar = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { user } = useGlobalAuth();
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
