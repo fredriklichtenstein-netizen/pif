@@ -112,7 +112,7 @@ export const useProfileAvatar = () => {
     } catch (error: any) {
       console.error("Error updating profile picture:", error);
       toast({
-        title: "Error",
+        title: t('interactions.error_title'),
         description: error.message,
         variant: "destructive",
       });

@@ -58,15 +58,15 @@ export function useRatings(userId?: string) {
     },
     onSuccess: () => {
       toast({
-        title: "Tack för ditt betyg!",
-        description: "Ditt betyg har sparats.",
+        title: t('interactions.rating_thanks'),
+        description: t('interactions.rating_saved'),
       });
       queryClient.invalidateQueries({ queryKey: ['userRating'] });
     },
     onError: (error: any) => {
       toast({
-        title: "Fel",
-        description: error.message || "Kunde inte spara betyget.",
+        title: t('interactions.rating_error'),
+        description: error.message || t('interactions.rating_save_failed'),
         variant: "destructive",
       });
     },

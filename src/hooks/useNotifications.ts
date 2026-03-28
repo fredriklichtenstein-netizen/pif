@@ -114,7 +114,7 @@ export function useNotifications() {
     const { error } = await (supabase.rpc as any)("mark_all_notifications_read");
     if (error) {
       toast({
-        title: "Failed to mark notifications as read",
+        title: t('interactions.failed_mark_read'),
         description: error.message,
         variant: "destructive",
       });

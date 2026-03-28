@@ -34,8 +34,8 @@ export function useInterestSelection() {
       console.error("Error selecting receiver:", err);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to select receiver",
+        title: t('interactions.error_title'),
+        description: t('interactions.receiver_select_error'),
       });
       return false;
     }

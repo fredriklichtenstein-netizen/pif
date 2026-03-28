@@ -57,7 +57,7 @@ export const useCommentAdd = (itemId: string) => {
     } catch (error: any) {
       console.error("Error adding comment:", error);
       toast({
-        title: "Error",
+        title: t('interactions.error_adding_comment'),
         description: error.message,
         variant: "destructive",
       });

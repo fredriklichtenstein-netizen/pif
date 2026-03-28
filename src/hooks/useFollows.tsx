@@ -63,7 +63,7 @@ export const useFollows = () => {
     } catch (error: any) {
       console.error("Error toggling follow:", error);
       toast({
-        title: "Error",
+        title: t('interactions.error_title'),
         description: error.message,
         variant: "destructive",
       });

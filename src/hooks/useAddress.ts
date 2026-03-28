@@ -94,8 +94,8 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
       }
     } else {
       toast({
-        title: "Error",
-        description: "Please enter an address first.",
+        title: t('interactions.address_error'),
+        description: t('interactions.address_empty_error'),
         variant: "destructive",
       });
     }

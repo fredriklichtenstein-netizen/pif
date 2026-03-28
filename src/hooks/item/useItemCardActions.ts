@@ -143,8 +143,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   const handleMessage = () => {
     if (!session) {
       toast({
-        title: "Sign in required",
-        description: "You need to sign in to send messages",
+        title: t('interactions.sign_in_required'),
+        description: t('interactions.sign_in_to_message'),
         variant: "destructive"
       });
       return;

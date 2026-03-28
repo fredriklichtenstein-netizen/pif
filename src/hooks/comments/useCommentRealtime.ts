@@ -34,8 +34,8 @@ export const useCommentRealtime = (
       // Show toast for new comments from others
       if (newComment.user_id !== user?.id) {
         toast({
-          title: "New Comment",
-          description: `${formattedComment.author.name} added a comment`,
+          title: t('interactions.new_comment'),
+          description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
         });
       }
     }

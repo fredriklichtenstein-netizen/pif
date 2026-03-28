@@ -121,7 +121,7 @@ export function useEmailConfirmation() {
       }, 1000);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('interactions.error_title'),
         description: error.message,
         variant: "destructive",
       });

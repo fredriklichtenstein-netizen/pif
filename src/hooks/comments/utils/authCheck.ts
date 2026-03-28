@@ -24,8 +24,8 @@ export const useAuthCheck = () => {
     
     if (!session?.user) {
       toast({
-        title: "Authentication Required",
-        description: `You need to sign in to ${action}`,
+        title: t('interactions.auth_required_title'),
+        description: t('interactions.auth_required_description', { action }),
         variant: "default",
       });
       

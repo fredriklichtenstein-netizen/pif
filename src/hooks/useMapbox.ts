@@ -69,8 +69,8 @@ export const useMapbox = () => {
       setIsLoading(false);
       
       toast({
-        title: "Map Error",
-        description: "Failed to load map credentials. Please try again.",
+        title: t('interactions.map_error'),
+        description: t('interactions.map_error_description'),
         variant: "destructive",
       });
     }

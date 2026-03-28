@@ -87,8 +87,8 @@ export const useCommentActions = (
         const updatedComments = comments.filter(c => c.id !== commentId);
         setComments(updatedComments);
         toast({
-          title: "Comment deleted",
-          description: "Your comment has been removed",
+          title: t('interactions.comment_deleted'),
+          description: t('interactions.comment_deleted_description'),
         });
         return true;
       }

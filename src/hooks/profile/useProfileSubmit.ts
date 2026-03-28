@@ -70,25 +70,25 @@ export const useProfileSubmit = (
       }
       
       toast({
-        title: "Success",
-        description: "Profile updated successfully",
+        title: t('interactions.profile_updated'),
+        description: t('interactions.profile_updated_description'),
       });
     } catch (error: any) {
       console.error("Error updating profile:", error);
       
       // Handle timeout errors nicely
       if (error.name === 'AbortError') {
-        setSubmitError(new Error("The request timed out. Please try again."));
+        setSubmitError(new Error(t('interactions.profile_update_timeout')));
         toast({
-          title: "Error",
-          description: "The request timed out. Please try again.",
+          title: t('interactions.error_title'),
+          description: t('interactions.profile_update_timeout'),
           variant: "destructive",
         });
       } else {
         setSubmitError(error);
         toast({
-          title: "Error",
-          description: error.message || "An error occurred while updating your profile",
+          title: t('interactions.error_title'),
+          description: error.message || t('interactions.profile_update_error'),
           variant: "destructive",
         });
       }

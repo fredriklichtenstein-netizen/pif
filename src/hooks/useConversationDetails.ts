@@ -155,7 +155,7 @@ export function useConversationDetails(conversationId: string | null) {
         setError(err as Error);
         toast({
           variant: "destructive",
-          title: "Failed to load conversation details",
+          title: t('interactions.failed_load_conversation_details'),
           description: (err as Error).message,
         });
       } finally {

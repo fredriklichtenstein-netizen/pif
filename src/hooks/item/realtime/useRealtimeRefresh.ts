@@ -26,8 +26,8 @@ export const useRealtimeRefresh = (
     } catch (error) {
       console.error("Error refreshing item data:", error);
       toast({
-        title: "Error refreshing",
-        description: "Could not refresh the data. Please try again.",
+        title: t('interactions.error_refreshing'),
+        description: t('interactions.error_refreshing_description'),
         variant: "destructive"
       });
       return false;
