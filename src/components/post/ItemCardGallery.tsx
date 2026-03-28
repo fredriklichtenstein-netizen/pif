@@ -11,6 +11,7 @@ interface ItemCardGalleryProps {
 }
 
 export function ItemCardGallery({ images, title, category }: ItemCardGalleryProps) {
+  const { t } = useTranslation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
