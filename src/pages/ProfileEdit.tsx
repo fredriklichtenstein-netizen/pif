@@ -83,12 +83,36 @@ function ProfileEdit() {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
+  const geocodeAddress = async (address: string): Promise<string | null> => {
+    if (!address) return null;
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: tokenData } = await supabase.functions.invoke('get-mapbox-token');
+      if (!tokenData?.token) return null;
+      const encoded = encodeURIComponent(address);
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${tokenData.token}&country=SE&limit=1`
+      );
+      const json = await res.json();
+      if (json.features?.length > 0) {
+        const [lng, lat] = json.features[0].center;
+        return `${lng},${lat}`;
+      }
+    } catch (err) {
+      console.error("Geocoding error:", err);
+    }
+    return null;
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
 
     setIsSubmitting(true);
     try {
       const { supabase } = await import("@/integrations/supabase/client");
+
+      // Geocode address to get coordinates
+      const location = await geocodeAddress(formData.address);
       
       const updateData: any = {
         first_name: formData.firstName,
@@ -96,6 +120,7 @@ function ProfileEdit() {
         gender: formData.gender || null,
         phone: formData.phone || null,
         address: formData.address || null,
+        location: location,
       };
 
       if (avatarUrl) {
