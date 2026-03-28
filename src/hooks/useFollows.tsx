@@ -14,6 +14,7 @@ export type FollowUser = {
 export const useFollows = () => {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   // Toggle follow status for a user
