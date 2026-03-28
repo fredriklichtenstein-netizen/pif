@@ -11,6 +11,7 @@ export function useItemDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [retryCount, setRetryCount] = useState(0);
   const [hasCheckedLocalStorage, setHasCheckedLocalStorage] = useState(false);
   const [localItem, setLocalItem] = useState<any>(null);
