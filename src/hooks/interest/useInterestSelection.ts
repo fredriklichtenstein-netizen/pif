@@ -25,8 +25,8 @@ export function useInterestSelection() {
         .neq("id", interestId);
         
       toast({
-        title: "Success",
-        description: "Receiver has been selected",
+        title: t('interactions.receiver_selected_success'),
+        description: t('interactions.receiver_selected_success_description'),
       });
 
       return true;
