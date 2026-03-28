@@ -46,28 +46,10 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
     }
   }, [map]);
 
-  useEffect(() => {
-    if (!map || !center || !visible || rings.length === 0) {
-      removeAll();
-      prevRingsKey.current = '';
-      return;
-    }
-
-    const radiusKm = rings[rings.length - 1]; // use largest ring
-    const key = `${center[0]},${center[1]},${radiusKm}`;
-    if (key === prevRingsKey.current) return;
-    prevRingsKey.current = key;
-
-    const circle = createCircle(center, radiusKm);
-    const geojson: GeoJSON.Feature = {
-      type: 'Feature',
-      geometry: circle,
-      properties: { distance: radiusKm }
-    };
-
+  const addLayers = useCallback((geojson: GeoJSON.Feature) => {
+    if (!map) return;
     try {
       if (addedRef.current) {
-        // Update existing source
         const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
         if (source) {
           source.setData(geojson as any);
@@ -75,7 +57,6 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
         }
       }
 
-      // Remove stale layers first
       removeAll();
 
       map.addSource(SOURCE_ID, { type: 'geojson', data: geojson as any });
@@ -105,9 +86,39 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
     } catch (error) {
       console.error('Error adding distance radius:', error);
     }
+  }, [map, removeAll]);
+
+  useEffect(() => {
+    if (!map || !center || !visible || rings.length === 0) {
+      removeAll();
+      prevRingsKey.current = '';
+      return;
+    }
+
+    const radiusKm = rings[rings.length - 1];
+    const key = `${center[0]},${center[1]},${radiusKm}`;
+    if (key === prevRingsKey.current) return;
+    prevRingsKey.current = key;
+
+    const circle = createCircle(center, radiusKm);
+    const geojson: GeoJSON.Feature = {
+      type: 'Feature',
+      geometry: circle,
+      properties: { distance: radiusKm }
+    };
+
+    const tryAdd = () => {
+      if (map.isStyleLoaded()) {
+        addLayers(geojson);
+      } else {
+        map.once('style.load', () => addLayers(geojson));
+      }
+    };
+
+    tryAdd();
 
     return () => removeAll();
-  }, [map, center, visible, rings, createCircle, removeAll]);
+  }, [map, center, visible, rings, createCircle, removeAll, addLayers]);
 
   return null;
 };

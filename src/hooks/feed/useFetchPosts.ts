@@ -66,6 +66,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       console.log("Fetch already in progress, skipping redundant call");
       return;
     }
+
     
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -141,12 +142,10 @@ export function useFetchPosts(options = { includeArchived: false }) {
         }
       }
     } finally {
-      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-        setIsLoading(false);
-        setIsFetching(false);
-      }
+      setIsLoading(false);
+      setIsFetching(false);
     }
-  }, [toast, t, options.includeArchived, isFetching]);
+  }, [toast, t, options.includeArchived]);
 
   const cleanup = useCallback(() => {
     if (abortControllerRef.current) {
