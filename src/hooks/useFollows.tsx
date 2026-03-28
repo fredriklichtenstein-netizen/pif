@@ -54,8 +54,8 @@ export const useFollows = () => {
         if (error) throw error;
         
         toast({
-          title: "Following",
-          description: "You are now following this user",
+          title: t('interactions.following'),
+          description: t('interactions.following_description'),
         });
         
         return true;
