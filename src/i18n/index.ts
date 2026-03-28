@@ -49,7 +49,8 @@ const resources = {
       ...enUI,
       ...enStatus,
       ...enCommon,
-      ...enLanguage
+      ...enLanguage,
+      ...enPages
     }
   },
   sv: {
