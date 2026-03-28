@@ -27,6 +27,7 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
