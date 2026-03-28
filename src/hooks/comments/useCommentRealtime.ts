@@ -18,6 +18,7 @@ export const useCommentRealtime = (
   const [channel, setChannel] = useState<ReturnType<typeof supabase.channel> | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const MAX_SUBSCRIPTION_ATTEMPTS = 3;
 
   // Add comment to the list (for inserts)
