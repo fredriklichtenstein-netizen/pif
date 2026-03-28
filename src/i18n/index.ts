@@ -16,6 +16,7 @@ import enUI from '../locales/en/ui.json';
 import enStatus from '../locales/en/status.json';
 import enCommon from '../locales/en/common.json';
 import enLanguage from '../locales/en/language.json';
+import enPages from '../locales/en/pages.json';
 
 // Import Swedish translations
 import svNavigation from '../locales/sv/navigation.json';
