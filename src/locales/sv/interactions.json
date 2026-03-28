@@ -13,7 +13,24 @@
     "show_less": "Visa mindre",
     "remove_interest": "Ta bort intresse",
     "show_interest": "Visa intresse",
-    "become_receiver": "Bli mottagare"
+    "become_receiver": "Bli mottagare",
+    "liked_toast": "Gillad!",
+    "like_removed_toast": "Gillning borttagen",
+    "liked_description": "Du gillade denna sak",
+    "like_removed_description": "Du tog bort din gillning",
+    "like_error": "Kunde inte uppdatera gillningsstatus. Försök igen.",
+    "saved_toast": "Sparad bland dina saker",
+    "removed_saved_toast": "Borttagen från sparade saker",
+    "saved_description": "Du hittar denna sak bland dina sparade saker",
+    "removed_saved_description": "Denna sak har tagits bort från dina sparade saker",
+    "bookmark_error": "Kunde inte uppdatera dina bokmärken. Försök igen.",
+    "auth_required_title": "Autentisering krävs",
+    "auth_required_description": "Du måste logga in för att {{action}}",
+    "like_action": "gilla denna sak",
+    "bookmark_action": "bokmärka denna sak",
+    "comments_refresh_error": "Kunde inte uppdatera kommentarer",
+    "failed_load_posts": "Kunde inte ladda inlägg",
+    "failed_load_posts_description": "Kontrollera din anslutning och försök igen"
   },
   "comments": {
     "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."

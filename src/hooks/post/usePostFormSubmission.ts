@@ -7,6 +7,7 @@ import type { PostFormData } from "@/types/post";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoPostsStore } from "@/stores/demoPostsStore";
 import { DEMO_USER } from "@/data/mockUser";
+import { useTranslation } from "react-i18next";
 
 export function usePostFormSubmission(initialData?: any) {
   const { toast } = useToast();
@@ -14,6 +15,7 @@ export function usePostFormSubmission(initialData?: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const addDemoPost = useDemoPostsStore((state) => state.addPost);
   const updateDemoPost = useDemoPostsStore((state) => state.updatePost);
+  const { t } = useTranslation();
 
   const handleSubmit = async (formData: PostFormData) => {
     console.log("Form submission started");
@@ -26,13 +28,11 @@ export function usePostFormSubmission(initialData?: any) {
       item_type: formData.item_type
     });
     
-    // Demo mode handling
     if (DEMO_MODE) {
-      // Validate required fields
       if (!formData.title || !formData.category || !formData.coordinates || formData.images.length === 0) {
         toast({
-          title: "Obligatoriska fält saknas",
-          description: "Vänligen fyll i alla obligatoriska fält och lägg till minst en bild.",
+          title: t('post.required_fields_missing'),
+          description: t('post.required_fields_description'),
           variant: "destructive",
         });
         return;
@@ -41,18 +41,15 @@ export function usePostFormSubmission(initialData?: any) {
       setIsSubmitting(true);
       
       try {
-        // Simulate a short delay for realism
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (initialData?.id) {
-          // Update existing demo post
           updateDemoPost(initialData.id, formData);
           toast({
-            title: "Din pif har uppdaterats!",
-            description: "Dina ändringar har sparats (demo-läge).",
+            title: t('post.pif_updated'),
+            description: t('post.pif_updated_demo_description'),
           });
         } else {
-          // Add new demo post
           addDemoPost(formData, {
             id: DEMO_USER.id,
             name: DEMO_USER.user_metadata?.full_name || "Demo User",
@@ -60,10 +57,10 @@ export function usePostFormSubmission(initialData?: any) {
           });
           
           toast({
-            title: formData.item_type === 'request' ? "Din önskning har skapats!" : "Din pif har skapats!",
+            title: formData.item_type === 'request' ? t('post.request_created') : t('post.pif_created'),
             description: formData.item_type === 'request' 
-              ? "Andra kan nu se vad du söker (demo-läge)." 
-              : "Andra kan nu se din pif (demo-läge).",
+              ? t('post.request_created_demo_description')
+              : t('post.pif_created_demo_description'),
           });
         }
         
@@ -71,8 +68,8 @@ export function usePostFormSubmission(initialData?: any) {
       } catch (error) {
         console.error("Error in demo submission:", error);
         toast({
-          title: "Fel",
-          description: "Något gick fel i demo-läget.",
+          title: t('post.error'),
+          description: t('post.error_demo'),
           variant: "destructive",
         });
       } finally {
@@ -81,12 +78,11 @@ export function usePostFormSubmission(initialData?: any) {
       return;
     }
     
-    // Check if user is authenticated (non-demo mode)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({
-        title: "Inte inloggad",
-        description: "Du måste vara inloggad för att skapa en pif eller önskning.",
+        title: t('post.not_logged_in'),
+        description: t('post.not_logged_in_description'),
         variant: "destructive",
       });
       navigate("/auth");
@@ -95,8 +91,8 @@ export function usePostFormSubmission(initialData?: any) {
     
     if (!formData.title || !formData.category || !formData.condition || !formData.coordinates || formData.images.length === 0) {
       toast({
-        title: "Obligatoriska fält saknas",
-        description: "Vänligen fyll i alla obligatoriska fält och lägg till minst en bild.",
+        title: t('post.required_fields_missing'),
+        description: t('post.required_fields_description'),
         variant: "destructive",
       });
       return;
@@ -107,7 +103,6 @@ export function usePostFormSubmission(initialData?: any) {
     try {
       console.log("Starting database insertion...");
       
-      // Format coordinates as a string in the format PostgreSQL expects
       let coordinatesForDB = null;
       if (formData.coordinates && formData.coordinates.lat !== null && formData.coordinates.lng !== null) {
         coordinatesForDB = `(${formData.coordinates.lng},${formData.coordinates.lat})`;
@@ -159,10 +154,10 @@ export function usePostFormSubmission(initialData?: any) {
       console.log("Success! Showing toast and navigating...");
       
       toast({
-        title: initialData?.id ? "Din pif har uppdaterats!" : 
-               formData.item_type === 'request' ? "Din önskning har skapats!" : "Din pif har skapats!",
-        description: initialData?.id ? "Dina ändringar har sparats." : 
-                     formData.item_type === 'request' ? "Andra kan nu se vad du söker." : "Andra kan nu se din pif.",
+        title: initialData?.id ? t('post.pif_updated') : 
+               formData.item_type === 'request' ? t('post.request_created') : t('post.pif_created'),
+        description: initialData?.id ? t('post.pif_updated_description') : 
+                     formData.item_type === 'request' ? t('post.request_created_description') : t('post.pif_created_description'),
       });
 
       navigate("/feed");
@@ -175,16 +170,16 @@ export function usePostFormSubmission(initialData?: any) {
         stack: error.stack
       });
       
-      let errorMessage = "Något gick fel när din pif skulle sparas.";
+      let errorMessage = t('post.error_saving');
       
       if (error.message?.includes('invalid input syntax for type point')) {
-        errorMessage = "Problem med platsdata. Försök välja en annan adress.";
+        errorMessage = t('post.error_location');
       } else if (error.message) {
         errorMessage = error.message;
       }
       
       toast({
-        title: "Fel",
+        title: t('post.error'),
         description: errorMessage,
         variant: "destructive",
       });

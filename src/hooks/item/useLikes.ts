@@ -7,6 +7,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { DEMO_USER } from "@/data/mockUser";
 import type { User } from "./utils/userUtils";
+import { useTranslation } from "react-i18next";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -18,8 +19,8 @@ export const useLikes = (id: string, userId?: string | null) => {
   const [loading, setLoading] = useState(!DEMO_MODE);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
+  const { t } = useTranslation();
 
-  // Sync demo state
   useEffect(() => {
     if (DEMO_MODE) {
       setIsLiked(demoIsLiked);
@@ -37,7 +38,6 @@ export const useLikes = (id: string, userId?: string | null) => {
     }
   }, [demoIsLiked]);
 
-  // Initial fetch of like status and count
   useEffect(() => {
     if (DEMO_MODE) return;
     
@@ -50,7 +50,6 @@ export const useLikes = (id: string, userId?: string | null) => {
 
       setLoading(true);
       try {
-        // Check if user has liked this item
         if (userId) {
           const { data: likeData, error: likeError } = await supabase
             .from('likes')
@@ -64,7 +63,6 @@ export const useLikes = (id: string, userId?: string | null) => {
           }
         }
 
-        // Fetch likers to get the accurate count and user list
         await fetchLikersInternal(numericId);
       } catch (error) {
         console.error("Error fetching likes:", error);
@@ -76,10 +74,8 @@ export const useLikes = (id: string, userId?: string | null) => {
     fetchLikes();
   }, [id, userId]);
 
-  // Internal function to fetch likers and update count
   const fetchLikersInternal = async (numericId: number): Promise<User[]> => {
     try {
-      // Get user IDs who liked this item
       const { data: likesData, error: likesError } = await supabase
         .from('likes')
         .select('user_id')
@@ -96,13 +92,10 @@ export const useLikes = (id: string, userId?: string | null) => {
         return [];
       }
       
-      // Update the count based on actual data
       setLikesCount(likesData.length);
       
-      // Get unique user IDs
       const userIds = [...new Set(likesData.map(like => like.user_id))];
       
-      // Fetch user profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url')
@@ -118,16 +111,13 @@ export const useLikes = (id: string, userId?: string | null) => {
         return [];
       }
       
-      // Map to User type
       const users = profilesData.map(profile => ({
         id: profile.id,
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
         avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
       }));
       
-      // Update local state
       setLikers(users);
-      
       return users;
     } catch (error) {
       console.error('Error in fetchLikersInternal:', error);
@@ -136,32 +126,28 @@ export const useLikes = (id: string, userId?: string | null) => {
   };
 
   const handleLike = async () => {
-    // Demo mode: toggle locally
     if (DEMO_MODE) {
       const newState = demoStore.toggleLike(id);
       toast({
-        title: newState ? "Liked!" : "Like removed",
-        description: newState ? "You liked this item" : "You removed your like",
+        title: newState ? t('interactions.liked_toast') : t('interactions.like_removed_toast'),
+        description: newState ? t('interactions.liked_description') : t('interactions.like_removed_description'),
       });
       return;
     }
     
-    if (!await checkAuth("like this item")) return;
+    if (!await checkAuth(t('interactions.like_action'))) return;
     
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
     
-    // Create a local copy of the current state before making updates
     const wasLiked = isLiked;
     const previousCount = likesCount;
     const previousLikers = [...likers];
     
-    // Optimistically update UI
     setIsLiked(!wasLiked);
     
     try {
       if (wasLiked) {
-        // Remove like
         const { error } = await supabase
           .from('likes')
           .delete()
@@ -170,7 +156,6 @@ export const useLikes = (id: string, userId?: string | null) => {
           
         if (error) throw error;
       } else {
-        // Add like
         const { error } = await supabase
           .from('likes')
           .insert([
@@ -180,25 +165,22 @@ export const useLikes = (id: string, userId?: string | null) => {
         if (error) throw error;
       }
       
-      // Fetch updated likes data
       await fetchLikersInternal(numericId);
     } catch (error) {
       console.error('Error toggling like:', error);
       
-      // Revert optimistic updates on error
       setIsLiked(wasLiked);
       setLikesCount(previousCount);
       setLikers(previousLikers);
       
       toast({
-        title: "Error",
-        description: "Failed to update like status. Please try again.",
+        title: t('post.error'),
+        description: t('interactions.like_error'),
         variant: "destructive",
       });
     }
   };
   
-  // Public method for components to fetch likers
   const fetchLikers = async (): Promise<User[]> => {
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
@@ -207,7 +189,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       return await fetchLikersInternal(numericId);
     } catch (error) {
       console.error('Error in fetchLikers:', error);
-      return likers; // Return current likers on error
+      return likers;
     }
   };
 

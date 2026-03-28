@@ -13,7 +13,24 @@
     "show_less": "Show less",
     "remove_interest": "Remove interest",
     "show_interest": "Show interest",
-    "become_receiver": "Become receiver"
+    "become_receiver": "Become receiver",
+    "liked_toast": "Liked!",
+    "like_removed_toast": "Like removed",
+    "liked_description": "You liked this item",
+    "like_removed_description": "You removed your like",
+    "like_error": "Failed to update like status. Please try again.",
+    "saved_toast": "Saved to your items",
+    "removed_saved_toast": "Removed from saved items",
+    "saved_description": "You can find this item in your saved items",
+    "removed_saved_description": "This item has been removed from your saved items",
+    "bookmark_error": "Failed to update your bookmarks. Please try again.",
+    "auth_required_title": "Authentication Required",
+    "auth_required_description": "You need to sign in to {{action}}",
+    "like_action": "like this item",
+    "bookmark_action": "bookmark this item",
+    "comments_refresh_error": "Failed to refresh comments",
+    "failed_load_posts": "Failed to load posts",
+    "failed_load_posts_description": "Please check your connection and try again"
   },
   "comments": {
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."

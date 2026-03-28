@@ -4,6 +4,7 @@ import { Comment } from "@/types/comment";
 import { useCommentsFetch } from "@/hooks/item/useCommentsFetch";
 import { useToast } from "@/hooks/use-toast";
 import { useCommentRateLimiter } from "./useCommentRateLimiter";
+import { useTranslation } from "react-i18next";
 
 export const useCommentsCore = (
   itemId: string,
@@ -18,17 +19,16 @@ export const useCommentsCore = (
   const { fetchComments } = useCommentsFetch(itemId);
   const { toast } = useToast();
   const { shouldRateLimit, recordOperation } = useCommentRateLimiter();
+  const { t } = useTranslation();
   
   const refreshComments = useCallback(async () => {
     if (!itemId) return;
     
-    // Check rate limiting
     if (shouldRateLimit()) {
       console.log("Refresh rate limited, skipping this request");
       return;
     }
     
-    // Record this operation for rate limiting
     recordOperation();
     
     setIsRefreshing(true);
@@ -40,14 +40,14 @@ export const useCommentsCore = (
     } catch (error) {
       console.error("Error refreshing comments:", error);
       toast({
-        title: "Error",
-        description: "Failed to refresh comments",
+        title: t('post.error'),
+        description: t('interactions.comments_refresh_error'),
         variant: "destructive",
       });
     } finally {
       setIsRefreshing(false);
     }
-  }, [itemId, fetchComments, setComments, toast, shouldRateLimit, recordOperation]);
+  }, [itemId, fetchComments, setComments, toast, shouldRateLimit, recordOperation, t]);
 
   return {
     refreshComments,

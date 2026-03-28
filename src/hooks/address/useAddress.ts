@@ -2,19 +2,20 @@
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import debounce from "lodash/debounce";
+import { useTranslation } from "react-i18next";
 
 export const useAddress = (
   mapToken: string, 
   onAddressChange: (address: string, coordinates?: { lat: number; lng: number }) => void
 ) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Debounced function for fetching address suggestions
   const debouncedFetchSuggestions = useCallback(
     debounce(async (address: string) => {
       if (address.length <= 3) {
@@ -22,12 +23,10 @@ export const useAddress = (
         return;
       }
 
-      // Cancel any pending requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
 
-      // Create new abort controller for this request
       abortControllerRef.current = new AbortController();
 
       setIsLoadingSuggestions(true);
@@ -78,13 +77,13 @@ export const useAddress = (
               setCoordinates({ lat: latitude, lng: longitude });
               setShowMap(true);
               onAddressChange(address, { lat: latitude, lng: longitude });
-              setSuggestions([]); // Clear suggestions after selection
+              setSuggestions([]);
             }
           } catch (error) {
             console.error("Error reverse geocoding:", error);
             toast({
-              title: "Error",
-              description: "Could not determine your address. Please enter it manually.",
+              title: t('post.error'),
+              description: t('post.address_error'),
               variant: "destructive",
             });
           }
@@ -92,8 +91,8 @@ export const useAddress = (
         (error) => {
           console.error("Geolocation error:", error);
           toast({
-            title: "Error",
-            description: "Could not access your location. Please enter your address manually.",
+            title: t('post.error'),
+            description: t('post.location_access_error'),
             variant: "destructive",
           });
         }
@@ -105,8 +104,8 @@ export const useAddress = (
     console.log("useAddress.handleShowMap:", address);
     if (!address) {
       toast({
-        title: "Error",
-        description: "Please enter an address first.",
+        title: t('post.error'),
+        description: t('post.enter_address_first'),
         variant: "destructive",
       });
       return undefined;
@@ -122,14 +121,14 @@ export const useAddress = (
         const newCoords = { lat, lng };
         setCoordinates(newCoords);
         setShowMap(true);
-        setSuggestions([]); // Clear suggestions after showing map
+        setSuggestions([]);
         return newCoords;
       }
     } catch (error) {
       console.error("Error geocoding address:", error);
       toast({
-        title: "Error",
-        description: "Could not locate the address on the map. Please verify the address.",
+        title: t('post.error'),
+        description: t('post.address_locate_error'),
         variant: "destructive",
       });
     }
