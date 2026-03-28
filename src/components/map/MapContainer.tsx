@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Locate, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
-import { LocationAccuracyIndicator } from "./location/LocationAccuracyIndicator";
-import { LocationPermissionManager } from "./location/LocationPermissionManager";
 import { DistanceRings } from "./distance/DistanceRings";
 import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import { useTranslation } from "react-i18next";
@@ -65,18 +63,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     setSelectedConditions([]);
     setSelectedItemTypes([]);
     setSelectedDistance(null);
-  };
-
-  const handleLocationEnabled = () => {
-    console.log('📍 [MapContainer] Location enabled successfully');
-    if (!locationTracking.isTracking) {
-      console.log('🚀 [MapContainer] Starting location tracking after permission granted');
-      locationTracking.toggleLocationTracking();
-    }
-  };
-
-  const handleLocationDenied = () => {
-    console.log('🚫 [MapContainer] Location access denied by user');
   };
 
   useEffect(() => {
@@ -167,18 +153,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       
       {isMapReady && !error && map && (
         <>
-          {!locationTracking.isTracking && !locationTracking.userLocation && (
-            <LocationPermissionManager
-              onLocationEnabled={handleLocationEnabled}
-              onLocationDenied={handleLocationDenied}
-            />
-          )}
-
-          <LocationAccuracyIndicator
-            accuracy={locationTracking.accuracy || 0}
-            isVisible={locationTracking.isTracking && locationTracking.accuracy !== null}
-          />
-
           <MapFilters
             posts={filteredPosts}
             selectedCategories={selectedCategories}
@@ -209,16 +183,18 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
 
           <div className="absolute bottom-4 right-4 flex flex-col gap-2">
             <Button
-              onClick={locationTracking.toggleLocationTracking}
+              onClick={locationTracking.goToMyLocation}
+              disabled={locationTracking.isLoadingLocation}
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
               variant="outline"
-              title={locationTracking.isTracking ? t('map.stop_tracking') : t('map.start_tracking')}
+              title={t('map.my_location')}
             >
-              <Locate 
-                className={`h-4 w-4 ${locationTracking.isTracking ? 'text-blue-500 fill-blue-500' : ''}`} 
-                strokeWidth={1.5}
-              />
+              {locationTracking.isLoadingLocation ? (
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Locate className="h-4 w-4" strokeWidth={1.5} />
+              )}
             </Button>
           </div>
         </>
