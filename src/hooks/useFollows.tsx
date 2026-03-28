@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "./useGlobalAuth";
 import { useToast } from "./use-toast";
+import { useTranslation } from "react-i18next";
 
 export type FollowUser = {
   id: string;
