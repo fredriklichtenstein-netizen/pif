@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { getDeleteDialogManager } from './useItemDeleteDialog';
 
 export const useItemCardActions = (id: string | number, postedById?: string) => {
