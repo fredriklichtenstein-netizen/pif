@@ -35,6 +35,13 @@
     "create_error": "Fel vid skapande av profil",
     "unexpected_error": "Ett oväntat fel inträffade",
     "mobile_phone": "Mobilnummer (valfritt)",
-    "primary_address": "Primär PIF-adress"
+    "primary_address": "Primär PIF-adress",
+    "loading": "Laddar profil...",
+    "auth_required": "Autentisering krävs",
+    "sign_in_to_view": "Logga in för att se din profil",
+    "sign_in": "Logga in",
+    "my_pifs_tab": "Mina PIFs",
+    "interested_tab": "Intresserad",
+    "archived_tab": "Arkiverade"
   }
 }

@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArchivedPifsGrid } from "@/components/profile/ArchivedPifsGrid";
 import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_PROFILE } from "@/data/mockProfiles";
+import { useTranslation } from "react-i18next";
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
@@ -29,11 +30,11 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("my-pifs");
+  const { t } = useTranslation();
 
   const fetchProfileData = async () => {
     if (!user) return;
     
-    // Demo mode: use mock profile data
     if (DEMO_MODE) {
       setProfileData(DEMO_PROFILE);
       setCoordinates({ lng: 18.0686, lat: 59.3293 });
@@ -54,27 +55,16 @@ const Profile = () => {
         return;
       }
       
-      console.log("Fetched profile data:", data);
       setProfileData(data);
       
-      // Process coordinates with more detailed logging
       if (data?.location) {
-        console.log("Raw location data from profile:", data.location);
         const locationCoords = parseCoordinates(data.location);
         if (locationCoords) {
-          console.log("Successfully parsed coordinates from location:", locationCoords);
           setCoordinates(locationCoords);
-        } else {
-          console.log("Failed to parse coordinates from location field");
         }
       } else {
-        console.log("No location data found in profile");
-        
-        // Fallback to Stockholm coordinates if no location data available
         if (data?.address) {
-          console.log("No coordinates found, but address exists:", data.address);
           setCoordinates({ lat: 59.3293, lng: 18.0686 });
-          console.log("Using fallback coordinates for Stockholm:", { lat: 59.3293, lng: 18.0686 });
         }
       }
     } catch (err) {
@@ -86,18 +76,14 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      console.log("User data:", user);
       setProfile(user);
       fetchProfileData();
       
-      // Type-safe approach - access user as any to check if it might have coordinates
       const userAny = user as any;
       if (userAny && typeof userAny === 'object') {
         if ('location' in userAny && userAny.location) {
-          console.log("Raw location from user object:", userAny.location);
           const coord = parseCoordinates(userAny.location);
           if (coord) {
-            console.log("Parsed coordinates from user location:", coord);
             setCoordinates(coord);
           }
         }
@@ -105,15 +91,10 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Add effect to log coordinates state changes
-  useEffect(() => {
-    console.log("Coordinates state updated:", coordinates);
-  }, [coordinates]);
-
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <span className="text-gray-600">Loading profile...</span>
+        <span className="text-muted-foreground">{t('profile.loading')}</span>
       </div>
     );
   }
@@ -123,10 +104,10 @@ const Profile = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="flex flex-col items-center p-8 gap-4 max-w-md">
           <AlertCircle className="h-12 w-12 text-amber-500" />
-          <div className="text-xl font-bold">Authentication required</div>
-          <div className="text-gray-600 text-center">Please sign in to view your profile</div>
+          <div className="text-xl font-bold">{t('profile.auth_required')}</div>
+          <div className="text-muted-foreground text-center">{t('profile.sign_in_to_view')}</div>
           <Link to="/auth">
-            <Button>Sign In</Button>
+            <Button>{t('profile.sign_in')}</Button>
           </Link>
         </Card>
       </div>
@@ -135,8 +116,6 @@ const Profile = () => {
 
   const currentAvatarUrl = profileData?.avatar_url || null;
   const displayName = formatPublicName(profileData || profile);
-
-  console.log("Rendering ProfileBasicInfo with coordinates:", coordinates);
 
   return (
     <>
@@ -153,9 +132,9 @@ const Profile = () => {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="my-pifs">My PIFs</TabsTrigger>
-              <TabsTrigger value="interested">Interested</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
+              <TabsTrigger value="my-pifs">{t('profile.my_pifs_tab')}</TabsTrigger>
+              <TabsTrigger value="interested">{t('profile.interested_tab')}</TabsTrigger>
+              <TabsTrigger value="archived">{t('profile.archived_tab')}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="my-pifs" className="mt-0">

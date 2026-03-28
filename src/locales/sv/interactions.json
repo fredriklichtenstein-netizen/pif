@@ -45,7 +45,22 @@
     "location_blocked_description": "Aktivera plats för att se avstånd och närliggande saker",
     "browser_settings": "Webbläsarinställningar",
     "see_distances": "Se avstånd och hitta närliggande saker",
-    "requesting": "Begär..."
+    "requesting": "Begär...",
+    "loading_map_credentials": "Laddar kartuppgifter...",
+    "fetching_token": "Hämtar säker Mapbox-token",
+    "map_requires_token": "Kartan kräver Mapbox-token",
+    "map_token_description": "För att visa den interaktiva kartan i demoläge, ange din Mapbox publika token. Du kan få en gratis på mapbox.com.",
+    "use_token": "Använd token",
+    "get_free_token": "Skaffa en gratis Mapbox-token",
+    "demo_token_note": "Kartfunktionen kräver en Mapbox API-token. I produktion hanteras detta automatiskt via backend.",
+    "map_unavailable": "Karta ej tillgänglig",
+    "unable_to_load": "Kunde inte ladda kartuppgifter. Försök igen.",
+    "retry": "Försök igen",
+    "demo_mode": "Demoläge",
+    "demo_viewing": "Visar exempelplatser i Stockholm",
+    "loading_posts": "Laddar inlägg...",
+    "map_loaded_announcement": "Kartsidan laddad, visar gemenskapens inlägg på kartan",
+    "interactive_map": "Interaktiv karta"
   },
   "email_confirmation": {
     "check_email": "Kolla din e-post",

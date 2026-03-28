@@ -16,6 +16,7 @@ import enUI from '../locales/en/ui.json';
 import enStatus from '../locales/en/status.json';
 import enCommon from '../locales/en/common.json';
 import enLanguage from '../locales/en/language.json';
+import enPages from '../locales/en/pages.json';
 
 // Import Swedish translations
 import svNavigation from '../locales/sv/navigation.json';
@@ -31,6 +32,7 @@ import svUI from '../locales/sv/ui.json';
 import svStatus from '../locales/sv/status.json';
 import svCommon from '../locales/sv/common.json';
 import svLanguage from '../locales/sv/language.json';
+import svPages from '../locales/sv/pages.json';
 
 const resources = {
   en: {
@@ -47,7 +49,8 @@ const resources = {
       ...enUI,
       ...enStatus,
       ...enCommon,
-      ...enLanguage
+      ...enLanguage,
+      ...enPages
     }
   },
   sv: {
@@ -64,7 +67,8 @@ const resources = {
       ...svUI,
       ...svStatus,
       ...svCommon,
-      ...svLanguage
+      ...svLanguage,
+      ...svPages
     }
   }
 };
