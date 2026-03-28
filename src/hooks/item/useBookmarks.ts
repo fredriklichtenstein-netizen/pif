@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthCheck } from "./utils/authCheck";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
+import { useTranslation } from "react-i18next";
 
 export const useBookmarks = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -14,8 +15,8 @@ export const useBookmarks = (id: string, userId?: string | null) => {
   const [loading, setLoading] = useState(!DEMO_MODE);
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
+  const { t } = useTranslation();
 
-  // Sync demo state
   useEffect(() => {
     if (DEMO_MODE) {
       setIsBookmarked(demoIsBookmarked);
@@ -55,19 +56,18 @@ export const useBookmarks = (id: string, userId?: string | null) => {
   }, [id, userId]);
 
   const handleBookmark = async () => {
-    // Demo mode: toggle locally
     if (DEMO_MODE) {
       const newState = demoStore.toggleBookmark(id);
       toast({
-        title: newState ? "Saved to your items" : "Removed from saved items",
+        title: newState ? t('interactions.saved_toast') : t('interactions.removed_saved_toast'),
         description: newState 
-          ? "You can find this item in your saved items" 
-          : "This item has been removed from your saved items",
+          ? t('interactions.saved_description')
+          : t('interactions.removed_saved_description'),
       });
       return;
     }
     
-    if (!await checkAuth("bookmark this item")) return;
+    if (!await checkAuth(t('interactions.bookmark_action'))) return;
     
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
@@ -86,8 +86,8 @@ export const useBookmarks = (id: string, userId?: string | null) => {
         setIsBookmarked(false);
         
         toast({
-          title: "Removed from saved items",
-          description: "This item has been removed from your saved items",
+          title: t('interactions.removed_saved_toast'),
+          description: t('interactions.removed_saved_description'),
         });
       } else {
         const { error } = await supabase
@@ -101,15 +101,15 @@ export const useBookmarks = (id: string, userId?: string | null) => {
         setIsBookmarked(true);
         
         toast({
-          title: "Saved to your items",
-          description: "You can find this item in your saved items",
+          title: t('interactions.saved_toast'),
+          description: t('interactions.saved_description'),
         });
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       toast({
-        title: "Error",
-        description: "Failed to update your bookmarks. Please try again.",
+        title: t('post.error'),
+        description: t('interactions.bookmark_error'),
         variant: "destructive",
       });
     } finally {
