@@ -12,6 +12,8 @@
     "music": "Musik",
     "kitchen": "Kök",
     "garden": "Trädgård",
+    "tools": "Verktyg",
+    "household": "Husgeråd",
     "other": "Övrigt"
   },
   "conditions": {
@@ -20,6 +22,18 @@
     "very_good": "Mycket bra",
     "good": "Bra",
     "acceptable": "Acceptabelt",
+    "ok": "Okej",
     "poor": "Dåligt"
+  },
+  "map_filters": {
+    "all": "Alla",
+    "pifs": "Piffar",
+    "wishes": "Önskningar",
+    "categories_label": "Kategorier",
+    "condition_label": "Skick",
+    "filter": "Filter",
+    "clear": "Rensa",
+    "offers": "Erbjudanden",
+    "requests": "Önskemål"
   }
 }

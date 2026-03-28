@@ -12,6 +12,8 @@
     "music": "Music",
     "kitchen": "Kitchen",
     "garden": "Garden",
+    "tools": "Tools",
+    "household": "Household items",
     "other": "Other"
   },
   "conditions": {
@@ -20,6 +22,18 @@
     "very_good": "Very Good",
     "good": "Good",
     "acceptable": "Acceptable",
+    "ok": "OK",
     "poor": "Poor"
+  },
+  "map_filters": {
+    "all": "All",
+    "pifs": "Pifs",
+    "wishes": "Wishes",
+    "categories_label": "Categories",
+    "condition_label": "Condition",
+    "filter": "Filter",
+    "clear": "Clear",
+    "offers": "Offers",
+    "requests": "Requests"
   }
 }
