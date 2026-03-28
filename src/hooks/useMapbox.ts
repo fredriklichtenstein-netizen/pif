@@ -10,6 +10,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 const DEMO_TOKEN_KEY = 'pif_demo_mapbox_token';
 
 export const useMapbox = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [mapToken, setMapToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
