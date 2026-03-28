@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface ImageFormTipsProps {
   isRequest: boolean;
@@ -7,21 +8,13 @@ interface ImageFormTipsProps {
 }
 
 export function ImageFormTips({ isRequest, hasImages }: ImageFormTipsProps) {
-  if (!hasImages) {
-    return null;
-  }
+  const { t } = useTranslation();
 
-  if (isRequest) {
-    return (
-      <div className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-        <p><strong>Tips:</strong> Din referensbild hjälper andra att förstå vad du söker, även om de inte har exakt samma sak.</p>
-      </div>
-    );
-  }
+  if (!hasImages) return null;
 
   return (
     <div className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-      <p><strong>Tips:</strong> Bilden märkt med stjärna (★) visas först i flödet. Dra bilderna för att ändra ordning.</p>
+      <p><strong>{t('post.tip_label')}</strong> {isRequest ? t('interactions.image_tips_request') : t('interactions.image_tips_offer')}</p>
     </div>
   );
 }

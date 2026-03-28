@@ -3,22 +3,19 @@ import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuthCheck } from "../item/utils/authCheck";
+import { useTranslation } from "react-i18next";
 
 export const useItemActions = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkAuth } = useAuthCheck();
+  const { t } = useTranslation();
 
-  // Modified to accept all parameters but maintain compatibility with callers
-  // that might only pass the event
   const handleMessage = async (e: React.MouseEvent, itemId?: string, ownerId?: string) => {
     if (!await checkAuth("message the owner")) {
       e.preventDefault();
       return;
     }
-    
-    // Actual messaging is now handled by the ConversationHandler component
-    // This method remains for backward compatibility
   };
 
   const handleShare = async () => {
@@ -26,23 +23,18 @@ export const useItemActions = () => {
     const url = window.location.href;
     window.open(`https://facebook.com/share?url=${url}`, '_blank');
     toast({
-      title: "Shared!",
-      description: "Item shared on Facebook",
+      title: t('interactions.shared_facebook'),
+      description: t('interactions.shared_facebook_description'),
     });
   };
 
   const handleReport = async () => {
     if (!await checkAuth("report this item")) return;
-    
     toast({
-      title: "Item reported",
-      description: "Thank you for helping keep our community safe. We'll review this item.",
+      title: t('interactions.item_reported'),
+      description: t('interactions.item_reported_description'),
     });
   };
 
-  return {
-    handleMessage,
-    handleShare,
-    handleReport,
-  };
+  return { handleMessage, handleShare, handleReport };
 };
