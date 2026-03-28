@@ -67,7 +67,8 @@ const resources = {
       ...svUI,
       ...svStatus,
       ...svCommon,
-      ...svLanguage
+      ...svLanguage,
+      ...svPages
     }
   }
 };
