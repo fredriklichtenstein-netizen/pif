@@ -1,6 +1,7 @@
 
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 /**
  * Hook to handle refreshing item data with error handling
