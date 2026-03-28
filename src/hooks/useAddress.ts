@@ -63,8 +63,8 @@ export const useAddress = (mapToken: string, onAddressChange: (address: string) 
         (error) => {
           console.error("Geolocation error:", error);
           toast({
-            title: "Error",
-            description: "Could not access your location. Please enter your address manually.",
+            title: t('interactions.address_error'),
+            description: t('interactions.address_location_error'),
             variant: "destructive",
           });
         }
