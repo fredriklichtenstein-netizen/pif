@@ -9,6 +9,7 @@ import { formatCommentFromDB } from "../item/utils/commentFormatters";
 
 export const useCommentAdd = (itemId: string) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { user } = useGlobalAuth();
   const { checkAuth } = useAuthCheck();
   
