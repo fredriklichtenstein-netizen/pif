@@ -80,8 +80,8 @@ export function useEmailConfirmation() {
   const handleResendConfirmation = async () => {
     if (!userEmail) {
       toast({
-        title: "Error",
-        description: "No email found. Please try signing up again.",
+        title: t('interactions.error_title'),
+        description: t('interactions.no_email_found'),
         variant: "destructive",
       });
       return;
