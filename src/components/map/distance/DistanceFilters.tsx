@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { MapPin, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 interface DistanceFiltersProps {
   selectedDistance: number | null;
@@ -19,20 +20,21 @@ const DISTANCE_OPTIONS = [
 
 export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocation }: DistanceFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useTranslation();
 
   if (!userLocation) {
     return (
-      <div className="absolute top-20 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-gray-200">
-        <div className="flex items-center gap-2 text-gray-500">
+      <div className="absolute top-20 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span className="text-sm">Enable location for distance filters</span>
+          <span className="text-sm">{t('interactions.enable_location_filters')}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="absolute top-20 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200">
+    <div className="absolute top-20 left-4 bg-background/90 backdrop-blur-sm rounded-lg shadow-lg border">
       <Button
         variant="ghost"
         size="sm"
@@ -40,7 +42,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
         className="flex items-center gap-2 p-3"
       >
         <Filter className="h-4 w-4" />
-        <span className="text-sm font-medium">Distance</span>
+        <span className="text-sm font-medium">{t('interactions.distance')}</span>
         {selectedDistance && (
           <Badge variant="secondary" className="ml-1">
             {selectedDistance}km
@@ -49,7 +51,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
       </Button>
 
       {isExpanded && (
-        <div className="border-t border-gray-200 p-2">
+        <div className="border-t p-2">
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant={selectedDistance === null ? "default" : "outline"}
@@ -57,7 +59,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
               onClick={() => onDistanceChange(null)}
               className="text-xs"
             >
-              All
+              {t('interactions.all')}
             </Button>
             {DISTANCE_OPTIONS.map((option) => (
               <Button

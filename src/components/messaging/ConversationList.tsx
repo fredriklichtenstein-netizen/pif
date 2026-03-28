@@ -3,6 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import type { Conversation } from "@/types/messaging";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -17,15 +18,15 @@ export function ConversationList({
 }: ConversationListProps) {
   const { user } = useGlobalAuth();
   const currentUserId = user?.id;
+  const { t } = useTranslation();
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-3 border-b">
-        <h3 className="font-medium">Conversations</h3>
+        <h3 className="font-medium">{t('interactions.conversations_title')}</h3>
       </div>
       <div className="divide-y">
         {conversations.map((conversation) => {
-          // Find the other participant (not the current user)
           const otherParticipant = conversation.participants.find(
             p => p.user_id !== currentUserId
           );
@@ -33,14 +34,14 @@ export function ConversationList({
           return (
             <div 
               key={conversation.id}
-              className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                activeConversationId === conversation.id ? "bg-gray-100" : ""
+              className={`p-3 cursor-pointer hover:bg-accent transition-colors ${
+                activeConversationId === conversation.id ? "bg-accent" : ""
               }`}
               onClick={() => onSelectConversation(conversation.id)}
             >
               <div className="flex items-start gap-3">
                 {otherParticipant?.user_id && (
-                  <Link to={`/user/${otherParticipant.user_id}`} className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                  <Link to={`/user/${otherParticipant.user_id}`} className="h-10 w-10 rounded-full bg-muted flex-shrink-0 overflow-hidden" onClick={(e) => e.stopPropagation()}>
                     {otherParticipant?.profile?.avatar_url ? (
                       <img 
                         src={otherParticipant.profile.avatar_url} 
@@ -48,7 +49,7 @@ export function ConversationList({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center text-gray-500">
+                      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
                         {(otherParticipant?.profile?.username || "U").charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -59,12 +60,12 @@ export function ConversationList({
                     <h4 className="font-medium truncate">
                       {otherParticipant?.profile?.username || "User"}
                     </h4>
-                    <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                       {formatDistanceToNow(new Date(conversation.updated_at), { addSuffix: true })}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 truncate mt-1">
-                    {conversation.last_message_text || "No messages yet"}
+                  <p className="text-sm text-muted-foreground truncate mt-1">
+                    {conversation.last_message_text || t('interactions.no_messages_yet_short')}
                   </p>
                 </div>
               </div>

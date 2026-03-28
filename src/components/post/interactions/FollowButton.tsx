@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useFollows } from "@/hooks/useFollows";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { UserPlus, UserCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface FollowButtonProps {
   userId: string;
@@ -23,8 +24,8 @@ export const FollowButton = ({
   const { user } = useGlobalAuth();
   const { toggleFollow, checkFollowStatus, loading } = useFollows();
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+  const { t } = useTranslation();
 
-  // Check initial follow status
   useEffect(() => {
     if (!user || user.id === userId) return;
     
@@ -38,7 +39,6 @@ export const FollowButton = ({
     }
   }, [user, userId]);
 
-  // Don't show if it's the current user or if no user is logged in
   if (!user || user.id === userId) {
     return null;
   }
@@ -50,7 +50,6 @@ export const FollowButton = ({
     }
   };
 
-  // Show loading state or null until we know the status
   if (isFollowing === null) {
     return <Button size={size} variant={variant} className={className} disabled>...</Button>;
   }
@@ -66,12 +65,12 @@ export const FollowButton = ({
       {isFollowing ? (
         <>
           <UserCheck className="h-4 w-4" />
-          {showText && <span className="ml-1">Following</span>}
+          {showText && <span className="ml-1">{t('interactions.following_label')}</span>}
         </>
       ) : (
         <>
           <UserPlus className="h-4 w-4" />
-          {showText && <span className="ml-1">Follow</span>}
+          {showText && <span className="ml-1">{t('interactions.follow')}</span>}
         </>
       )}
     </Button>
