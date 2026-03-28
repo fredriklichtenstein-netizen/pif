@@ -2,6 +2,7 @@
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Hook for handling image uploads for posts
@@ -11,8 +12,8 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
   const { user } = useGlobalAuth();
+  const { t } = useTranslation();
 
-  // Handles uploading images and returns URLs
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("Image upload started");
     setIsAnalyzing(true);
@@ -29,7 +30,6 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
       console.log(`Processing ${files.length} files for upload`);
       const { supabase } = await import("@/integrations/supabase/client");
       
-      // Track successful uploads to show progress
       let completedUploads = 0;
       
       const uploadPromises = files.map(async (file) => {
@@ -48,14 +48,13 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
           if (error) {
             console.error("Upload error:", error);
             toast({
-              title: "Error uploading image",
+              title: t('interactions.upload_error_title'),
               description: error.message,
               variant: "destructive",
             });
             return null;
           }
 
-          // Update progress after each successful upload
           completedUploads++;
           setUploadProgress(Math.round((completedUploads / files.length) * 100));
 
@@ -69,8 +68,8 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
         } catch (fileError) {
           console.error("File upload error:", fileError);
           toast({
-            title: "Upload failed",
-            description: "An error occurred while uploading the image",
+            title: t('interactions.upload_failed'),
+            description: t('interactions.upload_failed_description'),
             variant: "destructive",
           });
           return null;
@@ -84,21 +83,21 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
       if (uploadedUrls.length > 0) {
         onImagesUploaded(uploadedUrls);
         toast({
-          title: "Upload successful",
-          description: `Successfully uploaded ${uploadedUrls.length} image${uploadedUrls.length > 1 ? 's' : ''}`,
+          title: t('interactions.upload_successful'),
+          description: t('interactions.upload_successful_description', { count: uploadedUrls.length }),
         });
       } else if (files.length > 0 && uploadedUrls.length === 0) {
         toast({
-          title: "Upload failed",
-          description: "None of the images could be uploaded. Please try again.",
+          title: t('interactions.upload_failed'),
+          description: t('interactions.upload_none_succeeded'),
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Unexpected error in image upload process:", error);
       toast({
-        title: "Upload error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: t('interactions.upload_failed'),
+        description: t('interactions.upload_unexpected_error'),
         variant: "destructive",
       });
     } finally {

@@ -97,8 +97,8 @@ export function useItemDetailPage() {
   useEffect(() => {
     if (localItem && item) {
       toast({
-        title: "Item details refreshed",
-        description: "Latest information has been loaded",
+        title: t('interactions.item_refreshed'),
+        description: t('interactions.item_refreshed_description'),
       });
     }
   }, [item, localItem, toast]);
