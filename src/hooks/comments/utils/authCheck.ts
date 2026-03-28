@@ -7,6 +7,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export const useAuthCheck = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, session } = useGlobalAuth();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
