@@ -106,8 +106,8 @@ export const useProfileAvatar = () => {
       console.log("Profile updated with new avatar_url");
 
       toast({
-        title: "Success",
-        description: "Profile picture updated successfully",
+        title: t('interactions.avatar_updated'),
+        description: t('interactions.avatar_updated_description'),
       });
     } catch (error: any) {
       console.error("Error updating profile picture:", error);
