@@ -546,6 +546,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_own_account: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
       archive_item: {
         Args: { p_item_id: number; p_reason?: string }
         Returns: boolean
