@@ -26,6 +26,7 @@ export function DangerZone() {
   const [loading, setLoading] = useState(false);
 
   const handleDeleteAccount = async () => {
+    console.log('handleDeleteAccount called');
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
