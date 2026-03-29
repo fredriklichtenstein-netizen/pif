@@ -28,18 +28,9 @@ export function DangerZone() {
   const handleDeleteAccount = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not found");
+      const { error } = await supabase.rpc('delete_own_account' as any);
+      if (error) throw error;
 
-      const { error: profileDeleteError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (profileDeleteError) {
-        console.error("Profile deletion error:", profileDeleteError);
-      }
-      
       await supabase.auth.signOut();
       
       toast({
@@ -47,7 +38,7 @@ export function DangerZone() {
         description: t('settings.account_deletion_description'),
       });
       
-      navigate("/");
+      navigate("/auth");
     } catch (error: any) {
       console.error("Error during account deletion:", error);
       toast({
