@@ -43,6 +43,7 @@ export function DangerZone() {
         description: t('settings.account_deletion_description'),
       });
       
+      setShowDeleteDialog(false);
       navigate("/auth");
     } catch (error: any) {
       console.error("Error during account deletion:", error);
