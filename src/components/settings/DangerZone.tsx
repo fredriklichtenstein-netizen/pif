@@ -28,7 +28,7 @@ export function DangerZone() {
   const handleDeleteAccount = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('delete_own_account' as any);
+      const { error } = await supabase.rpc('delete_own_account');
       if (error) throw error;
 
       await supabase.auth.signOut();
