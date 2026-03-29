@@ -29,8 +29,10 @@ export function DangerZone() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('Deleting user:', user?.id);
       if (!user) throw new Error('No authenticated user found');
-      const { error } = await supabase.rpc('delete_own_account', { p_user_id: user.id });
+      const { data, error } = await supabase.rpc('delete_own_account', { p_user_id: user.id });
+      console.log('RPC result:', data, 'Error:', error);
       if (error) throw error;
 
       await supabase.auth.signOut();
