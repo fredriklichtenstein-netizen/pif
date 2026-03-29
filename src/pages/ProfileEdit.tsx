@@ -96,7 +96,7 @@ function ProfileEdit() {
       const json = await res.json();
       if (json.features?.length > 0) {
         const [lng, lat] = json.features[0].center;
-        return `${lng},${lat}`;
+        return `(${lng},${lat})`;
       }
     } catch (err) {
       console.error("Geocoding error:", err);
