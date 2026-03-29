@@ -41,6 +41,16 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
         };
       }
     }
+
+    // Format 2c: Simple "lng,lat" string
+      const simpleCommaMatch = coordinates.match(/^([-\d.]+),([-\d.]+)$/);
+      if (simpleCommaMatch && simpleCommaMatch.length >= 3) {
+        console.log("Found Format 2c: Simple lng,lat string");
+        return {
+          lng: parseFloat(simpleCommaMatch[1]),
+          lat: parseFloat(simpleCommaMatch[2]),
+        };
+      }
     
     // Format 3: PostGIS point object with x, y properties
     if (typeof coordinates === "object" && coordinates !== null && "x" in coordinates && "y" in coordinates) {
