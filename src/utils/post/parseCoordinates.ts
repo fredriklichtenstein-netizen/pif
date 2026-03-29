@@ -40,16 +40,6 @@ export function parseCoordinates(coordinates: any): { lat: number; lng: number }
           lat: parseFloat(pointMatches[2]),  // lat is the second value
         };
       }
-
-          // Format 2c: Simple "lng,lat" string
-      const simpleCommaMatch = coordinates.match(/^([-\d.]+),([-\d.]+)$/);
-      if (simpleCommaMatch && simpleCommaMatch.length >= 3) {
-        console.log("Found Format 2c: Simple lng,lat string");
-        return {
-          lng: parseFloat(simpleCommaMatch[1]),
-          lat: parseFloat(simpleCommaMatch[2]),
-        };
-      }
       
     }
     
