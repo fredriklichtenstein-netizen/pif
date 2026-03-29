@@ -97,10 +97,9 @@ export function DangerZone() {
           
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={(e) => {
-                e.preventDefault();
+            <Button
+              variant="destructive"
+              onClick={() => {
                 if (confirmationText === "delete my account") {
                   handleDeleteAccount();
                 } else {
@@ -114,7 +113,7 @@ export function DangerZone() {
               disabled={loading || confirmationText !== "delete my account"}
             >
               {loading ? t('settings.deleting') : t('settings.delete_account')}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
