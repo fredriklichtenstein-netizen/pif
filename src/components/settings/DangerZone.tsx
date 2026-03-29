@@ -26,6 +26,7 @@ export function DangerZone() {
   const [loading, setLoading] = useState(false);
 
   const handleDeleteAccount = async () => {
+    console.log('handleDeleteAccount called');
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -42,6 +43,7 @@ export function DangerZone() {
         description: t('settings.account_deletion_description'),
       });
       
+      setShowDeleteDialog(false);
       navigate("/auth");
     } catch (error: any) {
       console.error("Error during account deletion:", error);
@@ -95,10 +97,9 @@ export function DangerZone() {
           
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={(e) => {
-                e.preventDefault();
+            <Button
+              variant="destructive"
+              onClick={() => {
                 if (confirmationText === "delete my account") {
                   handleDeleteAccount();
                 } else {
@@ -112,7 +113,7 @@ export function DangerZone() {
               disabled={loading || confirmationText !== "delete my account"}
             >
               {loading ? t('settings.deleting') : t('settings.delete_account')}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
