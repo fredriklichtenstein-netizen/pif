@@ -2,8 +2,6 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapbox } from "@/hooks/useMapbox";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
-import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface ProfileLocationMapProps {
@@ -13,62 +11,38 @@ interface ProfileLocationMapProps {
 export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  // marker removed for privacy
   const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
-  
-  // Add log to debug the incoming coordinates
-  console.log("ProfileLocationMap rendering with coordinates:", coordinates);
-  
+
   useEffect(() => {
-    if (!coordinates || !mapToken || !mapContainerRef.current) {
-      console.log("Map initialization skipped:", { 
-        hasCoordinates: !!coordinates, 
-        hasMapToken: !!mapToken, 
-        hasContainer: !!mapContainerRef.current 
-      });
-      return;
-    }
-    
-    console.log("Initializing profile map with coordinates:", coordinates);
+    if (!coordinates || !mapToken || !mapContainerRef.current) return;
+
     mapboxgl.accessToken = mapToken;
     let destroyed = false;
 
-    const initializeMap = async () => {
-      try {
-        // Process coordinates exactly like in MapMarkersLayer.tsx
-        // Apply location privacy to the coordinates - note: removed the third argument (map)
-        // which matches how MapMarkersLayer does it
-        const [privateLng, privateLat] = await addLocationPrivacy(
-          coordinates.lng,
-          coordinates.lat
-        );
-        
-        if (destroyed) return;
-        
-        console.log("Privacy-adjusted coordinates for profile map:", privateLng, privateLat);
-        
-        const map = new mapboxgl.Map({
-          container: mapContainerRef.current!,
-          style: "mapbox://styles/mapbox/streets-v12",
-          center: [privateLng, privateLat],
-          zoom: 13,
-          interactive: false,
-          dragPan: false,
-          scrollZoom: false,
-          boxZoom: false,
-          dragRotate: false,
-          doubleClickZoom: false,
-          touchZoomRotate: false,
-          keyboard: false,
-        });
-        
-        mapRef.current = map;
-      } catch (error) {
-        console.error("Error initializing map:", error);
-      }
-    };
+    // Fixed 200-300m random offset for privacy
+    const offsetMeters = 200 + Math.random() * 100;
+    const angle = Math.random() * 2 * Math.PI;
+    const latOffset = offsetMeters / 111000;
+    const lngOffset = offsetMeters / (111000 * Math.cos(coordinates.lat * Math.PI / 180));
+    const centerLng = coordinates.lng + lngOffset * Math.cos(angle);
+    const centerLat = coordinates.lat + latOffset * Math.sin(angle);
 
-    initializeMap();
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current!,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [centerLng, centerLat],
+      zoom: 14,
+      interactive: false,
+      dragPan: false,
+      scrollZoom: false,
+      boxZoom: false,
+      dragRotate: false,
+      doubleClickZoom: false,
+      touchZoomRotate: false,
+      keyboard: false,
+    });
+
+    mapRef.current = map;
 
     return () => {
       destroyed = true;
@@ -76,18 +50,18 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
       mapRef.current = null;
     };
   }, [coordinates, mapToken]);
-  
+
   if (isMapTokenLoading) {
-    return <div className="w-full h-[200px] rounded-lg border mb-4 bg-gray-100 flex items-center justify-center">
-      <div className="text-sm text-gray-500">Loading map...</div>
+    return <div className="w-full h-[200px] rounded-lg border mb-4 bg-muted flex items-center justify-center">
+      <div className="text-sm text-muted-foreground">Loading map...</div>
     </div>;
   }
-  
+
   return (
-    <div 
-      ref={mapContainerRef} 
-      className="w-full h-[200px] rounded-lg border mb-4" 
-      style={{ display: "block" }} // Force display
+    <div
+      ref={mapContainerRef}
+      className="w-full h-[200px] rounded-lg border mb-4"
+      style={{ display: "block" }}
     />
   );
 }
