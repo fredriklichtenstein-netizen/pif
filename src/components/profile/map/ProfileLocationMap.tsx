@@ -13,7 +13,7 @@ interface ProfileLocationMapProps {
 export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  // marker removed for privacy
   const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
   
   // Add log to debug the incoming coordinates
