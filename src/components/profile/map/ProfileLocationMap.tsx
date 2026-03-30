@@ -72,10 +72,8 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
 
     return () => {
       destroyed = true;
-      if (markerRef.current) markerRef.current.remove();
       if (mapRef.current) mapRef.current.remove();
       mapRef.current = null;
-      markerRef.current = null;
     };
   }, [coordinates, mapToken]);
   
