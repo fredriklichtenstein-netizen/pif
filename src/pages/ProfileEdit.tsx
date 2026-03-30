@@ -115,13 +115,17 @@ function ProfileEdit() {
       const location = await geocodeAddress(formData.address);
       
       const updateData: any = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        gender: formData.gender || null,
-        phone: formData.phone || null,
-        address: formData.address || null,
-        location: location,
-      };
+  first_name: formData.firstName,
+  last_name: formData.lastName,
+  gender: formData.gender || null,
+  phone: formData.phone || null,
+  address: formData.address || null,
+};
+
+// Only update location if geocoding succeeded
+if (location) {
+  updateData.location = location;
+}
 
       if (avatarUrl) {
         updateData.avatar_url = avatarUrl;
