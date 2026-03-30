@@ -51,22 +51,18 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
           container: mapContainerRef.current!,
           style: "mapbox://styles/mapbox/streets-v12",
           center: [privateLng, privateLat],
-          zoom: 14,
+          zoom: 13,
           interactive: false,
+          dragPan: false,
+          scrollZoom: false,
+          boxZoom: false,
+          dragRotate: false,
+          doubleClickZoom: false,
+          touchZoomRotate: false,
+          keyboard: false,
         });
-        
-        map.on('load', () => {
-          console.log("Map loaded successfully");
-        });
-        
-        map.on('error', (e) => {
-          console.error("Map error:", e);
-        });
-        
-        const marker = new mapboxgl.Marker().setLngLat([privateLng, privateLat]).addTo(map);
         
         mapRef.current = map;
-        markerRef.current = marker;
       } catch (error) {
         console.error("Error initializing map:", error);
       }
