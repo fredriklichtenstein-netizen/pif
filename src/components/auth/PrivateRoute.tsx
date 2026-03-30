@@ -22,7 +22,7 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     };
 
     init();
-  }, [initialized]);
+  }, []);
 
   useEffect(() => {
     if (error) {
