@@ -91,6 +91,18 @@ const Profile = () => {
     }
   }, [user]);
 
+  // Prevent re-fetch on tab focus if profile data is already loaded
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user && !profileData) {
+        console.log('Tab visible, profile data missing — re-fetching');
+        fetchProfileData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user, profileData]);
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

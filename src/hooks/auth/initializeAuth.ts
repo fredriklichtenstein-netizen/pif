@@ -131,6 +131,13 @@ export const initializeAuth = async () => {
         auth.clearAuth();
         return;
       }
+
+      // TOKEN_REFRESHED fires on tab focus — handle silently without affecting loading state
+      if (event === 'TOKEN_REFRESHED') {
+        auth.setSession(session);
+        auth.setUser(session?.user ?? null);
+        return;
+      }
       
       auth.setUser(session?.user ?? null);
       auth.setSession(session);
@@ -146,7 +153,6 @@ export const initializeAuth = async () => {
           auth.setProfileCompleted(profile?.onboarding_completed ?? false);
         } catch (error) {
           console.error('Error in profile check on auth change:', error);
-          // Don't fail the auth process for profile issues
           auth.setProfileCompleted(false);
         }
       } else {
