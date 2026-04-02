@@ -11,6 +11,7 @@ interface FeedEmptyStateProps {
 
 export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: FeedEmptyStateProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const getEmptyStateMessage = () => {
     if (selectedCategories.length > 0) {
