@@ -29,7 +29,7 @@ export const initializeAuth = async () => {
     
     // Set a more reasonable timeout
     const timeoutId = setTimeout(() => {
-      console.log('Auth initialization timed out - possible network issues');
+      
       auth.setError(new Error('Connection issue. Please check your internet and try again.'));
       auth.setNetworkError(true);
       auth.setLoading(false);
