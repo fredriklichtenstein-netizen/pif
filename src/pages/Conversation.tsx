@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { MainNav } from "@/components/MainNav";
 
 export default function Conversation() {
   const { id } = useParams<{ id: string }>();
