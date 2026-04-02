@@ -45,7 +45,7 @@ export const useMapbox = () => {
       
       if (functionError) {
         console.error("🚨 [Mapbox Hook] Edge function error:", functionError);
-        throw new Error(`Failed to get Mapbox token: ${functionError.message}`);
+        throw new Error("Kunde inte ladda kartan. Försök igen.");
       }
       
       if (!data || !data.token) {
