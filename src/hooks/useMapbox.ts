@@ -50,7 +50,7 @@ export const useMapbox = () => {
       
       if (!data || !data.token) {
         console.error("🚨 [Mapbox Hook] No token in response:", data);
-        throw new Error("No Mapbox token received from server");
+        throw new Error("Kunde inte ladda kartan. Försök igen.");
       }
       
       // Validate token format
