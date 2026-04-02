@@ -133,9 +133,11 @@ export const initializeAuth = async () => {
       }
 
       // TOKEN_REFRESHED fires on tab focus — handle silently without affecting loading state
-      if (event === 'TOKEN_REFRESHED') {
-        auth.setSession(session);
-        auth.setUser(session?.user ?? null);
+      if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        if (session) {
+          auth.setSession(session);
+          auth.setUser(session.user);
+        }
         return;
       }
       
