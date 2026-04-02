@@ -11,7 +11,7 @@ export const initializeAuth = async () => {
 
   // In demo mode, skip Supabase entirely and set demo user immediately
   if (DEMO_MODE) {
-    console.log('Demo mode: Setting demo user');
+    
     auth.setUser(DEMO_USER);
     auth.setSession(DEMO_SESSION);
     auth.setProfileCompleted(true);
