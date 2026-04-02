@@ -197,7 +197,7 @@
     "image_tips_request": "Your reference image helps others understand what you're looking for, even if they don't have the exact same thing.",
     "image_tips_offer": "The image marked with a star (★) is shown first in the feed. Drag images to change order.",
     "map_error": "Map Error",
-    "map_error_description": "Failed to load map credentials. Please try again.",
+    "map_error_description": "Unable to load map. Please try again.",
     "error_adding_comment": "Error",
     "new_comment": "New Comment",
     "new_comment_description": "{{name}} added a comment",

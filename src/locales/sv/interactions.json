@@ -197,7 +197,7 @@
     "image_tips_request": "Din referensbild hjälper andra att förstå vad du söker, även om de inte har exakt samma sak.",
     "image_tips_offer": "Bilden märkt med stjärna (★) visas först i flödet. Dra bilderna för att ändra ordning.",
     "map_error": "Kartfel",
-    "map_error_description": "Kunde inte ladda kartuppgifter. Försök igen.",
+    "map_error_description": "Kunde inte ladda kartan. Försök igen.",
     "error_adding_comment": "Fel",
     "new_comment": "Ny kommentar",
     "new_comment_description": "{{name}} lade till en kommentar",
