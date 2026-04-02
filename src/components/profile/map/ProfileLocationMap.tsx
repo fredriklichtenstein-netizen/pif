@@ -33,7 +33,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
       container: mapContainerRef.current!,
       style: "mapbox://styles/mapbox/streets-v12",
       center: [center.lng, center.lat],
-      zoom: 12,
+      zoom: 13,
       interactive: false,
       dragPan: false,
       scrollZoom: false,
