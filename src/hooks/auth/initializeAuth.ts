@@ -100,7 +100,7 @@ export const initializeAuth = async () => {
         auth.setProfileCompleted(false);
       }
     } else {
-      console.log('No active session found');
+      
       auth.clearAuth();
     }
   } catch (error) {
