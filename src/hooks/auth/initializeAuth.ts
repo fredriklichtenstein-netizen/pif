@@ -126,7 +126,7 @@ export const initializeAuth = async () => {
   // Set up auth listener
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      console.log('Auth state changed:', event);
+      
 
       const currentAuth = useAuthStore.getState();
 
