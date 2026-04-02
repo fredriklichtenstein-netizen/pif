@@ -39,11 +39,6 @@ export function ItemInteractions({
   const { user } = useGlobalAuth();
   const currentUserId = user?.id || "";
   const { handleShare } = useItemSharing(id);
-  
-  console.log("ItemInteractions rendering for item:", id, "with props:", { 
-    isLiked, showComments, showInterest, commentsCount, likesCount, interestsCount 
-  });
-
   // Check if current user has commented
   const userHasCommented = hasUserCommented(commenters, currentUserId);
 
@@ -53,7 +48,6 @@ export function ItemInteractions({
 
   // Wrapper for handleShare that doesn't require an event parameter
   const handleShareAction = () => {
-    console.log("Share action triggered for item:", id);
     handleShare();
   };
 

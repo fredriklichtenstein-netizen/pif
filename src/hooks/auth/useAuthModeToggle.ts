@@ -8,7 +8,6 @@ export function useAuthModeToggle() {
   const [isSignUp, setIsSignUp] = useState(false);
 
   const toggleMode = () => {
-    console.log("Toggling auth mode from", isSignUp ? "signup" : "signin", "to", !isSignUp ? "signup" : "signin");
     setIsSignUp(!isSignUp);
   };
 

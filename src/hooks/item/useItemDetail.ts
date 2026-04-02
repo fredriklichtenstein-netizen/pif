@@ -42,7 +42,6 @@ export function useItemDetail(id: string) {
             maxAttempts: 2,
             initialDelay: 500,
             onRetry: (attempt) => {
-              console.log(`Retrying item detail fetch, attempt ${attempt}`);
             },
             onFail: () => {
               toast({
@@ -63,8 +62,6 @@ export function useItemDetail(id: string) {
           console.error('Item not found');
           throw new Error('Item not found');
         }
-
-        console.log('Item detail loaded:', data);
         return data;
       } catch (err) {
         console.error('Error in useItemDetail:', err);

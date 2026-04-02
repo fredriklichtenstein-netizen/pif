@@ -12,8 +12,6 @@ export const usePostLocation = (
   const [isAddressVerified, setIsAddressVerified] = useState(false);
 
   const handleAddressSelect = (address: string, coordinates?: { lat: number; lng: number }) => {
-    console.log("usePostLocation.handleAddressSelect called with:", { address, coordinates });
-    
     setFormData(prev => ({
       ...prev,
       location: address,
@@ -21,20 +19,9 @@ export const usePostLocation = (
     }));
     
     setIsAddressVerified(!!coordinates);
-    
-    console.log("Address updated in form state:", { 
-      address, 
-      coordinates
-    });
   };
 
   const validateLocation = () => {
-    console.log("Validating location:", { 
-      location: formData.location, 
-      coordinates: formData.coordinates,
-      isVerified: isAddressVerified
-    });
-
     if (!formData.location || !formData.coordinates || !isAddressVerified) {
       toast({
         title: "Missing location",

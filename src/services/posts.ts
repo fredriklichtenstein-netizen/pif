@@ -25,8 +25,6 @@ export const addPost = async (postData: CreatePostInput) => {
  */
 export const getPosts = async (): Promise<Post[]> => {
   try {
-    console.log("Fetching posts from database...");
-    
     // Cache control helpers
     const cacheKey = 'posts_cache';
     const cacheExpiry = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -40,7 +38,6 @@ export const getPosts = async (): Promise<Post[]> => {
           const isExpired = Date.now() - timestamp > cacheExpiry;
           
           if (!isExpired) {
-            console.log("Using cached posts data");
             return data;
           }
         } catch (e) {
@@ -62,7 +59,6 @@ export const getPosts = async (): Promise<Post[]> => {
     }
 
     if (!data || data.length === 0) {
-      console.log("No posts found in database");
       return [];
     }
 
@@ -194,8 +190,6 @@ export const getPosts = async (): Promise<Post[]> => {
         timestamp: Date.now()
       }));
     }
-
-    console.log("Transformed posts:", transformedData);
     return transformedData;
   } catch (error) {
     console.error("Error in getPosts:", error);

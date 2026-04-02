@@ -75,7 +75,6 @@ export function useShare() {
         url: options.url
       });
     } catch (error) {
-      console.log('Error checking if content can be shared:', error);
       return false;
     }
   };
@@ -99,7 +98,6 @@ export function useShare() {
     } catch (error) {
       // If it's an AbortError, the user cancelled, which is not a failure
       if ((error as Error).name === 'AbortError') {
-        console.log('Share operation was aborted by user');
         return true;
       }
       console.error('Web Share API error:', error);
@@ -111,7 +109,6 @@ export function useShare() {
    * Share content prioritizing clipboard functionality with Web Share API as fallback.
    */
   const shareContent = async (options: ShareOptions) => {
-    console.log('Starting share process with options:', options);
     setIsSharing(true);
     
     try {
@@ -135,11 +132,9 @@ export function useShare() {
           attemptWebShare(options)
             .then(success => {
               if (success) {
-                console.log('Also shared via Web Share API');
               }
             })
             .catch(err => {
-              console.log('Web Share API attempt failed after clipboard success:', err);
               // We don't show errors here since clipboard already worked
             });
         }

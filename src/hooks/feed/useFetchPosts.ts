@@ -46,7 +46,6 @@ export function useFetchPosts(options = { includeArchived: false }) {
 
   useEffect(() => {
     if (DEMO_MODE) {
-      console.log("📦 [FetchPosts] Demo mode - loading mock posts");
       const mockData = transformMockPosts();
       setPosts(mockData);
       setIsLoading(false);
@@ -55,7 +54,6 @@ export function useFetchPosts(options = { includeArchived: false }) {
 
   const fetchPosts = useCallback(async () => {
     if (DEMO_MODE) {
-      console.log("📦 [FetchPosts] Demo mode - refreshing mock posts");
       const mockData = transformMockPosts();
       setPosts(mockData);
       setIsLoading(false);
@@ -63,7 +61,6 @@ export function useFetchPosts(options = { includeArchived: false }) {
     }
 
     if (isFetching) {
-      console.log("Fetch already in progress, skipping redundant call");
       return;
     }
 
@@ -80,8 +77,6 @@ export function useFetchPosts(options = { includeArchived: false }) {
     setError(null);
 
     try {
-      console.log("Fetching posts from database...");
-      
       let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
@@ -95,16 +90,13 @@ export function useFetchPosts(options = { includeArchived: false }) {
       const { data, error } = await query;
 
       if (signal.aborted) {
-        console.log('Request aborted, skipping state update');
         return;
       }
 
       if (error) throw error;
 
       const transformedData = data?.map(item => {
-        console.log('Debug - item.profiles:', item.profiles, 'item.user_id:', item.user_id);
         const user = extractUserFromProfile(item.profiles, item.user_id);
-        console.log('Debug - extracted user:', user);
         return {
           id: item.id,
           title: item.title,
@@ -125,7 +117,6 @@ export function useFetchPosts(options = { includeArchived: false }) {
       }) || [];
 
       setPosts(transformedData);
-      console.log('Posts fetched successfully:', { count: transformedData.length });
     } catch (err: any) {
       if (err.name !== 'AbortError' && !signal.aborted) {
         console.error('Error fetching posts:', err);

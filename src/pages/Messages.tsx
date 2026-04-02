@@ -24,7 +24,6 @@ const Messages = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      console.log("No authenticated user in Messages page");
     }
   }, [authLoading, user]);
 

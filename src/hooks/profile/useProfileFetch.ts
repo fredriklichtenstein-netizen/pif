@@ -39,7 +39,6 @@ export const useProfileFetch = () => {
     const cachedProfile = profileCache.get(user.id);
     const now = Date.now();
     if (cachedProfile && (now - cachedProfile.timestamp) < CACHE_TTL) {
-      console.log("Using cached profile data");
       setFormData(cachedProfile.data);
       setInitialFormData(cachedProfile.data);
       setAvatarUrl(cachedProfile.avatarUrl);
@@ -52,11 +51,9 @@ export const useProfileFetch = () => {
     setError(null);
     
     try {
-      console.log(`Fetching profile for user ${user.id} (attempt ${fetchAttempts.current + 1}/${maxFetchAttempts})`);
       const timeoutMs = 8000 + (fetchAttempts.current * 2000);
       const timeoutId = setTimeout(() => {
         if (abortController.current) {
-          console.log(`Profile fetch timeout after ${timeoutMs}ms`);
           abortController.current.abort();
         }
       }, timeoutMs);
@@ -70,7 +67,6 @@ export const useProfileFetch = () => {
       if (profileError) { console.error("Error fetching profile:", profileError); throw profileError; }
 
       if (profile) {
-        console.log("Profile data retrieved successfully");
         fetchAttempts.current = 0;
         let dateOfBirth: Date | undefined = undefined;
         if (profile.date_of_birth) {
@@ -89,11 +85,9 @@ export const useProfileFetch = () => {
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('Profile fetch aborted');
         if (fetchAttempts.current < maxFetchAttempts - 1) {
           fetchAttempts.current++;
           const backoffDelay = Math.min(1000 * Math.pow(2, fetchAttempts.current), 10000);
-          console.log(`Retrying profile fetch in ${backoffDelay}ms (attempt ${fetchAttempts.current + 1}/${maxFetchAttempts})`);
           setTimeout(() => { fetchProfile(); }, backoffDelay);
         } else {
           console.error("Max profile fetch attempts reached");

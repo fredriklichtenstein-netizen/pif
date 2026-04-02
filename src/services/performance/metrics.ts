@@ -130,7 +130,6 @@ class PerformanceMetricsCollector {
     
     // Log in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📊 Performance metric: ${metric.name} = ${metric.value.toFixed(2)}ms`);
     }
   }
 

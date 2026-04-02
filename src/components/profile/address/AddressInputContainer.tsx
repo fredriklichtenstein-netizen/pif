@@ -38,12 +38,10 @@ export function AddressInputContainer({
   } = useAddress(mapToken, onChange);
 
   const handleAddressInput = (input: string) => {
-    console.log("handleAddressInput called with:", input);
     handleAddressChange(input);
   };
 
   const handleSuggestionSelect = async (suggestion: string) => {
-    console.log("Suggestion selected:", suggestion);
     setSuggestions([]);
     const coords = await handleShowMap(suggestion);
     onChange(suggestion, coords);

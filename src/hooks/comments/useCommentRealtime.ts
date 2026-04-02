@@ -27,7 +27,6 @@ export const useCommentRealtime = (
     
     // Check for duplicates before adding
     if (!comments.some(c => c.id === formattedComment.id)) {
-      console.log("[useCommentRealtime] Real-time: Adding new comment", formattedComment.id);
       const updatedComments = [...comments, formattedComment];
       setComments(updatedComments);
       
@@ -43,7 +42,6 @@ export const useCommentRealtime = (
 
   // Update an existing comment (for updates)
   const handleCommentUpdate = useCallback((updatedComment: any) => {
-    console.log("[useCommentRealtime] Real-time: Updating comment", updatedComment.id);
     const updatedComments = comments.map(comment => 
       comment.id === updatedComment.id.toString()
         ? formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id)
@@ -54,7 +52,6 @@ export const useCommentRealtime = (
 
   // Remove a comment from the list (for deletes)
   const handleCommentDelete = useCallback((deletedComment: any) => {
-    console.log("[useCommentRealtime] Real-time: Deleting comment", deletedComment.id);
     const filteredComments = comments.filter(comment => 
       comment.id !== deletedComment.id.toString()
     );
@@ -64,18 +61,15 @@ export const useCommentRealtime = (
   // Clean up function for supabase channels
   const cleanupChannel = useCallback(() => {
     if (channel) {
-      console.log(`[useCommentRealtime] Cleaning up real-time subscription for item ${itemId}`);
       supabase.removeChannel(channel);
       setChannel(null);
     } else {
-      console.log(`[useCommentRealtime] No channels to clean up for item ${itemId}`);
     }
   }, [channel, itemId]);
 
   useEffect(() => {
     if (!itemId || subscriptionAttempts >= MAX_SUBSCRIPTION_ATTEMPTS) {
       if (subscriptionAttempts >= MAX_SUBSCRIPTION_ATTEMPTS) {
-        console.log(`[useCommentRealtime] Max subscription attempts (${MAX_SUBSCRIPTION_ATTEMPTS}) reached for item ${itemId}`);
       }
       return;
     }
@@ -85,9 +79,6 @@ export const useCommentRealtime = (
       if (isNaN(numericItemId)) {
         throw new Error(`[useCommentRealtime] Invalid item ID: ${itemId}`);
       }
-      
-      console.log(`[useCommentRealtime] Setting up real-time subscription for comments on item ${numericItemId} (attempt ${subscriptionAttempts + 1})`);
-      
       // Clean up existing subscription if any
       cleanupChannel();
       
@@ -99,7 +90,6 @@ export const useCommentRealtime = (
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          console.log('[useCommentRealtime] Real-time comment INSERT received:', payload.new.id);
           handleCommentInsert(payload.new);
         })
         .on('postgres_changes', {
@@ -108,7 +98,6 @@ export const useCommentRealtime = (
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          console.log('[useCommentRealtime] Real-time comment UPDATE received:', payload.new.id);
           handleCommentUpdate(payload.new);
         })
         .on('postgres_changes', {
@@ -117,16 +106,12 @@ export const useCommentRealtime = (
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          console.log('[useCommentRealtime] Real-time comment DELETE received:', payload.old.id);
           handleCommentDelete(payload.old);
         });
         
       // Setup subscription status handling
       newChannel.subscribe((status) => {
-        console.log(`[useCommentRealtime] Subscription status for item ${itemId}:`, status);
-        
         if (status === 'SUBSCRIBED') {
-          console.log('[useCommentRealtime] Successfully subscribed to real-time comments');
           setIsSubscribed(true);
           setError(null);
           setSubscriptionAttempts(0); // Reset attempts counter on success
@@ -142,7 +127,6 @@ export const useCommentRealtime = (
             
             // Try with increasing delays
             const retryDelay = 1000 * Math.pow(2, nextAttempt);
-            console.log(`[useCommentRealtime] Will retry in ${retryDelay}ms (attempt ${nextAttempt + 1}/${MAX_SUBSCRIPTION_ATTEMPTS})`);
           }
         }
       });

@@ -14,11 +14,7 @@ export function useSignUp() {
   const handleSignUp = async (email: string, password: string, phone?: string, countryCode?: string) => {
     setLoading(true);
     try {
-      console.log("Starting signup process with:", { email, phone, countryCode });
-      
       const formattedPhone = phone && countryCode ? `${countryCode}${phone}` : null;
-      console.log("Formatted phone:", formattedPhone);
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -42,8 +38,6 @@ export function useSignUp() {
       }
 
       if (data.user) {
-        console.log("User created:", data.user);
-
         toast({
           title: t('auth.account_created'),
           description: t('auth.account_created_description'),

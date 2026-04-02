@@ -86,8 +86,6 @@ class RealtimePerformanceManager {
         }
       )
       .subscribe((status) => {
-        console.log(`Realtime subscription status: ${status}`);
-        
         if (status === 'SUBSCRIBED') {
           performanceMetrics.recordMetric({
             id: `realtime-sub-${Date.now()}`,

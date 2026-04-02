@@ -61,7 +61,6 @@ export default function Auth() {
   
   useEffect(() => {
     if (user) {
-      console.log("User already authenticated, redirecting", { profileCompleted });
       if (profileCompleted === false) {
         navigate("/create-profile");
       } else {

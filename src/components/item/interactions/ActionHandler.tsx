@@ -15,10 +15,7 @@ export const ActionHandler = ({ children }: ActionHandlerProps) => {
   const { t } = useTranslation();
   
   const handleAction = async (action: () => void, requiresAuth: boolean = true) => {
-    console.log("handleAction called, requiresAuth:", requiresAuth, "user:", !!user);
-    
     if (requiresAuth && !user) {
-      console.log("Authentication required but no user is logged in");
       toast({
         title: t('interactions.auth_required_title'),
         description: t('interactions.auth_required_description', { action: t('interactions.sign_in') }),
@@ -29,9 +26,7 @@ export const ActionHandler = ({ children }: ActionHandlerProps) => {
     }
     
     try {
-      console.log("Executing action");
       await action();
-      console.log("Action completed successfully");
     } catch (error) {
       console.error('Action failed:', error);
       toast({

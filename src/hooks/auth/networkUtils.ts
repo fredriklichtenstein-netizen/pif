@@ -86,13 +86,11 @@ export const setupNetworkMonitoring = (
   
   // Setup browser online/offline events as backup
   const handleOnline = () => {
-    console.log('Browser reports online');
     lastStatus = true;
     onStatusChange(true);
   };
   
   const handleOffline = () => {
-    console.log('Browser reports offline');
     lastStatus = false;
     onStatusChange(false);
   };

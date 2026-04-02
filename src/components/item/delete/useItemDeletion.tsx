@@ -26,17 +26,14 @@ export function useItemDeletion(
 
   const cleanupRealtimeConnections = useCallback(() => {
     try {
-      console.log(`Starting cleanup for item ${id} realtime connections`);
       const allChannels = supabase.getChannels();
       const itemChannels = allChannels.filter(channel => 
         channel.topic.includes(`item-`) && channel.topic.includes(`${id}`)
       );
-      console.log(`Found ${itemChannels.length} realtime channels to clean up for item ${id}`);
       if (itemChannels.length > 0) {
         itemChannels.forEach(channel => {
           try {
             supabase.removeChannel(channel);
-            console.log(`Removed channel: ${channel.topic}`);
           } catch (e) {
             console.error(`Error removing channel ${channel.topic}:`, e);
           }
@@ -49,7 +46,6 @@ export function useItemDeletion(
 
   const handleDeleteConfirm = async (reason: string, isSoftDelete: boolean) => {
     const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-    console.log(`Starting ${isSoftDelete ? 'archive' : 'delete'} operation for item ${numericId}`);
     const operationType: OperationType = isSoftDelete ? 'archive' : 'delete';
     
     setIsDeleting(true);

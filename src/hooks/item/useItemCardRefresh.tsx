@@ -12,11 +12,11 @@ export const useItemCardRefresh = (
 ) => {
   const refreshData = useCallback(() => {
     fetchLikers()
-      .then(() => console.log('Refreshed likes data'))
+      .then(() => {})
       .catch(err => console.error('Error refreshing likes:', err));
     
     fetchInterestedUsers()
-      .then(() => console.log('Refreshed interests data'))
+      .then(() => {})
       .catch(err => console.error('Error refreshing interests:', err));
     
     if (shouldRefreshComments) {

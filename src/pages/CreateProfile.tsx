@@ -72,8 +72,6 @@ export default function CreateProfile() {
       if (avatar) {
         const fileExt = avatar.name.split('.').pop();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        console.log("Uploading avatar...");
         const { error: uploadError, data: uploadData } = await supabase.storage
           .from('profile-photos')
           .upload(fileName, avatar);
@@ -82,15 +80,11 @@ export default function CreateProfile() {
           console.error("Avatar upload error:", uploadError);
           throw uploadError;
         }
-
-        console.log("Avatar uploaded successfully:", uploadData);
-        
         const { data: { publicUrl } } = supabase.storage
           .from('profile-photos')
           .getPublicUrl(fileName);
         
         avatarPath = publicUrl;
-        console.log("Avatar public URL:", avatarPath);
       }
 
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;

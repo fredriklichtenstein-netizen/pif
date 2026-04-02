@@ -56,7 +56,6 @@ export function ReceiverConfirmation({
         if (itemError) throw itemError;
 
         if (feedback) {
-          console.log("Feedback for item", itemId, ":", feedback);
         }
       }
 

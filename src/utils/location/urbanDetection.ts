@@ -28,7 +28,6 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
       
       // If no valid infrastructure layers exist, fall back to database check
       if (existingLayers.length === 0) {
-        console.log("No infrastructure layers available in current map style, falling back to database");
         return fallbackToDatabaseCheck(lat, lng);
       }
       
@@ -65,14 +64,6 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
 
       // Urban if: many buildings OR (multiple roads AND not rural)
       const isUrban = (buildingCount > 5 || (roadCount >= 2 && !hasRuralLanduse));
-
-      console.log(`Location analysis at [${lng}, ${lat}]:`, {
-        buildingCount,
-        roadCount,
-        hasRuralLanduse,
-        isUrban
-      });
-
       return isUrban;
     } catch (error) {
       console.error("Error determining urban area:", error);

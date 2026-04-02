@@ -25,7 +25,6 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl);
 
   useEffect(() => {
-    console.log("AvatarUpload received avatarUrl:", avatarUrl);
     setPreviewUrl(avatarUrl);
   }, [avatarUrl]);
 

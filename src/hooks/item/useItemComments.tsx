@@ -18,14 +18,11 @@ export const useItemComments = (itemId: string) => {
 
   const fetchItemComments = useCallback(async () => {
     if (!itemId) return;
-    
-    console.log(`Fetching comments for item ${itemId}`);
     setCommentsLoading(true);
     setCommentsError(null);
     
     try {
       const fetchedComments = await fetchComments();
-      console.log(`Fetched ${fetchedComments.length} comments for item ${itemId}`);
       setComments(fetchedComments);
       setCommentsFetched(true);
       // Also update the count to match actual comments
@@ -40,7 +37,6 @@ export const useItemComments = (itemId: string) => {
 
   // Make sure we fetch comments when toggling from closed → open
   const handleCommentToggle = useCallback(() => {
-    console.log(`Toggling comments for item ${itemId}, current state: ${showComments}`);
     // If we're opening comments and haven't fetched them yet (or have none)
     const isOpening = !showComments;
     setShowComments(isOpening);

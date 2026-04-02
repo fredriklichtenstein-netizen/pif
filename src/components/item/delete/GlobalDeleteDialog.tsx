@@ -10,11 +10,9 @@ export function GlobalDeleteDialog() {
 
   // Register this instance as the global singleton
   useEffect(() => {
-    console.log("GlobalDeleteDialog mounted, registering global instance");
     setDeleteDialogManager(dialogManager);
     
     return () => {
-      console.log("GlobalDeleteDialog unmounting, cleaning up");
       setDeleteDialogManager(null);
       mountedRef.current = false;
     };

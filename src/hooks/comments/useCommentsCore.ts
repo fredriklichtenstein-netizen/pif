@@ -25,7 +25,6 @@ export const useCommentsCore = (
     if (!itemId) return;
     
     if (shouldRateLimit()) {
-      console.log("Refresh rate limited, skipping this request");
       return;
     }
     
@@ -33,10 +32,8 @@ export const useCommentsCore = (
     
     setIsRefreshing(true);
     try {
-      console.log(`Refreshing comments for item ${itemId}`);
       const fetchedComments = await fetchComments();
       setComments(fetchedComments);
-      console.log(`Refreshed ${fetchedComments.length} comments`);
     } catch (error) {
       console.error("Error refreshing comments:", error);
       toast({

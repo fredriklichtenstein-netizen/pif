@@ -24,13 +24,9 @@ export default function Map() {
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken, needsToken, setDemoToken } = useMapbox();
   const [tokenInput, setTokenInput] = useState("");
   const { t } = useTranslation();
-
-  console.log("🗺️ [Map Page] Render - Posts:", posts.length, "Token loading:", isTokenLoading, "Token:", mapToken ? "✅" : "❌", "NeedsToken:", needsToken);
-
   useEffect(() => {
     const itemId = searchParams.get('item');
     if (itemId) {
-      console.log('🎯 [Map Page] Target item ID from URL:', itemId);
       setTargetItemId(itemId);
     } else {
       setTargetItemId(null);
@@ -43,7 +39,6 @@ export default function Map() {
   }, [announce, refreshPosts, t]);
 
   const handlePostClick = (postId: string) => {
-    console.log('🔗 [Map Page] Post clicked, navigating to feed with post:', postId);
     navigate(`/feed?post=${postId}&t=${Date.now()}`);
   };
 

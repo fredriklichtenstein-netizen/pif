@@ -37,7 +37,6 @@ export function useConversations() {
       }
 
       try {
-        console.log("Fetching conversations for user:", user.id);
         setIsLoading(true);
         setError(null);
 
@@ -45,13 +44,9 @@ export function useConversations() {
         if (funcError) throw funcError;
         
         if (!conversationIds || conversationIds.length === 0) {
-          console.log("No conversations found");
           if (mounted) { setConversations([]); setIsLoading(false); }
           return;
         }
-
-        console.log(`Found ${conversationIds.length} conversations`);
-
         const { data: conversationsData, error: conversationsError } = await supabase
           .from('conversations').select(`*, item:items(id, title, images)`)
           .in('id', conversationIds).order('updated_at', { ascending: false });
@@ -98,7 +93,6 @@ export function useConversations() {
     if (user) {
       channel = supabase.channel('public:conversations')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
-          console.log("Received real-time update for conversations");
           fetchConversations();
         }).subscribe();
     }

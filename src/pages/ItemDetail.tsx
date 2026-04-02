@@ -19,8 +19,6 @@ export default function ItemDetail() {
   const [loadFailed, setLoadFailed] = useState(false);
   
   useEffect(() => {
-    console.log(`ItemDetail page loaded with ID: ${id}, fromShare: ${fromShare}`, 
-      fromShare ? { shareTimestamp } : '');
   }, [id, fromShare, shareTimestamp]);
   
   const {
@@ -50,8 +48,6 @@ export default function ItemDetail() {
   // If coming from a share link, provide more context in the error logs
   useEffect(() => {
     if (fromShare) {
-      console.log('User arrived from shared link, ID:', id, 'Timestamp:', shareTimestamp);
-      
       // Track share link usage analytics
       try {
         // Store in localStorage for analytics
@@ -84,8 +80,6 @@ export default function ItemDetail() {
   // Enhanced retry logic for shared items
   const handleRetryWithBackoff = async () => {
     setLoadFailed(false);
-    console.log(`Attempting retry for item ${id} with backoff strategy...`);
-    
     try {
       await withRetry(
         async () => {
@@ -97,7 +91,6 @@ export default function ItemDetail() {
           initialDelay: 500,
           backoffFactor: 2,
           onRetry: (attempt, delay) => {
-            console.log(`Retrying item load (attempt ${attempt}) after ${delay}ms`);
             toast({
               title: "Retrying...",
               description: `Attempt ${attempt} to load the item`
@@ -117,13 +110,11 @@ export default function ItemDetail() {
   };
   
   if (redirectTo404) {
-    console.log('No item data found, redirecting to 404');
     return <Navigate to="/404" replace state={{ from: 'item', itemId: id }} />;
   }
 
   // Show loading state
   if (isLoading && !displayItem) {
-    console.log('Item is loading, showing skeleton...');
     return <ItemDetailLoader />;
   }
 
@@ -144,9 +135,6 @@ export default function ItemDetail() {
       </div>
     );
   }
-
-  console.log('Rendering item:', displayItem?.id);
-  
   return (
     <ItemDetailContainer 
       displayItem={displayItem}

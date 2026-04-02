@@ -61,13 +61,8 @@ export const useFetchCommentsCore = (itemId: string, callbacks: CoreCallbacks) =
       if (isNaN(numericItemId)) {
         throw new Error(`Invalid item ID: ${itemId}`);
       }
-      
-      console.log(`Fetching comments for item ${numericItemId}, user: ${userId || 'unknown'}`);
-      
       // Use the runCommentQuery function to fetch comments
       const comments = await runCommentQuery(numericItemId, userId, controller);
-      console.log(`Fetched ${comments.length} comments for item ${numericItemId}`);
-      
       setIsLoading(false);
       return comments;
     } catch (error) {

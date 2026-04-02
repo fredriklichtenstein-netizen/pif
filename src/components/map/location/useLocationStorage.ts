@@ -24,7 +24,6 @@ export const useLocationStorage = (): LocationStorage => {
         
         // Validate coordinate ranges
         if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
-          console.log('Retrieved stored location (lng, lat):', [lng, lat]);
           return [lng, lat];
         } else {
           console.warn('Invalid coordinate ranges:', { lng, lat });
@@ -49,13 +48,11 @@ export const useLocationStorage = (): LocationStorage => {
           // Store as serializable array only
           const serializableLocation = [lng, lat];
           localStorage.setItem(LOCATION_KEY, JSON.stringify(serializableLocation));
-          console.log('Stored location (lng, lat):', serializableLocation);
         } else {
           console.error('Invalid coordinates for storage:', { lng, lat });
         }
       } else {
         localStorage.removeItem(LOCATION_KEY);
-        console.log('Cleared stored location');
       }
     } catch (error) {
       console.error('Error storing location:', error);
@@ -66,7 +63,6 @@ export const useLocationStorage = (): LocationStorage => {
     try {
       const stored = localStorage.getItem(TRACKING_KEY);
       const isTracking = stored === 'true';
-      console.log('Retrieved tracking state:', isTracking);
       return isTracking;
     } catch (error) {
       console.error('Error retrieving tracking state:', error);
@@ -77,7 +73,6 @@ export const useLocationStorage = (): LocationStorage => {
   const setStoredTrackingState = (isTracking: boolean): void => {
     try {
       localStorage.setItem(TRACKING_KEY, isTracking.toString());
-      console.log('Stored tracking state:', isTracking);
     } catch (error) {
       console.error('Error storing tracking state:', error);
     }
@@ -87,7 +82,6 @@ export const useLocationStorage = (): LocationStorage => {
     try {
       localStorage.removeItem(LOCATION_KEY);
       localStorage.removeItem(TRACKING_KEY);
-      console.log('Cleared all stored location data');
     } catch (error) {
       console.error('Error clearing stored data:', error);
     }

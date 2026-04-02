@@ -100,9 +100,6 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
       [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()],
       zoom
     );
-
-    console.log(`🗺️ [Clusters] Zoom: ${zoom}, Clusters/points: ${clusters.length}`);
-
     clusters.forEach(cluster => {
       const [lng, lat] = cluster.geometry.coordinates;
       const props = cluster.properties as any;
@@ -133,8 +130,6 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
   // Initialize cluster index when posts change
   useEffect(() => {
     const initializeClusters = async () => {
-      console.log("🗺️ [Clusters] Initializing with posts:", posts.length);
-      
       // Filter valid posts
       const validPosts = posts.filter(post => {
         if (!post.coordinates) return false;
@@ -143,7 +138,6 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
       });
 
       if (validPosts.length === 0) {
-        console.log("🗺️ [Clusters] No valid posts");
         clearMarkers();
         return;
       }
@@ -191,9 +185,6 @@ export const MapMarkersLayer = ({ map, posts, onPostClick, targetItemId }: MapMa
         minPoints: 2
       });
       clusterIndex.current.load(features);
-
-      console.log("🗺️ [Clusters] Index created with", features.length, "points");
-
       // Fit bounds on initial load
       if (!targetItemId && enhancedPosts.length > 0) {
         const bounds = new mapboxgl.LngLatBounds();

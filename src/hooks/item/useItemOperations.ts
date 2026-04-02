@@ -32,7 +32,6 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
     setError(null);
     try {
       const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-      console.log(`Archiving item ${numericId} with reason: ${reason || 'none provided'}`);
       const { data: result, error } = await supabase.rpc('archive_item', { p_item_id: numericId, p_reason: reason || null });
       if (error) {
         console.error('Error archiving item:', error);
@@ -63,7 +62,6 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
     setError(null);
     try {
       const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-      console.log(`Permanently deleting item ${numericId} with reason: ${reason || 'none provided'}`);
       const { data: result, error } = await supabase.rpc('delete_item_with_related_records', { p_item_id: numericId, p_reason: reason || null });
       if (error) {
         console.error('Error deleting item:', error);
@@ -94,7 +92,6 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
     setError(null);
     try {
       const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-      console.log(`Restoring archived item ${numericId}`);
       const { error } = await supabase.from('items').update({ archived_at: null, archived_reason: null }).eq('id', numericId);
       if (error) {
         console.error('Error restoring item:', error);

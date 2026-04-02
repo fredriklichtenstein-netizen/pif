@@ -9,8 +9,6 @@ export const transformPostData = (
   item: any,
   interactionCounts: InteractionCounts
 ): Post => {
-  console.log("Transform - Raw item coordinates:", item.coordinates, "Type:", typeof item.coordinates);
-  
   let parsedCoordinates = null;
   if (item.coordinates) {
     try {
@@ -22,13 +20,10 @@ export const transformPostData = (
         const coordsStr = String(item.coordinates);
         parsedCoordinates = parseCoordinatesFromDB(coordsStr);
       }
-      
-      console.log("Transform - Final parsed coordinates:", parsedCoordinates);
     } catch (err) {
       console.error("Error parsing coordinates:", err, item.coordinates);
     }
   } else {
-    console.log("Transform - No coordinates for item:", item.id);
   }
   
   // Process measurements to ensure they are correctly formatted

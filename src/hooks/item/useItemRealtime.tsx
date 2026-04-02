@@ -13,8 +13,6 @@ export const useItemRealtime = (
 ) => {
   // Enhanced cleanup function to ensure all resources are released
   const forceCleanup = useCallback(() => {
-    console.log(`Force cleaning up all realtime resources for item ${itemId}`);
-    
     try {
       // Get all Supabase channels
       const allChannels = supabase.getChannels();
@@ -59,7 +57,6 @@ export const useItemRealtime = (
   
   // Combined cleanup function
   const combinedCleanup = useCallback(() => {
-    console.log(`Cleaning up realtime for item ${itemId}`);
     cleanup();
     forceCleanup();
   }, [cleanup, forceCleanup, itemId]);

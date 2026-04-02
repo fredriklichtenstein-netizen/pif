@@ -6,8 +6,6 @@ import { Comment } from "@/types/comment";
 
 export async function runCommentQuery(numericItemId: number, userId?: string, controller?: AbortController): Promise<Comment[]> {
   const signal = controller?.signal;
-  console.log(`Running comment query for item ${numericItemId}, user ${userId || 'unknown'}`);
-  
   const query = supabase
     .from('comments')
     .select(`
@@ -45,15 +43,10 @@ export async function runCommentQuery(numericItemId: number, userId?: string, co
   
   const commentsData = response.data;
   if (!commentsData) {
-    console.log("No comments data returned from query");
     return [];
   }
-  
-  console.log(`Received ${commentsData.length} comments for item ${numericItemId}`);
-  
   return commentsData.map((comment: any) => {
     const isOwnComment = comment.user_id === userId;
-    console.log(`Comment ${comment.id} by user ${comment.user_id} (own: ${isOwnComment})`);
     return formatCommentFromDB(comment, isOwnComment);
   });
 }

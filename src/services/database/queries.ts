@@ -28,9 +28,6 @@ export class OptimizedQueries {
           `)
           .is('archived_at', null)
           .order('created_at', { ascending: false });
-
-        console.log('🔍 DEBUG: About to execute query...');
-        
         if (options.categories?.length) {
           query = query.in('category', options.categories);
         }
@@ -44,9 +41,6 @@ export class OptimizedQueries {
         }
 
         const { data, error } = await query;
-        
-        console.log('🚨 CRITICAL: Query result - data:', data?.length, 'error:', error);
-        
         if (error) {
           console.error('🚨 CRITICAL: Database query failed:', error);
           throw new DatabaseError('Failed to fetch posts', error.code, error);
@@ -56,14 +50,7 @@ export class OptimizedQueries {
           console.error('🚨 CRITICAL: Query returned null data');
           return [];
         }
-        
-        console.log('✅ SUCCESS: Found', data.length, 'posts');
         if (data?.[0]?.profiles) {
-          console.log('✅ Profile data present:', {
-            first_name: data[0].profiles.first_name,
-            last_name: data[0].profiles.last_name,
-            username: data[0].profiles.username
-          });
         }
         
         return data || [];

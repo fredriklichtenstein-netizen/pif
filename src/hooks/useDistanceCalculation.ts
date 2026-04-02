@@ -13,11 +13,7 @@ export const useDistanceCalculation = (coordinates: Coordinates | null): string 
   
   return useMemo(() => {
     const userLocation = storage.getStoredLocation();
-    
-    console.log('Distance calculation - userLocation:', userLocation, 'coordinates:', coordinates);
-    
     if (!userLocation || !coordinates) {
-      console.log('Missing data for distance calculation');
       return '';
     }
 
@@ -27,16 +23,12 @@ export const useDistanceCalculation = (coordinates: Coordinates | null): string 
     if (typeof lat !== 'number' || typeof lng !== 'number' || 
         isNaN(lat) || isNaN(lng) || 
         lat === 0 || lng === 0) {
-      console.log('Invalid coordinates for distance calculation:', { lat, lng });
       return '';
     }
 
     try {
       const distance = calculateDistance(userLocation[1], userLocation[0], lat, lng);
-      console.log('Calculated distance:', distance, 'km');
-      
       if (isNaN(distance) || distance < 0) {
-        console.log('Invalid distance result:', distance);
         return '';
       }
       

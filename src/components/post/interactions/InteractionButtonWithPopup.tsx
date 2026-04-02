@@ -48,16 +48,12 @@ export function InteractionButtonWithPopup({
   
   const handleButtonClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log(`${type} button clicked, isOwner:`, isOwner);
-    
     if (isOwner && (type === "like" || type === "interest")) {
-      console.log('Owner attempted to interact with their own item');
       return;
     }
     
     try {
       await onClick();
-      console.log(`${type} action completed successfully`);
     } catch (error) {
       console.error(`${type} action failed:`, error);
       toast({
@@ -69,14 +65,11 @@ export function InteractionButtonWithPopup({
   };
 
   const handleCounterClick = async () => {
-    console.log(`Counter clicked for ${type}`);
-    
     if ((type === "like" || type === "interest") && onCounterClick) {
       setLoading(true);
       
       try {
         const data = await onCounterClick();
-        console.log(`Fetched ${type} users:`, data?.length);
         setPopupUsers(data || []);
         return data || [];
       } catch (error) {

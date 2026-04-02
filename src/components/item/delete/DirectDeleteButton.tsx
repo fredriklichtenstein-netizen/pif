@@ -24,14 +24,10 @@ export function DirectDeleteButton({
   const handleClick = () => {
     if (isDeleting) return;
     setIsDeleting(true);
-    
-    console.log("DirectDeleteButton clicked for item:", itemId);
-    
     // Try to use global dialog manager first
     const dialogManager = getDeleteDialogManager();
     
     if (dialogManager) {
-      console.log("Using global dialog manager to open delete dialog");
       dialogManager.openDeleteDialog({
         id: itemId,
         onSuccess
@@ -43,7 +39,6 @@ export function DirectDeleteButton({
     }
     
     // Fallback to custom event
-    console.log("Global dialog manager not available, using custom event");
     document.dispatchEvent(
       new CustomEvent("global-delete-dialog-open", {
         detail: { id: itemId, onSuccess },

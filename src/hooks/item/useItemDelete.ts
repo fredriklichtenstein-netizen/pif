@@ -17,13 +17,10 @@ export const useItemDelete = (
 
   const handleDeleteSuccess = useCallback(() => {
     if (isProcessingRef.current) {
-      console.log("Operation already in progress, skipping duplicate call");
       return;
     }
     
     isProcessingRef.current = true;
-    console.log("Item was successfully deleted or archived");
-    
     try {
       cleanupRealtime();
       setIsItemDeleted(true);

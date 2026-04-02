@@ -30,12 +30,10 @@ export const useItemDeleteDialog = () => {
   const [currentDialog, setCurrentDialog] = useState<ItemDeleteDialogState | null>(null);
   
   const openDeleteDialog = useCallback((props: ItemDeleteDialogState) => {
-    console.log("Opening delete dialog for item:", props.id);
     setCurrentDialog(props);
   }, []);
   
   const closeDeleteDialog = useCallback(() => {
-    console.log("Closing delete dialog");
     setCurrentDialog(null);
   }, []);
   

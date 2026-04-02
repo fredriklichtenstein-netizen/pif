@@ -31,8 +31,6 @@ function ProfileEdit() {
   const { setAvatar, avatarUrl, loading: avatarLoading, setAvatarUrl } = useProfileAvatar();
   
   useEffect(() => {
-    console.log("Current avatarUrl:", avatarUrl);
-    console.log("User avatar_url:", (user as any)?.avatar_url);
   }, [avatarUrl, user]);
 
   useEffect(() => {

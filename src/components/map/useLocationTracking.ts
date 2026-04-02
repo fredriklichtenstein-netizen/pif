@@ -38,7 +38,6 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const coords: [number, number] = [position.coords.longitude, position.coords.latitude];
-        console.log('Got position:', coords, 'Accuracy:', position.coords.accuracy, 'meters');
         setUserLocation(coords);
         setIsLoadingLocation(false);
         updateLocationMarker(coords);

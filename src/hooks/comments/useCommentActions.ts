@@ -48,8 +48,6 @@ export const useCommentActions = (
       if (formattedName !== currentUser.name) {
         currentUser.name = formattedName;
       }
-      
-      console.log("Current user in useCommentActions:", currentUser);
     }
   }, [currentUser]);
 

@@ -80,17 +80,13 @@ export function useLazyComments(itemId: string) {
       setIsLoading(false);
       return;
     }
-    
-    console.log(`[useLazyComments] Starting to load comments for item ${itemId}`);
     setIsLoading(true);
     setError(null);
     
     try {
-      console.log(`[useLazyComments] Attempting to load comments for item ${itemId} (attempt ${retryCount + 1})`);
       const fetchedComments = await fetchComments();
       
       if (Array.isArray(fetchedComments)) {
-        console.log(`[useLazyComments] Successfully loaded ${fetchedComments.length} comments for item ${itemId}`);
         setComments(fetchedComments);
         setIsInitialized(true);
         setRetryCount(0);
@@ -127,7 +123,6 @@ export function useLazyComments(itemId: string) {
       } else if (retryCount < 2) {
         const nextRetryCount = retryCount + 1;
         const delay = Math.min(1000 * Math.pow(2, nextRetryCount), 8000);
-        console.log(`[useLazyComments] Scheduling retry ${nextRetryCount} after ${delay}ms`);
         const timer = setTimeout(() => { setRetryCount(nextRetryCount); loadComments(true); }, delay);
         setRetryTimer(timer);
       } else {
@@ -142,7 +137,6 @@ export function useLazyComments(itemId: string) {
   }, [fetchComments, isInitialized, itemId, retryCount, toast, fetchFallbackMode, getComments, t]);
 
   const refreshComments = useCallback(() => {
-    console.log(`[useLazyComments] Refreshing comments for item ${itemId}`);
     setRetryCount(0);
     setIsInitialized(false);
     return loadComments(true);

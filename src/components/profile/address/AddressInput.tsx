@@ -10,10 +10,5 @@ interface AddressInputProps {
 }
 
 export function AddressInput(props: AddressInputProps) {
-  console.log("AddressInput rendering with props:", {
-    value: props.value,
-    hasOnChange: !!props.onChange
-  });
-  
   return <AddressInputContainer {...props} />;
 }

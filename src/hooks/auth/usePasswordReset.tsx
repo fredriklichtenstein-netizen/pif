@@ -22,9 +22,6 @@ export function usePasswordReset() {
       // Use absolute URL for reset password to ensure correct redirect
       const siteUrl = window.location.origin;
       const resetRedirectUrl = new URL("/reset-password", siteUrl).toString();
-      console.log("Using reset redirect URL:", resetRedirectUrl);
-      console.log("Site URL:", siteUrl);
-      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: resetRedirectUrl,
       });
