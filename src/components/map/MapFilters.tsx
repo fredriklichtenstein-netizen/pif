@@ -27,6 +27,7 @@ interface MapFiltersProps {
   selectedDistance: number | null;
   onDistanceChange: (distance: number | null) => void;
   userLocation: [number, number] | null;
+  onRequestLocation?: () => void;
 }
 
 const CATEGORY_KEYS = [
@@ -49,7 +50,8 @@ export const MapFilters = ({
   onClearFilters,
   selectedDistance,
   onDistanceChange,
-  userLocation
+  userLocation,
+  onRequestLocation
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
@@ -127,6 +129,7 @@ export const MapFilters = ({
           selectedDistance={selectedDistance}
           onDistanceChange={onDistanceChange}
           userLocation={userLocation}
+          onRequestLocation={onRequestLocation}
         />
       </div>
 
