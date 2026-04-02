@@ -2,6 +2,7 @@
 import { OptimizedFeedContainer } from "@/components/feed/OptimizedFeedContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Separator } from "@/components/ui/separator";
+import { MainNav } from "@/components/MainNav";
 
 import { useEffect } from "react";
 import { FadeIn } from "@/components/animation/FadeIn";
@@ -40,6 +41,7 @@ export default function Feed() {
           </SlideIn>
         </div>
       </main>
+      <MainNav />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { useProfileAvatar } from "@/hooks/profile/useProfileAvatar";
 import { useTranslation } from "react-i18next";
+import { MainNav } from "@/components/MainNav";
 
 function ProfileEdit() {
   const { user, isLoading } = useGlobalAuth();
@@ -183,34 +184,37 @@ if (location) {
   const currentAvatarUrl = avatarUrl || (user as any).avatar_url;
   
   return (
-    <div className="container max-w-2xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6">{t('profile.edit_profile')}</h1>
-      
-      <div className="mb-6 flex justify-center">
-        <AvatarUpload 
-          avatarUrl={currentAvatarUrl} 
-          onFileChange={setAvatar} 
-        />
+    <>
+      <div className="container max-w-2xl mx-auto py-8 px-4 pb-24">
+        <h1 className="text-2xl font-bold mb-6">{t('profile.edit_profile')}</h1>
+        
+        <div className="mb-6 flex justify-center">
+          <AvatarUpload 
+            avatarUrl={currentAvatarUrl} 
+            onFileChange={setAvatar} 
+          />
+        </div>
+        
+        <ProfileForm formData={formData} onChange={handleFormChange} />
+        <div className="mt-6 flex justify-end">
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting || avatarLoading}
+            className="w-full sm:w-auto"
+          >
+            {isSubmitting || avatarLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('common.saving')}
+              </>
+            ) : (
+              t('common.save_changes')
+            )}
+          </Button>
+        </div>
       </div>
-      
-      <ProfileForm formData={formData} onChange={handleFormChange} />
-      <div className="mt-6 flex justify-end">
-        <Button 
-          onClick={handleSubmit} 
-          disabled={isSubmitting || avatarLoading}
-          className="w-full sm:w-auto"
-        >
-          {isSubmitting || avatarLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {t('common.saving')}
-            </>
-          ) : (
-            t('common.save_changes')
-          )}
-        </Button>
-      </div>
-    </div>
+      <MainNav />
+    </>
   );
 }
 

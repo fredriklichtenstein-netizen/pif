@@ -7,6 +7,7 @@ import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useTranslation } from "react-i18next";
+import { MainNav } from "@/components/MainNav";
 
 interface Profile {
   id: string;
@@ -165,30 +166,33 @@ export default function PublicProfile() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center py-8 px-2 min-h-[70vh]">
-      <Card className="p-6 rounded-xl shadow max-w-lg w-full">
-        <div className="flex flex-col items-center">
-          <AvatarImage
-            src={profile.avatar_url || undefined}
-            alt={formatPublicName(profile)}
-            size={96}
-            className="mb-3 border"
-          />
-          <div className="text-xl font-semibold">{formatPublicName(profile)}</div>
-          <div className="text-muted-foreground mb-2 capitalize">{profile.gender || t('common.gender_undisclosed')}</div>
-          {coordinates && (
-            <div className="w-full">
-              <ProfileMap coordinates={coordinates} />
-            </div>
-          )}
-          {!coordinates && (
-            <div className="w-full text-center text-xs text-muted-foreground mt-6">
-              {t('common.no_location_available')}
-            </div>
-          )}
-        </div>
-        <UserPifsGrid userId={profile.id} />
-      </Card>
-    </div>
+    <>
+      <div className="flex flex-col items-center justify-center py-8 px-2 min-h-[70vh] pb-24">
+        <Card className="p-6 rounded-xl shadow max-w-lg w-full">
+          <div className="flex flex-col items-center">
+            <AvatarImage
+              src={profile.avatar_url || undefined}
+              alt={formatPublicName(profile)}
+              size={96}
+              className="mb-3 border"
+            />
+            <div className="text-xl font-semibold">{formatPublicName(profile)}</div>
+            <div className="text-muted-foreground mb-2 capitalize">{profile.gender || t('common.gender_undisclosed')}</div>
+            {coordinates && (
+              <div className="w-full">
+                <ProfileMap coordinates={coordinates} />
+              </div>
+            )}
+            {!coordinates && (
+              <div className="w-full text-center text-xs text-muted-foreground mt-6">
+                {t('common.no_location_available')}
+              </div>
+            )}
+          </div>
+          <UserPifsGrid userId={profile.id} />
+        </Card>
+      </div>
+      <MainNav />
+    </>
   );
 }

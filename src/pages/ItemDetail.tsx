@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { withRetry } from '@/utils/connectionRetryUtils';
+import { MainNav } from '@/components/MainNav';
 
 export default function ItemDetail() {
   const { id } = useParams();
@@ -136,13 +137,16 @@ export default function ItemDetail() {
     );
   }
   return (
-    <ItemDetailContainer 
-      displayItem={displayItem}
-      postedBy={postedBy}
-      coordinates={coordinates}
-      measurements={measurementsRecord}
-      realtimeError={realtimeError}
-      refreshItemData={refreshItemData}
-    />
+    <>
+      <ItemDetailContainer 
+        displayItem={displayItem}
+        postedBy={postedBy}
+        coordinates={coordinates}
+        measurements={measurementsRecord}
+        realtimeError={realtimeError}
+        refreshItemData={refreshItemData}
+      />
+      <MainNav />
+    </>
   );
 }
