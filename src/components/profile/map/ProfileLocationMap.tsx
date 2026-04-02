@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import { useMapbox } from "@/hooks/useMapbox";
 import "mapbox-gl/dist/mapbox-gl.css";

@@ -1,3 +1,4 @@
+// updated
 import { Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
