@@ -120,7 +120,7 @@ export const initializeAuth = async () => {
   } finally {
     auth.setLoading(false);
     auth.setInitialized(true);
-    console.log('Auth initialization complete');
+    
   }
 
   // Set up auth listener
