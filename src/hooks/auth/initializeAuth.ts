@@ -6,12 +6,12 @@ import { DEMO_USER, DEMO_SESSION } from "@/data/mockUser";
 
 export const initializeAuth = async () => {
   const auth = useAuthStore.getState();
-  console.log('initializeAuth called, initialized:', auth.initialized, 'isLoading:', auth.isLoading);
+  
   if (auth.initialized) return;
 
   // In demo mode, skip Supabase entirely and set demo user immediately
   if (DEMO_MODE) {
-    console.log('Demo mode: Setting demo user');
+    
     auth.setUser(DEMO_USER);
     auth.setSession(DEMO_SESSION);
     auth.setProfileCompleted(true);
@@ -22,14 +22,14 @@ export const initializeAuth = async () => {
   }
 
   try {
-    console.log('Initializing auth state...');
+    
     auth.setLoading(true);
     auth.setError(null);
     auth.setNetworkError(false);
     
     // Set a more reasonable timeout
     const timeoutId = setTimeout(() => {
-      console.log('Auth initialization timed out - possible network issues');
+      
       auth.setError(new Error('Connection issue. Please check your internet and try again.'));
       auth.setNetworkError(true);
       auth.setLoading(false);
@@ -69,7 +69,7 @@ export const initializeAuth = async () => {
     }
     
     if (session?.user) {
-      console.log('User session found:', session.user.id);
+      
       auth.setUser(session.user);
       auth.setSession(session);
       
@@ -100,7 +100,7 @@ export const initializeAuth = async () => {
         auth.setProfileCompleted(false);
       }
     } else {
-      console.log('No active session found');
+      
       auth.clearAuth();
     }
   } catch (error) {
@@ -120,13 +120,13 @@ export const initializeAuth = async () => {
   } finally {
     auth.setLoading(false);
     auth.setInitialized(true);
-    console.log('Auth initialization complete');
+    
   }
 
   // Set up auth listener
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      console.log('Auth state changed:', event);
+      
 
       const currentAuth = useAuthStore.getState();
 

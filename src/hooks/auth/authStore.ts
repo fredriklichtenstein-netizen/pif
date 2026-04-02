@@ -32,10 +32,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setSession: (session) => set({ session }),
   setProfileCompleted: (completed) => set({ profileCompleted: completed }),
   setLoading: (loading) => set({ isLoading: loading }),
-  setInitialized: (initialized) => {
-    console.log('setInitialized called with:', initialized, new Error().stack);
-    set({ initialized });
-  },
+  setInitialized: (initialized) => set({ initialized }),
   setError: (error) => set({ error }),
   setNetworkError: (hasError) => set({ networkError: hasError }),
   clearAuth: () => set({ 
