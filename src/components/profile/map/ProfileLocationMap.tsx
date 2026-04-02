@@ -13,24 +13,26 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
 
-  useEffect(() => {
-    if (!coordinates || !mapToken || !mapContainerRef.current) return;
-
-    mapboxgl.accessToken = mapToken;
-    let destroyed = false;
-
-    // Fixed 200-300m random offset for privacy
+  const center = useMemo(() => {
     const offsetMeters = 200 + Math.random() * 100;
     const angle = Math.random() * 2 * Math.PI;
     const latOffset = offsetMeters / 111000;
     const lngOffset = offsetMeters / (111000 * Math.cos(coordinates.lat * Math.PI / 180));
-    const centerLng = coordinates.lng + lngOffset * Math.cos(angle);
-    const centerLat = coordinates.lat + latOffset * Math.sin(angle);
+    return {
+      lng: coordinates.lng + lngOffset * Math.cos(angle),
+      lat: coordinates.lat + latOffset * Math.sin(angle)
+    };
+  }, [coordinates.lng, coordinates.lat]);
+
+  useEffect(() => {
+    if (!coordinates || !mapToken || !mapContainerRef.current) return;
+
+    mapboxgl.accessToken = mapToken;
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [centerLng, centerLat],
+      center: [center.lng, center.lat],
       zoom: 14,
       interactive: false,
       dragPan: false,
