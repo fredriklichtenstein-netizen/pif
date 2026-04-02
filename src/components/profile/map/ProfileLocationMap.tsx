@@ -53,7 +53,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   }, [coordinates, mapToken, center]);
 
   if (isMapTokenLoading) {
-    return <div className="w-full aspect-square rounded-lg border mb-4 bg-muted flex items-center justify-center">
+    return <div className="w-full max-w-sm aspect-square rounded-lg border mb-4 bg-muted flex items-center justify-center">
       <div className="text-sm text-muted-foreground">Loading map...</div>
     </div>;
   }
