@@ -11,6 +11,7 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
+import { MainNav } from "@/components/MainNav";
 
 export default function CreateProfile() {
   const { t } = useTranslation();
