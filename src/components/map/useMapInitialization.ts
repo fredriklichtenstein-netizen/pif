@@ -168,14 +168,14 @@ export const useMapInitialization = (mapboxToken: string) => {
     
     if (!mapContainer.current) {
       console.error("🚨 [Map Init] No map container ref available");
-      setError(new Error("Map container not available"));
+      setError(new Error("Kunde inte ladda kartan"));
       isInitializing.current = false;
       return;
     }
     
     if (!mapboxToken) {
       console.error("🚨 [Map Init] No Mapbox token available");
-      setError(new Error("No Mapbox token available"));
+      setError(new Error("Kunde inte ladda kartan"));
       isInitializing.current = false;
       return;
     }

@@ -45,18 +45,18 @@ export const useMapbox = () => {
       
       if (functionError) {
         console.error("🚨 [Mapbox Hook] Edge function error:", functionError);
-        throw new Error(`Failed to get Mapbox token: ${functionError.message}`);
+        throw new Error("Kunde inte ladda kartan. Försök igen.");
       }
       
       if (!data || !data.token) {
         console.error("🚨 [Mapbox Hook] No token in response:", data);
-        throw new Error("No Mapbox token received from server");
+        throw new Error("Kunde inte ladda kartan. Försök igen.");
       }
       
       // Validate token format
       if (!data.token.startsWith('pk.')) {
         console.error("🚨 [Mapbox Hook] Invalid token format:", data.token.substring(0, 10) + "...");
-        throw new Error("Invalid Mapbox token format received");
+        throw new Error("Kunde inte ladda kartan. Försök igen.");
       }
       
       console.log("✅ [Mapbox Hook] Successfully retrieved valid token");

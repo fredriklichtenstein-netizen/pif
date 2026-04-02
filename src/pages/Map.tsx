@@ -62,7 +62,6 @@ export default function Map() {
           <div className="text-center p-6">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-muted-foreground font-medium">{t('map.loading_map_credentials')}</p>
-            <p className="text-muted-foreground text-sm mt-2">{t('map.fetching_token')}</p>
           </div>
         </main>
       </div>
@@ -126,7 +125,7 @@ export default function Map() {
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-foreground mb-2">{t('map.map_unavailable')}</h2>
             <p className="text-muted-foreground mb-4">
-              {tokenError?.message || t('map.unable_to_load')}
+              {t('map.unable_to_load')}
             </p>
             <Button 
               onClick={retryFetchToken} 
