@@ -129,6 +129,7 @@ export const MapFilters = ({
           selectedDistance={selectedDistance}
           onDistanceChange={onDistanceChange}
           userLocation={userLocation}
+          onRequestLocation={onRequestLocation}
         />
       </div>
 
