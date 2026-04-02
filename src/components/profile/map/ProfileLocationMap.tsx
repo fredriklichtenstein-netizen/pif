@@ -14,7 +14,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
 
   const center = useMemo(() => {
-    const offsetMeters = 200 + Math.random() * 100;
+    const offsetMeters = 100 + Math.random() * 50;
     const angle = Math.random() * 2 * Math.PI;
     const latOffset = offsetMeters / 111000;
     const lngOffset = offsetMeters / (111000 * Math.cos(coordinates.lat * Math.PI / 180));
@@ -33,7 +33,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
       container: mapContainerRef.current!,
       style: "mapbox://styles/mapbox/streets-v12",
       center: [center.lng, center.lat],
-      zoom: 12,
+      zoom: 13,
       interactive: false,
       dragPan: false,
       scrollZoom: false,
@@ -53,7 +53,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   }, [coordinates, mapToken, center]);
 
   if (isMapTokenLoading) {
-    return <div className="w-full aspect-square rounded-lg border mb-4 bg-muted flex items-center justify-center">
+    return <div className="w-full max-w-sm aspect-square rounded-lg border mb-4 bg-muted flex items-center justify-center">
       <div className="text-sm text-muted-foreground">Loading map...</div>
     </div>;
   }
@@ -61,7 +61,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   return (
     <div
       ref={mapContainerRef}
-      className="w-full aspect-square rounded-lg border mb-4"
+      className="w-full max-w-sm aspect-square rounded-lg border mb-4"
       style={{ display: "block" }}
     />
   );
