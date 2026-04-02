@@ -33,7 +33,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
       container: mapContainerRef.current!,
       style: "mapbox://styles/mapbox/streets-v12",
       center: [center.lng, center.lat],
-      zoom: 14,
+      zoom: 12,
       interactive: false,
       dragPan: false,
       scrollZoom: false,
@@ -53,7 +53,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   }, [coordinates, mapToken, center]);
 
   if (isMapTokenLoading) {
-    return <div className="w-full h-[200px] rounded-lg border mb-4 bg-muted flex items-center justify-center">
+    return <div className="w-full aspect-square rounded-lg border mb-4 bg-muted flex items-center justify-center">
       <div className="text-sm text-muted-foreground">Loading map...</div>
     </div>;
   }
@@ -61,7 +61,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   return (
     <div
       ref={mapContainerRef}
-      className="w-full h-[200px] rounded-lg border mb-4"
+      className="w-full aspect-square rounded-lg border mb-4"
       style={{ display: "block" }}
     />
   );
