@@ -140,7 +140,7 @@ if (location) {
 
       toast({
         title: t('common.save_changes'),
-        description: t('auth.password_updated_description'),
+        description: t('profile.profile_updated'),
       });
 
       navigate("/profile");

@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 interface FeedEmptyStateProps {
   viewMode: string;
@@ -10,6 +11,7 @@ interface FeedEmptyStateProps {
 
 export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: FeedEmptyStateProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const getEmptyStateMessage = () => {
     if (selectedCategories.length > 0) {
@@ -40,6 +42,14 @@ export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: F
           onClick={clearFilters}
         >
           {t('feed.clear_filters')}
+        </Button>
+      )}
+      {viewMode === "all" && selectedCategories.length === 0 && (
+        <Button
+          className="mt-4"
+          onClick={() => navigate('/post')}
+        >
+          {t('post.create_offer')}
         </Button>
       )}
     </div>
