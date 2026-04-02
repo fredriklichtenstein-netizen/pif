@@ -164,8 +164,7 @@ export function MainNav() {
                   src={avatarUrl}
                   alt={t('nav.profile')}
                   className="w-full h-full object-cover"
-                  width={24}
-                  height={24}
+                  size={24}
                 />
               </div>
             ) : user ? (
