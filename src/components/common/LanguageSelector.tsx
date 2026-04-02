@@ -35,15 +35,15 @@ export function LanguageSelector() {
     }
   };
 
-  const getCurrentLanguageDisplay = () => {
-    return i18n.language === 'sv' ? 'Svenska' : 'English';
+  const getCurrentFlag = () => {
+    return i18n.language === 'sv' ? '🇸🇪' : '🇺🇸';
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="flex items-center gap-2" disabled={isChanging}>
-          <Languages className="h-4 w-4" />
+          <span className="text-lg">{isChanging ? '...' : getCurrentFlag()}</span>
           <span className="hidden sm:inline">
             {isChanging ? '...' : getCurrentLanguageDisplay()}
           </span>
