@@ -6,6 +6,7 @@ import { DEMO_USER, DEMO_SESSION } from "@/data/mockUser";
 
 export const initializeAuth = async () => {
   const auth = useAuthStore.getState();
+  console.log('initializeAuth called, initialized:', auth.initialized, 'isLoading:', auth.isLoading);
   if (auth.initialized) return;
 
   // In demo mode, skip Supabase entirely and set demo user immediately
