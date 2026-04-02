@@ -7,6 +7,7 @@ import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useTranslation } from "react-i18next";
+import { MainNav } from "@/components/MainNav";
 
 interface Profile {
   id: string;
