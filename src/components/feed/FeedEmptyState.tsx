@@ -49,7 +49,7 @@ export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: F
           className="mt-4"
           onClick={() => navigate('/post')}
         >
-          {t('post.create_pif')}
+          {t('post.create_offer')}
         </Button>
       )}
     </div>
