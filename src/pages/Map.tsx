@@ -62,7 +62,6 @@ export default function Map() {
           <div className="text-center p-6">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-muted-foreground font-medium">{t('map.loading_map_credentials')}</p>
-            <p className="text-muted-foreground text-sm mt-2">{t('map.fetching_token')}</p>
           </div>
         </main>
       </div>

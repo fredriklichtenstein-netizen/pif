@@ -59,6 +59,6 @@
   },
   "demo": {
     "title": "You're viewing demo content",
-    "description": "This is example data to showcase the app. Connect a backend to see real community posts."
+    "description": "This is example data to showcase the app."
   }
 }

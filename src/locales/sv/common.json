@@ -59,6 +59,6 @@
   },
   "demo": {
     "title": "Du tittar på demoinnehåll",
-    "description": "Detta är exempeldata för att visa appen. Anslut en backend för att se riktiga inlägg."
+    "description": "Detta är exempeldata för att visa appen."
   }
 }
