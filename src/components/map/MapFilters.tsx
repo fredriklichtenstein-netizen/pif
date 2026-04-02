@@ -27,6 +27,7 @@ interface MapFiltersProps {
   selectedDistance: number | null;
   onDistanceChange: (distance: number | null) => void;
   userLocation: [number, number] | null;
+  onRequestLocation?: () => void;
 }
 
 const CATEGORY_KEYS = [
