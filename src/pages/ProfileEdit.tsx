@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { useProfileAvatar } from "@/hooks/profile/useProfileAvatar";
 import { useTranslation } from "react-i18next";
+import { MainNav } from "@/components/MainNav";
 
 function ProfileEdit() {
   const { user, isLoading } = useGlobalAuth();
