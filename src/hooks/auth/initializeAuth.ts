@@ -69,7 +69,7 @@ export const initializeAuth = async () => {
     }
     
     if (session?.user) {
-      console.log('User session found:', session.user.id);
+      
       auth.setUser(session.user);
       auth.setSession(session);
       
