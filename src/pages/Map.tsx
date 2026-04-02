@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { RefreshCw, AlertCircle, MapPin, ExternalLink } from "lucide-react";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useTranslation } from "react-i18next";
+import { MainNav } from "@/components/MainNav";
 
 export default function Map() {
   const navigate = useNavigate();
