@@ -54,9 +54,7 @@ export function CommentsPanel({
   const { t } = useTranslation();
   
   useEffect(() => {
-    console.log("CommentsPanel rendering with comments:", comments);
     if (currentUser) {
-      console.log("Current user:", currentUser);
     }
   }, [comments, currentUser]);
   

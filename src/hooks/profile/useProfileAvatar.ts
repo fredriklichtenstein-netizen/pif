@@ -31,7 +31,6 @@ export const useProfileAvatar = () => {
         }
         
         if (data?.avatar_url) {
-          console.log("Fetched avatar URL:", data.avatar_url);
           setAvatarUrl(data.avatar_url);
         }
       } catch (err) {
@@ -51,7 +50,6 @@ export const useProfileAvatar = () => {
         filter: `id=eq.${user.id}`
       }, (payload) => {
         if (payload.new.avatar_url) {
-          console.log("Real-time avatar update:", payload.new.avatar_url);
           setAvatarUrl(payload.new.avatar_url);
         }
       })
@@ -75,9 +73,6 @@ export const useProfileAvatar = () => {
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      console.log("Uploading avatar:", fileName);
-      
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profile-photos')
         .upload(fileName, file);
@@ -87,9 +82,6 @@ export const useProfileAvatar = () => {
       const { data: { publicUrl } } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(fileName);
-      
-      console.log("Avatar uploaded successfully, public URL:", publicUrl);
-      
       // Update the UI immediately with the new avatar URL
       setAvatarUrl(publicUrl);
 
@@ -102,9 +94,6 @@ export const useProfileAvatar = () => {
         .eq('id', user.id);
 
       if (updateError) throw updateError;
-
-      console.log("Profile updated with new avatar_url");
-
       toast({
         title: t('interactions.avatar_updated'),
         description: t('interactions.avatar_updated_description'),

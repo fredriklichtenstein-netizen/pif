@@ -54,8 +54,6 @@ export default function ResetPassword() {
         if (!data.session) {
           throw new Error("No session returned when verifying token");
         }
-        
-        console.log("Token verified successfully");
         setTokenVerified(true);
         
       } catch (err: any) {

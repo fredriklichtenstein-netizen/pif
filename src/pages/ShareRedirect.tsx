@@ -72,7 +72,6 @@ export default function ShareRedirect() {
           maxDelay: 3000,
           backoffFactor: 1.5,
           onRetry: (attempt, delay) => {
-            console.log(`ShareRedirect: Retrying (attempt ${attempt}) after ${delay}ms`);
           }
         }
       );

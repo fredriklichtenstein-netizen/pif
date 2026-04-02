@@ -15,12 +15,8 @@ export const useRealtimeConnection = (itemId: string) => {
   // Clean up function to remove all channels
   const cleanupChannels = useCallback(() => {
     if (channelsRef.current.length === 0) {
-      console.log(`No channels to clean up for item ${itemId}`);
       return;
     }
-    
-    console.log(`Cleaning up ${channelsRef.current.length} channels for item ${itemId}`);
-    
     channelsRef.current.forEach(channel => {
       try {
         supabase.removeChannel(channel);

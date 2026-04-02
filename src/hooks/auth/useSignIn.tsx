@@ -16,14 +16,12 @@ export function useSignIn() {
 
   const handleSignIn = async (email: string, password: string) => {
     try {
-      console.log("Starting sign in process for:", email);
       setSigningIn(true);
       setAuthError(null);
       
       let timeoutId: NodeJS.Timeout | null = null;
       
       timeoutId = setTimeout(() => {
-        console.log("Sign in is taking longer than expected - possible network issues");
       }, 10000);
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -35,9 +33,6 @@ export function useSignIn() {
         clearTimeout(timeoutId);
         timeoutId = null;
       }
-      
-      console.log("Sign in response:", { data: data ? "data received" : "no data", error });
-
       if (error) {
         console.error("Sign in error:", error);
         
@@ -116,9 +111,6 @@ export function useSignIn() {
         .select('onboarding_completed')
         .eq('id', userId)
         .maybeSingle();
-
-      console.log("Profile check result:", { profile, profileError });
-
       if (profileError) {
         console.error("Error fetching profile:", profileError);
         toast({

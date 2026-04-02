@@ -16,7 +16,6 @@ export const useRealtimeStatus = (
   // Effect to track subscription status
   useEffect(() => {
     if (isSubscribed && !isRealtimeSubscribed) {
-      console.log(`Realtime subscription active for item ${itemId}`);
       setIsRealtimeSubscribed(true);
       
       // Show toast only after successful reconnection attempt
@@ -27,7 +26,6 @@ export const useRealtimeStatus = (
         });
       }
     } else if (!isSubscribed && isRealtimeSubscribed) {
-      console.log(`Realtime subscription lost for item ${itemId}`);
       setIsRealtimeSubscribed(false);
     }
   }, [isSubscribed, isRealtimeSubscribed, itemId, connectionAttempts, toast]);

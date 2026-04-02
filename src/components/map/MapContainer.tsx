@@ -24,9 +24,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
   const { t } = useTranslation();
-
-  console.log("🗺️ [MapContainer] Render - Token:", mapboxToken ? "✅" : "❌", "Posts:", posts.length, "Ready:", isMapReady);
-
   // Distance filtering
   const {
     filteredPosts,
@@ -55,9 +52,6 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     }
     return true;
   });
-
-  console.log("📊 [MapContainer] Filtered posts:", finalFilteredPosts.length, "of", posts.length);
-
   const handleClearFilters = () => {
     setSelectedCategories([]);
     setSelectedConditions([]);
@@ -67,26 +61,20 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
 
   useEffect(() => {
     if (isMapReady && map) {
-      console.log("✨ [MapContainer] Map is ready, making it visible");
       const timer = setTimeout(() => {
         setIsMapVisible(true);
       }, 100);
       return () => clearTimeout(timer);
     } else {
-      console.log("⏳ [MapContainer] Map not ready yet - Ready:", isMapReady, "Map:", !!map);
     }
   }, [isMapReady, map]);
 
   // Handle target item centering
   useEffect(() => {
     if (!isMapReady || !map || !targetItemId || !posts.length) return;
-    
-    console.log("🎯 [MapContainer] Attempting to center on target item:", targetItemId);
-    
     const targetPost = posts.find(post => post.id === targetItemId);
     
     if (!targetPost?.coordinates) {
-      console.log("❌ [MapContainer] Target post not found or has no coordinates:", targetItemId);
       return;
     }
     
@@ -96,16 +84,12 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       console.error("🚨 [MapContainer] Invalid coordinates for target post:", { lng, lat });
       return;
     }
-    
-    console.log("🎯 [MapContainer] Centering map on target coordinates:", { lng, lat });
-    
     try {
       map.flyTo({
         center: [lng, lat],
         zoom: 15,
         duration: 1500
       });
-      console.log("✅ [MapContainer] Successfully initiated flyTo for target item");
     } catch (error) {
       console.error("🚨 [MapContainer] Error during flyTo:", error);
     }

@@ -34,7 +34,6 @@ export function LazyCommentsSection({
 
   useEffect(() => {
     if (isVisible && !isInitialized) {
-      console.log(`[LazyCommentsSection] Loading comments for item ${itemId} (isInitialized: ${isInitialized})`);
       loadComments();
     }
   }, [isVisible, loadComments, isInitialized, itemId]);

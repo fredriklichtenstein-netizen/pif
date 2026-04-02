@@ -13,9 +13,6 @@ export interface CoordinateResult {
  */
 export function extractCoordinates(coordinates: any): CoordinateResult | null {
   if (!coordinates) return null;
-  
-  console.log("Extracting coordinates from:", coordinates, "Type:", typeof coordinates);
-  
   try {
     // Method 1: Try direct property access (for plain objects)
     if (typeof coordinates === "object" && coordinates !== null) {
@@ -24,7 +21,6 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
       
       if (typeof directLng === 'number' && typeof directLat === 'number' && 
           !isNaN(directLng) && !isNaN(directLat)) {
-        console.log("Extracted via direct access:", { lng: directLng, lat: directLat });
         return { lng: directLng, lat: directLat };
       }
     }
@@ -40,7 +36,6 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
       
       if (typeof descriptorLng === 'number' && typeof descriptorLat === 'number' && 
           !isNaN(descriptorLng) && !isNaN(descriptorLat)) {
-        console.log("Extracted via descriptors:", { lng: descriptorLng, lat: descriptorLat });
         return { lng: descriptorLng, lat: descriptorLat };
       }
     }
@@ -60,7 +55,6 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
       }
       
       if (typeof foundLng === 'number' && typeof foundLat === 'number') {
-        console.log("Extracted via keys iteration:", { lng: foundLng, lat: foundLat });
         return { lng: foundLng, lat: foundLat };
       }
     }
@@ -77,7 +71,6 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
           
           if (typeof jsonLng === 'number' && typeof jsonLat === 'number' && 
               !isNaN(jsonLng) && !isNaN(jsonLat)) {
-            console.log("Extracted via JSON:", { lng: jsonLng, lat: jsonLat });
             return { lng: jsonLng, lat: jsonLat };
           }
         }
@@ -91,7 +84,6 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
     if (coordStr && coordStr !== '[object Object]') {
       const result = parseCoordinatesFromString(coordStr);
       if (result) {
-        console.log("Extracted via string parsing:", result);
         return result;
       }
     }
@@ -106,7 +98,6 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
           // Assume first is lng, second is lat (common PostGIS format)
           const [lng, lat] = nums;
           if (Math.abs(lng) <= 180 && Math.abs(lat) <= 90) {
-            console.log("Extracted via toString parsing:", { lng, lat });
             return { lng, lat };
           }
         }

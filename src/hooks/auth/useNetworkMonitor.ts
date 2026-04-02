@@ -40,7 +40,6 @@ export function useNetworkMonitor() {
   }, [networkError]);
 
   const handleOnline = () => {
-    console.log("Network connection restored");
     // Only clear the network error if it was specifically about connection issues
     if (networkError && (networkError.includes("connection") || networkError.includes("internet"))) {
       setNetworkError(null);
@@ -49,7 +48,6 @@ export function useNetworkMonitor() {
   };
 
   const handleOffline = () => {
-    console.log("Network connection lost");
     setNetworkError("Network connection lost. Please check your internet connection.");
     setConnectionStatus(false);
   };

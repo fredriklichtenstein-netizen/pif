@@ -78,14 +78,12 @@ export function AuthForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Auth form submitted", { email, password, isSignUp });
     setSubmitError("");
     setSubmitting(true);
     setTimeoutWarning(null);
     
     const validation = validateAuthForm(email, password);
     if (!validation.isValid) {
-      console.log("Form validation failed");
       setFormError(validation.error);
       setSubmitting(false);
       return;
@@ -93,7 +91,6 @@ export function AuthForm({
     
     // Set a local timeout to detect if the request is taking too long
     const timeout = setTimeout(() => {
-      console.log("Request is taking longer than expected");
       setTimeoutWarning("Request is taking longer than expected. Network may be slow.");
       // Don't set submitting to false here to prevent multiple submissions
     }, 5000);
@@ -101,7 +98,6 @@ export function AuthForm({
     setRequestTimeout(timeout);
     
     try {
-      console.log("Attempting authentication...");
       const result = isSignUp
         ? await onSubmit(email, password, phone, countryCode)
         : await onSubmit(email, password);
@@ -110,9 +106,6 @@ export function AuthForm({
       clearTimeout(timeout);
       setRequestTimeout(null);
       setTimeoutWarning(null);
-      
-      console.log("Authentication result:", result);
-      
       if (result === false) {
         // Error is now handled by the parent component and passed via props
         setSubmitting(false);

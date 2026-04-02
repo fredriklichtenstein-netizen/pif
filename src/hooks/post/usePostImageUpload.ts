@@ -15,26 +15,22 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
   const { t } = useTranslation();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Image upload started");
     setIsAnalyzing(true);
     setUploadProgress(0);
     const files = Array.from(e.target.files || []);
 
     if (!files || files.length === 0) {
-      console.log("No files selected");
       setIsAnalyzing(false);
       return;
     }
 
     try {
-      console.log(`Processing ${files.length} files for upload`);
       const { supabase } = await import("@/integrations/supabase/client");
       
       let completedUploads = 0;
       
       const uploadPromises = files.map(async (file) => {
         try {
-          console.log(`Uploading file: ${file.name}, size: ${file.size}`);
           const timestamp = new Date().getTime();
           const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
 
@@ -57,13 +53,9 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
 
           completedUploads++;
           setUploadProgress(Math.round((completedUploads / files.length) * 100));
-
-          console.log(`File uploaded successfully: ${filePath}`);
           const { data: urlData } = supabase.storage
             .from("post-images")
             .getPublicUrl(filePath);
-            
-          console.log(`Generated public URL: ${urlData.publicUrl}`);
           return urlData.publicUrl;
         } catch (fileError) {
           console.error("File upload error:", fileError);
@@ -75,11 +67,7 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
           return null;
         }
       });
-
-      console.log("Waiting for all uploads to complete");
       const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
-
-      console.log(`Upload completed: ${uploadedUrls.length} successful uploads out of ${files.length} attempts`);
       if (uploadedUrls.length > 0) {
         onImagesUploaded(uploadedUrls);
         toast({
@@ -101,7 +89,6 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
         variant: "destructive",
       });
     } finally {
-      console.log("Upload process finished, resetting state");
       setIsAnalyzing(false);
       setUploadProgress(0);
     }

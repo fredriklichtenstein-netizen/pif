@@ -80,7 +80,6 @@ export function ItemInteractions({
   const handleShareAction = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`Post.ItemInteractions: Share action triggered for item: ${id}`);
     handleShare(e);
   };
   

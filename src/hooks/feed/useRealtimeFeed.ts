@@ -16,19 +16,16 @@ export function useRealtimeFeed(posts: Post[], onPostUpdate: (posts: Post[]) => 
       switch (payload.eventType) {
         case 'INSERT':
           // New post added
-          console.log('New post created:', payload.new);
           // In a real implementation, we'd refetch or optimistically update
           break;
           
         case 'UPDATE':
           // Post updated
-          console.log('Post updated:', payload.new);
           // Update the specific post in the feed
           break;
           
         case 'DELETE':
           // Post deleted
-          console.log('Post deleted:', payload.old);
           // Remove post from feed
           break;
       }
@@ -58,8 +55,6 @@ export function useRealtimeFeed(posts: Post[], onPostUpdate: (posts: Post[]) => 
       
       setIsRealtime(true);
       setConnectionStatus('connected');
-      
-      console.log('✅ Real-time updates enabled');
     } catch (error) {
       console.error('Failed to enable real-time updates:', error);
       setConnectionStatus('disconnected');
@@ -72,8 +67,6 @@ export function useRealtimeFeed(posts: Post[], onPostUpdate: (posts: Post[]) => 
     realtimeManager.cleanup();
     setIsRealtime(false);
     setConnectionStatus('disconnected');
-    
-    console.log('❌ Real-time updates disabled');
   }, [isRealtime]);
 
   // Monitor connection health

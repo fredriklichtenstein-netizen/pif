@@ -66,7 +66,6 @@ export function useEmailConfirmation() {
 
     // Listen for auth state changes (fires when Supabase processes the hash token)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('EmailConfirmation auth event:', event);
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user?.email_confirmed_at) {
         await checkAndRedirect(session.user.id);
       }

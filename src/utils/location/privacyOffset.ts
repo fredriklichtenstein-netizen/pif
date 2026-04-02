@@ -22,13 +22,9 @@ export async function addLocationPrivacy(
       console.error("Invalid coordinates for privacy calculation:", { lng, lat });
       throw new Error("Invalid coordinates provided for privacy calculation");
     }
-    
-    console.log("Adding privacy to coordinates:", { lng, lat });
-    
     // Check if we have cached coordinates for this location
     const cached = getCachedCoordinates(lng, lat);
     if (cached) {
-      console.log('Using cached privacy coordinates');
       return cached;
     }
     
@@ -42,8 +38,6 @@ export async function addLocationPrivacy(
     const privacyRadiusRural = 800; // meters for rural areas
     
     const privacyRadius = isUrban ? privacyRadiusUrban : privacyRadiusRural;
-    console.log(`Location is ${isUrban ? 'urban' : 'rural'}, using radius: ${privacyRadius}m`);
-    
     // Calculate privacy offset
     const offsetMeters = Math.random() * privacyRadius;
     const angle = Math.random() * 2 * Math.PI; // Random angle in radians
@@ -68,9 +62,6 @@ export async function addLocationPrivacy(
       if (!isWater) {
         break; // Found a valid location
       }
-      
-      console.log('Privacy offset landed in water, retrying...');
-      
       // Calculate new offset with smaller radius each attempt
       const retryRadius = privacyRadius * (1 - (attempts + 1) / maxAttempts);
       const retryOffset = Math.random() * retryRadius;
@@ -84,10 +75,6 @@ export async function addLocationPrivacy(
       
       attempts++;
     }
-    
-    console.log("Original coordinates:", { lng, lat });
-    console.log("Privacy-adjusted coordinates:", { lng: adjustedLng, lat: adjustedLat });
-    
     // Cache the result
     const result: [number, number] = [adjustedLng, adjustedLat];
     cacheCoordinates(lng, lat, result);
@@ -98,7 +85,6 @@ export async function addLocationPrivacy(
     // In case of error, return original coordinates with minimal offset
     const minimalOffsetLng = lng + (Math.random() - 0.5) * 0.001;
     const minimalOffsetLat = lat + (Math.random() - 0.5) * 0.001;
-    console.log("Using minimal offset due to error:", { lng: minimalOffsetLng, lat: minimalOffsetLat });
     return [minimalOffsetLng, minimalOffsetLat];
   }
 }

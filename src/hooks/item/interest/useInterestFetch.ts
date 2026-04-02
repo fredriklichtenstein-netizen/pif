@@ -40,8 +40,6 @@ export const useInterestFetch = (
     }
     
     try {
-      console.log(`Fetching interested users for item ${numericId} (attempt: ${fetchAttemptCount + 1})`);
-      
       const timeoutId = setTimeout(() => {
         controller.abort();
       }, 15000);

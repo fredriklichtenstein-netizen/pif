@@ -37,10 +37,6 @@ export const useCommentCreate = (
   // Add a new comment
   const handleAddComment = async (text: string) => {
     if (!text.trim() || !currentUser || !currentUser.id) {
-      console.log("Cannot add comment: empty text or missing user", { 
-        textLength: text?.length, 
-        currentUser: !!currentUser 
-      });
       return;
     }
     
@@ -69,8 +65,6 @@ export const useCommentCreate = (
       
       // If in fallback mode, create a local comment
       if (useFallbackMode) {
-        console.log("Creating local comment in fallback mode");
-        
         // Format the display name properly
         const displayName = formatUserName(currentUser.name || '');
         
@@ -93,12 +87,6 @@ export const useCommentCreate = (
         
         // Add to local state
         const updatedComments = [...comments, tempComment];
-        console.log("Adding local comment to state", { 
-          previousCount: comments.length, 
-          newCount: updatedComments.length,
-          newComment: tempComment
-        });
-        
         setComments(updatedComments);
         
         // Store in local storage for later sync
@@ -132,9 +120,6 @@ export const useCommentCreate = (
       if (isNaN(numericItemId)) {
         throw new Error(`Invalid item ID: ${itemId}`);
       }
-      
-      console.log(`Adding comment to item ${numericItemId}: "${text.substring(0, 20)}..."`);
-      
       const { data, error } = await supabase
         .from('comments')
         .insert({
@@ -159,16 +144,10 @@ export const useCommentCreate = (
       if (error) throw error;
       
       if (data) {
-        console.log("Comment successfully added:", data);
         const newComment = formatCommentFromDB(data, true);
         
         // Create a new array with the new comment added (avoid direct mutation)
         const updatedComments = [...comments, newComment];
-        console.log("Updating comments state with new comment", { 
-          previousCount: comments.length, 
-          newCount: updatedComments.length 
-        });
-        
         setComments(updatedComments);
         
         toast({

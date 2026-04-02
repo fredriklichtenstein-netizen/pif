@@ -16,7 +16,4 @@ export const getCachedCoordinates = (lng: number, lat: number): [number, number]
 export const cacheCoordinates = (lng: number, lat: number, adjustedCoords: [number, number]): void => {
   const cacheKey = `${lng},${lat}`;
   coordinateCache.set(cacheKey, adjustedCoords);
-  console.log('Cached new privacy coordinates for:', cacheKey, 
-              'Original:', [lng, lat], 
-              'Adjusted:', adjustedCoords);
 };

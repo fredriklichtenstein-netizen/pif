@@ -23,12 +23,10 @@ export function ImageCropper({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const onCropComplete = async (_croppedArea: any, pixels: any) => {
-    console.log("Crop completed, pixels:", pixels);
     setCroppedAreaPixels(pixels);
   };
 
   const handleSave = () => {
-    console.log("Saving cropped image with pixels:", croppedAreaPixels);
     if (croppedAreaPixels) {
       onSave(croppedAreaPixels);
     }

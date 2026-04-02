@@ -9,12 +9,8 @@ export interface Coordinates {
 
 export function parseCoordinates(coordinateData: any): Coordinates | null {
   if (!coordinateData) {
-    console.log("No coordinate data provided");
     return null;
   }
-
-  console.log("Parsing coordinates:", coordinateData, "Type:", typeof coordinateData);
-
   try {
     // Convert to string to handle the (lng,lat) format
     const coordStr = String(coordinateData);
@@ -27,7 +23,6 @@ export function parseCoordinates(coordinateData: any): Coordinates | null {
       const lat = parseFloat(match[2]);
       
       if (!isNaN(lng) && !isNaN(lat)) {
-        console.log("Successfully parsed coordinates:", { lng, lat });
         return { lng, lat };
       }
     }

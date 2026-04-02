@@ -6,7 +6,6 @@ export const measurePerformance = (name: string, fn: Function) => {
     try {
       const result = await fn(...args);
       const end = performance.now();
-      console.log(`⚡ ${name} took ${(end - start).toFixed(2)}ms`);
       return result;
     } catch (error) {
       const end = performance.now();
@@ -47,10 +46,5 @@ export const throttle = <T extends (...args: any[]) => any>(
 export const logMemoryUsage = (label: string) => {
   if ('memory' in performance) {
     const memory = (performance as any).memory;
-    console.log(`🧠 Memory ${label}:`, {
-      used: `${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
-      total: `${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
-      limit: `${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`
-    });
   }
 };

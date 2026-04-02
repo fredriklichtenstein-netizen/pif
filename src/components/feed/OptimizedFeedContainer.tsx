@@ -37,7 +37,6 @@ export function OptimizedFeedContainer() {
   }, [announce, measureFetch, loadMore, t]);
 
   const handlePostUpdate = useCallback((updatedPosts: any[]) => {
-    console.log('Posts updated via real-time:', updatedPosts.length);
     announce(t('interactions.new_posts_available', { count: updatedPosts.length }), "polite");
   }, [announce, t]);
 

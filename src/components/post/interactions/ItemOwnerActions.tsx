@@ -18,18 +18,14 @@ export function ItemOwnerActions({ id }: ItemOwnerActionsProps) {
   const handleDelete = useCallback(() => {
     // Prevent multiple clicks
     if (deleteInProgressRef.current) {
-      console.log("Delete already in progress, ignoring duplicate request");
       return;
     }
     
     deleteInProgressRef.current = true;
-    console.log("ItemOwnerActions - handleDelete called for item:", id);
-    
     // Try to use the global dialog manager first (most direct approach)
     const dialogManager = getDeleteDialogManager();
     
     if (dialogManager) {
-      console.log("Using global dialog manager to open delete dialog");
       dialogManager.openDeleteDialog({
         id,
         onSuccess: () => {
@@ -44,7 +40,6 @@ export function ItemOwnerActions({ id }: ItemOwnerActionsProps) {
     }
     
     // Fallback to the custom event approach
-    console.log("Global dialog manager not available, using custom event");
     const deleteEvent = new CustomEvent("global-delete-dialog-open", {
       detail: { 
         itemId: id,

@@ -13,7 +13,6 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!initialized) {
-      console.log("Initializing auth from PrivateRoute");
       initializeAuth();
     }
   }, []);

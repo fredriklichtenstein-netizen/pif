@@ -5,8 +5,6 @@ import { parseCoordinates } from "@/utils/coordinates/simpleCoordinateParser";
 
 export const getPosts = async (): Promise<Post[]> => {
   try {
-    console.log("Fetching posts from database...");
-    
     // Simple database query without complex caching
     const { data, error } = await supabase
       .from('items')
@@ -20,16 +18,10 @@ export const getPosts = async (): Promise<Post[]> => {
     }
 
     if (!data || data.length === 0) {
-      console.log("No posts found in database");
       return [];
     }
-
-    console.log("Raw database data:", data);
-
     // Transform data to Post format
     const transformedData: Post[] = data.map(item => {
-      console.log("Processing item:", item.id, "coordinates:", item.coordinates);
-      
       // Parse coordinates using simple parser
       const coordinates = parseCoordinates(item.coordinates);
       
@@ -75,8 +67,6 @@ export const getPosts = async (): Promise<Post[]> => {
         commentsCount: 0
       };
     });
-
-    console.log("Transformed posts:", transformedData);
     return transformedData;
   } catch (error) {
     console.error("Error in getPosts:", error);

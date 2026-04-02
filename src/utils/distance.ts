@@ -47,9 +47,6 @@ export const calculateDistance = (
     Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
-  
-  console.log("Distance calculation - From:", { lng: lng1, lat: lat1 }, "To:", { lng: lng2, lat: lat2 }, "Distance:", distance, "km");
-  
   return distance;
 };
 
@@ -63,7 +60,6 @@ export const calculateDistanceFromUser = (
   try {
     const stored = localStorage.getItem('pif_user_location');
     if (!stored) {
-      console.log('No stored user location for distance calculation');
       return NaN;
     }
     

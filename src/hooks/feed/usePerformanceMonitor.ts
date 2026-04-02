@@ -21,9 +21,6 @@ export function usePerformanceMonitor(componentName: string) {
     return () => {
       const renderTime = performance.now() - renderStartTime.current;
       metricsRef.current.renderTime = renderTime;
-      
-      console.log(`⚡ ${componentName} render took ${renderTime.toFixed(2)}ms`);
-      
       // Log memory usage in development
       if (process.env.NODE_ENV === 'development') {
         logMemoryUsage(`${componentName} render complete`);

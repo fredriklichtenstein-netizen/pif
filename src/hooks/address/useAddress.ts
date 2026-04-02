@@ -57,7 +57,6 @@ export const useAddress = (
   );
 
   const handleAddressChange = (address: string) => {
-    console.log("useAddress.handleAddressChange:", address);
     onAddressChange(address);
     debouncedFetchSuggestions(address);
   };
@@ -101,7 +100,6 @@ export const useAddress = (
   };
 
   const handleShowMap = async (address: string): Promise<{ lat: number; lng: number } | undefined> => {
-    console.log("useAddress.handleShowMap:", address);
     if (!address) {
       toast({
         title: t('post.error'),

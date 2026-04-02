@@ -20,13 +20,11 @@ export function CommentButton({
   const { t } = useTranslation();
   
   const handleCommentClick = () => {
-    console.log(`CommentButton: Toggling comments for item ${itemId}, current state: ${showComments}`);
     onCommentToggle();
   };
   
   // Debug logging when component mounts or updates
   useEffect(() => {
-    console.log(`CommentButton rendered for item ${itemId}, showComments: ${showComments}, count: ${commentsCount}`);
   }, [itemId, showComments, commentsCount]);
   
   return (

@@ -75,13 +75,9 @@ export function PostFormContainer({
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(`Form submit attempted on step ${finalCurrentStep}, final step is ${steps.length - 1}`);
-    
     if (finalCurrentStep === steps.length - 1) {
-      console.log('Submitting form from final step');
       onFormSubmit(e);
     } else {
-      console.log('Preventing form submission - not on final step');
     }
   };
 

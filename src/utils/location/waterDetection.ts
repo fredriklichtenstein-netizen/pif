@@ -30,7 +30,6 @@ export const isWaterLocation = async (lng: number, lat: number, map?: mapboxgl.M
       
       // If no valid water layers exist, we can't check
       if (existingWaterLayers.length === 0) {
-        console.log("No water layers available in current map style");
         return false;
       }
       
@@ -53,7 +52,6 @@ export const isWaterLocation = async (lng: number, lat: number, map?: mapboxgl.M
       );
 
       if (isWater) {
-        console.log(`Water detected at [${lng}, ${lat}]`);
       }
       
       return isWater;

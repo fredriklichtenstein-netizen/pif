@@ -42,7 +42,6 @@ export const useRealtimeUpdates = (
     }
     
     refreshTimeoutRef.current = setTimeout(() => {
-      console.log(`Refreshing data for item ${itemId} due to real-time update`);
       refreshItemData();
       refreshTimeoutRef.current = null;
     }, debounceMs);
@@ -54,7 +53,6 @@ export const useRealtimeUpdates = (
     
     // Prevent excessive retry attempts
     if (attemptCountRef.current >= maxAttempts) {
-      console.log(`Max subscription attempts (${maxAttempts}) reached for item ${itemId}`);
       setError(new Error(`Failed to subscribe after ${maxAttempts} attempts`));
       return;
     }
@@ -72,8 +70,6 @@ export const useRealtimeUpdates = (
       
       // Create a unique channel name with timestamp to avoid collisions
       const channelName = `item-combined-${numericId}-${Date.now()}`;
-      console.log(`Setting up realtime channel: ${channelName}`);
-      
       // Consolidated channel for all table changes
       const combinedChannel = supabase
         .channel(channelName)
@@ -83,7 +79,6 @@ export const useRealtimeUpdates = (
           table: 'likes',
           filter: `item_id=eq.${numericId}`,
         }, () => {
-          console.log('Real-time likes change detected for item', numericId);
           debouncedRefresh();
         })
         .on('postgres_changes', {
@@ -92,7 +87,6 @@ export const useRealtimeUpdates = (
           table: 'interests',
           filter: `item_id=eq.${numericId}`,
         }, () => {
-          console.log('Real-time interests change detected for item', numericId);
           debouncedRefresh();
         })
         .on('postgres_changes', {
@@ -101,12 +95,10 @@ export const useRealtimeUpdates = (
           table: 'comments',
           filter: `item_id=eq.${numericId}`,
         }, () => {
-          console.log('Real-time comments change detected for item', numericId);
           debouncedRefresh();
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log(`Subscribed to all changes for item ${numericId}`);
             channelsRef.current.push(combinedChannel);
             setIsSubscribed(true);
             setError(null);

@@ -18,7 +18,6 @@ export const useRealtimeRefresh = (
   // Enhanced refresh with proper error handling
   const refreshItemData = useCallback(() => {
     try {
-      console.log(`Manual refresh requested for item ${itemId}`);
       handleReconnect();
       retry();
       refreshData();

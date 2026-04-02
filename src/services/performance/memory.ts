@@ -36,7 +36,6 @@ class MemoryOptimizer {
   }
 
   private triggerMemoryCleanup() {
-    console.log('🧹 Triggering memory cleanup...');
     this.memoryPressureHandlers.forEach(handler => {
       try {
         handler();

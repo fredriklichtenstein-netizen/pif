@@ -21,12 +21,9 @@ export const addPost = async (postData: CreatePostInput) => {
 
 export const getPosts = async (): Promise<Post[]> => {
   try {
-    console.log("Fetching posts from database...");
-    
     // Try cache first
     const cachedPosts = getPostsFromCache();
     if (cachedPosts) {
-      console.log("Using cached posts data");
       return cachedPosts;
     }
     
@@ -43,7 +40,6 @@ export const getPosts = async (): Promise<Post[]> => {
     }
 
     if (!data || data.length === 0) {
-      console.log("No posts found in database");
       return [];
     }
 

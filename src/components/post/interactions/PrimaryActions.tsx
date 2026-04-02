@@ -46,11 +46,6 @@ export function PrimaryActions({
   fetchInterestedUsers,
 }: PrimaryActionsProps) {
   const { t } = useTranslation();
-  
-  console.log("PrimaryActions rendering for item:", itemId, "with props:", { 
-    isLiked, showComments, showInterest, likesCount, commentsCount, interestsCount 
-  });
-  
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onShare();

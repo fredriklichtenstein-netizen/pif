@@ -60,7 +60,6 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
   // Debounced refresh function to prevent multiple rapid refreshes
   const debouncedLoadPosts = useCallback((mode: string, delay = 300) => {
     if (refreshInProgressRef.current) {
-      console.log('Refresh already in progress, deferring this request');
       return;
     }
     

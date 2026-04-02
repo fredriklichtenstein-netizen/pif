@@ -77,7 +77,6 @@ export function ItemCardWrapper({
   // Cleanup effect to ensure realtime connections are removed
   useEffect(() => {
     return () => {
-      console.log(`ItemCardWrapper unmounting, cleaning up resources for item ${id}`);
       cleanupRealtime();
     };
   }, [id, cleanupRealtime]);

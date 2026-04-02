@@ -14,7 +14,6 @@ export function useOptimisticFeedUpdates() {
 
   // Record a new operation
   const recordOperation = useCallback((id: string | number, type: OperationType) => {
-    console.log(`Recording operation: ${type} for item ${id}`);
     setRecentOperations(prev => [
       ...prev.filter(op => op.id !== id), // Remove any previous operations for this item
       { id, type, timestamp: Date.now() }

@@ -42,7 +42,6 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       if (!isImageLoaded && mountedRef.current) {
-        console.log("Force loading complete after timeout");
         setIsImageLoaded(true);
       }
     }, 5000);
@@ -105,7 +104,6 @@ export function ItemCardGallery({ images, title, category }: ItemCardGalleryProp
         className={`w-full h-48 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => {
           if (mountedRef.current) {
-            console.log("Image loaded successfully:", currentImageUrl);
             setIsImageLoaded(true);
             setRetryAttempt(0);
           }

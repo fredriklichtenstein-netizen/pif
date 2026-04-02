@@ -35,7 +35,6 @@ export function CommentCard({
   const handleSaveEdit = () => { onEdit(comment.id, editedText); setIsEditing(false); };
 
   const handleReply = (text: string) => {
-    console.log("Replying to comment:", comment.id, "with text:", text);
     onReply(comment.id, text);
     setShowReplyInput(false);
   };

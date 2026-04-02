@@ -135,7 +135,6 @@ export function AvatarImage({
   // Debug information
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`AvatarImage rendering with src: ${src || 'null'}, fallback: ${fallbackSrc}`);
     }
   }, [src, fallbackSrc]);
     
@@ -148,7 +147,6 @@ export function AvatarImage({
       className={`rounded-full object-cover ${className || ''}`}
       placeholderSrc={fallbackSrc}
       onError={() => {
-        console.log("Avatar image error, using animal fallback");
         setUseFallback(true);
       }}
       priority={true}

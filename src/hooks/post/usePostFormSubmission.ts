@@ -18,16 +18,6 @@ export function usePostFormSubmission(initialData?: any) {
   const { t } = useTranslation();
 
   const handleSubmit = async (formData: PostFormData) => {
-    console.log("Form submission started");
-    console.log("Form data validation:", {
-      title: !!formData.title,
-      category: !!formData.category,
-      condition: !!formData.condition,
-      coordinates: !!formData.coordinates,
-      images: formData.images.length,
-      item_type: formData.item_type
-    });
-    
     if (DEMO_MODE) {
       if (!formData.title || !formData.category || !formData.coordinates || formData.images.length === 0) {
         toast({
@@ -101,12 +91,9 @@ export function usePostFormSubmission(initialData?: any) {
     setIsSubmitting(true);
 
     try {
-      console.log("Starting database insertion...");
-      
       let coordinatesForDB = null;
       if (formData.coordinates && formData.coordinates.lat !== null && formData.coordinates.lng !== null) {
         coordinatesForDB = `(${formData.coordinates.lng},${formData.coordinates.lat})`;
-        console.log("Formatted coordinates for DB:", coordinatesForDB);
       }
       
       const insertData = {
@@ -122,25 +109,17 @@ export function usePostFormSubmission(initialData?: any) {
         images: formData.images,
         measurements: formData.measurements,
       };
-
-      console.log("Insert data prepared:", insertData);
-
       let result;
       if (initialData?.id) {
-        console.log("Updating existing item:", initialData.id);
         result = await supabase
           .from("items")
           .update(insertData)
           .eq("id", initialData.id);
       } else {
-        console.log("Inserting new item...");
         result = await supabase
           .from("items")
           .insert([insertData]);
       }
-
-      console.log("Database operation result:", result);
-
       if (result.error) {
         console.error("Supabase error details:", {
           message: result.error.message,
@@ -150,9 +129,6 @@ export function usePostFormSubmission(initialData?: any) {
         });
         throw result.error;
       }
-
-      console.log("Success! Showing toast and navigating...");
-      
       toast({
         title: initialData?.id ? t('post.pif_updated') : 
                formData.item_type === 'request' ? t('post.request_created') : t('post.pif_created'),
@@ -184,7 +160,6 @@ export function usePostFormSubmission(initialData?: any) {
         variant: "destructive",
       });
     } finally {
-      console.log("Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };

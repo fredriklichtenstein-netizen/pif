@@ -14,7 +14,6 @@ interface CommentHeaderProps {
 
 export function CommentHeader({ author, createdAt, authorInitials }: CommentHeaderProps) {
   const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.log("Avatar failed to load, using fallback");
     e.currentTarget.style.display = 'none';
   };
 

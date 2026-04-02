@@ -29,17 +29,13 @@ export function useAuth() {
   }, [initialized]);
 
   const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
-    console.log("Auth initiated with:", { email, isSignUp });
-    
     // Clear network error first
     clearNetworkError();
     
     try {
       if (isSignUp) {
-        console.log("Signup with email:", email);
         return await handleSignUp(email, password, phone, countryCode);
       } else {
-        console.log("Signin with email:", email);
         return await handleSignIn(email, password);
       }
     } catch (error: any) {
@@ -49,7 +45,6 @@ export function useAuth() {
   };
 
   const handleResetPassword = async (email: string) => {
-    console.log("Password reset requested for:", email);
     // Clear network error first
     clearNetworkError();
     
@@ -68,20 +63,6 @@ export function useAuth() {
   // CRITICAL FIX: Only use networkError if there's no specific auth error AND we have a confirmed network issue
   // This ensures specific auth errors (like wrong password) take precedence over generic network errors
   const error = signInError || (connectionStatus === false ? networkError : null);
-  
-  console.log("Auth hook state:", { 
-    loading, 
-    isSignUp, 
-    authStateLoading, 
-    signUpLoading, 
-    signInLoading, 
-    hasSession: !!session,
-    error,
-    networkStatus: connectionStatus,
-    signInError,
-    networkError
-  });
-
   return {
     loading,
     isSignUp,

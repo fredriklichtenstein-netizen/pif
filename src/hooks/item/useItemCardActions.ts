@@ -67,11 +67,7 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
   useEffect(() => {
     const handleDirectDeleteEvent = (event: CustomEvent) => {
       const eventItemId = event.detail?.itemId || event.detail?.id;
-      
-      console.log("useItemCardActions - Received direct delete event", { eventItemId, thisItemId: id });
-      
       if ((eventItemId === id || eventItemId === String(id)) && isOwner) {
-        console.log("useItemCardActions - Direct event matches this item, showing delete dialog");
         setShowDeleteDialog(true);
       }
     };
@@ -87,11 +83,8 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
 
   // Enhanced delete handler with global dialog manager support
   const handleDeleteClick = useCallback(() => {
-    console.log("HandleDeleteClick called in useItemCardActions", { isOwner, id, pending: deleteActionPending.current }); 
-    
     // Prevent duplicate triggers
     if (deleteActionPending.current) {
-      console.log("Delete action already pending, ignoring duplicate call");
       return;
     }
     
@@ -110,14 +103,12 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     // Try to use global dialog manager first (most direct approach)
     const dialogManager = getDeleteDialogManager();
     if (dialogManager) {
-      console.log("Using global dialog manager to open dialog");
       dialogManager.openDeleteDialog({
         id,
         // We'll pass onDeleteSuccess later in the component
       });
     } else {
       // Fallback to the component's local state
-      console.log("Using local state to show delete dialog");
       setShowDeleteDialog(true);
     }
     

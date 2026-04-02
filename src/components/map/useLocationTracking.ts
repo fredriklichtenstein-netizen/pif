@@ -27,7 +27,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
   };
 
   const goToMyLocation = () => {
-    if (!map) { console.log('Cannot get location: map not ready'); return; }
+    if (!map) { return; }
     if (!navigator.geolocation) {
       toast({ variant: "destructive", title: t('map.location_error'), description: t('interactions.geolocation_not_supported') });
       return;
@@ -38,7 +38,6 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const coords: [number, number] = [position.coords.longitude, position.coords.latitude];
-        console.log('Got position:', coords, 'Accuracy:', position.coords.accuracy, 'meters');
         setUserLocation(coords);
         setIsLoadingLocation(false);
         updateLocationMarker(coords);

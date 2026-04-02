@@ -18,7 +18,6 @@ export function useItemDetailPage() {
   
   // Validate the ID parameter
   if (!id) {
-    console.log('No item ID provided in URL params');
     return { redirectTo404: true };
   }
 
@@ -61,7 +60,6 @@ export function useItemDetailPage() {
 
   // Function to handle manual retries
   const handleRetry = () => {
-    console.log('Manual retry initiated for item', id);
     setRetryCount(prev => prev + 1);
     refetch();
   };
@@ -72,7 +70,6 @@ export function useItemDetailPage() {
       const cachedItem = localStorage.getItem(`item_${id}`);
       if (cachedItem) {
         const parsedItem = JSON.parse(cachedItem);
-        console.log('Found cached item:', parsedItem);
         setLocalItem(parsedItem);
       }
     } catch (err) {

@@ -106,8 +106,6 @@ export function FeedContainer() {
     }
     
     // Log the refresh
-    console.log("Forcing complete feed refresh");
-    
     // Update the key to force a component remount
     setFeedKey(Date.now());
     
@@ -135,7 +133,6 @@ export function FeedContainer() {
     }
     
     refreshTimeoutRef.current = setTimeout(() => {
-      console.log('Executing debounced feed refresh');
       loadPostsBasedOnViewMode(viewMode);
       refreshTimeoutRef.current = null;
     }, delay);
@@ -183,7 +180,6 @@ export function FeedContainer() {
     const initialLoadTimer = setTimeout(() => {
       refreshPosts().then(() => {
         setIsInitialLoad(false);  // Mark initial load as complete after first refresh
-        console.log('Initial feed load complete');
       });
     }, 500);
     
@@ -201,15 +197,12 @@ export function FeedContainer() {
   // If there's a timestamp parameter, it's coming from a refresh - force refresh data
   useEffect(() => {
     if (timeParam && !isInitialLoad) {
-      console.log("Time parameter detected, forcing refresh");
       forceCompleteRefresh();
     }
   }, [timeParam, isInitialLoad, forceCompleteRefresh]);
 
   // Enhanced handler for successful item operations (delete, archive, restore)
   const handleItemOperationSuccess = useCallback((itemId?: string | number, operationType?: OperationType) => {
-    console.log('Item operation success detected:', operationType, itemId);
-    
     // Apply optimistic UI update if we have item ID and operation type
     if (itemId && operationType) {
       recordOperation(itemId, operationType);

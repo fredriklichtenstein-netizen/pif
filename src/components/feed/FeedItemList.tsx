@@ -89,27 +89,19 @@ export function FeedItemList({
 
   // Log when posts change for debugging
   useEffect(() => {
-    console.log('FeedItemList: Posts updated', { 
-      count: posts?.length, 
-      validCount: validPosts.length,
-      viewMode 
-    });
   }, [posts, validPosts.length, viewMode]);
 
   // Scroll to target post when available
   useEffect(() => {
     if (targetPostId && validPosts && validPosts.length > 0) {
-      console.log('Attempting to scroll to post:', targetPostId);
       const timer = setTimeout(() => {
         const targetElement = document.getElementById(`post-${targetPostId}`);
         if (targetElement) {
-          console.log('Found target element, scrolling to post:', targetPostId);
           targetElement.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'center' 
           });
         } else {
-          console.log('Target post element not found:', targetPostId);
         }
       }, 500);
       
@@ -141,7 +133,6 @@ export function FeedItemList({
         if (onItemOperationSuccess) {
           try {
             onItemOperationSuccess();
-            console.log("Feed data refresh completed");
           } catch (err) {
             console.error("Error during recovery refresh:", err);
             setRefreshKey(Date.now() + 1);
@@ -167,8 +158,6 @@ export function FeedItemList({
   // Enhanced handler for item operations with operation type
   const handleItemSuccess = useCallback((itemId?: string | number, operationType?: OperationType) => {
     try {
-      console.log(`Item ${operationType || 'operation'} success callback triggered for item ${itemId}`);
-      
       // Reset any error state
       if (errorState.hasError) {
         setErrorState({ hasError: false, errorMessage: '' });

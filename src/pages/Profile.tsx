@@ -95,7 +95,6 @@ const Profile = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && user && !profileData) {
-        console.log('Tab visible, profile data missing — re-fetching');
         fetchProfileData();
       }
     };

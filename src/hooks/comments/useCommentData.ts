@@ -43,9 +43,6 @@ export function useCommentData(itemId: string) {
           setIsLoading(false);
           return;
         }
-        
-        console.log(`Fetching comments for item ID: ${numericId}`);
-        
         // Fetch comments for this item
         const { data: commentsData, error } = await supabase
           .from('comments')
@@ -70,7 +67,6 @@ export function useCommentData(itemId: string) {
         }
         
         if (!commentsData) {
-          console.log('No comments data returned');
           setComments([]);
           setIsLoading(false);
           return;
@@ -105,7 +101,6 @@ export function useCommentData(itemId: string) {
         });
         
         setComments(formattedComments);
-        console.log('Fetched comments:', formattedComments);
       } catch (error) {
         console.error('Error fetching comments:', error);
         setComments([]);
@@ -130,7 +125,6 @@ export function useCommentData(itemId: string) {
         if (error) {
           console.error('Error fetching profile:', error);
         } else if (data) {
-          console.log('Fetched profile data:', data);
           setProfileData(data);
         }
       };

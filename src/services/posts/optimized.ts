@@ -19,12 +19,8 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
   // Try cache first
   const cached = DatabaseCache.get<Post[]>(cacheKey);
   if (cached) {
-    console.log(`Cache hit for ${cacheKey}`);
     return cached;
   }
-  
-  console.log(`Fetching optimized posts: limit=${limit}, offset=${offset}`);
-  
   try {
     // Use optimized query
     const data = await OptimizedQueries.getPosts({ limit, offset });
@@ -57,8 +53,6 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
     
     // Cache the results
     DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
-    console.log(`Cached ${transformedPosts.length} posts with key: ${cacheKey}`);
-    
     // Record performance metrics
     performanceMetrics.recordMetric({
       id: `posts-fetch-${Date.now()}`,
@@ -118,12 +112,10 @@ memoryOptimizer.addCleanupTask(() => {
   const cacheSize = transformCache.size();
   if (cacheSize > 30) {
     transformCache.clear();
-    console.log(`🧹 Cleared transform cache (was ${cacheSize} entries)`);
   }
 });
 
 memoryOptimizer.addMemoryPressureHandler(() => {
   // Aggressive cleanup under memory pressure
   clearPostsCache();
-  console.log('🧹 Cleared all caches due to memory pressure');
 });
