@@ -175,7 +175,7 @@ export const useMapInitialization = (mapboxToken: string) => {
     
     if (!mapboxToken) {
       console.error("🚨 [Map Init] No Mapbox token available");
-      setError(new Error("No Mapbox token available"));
+      setError(new Error("Kunde inte ladda kartan"));
       isInitializing.current = false;
       return;
     }
