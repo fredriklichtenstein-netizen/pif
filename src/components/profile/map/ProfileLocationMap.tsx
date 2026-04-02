@@ -47,11 +47,10 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
     mapRef.current = map;
 
     return () => {
-      destroyed = true;
       if (mapRef.current) mapRef.current.remove();
       mapRef.current = null;
     };
-  }, [coordinates, mapToken]);
+  }, [coordinates, mapToken, center]);
 
   if (isMapTokenLoading) {
     return <div className="w-full h-[200px] rounded-lg border mb-4 bg-muted flex items-center justify-center">
