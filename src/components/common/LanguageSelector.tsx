@@ -7,7 +7,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Languages } from "lucide-react";
+
 import { useState } from 'react';
 
 export function LanguageSelector() {
@@ -35,18 +35,15 @@ export function LanguageSelector() {
     }
   };
 
-  const getCurrentLanguageDisplay = () => {
-    return i18n.language === 'sv' ? 'Svenska' : 'English';
+  const getCurrentFlag = () => {
+    return i18n.language === 'sv' ? '🇸🇪' : '🇺🇸';
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="flex items-center gap-2" disabled={isChanging}>
-          <Languages className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {isChanging ? '...' : getCurrentLanguageDisplay()}
-          </span>
+          <span className="text-lg">{isChanging ? '...' : getCurrentFlag()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
