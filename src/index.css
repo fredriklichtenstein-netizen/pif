@@ -118,8 +118,12 @@
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+  }
+
+  body {
     padding-bottom: 60px; /* Reduced from 75px to 60px */
   }
 }

@@ -44,6 +44,14 @@ export function FeedEmptyState({ viewMode, selectedCategories, clearFilters }: F
           {t('feed.clear_filters')}
         </Button>
       )}
+      {viewMode === "all" && selectedCategories.length === 0 && (
+        <Button
+          className="mt-4"
+          onClick={() => navigate('/post')}
+        >
+          {t('post.create_pif')}
+        </Button>
+      )}
     </div>
   );
 }
