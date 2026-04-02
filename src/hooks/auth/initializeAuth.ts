@@ -22,7 +22,7 @@ export const initializeAuth = async () => {
   }
 
   try {
-    console.log('Initializing auth state...');
+    
     auth.setLoading(true);
     auth.setError(null);
     auth.setNetworkError(false);
