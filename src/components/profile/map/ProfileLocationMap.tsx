@@ -14,7 +14,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   const { mapToken, isLoading: isMapTokenLoading } = useMapbox();
 
   const center = useMemo(() => {
-    const offsetMeters = 200 + Math.random() * 100;
+    const offsetMeters = 100 + Math.random() * 50;
     const angle = Math.random() * 2 * Math.PI;
     const latOffset = offsetMeters / 111000;
     const lngOffset = offsetMeters / (111000 * Math.cos(coordinates.lat * Math.PI / 180));
