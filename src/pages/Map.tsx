@@ -176,6 +176,7 @@ export default function Map() {
           </div>
         )}
       </main>
+      <MainNav />
     </div>
   );
 }

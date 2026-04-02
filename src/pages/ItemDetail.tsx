@@ -137,13 +137,16 @@ export default function ItemDetail() {
     );
   }
   return (
-    <ItemDetailContainer 
-      displayItem={displayItem}
-      postedBy={postedBy}
-      coordinates={coordinates}
-      measurements={measurementsRecord}
-      realtimeError={realtimeError}
-      refreshItemData={refreshItemData}
-    />
+    <>
+      <ItemDetailContainer 
+        displayItem={displayItem}
+        postedBy={postedBy}
+        coordinates={coordinates}
+        measurements={measurementsRecord}
+        realtimeError={realtimeError}
+        refreshItemData={refreshItemData}
+      />
+      <MainNav />
+    </>
   );
 }

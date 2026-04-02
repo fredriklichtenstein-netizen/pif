@@ -192,6 +192,7 @@ export default function CreateProfile() {
           </Button>
         </form>
       </div>
+      <MainNav />
     </div>
   );
 }

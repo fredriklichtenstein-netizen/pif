@@ -41,6 +41,7 @@ export default function Feed() {
           </SlideIn>
         </div>
       </main>
+      <MainNav />
     </div>
   );
 }
