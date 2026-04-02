@@ -50,7 +50,8 @@ export const MapFilters = ({
   onClearFilters,
   selectedDistance,
   onDistanceChange,
-  userLocation
+  userLocation,
+  onRequestLocation
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
