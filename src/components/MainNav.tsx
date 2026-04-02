@@ -7,7 +7,6 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from 'react-i18next';
-import { ExpandedNav } from "@/components/layout/ExpandedNav";
 
 export function MainNav() {
   const location = useLocation();
@@ -102,13 +101,13 @@ export function MainNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2 z-50">
       <div className="container max-w-md mx-auto px-4">
         <div className="grid grid-cols-5 items-center">
           <Link
             to="/feed"
             className={`flex flex-col items-center ${
-              isActive("/feed") ? "text-primary" : "text-gray-500"
+              isActive("/feed") ? "text-primary" : "text-muted-foreground"
             }`}
           >
             <House size={24} />
@@ -118,7 +117,7 @@ export function MainNav() {
           <Link
             to="/map"
             className={`flex flex-col items-center ${
-              isActive("/map") ? "text-primary" : "text-gray-500"
+              isActive("/map") ? "text-primary" : "text-muted-foreground"
             }`}
           >
             <Map size={24} />
@@ -144,7 +143,7 @@ export function MainNav() {
           <Link
             to="/messages"
             className={`flex flex-col items-center ${
-              isActive("/messages") ? "text-primary" : "text-gray-500"
+              isActive("/messages") ? "text-primary" : "text-muted-foreground"
             }`}
             onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
           >
@@ -152,7 +151,32 @@ export function MainNav() {
             <span className="text-xs mt-1">{t('nav.messages')}</span>
           </Link>
           
-          <ExpandedNav className="text-gray-500" />
+          <Link
+            to="/profile"
+            className={`flex flex-col items-center ${
+              isProfileActive ? "text-primary" : "text-muted-foreground"
+            }`}
+            onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
+          >
+            {avatarUrl ? (
+              <div className="w-6 h-6 rounded-full overflow-hidden">
+                <AvatarImage
+                  src={avatarUrl}
+                  alt={t('nav.profile')}
+                  className="w-full h-full object-cover"
+                  width={24}
+                  height={24}
+                />
+              </div>
+            ) : user ? (
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-[10px] font-medium text-primary">{getUserInitials()}</span>
+              </div>
+            ) : (
+              <UserIcon size={24} />
+            )}
+            <span className="text-xs mt-1">{t('nav.profile')}</span>
+          </Link>
         </div>
       </div>
     </nav>
