@@ -61,7 +61,7 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
   return (
     <div
       ref={mapContainerRef}
-      className="w-full max-w-sm aspect-square rounded-lg border mb-4"
+      className="w-full max-w-sm aspect-square rounded-lg border mb-4 mx-auto"
       style={{ display: "block" }}
     />
   );
