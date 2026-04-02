@@ -44,9 +44,6 @@ export function LanguageSelector() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="flex items-center gap-2" disabled={isChanging}>
           <span className="text-lg">{isChanging ? '...' : getCurrentFlag()}</span>
-          <span className="hidden sm:inline">
-            {isChanging ? '...' : getCurrentLanguageDisplay()}
-          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
