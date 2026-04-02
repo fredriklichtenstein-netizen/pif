@@ -127,24 +127,28 @@ export const initializeAuth = async () => {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
       console.log('Auth state changed:', event);
-      
+
+      const currentAuth = useAuthStore.getState();
+
+      // Handle token refresh and tab-focus sign-in silently
+      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' ||
+          (event === 'SIGNED_IN' && currentAuth.initialized)) {
+        if (session) {
+          currentAuth.setSession(session);
+          currentAuth.setUser(session.user);
+        }
+        return; // Don't trigger any loading state or re-initialization
+      }
+
       if (event === 'SIGNED_OUT') {
-        auth.clearAuth();
+        currentAuth.clearAuth();
         return;
       }
 
-      // TOKEN_REFRESHED fires on tab focus — handle silently without affecting loading state
-      if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
-        if (session) {
-          auth.setSession(session);
-          auth.setUser(session.user);
-        }
-        return;
-      }
-      
-      auth.setUser(session?.user ?? null);
-      auth.setSession(session);
-      
+      // Only reach here for genuine first-time SIGNED_IN
+      currentAuth.setUser(session?.user ?? null);
+      currentAuth.setSession(session);
+
       if (session?.user) {
         try {
           const { data: profile } = await supabase
@@ -152,14 +156,12 @@ export const initializeAuth = async () => {
             .select('onboarding_completed')
             .eq('id', session.user.id)
             .maybeSingle();
-          
-          auth.setProfileCompleted(profile?.onboarding_completed ?? false);
+
+          currentAuth.setProfileCompleted(profile?.onboarding_completed ?? false);
         } catch (error) {
           console.error('Error in profile check on auth change:', error);
-          auth.setProfileCompleted(false);
+          currentAuth.setProfileCompleted(false);
         }
-      } else {
-        auth.setProfileCompleted(null);
       }
     }
   );
