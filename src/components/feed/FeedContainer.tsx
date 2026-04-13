@@ -37,15 +37,10 @@ export function FeedContainer() {
   
   // Get translated categories
   const CATEGORIES = [
-    t('categories.furniture'),
-    t('categories.electronics'), 
-    t('categories.clothing'),
-    t('categories.kitchen'),
-    t('categories.books'),
-    t('categories.toys'),
-    t('categories.garden'),
-    t('categories.sports'),
-    t('categories.other')
+    'electronics', 'furniture', 'clothing', 'books', 'sports',
+    'toys', 'home_garden', 'vehicles', 'kitchen', 'garden',
+    'tools', 'household', 'food', 'kids', 'pets', 'bicycle',
+    'health', 'art', 'music', 'mixed', 'other'
   ];
   
   // Get post ID from URL if present
