@@ -135,7 +135,7 @@ export function PostFormInformation({
               <SelectContent>
                 {CATEGORIES.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {t(`categories.${category.toLowerCase().replace(/\s+/g, '_').replace('&', '').replace(/'/g, '')}`)}
+                    {t(`categories.${category}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
