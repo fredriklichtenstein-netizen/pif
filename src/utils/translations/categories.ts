@@ -29,19 +29,29 @@ export const useCategoryTranslations = () => {
   };
 
   const conditionMap: Record<string, string> = {
+    // Swedish labels
     'Nytt': t('conditions.new'),
     'Som nytt': t('conditions.like_new'),
     'Mycket bra': t('conditions.very_good'),
     'Bra': t('conditions.good'),
     'Acceptabelt': t('conditions.acceptable'),
     'Dåligt': t('conditions.poor'),
-    // English conditions
+    // English labels
     'New': t('conditions.new'),
     'Like New': t('conditions.like_new'),
     'Very Good': t('conditions.very_good'),
     'Good': t('conditions.good'),
     'Acceptable': t('conditions.acceptable'),
-    'Poor': t('conditions.poor')
+    'Poor': t('conditions.poor'),
+    // Database snake_case keys
+    'new': t('conditions.new'),
+    'like_new': t('conditions.like_new'),
+    'very_good': t('conditions.very_good'),
+    'good': t('conditions.good'),
+    'acceptable': t('conditions.acceptable'),
+    'ok': t('conditions.ok', 'OK'),
+    'fair': t('conditions.acceptable'),
+    'poor': t('conditions.poor'),
   };
 
   const translateCategory = (category: string): string => {

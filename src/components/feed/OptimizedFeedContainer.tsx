@@ -6,7 +6,7 @@ import { FeedLoadingState } from './FeedLoadingState';
 import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
 import { DemoModeBanner } from './DemoModeBanner';
-import { RealtimeIndicator } from './RealtimeIndicator';
+
 
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
 import { useAnnouncement } from '@/hooks/accessibility/useAnnouncement';

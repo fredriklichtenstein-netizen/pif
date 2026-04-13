@@ -1,5 +1,4 @@
 
-import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import { ItemInteractionButtons } from "./interactions/ItemInteractionButtons";
@@ -80,12 +79,6 @@ export function ItemInteractions({
         )}
       </ActionHandler>
 
-      {showComments && (
-        <LazyCommentsSection
-          itemId={id}
-          isVisible={showComments}
-        />
-      )}
     </div>
   );
 }

@@ -22,7 +22,7 @@ export function ItemCardContent({
 
   return (
     <div className="mt-1 mb-4 px-1">
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-600 text-left">
         <button 
           onClick={toggleExpanded} 
           className="mb-2 flex items-center text-primary text-xs font-medium"
