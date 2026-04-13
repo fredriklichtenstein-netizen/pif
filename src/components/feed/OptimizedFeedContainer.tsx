@@ -96,8 +96,6 @@ export function OptimizedFeedContainer() {
 
   return (
     <div className="space-y-4">
-      <RealtimeIndicator posts={posts} onPostUpdate={handlePostUpdate} />
-      
       <section role="feed" aria-label={t('interactions.community_posts')}>
         <FeedItemList
           posts={memoizedPosts}
