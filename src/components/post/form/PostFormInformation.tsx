@@ -16,15 +16,27 @@ interface PostFormInformationProps {
 }
 
 const CATEGORIES = [
-  "Furniture",
-  "Electronics", 
-  "Clothing",
-  "Kitchen",
-  "Books",
-  "Toys",
-  "Garden",
-  "Sports",
-  "Other"
+  "electronics",
+  "furniture", 
+  "clothing",
+  "books",
+  "sports",
+  "toys",
+  "home_garden",
+  "vehicles",
+  "kitchen",
+  "garden",
+  "tools",
+  "household",
+  "food",
+  "kids",
+  "pets",
+  "bicycle",
+  "health",
+  "art",
+  "music",
+  "mixed",
+  "other"
 ];
 
 const CONDITIONS = [
@@ -44,10 +56,10 @@ const REQUEST_CONDITIONS = [
 ];
 
 const CATEGORY_MEASUREMENTS: { [key: string]: string[] } = {
-  "Clothing": ["Chest", "Length", "Shoulders", "Sleeves"],
-  "Shoes": ["EU Size", "US Size", "UK Size", "Insole Length"],
-  "Children's Clothing": ["Age", "Height", "Chest", "Length"],
-  "Furniture": ["Width", "Depth", "Height"],
+  "clothing": ["Chest", "Length", "Shoulders", "Sleeves"],
+  "shoes": ["EU Size", "US Size", "UK Size", "Insole Length"],
+  "kids": ["Age", "Height", "Chest", "Length"],
+  "furniture": ["Width", "Depth", "Height"],
 };
 
 export function PostFormInformation({
@@ -123,7 +135,7 @@ export function PostFormInformation({
               <SelectContent>
                 {CATEGORIES.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {t(`categories.${category.toLowerCase().replace(/\s+/g, '_').replace('&', '').replace(/'/g, '')}`)}
+                    {t(`categories.${category}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -188,7 +200,7 @@ export function PostFormInformation({
           </h4>
 
           {/* Storlek för kläder */}
-          {formData.category?.toLowerCase().includes("clothing") && (
+          {formData.category === "clothing" && (
             <PostFormSizeSelector 
               category={formData.category} 
               measurements={measurements} 

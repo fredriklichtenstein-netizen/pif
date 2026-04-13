@@ -32,7 +32,9 @@ interface MapFiltersProps {
 
 const CATEGORY_KEYS = [
   "electronics", "furniture", "clothing", "books", "sports",
-  "tools", "toys", "garden", "household", "other"
+  "toys", "home_garden", "vehicles", "kitchen", "garden",
+  "tools", "household", "food", "kids", "pets", "bicycle",
+  "health", "art", "music", "mixed", "other"
 ];
 
 const CONDITION_KEYS = [

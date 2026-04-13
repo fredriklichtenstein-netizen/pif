@@ -9,11 +9,18 @@
     "toys": "Toys",
     "home_garden": "Home & Garden",
     "vehicles": "Vehicles",
-    "music": "Music",
+    "music": "Music & Instruments",
     "kitchen": "Kitchen",
     "garden": "Garden",
     "tools": "Tools",
     "household": "Household items",
+    "food": "Food & Drinks",
+    "kids": "Kids",
+    "pets": "Pets",
+    "bicycle": "Bicycle",
+    "health": "Health & Beauty",
+    "art": "Art & Crafts",
+    "mixed": "Mixed",
     "other": "Other"
   },
   "conditions": {
@@ -23,6 +30,7 @@
     "good": "Good",
     "acceptable": "Acceptable",
     "ok": "OK",
+    "fair": "Acceptable",
     "poor": "Poor"
   },
   "map_filters": {
