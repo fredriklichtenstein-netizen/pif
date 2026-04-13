@@ -200,7 +200,7 @@ export function PostFormInformation({
           </h4>
 
           {/* Storlek för kläder */}
-          {formData.category?.toLowerCase().includes("clothing") && (
+          {formData.category === "clothing" && (
             <PostFormSizeSelector 
               category={formData.category} 
               measurements={measurements} 
