@@ -133,7 +133,7 @@ export function FeedFilters({
                 size="sm"
                 onClick={() => handleCategoryToggle(category)}
               >
-                {category}
+                {t(`categories.${category}`, category)}
               </Button>
             ))}
           </div>
