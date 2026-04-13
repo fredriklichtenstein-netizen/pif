@@ -21,11 +21,19 @@ export const useItemActions = () => {
   const handleShare = async () => {
     if (!await checkAuth("share this item")) return;
     const url = window.location.href;
-    window.open(`https://facebook.com/share?url=${url}`, '_blank');
-    toast({
-      title: t('interactions.shared_facebook'),
-      description: t('interactions.shared_facebook_description'),
-    });
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: t('interactions.link_copied', 'Länk kopierad'),
+        description: t('interactions.link_copied_description', 'Länken har kopierats till urklipp'),
+      });
+    } catch {
+      toast({
+        title: t('interactions.sharing_failed', 'Kunde inte kopiera'),
+        description: url,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReport = async () => {
