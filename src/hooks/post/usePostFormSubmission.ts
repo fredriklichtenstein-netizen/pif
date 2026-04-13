@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import type { PostFormData } from "@/types/post";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoPostsStore } from "@/stores/demoPostsStore";
@@ -13,6 +14,7 @@ export function usePostFormSubmission(initialData?: any) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   const addDemoPost = useDemoPostsStore((state) => state.addPost);
   const updateDemoPost = useDemoPostsStore((state) => state.updatePost);
   const { t } = useTranslation();
@@ -129,6 +131,9 @@ export function usePostFormSubmission(initialData?: any) {
         });
         throw result.error;
       }
+      // Invalidate feed queries so new post appears immediately
+      await queryClient.invalidateQueries({ queryKey: ['posts'] });
+
       toast({
         title: initialData?.id ? t('post.pif_updated') : 
                formData.item_type === 'request' ? t('post.request_created') : t('post.pif_created'),

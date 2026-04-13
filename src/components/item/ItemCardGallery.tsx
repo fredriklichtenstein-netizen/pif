@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Gift, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Gift, Star } from "lucide-react";
 import { optimizeImageUrl, preloadImages } from "@/utils/image";
 import { useCategoryTranslations } from "@/utils/translations/categories";
 import type { ItemType } from "./types";
@@ -89,7 +89,7 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
         >
           {item_type === 'request' ? (
             <>
-              <Search className="h-3.5 w-3.5" />
+              <Star className="h-3.5 w-3.5" />
               {t('common.wish', 'Önskning')}
             </>
           ) : (

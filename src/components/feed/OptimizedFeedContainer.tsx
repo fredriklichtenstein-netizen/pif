@@ -6,7 +6,7 @@ import { FeedLoadingState } from './FeedLoadingState';
 import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
 import { DemoModeBanner } from './DemoModeBanner';
-import { RealtimeIndicator } from './RealtimeIndicator';
+
 
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
 import { useAnnouncement } from '@/hooks/accessibility/useAnnouncement';
@@ -96,8 +96,6 @@ export function OptimizedFeedContainer() {
 
   return (
     <div className="space-y-4">
-      <RealtimeIndicator posts={posts} onPostUpdate={handlePostUpdate} />
-      
       <section role="feed" aria-label={t('interactions.community_posts')}>
         <FeedItemList
           posts={memoizedPosts}
