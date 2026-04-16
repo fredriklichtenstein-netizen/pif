@@ -30,11 +30,12 @@ interface MapFiltersProps {
   onRequestLocation?: () => void;
 }
 
+// Sorted alphabetically by Swedish display name
 const CATEGORY_KEYS = [
-  "electronics", "furniture", "clothing", "books", "sports",
-  "toys", "home_garden", "vehicles", "kitchen", "garden",
-  "tools", "household", "food", "kids", "pets", "bicycle",
-  "health", "art", "music", "mixed", "other"
+  "kids", "mixed", "books", "bicycle", "electronics", "vehicles",
+  "home_garden", "pets", "household", "health", "art", "clothing",
+  "kitchen", "toys", "food", "music", "furniture", "sports",
+  "garden", "tools", "other"
 ];
 
 const CONDITION_KEYS = [

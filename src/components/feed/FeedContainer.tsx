@@ -35,12 +35,12 @@ export function FeedContainer() {
     return () => clearTimeout(timer);
   }, []);
   
-  // Get translated categories
+  // Categories sorted alphabetically by Swedish display name
   const CATEGORIES = [
-    'electronics', 'furniture', 'clothing', 'books', 'sports',
-    'toys', 'home_garden', 'vehicles', 'kitchen', 'garden',
-    'tools', 'household', 'food', 'kids', 'pets', 'bicycle',
-    'health', 'art', 'music', 'mixed', 'other'
+    'kids', 'mixed', 'books', 'bicycle', 'electronics', 'vehicles',
+    'home_garden', 'pets', 'household', 'health', 'art', 'clothing',
+    'kitchen', 'toys', 'food', 'music', 'furniture', 'sports',
+    'garden', 'tools', 'other'
   ];
   
   // Get post ID from URL if present
