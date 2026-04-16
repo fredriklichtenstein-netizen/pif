@@ -1,44 +1,56 @@
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useShare } from '@/hooks/useShare';
+import { useTranslation } from 'react-i18next';
+
+const SHARE_BASE_URL = 'https://app.pif.community';
 
 export const useItemSharing = (itemId: string) => {
   const { toast } = useToast();
-  const { shareContent, isSharing } = useShare();
-  
+  const { t } = useTranslation();
+  const [isSharing, setIsSharing] = useState(false);
+
   const handleShare = useCallback(async (e?: React.MouseEvent) => {
-    // Prevent any default navigation
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
+    const shareUrl = `${SHARE_BASE_URL}/item/${itemId}`;
+    setIsSharing(true);
+
     try {
-      const shareUrl = `${window.location.origin}/item/${itemId}`;
-      
-      await shareContent({
-        title: 'Check out this sustainable item on PIF',
-        text: 'I found this interesting eco-friendly item on PIF Community',
-        url: shareUrl
-      });
-      
+      // Mobile: use native Web Share API when available
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: 'Check out this item on PIF',
+          url: shareUrl,
+        });
+        return;
+      }
+
+      // Desktop: copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
       toast({
-        title: "Shared successfully",
-        description: "Link has been copied to clipboard",
+        title: t('interactions.link_copied', 'Länk kopierad till urklipp!'),
       });
     } catch (error) {
+      // User cancelled native share — silent
+      if ((error as Error)?.name === 'AbortError') return;
+
       console.error('Error sharing:', error);
       toast({
-        title: "Error sharing",
-        description: "Something went wrong while sharing. Please try again.",
-        variant: "destructive"
+        title: t('interactions.sharing_failed', 'Kunde inte dela'),
+        description: shareUrl,
+        variant: 'destructive',
       });
+    } finally {
+      setIsSharing(false);
     }
-  }, [itemId, shareContent, toast]);
+  }, [itemId, toast, t]);
 
   return {
     isSharing,
-    handleShare
+    handleShare,
   };
 };
