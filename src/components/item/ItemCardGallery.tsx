@@ -83,7 +83,7 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
         <Badge 
           className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium shadow-lg ${
             item_type === 'request'
-              ? 'bg-pif-wish text-pif-wish-foreground'
+              ? 'bg-amber-400 text-amber-950 hover:bg-amber-400'
               : 'bg-pif-offer text-pif-offer-foreground'
           }`}
         >

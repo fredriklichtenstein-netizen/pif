@@ -15,28 +15,29 @@ interface PostFormInformationProps {
   onMeasurementChange: (field: string, value: string) => void;
 }
 
+// Sorted alphabetically by Swedish display name
 const CATEGORIES = [
-  "electronics",
-  "furniture", 
-  "clothing",
-  "books",
-  "sports",
-  "toys",
-  "home_garden",
-  "vehicles",
-  "kitchen",
-  "garden",
-  "tools",
-  "household",
-  "food",
-  "kids",
-  "pets",
-  "bicycle",
-  "health",
-  "art",
-  "music",
-  "mixed",
-  "other"
+  "kids",          // Barnartiklar
+  "mixed",         // Blandat
+  "books",         // Böcker
+  "bicycle",       // Cykel
+  "electronics",   // Elektronik
+  "vehicles",      // Fordon
+  "home_garden",   // Hem & Trädgård
+  "pets",          // Husdjur
+  "household",     // Husgeråd
+  "health",        // Hälsa & skönhet
+  "art",           // Konst & hantverk
+  "clothing",      // Kläder
+  "kitchen",       // Kök
+  "toys",          // Leksaker
+  "food",          // Mat & dryck
+  "music",         // Musik & instrument
+  "furniture",     // Möbler
+  "sports",        // Sport
+  "garden",        // Trädgård
+  "tools",         // Verktyg
+  "other"          // Övrigt
 ];
 
 const CONDITIONS = [

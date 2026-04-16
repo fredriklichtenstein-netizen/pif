@@ -18,18 +18,27 @@ export const useItemActions = () => {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (itemId?: string) => {
     if (!await checkAuth("share this item")) return;
-    const url = window.location.href;
+    const url = itemId
+      ? `https://app.pif.community/item/${itemId}`
+      : window.location.href;
     try {
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: 'Check out this item on PIF',
+          url,
+        });
+        return;
+      }
       await navigator.clipboard.writeText(url);
       toast({
-        title: t('interactions.link_copied', 'Länk kopierad'),
-        description: t('interactions.link_copied_description', 'Länken har kopierats till urklipp'),
+        title: t('interactions.link_copied', 'Länk kopierad till urklipp!'),
       });
-    } catch {
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return;
       toast({
-        title: t('interactions.sharing_failed', 'Kunde inte kopiera'),
+        title: t('interactions.sharing_failed', 'Kunde inte dela'),
         description: url,
         variant: "destructive",
       });
