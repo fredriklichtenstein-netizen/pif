@@ -74,7 +74,7 @@ export function ItemInteractions({
     return <InteractionsLoading />;
   }
   
-  const { handleShare } = useItemSharing(id);
+  const { handleShare } = useItemSharing(String(id));
   
   // Create a share handler that uses the useItemSharing hook
   const handleShareAction = (e: React.MouseEvent) => {

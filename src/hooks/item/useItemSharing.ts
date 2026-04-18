@@ -17,6 +17,7 @@ export const useItemSharing = (itemId: string) => {
     }
 
     const shareUrl = `${SHARE_BASE_URL}/item/${itemId}`;
+    console.log('Share URL:', shareUrl, 'itemId:', itemId, typeof itemId);
     setIsSharing(true);
 
     try {
