@@ -37,7 +37,7 @@ export function ItemInteractions({
 }: ItemInteractionsProps) {
   const { user } = useGlobalAuth();
   const currentUserId = user?.id || "";
-  const { handleShare } = useItemSharing(id);
+  const { handleShare } = useItemSharing(String(id));
   // Check if current user has commented
   const userHasCommented = hasUserCommented(commenters, currentUserId);
 
