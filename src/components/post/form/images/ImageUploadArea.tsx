@@ -1,7 +1,7 @@
 
-import React from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, Image as ImageIcon } from "lucide-react";
+import { Upload, Image as ImageIcon, Camera } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 
 interface ImageUploadAreaProps {
@@ -28,6 +28,7 @@ export function ImageUploadArea({
   fileInputRef,
 }: ImageUploadAreaProps) {
   const { t } = useTranslation();
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   if (!canAddMoreImages) {
     return null;
@@ -58,20 +59,40 @@ export function ImageUploadArea({
           </p>
         </div>
 
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onClick}
-          className="flex items-center space-x-2"
-        >
-          <Upload className="h-4 w-4" />
-          <span>{t('post.choose_image')}</span>
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClick}
+            className="flex items-center space-x-2"
+          >
+            <Upload className="h-4 w-4" />
+            <span>{t('post.choose_image')}</span>
+          </Button>
+
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex items-center space-x-2"
+          >
+            <Camera className="h-4 w-4" />
+            <span>{t('interactions.take_photo')}</span>
+          </Button>
+        </div>
 
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          onChange={onImageUpload}
+          className="hidden"
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
           onChange={onImageUpload}
           className="hidden"
         />

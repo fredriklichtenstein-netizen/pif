@@ -1,26 +1,25 @@
 
+import { useRef } from "react";
 import { Camera, Upload, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
 interface UploadOptionsProps {
   onFileSelect: () => void;
   onEditCurrent: () => void;
   hasExistingImage: boolean;
+  onCameraCapture?: () => void;
 }
 
-export function UploadOptions({ onFileSelect, onEditCurrent, hasExistingImage }: UploadOptionsProps) {
-  const { toast } = useToast();
+export function UploadOptions({ onFileSelect, onEditCurrent, hasExistingImage, onCameraCapture }: UploadOptionsProps) {
   const { t } = useTranslation();
 
-  const handleCameraCapture = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      toast({ title: t('interactions.camera_capture'), description: t('interactions.camera_coming_soon') });
-      stream.getTracks().forEach(track => track.stop());
-    } catch (error: any) {
-      toast({ title: t('interactions.error_title'), description: t('interactions.camera_error', { error: error.message }), variant: "destructive" });
+  const handleCameraClick = () => {
+    if (onCameraCapture) {
+      onCameraCapture();
+    } else {
+      // Fallback: trigger the avatar camera input (front camera)
+      document.getElementById('avatar-camera-capture')?.click();
     }
   };
 
@@ -34,7 +33,7 @@ export function UploadOptions({ onFileSelect, onEditCurrent, hasExistingImage }:
           <Edit2 className="h-4 w-4 mr-2" />{t('interactions.edit_current_photo')}
         </Button>
       )}
-      <Button type="button" variant="outline" onClick={handleCameraCapture} className="w-full">
+      <Button type="button" variant="outline" onClick={handleCameraClick} className="w-full">
         <Camera className="h-4 w-4 mr-2" />{t('interactions.take_photo')}
       </Button>
     </div>
