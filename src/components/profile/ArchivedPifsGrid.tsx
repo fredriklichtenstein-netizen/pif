@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArchiveRestore, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Archive, ArchiveRestore, Loader2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useTranslation } from "react-i18next";
 
