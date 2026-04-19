@@ -73,9 +73,56 @@ export function useItemDeletion(
         success = Boolean(result);
         if (!success) throw new Error('Failed to archive item');
         
-        toast({
-          title: t('interactions.item_archived'),
+        // Sonner toast with an "Undo" action that restores the item.
+        sonnerToast.success(t('interactions.item_archived'), {
           description: t('interactions.item_archived_restore'),
+          duration: 8000,
+          action: {
+            label: t('interactions.undo'),
+            onClick: async () => {
+              try {
+                let restored = false;
+                const { data: rpcResult, error: rpcError } = await (supabase as any)
+                  .rpc('restore_item', { p_item_id: numericId });
+
+                if (!rpcError) {
+                  restored = Boolean(rpcResult);
+                } else {
+                  console.warn('restore_item RPC unavailable, falling back to direct update:', rpcError.message);
+                  const { error: updateError } = await (supabase
+                    .from('items')
+                    .update({
+                      pif_status: null,
+                      archived_at: null,
+                      archived_reason: null,
+                    } as any) as any)
+                    .eq('id', numericId);
+                  if (updateError) throw updateError;
+                  restored = true;
+                }
+
+                if (!restored) {
+                  throw new Error('Restore returned no rows.');
+                }
+
+                sonnerToast.success(t('interactions.item_restored'), {
+                  description: t('interactions.item_restored_description'),
+                });
+
+                // Tell any list that optimistically removed this item to add it back.
+                document.dispatchEvent(
+                  new CustomEvent('item-operation-undone', {
+                    detail: { itemId: numericId, operationType: 'archive' },
+                  })
+                );
+              } catch (err: any) {
+                console.error('Undo archive failed:', err);
+                sonnerToast.error(t('post.error'), {
+                  description: err?.message || t('interactions.restore_error'),
+                });
+              }
+            },
+          },
         });
       } else {
         const { data: result, error: deleteError } = await supabase.rpc('delete_item_with_related_records', { 
