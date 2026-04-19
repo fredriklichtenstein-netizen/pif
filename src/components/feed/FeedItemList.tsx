@@ -211,11 +211,17 @@ export function FeedItemList({
       <div className="space-y-4" key={refreshKey}>
         {validPosts?.map((post) => {
           const isFading = fadingIds?.has(String(post.id));
+          const isRestoring = restoringIds?.has(String(post.id));
+          const animationClass = isFading
+            ? 'animate-fade-out-collapse pointer-events-none'
+            : isRestoring
+              ? 'animate-fade-in'
+              : undefined;
           return (
             <div
               key={post.id}
               id={`post-${post.id}`}
-              className={isFading ? 'animate-fade-out-collapse pointer-events-none' : undefined}
+              className={animationClass}
               aria-hidden={isFading || undefined}
             >
               <FeedItemCard
