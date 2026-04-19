@@ -203,8 +203,11 @@ export function useOptimizedFeed() {
     // Server is now authoritative; drop optimistic removals & in-flight fades.
     setRemovedIds(new Set());
     setFadingIds(new Set());
+    setRestoringIds(new Set());
     fadeTimersRef.current.forEach(t => clearTimeout(t));
     fadeTimersRef.current.clear();
+    restoreTimersRef.current.forEach(t => clearTimeout(t));
+    restoreTimersRef.current.clear();
   }, [queryClient, refetch]);
 
   // Prefetch next page on mount and when page changes
