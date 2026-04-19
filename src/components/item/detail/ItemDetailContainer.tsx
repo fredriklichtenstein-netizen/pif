@@ -1,6 +1,5 @@
 
 import { ItemCardWrapper } from '@/components/item/ItemCardWrapper';
-import { RealtimeConnectionAlert } from './RealtimeConnectionAlert';
 
 interface ItemDetailContainerProps {
   displayItem: any;
@@ -20,14 +19,9 @@ export function ItemDetailContainer({
   postedBy,
   coordinates,
   measurements,
-  realtimeError,
-  refreshItemData
 }: ItemDetailContainerProps) {
   return (
     <div className="container mx-auto px-4 py-8">
-      {realtimeError && (
-        <RealtimeConnectionAlert onRefresh={refreshItemData} />
-      )}
       
       <ItemCardWrapper
         id={displayItem.id.toString()} // Convert number to string to satisfy the type requirement
