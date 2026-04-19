@@ -58,6 +58,7 @@ export function ItemCardHeader({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { handleShare: shareItem } = useItemSharing(String(itemId));
   
   const handleBookmarkClick = async () => {
     // Check authentication
