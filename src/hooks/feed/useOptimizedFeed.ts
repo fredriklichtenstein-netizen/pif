@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getOptimizedPosts, prefetchNextPage } from '@/services/posts/optimized';
 import { DEMO_MODE } from '@/config/demoMode';
