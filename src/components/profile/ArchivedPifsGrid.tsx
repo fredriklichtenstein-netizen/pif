@@ -231,7 +231,19 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
             className={`relative${isFading ? ' animate-fade-out-collapse pointer-events-none' : ''}`}
             aria-hidden={isFading || undefined}
           >
-            <ItemCard {...item} />
+            <div className="relative overflow-hidden rounded-lg">
+              <ItemCard {...item} />
+              {/* Muted overlay so archived items look visually distinct from active pifs. */}
+              <div className="pointer-events-none absolute inset-0 bg-background/40" aria-hidden="true" />
+              {/* Archived badge sits above the overlay, top-left. */}
+              <Badge
+                variant="secondary"
+                className="absolute top-3 left-3 z-10 flex items-center gap-1 shadow-md"
+              >
+                <Archive className="h-3 w-3" />
+                {t('interactions.archived')}
+              </Badge>
+            </div>
 
           {isOwner && (
             <div className="absolute top-3 right-3 z-10">
