@@ -102,6 +102,7 @@ export function OptimizedFeedContainer() {
         <FeedItemList
           posts={memoizedPosts}
           fadingIds={fadingIds}
+          restoringIds={restoringIds}
           selectedCategories={[]}
           clearFilters={() => {}}
           viewMode="all"
