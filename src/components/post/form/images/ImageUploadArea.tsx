@@ -30,6 +30,7 @@ export function ImageUploadArea({
 }: ImageUploadAreaProps) {
   const { t } = useTranslation();
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   if (!canAddMoreImages) {
     return null;
