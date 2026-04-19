@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
 import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil } from "lucide-react";
+import { useItemSharing } from "@/hooks/item/useItemSharing";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -57,6 +58,7 @@ export function ItemCardHeader({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { handleShare: shareItem } = useItemSharing(String(itemId));
   
   const handleBookmarkClick = async () => {
     // Check authentication
@@ -182,11 +184,9 @@ export function ItemCardHeader({
               </>
             )}
             
-            {handleShare && (
-              <DropdownMenuItem onClick={handleShare}>
-                <span>{t('interactions.share')}</span>
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem onClick={() => shareItem()}>
+              <span>{t('interactions.share')}</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
