@@ -1,10 +1,8 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
 import { useItemCard } from "@/hooks/useItemCard";
+import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 interface UseItemCardContainerProps {
   id: number;
@@ -17,8 +15,6 @@ interface UseItemCardContainerProps {
 
 export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { t } = useTranslation();
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Get user interactions data from the hook
@@ -55,30 +51,32 @@ export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) {
+  const handleDelete = () => {
+    // Open the global archive/delete dialog so the user can choose to archive
+    // (soft delete) or permanently delete — same flow as the feed cards.
+    const dialogManager = getDeleteDialogManager();
+
+    if (dialogManager) {
+      dialogManager.openDeleteDialog({
+        id,
+        onSuccess: () => {
+          setIsDeleting(false);
+        },
+      });
       return;
     }
 
-    setIsDeleting(true);
-    try {
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      // Success is reflected by the post disappearing — no toast needed
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      toast({
-        title: t('post.error'),
-        description: t('interactions.delete_post_error'),
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+    // Fallback: dispatch the global event listened to by GlobalDeleteDialog.
+    document.dispatchEvent(
+      new CustomEvent("global-delete-dialog-open", {
+        detail: {
+          itemId: id,
+          onSuccess: () => setIsDeleting(false),
+        },
+        bubbles: true,
+        cancelable: true,
+      })
+    );
   };
 
   const handleEdit = () => {

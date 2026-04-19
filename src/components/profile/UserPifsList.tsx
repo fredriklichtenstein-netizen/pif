@@ -7,6 +7,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { Pencil, Trash2, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 export function UserPifsList({
   userId,
@@ -44,18 +45,43 @@ export function UserPifsList({
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const handleDelete = async (itemId: number) => {
-    if (!window.confirm(t('interactions.confirm_delete_pif'))) return;
+  const handleDelete = (itemId: number) => {
+    // Open the global archive/delete dialog (same flow as feed cards) so the
+    // owner can choose between archiving and permanent deletion.
     setDeletingId(itemId);
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { error } = await supabase.from("items").delete().eq("id", itemId);
-    if (error) {
-      alert(t('interactions.error_deleting_pif'));
-    } else {
+
+    const removeFromList = () => {
       setItems((prev) => prev.filter((item) => item.id !== itemId));
+      setDeletingId(null);
+    };
+
+    const dialogManager = getDeleteDialogManager();
+    if (dialogManager) {
+      dialogManager.openDeleteDialog({ id: itemId, onSuccess: removeFromList });
+    } else {
+      document.dispatchEvent(
+        new CustomEvent("global-delete-dialog-open", {
+          detail: { itemId, onSuccess: removeFromList },
+          bubbles: true,
+          cancelable: true,
+        })
+      );
     }
-    setDeletingId(null);
   };
+
+  // Also listen for the global success event so archived items disappear
+  // instantly from "My pifs" without needing a refresh.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
+      if (!detail) return;
+      const idStr = String(detail.itemId);
+      setItems((prev) => prev.filter((item) => String(item.id) !== idStr));
+      setDeletingId((current) => (current !== null && String(current) === idStr ? null : current));
+    };
+    document.addEventListener("item-operation-success", handler as EventListener);
+    return () => document.removeEventListener("item-operation-success", handler as EventListener);
+  }, []);
 
   if (loading) {
     return <div className="py-12 text-center text-muted-foreground">{t('profile.loading_pifs')}</div>;

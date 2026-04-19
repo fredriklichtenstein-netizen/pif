@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
@@ -101,31 +102,47 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
   const handleRestore = async (itemId: number) => {
     if (!isOwner) return;
-    
+
     setRestoring(itemId);
     try {
-      const { error } = await supabase
-        .from("items")
-        .update({
-          pif_status: null,
-          archived_at: null,
-          archived_reason: null
-        } as any)
-        .eq("id", itemId);
-        
-      if (error) throw error;
-      
+      // Prefer the SECURITY DEFINER RPC (bypasses missing UPDATE RLS policy on items).
+      // Falls back to a direct UPDATE for environments where the RPC isn't deployed yet.
+      let restored = false;
+      const { data: rpcResult, error: rpcError } = await (supabase as any)
+        .rpc('restore_item', { p_item_id: itemId });
+
+      if (!rpcError) {
+        restored = Boolean(rpcResult);
+      } else {
+        console.warn('restore_item RPC unavailable, falling back to direct update:', rpcError.message);
+        const { error: updateError, count } = await (supabase
+          .from('items')
+          .update({
+            pif_status: null,
+            archived_at: null,
+            archived_reason: null,
+          } as any, { count: 'exact' }) as any)
+          .eq('id', itemId);
+
+        if (updateError) throw updateError;
+        restored = (count ?? 0) > 0;
+      }
+
+      if (!restored) {
+        throw new Error('Restore returned no rows — RLS or RPC permissions may be missing.');
+      }
+
       toast({
         title: t('interactions.item_restored'),
         description: t('interactions.item_restored_description'),
       });
-      
+
       setItems(items.filter(item => item.id !== itemId));
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error restoring item:", err);
       toast({
         title: t('post.error'),
-        description: t('interactions.restore_error'),
+        description: err?.message || t('interactions.restore_error'),
         variant: "destructive"
       });
     } finally {
@@ -156,26 +173,26 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
       {visibleItems.map(item => (
         <div key={item.id} className="relative">
           <ItemCard {...item} />
-          
+
           {isOwner && (
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-3 right-3 z-10">
               <Button
-                variant="secondary"
+                variant="default"
                 size="sm"
-                className="bg-white bg-opacity-90 hover:bg-white shadow-md flex items-center gap-1"
+                className="shadow-lg flex items-center gap-1 font-medium"
                 onClick={() => handleRestore(item.id)}
                 disabled={restoring === item.id}
               >
                 {restoring === item.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <ArchiveRestore className="h-4 w-4 mr-1" />
+                  <ArchiveRestore className="h-4 w-4" />
                 )}
                 {t('interactions.restore')}
               </Button>
             </div>
           )}
-          
+
           {item.archived_reason && (
             <div className="mt-2 text-sm text-muted-foreground italic px-3">
               <span className="font-medium">{t('interactions.archived_reason')}</span> {item.archived_reason}
