@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getOptimizedPosts, prefetchNextPage } from '@/services/posts/optimized';
 import { DEMO_MODE } from '@/config/demoMode';
@@ -9,43 +9,91 @@ import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 
 const POSTS_PER_PAGE = 10;
 
+// Duration of the fade-out animation before items are fully removed.
+const FADE_DURATION_MS = 320;
+
 export function useOptimizedFeed() {
   const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
-  // Optimistic removals for delete/archive ops — instantly hide items in the feed.
+  // Items currently animating out (still rendered, with fade-out class).
+  const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
+  // Items fully removed (no longer rendered).
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  // Pending fade timers, keyed by item id, so undo can cancel them.
+  const fadeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  // Listen for global delete/archive success events and remove items locally.
+  // Listen for global delete/archive success events and animate items out locally.
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ itemId: string | number; operationType: OperationType }>).detail;
       if (!detail || !detail.itemId) return;
+      const idStr = String(detail.itemId);
+
       if (detail.operationType === 'delete' || detail.operationType === 'archive') {
-        setRemovedIds(prev => {
+        // Mark as fading so the card animates out, then promote to removed.
+        setFadingIds(prev => {
+          if (prev.has(idStr)) return prev;
           const next = new Set(prev);
-          next.add(String(detail.itemId));
+          next.add(idStr);
           return next;
         });
+
+        // Cancel any prior pending timer for this id.
+        const existing = fadeTimersRef.current.get(idStr);
+        if (existing) clearTimeout(existing);
+
+        const timer = setTimeout(() => {
+          setRemovedIds(prev => {
+            const next = new Set(prev);
+            next.add(idStr);
+            return next;
+          });
+          setFadingIds(prev => {
+            if (!prev.has(idStr)) return prev;
+            const next = new Set(prev);
+            next.delete(idStr);
+            return next;
+          });
+          fadeTimersRef.current.delete(idStr);
+        }, FADE_DURATION_MS);
+
+        fadeTimersRef.current.set(idStr, timer);
       }
+
       if (detail.operationType === 'restore') {
+        // Server-side restore — bring it back into view.
         setRemovedIds(prev => {
-          if (!prev.has(String(detail.itemId))) return prev;
+          if (!prev.has(idStr)) return prev;
           const next = new Set(prev);
-          next.delete(String(detail.itemId));
+          next.delete(idStr);
           return next;
         });
       }
     };
     document.addEventListener('item-operation-success', handler as EventListener);
 
-    // Undo handler — re-show items that were optimistically removed.
+    // Undo handler — cancel any in-flight fade and re-show fully-removed items.
     const undoHandler = (event: Event) => {
       const detail = (event as CustomEvent<{ itemId: string | number }>).detail;
       if (!detail || !detail.itemId) return;
-      setRemovedIds(prev => {
-        if (!prev.has(String(detail.itemId))) return prev;
+      const idStr = String(detail.itemId);
+
+      const pending = fadeTimersRef.current.get(idStr);
+      if (pending) {
+        clearTimeout(pending);
+        fadeTimersRef.current.delete(idStr);
+      }
+
+      setFadingIds(prev => {
+        if (!prev.has(idStr)) return prev;
         const next = new Set(prev);
-        next.delete(String(detail.itemId));
+        next.delete(idStr);
+        return next;
+      });
+      setRemovedIds(prev => {
+        if (!prev.has(idStr)) return prev;
+        const next = new Set(prev);
+        next.delete(idStr);
         return next;
       });
     };
@@ -54,6 +102,9 @@ export function useOptimizedFeed() {
     return () => {
       document.removeEventListener('item-operation-success', handler as EventListener);
       document.removeEventListener('item-operation-undone', undoHandler as EventListener);
+      // Clear any pending fade timers on unmount.
+      fadeTimersRef.current.forEach(t => clearTimeout(t));
+      fadeTimersRef.current.clear();
     };
   }, []);
 
@@ -62,6 +113,7 @@ export function useOptimizedFeed() {
     if (!DEMO_MODE) return null;
     return {
       posts: MOCK_POSTS as unknown as Post[],
+      fadingIds: new Set<string>(),
       isLoading: false,
       isLoadingMore: false,
       error: null,
@@ -120,8 +172,11 @@ export function useOptimizedFeed() {
     queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
     setPage(0);
     await refetch();
-    // Server is now authoritative; drop optimistic removals.
+    // Server is now authoritative; drop optimistic removals & in-flight fades.
     setRemovedIds(new Set());
+    setFadingIds(new Set());
+    fadeTimersRef.current.forEach(t => clearTimeout(t));
+    fadeTimersRef.current.clear();
   }, [queryClient, refetch]);
 
   // Prefetch next page on mount and when page changes
@@ -143,6 +198,7 @@ export function useOptimizedFeed() {
 
   return {
     posts: allPosts,
+    fadingIds,
     isLoading: isLoading && page === 0,
     isLoadingMore: isLoading && page > 0,
     error,

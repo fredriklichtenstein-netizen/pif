@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +11,17 @@ import { ArchiveRestore, Loader2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useTranslation } from "react-i18next";
 
+const FADE_DURATION_MS = 320;
+
 export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<number | null>(null);
-  // Track items removed via the global delete dialog so they disappear instantly.
+  // Items currently animating out (still rendered, with fade-out class).
+  const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
+  // Items fully removed (no longer rendered).
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const fadeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -83,19 +88,46 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     fetchArchivedItems();
   }, [userId]);
 
-  // Listen for global delete success events so deleted items disappear instantly.
+  // Listen for global delete success events so deleted items animate out, then disappear.
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
       if (!detail || detail.operationType !== 'delete') return;
-      setDeletedIds(prev => {
+      const idStr = String(detail.itemId);
+
+      setFadingIds(prev => {
+        if (prev.has(idStr)) return prev;
         const next = new Set(prev);
-        next.add(String(detail.itemId));
+        next.add(idStr);
         return next;
       });
+
+      const existing = fadeTimersRef.current.get(idStr);
+      if (existing) clearTimeout(existing);
+
+      const timer = setTimeout(() => {
+        setDeletedIds(prev => {
+          const next = new Set(prev);
+          next.add(idStr);
+          return next;
+        });
+        setFadingIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
+        fadeTimersRef.current.delete(idStr);
+      }, FADE_DURATION_MS);
+
+      fadeTimersRef.current.set(idStr, timer);
     };
     document.addEventListener('item-operation-success', handler as EventListener);
-    return () => document.removeEventListener('item-operation-success', handler as EventListener);
+    return () => {
+      document.removeEventListener('item-operation-success', handler as EventListener);
+      fadeTimersRef.current.forEach(t => clearTimeout(t));
+      fadeTimersRef.current.clear();
+    };
   }, []);
 
   const visibleItems = items.filter(item => !deletedIds.has(String(item.id)));
@@ -137,7 +169,27 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         description: t('interactions.item_restored_description'),
       });
 
-      setItems(items.filter(item => item.id !== itemId));
+      // Fade the restored item out, then remove from the local list.
+      const idStr = String(itemId);
+      setFadingIds(prev => {
+        if (prev.has(idStr)) return prev;
+        const next = new Set(prev);
+        next.add(idStr);
+        return next;
+      });
+      const existing = fadeTimersRef.current.get(idStr);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(() => {
+        setItems(prev => prev.filter(item => item.id !== itemId));
+        setFadingIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
+        fadeTimersRef.current.delete(idStr);
+      }, FADE_DURATION_MS);
+      fadeTimersRef.current.set(idStr, timer);
     } catch (err: any) {
       console.error("Error restoring item:", err);
       toast({
@@ -170,9 +222,15 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      {visibleItems.map(item => (
-        <div key={item.id} className="relative">
-          <ItemCard {...item} />
+      {visibleItems.map(item => {
+        const isFading = fadingIds.has(String(item.id));
+        return (
+          <div
+            key={item.id}
+            className={`relative${isFading ? ' animate-fade-out-collapse pointer-events-none' : ''}`}
+            aria-hidden={isFading || undefined}
+          >
+            <ItemCard {...item} />
 
           {isOwner && (
             <div className="absolute top-3 right-3 z-10">
@@ -198,8 +256,9 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
               <span className="font-medium">{t('interactions.archived_reason')}</span> {item.archived_reason}
             </div>
           )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
