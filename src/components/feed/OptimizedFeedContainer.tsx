@@ -56,6 +56,7 @@ export function OptimizedFeedContainer() {
         <section role="feed" aria-label={t('interactions.community_posts_demo')}>
           <FeedItemList
             posts={memoizedPosts}
+            fadingIds={fadingIds}
             selectedCategories={[]}
             clearFilters={() => {}}
             viewMode="all"
@@ -99,6 +100,7 @@ export function OptimizedFeedContainer() {
       <section role="feed" aria-label={t('interactions.community_posts')}>
         <FeedItemList
           posts={memoizedPosts}
+          fadingIds={fadingIds}
           selectedCategories={[]}
           clearFilters={() => {}}
           viewMode="all"
