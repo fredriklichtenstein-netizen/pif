@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Archive, ArchiveRestore, Loader2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useTranslation } from "react-i18next";
+import { formatRelativeTime } from "@/utils/formatDate";
 
 const FADE_DURATION_MS = 320;
 
@@ -264,12 +265,23 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
             </div>
           )}
 
-          {item.archived_reason && (
+          {(item.archived_reason || item.archived_at) && (
             <div className="mt-1.5 px-3 flex items-start gap-1.5 text-xs text-muted-foreground">
               <Archive className="h-3 w-3 mt-0.5 shrink-0 opacity-70" aria-hidden="true" />
               <span className="leading-snug">
-                <span className="font-medium">{t('interactions.archived_reason')}</span>{' '}
-                <span className="italic">{item.archived_reason}</span>
+                {item.archived_at && (
+                  <span className="font-medium">
+                    {t('interactions.archived_time_ago', {
+                      time: formatRelativeTime(new Date(item.archived_at)),
+                    })}
+                  </span>
+                )}
+                {item.archived_reason && (
+                  <>
+                    {item.archived_at && <span> · </span>}
+                    <span className="italic">{item.archived_reason}</span>
+                  </>
+                )}
               </span>
             </div>
           )}

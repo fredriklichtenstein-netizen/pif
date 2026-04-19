@@ -21,6 +21,7 @@ export function ItemCardWrapperContent({
   postedBy,
   isOwner,
   isItemArchived,
+  archived_at,
   archived_reason,
   realtimeError,
   handleRefresh,
@@ -66,7 +67,7 @@ export function ItemCardWrapperContent({
       item_type={item_type}
       isRealtimeError={!!realtimeError}
       refreshItemData={handleRefresh}
-      statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} /> : undefined}
+      statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} archivedAt={archived_at} /> : undefined}
       header={
         <ItemCardHeader 
           itemId={id}

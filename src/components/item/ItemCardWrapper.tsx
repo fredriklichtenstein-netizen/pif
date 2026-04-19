@@ -113,6 +113,7 @@ export function ItemCardWrapper({
       postedBy={postedBy}
       isOwner={isOwner}
       isItemArchived={isItemArchived}
+      archived_at={archived_at}
       archived_reason={archived_reason}
       realtimeError={realtimeError}
       handleRefresh={handleRefresh}
