@@ -1,8 +1,6 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
 import { useItemCard } from "@/hooks/useItemCard";
 import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
@@ -17,8 +15,6 @@ interface UseItemCardContainerProps {
 
 export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { t } = useTranslation();
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Get user interactions data from the hook
