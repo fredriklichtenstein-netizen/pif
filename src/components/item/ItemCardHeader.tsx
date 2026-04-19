@@ -184,11 +184,9 @@ export function ItemCardHeader({
               </>
             )}
             
-            {handleShare && (
-              <DropdownMenuItem onClick={handleShare}>
-                <span>{t('interactions.share')}</span>
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem onClick={() => shareItem()}>
+              <span>{t('interactions.share')}</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
