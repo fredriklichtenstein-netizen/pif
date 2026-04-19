@@ -5,6 +5,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function DeleteConfirmDialog({
   isLoading = false,
   isLoadingInterested = false
 }: DeleteConfirmDialogProps) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
   const [isSoftDelete, setIsSoftDelete] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(isOpen);
@@ -114,13 +116,13 @@ export function DeleteConfirmDialog({
         {isLoadingInterested ? <div className="space-y-2 my-4">
             <p className="text-sm text-gray-500 flex items-center">
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Checking if anyone is interested in this item...
+              {t('interactions.delete_dialog_checking_interest')}
             </p>
           </div> : hasInterestedUsers && <div className="mb-4">
             <p className="text-sm text-amber-600 font-medium">
-              Warning: {interestCount} {interestCount === 1 ? 'person is' : 'people are'} interested in this item.
+              {t(interestCount === 1 ? 'interactions.delete_dialog_warning_interested_one' : 'interactions.delete_dialog_warning_interested_other', { count: interestCount })}
             </p>
-            <p className="text-sm text-gray-500">They will be notified if you proceed.</p>
+            <p className="text-sm text-gray-500">{t('interactions.delete_dialog_will_be_notified')}</p>
           </div>}
 
         <div className="mb-4">
@@ -133,20 +135,20 @@ export function DeleteConfirmDialog({
                 disabled={isLoading}
               />
               <Label htmlFor="soft-delete" className={`cursor-pointer ${isLoading ? 'opacity-50' : ''}`}>
-                Archive instead of permanently delete
+                {t('interactions.delete_dialog_archive_instead')}
               </Label>
             </div>
             <p className="text-xs text-gray-500 pl-6">
-              {isSoftDelete ? "The item will be archived and can be restored later." : "The item will be permanently deleted and cannot be recovered."}
+              {isSoftDelete ? t('interactions.delete_dialog_archive_hint') : t('interactions.delete_dialog_delete_hint')}
             </p>
           </div>
         </div>
 
         <div className="mb-4">
-          <Label htmlFor="delete-reason">Reason (optional)</Label>
+          <Label htmlFor="delete-reason">{t('interactions.delete_dialog_reason_label')}</Label>
           <Textarea 
             id="delete-reason" 
-            placeholder={isSoftDelete ? "Why are you archiving this item?" : "Why are you deleting this item?"} 
+            placeholder={isSoftDelete ? t('interactions.delete_dialog_reason_placeholder_archive') : t('interactions.delete_dialog_reason_placeholder_delete')} 
             value={reason} 
             onChange={e => setReason(e.target.value)} 
             className="mt-1" 
@@ -163,7 +165,7 @@ export function DeleteConfirmDialog({
               if (!isLoading && !isLoadingInterested) handleSafeClose();
             }}
           >
-            Cancel
+            {t('interactions.delete_dialog_cancel')}
           </AlertDialogCancel>
           <AlertDialogAction 
             type="button" 
@@ -174,9 +176,9 @@ export function DeleteConfirmDialog({
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
+                {t('interactions.delete_dialog_processing')}
               </>
-            ) : isSoftDelete ? "Archive" : "Delete"}
+            ) : isSoftDelete ? t('interactions.delete_dialog_archive') : t('interactions.delete_dialog_delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
