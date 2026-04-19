@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 export function usePasswordReset() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +17,7 @@ export function usePasswordReset() {
       
       // Set a timeout for reset password request
       const timeoutId = setTimeout(() => {
-        setError("Request is taking longer than expected. Please try again.");
+        setError(t('interactions.password_reset_unexpected'));
         setLoading(false);
       }, 15000);
       
@@ -30,15 +32,10 @@ export function usePasswordReset() {
       
       if (error) {
         console.error("Password reset error:", error);
-        
-        if (error.message.includes("Load failed") || error.message.includes("fetch failed")) {
-          setError("Connection error. Please check your internet connection and try again.");
-        } else {
-          setError(error.message);
-        }
+        setError(error.message);
         
         toast({
-          title: "Password reset failed",
+          title: t('interactions.password_reset_failed'),
           description: error.message,
           variant: "destructive",
         });
@@ -47,18 +44,18 @@ export function usePasswordReset() {
       }
       
       toast({
-        title: "Password reset email sent",
-        description: "Check your email for a link to reset your password. The link is valid for 1 hour.",
+        title: t('interactions.password_reset_sent'),
+        description: t('interactions.password_reset_sent_description'),
       });
       setLoading(false);
       return true;
     } catch (error) {
       console.error("Unexpected error during password reset:", error);
       
-      setError("An unexpected error occurred. Please try again.");
+      setError(t('interactions.password_reset_unexpected'));
       toast({
-        title: "Password reset failed",
-        description: "An unexpected error occurred. Please try again.",
+        title: t('interactions.password_reset_failed'),
+        description: t('interactions.password_reset_unexpected'),
         variant: "destructive",
       });
       setLoading(false);

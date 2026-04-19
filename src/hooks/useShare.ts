@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from './use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface ShareOptions {
   title?: string;
@@ -15,6 +16,7 @@ interface ShareOptions {
 export function useShare() {
   const [isSharing, setIsSharing] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   /**
    * Copies text to the clipboard with fallbacks for older browsers.
@@ -121,50 +123,37 @@ export function useShare() {
       const copied = await copyToClipboard(options.url);
       
       if (copied) {
-        toast({
-          title: "Link copied",
-          description: "Link has been copied to clipboard",
-        });
-        
+        // Routine success: silent per UX guidelines
         // As an enhancement, also try Web Share API if available
-        // This doesn't affect our primary success path
         if (isSecureContext() && isShareApiSupported() && canShareContent(options)) {
           attemptWebShare(options)
-            .then(success => {
-              if (success) {
-              }
-            })
-            .catch(err => {
-              // We don't show errors here since clipboard already worked
-            });
+            .then(() => {})
+            .catch(() => {});
         }
-        
+
         return;
       }
-      
+
       // Second attempt: If clipboard fails, try Web Share API
       const webShareSucceeded = await attemptWebShare(options);
-      
+
       if (webShareSucceeded) {
-        toast({
-          title: "Shared successfully",
-          description: "Content has been shared",
-        });
+        // Silent success
         return;
       }
       
       // If both methods fail
       toast({
-        title: "Sharing failed",
-        description: "Couldn't share content. Please try copying the URL manually.",
+        title: t('interactions.sharing_failed'),
+        description: t('interactions.sharing_failed_description'),
         variant: "destructive",
       });
-      
+
     } catch (error) {
       console.error('Unexpected error during share process:', error);
       toast({
-        title: "Sharing failed",
-        description: error instanceof Error ? error.message : "Unable to share content",
+        title: t('interactions.sharing_failed'),
+        description: error instanceof Error ? error.message : t('interactions.sharing_failed_unknown'),
         variant: "destructive",
       });
     } finally {

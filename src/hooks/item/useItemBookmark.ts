@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useGlobalAuth } from '../useGlobalAuth';
+import { useTranslation } from 'react-i18next';
 
 export function useItemBookmark(itemId: number | string) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { user } = useGlobalAuth();
   
   // Ensure itemId is numeric for database operations
@@ -50,8 +52,8 @@ export function useItemBookmark(itemId: number | string) {
   const toggleBookmark = async () => {
     if (!user) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to save items",
+        title: t('interactions.auth_required_title'),
+        description: t('interactions.auth_required_save_items'),
         variant: "destructive"
       });
       return;
@@ -85,8 +87,8 @@ export function useItemBookmark(itemId: number | string) {
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
       toast({
-        title: "Error",
-        description: "Failed to update saved items. Please try again.",
+        title: t('post.error'),
+        description: t('interactions.bookmark_update_error'),
         variant: "destructive"
       });
     } finally {

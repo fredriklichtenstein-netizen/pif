@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import type { CreatePostInput, Coordinates } from "@/types/post";
 
 export const usePostLocation = (
@@ -8,6 +9,7 @@ export const usePostLocation = (
   setFormData: (data: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void
 ) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isAddressVerified, setIsAddressVerified] = useState(false);
 
@@ -24,8 +26,8 @@ export const usePostLocation = (
   const validateLocation = () => {
     if (!formData.location || !formData.coordinates || !isAddressVerified) {
       toast({
-        title: "Missing location",
-        description: "Please enter and verify a valid address",
+        title: t('interactions.missing_location'),
+        description: t('interactions.missing_location_description'),
         variant: "destructive",
       });
       return false;
