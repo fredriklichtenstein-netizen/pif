@@ -142,8 +142,8 @@ export const useCommentCreate = (
     } catch (error) {
       console.error("Error adding comment:", error);
       toast({
-        title: "Error",
-        description: "Failed to add comment",
+        title: t('post.error'),
+        description: t('interactions.comment_add_error'),
         variant: "destructive"
       });
     } finally {
