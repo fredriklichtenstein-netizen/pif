@@ -171,8 +171,11 @@ export function useOptimizedFeed() {
     queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
     setPage(0);
     await refetch();
-    // Server is now authoritative; drop optimistic removals.
+    // Server is now authoritative; drop optimistic removals & in-flight fades.
     setRemovedIds(new Set());
+    setFadingIds(new Set());
+    fadeTimersRef.current.forEach(t => clearTimeout(t));
+    fadeTimersRef.current.clear();
   }, [queryClient, refetch]);
 
   // Prefetch next page on mount and when page changes
@@ -194,6 +197,7 @@ export function useOptimizedFeed() {
 
   return {
     posts: allPosts,
+    fadingIds,
     isLoading: isLoading && page === 0,
     isLoadingMore: isLoading && page > 0,
     error,
