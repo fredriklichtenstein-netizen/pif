@@ -20,6 +20,8 @@ interface FeedItemListProps {
   isShowingMockData?: boolean;
   /** IDs of items currently animating out (fade-out applied while still rendered). */
   fadingIds?: Set<string>;
+  /** IDs of items animating back in (fade-in applied briefly after undo). */
+  restoringIds?: Set<string>;
 }
 
 // Helper function to validate post data
