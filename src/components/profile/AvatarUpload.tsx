@@ -104,6 +104,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
               onFileSelect={() => document.getElementById('avatar-upload')?.click()}
               onEditCurrent={handleEditCurrent}
               hasExistingImage={!!avatarUrl}
+              onCameraCapture={() => document.getElementById('avatar-camera-capture')?.click()}
             />
           )}
         </DialogContent>
@@ -124,6 +125,10 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
               setShowOptions(false);
             }}
             hasExistingImage={!!avatarUrl}
+            onCameraCapture={() => {
+              setShowOptions(false);
+              document.getElementById('avatar-camera-capture')?.click();
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -165,6 +170,14 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
         id="avatar-upload"
         type="file"
         accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        id="avatar-camera-capture"
+        type="file"
+        accept="image/*"
+        capture="user"
         className="hidden"
         onChange={handleFileChange}
       />
