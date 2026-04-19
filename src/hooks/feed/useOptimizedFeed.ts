@@ -230,6 +230,7 @@ export function useOptimizedFeed() {
   return {
     posts: allPosts,
     fadingIds,
+    restoringIds,
     isLoading: isLoading && page === 0,
     isLoadingMore: isLoading && page > 0,
     error,
