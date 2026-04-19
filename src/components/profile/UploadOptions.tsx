@@ -14,6 +14,7 @@ interface UploadOptionsProps {
 
 export function UploadOptions({ onFileSelect, onEditCurrent, hasExistingImage, onCameraCapture }: UploadOptionsProps) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   const handleCameraClick = () => {
     if (onCameraCapture) {
@@ -34,9 +35,11 @@ export function UploadOptions({ onFileSelect, onEditCurrent, hasExistingImage, o
           <Edit2 className="h-4 w-4 mr-2" />{t('interactions.edit_current_photo')}
         </Button>
       )}
-      <Button type="button" variant="outline" onClick={handleCameraClick} className="w-full">
-        <Camera className="h-4 w-4 mr-2" />{t('interactions.take_photo')}
-      </Button>
+      {isMobile && (
+        <Button type="button" variant="outline" onClick={handleCameraClick} className="w-full">
+          <Camera className="h-4 w-4 mr-2" />{t('interactions.take_photo')}
+        </Button>
+      )}
     </div>
   );
 }
