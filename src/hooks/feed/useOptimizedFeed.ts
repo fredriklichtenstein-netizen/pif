@@ -103,6 +103,8 @@ export function useOptimizedFeed() {
     queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
     setPage(0);
     await refetch();
+    // Server is now authoritative; drop optimistic removals.
+    setRemovedIds(new Set());
   }, [queryClient, refetch]);
 
   // Prefetch next page on mount and when page changes
