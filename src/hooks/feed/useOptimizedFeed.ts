@@ -12,6 +12,33 @@ const POSTS_PER_PAGE = 10;
 export function useOptimizedFeed() {
   const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
+  // Optimistic removals for delete/archive ops — instantly hide items in the feed.
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+
+  // Listen for global delete/archive success events and remove items locally.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ itemId: string | number; operationType: OperationType }>).detail;
+      if (!detail || !detail.itemId) return;
+      if (detail.operationType === 'delete' || detail.operationType === 'archive') {
+        setRemovedIds(prev => {
+          const next = new Set(prev);
+          next.add(String(detail.itemId));
+          return next;
+        });
+      }
+      if (detail.operationType === 'restore') {
+        setRemovedIds(prev => {
+          if (!prev.has(String(detail.itemId))) return prev;
+          const next = new Set(prev);
+          next.delete(String(detail.itemId));
+          return next;
+        });
+      }
+    };
+    document.addEventListener('item-operation-success', handler as EventListener);
+    return () => document.removeEventListener('item-operation-success', handler as EventListener);
+  }, []);
 
   // In demo mode, return mock data immediately
   const demoData = useMemo(() => {
