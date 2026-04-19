@@ -53,7 +53,7 @@ export const createClusterElement = ({ count, onClick }: ClusterMarkerElementPro
   ensureClusterAnimationStyles();
   
   const el = document.createElement("div");
-  el.className = "cursor-pointer cluster-marker-animated";
+  el.className = "cursor-pointer";
   
   // Calculate size based on count
   const size = Math.min(28 + Math.log2(count) * 8, 56);
@@ -61,6 +61,7 @@ export const createClusterElement = ({ count, onClick }: ClusterMarkerElementPro
   
   // Create outer container
   const container = document.createElement("div");
+  container.className = "cluster-marker-animated";
   container.style.position = "relative";
   container.style.width = `${size}px`;
   container.style.height = `${size}px`;

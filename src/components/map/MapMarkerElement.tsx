@@ -28,7 +28,7 @@ const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDiv
   
   // Create an outer container for the marker with a shadow
   const markerContainer = document.createElement("div");
-  markerContainer.className = "relative";
+  markerContainer.className = "relative marker-animated";
   markerContainer.style.width = "28px";
   markerContainer.style.height = "28px";
   
@@ -150,9 +150,6 @@ export const createMarkerElement = ({
   }
   
   const el = elementTemplates[itemType].cloneNode(true) as HTMLDivElement;
-  
-  // Add animation class
-  el.classList.add("marker-animated");
   
   // Apply highlighting if needed
   if (highlighted) {
