@@ -65,10 +65,6 @@ export function MainNav() {
     if (!user) {
       e.preventDefault();
       navigate("/auth");
-      toast({
-        title: t('nav.auth_required'),
-        description: t('nav.sign_in_required'),
-      });
     }
   };
 

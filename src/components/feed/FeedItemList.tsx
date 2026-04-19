@@ -118,11 +118,6 @@ export function FeedItemList({
       setRefreshKey(Date.now());
       setErrorState({ hasError: false, errorMessage: '' });
       
-      toast({
-        title: t('interactions.refreshing'),
-        description: t('interactions.refreshing_description'),
-      });
-      
       // Clean up any potential timers
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
