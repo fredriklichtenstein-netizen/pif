@@ -6,6 +6,7 @@ import { ItemDetailError } from '@/components/item/detail/ItemDetailError';
 import { ItemDetailContainer } from '@/components/item/detail/ItemDetailContainer';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { withRetry } from '@/utils/connectionRetryUtils';
@@ -15,6 +16,7 @@ export default function ItemDetail() {
   const { id } = useParams();
   const location = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const fromShare = location.state?.fromShare === true;
   const shareTimestamp = location.state?.timestamp;
   const [loadFailed, setLoadFailed] = useState(false);
