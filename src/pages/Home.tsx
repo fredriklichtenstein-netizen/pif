@@ -31,11 +31,7 @@ export default function Home() {
       const isOnline = await checkNetworkConnection();
       
       if (isOnline) {
-        toast({
-          title: t('common.connection_restored'),
-          description: t('home.welcome_connected'),
-          duration: 3000,
-        });
+        // Silent: connectivity is reflected by app working again
       } else {
         setHasNetworkError(true);
         toast({

@@ -22,12 +22,6 @@ export const useAuthCheck = () => {
     }
     
     if (!session?.user) {
-      toast({
-        title: t('interactions.auth_required_title'),
-        description: t('interactions.auth_required_description', { action }),
-        variant: "default",
-      });
-      
       navigate("/auth");
       return false;
     }
