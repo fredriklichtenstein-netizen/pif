@@ -2,6 +2,7 @@
 import mapboxgl from "mapbox-gl";
 import type { Post } from "@/types/post";
 import { calculateDistanceFromUser, formatDistance } from "@/utils/distance";
+import i18n from "@/i18n";
 
 interface MapPopupProps {
   post: Post;
@@ -52,7 +53,9 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
   };
 
   const itemTypeLabel = getItemTypeLabel(post.item_type);
-  const condition = post.condition ? post.condition.charAt(0).toUpperCase() + post.condition.slice(1) : '';
+  const conditionRaw = post.condition || '';
+  const conditionTranslated = conditionRaw ? i18n.t(`conditions.${conditionRaw}`, { defaultValue: conditionRaw.charAt(0).toUpperCase() + conditionRaw.slice(1) }) : '';
+  const condition = conditionTranslated;
   const category = post.category ? post.category.charAt(0).toUpperCase() + post.category.slice(1) : '';
 
   // Enhanced image handling with larger thumbnail

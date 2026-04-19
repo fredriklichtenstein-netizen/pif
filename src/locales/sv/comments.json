@@ -3,6 +3,7 @@
   "comments": {
     "title": "Kommentarer",
     "live": "Live",
+    "login_to_comment": "Logga in för att kommentera",
     "connection_issue": "Anslutningsproblem",
     "error_loading": "Fel vid laddning av kommentarer",
     "try_again": "Försök igen",

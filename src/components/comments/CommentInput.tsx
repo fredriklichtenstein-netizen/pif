@@ -1,24 +1,41 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Smile } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface CommentInputProps {
   onSubmit: (text: string) => void;
   placeholder?: string;
-  disabled?: boolean; // Add the missing disabled prop
+  disabled?: boolean;
 }
 
 export function CommentInput({ onSubmit, placeholder = "Write a comment...", disabled = false }: CommentInputProps) {
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const { user } = useGlobalAuth();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const requireAuth = (): boolean => {
+    if (!user) {
+      toast(t('comments.login_to_comment', 'Logga in för att kommentera'));
+      navigate('/auth');
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = () => {
     if (!text.trim() || disabled) return;
+    if (!requireAuth()) return;
     onSubmit(text);
     setText("");
   };

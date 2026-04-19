@@ -62,7 +62,6 @@ export function CommentsPanel({
     <CommentInput 
       onSubmit={onAddComment} 
       placeholder={t('interactions.write_comment')}
-      disabled={!user} 
     />
   );
 
