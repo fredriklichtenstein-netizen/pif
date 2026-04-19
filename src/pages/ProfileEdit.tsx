@@ -1,12 +1,12 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { ProfileFormData } from "@/hooks/profile/types";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
