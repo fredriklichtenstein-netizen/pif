@@ -73,19 +73,28 @@ export function UserPifsList({
     }
   };
 
-  // Also listen for the global success event so archived items disappear
-  // instantly from "My pifs" without needing a refresh.
+  // Listen for the global success event so archived/deleted items disappear
+  // instantly from "My pifs" without needing a refresh, and for the undo event
+  // so a user-initiated restore brings the item back into the list.
   useEffect(() => {
-    const handler = (event: Event) => {
+    const successHandler = (event: Event) => {
       const detail = (event as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
       if (!detail) return;
       const idStr = String(detail.itemId);
       setItems((prev) => prev.filter((item) => String(item.id) !== idStr));
       setDeletingId((current) => (current !== null && String(current) === idStr ? null : current));
     };
-    document.addEventListener("item-operation-success", handler as EventListener);
-    return () => document.removeEventListener("item-operation-success", handler as EventListener);
-  }, []);
+    const undoHandler = () => {
+      // Item data isn't kept after optimistic removal, so refetch to bring it back.
+      fetchItems();
+    };
+    document.addEventListener("item-operation-success", successHandler as EventListener);
+    document.addEventListener("item-operation-undone", undoHandler as EventListener);
+    return () => {
+      document.removeEventListener("item-operation-success", successHandler as EventListener);
+      document.removeEventListener("item-operation-undone", undoHandler as EventListener);
+    };
+  }, [fetchItems]);
 
   if (loading) {
     return <div className="py-12 text-center text-muted-foreground">{t('profile.loading_pifs')}</div>;
