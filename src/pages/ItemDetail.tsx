@@ -96,8 +96,8 @@ export default function ItemDetail() {
       console.error('Failed to load item after multiple retries:', error);
       setLoadFailed(true);
       toast({
-        title: t('post.error', 'Fel'),
-        description: t('interactions.item_load_failed', 'Kunde inte ladda objektet'),
+        title: t('post.error'),
+        description: t('interactions.item_load_failed'),
         variant: "destructive"
       });
     }

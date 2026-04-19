@@ -55,8 +55,8 @@ export function ConversationHandler({
     } catch (error) {
       console.error('Error starting conversation:', error);
       toast({
-        title: t('post.error', 'Fel'),
-        description: t('interactions.conversation_start_error', 'Kunde inte starta konversation. Försök igen.'),
+        title: t('post.error'),
+        description: t('interactions.conversation_start_error'),
         variant: "destructive",
       });
     } finally {
