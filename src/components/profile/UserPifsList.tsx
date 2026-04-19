@@ -7,6 +7,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { Pencil, Trash2, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 
 export function UserPifsList({
   userId,
