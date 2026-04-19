@@ -190,15 +190,15 @@ if (location) {
   return (
     <>
       <div className="container max-w-2xl mx-auto py-8 px-4 pb-24">
-        <div className="mb-4">
+        <div className="flex items-center mb-6">
           <Link to="/profile">
             <Button variant="ghost" size="sm" className="gap-1">
               <ArrowLeft size={16} />
               {t('nav.back_to_profile')}
             </Button>
           </Link>
+          <h1 className="text-2xl font-bold mx-auto pr-10">{t('profile.edit_profile')}</h1>
         </div>
-        <h1 className="text-2xl font-bold mb-6">{t('profile.edit_profile')}</h1>
         
         <div className="mb-6 flex justify-center">
           <AvatarUpload 
