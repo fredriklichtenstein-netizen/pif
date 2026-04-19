@@ -76,11 +76,17 @@ export function useClusterInit({
 
       enhancedPostsRef.current = enhancedPosts;
 
+      // Tiny anti-stacking jitter (~±2 meters) so coincident offsets still
+      // render as distinct pins at max zoom instead of overlapping pixel-perfect.
+      const JITTER_DEG = 0.00002;
       const features: PointFeature[] = enhancedPosts.map((ep, index) => ({
         type: "Feature" as const,
         geometry: {
           type: "Point" as const,
-          coordinates: [ep.privacyCoordinates.lng, ep.privacyCoordinates.lat],
+          coordinates: [
+            ep.privacyCoordinates.lng + (Math.random() - 0.5) * JITTER_DEG,
+            ep.privacyCoordinates.lat + (Math.random() - 0.5) * JITTER_DEG,
+          ],
         },
         properties: { postIndex: index },
       }));
