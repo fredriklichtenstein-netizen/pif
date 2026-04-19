@@ -11,6 +11,8 @@ const POSTS_PER_PAGE = 10;
 
 // Duration of the fade-out animation before items are fully removed.
 const FADE_DURATION_MS = 320;
+// Duration of the fade-in animation when an item is undone/restored.
+const RESTORE_FADE_MS = 400;
 
 export function useOptimizedFeed() {
   const [page, setPage] = useState(0);
@@ -19,8 +21,12 @@ export function useOptimizedFeed() {
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
   // Items fully removed (no longer rendered).
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  // Items animating back in after undo/restore.
+  const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
   // Pending fade timers, keyed by item id, so undo can cancel them.
   const fadeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Pending fade-in timers so we can clear the class once the animation finishes.
+  const restoreTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Listen for global delete/archive success events and animate items out locally.
   useEffect(() => {
