@@ -6,6 +6,7 @@ import { optimizeImageUrl, preloadImages } from "@/utils/image";
 import { useCategoryTranslations } from "@/utils/translations/categories";
 import type { ItemType } from "./types";
 import { useTranslation } from "react-i18next";
+import { ImageLightbox } from "./ImageLightbox";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -18,6 +19,7 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const mountedRef = useRef(true);
   const { translateCategory } = useCategoryTranslations();
   const { t } = useTranslation();
@@ -66,17 +68,24 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
         <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}
       
-      <img 
-        src={imageUrls[currentImageIndex]}
-        alt={title} 
-        className={`w-full h-72 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
-        onLoad={() => setIsImageLoaded(true)}
-        onError={(e) => {
-          e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
-          setIsImageLoaded(true);
-        }}
-        loading="lazy"
-      />
+      <button
+        type="button"
+        onClick={() => setLightboxOpen(true)}
+        className="block w-full h-72 p-0 m-0 border-0 bg-transparent cursor-zoom-in"
+        aria-label={t('interactions.expand_image', 'Expand image')}
+      >
+        <img 
+          src={imageUrls[currentImageIndex]}
+          alt={title} 
+          className={`w-full h-72 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setIsImageLoaded(true)}
+          onError={(e) => {
+            e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";
+            setIsImageLoaded(true);
+          }}
+          loading="lazy"
+        />
+      </button>
       
       {/* Type Badge */}
       <div className="absolute top-3 left-3">
@@ -117,15 +126,15 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
       {imageUrls.length > 1 && (
         <>
           <button 
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
-            onClick={handlePrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
+            onClick={(e) => { e.stopPropagation(); handlePrev(); }}
             aria-label={t('interactions.previous_image')}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button 
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
-            onClick={handleNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
+            onClick={(e) => { e.stopPropagation(); handleNext(); }}
             aria-label={t('interactions.next_image')}
           >
             <ChevronRight className="h-4 w-4" />
@@ -140,6 +149,14 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
           </div>
         </>
       )}
+
+      <ImageLightbox
+        images={imageUrls}
+        initialIndex={currentImageIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        alt={title}
+      />
     </div>
   );
 }
