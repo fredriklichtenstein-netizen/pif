@@ -82,6 +82,23 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     fetchArchivedItems();
   }, [userId]);
 
+  // Listen for global delete success events so deleted items disappear instantly.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
+      if (!detail || detail.operationType !== 'delete') return;
+      setDeletedIds(prev => {
+        const next = new Set(prev);
+        next.add(String(detail.itemId));
+        return next;
+      });
+    };
+    document.addEventListener('item-operation-success', handler as EventListener);
+    return () => document.removeEventListener('item-operation-success', handler as EventListener);
+  }, []);
+
+  const visibleItems = items.filter(item => !deletedIds.has(String(item.id)));
+
   const handleRestore = async (itemId: number) => {
     if (!isOwner) return;
     
