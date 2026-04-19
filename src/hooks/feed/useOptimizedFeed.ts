@@ -113,6 +113,7 @@ export function useOptimizedFeed() {
     if (!DEMO_MODE) return null;
     return {
       posts: MOCK_POSTS as unknown as Post[],
+      fadingIds: new Set<string>(),
       isLoading: false,
       isLoadingMore: false,
       error: null,
