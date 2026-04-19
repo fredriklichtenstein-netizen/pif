@@ -100,8 +100,8 @@ export function useClusterInit({
         );
 
         map.fitBounds(bounds, {
-          padding: { top: 80, bottom: 120, left: 80, right: 80 },
-          maxZoom: 14,
+          padding: { top: 160, bottom: 120, left: 80, right: 80 },
+          maxZoom: 13,
           duration: 1500,
         });
       } else if (targetItemId) {

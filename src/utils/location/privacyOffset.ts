@@ -29,7 +29,7 @@ export async function addLocationPrivacy(
     }
     
     // Check if location is in an urban area (more anonymization needed)
-    const isUrban = await isUrbanArea(lat, lng);
+    const isUrban = await isUrbanArea(lat, lng, undefined, map ?? undefined);
     
     // Determine privacy radius based on location type
     // Urban areas use smaller radius (higher density of potential PIF users)

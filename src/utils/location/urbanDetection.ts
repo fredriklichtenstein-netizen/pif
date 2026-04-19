@@ -1,11 +1,11 @@
 
 import mapboxgl, { Point } from "mapbox-gl";
-import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Checks if coordinates are within an urban area based on Mapbox infrastructure data
- * Uses building density, road network, and land use classification
- * Falls back to database of Swedish urban areas if infrastructure data isn't available
+ * Uses building density, road network, and land use classification.
+ * If no map instance is provided or infrastructure data isn't available, returns false
+ * (treats as rural, which applies the larger, more privacy-preserving offset).
  */
 export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, map?: mapboxgl.Map): Promise<boolean> => {
   // If map object is provided, use infrastructure data
@@ -26,9 +26,9 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
         availableLayers.includes(layer)
       );
       
-      // If no valid infrastructure layers exist, fall back to database check
+      // If no valid infrastructure layers exist, treat as rural (safer privacy default)
       if (existingLayers.length === 0) {
-        return fallbackToDatabaseCheck(lat, lng);
+        return false;
       }
       
       // Convert lat/lng to pixel coordinates for querying features
@@ -67,37 +67,10 @@ export const isUrbanArea = async (lat: number, lng: number, _mapZoom?: number, m
       return isUrban;
     } catch (error) {
       console.error("Error determining urban area:", error);
-      // Fall back to database check
-      return fallbackToDatabaseCheck(lat, lng);
+      return false;
     }
   }
   
-  // Fallback to database check
-  return fallbackToDatabaseCheck(lat, lng);
+  // No map available — default to rural for stronger privacy offset
+  return false;
 };
-
-/**
- * Fallback method to check against database of Swedish urban areas
- */
-async function fallbackToDatabaseCheck(lat: number, lng: number): Promise<boolean> {
-  try {
-    const { data, error } = await (supabase
-      .from as any)('swedish_urban_areas')
-      .select('id')
-      .gte('min_lat', lat)
-      .lte('max_lat', lat)
-      .gte('min_lng', lng)
-      .lte('max_lng', lng)
-      .limit(1);
-
-    if (error) {
-      console.error("Error checking urban areas database:", error);
-      return false;
-    }
-
-    return data.length > 0;
-  } catch (error) {
-    console.error("Error in database fallback for urban detection:", error);
-    return false;
-  }
-}
