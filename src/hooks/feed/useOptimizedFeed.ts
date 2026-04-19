@@ -5,12 +5,40 @@ import { getOptimizedPosts, prefetchNextPage } from '@/services/posts/optimized'
 import { DEMO_MODE } from '@/config/demoMode';
 import { MOCK_POSTS } from '@/data/mockPosts';
 import type { Post } from '@/types/post';
+import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 
 const POSTS_PER_PAGE = 10;
 
 export function useOptimizedFeed() {
   const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
+  // Optimistic removals for delete/archive ops — instantly hide items in the feed.
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+
+  // Listen for global delete/archive success events and remove items locally.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ itemId: string | number; operationType: OperationType }>).detail;
+      if (!detail || !detail.itemId) return;
+      if (detail.operationType === 'delete' || detail.operationType === 'archive') {
+        setRemovedIds(prev => {
+          const next = new Set(prev);
+          next.add(String(detail.itemId));
+          return next;
+        });
+      }
+      if (detail.operationType === 'restore') {
+        setRemovedIds(prev => {
+          if (!prev.has(String(detail.itemId))) return prev;
+          const next = new Set(prev);
+          next.delete(String(detail.itemId));
+          return next;
+        });
+      }
+    };
+    document.addEventListener('item-operation-success', handler as EventListener);
+    return () => document.removeEventListener('item-operation-success', handler as EventListener);
+  }, []);
 
   // In demo mode, return mock data immediately
   const demoData = useMemo(() => {
@@ -42,7 +70,7 @@ export function useOptimizedFeed() {
     enabled: !DEMO_MODE // Skip query in demo mode
   });
 
-  // Aggregate all pages of posts
+  // Aggregate all pages of posts, then strip optimistically-removed items.
   const allPosts = useMemo(() => {
     if (DEMO_MODE) return [];
     const posts: Post[] = [];
@@ -52,8 +80,9 @@ export function useOptimizedFeed() {
         posts.push(...pageData);
       }
     }
-    return posts;
-  }, [page, queryClient, currentPageData]);
+    if (removedIds.size === 0) return posts;
+    return posts.filter(p => !removedIds.has(String(p.id)));
+  }, [page, queryClient, currentPageData, removedIds]);
 
   // Load more posts
   const loadMore = useCallback(() => {
@@ -74,6 +103,8 @@ export function useOptimizedFeed() {
     queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
     setPage(0);
     await refetch();
+    // Server is now authoritative; drop optimistic removals.
+    setRemovedIds(new Set());
   }, [queryClient, refetch]);
 
   // Prefetch next page on mount and when page changes

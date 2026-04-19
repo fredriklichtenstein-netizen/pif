@@ -14,6 +14,8 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<number | null>(null);
+  // Track items removed via the global delete dialog so they disappear instantly.
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -80,6 +82,23 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     fetchArchivedItems();
   }, [userId]);
 
+  // Listen for global delete success events so deleted items disappear instantly.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
+      if (!detail || detail.operationType !== 'delete') return;
+      setDeletedIds(prev => {
+        const next = new Set(prev);
+        next.add(String(detail.itemId));
+        return next;
+      });
+    };
+    document.addEventListener('item-operation-success', handler as EventListener);
+    return () => document.removeEventListener('item-operation-success', handler as EventListener);
+  }, []);
+
+  const visibleItems = items.filter(item => !deletedIds.has(String(item.id)));
+
   const handleRestore = async (itemId: number) => {
     if (!isOwner) return;
     
@@ -123,7 +142,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     );
   }
 
-  if (items.length === 0) {
+  if (visibleItems.length === 0) {
     return (
       <Card className="p-8 text-center">
         <p className="text-lg font-semibold mb-2">{t('interactions.no_archived')}</p>
@@ -134,7 +153,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      {items.map(item => (
+      {visibleItems.map(item => (
         <div key={item.id} className="relative">
           <ItemCard {...item} />
           

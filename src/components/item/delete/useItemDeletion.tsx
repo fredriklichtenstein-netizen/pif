@@ -93,7 +93,19 @@ export function useItemDeletion(
       operationCompleteRef.current = true;
       cleanupRealtimeConnections();
       document.body.style.pointerEvents = '';
-      
+
+      // Broadcast a global success event so any list (feed, archived grid, etc.)
+      // can perform an instant optimistic removal without prop drilling.
+      try {
+        document.dispatchEvent(
+          new CustomEvent("item-operation-success", {
+            detail: { itemId: numericId, operationType },
+          })
+        );
+      } catch (e) {
+        console.error("Failed to dispatch item-operation-success event:", e);
+      }
+
       const closeTimeout = setTimeout(() => {
         onClose();
         const successTimeout = setTimeout(() => {
