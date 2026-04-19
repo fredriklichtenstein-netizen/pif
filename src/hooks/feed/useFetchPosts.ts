@@ -6,6 +6,7 @@ import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 // Normalize item_type to match map marker expectations
 const normalizeItemType = (itemType: string): 'offer' | 'request' => {
