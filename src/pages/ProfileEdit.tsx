@@ -13,6 +13,7 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { useProfileAvatar } from "@/hooks/profile/useProfileAvatar";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
+import { usePifAddress } from "@/hooks/usePifAddress";
 
 function ProfileEdit() {
   const { user, isLoading } = useGlobalAuth();
@@ -30,6 +31,7 @@ function ProfileEdit() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const { setAvatar, avatarUrl, loading: avatarLoading, setAvatarUrl } = useProfileAvatar();
+  const { clearCache: clearPifAddressCache } = usePifAddress();
   
   useEffect(() => {
   }, [avatarUrl, user]);
@@ -136,6 +138,8 @@ if (location) {
         .eq("id", user.id);
 
       if (error) throw error;
+
+      clearPifAddressCache();
 
       toast({
         title: t('common.save_changes'),
