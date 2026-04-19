@@ -142,7 +142,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     );
   }
 
-  if (items.length === 0) {
+  if (visibleItems.length === 0) {
     return (
       <Card className="p-8 text-center">
         <p className="text-lg font-semibold mb-2">{t('interactions.no_archived')}</p>
@@ -153,7 +153,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      {items.map(item => (
+      {visibleItems.map(item => (
         <div key={item.id} className="relative">
           <ItemCard {...item} />
           
