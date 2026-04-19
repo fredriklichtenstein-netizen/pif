@@ -125,17 +125,72 @@ export function useItemDeletion(
           },
         });
       } else {
-        const { data: result, error: deleteError } = await supabase.rpc('delete_item_with_related_records', { 
-          p_item_id: numericId, p_reason: reason || null 
+        // Hard delete: defer the destructive RPC for 12s so the user can undo.
+        const UNDO_WINDOW_MS = 12000;
+        let cancelled = false;
+
+        // Optimistically broadcast removal so the item disappears from lists immediately.
+        try {
+          document.dispatchEvent(
+            new CustomEvent('item-operation-success', {
+              detail: { itemId: numericId, operationType: 'delete' },
+            })
+          );
+        } catch (e) {
+          console.error('Failed to dispatch optimistic delete event:', e);
+        }
+
+        const toastId = sonnerToast.warning(t('interactions.item_pending_delete_title'), {
+          description: t('interactions.item_pending_delete_description'),
+          duration: UNDO_WINDOW_MS,
+          action: {
+            label: t('interactions.undo'),
+            onClick: () => {
+              cancelled = true;
+              if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+              // Tell lists to put the item back.
+              document.dispatchEvent(
+                new CustomEvent('item-operation-undone', {
+                  detail: { itemId: numericId, operationType: 'delete' },
+                })
+              );
+              sonnerToast.success(t('interactions.delete_undone_title'), {
+                description: t('interactions.delete_undone_description'),
+              });
+            },
+          },
         });
-        if (deleteError) throw new Error(`Failed to delete item: ${deleteError.message || 'Unknown error'}`);
-        success = Boolean(result);
-        if (!success) throw new Error('Failed to delete item');
-        
-        toast({
-          title: t('interactions.item_deleted'),
-          description: t('interactions.item_permanently_deleted'),
-        });
+
+        const pendingDeleteTimer = setTimeout(async () => {
+          if (cancelled) return;
+          try {
+            const { data: result, error: deleteError } = await supabase.rpc('delete_item_with_related_records', {
+              p_item_id: numericId, p_reason: reason || null
+            });
+            if (deleteError) throw new Error(`Failed to delete item: ${deleteError.message || 'Unknown error'}`);
+            if (!Boolean(result)) throw new Error('Failed to delete item');
+
+            sonnerToast.success(t('interactions.item_deleted'), {
+              description: t('interactions.item_permanently_deleted'),
+              id: toastId,
+            });
+          } catch (err: any) {
+            console.error('Deferred delete failed:', err);
+            // Roll back optimistic removal so the item reappears.
+            document.dispatchEvent(
+              new CustomEvent('item-operation-undone', {
+                detail: { itemId: numericId, operationType: 'delete' },
+              })
+            );
+            sonnerToast.error(t('interactions.error_title'), {
+              description: err?.message || t('interactions.delete_error_description'),
+              id: toastId,
+            });
+          }
+        }, UNDO_WINDOW_MS);
+        timeoutRefs.current.push(pendingDeleteTimer);
+
+        success = true;
       }
 
       operationCompleteRef.current = true;
