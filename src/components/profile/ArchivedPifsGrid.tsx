@@ -256,8 +256,9 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
               <span className="font-medium">{t('interactions.archived_reason')}</span> {item.archived_reason}
             </div>
           )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
