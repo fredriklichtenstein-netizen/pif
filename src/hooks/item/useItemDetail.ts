@@ -24,16 +24,12 @@ export function useItemDetail(id: string) {
               .from('items')
               .select(`
                 *,
-                user_id,
                 profiles:user_id (
                   id,
                   first_name,
                   last_name,
                   avatar_url
-                ),
-                likes:likes(user_id),
-                interests:interests(user_id),
-                bookmarks:bookmarks(user_id)
+                )
               `)
               .eq('id', numericId)
               .single();
@@ -54,7 +50,7 @@ export function useItemDetail(id: string) {
         );
 
         if (error) {
-          console.error('Error fetching item detail:', error);
+          console.error('Supabase error fetching item:', JSON.stringify(error));
           throw error;
         }
         
