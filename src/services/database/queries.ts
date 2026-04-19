@@ -6,6 +6,8 @@ import { monitorQuery } from "./monitor";
 
 // Optimized query builders with monitoring
 export class OptimizedQueries {
+  private static interactionCountsRpcAvailable = true;
+
   // Get posts with optimized joins and filtering
   static async getPosts(options: {
     limit?: number;
@@ -63,6 +65,10 @@ export class OptimizedQueries {
     return monitorQuery('getInteractionCounts', () =>
       withRetry(async () => {
         if (itemIds.length === 0) return new Map();
+
+        if (!this.interactionCountsRpcAvailable) {
+          return this.getInteractionCountsFallback(itemIds);
+        }
         
         try {
           // Use our optimized RPC function
@@ -87,7 +93,12 @@ export class OptimizedQueries {
           
           return countsMap;
         } catch (error) {
-          console.error('Bulk interaction counts failed:', error);
+          if (error instanceof Error === false && typeof error === 'object' && error && 'code' in error && error.code === 'PGRST202') {
+            this.interactionCountsRpcAvailable = false;
+            console.warn('Bulk interaction counts RPC unavailable, using fallback queries instead.');
+          } else {
+            console.error('Bulk interaction counts failed:', error);
+          }
           // Fallback to individual queries with batching
           return await this.getInteractionCountsFallback(itemIds);
         }
