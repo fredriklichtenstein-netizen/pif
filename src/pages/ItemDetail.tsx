@@ -67,13 +67,7 @@ export default function ItemDetail() {
         
         localStorage.setItem('pif_share_visits', JSON.stringify(shareVisits));
         
-        // Show toast for successful share navigation
-        if (!redirectTo404 && !error && displayItem) {
-          toast({
-            title: "Shared item loaded",
-            description: `You're viewing an item shared with you`,
-          });
-        }
+        // Silent success — UI already shows the loaded item
       } catch (err) {
         console.error('Failed to track share analytics:', err);
       }
