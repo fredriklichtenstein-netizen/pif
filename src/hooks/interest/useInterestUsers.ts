@@ -11,7 +11,7 @@ export function useInterestUsers(itemId: number) {
     try {
       const { data, error } = await supabase
         .from("interests")
-        .select("id,user_id,status,message,created_at,users:profiles!interests_user_id_fkey(*)")
+        .select("id,user_id,status,created_at,users:profiles!interests_user_id_fkey(*)")
         .eq("item_id", itemId)
         .order("created_at", { ascending: false });
         
