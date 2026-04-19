@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { Camera, Upload, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UploadOptionsProps {
   onFileSelect: () => void;
