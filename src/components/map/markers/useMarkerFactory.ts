@@ -61,7 +61,7 @@ export function useMarkerFactory({
               clusterIndexRef.current.getClusterExpansionZoom(clusterId);
             map.flyTo({
               center: [lng, lat],
-              zoom: Math.min(expansionZoom, 16),
+              zoom: Math.min(expansionZoom + 0.5, 17),
               duration: 500,
             });
           }

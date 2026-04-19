@@ -87,7 +87,7 @@ export function useClusterInit({
 
       clusterIndexRef.current = new Supercluster({
         radius: 60,
-        maxZoom: 16,
+        maxZoom: 14,
         minZoom: 0,
         minPoints: 2,
       });
