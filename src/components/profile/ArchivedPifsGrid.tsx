@@ -14,6 +14,8 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<number | null>(null);
+  // Track items removed via the global delete dialog so they disappear instantly.
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
