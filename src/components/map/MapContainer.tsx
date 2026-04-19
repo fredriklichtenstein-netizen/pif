@@ -150,6 +150,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             onDistanceChange={setSelectedDistance}
             userLocation={locationTracking.userLocation}
             onRequestLocation={locationTracking.goToMyLocation}
+            onUsePifAddress={locationTracking.setManualLocation}
           />
 
           <DistanceRings

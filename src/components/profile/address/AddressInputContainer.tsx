@@ -7,6 +7,7 @@ import { useAddress } from "@/hooks/address/useAddress";
 import { AddressSuggestions } from "./AddressSuggestions";
 import { AddressMap } from "./AddressMap";
 import { AddressSearchBar } from "./AddressSearchBar";
+import { UsePifAddressButton } from "./UsePifAddressButton";
 import { useTranslation } from "react-i18next";
 
 interface AddressInputProps {
@@ -54,15 +55,27 @@ export function AddressInputContainer({
     }
   };
 
+  const handlePifAddressSelect = async (address: string, coordinates: { lat: number; lng: number }) => {
+    setSuggestions([]);
+    onChange(address, coordinates);
+    // Trigger the map preview using the saved coordinates by also asking handleShowMap to show
+    await handleShowMap(address);
+  };
+
   return (
     <div className="space-y-4 relative">
       {!hideSearch && (
-        <AddressSearchBar 
-          value={value}
-          onAddressChange={handleAddressInput}
-          onLocationClick={handleUseCurrentLocation}
-          locationButtonLabel={locationButtonLabel}
-        />
+        <>
+          <AddressSearchBar 
+            value={value}
+            onAddressChange={handleAddressInput}
+            onLocationClick={handleUseCurrentLocation}
+            locationButtonLabel={locationButtonLabel}
+          />
+          <div className="-mt-2">
+            <UsePifAddressButton onSelect={handlePifAddressSelect} />
+          </div>
+        </>
       )}
 
       {hideSearch && (

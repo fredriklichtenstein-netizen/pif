@@ -28,6 +28,7 @@ interface MapFiltersProps {
   onDistanceChange: (distance: number | null) => void;
   userLocation: [number, number] | null;
   onRequestLocation?: () => void;
+  onUsePifAddress?: (coords: [number, number]) => void;
 }
 
 // Sorted alphabetically by Swedish display name
@@ -54,7 +55,8 @@ export const MapFilters = ({
   selectedDistance,
   onDistanceChange,
   userLocation,
-  onRequestLocation
+  onRequestLocation,
+  onUsePifAddress
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
@@ -133,6 +135,7 @@ export const MapFilters = ({
           onDistanceChange={onDistanceChange}
           userLocation={userLocation}
           onRequestLocation={onRequestLocation}
+          onUsePifAddress={onUsePifAddress}
         />
       </div>
 
