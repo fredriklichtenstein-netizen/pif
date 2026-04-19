@@ -72,7 +72,7 @@ export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps
     } catch (error) {
       console.error('Error deleting post:', error);
       toast({
-        title: t('post.error', 'Fel'),
+        title: t('post.error'),
         description: t('interactions.delete_post_error'),
         variant: "destructive",
       });
