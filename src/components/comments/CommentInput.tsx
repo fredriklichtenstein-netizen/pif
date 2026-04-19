@@ -20,7 +20,8 @@ interface CommentInputProps {
 export function CommentInput({ onSubmit, placeholder = "Write a comment...", disabled = false }: CommentInputProps) {
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
   const navigate = useNavigate();
   const { t } = useTranslation();
 
