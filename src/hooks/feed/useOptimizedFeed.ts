@@ -141,6 +141,7 @@ export function useOptimizedFeed() {
     return {
       posts: MOCK_POSTS as unknown as Post[],
       fadingIds: new Set<string>(),
+      restoringIds: new Set<string>(),
       isLoading: false,
       isLoadingMore: false,
       error: null,
