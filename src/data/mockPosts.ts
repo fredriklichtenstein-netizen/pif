@@ -33,7 +33,7 @@ export const MOCK_POSTS = [
     coordinates: { lng: 18.0350, lat: 59.3350 },
     category: "Sports",
     condition: null,
-    item_type: "wish",
+    item_type: "request",
     postedBy: {
       id: "mock-user-2",
       name: "Erik L.",
@@ -69,7 +69,7 @@ export const MOCK_POSTS = [
     coordinates: { lng: 18.0850, lat: 59.3380 },
     category: "Other",
     condition: null,
-    item_type: "wish",
+    item_type: "request",
     postedBy: {
       id: "mock-user-4",
       name: "Johan B.",
