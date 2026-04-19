@@ -88,19 +88,46 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
     fetchArchivedItems();
   }, [userId]);
 
-  // Listen for global delete success events so deleted items disappear instantly.
+  // Listen for global delete success events so deleted items animate out, then disappear.
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
       if (!detail || detail.operationType !== 'delete') return;
-      setDeletedIds(prev => {
+      const idStr = String(detail.itemId);
+
+      setFadingIds(prev => {
+        if (prev.has(idStr)) return prev;
         const next = new Set(prev);
-        next.add(String(detail.itemId));
+        next.add(idStr);
         return next;
       });
+
+      const existing = fadeTimersRef.current.get(idStr);
+      if (existing) clearTimeout(existing);
+
+      const timer = setTimeout(() => {
+        setDeletedIds(prev => {
+          const next = new Set(prev);
+          next.add(idStr);
+          return next;
+        });
+        setFadingIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
+        fadeTimersRef.current.delete(idStr);
+      }, FADE_DURATION_MS);
+
+      fadeTimersRef.current.set(idStr, timer);
     };
     document.addEventListener('item-operation-success', handler as EventListener);
-    return () => document.removeEventListener('item-operation-success', handler as EventListener);
+    return () => {
+      document.removeEventListener('item-operation-success', handler as EventListener);
+      fadeTimersRef.current.forEach(t => clearTimeout(t));
+      fadeTimersRef.current.clear();
+    };
   }, []);
 
   const visibleItems = items.filter(item => !deletedIds.has(String(item.id)));
