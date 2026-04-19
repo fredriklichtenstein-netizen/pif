@@ -70,10 +70,6 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
       const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
       if (uploadedUrls.length > 0) {
         onImagesUploaded(uploadedUrls);
-        toast({
-          title: t('interactions.upload_successful'),
-          description: t('interactions.upload_successful_description', { count: uploadedUrls.length }),
-        });
       } else if (files.length > 0 && uploadedUrls.length === 0) {
         toast({
           title: t('interactions.upload_failed'),
