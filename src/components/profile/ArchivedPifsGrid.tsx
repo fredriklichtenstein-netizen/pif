@@ -169,7 +169,27 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         description: t('interactions.item_restored_description'),
       });
 
-      setItems(items.filter(item => item.id !== itemId));
+      // Fade the restored item out, then remove from the local list.
+      const idStr = String(itemId);
+      setFadingIds(prev => {
+        if (prev.has(idStr)) return prev;
+        const next = new Set(prev);
+        next.add(idStr);
+        return next;
+      });
+      const existing = fadeTimersRef.current.get(idStr);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(() => {
+        setItems(prev => prev.filter(item => item.id !== itemId));
+        setFadingIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
+        fadeTimersRef.current.delete(idStr);
+      }, FADE_DURATION_MS);
+      fadeTimersRef.current.set(idStr, timer);
     } catch (err: any) {
       console.error("Error restoring item:", err);
       toast({
@@ -202,9 +222,15 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      {visibleItems.map(item => (
-        <div key={item.id} className="relative">
-          <ItemCard {...item} />
+      {visibleItems.map(item => {
+        const isFading = fadingIds.has(String(item.id));
+        return (
+          <div
+            key={item.id}
+            className={`relative${isFading ? ' animate-fade-out-collapse pointer-events-none' : ''}`}
+            aria-hidden={isFading || undefined}
+          >
+            <ItemCard {...item} />
 
           {isOwner && (
             <div className="absolute top-3 right-3 z-10">
