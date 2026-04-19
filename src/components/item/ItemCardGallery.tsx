@@ -126,15 +126,15 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
       {imageUrls.length > 1 && (
         <>
           <button 
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
-            onClick={handlePrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
+            onClick={(e) => { e.stopPropagation(); handlePrev(); }}
             aria-label={t('interactions.previous_image')}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button 
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white"
-            onClick={handleNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 text-gray-800 hover:bg-white z-10"
+            onClick={(e) => { e.stopPropagation(); handleNext(); }}
             aria-label={t('interactions.next_image')}
           >
             <ChevronRight className="h-4 w-4" />
@@ -149,6 +149,14 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
           </div>
         </>
       )}
+
+      <ImageLightbox
+        images={imageUrls}
+        initialIndex={currentImageIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        alt={title}
+      />
     </div>
   );
 }
