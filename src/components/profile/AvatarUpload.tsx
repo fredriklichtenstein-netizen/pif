@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
 import { getCroppedImg } from "@/utils/image";
+import { compressImage } from "@/utils/image/compress";
 import { Button } from "../ui/button";
 import { useTranslation } from "react-i18next";
 
@@ -58,9 +59,11 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
     try {
       const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels);
       if (croppedImage) {
-        const tempPreviewUrl = URL.createObjectURL(croppedImage);
+        // Resize (max 1600px) and convert to WEBP before upload
+        const compressed = await compressImage(croppedImage, { maxDimension: 1600, quality: 0.85 });
+        const tempPreviewUrl = URL.createObjectURL(compressed);
         setPreviewUrl(tempPreviewUrl);
-        onFileChange(croppedImage);
+        onFileChange(compressed);
         setShowCropper(false);
         setTempImage(null);
         setIsEditing(false);
