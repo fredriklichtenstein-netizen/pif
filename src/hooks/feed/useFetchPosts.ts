@@ -104,7 +104,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
           description: item.description,
           images: item.images,
           location: item.location,
-          coordinates: parseCoordinatesFromDB(item.coordinates),
+          coordinates: parseCoordinatesFromDB(item.coordinates as any),
           category: item.category,
           condition: item.condition,
           measurements: item.measurements,
