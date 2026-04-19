@@ -19,10 +19,6 @@ export function SignOutButton() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       navigate("/auth");
-      toast({
-        title: t('settings.signed_out'),
-        description: t('settings.signed_out_description'),
-      });
     } catch (error: any) {
       toast({
         title: t('settings.error_signing_out'),
