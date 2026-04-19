@@ -69,11 +69,6 @@ export function useItemBookmark(itemId: number | string) {
           .eq('item_id', numericItemId);
           
         if (error) throw error;
-        
-        toast({
-          title: "Removed from saved items",
-          description: "This item has been removed from your saved items"
-        });
       } else {
         // Add bookmark
         const { error } = await supabase
@@ -84,11 +79,6 @@ export function useItemBookmark(itemId: number | string) {
           });
           
         if (error) throw error;
-        
-        toast({
-          title: "Added to saved items",
-          description: "This item has been added to your saved items"
-        });
       }
       
       setIsBookmarked(!isBookmarked);

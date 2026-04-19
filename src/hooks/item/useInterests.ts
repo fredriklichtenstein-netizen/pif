@@ -100,13 +100,7 @@ export const useInterests = (id: string, userId?: string | null) => {
 
   // Demo mode handler
   const handleShowInterestDemo = () => {
-    const newState = demoStore.toggleInterest(id);
-    toast({
-      title: newState ? "Interest shown" : "Interest removed",
-      description: newState 
-        ? "You've shown interest in this item" 
-        : "You are no longer interested in this item",
-    });
+    demoStore.toggleInterest(id);
   };
 
   return {

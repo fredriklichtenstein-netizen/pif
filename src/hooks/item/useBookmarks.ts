@@ -57,13 +57,7 @@ export const useBookmarks = (id: string, userId?: string | null) => {
 
   const handleBookmark = async () => {
     if (DEMO_MODE) {
-      const newState = demoStore.toggleBookmark(id);
-      toast({
-        title: newState ? t('interactions.saved_toast') : t('interactions.removed_saved_toast'),
-        description: newState 
-          ? t('interactions.saved_description')
-          : t('interactions.removed_saved_description'),
-      });
+      demoStore.toggleBookmark(id);
       return;
     }
     
@@ -84,11 +78,6 @@ export const useBookmarks = (id: string, userId?: string | null) => {
         if (error) throw error;
         
         setIsBookmarked(false);
-        
-        toast({
-          title: t('interactions.removed_saved_toast'),
-          description: t('interactions.removed_saved_description'),
-        });
       } else {
         const { error } = await supabase
           .from('bookmarks')
@@ -99,11 +88,6 @@ export const useBookmarks = (id: string, userId?: string | null) => {
         if (error) throw error;
         
         setIsBookmarked(true);
-        
-        toast({
-          title: t('interactions.saved_toast'),
-          description: t('interactions.saved_description'),
-        });
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);

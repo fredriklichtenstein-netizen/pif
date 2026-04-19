@@ -54,11 +54,6 @@ export const useCommentCreate = (
         
         setComments([...comments, newComment]);
         
-        toast({
-          title: "Comment added",
-          description: "Your comment has been posted",
-        });
-        
         setIsLoading(false);
         return;
       }
@@ -104,12 +99,6 @@ export const useCommentCreate = (
           console.error("Failed to store pending comment in localStorage:", err);
         }
         
-        // Show success toast
-        toast({
-          title: "Comment saved locally",
-          description: "Your comment will be uploaded when connection improves",
-        });
-        
         setIsLoading(false);
         return;
       }
@@ -149,11 +138,6 @@ export const useCommentCreate = (
         // Create a new array with the new comment added (avoid direct mutation)
         const updatedComments = [...comments, newComment];
         setComments(updatedComments);
-        
-        toast({
-          title: "Comment posted",
-          description: "Your comment has been added successfully",
-        });
       }
     } catch (error) {
       console.error("Error adding comment:", error);

@@ -23,25 +23,17 @@ export const useInterestActions = (
       if (wasInterested) {
         await removeInterest(numericId, userId);
         await fetchInterestedUsersInternal(numericId);
-        toast({
-          title: "Interest removed",
-          description: "You are no longer interested in this item",
-        });
       } else {
         await addInterest(numericId, userId);
         await fetchInterestedUsersInternal(numericId);
-        toast({
-          title: "Interest shown",
-          description: "You've shown interest in this item",
-        });
       }
     } catch (error) {
       console.error('Error toggling interest:', error);
       setShowInterest(wasInterested);
       
       toast({
-        title: "Error",
-        description: "Failed to update interest status. Please try again.",
+        title: t('post.error', 'Error'),
+        description: t('interactions.interest_error', 'Failed to update interest status. Please try again.'),
         variant: "destructive",
       });
     }
