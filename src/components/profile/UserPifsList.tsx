@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InterestUsersPopover } from "./interest/InterestUsersPopover";
@@ -23,7 +23,7 @@ export function UserPifsList({
 
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchItems = useCallback(() => {
     if (!userId) return;
     setLoading(true);
     import("@/integrations/supabase/client").then(({ supabase }) => {
@@ -38,6 +38,10 @@ export function UserPifsList({
         });
     });
   }, [userId]);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
   const handleEdit = (itemId: number) => {
     navigate(`/post/edit/${itemId}`);
