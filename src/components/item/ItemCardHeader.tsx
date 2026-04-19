@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
 import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil } from "lucide-react";
+import { useItemSharing } from "@/hooks/item/useItemSharing";
 
 interface ItemCardHeaderProps {
   postedBy: {
