@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ArchiveRestore, Loader2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useTranslation } from "react-i18next";
+
+const FADE_DURATION_MS = 320;
 
 export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
