@@ -70,7 +70,7 @@ export function useOptimizedFeed() {
     enabled: !DEMO_MODE // Skip query in demo mode
   });
 
-  // Aggregate all pages of posts
+  // Aggregate all pages of posts, then strip optimistically-removed items.
   const allPosts = useMemo(() => {
     if (DEMO_MODE) return [];
     const posts: Post[] = [];
@@ -80,8 +80,9 @@ export function useOptimizedFeed() {
         posts.push(...pageData);
       }
     }
-    return posts;
-  }, [page, queryClient, currentPageData]);
+    if (removedIds.size === 0) return posts;
+    return posts.filter(p => !removedIds.has(String(p.id)));
+  }, [page, queryClient, currentPageData, removedIds]);
 
   // Load more posts
   const loadMore = useCallback(() => {
