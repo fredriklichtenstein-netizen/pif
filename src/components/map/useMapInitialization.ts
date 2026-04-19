@@ -179,11 +179,7 @@ export const useMapInitialization = (mapboxToken: string) => {
       return;
     }
 
-    // Check network connectivity
-    const hasNetwork = await checkNetworkConnectivity();
-    if (!hasNetwork) {
-      console.warn("⚠️ [Map Init] Network connectivity issues detected, proceeding anyway...");
-    }
+    // Skip pre-init network probe — let map init surface real errors
 
     try {
       // Set access token

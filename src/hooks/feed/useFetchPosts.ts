@@ -6,6 +6,7 @@ import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
+import { parseCoordinatesFromDB } from "@/types/post";
 
 // Normalize item_type to match map marker expectations
 const normalizeItemType = (itemType: string): 'offer' | 'request' => {
@@ -103,10 +104,11 @@ export function useFetchPosts(options = { includeArchived: false }) {
           description: item.description,
           images: item.images,
           location: item.location,
-          coordinates: item.coordinates,
+          coordinates: parseCoordinatesFromDB(item.coordinates as any),
           category: item.category,
           condition: item.condition,
           measurements: item.measurements,
+          item_type: normalizeItemType(item.item_type),
           user_id: item.user_id,
           status: item.pif_status, 
           archived_at: item.archived_at,
