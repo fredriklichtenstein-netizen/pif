@@ -101,7 +101,7 @@ export function useItemDetailPage() {
   }, [item, localItem, toast]);
 
   // If there's no item data at all, return redirect flag
-  if (!item && !localItem && hasCheckedLocalStorage) {
+  if (!item && !localItem && hasCheckedLocalStorage && !isLoading) {
     return { redirectTo404: true };
   }
 
