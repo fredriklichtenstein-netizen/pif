@@ -326,6 +326,7 @@
     "request_timed_out": "Request timed out",
     "check_interested_timeout_description": "Could not check who's interested in this item",
     "item_archived_restore": "The item has been archived and can be restored later",
+    "undo": "Undo",
     "item_permanently_deleted": "The item has been permanently deleted",
     "delete_error_description": "Failed to complete operation. Please try again.",
     "map_requires_token_title": "Map requires a Mapbox token",

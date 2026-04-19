@@ -326,6 +326,7 @@
     "request_timed_out": "Förfrågan tog för lång tid",
     "check_interested_timeout_description": "Kunde inte kontrollera vem som är intresserad av detta objekt",
     "item_archived_restore": "Objektet har arkiverats och kan återställas senare",
+    "undo": "Ångra",
     "item_permanently_deleted": "Objektet har raderats permanent",
     "delete_error_description": "Kunde inte slutföra åtgärden. Försök igen.",
     "map_requires_token_title": "Kartan kräver en Mapbox-token",
