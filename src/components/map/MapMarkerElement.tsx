@@ -43,6 +43,8 @@ const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDiv
   markerDot.style.borderRadius = "50%";
   markerDot.style.border = "3px solid white";
   markerDot.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+  markerDot.style.transition = "box-shadow 0.2s ease, transform 0.2s ease";
+  markerDot.classList.add("marker-dot");
   markerDot.style.display = "flex";
   markerDot.style.alignItems = "center";
   markerDot.style.justifyContent = "center";
@@ -123,6 +125,13 @@ const ensureAnimationStyles = (() => {
         }
         .marker-exit {
           animation: markerPopOut 0.2s ease-out forwards;
+        }
+        .cursor-pointer:hover .marker-dot {
+          transform: scale(1.12);
+          box-shadow:
+            0 2px 6px rgba(0,0,0,0.3),
+            0 0 0 4px rgba(255,255,255,0.85),
+            0 0 0 6px rgba(0,0,0,0.12);
         }
       `;
       document.head.appendChild(style);
