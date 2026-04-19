@@ -3,6 +3,7 @@ import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Image as ImageIcon, Camera } from "lucide-react";
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImageUploadAreaProps {
   isRequest: boolean;
