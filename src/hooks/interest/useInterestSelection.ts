@@ -15,7 +15,7 @@ export function useInterestSelection() {
     try {
       await supabase
         .from("interests")
-        .update({ status: "selected", selected_at: new Date().toISOString() })
+        .update({ status: "selected" })
         .eq("id", interestId);
         
       await supabase
