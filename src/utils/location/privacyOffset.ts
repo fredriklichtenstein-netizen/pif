@@ -1,7 +1,6 @@
 
 import { isUrbanArea } from "./urbanDetection";
 import { isWaterLocation } from "./waterDetection";
-import { getCachedCoordinates, cacheCoordinates } from "./coordinateCache";
 
 /**
  * Adds privacy offset to coordinates based on urban density
@@ -22,12 +21,11 @@ export async function addLocationPrivacy(
       console.error("Invalid coordinates for privacy calculation:", { lng, lat });
       throw new Error("Invalid coordinates provided for privacy calculation");
     }
-    // Check if we have cached coordinates for this location
-    const cached = getCachedCoordinates(lng, lat);
-    if (cached) {
-      return cached;
-    }
-    
+    // Note: Coordinate caching intentionally removed.
+    // Caching by source (lng,lat) caused multiple posts sharing the same
+    // source address to receive identical offsets, stacking pins on the map.
+    // Each call now produces a fresh independent offset.
+
     // Check if location is in an urban area (more anonymization needed)
     const isUrban = await isUrbanArea(lat, lng, undefined, map ?? undefined);
     
@@ -75,11 +73,7 @@ export async function addLocationPrivacy(
       
       attempts++;
     }
-    // Cache the result
-    const result: [number, number] = [adjustedLng, adjustedLat];
-    cacheCoordinates(lng, lat, result);
-    
-    return result;
+    return [adjustedLng, adjustedLat];
   } catch (error) {
     console.error('Error in privacy offset calculation:', error);
     // In case of error, return original coordinates with minimal offset
