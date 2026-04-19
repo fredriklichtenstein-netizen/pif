@@ -102,6 +102,25 @@ export function useOptimizedFeed() {
         next.delete(idStr);
         return next;
       });
+
+      // Mark as restoring so the wrapper applies the fade-in class briefly.
+      setRestoringIds(prev => {
+        const next = new Set(prev);
+        next.add(idStr);
+        return next;
+      });
+      const existingRestore = restoreTimersRef.current.get(idStr);
+      if (existingRestore) clearTimeout(existingRestore);
+      const restoreTimer = setTimeout(() => {
+        setRestoringIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
+        restoreTimersRef.current.delete(idStr);
+      }, RESTORE_FADE_MS);
+      restoreTimersRef.current.set(idStr, restoreTimer);
     };
     document.addEventListener('item-operation-undone', undoHandler as EventListener);
 
@@ -111,6 +130,8 @@ export function useOptimizedFeed() {
       // Clear any pending fade timers on unmount.
       fadeTimersRef.current.forEach(t => clearTimeout(t));
       fadeTimersRef.current.clear();
+      restoreTimersRef.current.forEach(t => clearTimeout(t));
+      restoreTimersRef.current.clear();
     };
   }, []);
 
