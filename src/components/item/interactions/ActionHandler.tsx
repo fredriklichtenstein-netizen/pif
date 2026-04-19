@@ -16,11 +16,6 @@ export const ActionHandler = ({ children }: ActionHandlerProps) => {
   
   const handleAction = async (action: () => void, requiresAuth: boolean = true) => {
     if (requiresAuth && !user) {
-      toast({
-        title: t('interactions.auth_required_title'),
-        description: t('interactions.auth_required_description', { action: t('interactions.sign_in') }),
-        variant: "destructive",
-      });
       navigate("/auth");
       return;
     }
