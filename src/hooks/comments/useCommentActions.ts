@@ -84,10 +84,6 @@ export const useCommentActions = (
         deleteDemoComment(itemId, commentId);
         const updatedComments = comments.filter(c => c.id !== commentId);
         setComments(updatedComments);
-        toast({
-          title: t('interactions.comment_deleted'),
-          description: t('interactions.comment_deleted_description'),
-        });
         return true;
       }
       

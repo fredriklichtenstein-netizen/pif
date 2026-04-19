@@ -127,11 +127,7 @@ export const useLikes = (id: string, userId?: string | null) => {
 
   const handleLike = async () => {
     if (DEMO_MODE) {
-      const newState = demoStore.toggleLike(id);
-      toast({
-        title: newState ? t('interactions.liked_toast') : t('interactions.like_removed_toast'),
-        description: newState ? t('interactions.liked_description') : t('interactions.like_removed_description'),
-      });
+      demoStore.toggleLike(id);
       return;
     }
     

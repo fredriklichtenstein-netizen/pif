@@ -17,7 +17,6 @@ export const useItemSharing = (itemId: string) => {
     }
 
     const shareUrl = `${SHARE_BASE_URL}/item/${itemId}`;
-    console.log('Share URL:', shareUrl, 'itemId:', itemId, typeof itemId);
     setIsSharing(true);
 
     try {
@@ -30,11 +29,8 @@ export const useItemSharing = (itemId: string) => {
         return;
       }
 
-      // Desktop: copy to clipboard
+      // Desktop: copy to clipboard silently
       await navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: t('interactions.link_copied', 'Länk kopierad till urklipp!'),
-      });
     } catch (error) {
       // User cancelled native share — silent
       if ((error as Error)?.name === 'AbortError') return;
