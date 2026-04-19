@@ -72,15 +72,17 @@ export function ImageUploadArea({
             <span>{t('post.choose_image')}</span>
           </Button>
 
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => cameraInputRef.current?.click()}
-            className="flex items-center space-x-2"
-          >
-            <Camera className="h-4 w-4" />
-            <span>{t('interactions.take_photo')}</span>
-          </Button>
+          {isMobile && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => cameraInputRef.current?.click()}
+              className="flex items-center space-x-2"
+            >
+              <Camera className="h-4 w-4" />
+              <span>{t('interactions.take_photo')}</span>
+            </Button>
+          )}
         </div>
 
         <input
@@ -95,6 +97,7 @@ export function ImageUploadArea({
           type="file"
           accept="image/*"
           capture="environment"
+          onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
           onChange={onImageUpload}
           className="hidden"
         />
