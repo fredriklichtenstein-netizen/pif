@@ -265,8 +265,12 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
           )}
 
           {item.archived_reason && (
-            <div className="mt-2 text-sm text-muted-foreground italic px-3">
-              <span className="font-medium">{t('interactions.archived_reason')}</span> {item.archived_reason}
+            <div className="mt-1.5 px-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+              <Archive className="h-3 w-3 mt-0.5 shrink-0 opacity-70" aria-hidden="true" />
+              <span className="leading-snug">
+                <span className="font-medium">{t('interactions.archived_reason')}</span>{' '}
+                <span className="italic">{item.archived_reason}</span>
+              </span>
             </div>
           )}
           </div>
