@@ -76,20 +76,6 @@ const checkBrowserCapabilities = () => {
   return results;
 };
 
-// Network connectivity check
-const checkNetworkConnectivity = async (): Promise<boolean> => {
-  try {
-    const response = await fetch('https://api.mapbox.com/v1/ping', {
-      method: 'GET',
-      mode: 'no-cors',
-      cache: 'no-cache'
-    });
-    return true;
-  } catch (error) {
-    console.error("🚨 [Map Init] Network connectivity check failed:", error);
-    return false;
-  }
-};
 
 // Container validation
 const validateContainer = (container: HTMLDivElement): boolean => {
