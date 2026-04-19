@@ -67,6 +67,7 @@ export function FeedItemList({
   isLoading = false,
   isShowingMockData = false,
   fadingIds,
+  restoringIds,
 }: FeedItemListProps) {
   const [refreshKey, setRefreshKey] = useState(Date.now());
   const [errorState, setErrorState] = useState<{ hasError: boolean, errorMessage: string }>({ 
