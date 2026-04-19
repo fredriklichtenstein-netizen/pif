@@ -66,16 +66,12 @@ export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps
         .eq('id', id);
 
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Post deleted successfully",
-      });
+      // Success is reflected by the post disappearing — no toast needed
     } catch (error) {
       console.error('Error deleting post:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete post. Please try again.",
+        title: t('post.error', 'Fel'),
+        description: t('interactions.delete_post_error', 'Kunde inte radera inlägget. Försök igen.'),
         variant: "destructive",
       });
     } finally {

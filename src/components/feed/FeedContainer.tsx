@@ -201,23 +201,12 @@ export function FeedContainer() {
     // Apply optimistic UI update if we have item ID and operation type
     if (itemId && operationType) {
       recordOperation(itemId, operationType);
-      
-      // Show toast notification
-      const messages = {
-        delete: "Item has been permanently deleted",
-        archive: "Item has been archived and can be restored later",
-        restore: "Item has been restored"
-      };
-      
-      toast({
-        title: `Success! ${operationType === 'archive' ? 'Archived' : operationType === 'delete' ? 'Deleted' : 'Restored'}`,
-        description: messages[operationType],
-      });
+      // Toast intentionally removed — UI reflects the action (item disappears/restored)
     }
     
     // Still do a background refresh after a delay for data consistency
     debouncedRefresh(1500);
-  }, [debouncedRefresh, recordOperation, toast]);
+  }, [debouncedRefresh, recordOperation]);
 
   // Cleanup function to prevent memory leaks
   useEffect(() => {

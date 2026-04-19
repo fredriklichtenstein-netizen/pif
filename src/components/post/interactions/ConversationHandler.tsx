@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ConversationHandlerProps {
@@ -18,6 +19,7 @@ export function ConversationHandler({
   const [isMessaging, setIsMessaging] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleStartConversation = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,8 +55,8 @@ export function ConversationHandler({
     } catch (error) {
       console.error('Error starting conversation:', error);
       toast({
-        title: "Error",
-        description: "Failed to start conversation. Please try again.",
+        title: t('post.error', 'Fel'),
+        description: t('interactions.conversation_start_error', 'Kunde inte starta konversation. Försök igen.'),
         variant: "destructive",
       });
     } finally {

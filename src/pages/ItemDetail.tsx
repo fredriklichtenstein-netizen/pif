@@ -91,11 +91,8 @@ export default function ItemDetail() {
           maxAttempts: 3,
           initialDelay: 500,
           backoffFactor: 2,
-          onRetry: (attempt, delay) => {
-            toast({
-              title: "Retrying...",
-              description: `Attempt ${attempt} to load the item`
-            });
+          onRetry: () => {
+            // Silent retry
           }
         }
       );
@@ -103,8 +100,8 @@ export default function ItemDetail() {
       console.error('Failed to load item after multiple retries:', error);
       setLoadFailed(true);
       toast({
-        title: "Loading failed",
-        description: "Could not load the item after multiple attempts",
+        title: t('post.error', 'Fel'),
+        description: t('interactions.item_load_failed', 'Kunde inte ladda objektet'),
         variant: "destructive"
       });
     }

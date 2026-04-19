@@ -109,10 +109,6 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     
     if (DEMO_MODE) {
       toggleInterest(selectedInterestId);
-      toast({
-        title: t('interactions.interest_removed'),
-        description: t('interactions.interest_removed_description'),
-      });
       setRemoving(false);
       setRegretDialogOpen(false);
       return;
@@ -125,11 +121,6 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
         .eq("id", typeof selectedInterestId === 'string' ? parseInt(selectedInterestId, 10) : selectedInterestId);
         
       if (error) throw error;
-      
-      toast({
-        title: t('interactions.interest_removed'),
-        description: t('interactions.interest_removed_description'),
-      });
       
       fetchInterests();
     } catch (err) {
