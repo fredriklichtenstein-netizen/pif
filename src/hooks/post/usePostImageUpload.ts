@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { compressImage } from "@/utils/image/compress";
 
 /**
  * Hook for handling image uploads for posts
@@ -29,8 +30,10 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
       
       let completedUploads = 0;
       
-      const uploadPromises = files.map(async (file) => {
+      const uploadPromises = files.map(async (originalFile) => {
         try {
+          // Compress: resize to max 1600px and convert to WEBP
+          const file = await compressImage(originalFile, { maxDimension: 1600, quality: 0.82 });
           const timestamp = new Date().getTime();
           const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
 
@@ -39,6 +42,7 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
             .upload(filePath, file, {
               cacheControl: "3600",
               upsert: false,
+              contentType: file.type,
             });
 
           if (error) {
