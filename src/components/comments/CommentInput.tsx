@@ -7,7 +7,7 @@ import { Smile } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
-import { useAuth } from "@/hooks/useAuth";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -20,8 +20,7 @@ interface CommentInputProps {
 export function CommentInput({ onSubmit, placeholder = "Write a comment...", disabled = false }: CommentInputProps) {
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const { session } = useAuth();
-  const user = session?.user;
+  const { user } = useGlobalAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
