@@ -9,6 +9,7 @@ interface LocationTrackingResult {
   userLocation: [number, number] | null;
   isLoadingLocation: boolean;
   goToMyLocation: () => void;
+  setManualLocation: (coords: [number, number]) => void;
 }
 
 export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingResult => {
@@ -56,5 +57,17 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     );
   };
 
-  return { userLocation, isLoadingLocation, goToMyLocation };
+  const setManualLocation = (coords: [number, number]) => {
+    setUserLocation(coords);
+    if (map) {
+      updateLocationMarker(coords);
+      try {
+        map.flyTo({ center: coords, zoom: 13, duration: 1500, essential: true });
+      } catch (e) {
+        console.error("Error flying to manual location:", e);
+      }
+    }
+  };
+
+  return { userLocation, isLoadingLocation, goToMyLocation, setManualLocation };
 };

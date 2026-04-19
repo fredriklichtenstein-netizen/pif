@@ -1,14 +1,18 @@
 
 import { useMemo } from 'react';
-import { MapPin, ChevronRight } from 'lucide-react';
+import { MapPin, ChevronRight, Home } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { usePifAddress } from '@/hooks/usePifAddress';
+import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
 interface DistanceFiltersProps {
   selectedDistance: number | null;
   onDistanceChange: (distance: number | null) => void;
   userLocation: [number, number] | null;
   onRequestLocation?: () => void;
+  onUsePifAddress?: (coords: [number, number]) => void;
 }
 
 // Slider steps: 1, 2, 3, 5, 10, 15, 25, null(All)
@@ -26,8 +30,11 @@ function stepToDistance(step: number): number | null {
   return DISTANCE_STEPS[step];
 }
 
-export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocation, onRequestLocation }: DistanceFiltersProps) => {
+export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocation, onRequestLocation, onUsePifAddress }: DistanceFiltersProps) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const { user } = useGlobalAuth();
+  const { fetchPifAddress, isLoading: pifLoading } = usePifAddress();
 
   const currentStep = useMemo(() => distanceToStep(selectedDistance), [selectedDistance]);
 
@@ -35,19 +42,51 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
     onDistanceChange(stepToDistance(value[0]));
   };
 
+  const handleUsePifAddress = async () => {
+    if (!user) {
+      toast({
+        title: t('interactions.pif_address_not_found_title'),
+        description: t('interactions.pif_address_login_required'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    const result = await fetchPifAddress();
+    if (!result.coordinates) {
+      toast({
+        title: t('interactions.pif_address_not_found_title'),
+        description: t('interactions.pif_address_not_found_description'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    onUsePifAddress?.([result.coordinates.lng, result.coordinates.lat]);
+  };
+
   if (!userLocation) {
     return (
-      <button
-        onClick={onRequestLocation}
-        className="flex items-center gap-2 text-muted-foreground px-1 cursor-pointer hover:text-foreground transition-colors group"
-        type="button"
-      >
-        <MapPin className="h-3.5 w-3.5 shrink-0" />
-        <span className="text-xs underline underline-offset-2 decoration-muted-foreground/50 group-hover:decoration-foreground/70">
-          {t('interactions.enable_location_filters')}
-        </span>
-        <ChevronRight className="h-3 w-3 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
-      </button>
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={onRequestLocation}
+          className="flex items-center gap-2 text-muted-foreground px-1 cursor-pointer hover:text-foreground transition-colors group"
+          type="button"
+        >
+          <MapPin className="h-3.5 w-3.5 shrink-0" />
+          <span className="text-xs underline underline-offset-2 decoration-muted-foreground/50 group-hover:decoration-foreground/70">
+            {t('interactions.enable_location_filters')}
+          </span>
+          <ChevronRight className="h-3 w-3 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
+        </button>
+        <button
+          onClick={handleUsePifAddress}
+          disabled={pifLoading}
+          className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+          type="button"
+        >
+          <Home className="h-3 w-3 shrink-0" />
+          <span className="text-xs">{t('interactions.use_pif_address_short')}</span>
+        </button>
+      </div>
     );
   }
 
