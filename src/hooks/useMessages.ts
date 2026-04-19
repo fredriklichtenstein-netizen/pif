@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import type { Message } from "@/types/messaging";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_MESSAGES } from "@/data/mockConversations";
@@ -12,6 +13,7 @@ export function useMessages(conversationId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!conversationId) {
@@ -64,7 +66,7 @@ export function useMessages(conversationId: string) {
         setError(err as Error);
         toast({
           variant: "destructive",
-          title: "Failed to load messages",
+          title: t('interactions.messages_load_failed'),
           description: (err as Error).message,
         });
       } finally {
@@ -171,11 +173,7 @@ export function useMessages(conversationId: string) {
       
       setMessages(currentMessages => [...currentMessages, newMessage]);
       
-      toast({
-        title: "Meddelande skickat",
-        description: "Detta är en demo – meddelandet sparas endast lokalt.",
-      });
-      
+      // Routine success: UI shows the message immediately, no toast needed
       return newMessage;
     }
 
@@ -204,7 +202,7 @@ export function useMessages(conversationId: string) {
       console.error('Error sending message:', err);
       toast({
         variant: "destructive",
-        title: "Failed to send message",
+        title: t('interactions.message_send_failed'),
         description: (err as Error).message,
       });
       throw err;
