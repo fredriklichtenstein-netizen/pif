@@ -3,6 +3,7 @@
   "comments": {
     "title": "Comments",
     "live": "Live",
+    "login_to_comment": "Sign in to comment",
     "connection_issue": "Connection Issue",
     "error_loading": "Error loading comments",
     "try_again": "Try Again",

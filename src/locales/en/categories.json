@@ -31,7 +31,10 @@
     "acceptable": "Acceptable",
     "ok": "OK",
     "fair": "Acceptable",
-    "poor": "Poor"
+    "poor": "Poor",
+    "any": "Any condition",
+    "good_enough": "Good condition is enough",
+    "prefer_new": "Prefer new/like new"
   },
   "map_filters": {
     "all": "All",

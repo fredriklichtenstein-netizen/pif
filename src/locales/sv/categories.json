@@ -31,7 +31,10 @@
     "acceptable": "Acceptabelt skick",
     "ok": "Okej",
     "fair": "Acceptabelt skick",
-    "poor": "Slitet skick"
+    "poor": "Slitet skick",
+    "any": "Vilket skick som helst",
+    "good_enough": "Bra skick räcker",
+    "prefer_new": "Föredrar nytt/som nytt"
   },
   "map_filters": {
     "all": "Alla",
