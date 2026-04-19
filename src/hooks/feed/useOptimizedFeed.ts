@@ -5,6 +5,7 @@ import { getOptimizedPosts, prefetchNextPage } from '@/services/posts/optimized'
 import { DEMO_MODE } from '@/config/demoMode';
 import { MOCK_POSTS } from '@/data/mockPosts';
 import type { Post } from '@/types/post';
+import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 
 const POSTS_PER_PAGE = 10;
 
