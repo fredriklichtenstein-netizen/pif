@@ -182,6 +182,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
         accept="image/*"
         capture="user"
         className="hidden"
+        onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
         onChange={handleFileChange}
       />
     </div>
