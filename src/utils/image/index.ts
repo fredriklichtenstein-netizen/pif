@@ -4,3 +4,4 @@ export * from './optimization';
 export * from './loading';
 export * from './preload';
 export * from './cropping';
+export * from './compress';
