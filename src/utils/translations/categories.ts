@@ -44,6 +44,11 @@ export const useCategoryTranslations = () => {
     'ok': t('conditions.ok', 'OK'),
     'fair': t('conditions.fair', t('conditions.acceptable')),
     'poor': t('conditions.poor'),
+    // Request-specific condition values
+    'any': t('conditions.any', 'Vilket skick som helst'),
+    'any_condition': t('conditions.any', 'Vilket skick som helst'),
+    'good_enough': t('conditions.good_enough', 'Bra skick räcker'),
+    'prefer_new': t('conditions.prefer_new', 'Föredrar nytt/som nytt'),
     // Legacy labels
     'Nytt': t('conditions.new'),
     'Som nytt': t('conditions.like_new'),

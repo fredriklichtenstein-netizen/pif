@@ -63,7 +63,7 @@ export function CommentCard({
             {isEditing ? (
               <CommentEditor text={editedText} onTextChange={setEditedText} onSave={handleSaveEdit} onCancel={() => setIsEditing(false)} />
             ) : (
-              <p className="text-sm mt-1">{comment.text}</p>
+              <p className="text-sm mt-1 text-left">{comment.text}</p>
             )}
 
             <CommentInteractions likes={comment.likes} isLiked={comment.isLiked} onLike={() => onLike(comment.id)} onReply={() => setShowReplyInput(!showReplyInput)} maxReplyLevel={maxReplyLevel} level={level} />

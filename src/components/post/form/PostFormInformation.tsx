@@ -50,10 +50,9 @@ const CONDITIONS = [
 ];
 
 const REQUEST_CONDITIONS = [
-  { key: "any_condition", value: "post.any_condition" },
-  { key: "prefer_new", value: "post.prefer_new" },
-  { key: "good_enough", value: "post.good_enough" },
-  { key: "can_be_worn", value: "post.can_be_worn" }
+  { key: "any", value: "conditions.any" },
+  { key: "good", value: "conditions.good_enough" },
+  { key: "new", value: "conditions.prefer_new" },
 ];
 
 const CATEGORY_MEASUREMENTS: { [key: string]: string[] } = {
