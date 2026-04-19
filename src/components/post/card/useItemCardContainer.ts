@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useItemCard } from "@/hooks/useItemCard";
 
@@ -17,6 +18,7 @@ interface UseItemCardContainerProps {
 export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Get user interactions data from the hook
@@ -66,16 +68,12 @@ export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps
         .eq('id', id);
 
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Post deleted successfully",
-      });
+      // Success is reflected by the post disappearing — no toast needed
     } catch (error) {
       console.error('Error deleting post:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete post. Please try again.",
+        title: t('post.error', 'Fel'),
+        description: t('interactions.delete_post_error', 'Kunde inte radera inlägget. Försök igen.'),
         variant: "destructive",
       });
     } finally {

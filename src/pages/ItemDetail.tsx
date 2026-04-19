@@ -6,6 +6,7 @@ import { ItemDetailError } from '@/components/item/detail/ItemDetailError';
 import { ItemDetailContainer } from '@/components/item/detail/ItemDetailContainer';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { withRetry } from '@/utils/connectionRetryUtils';
@@ -15,6 +16,7 @@ export default function ItemDetail() {
   const { id } = useParams();
   const location = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const fromShare = location.state?.fromShare === true;
   const shareTimestamp = location.state?.timestamp;
   const [loadFailed, setLoadFailed] = useState(false);
@@ -65,13 +67,7 @@ export default function ItemDetail() {
         
         localStorage.setItem('pif_share_visits', JSON.stringify(shareVisits));
         
-        // Show toast for successful share navigation
-        if (!redirectTo404 && !error && displayItem) {
-          toast({
-            title: "Shared item loaded",
-            description: `You're viewing an item shared with you`,
-          });
-        }
+        // Silent success — UI already shows the loaded item
       } catch (err) {
         console.error('Failed to track share analytics:', err);
       }
@@ -91,11 +87,8 @@ export default function ItemDetail() {
           maxAttempts: 3,
           initialDelay: 500,
           backoffFactor: 2,
-          onRetry: (attempt, delay) => {
-            toast({
-              title: "Retrying...",
-              description: `Attempt ${attempt} to load the item`
-            });
+          onRetry: () => {
+            // Silent retry
           }
         }
       );
@@ -103,8 +96,8 @@ export default function ItemDetail() {
       console.error('Failed to load item after multiple retries:', error);
       setLoadFailed(true);
       toast({
-        title: "Loading failed",
-        description: "Could not load the item after multiple attempts",
+        title: t('post.error', 'Fel'),
+        description: t('interactions.item_load_failed', 'Kunde inte ladda objektet'),
         variant: "destructive"
       });
     }

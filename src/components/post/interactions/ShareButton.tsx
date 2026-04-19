@@ -54,8 +54,7 @@ export function ShareButton({
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url);
         setIsCopied(true);
-        toast({ title: t('interactions.link_copied'), description: t('interactions.link_copied_description') });
-        
+        // Silent — the Check icon provides visual feedback
         setTimeout(() => {
           setIsOpen(false);
           if (onShareComplete) onShareComplete();
@@ -75,7 +74,6 @@ export function ShareButton({
         
         if (successful) {
           setIsCopied(true);
-          toast({ title: t('interactions.link_copied'), description: t('interactions.link_copied_description') });
           setTimeout(() => setIsOpen(false), 1000);
         } else {
           toast({ 
