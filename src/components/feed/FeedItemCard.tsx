@@ -18,7 +18,11 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
   
   // Apply optimistic UI transition class if the item was just modified
   const transitionClass = post.__modified ? "animate-fade-in" : "";
-  
+
+  // Defensive normalization: ensure legacy 'wish' renders as 'request'
+  const normalizedItemType =
+    post.item_type === 'wish' ? 'request' : post.item_type === 'pif' ? 'offer' : post.item_type;
+
   return (
     <NetworkStatusWrapper key={post.id}>
       <div className={transitionClass}>
@@ -32,7 +36,7 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           coordinates={coordinates}
           category={post.category}
           condition={post.condition}
-          item_type={post.item_type}
+          item_type={normalizedItemType}
           measurements={post.measurements}
           postedBy={post.postedBy || {
             id: post.user_id,

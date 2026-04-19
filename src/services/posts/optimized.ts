@@ -14,7 +14,7 @@ const transformCache = memoryOptimizer.createMemoCache<Post>(50);
 
 export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]> => {
   const start = performance.now();
-  const cacheKey = `posts-${limit}-${offset}`;
+  const cacheKey = `posts-v2-${limit}-${offset}`;
   
   // Try cache first
   const cached = DatabaseCache.get<Post[]>(cacheKey);
@@ -35,7 +35,7 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
 
     // Transform all posts with memoization
     const transformedPosts = (data as any[]).map((item: any) => {
-      const cacheKey = `transform-${item.id}-${item.created_at}`;
+      const cacheKey = `transform-v2-${item.id}-${item.created_at}`;
       const cached = transformCache.get(cacheKey);
       if (cached) {
         return cached;

@@ -32,14 +32,19 @@ export const transformPostData = (
     : {};
 
   const extractedUser = extractUserFromProfile(item.profiles, item.user_id);
-  
+
+  // Normalize legacy item_type values ('wish' -> 'request', 'pif' -> 'offer')
+  const rawType = String(item.item_type || 'offer').toLowerCase();
+  const normalizedType: 'offer' | 'request' =
+    rawType === 'request' || rawType === 'wish' ? 'request' : 'offer';
+
   return {
     id: item.id.toString(),
     title: item.title,
     description: item.description || '',
     category: item.category || '',
     condition: item.condition || '',
-    item_type: item.item_type || 'offer',
+    item_type: normalizedType,
     measurements: measurements,
     images: item.images || [],
     location: item.location || '',
