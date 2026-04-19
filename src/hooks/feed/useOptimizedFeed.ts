@@ -11,6 +11,8 @@ const POSTS_PER_PAGE = 10;
 
 // Duration of the fade-out animation before items are fully removed.
 const FADE_DURATION_MS = 320;
+// Duration of the fade-in animation when an item is undone/restored.
+const RESTORE_FADE_MS = 400;
 
 export function useOptimizedFeed() {
   const [page, setPage] = useState(0);
@@ -19,8 +21,12 @@ export function useOptimizedFeed() {
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
   // Items fully removed (no longer rendered).
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  // Items animating back in after undo/restore.
+  const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
   // Pending fade timers, keyed by item id, so undo can cancel them.
   const fadeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Pending fade-in timers so we can clear the class once the animation finishes.
+  const restoreTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Listen for global delete/archive success events and animate items out locally.
   useEffect(() => {
@@ -96,6 +102,25 @@ export function useOptimizedFeed() {
         next.delete(idStr);
         return next;
       });
+
+      // Mark as restoring so the wrapper applies the fade-in class briefly.
+      setRestoringIds(prev => {
+        const next = new Set(prev);
+        next.add(idStr);
+        return next;
+      });
+      const existingRestore = restoreTimersRef.current.get(idStr);
+      if (existingRestore) clearTimeout(existingRestore);
+      const restoreTimer = setTimeout(() => {
+        setRestoringIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
+        restoreTimersRef.current.delete(idStr);
+      }, RESTORE_FADE_MS);
+      restoreTimersRef.current.set(idStr, restoreTimer);
     };
     document.addEventListener('item-operation-undone', undoHandler as EventListener);
 
@@ -105,6 +130,8 @@ export function useOptimizedFeed() {
       // Clear any pending fade timers on unmount.
       fadeTimersRef.current.forEach(t => clearTimeout(t));
       fadeTimersRef.current.clear();
+      restoreTimersRef.current.forEach(t => clearTimeout(t));
+      restoreTimersRef.current.clear();
     };
   }, []);
 
@@ -114,6 +141,7 @@ export function useOptimizedFeed() {
     return {
       posts: MOCK_POSTS as unknown as Post[],
       fadingIds: new Set<string>(),
+      restoringIds: new Set<string>(),
       isLoading: false,
       isLoadingMore: false,
       error: null,
@@ -175,8 +203,11 @@ export function useOptimizedFeed() {
     // Server is now authoritative; drop optimistic removals & in-flight fades.
     setRemovedIds(new Set());
     setFadingIds(new Set());
+    setRestoringIds(new Set());
     fadeTimersRef.current.forEach(t => clearTimeout(t));
     fadeTimersRef.current.clear();
+    restoreTimersRef.current.forEach(t => clearTimeout(t));
+    restoreTimersRef.current.clear();
   }, [queryClient, refetch]);
 
   // Prefetch next page on mount and when page changes
@@ -199,6 +230,7 @@ export function useOptimizedFeed() {
   return {
     posts: allPosts,
     fadingIds,
+    restoringIds,
     isLoading: isLoading && page === 0,
     isLoadingMore: isLoading && page > 0,
     error,

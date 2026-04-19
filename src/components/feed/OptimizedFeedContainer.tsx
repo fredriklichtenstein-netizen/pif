@@ -17,7 +17,7 @@ import { DEMO_MODE } from '@/config/demoMode';
 import { useTranslation } from 'react-i18next';
 
 export function OptimizedFeedContainer() {
-  const { posts, fadingIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
+  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
@@ -57,6 +57,7 @@ export function OptimizedFeedContainer() {
           <FeedItemList
             posts={memoizedPosts}
             fadingIds={fadingIds}
+            restoringIds={restoringIds}
             selectedCategories={[]}
             clearFilters={() => {}}
             viewMode="all"
@@ -101,6 +102,7 @@ export function OptimizedFeedContainer() {
         <FeedItemList
           posts={memoizedPosts}
           fadingIds={fadingIds}
+          restoringIds={restoringIds}
           selectedCategories={[]}
           clearFilters={() => {}}
           viewMode="all"
