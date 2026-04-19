@@ -55,7 +55,8 @@ export const MapFilters = ({
   selectedDistance,
   onDistanceChange,
   userLocation,
-  onRequestLocation
+  onRequestLocation,
+  onUsePifAddress
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
@@ -134,6 +135,7 @@ export const MapFilters = ({
           onDistanceChange={onDistanceChange}
           userLocation={userLocation}
           onRequestLocation={onRequestLocation}
+          onUsePifAddress={onUsePifAddress}
         />
       </div>
 
