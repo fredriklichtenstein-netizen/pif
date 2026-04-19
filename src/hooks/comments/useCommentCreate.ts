@@ -38,12 +38,25 @@ export const useCommentCreate = (
 
   // Add a new comment
   const handleAddComment = async (text: string) => {
-    if (!text.trim() || !currentUser || !currentUser.id) {
+    console.log('[useCommentCreate] handleAddComment called', {
+      text,
+      itemId,
+      currentUser,
+      useFallbackMode,
+      DEMO_MODE,
+    });
+
+    if (!text.trim()) {
+      console.warn('[useCommentCreate] Aborted: empty text');
       return;
     }
-    
+    if (!currentUser || !currentUser.id) {
+      console.warn('[useCommentCreate] Aborted: no currentUser.id', currentUser);
+      return;
+    }
+
     setIsLoading(true);
-    
+
     try {
       // Demo mode: add to local store
       if (DEMO_MODE) {
@@ -53,19 +66,17 @@ export const useCommentCreate = (
           name: displayName,
           avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
         });
-        
+
         setComments([...comments, newComment]);
-        
+
         setIsLoading(false);
         return;
       }
-      
+
       // If in fallback mode, create a local comment
       if (useFallbackMode) {
-        // Format the display name properly
         const displayName = formatUserName(currentUser.name || '');
-        
-        // Create a fallback comment with a temporary ID
+
         const tempComment: Comment = {
           id: `local-${uuidv4()}`,
           text: text.trim(),
@@ -79,14 +90,12 @@ export const useCommentCreate = (
           isLiked: false,
           replies: [],
           isOwn: true,
-          isPending: true  // Mark as pending to show it's not yet synced
+          isPending: true
         };
-        
-        // Add to local state
+
         const updatedComments = [...comments, tempComment];
         setComments(updatedComments);
-        
-        // Store in local storage for later sync
+
         try {
           const pendingComments = JSON.parse(localStorage.getItem(`pending_comments_${itemId}`) || '[]');
           pendingComments.push({
@@ -100,24 +109,28 @@ export const useCommentCreate = (
         } catch (err) {
           console.error("Failed to store pending comment in localStorage:", err);
         }
-        
+
         setIsLoading(false);
         return;
       }
-      
+
       // Regular online mode - send to server
-      // Parse the itemId to ensure it's a number
-      const numericItemId = parseInt(itemId);
+      const numericItemId = parseInt(itemId, 10);
+      console.log('[useCommentCreate] Parsing itemId', { itemId, numericItemId });
       if (isNaN(numericItemId)) {
         throw new Error(`Invalid item ID: ${itemId}`);
       }
+
+      const insertPayload = {
+        item_id: numericItemId,
+        user_id: currentUser.id,
+        content: text.trim(),
+      };
+      console.log('[useCommentCreate] Inserting comment payload', insertPayload);
+
       const { data, error } = await supabase
         .from('comments')
-        .insert({
-          item_id: numericItemId,
-          user_id: currentUser.id,
-          content: text
-        })
+        .insert(insertPayload)
         .select(`
           id,
           content,
@@ -131,13 +144,16 @@ export const useCommentCreate = (
           )
         `)
         .single();
-        
-      if (error) throw error;
-      
+
+      if (error) {
+        console.error('[useCommentCreate] Supabase insert error', error);
+        throw error;
+      }
+
+      console.log('[useCommentCreate] Insert success', data);
+
       if (data) {
         const newComment = formatCommentFromDB(data, true);
-        
-        // Create a new array with the new comment added (avoid direct mutation)
         const updatedComments = [...comments, newComment];
         setComments(updatedComments);
       }
