@@ -197,7 +197,7 @@ if (location) {
               {t('nav.back_to_profile')}
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold mx-auto pr-10">{t('profile.edit_profile')}</h1>
+          <h1 className="text-3xl font-bold text-foreground mx-auto pr-10">{t('profile.edit_profile')}</h1>
         </div>
         
         <div className="mb-6 flex justify-center">
