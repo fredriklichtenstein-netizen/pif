@@ -18,6 +18,8 @@ interface FeedItemListProps {
   onItemOperationSuccess?: (itemId?: string | number, operationType?: OperationType) => void;
   isLoading?: boolean;
   isShowingMockData?: boolean;
+  /** IDs of items currently animating out (fade-out applied while still rendered). */
+  fadingIds?: Set<string>;
 }
 
 // Helper function to validate post data
@@ -61,7 +63,8 @@ export function FeedItemList({
   viewMode,
   onItemOperationSuccess,
   isLoading = false,
-  isShowingMockData = false
+  isShowingMockData = false,
+  fadingIds,
 }: FeedItemListProps) {
   const [refreshKey, setRefreshKey] = useState(Date.now());
   const [errorState, setErrorState] = useState<{ hasError: boolean, errorMessage: string }>({ 
@@ -203,17 +206,22 @@ export function FeedItemList({
   return (
     <FeedErrorBoundary onReset={handleRecoveryAction}>
       <div className="space-y-4" key={refreshKey}>
-        {validPosts?.map((post) => (
-          <div 
-            key={post.id} 
-            id={`post-${post.id}`}
-          >
-            <FeedItemCard
-              post={post}
-              onItemOperationSuccess={isShowingMockData ? undefined : handleItemSuccess}
-            />
-          </div>
-        ))}
+        {validPosts?.map((post) => {
+          const isFading = fadingIds?.has(String(post.id));
+          return (
+            <div
+              key={post.id}
+              id={`post-${post.id}`}
+              className={isFading ? 'animate-fade-out-collapse pointer-events-none' : undefined}
+              aria-hidden={isFading || undefined}
+            >
+              <FeedItemCard
+                post={post}
+                onItemOperationSuccess={isShowingMockData ? undefined : handleItemSuccess}
+              />
+            </div>
+          );
+        })}
         
         {validPosts?.length === 0 && !isShowingMockData && (
           <FeedEmptyState
