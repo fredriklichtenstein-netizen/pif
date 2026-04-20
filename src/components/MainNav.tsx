@@ -154,7 +154,11 @@ export function MainNav() {
             }`}
             onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
           >
-            {avatarUrl ? (
+            {!initialized ? (
+              // Render a neutral placeholder while auth is being restored so
+              // we don't briefly flash a logged-out icon on refresh.
+              <div className="w-6 h-6 rounded-full bg-muted/50 animate-pulse" />
+            ) : avatarUrl ? (
               <div className="w-6 h-6 rounded-full overflow-hidden">
                 <AvatarImage
                   src={avatarUrl}
