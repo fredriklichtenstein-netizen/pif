@@ -123,6 +123,7 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
       });
     }
   };
+
   if (loading) return <div className="text-xs py-1 text-muted-foreground">{t('interactions.loading')}</div>;
   if (users.length === 0) return null;
 
@@ -174,6 +175,17 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                         onClick={() => { toast({ title: t('interactions.messaging_coming_soon'), description: t('interactions.messaging_coming_soon_description') }); }}>
                         <MessageCircle className="h-3 w-3 mr-1" />{t('interactions.message_btn')}
                       </Button>
+                      {isOwner && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
+                          onClick={() => { setWithdrawTargetId(u.id); setWithdrawDialogOpen(true); }}
+                          aria-label={t('interactions.withdraw_selection_aria')}
+                        >
+                          <UserMinus className="h-3 w-3 mr-1" />{t('interactions.withdraw_selection_btn')}
+                        </Button>
+                      )}
                     </>
                   )}
                   {u.status === "pending" && isOwner && (
@@ -204,6 +216,25 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
             <AlertDialogCancel>{t('interactions.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => { const user = users.find((u) => u.id === selectedUserId); if (user) handleSelectReceiver(selectedUserId!, user.user_id); }}>
               {t('interactions.confirm_selection_btn')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('interactions.withdraw_selection_title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('interactions.withdraw_selection_description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setWithdrawTargetId(null)}>
+              {t('interactions.withdraw_selection_cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleWithdrawSelection}>
+              {t('interactions.withdraw_selection_confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
