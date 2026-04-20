@@ -12,7 +12,7 @@ export function MainNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useGlobalAuth();
+  const { user, initialized } = useGlobalAuth();
   const { t } = useTranslation();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
