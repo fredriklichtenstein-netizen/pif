@@ -46,11 +46,14 @@ export function usePostForm(initialData?: any) {
 
   const isFormValid = validateForm(formData);
 
+  const isEditMode = Boolean(initialData?.id);
+
   return {
     formData,
     isSubmitting,
     isAnalyzing,
     isFormValid,
+    isEditMode,
     setFormData,
     handleImageUpload,
     handleImagesChange,

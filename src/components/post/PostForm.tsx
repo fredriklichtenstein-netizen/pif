@@ -24,6 +24,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     formData,
     isSubmitting,
     isAnalyzing,
+    isEditMode,
     setFormData,
     handleImageUpload,
     handleImagesChange,
@@ -108,6 +109,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
         formData={formData}
         isSubmitting={isSubmitting}
         isAnalyzing={isAnalyzing}
+        isEditMode={isEditMode}
         onFormSubmit={handleSubmit}
         onImageUpload={handleImageUpload}
         onImagesChange={handleImagesChange}

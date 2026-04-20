@@ -46,7 +46,25 @@ function PostEdit() {
           throw new Error("You don't have permission to edit this item");
         }
 
-        setItem(data);
+        // PostGIS returns coordinates as a string like "(lng,lat)".
+        // usePostFormState expects an object with .x (lng) and .y (lat),
+        // so normalize here so the edit form pre-fills correctly.
+        let normalizedCoordinates: { x: number; y: number } | null = null;
+        const rawCoords = (data as any).coordinates;
+        if (typeof rawCoords === "string") {
+          const match = rawCoords.match(/^\(?\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)?$/);
+          if (match) {
+            normalizedCoordinates = { x: parseFloat(match[1]), y: parseFloat(match[2]) };
+          }
+        } else if (rawCoords && typeof rawCoords === "object") {
+          if ("x" in rawCoords && "y" in rawCoords) {
+            normalizedCoordinates = { x: Number(rawCoords.x), y: Number(rawCoords.y) };
+          } else if ("lng" in rawCoords && "lat" in rawCoords) {
+            normalizedCoordinates = { x: Number(rawCoords.lng), y: Number(rawCoords.lat) };
+          }
+        }
+
+        setItem({ ...data, coordinates: normalizedCoordinates });
       } catch (err: any) {
         console.error("Error fetching item:", err);
         setError(err.message || "Failed to load item");

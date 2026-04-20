@@ -1,5 +1,6 @@
 
-import React, { useCallback } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PostFormSteps } from "./PostFormSteps";
 import { PostFormHeader } from "./PostFormHeader";
 import { PostFormImages } from "./PostFormImages";
@@ -8,6 +9,18 @@ import { PostFormLocation } from "./PostFormLocation";
 import { PostFormProgress } from "./PostFormProgress";
 import { PostFormNavigation } from "./PostFormNavigation";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { usePostFormValidation } from "@/hooks/post/usePostFormValidation";
 import { usePostFormNavigation } from "@/hooks/post/usePostFormNavigation";
 import { useTranslation } from 'react-i18next';
@@ -16,6 +29,7 @@ interface PostFormContainerProps {
   formData: any;
   isSubmitting: boolean;
   isAnalyzing: boolean;
+  isEditMode?: boolean;
   onFormSubmit: (e: React.FormEvent) => void;
   onImageUpload: (file: File) => void;
   onImagesChange: (images: string[]) => void;
@@ -29,6 +43,7 @@ export function PostFormContainer({
   formData,
   isSubmitting,
   isAnalyzing,
+  isEditMode = false,
   onFormSubmit,
   onImageUpload,
   onImagesChange,
@@ -38,6 +53,8 @@ export function PostFormContainer({
   isFormValid,
 }: PostFormContainerProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const isRequest = formData.item_type === 'request';
 
   const steps = [
@@ -79,6 +96,11 @@ export function PostFormContainer({
       onFormSubmit(e);
     } else {
     }
+  };
+
+  const handleConfirmCancel = () => {
+    setCancelDialogOpen(false);
+    navigate("/feed");
   };
 
   const renderCurrentStep = () => {
@@ -125,10 +147,22 @@ export function PostFormContainer({
 
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
-      <PostFormHeader 
-        title={isRequest ? t('post.create_request') : t('post.create_offer')}
-        subtitle={isRequest ? t('post.request_subtitle') : t('post.offer_subtitle')}
-      />
+      <div className="relative">
+        <PostFormHeader
+          title={isRequest ? t('post.create_request') : t('post.create_offer')}
+          subtitle={isRequest ? t('post.request_subtitle') : t('post.offer_subtitle')}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setCancelDialogOpen(true)}
+          aria-label={t('post.cancel_button_aria')}
+          className="absolute right-0 top-0 h-9 w-9 text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
 
       <PostFormProgress steps={steps} currentStep={finalCurrentStep} />
 
@@ -144,10 +178,29 @@ export function PostFormContainer({
           isFormValid={isFormValid}
           isSubmitting={isSubmitting}
           isRequest={isRequest}
+          isEditMode={isEditMode}
           onPrevStep={finalPrevStep}
           onNextStep={finalNextStep}
+          onCancel={() => setCancelDialogOpen(true)}
         />
       </form>
+
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('post.cancel_confirm_title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('post.cancel_confirm_message')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('post.cancel_keep_editing')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel}>
+              {t('post.cancel_discard')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

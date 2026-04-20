@@ -10,8 +10,10 @@ interface PostFormNavigationProps {
   isFormValid: boolean;
   isSubmitting: boolean;
   isRequest: boolean;
+  isEditMode?: boolean;
   onPrevStep: () => void;
   onNextStep: () => void;
+  onCancel?: () => void;
 }
 
 export function PostFormNavigation({
@@ -21,10 +23,20 @@ export function PostFormNavigation({
   isFormValid,
   isSubmitting,
   isRequest,
+  isEditMode = false,
   onPrevStep,
-  onNextStep
+  onNextStep,
+  onCancel,
 }: PostFormNavigationProps) {
   const { t } = useTranslation();
+
+  const submitLabel = isSubmitting
+    ? (isEditMode ? t('post.updating') : t('post.creating'))
+    : isEditMode
+      ? t('post.update_button')
+      : isRequest
+        ? t('post.create_request_final')
+        : t('post.create_offer_final');
 
   return (
     <div className="flex justify-between">
@@ -48,13 +60,25 @@ export function PostFormNavigation({
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       ) : (
-        <Button
-          type="submit"
-          disabled={!isFormValid || isSubmitting}
-          className="bg-primary hover:bg-primary/90"
-        >
-          {isSubmitting ? t('post.creating') : isRequest ? t('post.create_request_final') : t('post.create_offer_final')}
-        </Button>
+        <div className="flex gap-2">
+          {isEditMode && onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              {t('post.cancel_button')}
+            </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={!isFormValid || isSubmitting}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {submitLabel}
+          </Button>
+        </div>
       )}
     </div>
   );
