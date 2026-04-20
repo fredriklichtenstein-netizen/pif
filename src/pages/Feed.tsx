@@ -23,7 +23,7 @@ export default function Feed() {
   }, [announce, t]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <MainHeader />
       <Separator />
 
@@ -42,7 +42,7 @@ export default function Feed() {
 
           {/* Sticky action bar — keeps "Add pif" / "Add wish" one tap away while scrolling. */}
           <SlideIn direction="down" delay={150}>
-            <div className="sticky top-0 z-30 -mx-4 px-4 py-3 mb-4 bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/80 border-b border-border/40">
+            <div className="sticky top-0 z-30 -mx-4 px-4 py-3 mb-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40">
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
