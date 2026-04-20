@@ -75,7 +75,10 @@ export function ItemCardWrapper({
     handleRefresh,
     isItemDeleted,
     handleDeleteClick,
-    handleReportClick
+    handleReportClick,
+    withdrawConfirmOpen,
+    setWithdrawConfirmOpen,
+    confirmWithdrawInterest,
   } = useItemCardWrapper({
     id,
     postedBy,
@@ -84,6 +87,7 @@ export function ItemCardWrapper({
     onOperationSuccess,
     coordinates
   });
+  const { t } = useTranslation();
 
   // Cleanup effect to ensure realtime connections are removed
   useEffect(() => {
@@ -110,54 +114,77 @@ export function ItemCardWrapper({
   }
   
   return (
-    <ItemCardWrapperContent
-      id={id}
-      title={title}
-      description={description}
-      image={image}
-      images={images}
-      location={location}
-      category={category}
-      condition={condition}
-      item_type={item_type}
-      measurements={measurements}
-      postedBy={postedBy}
-      isOwner={isOwner}
-      isItemArchived={isItemArchived}
-      archived_at={archived_at}
-      archived_reason={archived_reason}
-      realtimeError={realtimeError}
-      handleRefresh={handleRefresh}
-      parsedCoordinates={parsedCoordinates}
-      handleReportClick={handleReportClick}
-      handleEdit={handleEdit}
-      handleDeleteClick={handleDeleteClick}
-      isLiked={isLiked}
-      showComments={showComments}
-      isBookmarked={isBookmarked}
-      showInterest={showInterest}
-      commentsCount={commentsCount}
-      likesCount={likesCount}
-      interestsCount={interestsCount}
-      likers={likers}
-      interestedUsers={interestedUsers}
-      commenters={commenters}
-      comments={comments}
-      commentsLoading={commentsLoading}
-      commentsError={commentsError}
-      interactionsLoading={interactionsLoading}
-      isLoadingInterested={isLoadingInterested}
-      interestedError={interestedError}
-      handleLike={handleLike}
-      handleCommentToggle={handleCommentToggle}
-      handleShowInterest={handleShowInterest}
-      handleBookmark={handleBookmark}
-      handleMessage={handleMessage}
-      handleShare={handleShare}
-      handleReport={handleReport}
-      getInterestedUsers={getInterestedUsers}
-      setComments={setComments}
-      isRealtimeSubscribed={isRealtimeSubscribed}
-    />
+    <>
+      <ItemCardWrapperContent
+        id={id}
+        title={title}
+        description={description}
+        image={image}
+        images={images}
+        location={location}
+        category={category}
+        condition={condition}
+        item_type={item_type}
+        measurements={measurements}
+        postedBy={postedBy}
+        isOwner={isOwner}
+        isItemArchived={isItemArchived}
+        archived_at={archived_at}
+        archived_reason={archived_reason}
+        realtimeError={realtimeError}
+        handleRefresh={handleRefresh}
+        parsedCoordinates={parsedCoordinates}
+        handleReportClick={handleReportClick}
+        handleEdit={handleEdit}
+        handleDeleteClick={handleDeleteClick}
+        isLiked={isLiked}
+        showComments={showComments}
+        isBookmarked={isBookmarked}
+        showInterest={showInterest}
+        commentsCount={commentsCount}
+        likesCount={likesCount}
+        interestsCount={interestsCount}
+        likers={likers}
+        interestedUsers={interestedUsers}
+        commenters={commenters}
+        comments={comments}
+        commentsLoading={commentsLoading}
+        commentsError={commentsError}
+        interactionsLoading={interactionsLoading}
+        isLoadingInterested={isLoadingInterested}
+        interestedError={interestedError}
+        handleLike={handleLike}
+        handleCommentToggle={handleCommentToggle}
+        handleShowInterest={handleShowInterest}
+        handleBookmark={handleBookmark}
+        handleMessage={handleMessage}
+        handleShare={handleShare}
+        handleReport={handleReport}
+        getInterestedUsers={getInterestedUsers}
+        setComments={setComments}
+        isRealtimeSubscribed={isRealtimeSubscribed}
+      />
+
+      <AlertDialog open={withdrawConfirmOpen} onOpenChange={setWithdrawConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('interactions.withdraw_interest_title')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('interactions.withdraw_interest_description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('interactions.withdraw_interest_cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmWithdrawInterest}>
+              {t('interactions.withdraw_interest_confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
