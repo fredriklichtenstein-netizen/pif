@@ -54,7 +54,7 @@ export default function Feed() {
                     type="button"
                     variant="outline"
                     onClick={() => navigate("/post?type=request")}
-                    className="border-amber-400 text-amber-700 hover:bg-amber-400 hover:text-amber-950"
+                    className="border-pif-wish text-pif-wish hover:bg-pif-wish hover:text-pif-wish-foreground"
                     aria-label={t('interactions.add_wish_button')}
                   >
                     <Star className="h-4 w-4 mr-1" aria-hidden="true" />
