@@ -9,4 +9,14 @@ const SUPABASE_PUBLISHABLE_KEY =
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    // Persist the session to localStorage so refresh keeps users signed in.
+    persistSession: true,
+    // Automatically refresh the access token before it expires.
+    autoRefreshToken: true,
+    // Detect OAuth / magic-link callbacks in the URL on load.
+    detectSessionInUrl: true,
+    storage: typeof window !== "undefined" ? window.localStorage : undefined,
+  },
+});

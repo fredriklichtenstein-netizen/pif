@@ -111,6 +111,23 @@ export function useItemCardWrapper({
     setIsReportDialogOpen(true);
   }, []);
 
+  // Wrap handleShowInterest to require confirmation when the user is
+  // about to *withdraw* an existing interest. Adding interest stays one-tap.
+  const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
+
+  const handleShowInterestWithConfirm = useCallback(() => {
+    if (showInterest) {
+      setWithdrawConfirmOpen(true);
+      return;
+    }
+    handleShowInterest();
+  }, [showInterest, handleShowInterest]);
+
+  const confirmWithdrawInterest = useCallback(() => {
+    setWithdrawConfirmOpen(false);
+    handleShowInterest();
+  }, [handleShowInterest]);
+
   return {
     isReportDialogOpen,
     setIsReportDialogOpen,
@@ -143,7 +160,7 @@ export function useItemCardWrapper({
     interestedError,
     handleLike,
     handleCommentToggle,
-    handleShowInterest,
+    handleShowInterest: handleShowInterestWithConfirm,
     handleShare,
     handleReport,
     handleBookmark,
@@ -157,6 +174,9 @@ export function useItemCardWrapper({
     handleRefresh,
     isItemDeleted,
     handleOperationSuccess,
-    handleReportClick
+    handleReportClick,
+    withdrawConfirmOpen,
+    setWithdrawConfirmOpen,
+    confirmWithdrawInterest,
   };
 }

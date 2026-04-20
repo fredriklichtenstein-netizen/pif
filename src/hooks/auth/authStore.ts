@@ -24,7 +24,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   profileCompleted: null,
-  isLoading: false,
+  // Start in loading state on first render so the UI does not flash
+  // an "unauthenticated" view before initializeAuth() restores the session.
+  isLoading: true,
   initialized: false,
   error: null,
   networkError: false,
