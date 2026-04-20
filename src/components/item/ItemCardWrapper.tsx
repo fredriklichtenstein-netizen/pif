@@ -1,8 +1,19 @@
 
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useItemCardWrapper } from "./hooks/useItemCardWrapper";
 import { ItemCardWrapperContent } from "./ItemCardWrapperContent";
 import { ItemCardError } from "./ItemCardError";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { ItemCardProps } from "./types";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
