@@ -15,6 +15,7 @@ import { TrustIndicator } from "./interest/TrustIndicator";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_INTERESTED_USERS } from "@/data/mockProfiles";
 import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
+import { UserMinus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface InterestUsersPopoverProps {
@@ -29,8 +30,10 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [withdrawTargetId, setWithdrawTargetId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const { selectUser: demoSelectUser, getSelectedUser, hasSelection } = useDemoSelectionsStore();
+  const { selectUser: demoSelectUser, unselectUser: demoUnselectUser, getSelectedUser, hasSelection } = useDemoSelectionsStore();
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -83,6 +86,43 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
     }
   };
 
+  const handleWithdrawSelection = async () => {
+    setWithdrawDialogOpen(false);
+    const targetId = withdrawTargetId;
+    setWithdrawTargetId(null);
+    if (targetId === null) return;
+
+    if (DEMO_MODE) {
+      demoUnselectUser(itemId);
+      fetchInterests();
+      toast({
+        title: t('interactions.selection_withdrawn'),
+        description: t('interactions.selection_withdrawn_description'),
+      });
+      return;
+    }
+    try {
+      const numericItemId = typeof itemId === 'string' ? parseInt(itemId as string, 10) : itemId;
+      // Reset the previously selected receiver and any siblings back to pending
+      // so the piffer can pick a different person without losing prior interest signals.
+      await supabase
+        .from("interests")
+        .update({ status: "pending", selected_at: null } as any)
+        .eq("item_id", numericItemId);
+      fetchInterests();
+      toast({
+        title: t('interactions.selection_withdrawn'),
+        description: t('interactions.selection_withdrawn_description'),
+      });
+    } catch (err) {
+      console.error("Error withdrawing selection:", err);
+      toast({
+        variant: "destructive",
+        title: t('interactions.error_title'),
+        description: t('interactions.error_withdraw_selection'),
+      });
+    }
+  };
   if (loading) return <div className="text-xs py-1 text-muted-foreground">{t('interactions.loading')}</div>;
   if (users.length === 0) return null;
 
