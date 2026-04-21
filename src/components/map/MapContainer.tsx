@@ -27,6 +27,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
   const { t } = useTranslation();
+  const { coordinates: pifCoordinates } = usePifAddress();
   // Distance filtering
   const {
     filteredPosts,
@@ -167,7 +168,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             targetItemId={targetItemId}
           />
 
-          <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+          <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
             <Button
               onClick={locationTracking.goToMyLocation}
               disabled={locationTracking.isLoadingLocation}
