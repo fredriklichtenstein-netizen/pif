@@ -54,7 +54,7 @@ const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDiv
   icon.style.color = "white";
   icon.style.fontSize = "12px";
   icon.style.fontWeight = "bold";
-  icon.innerHTML = itemType === 'request' ? '?' : '♥';
+  icon.innerHTML = itemType === 'request' ? '★' : '♥';
   markerDot.appendChild(icon);
   
   // Add a pulse animation effect

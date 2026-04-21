@@ -10,7 +10,10 @@ import { useLocationTracking } from "./useLocationTracking";
 import { DistanceRings } from "./distance/DistanceRings";
 import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import { useTranslation } from "react-i18next";
+import { usePifAddress } from "@/hooks/usePifAddress";
 import "./MapStyles.css";
+
+const MAP_SESSION_INIT_KEY = 'map_session_initialized';
 
 interface MapContainerProps {
   mapboxToken: string;
