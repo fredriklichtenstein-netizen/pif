@@ -511,6 +511,8 @@
     "email_password_description": "Hantera din e-postadress och ditt lösenord",
     "sign_out": "Logga ut",
     "sign_out_description": "Logga ut från din nuvarande session",
+    "language": "Språk",
+    "language_description": "Välj appens språk",
     "notification_preferences": "Aviseringsinställningar",
     "notification_preferences_description": "Kontrollera hur och när du får aviseringar",
     "privacy_settings": "Integritetsinställningar",
