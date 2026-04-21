@@ -73,6 +73,22 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     }
   }, [isMapReady, map]);
 
+  // First-load: center on user's PIF address (once per session)
+  useEffect(() => {
+    if (!isMapReady || !map) return;
+    try {
+      const alreadyInitialized = sessionStorage.getItem(MAP_SESSION_INIT_KEY);
+      if (alreadyInitialized) return;
+      if (!pifCoordinates) return;
+      const { lng, lat } = pifCoordinates;
+      if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) return;
+      map.jumpTo({ center: [lng, lat], zoom: 14 });
+      sessionStorage.setItem(MAP_SESSION_INIT_KEY, '1');
+    } catch (e) {
+      console.error('[MapContainer] session init centering failed:', e);
+    }
+  }, [isMapReady, map, pifCoordinates]);
+
   // Handle target item centering
   useEffect(() => {
     if (!isMapReady || !map || !targetItemId || !posts.length) return;
