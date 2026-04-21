@@ -79,7 +79,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-blue-50">
       <MainHeader />
-      <div className="container max-w-md mx-auto px-4 pb-20">
+      <div className="container max-w-md mx-auto px-4 pb-20 py-[10px]">
         {/* Network status banner */}
         <NetworkStatus onRetry={handleRetry} />
         
