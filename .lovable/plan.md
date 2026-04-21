@@ -1,48 +1,41 @@
 
 
-## The Bug
+## Remove top-right language toggle, move it into Account Settings, and add it to Auth + Create Profile
 
-`/profile` floods the console with 400 errors:
-```
-column interests.message does not exist
-```
+### 1. Remove the language toggle from `MainHeader`
+File: `src/components/layout/MainHeader.tsx`
+- Remove the `LanguageSelector` import and usage.
+- Keep the header element so layout/spacing stays intact, but render it empty (or reduce to a thin spacer). The header is used on Home, Feed, Map, Post, PostEdit, EmailConfirmation, so we keep the component to avoid touching all of them.
 
-Root cause: `src/hooks/interest/useInterestUsers.ts` selects columns that don't exist in the actual `interests` table.
+### 2. Add a Language section in `/account-settings`
+File: `src/pages/AccountSettings.tsx`
+- Inside the existing `account` tab (above or below the Email/Password card), add a new `Card`:
+  - Title: `t('settings.language')` ("Språk" / "Language")
+  - Description: `t('settings.language_description')` ("Välj appens språk" / "Choose the app language")
+  - Content: render `<LanguageSelector />` (the existing dropdown component, reused as-is so behavior stays identical).
+- No new tab — keep it inside "Konto" to avoid changing the 4-tab grid layout.
 
-**Actual schema** (`src/integrations/supabase/types.ts` lines 243–250):
-```
-interests: { id, item_id, user_id, status, created_at }
-```
+### 3. Add the flag switch to `/auth`
+File: `src/pages/Auth.tsx`
+- Add a small top-right row above the auth card containing `<LanguageSelector />`, e.g. a `flex justify-end` wrapper inside `max-w-md`. This way unauthenticated users can switch language before signing in/up.
 
-**The broken query** (`useInterestUsers.ts` line 14):
-```ts
-.select("id,user_id,status,message,created_at,users:profiles!interests_user_id_fkey(*)")
-//                  ^^^^^^^ does not exist
-```
+### 4. Add the flag switch to `/create-profile`
+File: `src/pages/CreateProfile.tsx`
+- Add the same top-right `<LanguageSelector />` placement at the top of the page content so users can switch language during onboarding.
 
-A second latent bug in `src/hooks/interest/useInterestSelection.ts` line 18 writes `selected_at`, which also does not exist in the schema — this will throw the moment a piffer tries to confirm a receiver.
+### 5. Translations
+Files: `src/locales/en/pages.json` (or `settings`-related file used by AccountSettings) and the Swedish counterpart.
+- Add:
+  - `settings.language` → "Language" / "Språk"
+  - `settings.language_description` → "Choose your preferred app language" / "Välj appens språk"
 
-`useInterestUsers` is called once per item rendered in the profile (via `InterestUsersPopover`), which is why the 400 repeats six times in the logs.
+### Out of scope / non-changes
+- `LanguageSelector.tsx` itself is unchanged — same dropdown, same flags, same persistence to `localStorage` and `i18n.changeLanguage`.
+- `MainHeader` is not deleted (still used by many pages); only its contents change.
+- No new routes, no schema changes.
 
-## The Fix
-
-Two minimal, surgical edits — no schema migration needed (the PRD-aligned flow works fine without `message` for now).
-
-**1. `src/hooks/interest/useInterestUsers.ts`** — remove the non-existent `message` column from the select:
-```ts
-.select("id,user_id,status,created_at,users:profiles!interests_user_id_fkey(*)")
-```
-
-**2. `src/hooks/interest/useInterestSelection.ts`** — drop `selected_at` from the update payload (keep just `status: "selected"`), so picking a receiver doesn't 400 once a user actually tries it:
-```ts
-.update({ status: "selected" })
-```
-
-## Why not add the columns instead?
-
-Per the PRD, v1 selection is binary (selected / not_selected) with no attached message — messaging unlocks *after* selection via DM, not as part of the interest record. Adding `message` and `selected_at` columns would expand schema surface for no current product use. If we later want optional notes ("I can help — I have one in my garage") on a request, we'll add `message` deliberately at that point.
-
-## Verification
-
-After the edits, reloading `/profile` should produce zero `interests` 400s and zero `column interests.message does not exist` errors. Interest popovers will render correctly with the existing fields.
+### Verification
+- `/feed`, `/`, `/map`, `/post`, `/post/edit/:id` no longer show the flag in the top-right.
+- `/account-settings` → Konto tab shows a new "Språk" card with the working flag dropdown.
+- `/auth` and `/create-profile` show the flag dropdown in the top-right of the page content, switching language without reload.
 
