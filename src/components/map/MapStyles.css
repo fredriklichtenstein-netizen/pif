@@ -24,6 +24,12 @@
   height: 100%;
 }
 
+/* Lift Mapbox built-in controls above the fixed bottom MainNav */
+.map-container .mapboxgl-ctrl-bottom-left,
+.map-container .mapboxgl-ctrl-bottom-right {
+  bottom: 80px !important;
+}
+
 /* Loading state for markers */
 .marker-loading {
   opacity: 0.7;

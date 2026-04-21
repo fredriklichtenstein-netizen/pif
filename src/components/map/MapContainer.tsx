@@ -10,7 +10,10 @@ import { useLocationTracking } from "./useLocationTracking";
 import { DistanceRings } from "./distance/DistanceRings";
 import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import { useTranslation } from "react-i18next";
+import { usePifAddress } from "@/hooks/usePifAddress";
 import "./MapStyles.css";
+
+const MAP_SESSION_INIT_KEY = 'map_session_initialized';
 
 interface MapContainerProps {
   mapboxToken: string;
@@ -24,6 +27,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
   const { t } = useTranslation();
+  const { coordinates: pifCoordinates } = usePifAddress();
   // Distance filtering
   const {
     filteredPosts,
@@ -68,6 +72,22 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     } else {
     }
   }, [isMapReady, map]);
+
+  // First-load: center on user's PIF address (once per session)
+  useEffect(() => {
+    if (!isMapReady || !map) return;
+    try {
+      const alreadyInitialized = sessionStorage.getItem(MAP_SESSION_INIT_KEY);
+      if (alreadyInitialized) return;
+      if (!pifCoordinates) return;
+      const { lng, lat } = pifCoordinates;
+      if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) return;
+      map.jumpTo({ center: [lng, lat], zoom: 14 });
+      sessionStorage.setItem(MAP_SESSION_INIT_KEY, '1');
+    } catch (e) {
+      console.error('[MapContainer] session init centering failed:', e);
+    }
+  }, [isMapReady, map, pifCoordinates]);
 
   // Handle target item centering
   useEffect(() => {
@@ -164,7 +184,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             targetItemId={targetItemId}
           />
 
-          <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+          <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
             <Button
               onClick={locationTracking.goToMyLocation}
               disabled={locationTracking.isLoadingLocation}
