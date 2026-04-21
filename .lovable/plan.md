@@ -1,41 +1,66 @@
 
 
-## Remove top-right language toggle, move it into Account Settings, and add it to Auth + Create Profile
+## Bug: wishes show as Pifs in the feed (but correctly on the map)
 
-### 1. Remove the language toggle from `MainHeader`
-File: `src/components/layout/MainHeader.tsx`
-- Remove the `LanguageSelector` import and usage.
-- Keep the header element so layout/spacing stays intact, but render it empty (or reduce to a thin spacer). The header is used on Home, Feed, Map, Post, PostEdit, EmailConfirmation, so we keep the component to avoid touching all of them.
+### Root cause
 
-### 2. Add a Language section in `/account-settings`
-File: `src/pages/AccountSettings.tsx`
-- Inside the existing `account` tab (above or below the Email/Password card), add a new `Card`:
-  - Title: `t('settings.language')` ("Språk" / "Language")
-  - Description: `t('settings.language_description')` ("Välj appens språk" / "Choose the app language")
-  - Content: render `<LanguageSelector />` (the existing dropdown component, reused as-is so behavior stays identical).
-- No new tab — keep it inside "Konto" to avoid changing the 4-tab grid layout.
+The feed and the map fetch from `items` through different code paths:
 
-### 3. Add the flag switch to `/auth`
-File: `src/pages/Auth.tsx`
-- Add a small top-right row above the auth card containing `<LanguageSelector />`, e.g. a `flex justify-end` wrapper inside `max-w-md`. This way unauthenticated users can switch language before signing in/up.
+- **Map** uses `select('*')` style queries — `item_type` is included, so wishes render as wishes.
+- **Feed** uses `OptimizedQueries.getPosts` in `src/services/database/queries.ts`, which uses an explicit column list:
 
-### 4. Add the flag switch to `/create-profile`
-File: `src/pages/CreateProfile.tsx`
-- Add the same top-right `<LanguageSelector />` placement at the top of the page content so users can switch language during onboarding.
+```ts
+.select(`
+  id, title, description, images, location, coordinates,
+  category, condition, measurements, user_id, pif_status,
+  archived_at, archived_reason, created_at,
+  profiles!items_user_id_fkey(...)
+`)
+```
 
-### 5. Translations
-Files: `src/locales/en/pages.json` (or `settings`-related file used by AccountSettings) and the Swedish counterpart.
-- Add:
-  - `settings.language` → "Language" / "Språk"
-  - `settings.language_description` → "Choose your preferred app language" / "Välj appens språk"
+`item_type` is **missing** from this list. The row arriving at `transformPostData` therefore has `item.item_type === undefined`, and the normalization defaults to `'offer'`:
 
-### Out of scope / non-changes
-- `LanguageSelector.tsx` itself is unchanged — same dropdown, same flags, same persistence to `localStorage` and `i18n.changeLanguage`.
-- `MainHeader` is not deleted (still used by many pages); only its contents change.
-- No new routes, no schema changes.
+```ts
+const rawType = String(item.item_type || 'offer').toLowerCase();
+// undefined → 'offer' → every card renders as a Pif
+```
+
+Downstream defensive normalizations in `FeedItemCard` (`'wish' → 'request'`) and `ItemCardLayout`/`ItemCardGallery` (color, badge, border) are correct — they just never see anything other than `'offer'`, because the field was dropped at the SQL layer.
+
+This also explains why previous fix attempts failed: they patched the rendering/normalization layer, not the SELECT.
+
+### Fix (single line, single file)
+
+**File:** `src/services/database/queries.ts` — `OptimizedQueries.getPosts`
+
+Add `item_type` to the explicit select list:
+
+```ts
+.select(`
+  id, title, description, images, location, coordinates,
+  category, condition, measurements, user_id, pif_status,
+  item_type,
+  archived_at, archived_reason, created_at,
+  profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)
+`)
+```
+
+### Cache invalidation
+
+`getOptimizedPosts` and `transformCache` cache results for 5 minutes keyed by `posts-v2-…` and `transform-v2-…`. The `v2` keys mean a fresh deploy will not collide with the old cache, so existing users will pick up correct types on the next fetch. No code change needed for cache busting; if needed for in-session users, a hard refresh clears it.
 
 ### Verification
-- `/feed`, `/`, `/map`, `/post`, `/post/edit/:id` no longer show the flag in the top-right.
-- `/account-settings` → Konto tab shows a new "Språk" card with the working flag dropdown.
-- `/auth` and `/create-profile` show the flag dropdown in the top-right of the page content, switching language without reload.
+
+1. Create a new wish from `/post?type=request`.
+2. On `/feed`, the new card should show:
+   - Amber "Önskning" badge with star icon (not green "Pif" with gift).
+   - Left border `border-l-pif-wish` (amber) instead of `border-l-pif-offer` (green).
+3. The same item on `/map` continues to render as a wish (unchanged behavior).
+4. Existing wishes already in the database also flip to the correct rendering after the cache TTL or refresh.
+
+### Out of scope
+
+- No changes to `transformPostData`, `FeedItemCard`, `ItemCardGallery`, `ItemCardLayout`, or any rendering logic — they are already correct.
+- No DB migration — `item_type` already exists on `items` and is being written correctly by `usePostFormSubmission`.
+- No changes to the map path.
 
