@@ -511,6 +511,8 @@
     "email_password_description": "Manage your email address and password",
     "sign_out": "Sign Out",
     "sign_out_description": "Sign out from your current session",
+    "language": "Language",
+    "language_description": "Choose your preferred app language",
     "notification_preferences": "Notification Preferences",
     "notification_preferences_description": "Control how and when you receive notifications",
     "privacy_settings": "Privacy Settings",

@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
+import { LanguageSelector } from "@/components/common/LanguageSelector";
 
 export default function CreateProfile() {
   const { t } = useTranslation();
@@ -142,6 +143,9 @@ export default function CreateProfile() {
   return (
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 pb-24">
       <div className="max-w-3xl mx-auto space-y-8">
+        <div className="flex justify-end">
+          <LanguageSelector />
+        </div>
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">
             {t('profile.create_title')}

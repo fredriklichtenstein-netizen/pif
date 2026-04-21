@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainNav } from "@/components/MainNav";
 import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/common/LanguageSelector";
 
 const SettingsSkeleton = () => (
   <div className="space-y-4">
@@ -66,6 +67,18 @@ export default function AccountSettings() {
                 </CardContent>
               </Card>
               
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('settings.language')}</CardTitle>
+                  <CardDescription>
+                    {t('settings.language_description')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <LanguageSelector />
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>{t('settings.sign_out')}</CardTitle>

@@ -10,6 +10,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
 import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/common/LanguageSelector";
 
 export default function Auth() {
   const { loading, isSignUp, error, handleAuth, handleResetPassword, toggleMode } = useAuth();
@@ -78,6 +79,9 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
+        <div className="flex justify-end mb-2">
+          <LanguageSelector />
+        </div>
         {showNetworkAlert && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
