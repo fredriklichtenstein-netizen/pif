@@ -74,7 +74,7 @@ export default function AccountSettings() {
                     {t('settings.language_description')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex justify-center">
                   <LanguageSelector />
                 </CardContent>
               </Card>
