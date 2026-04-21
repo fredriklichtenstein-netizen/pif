@@ -25,6 +25,7 @@ export class OptimizedQueries {
           .select(`
             id, title, description, images, location, coordinates, 
             category, condition, measurements, user_id, pif_status, 
+            item_type,
             archived_at, archived_reason, created_at,
             profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)
           `)
