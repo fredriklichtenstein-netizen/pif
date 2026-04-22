@@ -16,6 +16,8 @@ export default function Auth() {
   const { loading, isSignUp, error, handleAuth, handleResetPassword, toggleMode } = useAuth();
   const { user, profileCompleted, networkError } = useGlobalAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromPath = (location.state as { from?: string } | null)?.from || null;
   const { toast } = useToast();
   const { t } = useTranslation();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(true);
