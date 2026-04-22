@@ -1,5 +1,5 @@
 
-import { House, Map, MessageSquare, User as UserIcon } from "lucide-react";
+import { House, Map, MessageSquare, User as UserIcon, LogIn } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -148,15 +148,12 @@ export function MainNav() {
           </Link>
           
           <Link
-            to="/profile"
+            to={initialized && !user ? "/auth" : "/profile"}
             className={`flex flex-col items-center ${
               isProfileActive ? "text-primary" : "text-muted-foreground"
             }`}
-            onClick={(e) => handleAuthRequiredClick(e as any, "/profile")}
           >
             {!initialized ? (
-              // Render a neutral placeholder while auth is being restored so
-              // we don't briefly flash a logged-out icon on refresh.
               <div className="w-6 h-6 rounded-full bg-muted/50 animate-pulse" />
             ) : avatarUrl ? (
               <div className="w-6 h-6 rounded-full overflow-hidden">
@@ -172,9 +169,11 @@ export function MainNav() {
                 <span className="text-[10px] font-medium text-primary">{getUserInitials()}</span>
               </div>
             ) : (
-              <UserIcon size={24} />
+              <LogIn size={24} />
             )}
-            <span className="text-xs mt-1">{t('nav.profile')}</span>
+            <span className="text-xs mt-1 truncate max-w-full">
+              {!initialized || user ? t('nav.profile') : t('nav.sign_in', 'Sign in')}
+            </span>
           </Link>
         </div>
       </div>
