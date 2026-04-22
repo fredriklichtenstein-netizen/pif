@@ -92,7 +92,14 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
     setError(null);
     try {
       const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-      const { error } = await supabase.from('items').update({ archived_at: null, archived_reason: null }).eq('id', numericId);
+      // Prefer SECURITY DEFINER RPC; fall back to direct update with pif_status='active' (NOT NULL).
+      const { data: rpcResult, error: rpcError } = await (supabase as any).rpc('restore_item', { p_item_id: numericId });
+      let error: any = null;
+      if (rpcError || !rpcResult) {
+        if (rpcError) console.warn('restore_item RPC unavailable, falling back:', rpcError.message);
+        const res = await (supabase.from('items').update({ pif_status: 'active', archived_at: null, archived_reason: null } as any) as any).eq('id', numericId);
+        error = res.error;
+      }
       if (error) {
         console.error('Error restoring item:', error);
         setError(`Failed to restore: ${error.message}`);
@@ -100,6 +107,10 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         return false;
       }
       toast({ title: t('interactions.item_restored_op'), description: t('interactions.item_restored_op_description') });
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'restore' } }));
+        document.dispatchEvent(new CustomEvent('item-operation-undone', { detail: { itemId: numericId, operationType: 'archive' } }));
+      } catch (e) { console.error('Failed to dispatch restore event:', e); }
       if (onSuccess) onSuccess('restore');
       return true;
     } catch (err: any) {
