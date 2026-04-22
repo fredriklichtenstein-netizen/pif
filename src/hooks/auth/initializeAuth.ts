@@ -27,28 +27,10 @@ export const initializeAuth = async () => {
     auth.setError(null);
     auth.setNetworkError(false);
     
-    // Set a more reasonable timeout
-    const timeoutId = setTimeout(() => {
-      
-      auth.setError(new Error('Connection issue. Please check your internet and try again.'));
-      auth.setNetworkError(true);
-      auth.setLoading(false);
-      auth.setInitialized(true);
-    }, 5000);
-    
-    // Use Promise.race to enforce timeout
-    const sessionResult = await Promise.race([
-      supabase.auth.getSession(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout getting session')), 4000)
-      )
-    ]);
-    
-    // Clear the timeout as we got a response
-    clearTimeout(timeoutId);
-    
-    // Type assertion for the successful case
-    const { data: { session }, error: sessionError } = sessionResult as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+    // Restore session directly from storage. Do NOT race against a short timeout —
+    // getSession() reads from localStorage synchronously in practice, and racing it
+    // can cause refreshed pages to appear signed-out before storage is read.
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
       console.error('Error getting session:', sessionError);
