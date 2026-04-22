@@ -45,6 +45,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
   const { toast } = useToast();
   const { user } = useGlobalAuth();
   const { fetchPifAddress, isLoading: pifLoading } = usePifAddress();
+  const [activeMode, setActiveMode] = useState<LocationMode>(() => readMode());
 
   const currentStep = useMemo(() => distanceToStep(selectedDistance), [selectedDistance]);
 
@@ -54,6 +55,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
 
   const handleCurrentLocation = () => {
     try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
+    setActiveMode('current');
     onRequestLocation?.();
   };
 
@@ -76,16 +78,37 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
       return;
     }
     try { sessionStorage.setItem('map_location_mode', 'pif'); } catch {}
+    setActiveMode('pif');
     onUsePifAddress?.([result.coordinates.lng, result.coordinates.lat]);
   };
+
+  const activeClasses = 'border-primary bg-primary/10 text-foreground';
+  const inactiveClasses = 'border-border text-muted-foreground hover:text-foreground hover:bg-muted/50';
+
+  const modeBadge = activeMode && userLocation ? (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium border border-primary/30"
+      aria-label={t('interactions.active_location_mode', 'Active location mode')}
+    >
+      {activeMode === 'current' ? (
+        <MapPin className="h-2.5 w-2.5" />
+      ) : (
+        <Home className="h-2.5 w-2.5" />
+      )}
+      {activeMode === 'current'
+        ? t('interactions.current_location_short', 'Current')
+        : t('interactions.use_pif_address_short')}
+    </span>
+  ) : null;
 
   const locationButtons = (
     <div className="flex items-center gap-2 flex-wrap">
       <button
         onClick={handleCurrentLocation}
-        className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors group"
+        className={`flex items-center gap-1.5 px-2 py-0.5 rounded border cursor-pointer transition-colors group ${activeMode === 'current' ? activeClasses : inactiveClasses}`}
         type="button"
         title={t('interactions.enable_location_filters')}
+        aria-pressed={activeMode === 'current'}
       >
         <MapPin className="h-3 w-3 shrink-0" />
         <span className="text-xs">{t('interactions.current_location_short', 'Current')}</span>
@@ -94,8 +117,9 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
       <button
         onClick={handleUsePifAddress}
         disabled={pifLoading}
-        className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+        className={`flex items-center gap-1.5 px-2 py-0.5 rounded border cursor-pointer transition-colors disabled:opacity-50 ${activeMode === 'pif' ? activeClasses : inactiveClasses}`}
         type="button"
+        aria-pressed={activeMode === 'pif'}
       >
         <Home className="h-3 w-3 shrink-0" />
         <span className="text-xs">{t('interactions.use_pif_address_short')}</span>
@@ -112,6 +136,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
   return (
     <div className="flex items-center gap-3 min-w-0 flex-wrap">
       {locationButtons}
+      {modeBadge}
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
           {t('interactions.distance')}:
