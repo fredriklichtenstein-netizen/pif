@@ -20,16 +20,15 @@ export default function Auth() {
   const rawFromPath = (location.state as { from?: string } | null)?.from || null;
 
   // Whitelist of safe public/known routes for post-login redirect.
-  // Protected routes that need profile completion or special handling are excluded.
   const SAFE_REDIRECT_PATHS = ["/feed", "/map", "/post", "/messages", "/profile", "/account-settings"];
   const isSafeRedirect = (path: string | null): path is string => {
     if (!path || typeof path !== "string") return false;
     if (!path.startsWith("/")) return false;
-    // Disallow auth-related and onboarding routes
+    // Validate only the pathname portion (strip search/hash)
+    const pathnameOnly = path.split("?")[0].split("#")[0];
     const blocked = ["/auth", "/create-profile", "/reset-password", "/forgot-password"];
-    if (blocked.some((b) => path === b || path.startsWith(b + "/"))) return false;
-    // Allow exact match or nested route under a safe base
-    return SAFE_REDIRECT_PATHS.some((safe) => path === safe || path.startsWith(safe + "/"));
+    if (blocked.some((b) => pathnameOnly === b || pathnameOnly.startsWith(b + "/"))) return false;
+    return SAFE_REDIRECT_PATHS.some((safe) => pathnameOnly === safe || pathnameOnly.startsWith(safe + "/"));
   };
   const fromPath = isSafeRedirect(rawFromPath) ? rawFromPath : null;
   const { toast } = useToast();

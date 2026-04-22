@@ -61,10 +61,12 @@ export function MainNav() {
     };
   }, [user]);
 
+  const currentFullPath = `${location.pathname}${location.search}${location.hash}`;
+
   const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!user) {
       e.preventDefault();
-      navigate("/auth", { state: { from: location.pathname } });
+      navigate("/auth", { state: { from: currentFullPath } });
     }
   };
 
@@ -149,7 +151,7 @@ export function MainNav() {
           
           <Link
             to={initialized && !user ? "/auth" : "/profile"}
-            state={initialized && !user ? { from: location.pathname } : undefined}
+            state={initialized && !user ? { from: currentFullPath } : undefined}
             className={`flex flex-col items-center min-w-0 ${
               isProfileActive ? "text-primary" : "text-muted-foreground"
             }`}
