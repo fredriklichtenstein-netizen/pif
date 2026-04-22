@@ -63,51 +63,55 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
     onUsePifAddress?.([result.coordinates.lng, result.coordinates.lat]);
   };
 
+  const locationButtons = (
+    <div className="flex items-center gap-2 flex-wrap">
+      <button
+        onClick={onRequestLocation}
+        className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors group"
+        type="button"
+        title={t('interactions.enable_location_filters')}
+      >
+        <MapPin className="h-3 w-3 shrink-0" />
+        <span className="text-xs">{t('interactions.current_location_short', 'Current')}</span>
+        {!userLocation && <ChevronRight className="h-3 w-3 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />}
+      </button>
+      <button
+        onClick={handleUsePifAddress}
+        disabled={pifLoading}
+        className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+        type="button"
+      >
+        <Home className="h-3 w-3 shrink-0" />
+        <span className="text-xs">{t('interactions.use_pif_address_short')}</span>
+      </button>
+    </div>
+  );
+
   if (!userLocation) {
-    return (
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          onClick={onRequestLocation}
-          className="flex items-center gap-2 text-muted-foreground px-1 cursor-pointer hover:text-foreground transition-colors group"
-          type="button"
-        >
-          <MapPin className="h-3.5 w-3.5 shrink-0" />
-          <span className="text-xs underline underline-offset-2 decoration-muted-foreground/50 group-hover:decoration-foreground/70">
-            {t('interactions.enable_location_filters')}
-          </span>
-          <ChevronRight className="h-3 w-3 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
-        </button>
-        <button
-          onClick={handleUsePifAddress}
-          disabled={pifLoading}
-          className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
-          type="button"
-        >
-          <Home className="h-3 w-3 shrink-0" />
-          <span className="text-xs">{t('interactions.use_pif_address_short')}</span>
-        </button>
-      </div>
-    );
+    return locationButtons;
   }
 
   const label = selectedDistance ? `${selectedDistance} km` : t('interactions.all');
 
   return (
-    <div className="flex items-center gap-3 min-w-0">
-      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
-        {t('interactions.distance')}:
-      </span>
-      <Slider
-        value={[currentStep]}
-        min={0}
-        max={MAX_STEP}
-        step={1}
-        onValueChange={handleSliderChange}
-        className="w-32"
-      />
-      <span className="text-xs font-semibold text-foreground whitespace-nowrap shrink-0 min-w-[3rem] text-right">
-        {label}
-      </span>
+    <div className="flex items-center gap-3 min-w-0 flex-wrap">
+      {locationButtons}
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
+          {t('interactions.distance')}:
+        </span>
+        <Slider
+          value={[currentStep]}
+          min={0}
+          max={MAX_STEP}
+          step={1}
+          onValueChange={handleSliderChange}
+          className="w-32"
+        />
+        <span className="text-xs font-semibold text-foreground whitespace-nowrap shrink-0 min-w-[3rem] text-right">
+          {label}
+        </span>
+      </div>
     </div>
   );
 };
