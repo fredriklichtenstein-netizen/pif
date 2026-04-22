@@ -42,7 +42,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         setUserLocation(coords);
         setIsLoadingLocation(false);
         updateLocationMarker(coords);
-        map.flyTo({ center: coords, zoom: 13, duration: 1500, essential: true });
+        map.flyTo({ center: coords, zoom: 14, duration: 1500, essential: true });
       },
       (error) => {
         console.error("Geolocation error:", error);
@@ -62,7 +62,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     if (map) {
       updateLocationMarker(coords);
       try {
-        map.flyTo({ center: coords, zoom: 13, duration: 1500, essential: true });
+        map.flyTo({ center: coords, zoom: 14, duration: 1500, essential: true });
       } catch (e) {
         console.error("Error flying to manual location:", e);
       }
