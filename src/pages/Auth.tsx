@@ -17,7 +17,21 @@ export default function Auth() {
   const { user, profileCompleted, networkError } = useGlobalAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const fromPath = (location.state as { from?: string } | null)?.from || null;
+  const rawFromPath = (location.state as { from?: string } | null)?.from || null;
+
+  // Whitelist of safe public/known routes for post-login redirect.
+  // Protected routes that need profile completion or special handling are excluded.
+  const SAFE_REDIRECT_PATHS = ["/feed", "/map", "/post", "/messages", "/profile", "/account-settings"];
+  const isSafeRedirect = (path: string | null): path is string => {
+    if (!path || typeof path !== "string") return false;
+    if (!path.startsWith("/")) return false;
+    // Disallow auth-related and onboarding routes
+    const blocked = ["/auth", "/create-profile", "/reset-password", "/forgot-password"];
+    if (blocked.some((b) => path === b || path.startsWith(b + "/"))) return false;
+    // Allow exact match or nested route under a safe base
+    return SAFE_REDIRECT_PATHS.some((safe) => path === safe || path.startsWith(safe + "/"));
+  };
+  const fromPath = isSafeRedirect(rawFromPath) ? rawFromPath : null;
   const { toast } = useToast();
   const { t } = useTranslation();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(true);
