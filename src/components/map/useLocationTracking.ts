@@ -42,6 +42,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
         setUserLocation(coords);
         setIsLoadingLocation(false);
         updateLocationMarker(coords);
+        try { sessionStorage.setItem('map_session_initialized', '1'); } catch {}
         map.flyTo({ center: coords, zoom: 14, duration: 1500, essential: true });
       },
       (error) => {
@@ -61,6 +62,7 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
     setUserLocation(coords);
     if (map) {
       updateLocationMarker(coords);
+      try { sessionStorage.setItem('map_session_initialized', '1'); } catch {}
       try {
         map.flyTo({ center: coords, zoom: 14, duration: 1500, essential: true });
       } catch (e) {
