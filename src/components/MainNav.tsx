@@ -64,7 +64,7 @@ export function MainNav() {
   const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!user) {
       e.preventDefault();
-      navigate("/auth");
+      navigate("/auth", { state: { from: location.pathname } });
     }
   };
 
@@ -149,6 +149,7 @@ export function MainNav() {
           
           <Link
             to={initialized && !user ? "/auth" : "/profile"}
+            state={initialized && !user ? { from: location.pathname } : undefined}
             className={`flex flex-col items-center min-w-0 ${
               isProfileActive ? "text-primary" : "text-muted-foreground"
             }`}

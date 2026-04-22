@@ -2,7 +2,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalAuth, initializeAuth } from "@/hooks/useGlobalAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,6 +16,8 @@ export default function Auth() {
   const { loading, isSignUp, error, handleAuth, handleResetPassword, toggleMode } = useAuth();
   const { user, profileCompleted, networkError } = useGlobalAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromPath = (location.state as { from?: string } | null)?.from || null;
   const { toast } = useToast();
   const { t } = useTranslation();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(true);
@@ -64,11 +66,13 @@ export default function Auth() {
     if (user) {
       if (profileCompleted === false) {
         navigate("/create-profile");
+      } else if (fromPath && fromPath !== "/auth") {
+        navigate(fromPath, { replace: true });
       } else {
         navigate("/");
       }
     }
-  }, [user, profileCompleted, navigate]);
+  }, [user, profileCompleted, navigate, fromPath]);
 
   const handleRefresh = () => {
     window.location.reload();
