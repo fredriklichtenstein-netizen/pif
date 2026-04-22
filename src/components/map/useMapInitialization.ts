@@ -15,10 +15,10 @@ const DEFAULT_ZOOM = 14;
 // Move getInitialMapState outside the hook so it can be used by other components
 export const getInitialMapState = (): MapState => {
   try {
-    const stored = localStorage.getItem(MAP_STATE_KEY);
+    const stored = sessionStorage.getItem(MAP_STATE_KEY);
     if (stored) {
       const state = JSON.parse(stored);
-      if (Array.isArray(state.center) && state.center.length === 2 && 
+      if (Array.isArray(state.center) && state.center.length === 2 &&
           typeof state.zoom === 'number') {
         return state;
       }
@@ -31,7 +31,7 @@ export const getInitialMapState = (): MapState => {
 
 export const saveMapState = (center: [number, number], zoom: number) => {
   try {
-    localStorage.setItem(MAP_STATE_KEY, JSON.stringify({ center, zoom }));
+    sessionStorage.setItem(MAP_STATE_KEY, JSON.stringify({ center, zoom }));
   } catch (error) {
     console.error('🚨 [Map Init] Error saving map state:', error);
   }
