@@ -78,7 +78,13 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     if (!isMapReady || !map) return;
     try {
       const alreadyInitialized = sessionStorage.getItem(MAP_SESSION_INIT_KEY);
-      if (alreadyInitialized) return;
+      // If the map already has a saved session state (zoom/center), respect it
+      // and do not auto-recenter — useMapInitialization restored it already.
+      const hasSavedMapState = !!sessionStorage.getItem('map_last_state');
+      if (alreadyInitialized || hasSavedMapState) {
+        if (!alreadyInitialized) sessionStorage.setItem(MAP_SESSION_INIT_KEY, '1');
+        return;
+      }
 
       const savedMode = sessionStorage.getItem('map_location_mode');
 
