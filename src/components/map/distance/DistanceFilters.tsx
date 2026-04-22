@@ -72,7 +72,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
   const locationButtons = (
     <div className="flex items-center gap-2 flex-wrap">
       <button
-        onClick={onRequestLocation}
+        onClick={handleCurrentLocation}
         className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors group"
         type="button"
         title={t('interactions.enable_location_filters')}
