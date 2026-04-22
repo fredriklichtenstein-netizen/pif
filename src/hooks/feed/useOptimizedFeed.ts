@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getOptimizedPosts, prefetchNextPage } from '@/services/posts/optimized';
+import { getOptimizedPosts, prefetchNextPage, clearPostsCache } from '@/services/posts/optimized';
 import { DEMO_MODE } from '@/config/demoMode';
 import { MOCK_POSTS } from '@/data/mockPosts';
 import type { Post } from '@/types/post';
@@ -64,6 +64,15 @@ export function useOptimizedFeed() {
         }, FADE_DURATION_MS);
 
         fadeTimersRef.current.set(idStr, timer);
+
+        // Prune the item out of every cached optimized-feed page so a
+        // background refetch (or a remount) cannot resurrect it.
+        queryClient.setQueriesData<Post[]>({ queryKey: ['posts', 'optimized'] }, (oldData) => {
+          if (!oldData || !Array.isArray(oldData)) return oldData;
+          return oldData.filter((p) => String(p.id) !== idStr);
+        });
+        // Also wipe the secondary in-memory DatabaseCache used by getOptimizedPosts.
+        clearPostsCache();
       }
 
       if (detail.operationType === 'restore') {
@@ -74,9 +83,13 @@ export function useOptimizedFeed() {
           next.delete(idStr);
           return next;
         });
-        // Also invalidate the query cache so a brand-new restore (an item that
-        // wasn't in the current cache because it was archived before page load)
-        // actually reappears in the feed without a manual refresh.
+        // Clear the secondary cache so a fresh fetch can return the restored item.
+        clearPostsCache();
+        // Drop all cached pages and reset to page 0 so the restored item can
+        // re-enter the feed even if it wasn't part of any cached page.
+        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+        setPage(0);
+        // Trigger a fresh fetch.
         queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
       }
     };
