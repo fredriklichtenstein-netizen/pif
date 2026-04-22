@@ -66,11 +66,13 @@ export default function Auth() {
     if (user) {
       if (profileCompleted === false) {
         navigate("/create-profile");
+      } else if (fromPath && fromPath !== "/auth") {
+        navigate(fromPath, { replace: true });
       } else {
         navigate("/");
       }
     }
-  }, [user, profileCompleted, navigate]);
+  }, [user, profileCompleted, navigate, fromPath]);
 
   const handleRefresh = () => {
     window.location.reload();
