@@ -92,7 +92,7 @@ export function useItemDeletion(
                   const { error: updateError } = await (supabase
                     .from('items')
                     .update({
-                      pif_status: null,
+                      pif_status: 'active',
                       archived_at: null,
                       archived_reason: null,
                     } as any) as any)
