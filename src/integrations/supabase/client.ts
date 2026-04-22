@@ -18,5 +18,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     // Detect OAuth / magic-link callbacks in the URL on load.
     detectSessionInUrl: true,
     storage: typeof window !== "undefined" ? window.localStorage : undefined,
+    // Explicit, project-scoped storage key so the persisted session survives reloads
+    // and never collides with another Supabase project on the same origin.
+    storageKey: "sb-heurpehcwbhohwklqnir-auth-token",
+    flowType: "pkce",
   },
 });

@@ -126,29 +126,16 @@ export function DeleteConfirmDialog({
           </div>}
 
         <div className="mb-4">
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="soft-delete" 
-                checked={isSoftDelete} 
-                onCheckedChange={checked => setIsSoftDelete(Boolean(checked))} 
-                disabled={isLoading}
-              />
-              <Label htmlFor="soft-delete" className={`cursor-pointer ${isLoading ? 'opacity-50' : ''}`}>
-                {t('interactions.delete_dialog_archive_instead')}
-              </Label>
-            </div>
-            <p className="text-xs text-gray-500 pl-6">
-              {isSoftDelete ? t('interactions.delete_dialog_archive_hint') : t('interactions.delete_dialog_delete_hint')}
-            </p>
-          </div>
+          <p className="text-xs text-gray-500">
+            {t('interactions.delete_dialog_archive_hint')}
+          </p>
         </div>
 
         <div className="mb-4">
           <Label htmlFor="delete-reason">{t('interactions.delete_dialog_reason_label')}</Label>
           <Textarea 
             id="delete-reason" 
-            placeholder={isSoftDelete ? t('interactions.delete_dialog_reason_placeholder_archive') : t('interactions.delete_dialog_reason_placeholder_delete')} 
+            placeholder={t('interactions.delete_dialog_reason_placeholder_archive')} 
             value={reason} 
             onChange={e => setReason(e.target.value)} 
             className="mt-1" 
@@ -170,7 +157,6 @@ export function DeleteConfirmDialog({
           <AlertDialogAction 
             type="button" 
             onClick={handleConfirmAction} 
-            className="bg-red-600 hover:bg-red-700" 
             disabled={isLoading || isLoadingInterested}
           >
             {isLoading ? (
@@ -178,7 +164,7 @@ export function DeleteConfirmDialog({
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 {t('interactions.delete_dialog_processing')}
               </>
-            ) : isSoftDelete ? t('interactions.delete_dialog_archive') : t('interactions.delete_dialog_delete')}
+            ) : t('interactions.delete_dialog_archive')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
