@@ -64,7 +64,7 @@ export function MainNav() {
   const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!user) {
       e.preventDefault();
-      navigate("/auth");
+      navigate("/auth", { state: { from: location.pathname } });
     }
   };
 
