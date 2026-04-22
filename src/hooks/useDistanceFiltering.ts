@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { calculateDistance } from '@/utils/distance';
 import type { Post } from '@/types/post';
 
@@ -8,8 +8,28 @@ interface UseDistanceFilteringProps {
   userLocation: [number, number] | null;
 }
 
+const DISTANCE_STORAGE_KEY = 'map_selected_distance';
+
+function readStoredDistance(): number | null {
+  try {
+    const raw = sessionStorage.getItem(DISTANCE_STORAGE_KEY);
+    if (raw === null || raw === 'null') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
 export const useDistanceFiltering = ({ posts, userLocation }: UseDistanceFilteringProps) => {
-  const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
+  const [selectedDistance, setSelectedDistanceState] = useState<number | null>(() => readStoredDistance());
+
+  const setSelectedDistance = useCallback((distance: number | null) => {
+    setSelectedDistanceState(distance);
+    try {
+      sessionStorage.setItem(DISTANCE_STORAGE_KEY, distance === null ? 'null' : String(distance));
+    } catch {}
+  }, []);
 
   const filteredPosts = useMemo(() => {
     if (!userLocation || !selectedDistance) {
