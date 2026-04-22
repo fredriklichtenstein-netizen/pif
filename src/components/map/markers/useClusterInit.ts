@@ -99,18 +99,10 @@ export function useClusterInit({
       });
       clusterIndexRef.current.load(features);
 
-      if (!targetItemId && enhancedPosts.length > 0) {
-        const bounds = new mapboxgl.LngLatBounds();
-        enhancedPosts.forEach((ep) =>
-          bounds.extend([ep.privacyCoordinates.lng, ep.privacyCoordinates.lat])
-        );
+      const sessionInitialized = typeof sessionStorage !== 'undefined'
+        && sessionStorage.getItem('map_session_initialized');
 
-        map.fitBounds(bounds, {
-          padding: { top: 160, bottom: 120, left: 80, right: 80 },
-          maxZoom: 13,
-          duration: 1500,
-        });
-      } else if (targetItemId) {
+      if (targetItemId) {
         const targetPost = enhancedPosts.find(
           (ep) => ep.post.id === targetItemId
         );
@@ -124,6 +116,20 @@ export function useClusterInit({
             duration: 2000,
           });
         }
+      } else if (!sessionInitialized && enhancedPosts.length > 0) {
+        // Only auto-fit on the very first session load when no PIF address
+        // centering has happened yet. MapContainer will set the session flag
+        // when it centers on the user's PIF address, suppressing this fit.
+        const bounds = new mapboxgl.LngLatBounds();
+        enhancedPosts.forEach((ep) =>
+          bounds.extend([ep.privacyCoordinates.lng, ep.privacyCoordinates.lat])
+        );
+
+        map.fitBounds(bounds, {
+          padding: { top: 160, bottom: 120, left: 80, right: 80 },
+          maxZoom: 13,
+          duration: 1500,
+        });
       }
 
       setMapReady(true);
