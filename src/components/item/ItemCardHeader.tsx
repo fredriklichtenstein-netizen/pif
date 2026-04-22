@@ -198,6 +198,7 @@ export function ItemCardHeader({
         onClose={() => setShowDeleteDialog(false)}
         onSuccess={onDeleteSuccess}
         isArchived={isArchived}
+        archiveOnly={!isArchived}
       />
     </>
   );

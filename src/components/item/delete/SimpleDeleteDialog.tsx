@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useItemOperations } from "@/hooks/item/useItemOperations";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
@@ -16,6 +17,8 @@ export interface SimpleDeleteDialogProps {
   onClose: () => void;
   onSuccess?: (operationType?: OperationType) => void;
   isArchived?: boolean;
+  /** When true (feed context), only allow archiving — no permanent delete option. */
+  archiveOnly?: boolean;
 }
 
 export function SimpleDeleteDialog({
@@ -24,90 +27,84 @@ export function SimpleDeleteDialog({
   isOpen,
   onClose,
   onSuccess,
-  isArchived = false
+  isArchived = false,
+  archiveOnly = false,
 }: SimpleDeleteDialogProps) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
+  // For archived items the checkbox toggles "restore vs delete". For normal items
+  // it toggles "archive vs permanently delete" — but in archiveOnly mode it is forced to archive.
   const [isSoftDelete, setIsSoftDelete] = useState(true);
   const [interestedCount, setInterestedCount] = useState(0);
   const [showInterestInfo, setShowInterestInfo] = useState(false);
-  
+
   const {
     isProcessing,
     error,
     checkInterestedCount,
     archiveItem,
     deleteItem,
-    restoreItem
+    restoreItem,
   } = useItemOperations({
     onSuccess: (operationType?: OperationType) => {
       onClose();
       if (onSuccess) onSuccess(operationType);
-    }
+    },
   });
 
-  // Reset state when dialog opens or closes
   useEffect(() => {
     if (isOpen) {
       setReason("");
-      setIsSoftDelete(!isArchived); // Default to archive for normal items, delete for archived items
+      setIsSoftDelete(!isArchived || archiveOnly ? true : true);
       setShowInterestInfo(false);
 
-      // Start interest check in the background
       if (!isArchived) {
         checkInterestedCount(itemId)
-          .then(count => {
+          .then((count) => {
             setInterestedCount(count);
-            if (count > 0) {
-              setShowInterestInfo(true);
-            }
+            if (count > 0) setShowInterestInfo(true);
           })
-          .catch(err => {
-            console.error("Failed to check interest count:", err);
-            // Continue without showing the warning
-          });
+          .catch((err) => console.error("Failed to check interest count:", err));
       }
     }
-  }, [isOpen, itemId, checkInterestedCount, isArchived]);
-  
-  // Handle confirmation action
+  }, [isOpen, itemId, checkInterestedCount, isArchived, archiveOnly]);
+
   const handleConfirm = async () => {
     if (isArchived) {
       if (isSoftDelete) {
-        // Restore archived item
         await restoreItem(itemId);
       } else {
-        // Hard delete archived item
         await deleteItem(itemId, reason);
       }
     } else {
-      if (isSoftDelete) {
-        // Archive item
+      // archiveOnly forces archive, regardless of checkbox state
+      if (archiveOnly || isSoftDelete) {
         await archiveItem(itemId, reason);
       } else {
-        // Hard delete item
         await deleteItem(itemId, reason);
       }
     }
   };
-  
-  // Dialog title and description based on state
+
   const getDialogTitle = () => {
-    if (isArchived) {
-      return isSoftDelete ? "Restore Item" : "Delete Archived Item";
-    }
-    return "Delete Item";
+    if (isArchived) return isSoftDelete ? t('interactions.restore') : t('interactions.delete_permanently');
+    if (archiveOnly) return t('interactions.archive_only_dialog_title');
+    return t('interactions.delete') ?? "Delete Item";
   };
-  
+
   const getDialogDescription = () => {
     if (isArchived) {
-      return isSoftDelete 
-        ? "Are you sure you want to restore this item? It will become visible again." 
-        : "Are you sure you want to permanently delete this archived item? This action cannot be undone.";
+      return isSoftDelete
+        ? t('interactions.item_restored_description')
+        : t('interactions.delete_archived_confirm_description');
     }
-    return isSoftDelete 
-      ? "You can archive this item to hide it from users. You can restore it later." 
+    if (archiveOnly) return t('interactions.archive_only_dialog_description');
+    return isSoftDelete
+      ? "You can archive this item to hide it. You can restore it later."
       : "Are you sure you want to permanently delete this item? This action cannot be undone.";
   };
+
+  const showArchiveCheckbox = !isArchived && !archiveOnly;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && !open && onClose()}>
@@ -116,28 +113,24 @@ export function SimpleDeleteDialog({
           <DialogTitle>{getDialogTitle()}</DialogTitle>
           <DialogDescription>{getDialogDescription()}</DialogDescription>
         </DialogHeader>
-        
+
         {error && (
-          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
-            {error}
-          </div>
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">{error}</div>
         )}
-        
-        {/* Show interested users warning if available */}
+
         {showInterestInfo && interestedCount > 0 && (
           <div className="text-amber-600 text-sm font-medium">
             <p>Warning: {interestedCount} {interestedCount === 1 ? 'person is' : 'people are'} interested in this item.</p>
             <p className="text-muted-foreground font-normal">They will be notified if you proceed.</p>
           </div>
         )}
-        
-        {/* For non-archived items, show archive option */}
-        {!isArchived && (
+
+        {showArchiveCheckbox && (
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="soft-delete" 
-              checked={isSoftDelete} 
-              onCheckedChange={(checked) => setIsSoftDelete(!!checked)} 
+            <Checkbox
+              id="soft-delete"
+              checked={isSoftDelete}
+              onCheckedChange={(checked) => setIsSoftDelete(!!checked)}
               disabled={isProcessing}
             />
             <Label htmlFor="soft-delete" className="cursor-pointer">
@@ -145,67 +138,49 @@ export function SimpleDeleteDialog({
             </Label>
           </div>
         )}
-        
-        {/* For archived items, show restore option */}
+
         {isArchived && (
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="restore-item" 
-              checked={isSoftDelete} 
-              onCheckedChange={(checked) => setIsSoftDelete(!!checked)} 
+            <Checkbox
+              id="restore-item"
+              checked={isSoftDelete}
+              onCheckedChange={(checked) => setIsSoftDelete(!!checked)}
               disabled={isProcessing}
             />
             <Label htmlFor="restore-item" className="cursor-pointer">
-              Restore item instead of permanently deleting
+              {t('interactions.restore')}
             </Label>
           </div>
         )}
-        
-        {/* Reason field (not needed for restore) */}
-        {(!isArchived || !isSoftDelete) && (
+
+        {(!isArchived && !archiveOnly && !isSoftDelete) || (isArchived && !isSoftDelete) ? (
           <div>
             <Label htmlFor="delete-reason">Reason (optional)</Label>
-            <Textarea 
-              id="delete-reason" 
-              placeholder={
-                isArchived 
-                  ? "Why are you deleting this archived item?" 
-                  : isSoftDelete 
-                    ? "Why are you archiving this item?" 
-                    : "Why are you deleting this item?"
-              } 
-              value={reason} 
-              onChange={(e) => setReason(e.target.value)} 
-              className="mt-1" 
+            <Textarea
+              id="delete-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="mt-1"
               disabled={isProcessing}
             />
           </div>
-        )}
-        
+        ) : null}
+
         <DialogFooter className="sm:justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={isProcessing}
-          >
-            Cancel
+          <Button type="button" variant="outline" onClick={onClose} disabled={isProcessing}>
+            {t('interactions.cancel')}
           </Button>
           <Button
             type="button"
-            variant={isSoftDelete && !isArchived ? "default" : "destructive"}
+            variant={(archiveOnly || (isSoftDelete && !isArchived)) ? "default" : "destructive"}
             onClick={handleConfirm}
             disabled={isProcessing}
           >
             {isProcessing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : isArchived ? 
-                (isSoftDelete ? "Restore" : "Delete Permanently") : 
-                (isSoftDelete ? "Archive" : "Delete Permanently")
-            }
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />...</>
+            ) : isArchived
+              ? (isSoftDelete ? t('interactions.restore') : t('interactions.delete_permanently'))
+              : (archiveOnly || isSoftDelete ? t('interactions.status_archived') : t('interactions.delete_permanently'))}
           </Button>
         </DialogFooter>
       </DialogContent>

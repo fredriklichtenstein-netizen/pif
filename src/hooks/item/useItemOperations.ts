@@ -107,6 +107,10 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         return false;
       }
       toast({ title: t('interactions.item_restored_op'), description: t('interactions.item_restored_op_description') });
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'restore' } }));
+        document.dispatchEvent(new CustomEvent('item-operation-undone', { detail: { itemId: numericId, operationType: 'archive' } }));
+      } catch (e) { console.error('Failed to dispatch restore event:', e); }
       if (onSuccess) onSuccess('restore');
       return true;
     } catch (err: any) {
