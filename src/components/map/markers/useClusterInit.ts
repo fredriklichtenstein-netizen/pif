@@ -130,6 +130,7 @@ export function useClusterInit({
           maxZoom: 13,
           duration: 1500,
         });
+        try { sessionStorage.setItem('map_session_initialized', '1'); } catch {}
       }
 
       setMapReady(true);
