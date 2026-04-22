@@ -67,13 +67,17 @@ export function useOptimizedFeed() {
       }
 
       if (detail.operationType === 'restore') {
-        // Server-side restore — bring it back into view.
+        // Server-side restore — bring it back into view if it was optimistically removed.
         setRemovedIds(prev => {
           if (!prev.has(idStr)) return prev;
           const next = new Set(prev);
           next.delete(idStr);
           return next;
         });
+        // Also invalidate the query cache so a brand-new restore (an item that
+        // wasn't in the current cache because it was archived before page load)
+        // actually reappears in the feed without a manual refresh.
+        queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
       }
     };
     document.addEventListener('item-operation-success', handler as EventListener);
