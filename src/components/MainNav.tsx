@@ -149,13 +149,11 @@ export function MainNav() {
           
           <Link
             to={initialized && !user ? "/auth" : "/profile"}
-            className={`flex flex-col items-center ${
+            className={`flex flex-col items-center min-w-0 ${
               isProfileActive ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            {!initialized ? (
-              <div className="w-6 h-6 rounded-full bg-muted/50 animate-pulse" />
-            ) : avatarUrl ? (
+            {avatarUrl ? (
               <div className="w-6 h-6 rounded-full overflow-hidden">
                 <AvatarImage
                   src={avatarUrl}
@@ -169,10 +167,12 @@ export function MainNav() {
                 <span className="text-[10px] font-medium text-primary">{getUserInitials()}</span>
               </div>
             ) : (
+              // Default for both !initialized and unauthenticated: show LogIn icon.
+              // If auth resolves to a logged-in user, the avatar/initials replace it.
               <LogIn size={24} />
             )}
             <span className="text-xs mt-1 truncate max-w-full">
-              {!initialized || user ? t('nav.profile') : t('nav.sign_in', 'Sign in')}
+              {user ? t('nav.profile') : t('nav.sign_in', 'Sign in')}
             </span>
           </Link>
         </div>
