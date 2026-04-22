@@ -137,7 +137,7 @@ export function useOptimizedFeed() {
       restoreTimersRef.current.forEach(t => clearTimeout(t));
       restoreTimersRef.current.clear();
     };
-  }, []);
+  }, [queryClient]);
 
   // In demo mode, return mock data immediately
   const demoData = useMemo(() => {
