@@ -1,51 +1,130 @@
 
+Fix the remaining archive/restore feed sync by rebuilding the active `/feed` path around the components that are actually mounted today, then clearing the feed’s extra cache layer so restored items can re-enter immediately.
 
-## Rebuild Archive / Delete UX
+### Root causes to fix
 
-### What you'll get
+1. **The current feed uses the optimized feed stack, not the legacy one**
+   - `/feed` renders `OptimizedFeedContainer`, not `FeedContainer`.
+   - Some earlier fixes targeted the legacy feed path, so they do not affect the live `/feed` route.
 
-**Feed (`/feed`)**
-- Archiving an item from the three-dots menu opens a simplified, archive-only dialog (no "permanent delete" checkbox, no destructive option from the feed).
-- After archiving, the item fades out of the feed instantly (no refresh needed) — already wired via `item-operation-success`, but the dialog will use the same broadcast as the deletion path.
+2. **The current item-card delete flow is split across two dialog systems**
+   - `src/components/item/ItemCardHeader.tsx` contains the active `SimpleDeleteDialog`.
+   - But the header currently delegates owner delete/archive clicks to `handleDeleteClick`, which goes through `useItemCardActions`.
+   - That path expects `GlobalDeleteDialog` / `ItemDialogs`, but those are not mounted in the active tree.
+   - Result: the live card flow is inconsistent, and the feed does not reliably emit/update the right state when archiving from the feed.
 
-**Profile › My PIFs**
-- When an item is archived (from anywhere), it disappears from "My PIFs" instantly via the global `item-operation-success` event (`MyPifsGrid` currently doesn't listen — we'll add the listener).
-- When an archived item is restored, it reappears in "My PIFs" instantly via an `item-operation-undone` / `restore` event.
+3. **Restore is blocked by stale feed cache outside React Query**
+   - `useOptimizedFeed` invalidates React Query on restore.
+   - But `getOptimizedPosts()` also reads from `DatabaseCache` in `src/services/posts/optimized.ts`.
+   - That means a restored item can stay missing until the extra cache expires, even after query invalidation.
 
-**Profile › Archived tab**
-- Layout fix: the archived card becomes non-interactive (the inner `ItemCard` is wrapped so its like/comment/share/interest/three-dots/avatar links are disabled). Only the new action buttons in the top-right are clickable.
-- The "Arkiverad" pill that looks like a button is removed (visual badge replaced with a plain inline label, or kept only inside the existing `ItemArchivedBanner` to avoid duplication).
-- The duplicated "archived X minutes ago" line under the card is removed (the in-card `ItemArchivedBanner` already shows this).
-- Two action buttons stay visible on the top-right: **Restore** (existing, green) and a new **Delete** button (red) next to it.
-- Clicking **Delete** opens a confirmation dialog: "Are you sure you want to delete this pif? This action cannot be undone." → on confirm, hard-delete via existing `delete_item_with_related_records` RPC.
-- Both Restore and Delete cause the card to fade out of the Archived list immediately (already wired for delete; we'll dispatch the same event for restore).
-- Restore now works (currently broken — see Bugfix below).
+### What to change
 
-### Bugfix: Restore returns "Arkivering misslyckades"
+#### 1) Make the active feed cards use one archive flow only
+Update the current item-card stack so owner archive actions in the feed always open the already-present local `SimpleDeleteDialog`, instead of routing through the unused global delete-manager path.
 
-Root cause: the `restore_item` RPC referenced in `ArchivedPifsGrid.tsx` and `useItemDeletion.tsx` is not deployed (no migration defines it). The fallback then runs `UPDATE items SET pif_status = NULL`, which violates the `pif_status NOT NULL` constraint shown in your error toast.
+Files:
+- `src/components/item/ItemCardHeader.tsx`
+- `src/components/item/ItemCardWrapperContent.tsx`
+- `src/components/item/ItemCardWrapper.tsx`
+- `src/components/item/types.ts`
 
-Fix (two parts):
-1. **Add a `restore_item` RPC migration** (SECURITY DEFINER, owner-only), setting `pif_status = 'active'`, `archived_at = NULL`, `archived_reason = NULL`.
-2. **Fix the client fallback** to use `pif_status: 'active'` instead of `null`, so even environments without the RPC succeed.
+Implementation:
+- Change the owner menu action in `ItemCardHeader` to open `SimpleDeleteDialog` directly for the current item-card stack.
+- Stop depending on `handleDeleteClick` for the active feed/profile item cards.
+- Thread a real operation callback upward so the active card can notify the feed/profile immediately with `(itemId, operationType)` in addition to the document event.
 
-### Files to change
+Result:
+- Archiving from `/feed` uses the same path every time.
+- The archive event fires from the mounted dialog/hook that the feed actually depends on.
 
-| File | Change |
-|---|---|
-| `supabase/migrations/<new>.sql` | Create `public.restore_item(p_item_id bigint) returns boolean` (SECURITY DEFINER, checks `auth.uid() = user_id`). |
-| `src/components/item/delete/SimpleDeleteDialog.tsx` | When opened from the feed (non-archived, non-owner-of-archived path), hide the "Archive instead of permanently delete" checkbox and force archive-only mode. Add an `archiveOnly` prop. |
-| `src/components/item/ItemCardHeader.tsx` | Pass `archiveOnly` to `SimpleDeleteDialog` when the item is not archived (feed context). For archived items in the dropdown, keep current behavior or hide the menu entirely (see below). |
-| `src/components/profile/MyPifsGrid.tsx` | Add `item-operation-success` (archive/delete) and `item-operation-undone` (restore) listeners to remove/refetch instantly. |
-| `src/components/profile/ArchivedPifsGrid.tsx` | (a) Wrap each `ItemCard` in a `pointer-events-none` container so the underlying card is non-interactive. (b) Remove the floating "Arkiverad" Badge (banner inside the card already states it). (c) Remove the bottom "archived X ago / reason" block (duplicate of in-card banner). (d) Add a red **Delete** button next to **Restore** with its own confirm dialog. (e) Fix restore fallback to `pif_status: 'active'`. (f) On successful restore, dispatch `item-operation-undone` (so MyPifsGrid/feed/map re-add it) AND fade the card out of the archived list. |
-| `src/components/item/delete/useItemDeletion.tsx` | Replace fallback `pif_status: null` with `pif_status: 'active'` (defensive even though main path uses RPC). |
-| `src/locales/en/interactions.json`, `src/locales/sv/interactions.json` | Add new keys: `delete_archived_confirm_title`, `delete_archived_confirm_description`, `delete_permanently`, `archive_only_dialog_title`, `archive_only_dialog_description`. |
+#### 2) Patch the optimized feed cache immediately on archive/delete
+Strengthen `useOptimizedFeed` so archive/delete removes the item from both:
+- the local `removedIds` animation state, and
+- all cached `['posts', 'optimized', page]` query pages.
 
-### Technical notes
+File:
+- `src/hooks/feed/useOptimizedFeed.ts`
 
-- The "instant disappearance" already works in `useOptimizedFeed` and `ArchivedPifsGrid` via the `item-operation-success` document event — `MyPifsGrid` is the missing listener.
-- The "non-clickable archived card" is implemented with a wrapping `<div class="pointer-events-none select-none">` around `<ItemCard>`; the action buttons sit in a sibling absolutely-positioned overlay that re-enables pointer events (`pointer-events-auto`).
-- The new Delete confirm dialog reuses shadcn `AlertDialog` (no reason field, no archive option) — distinct from the existing archive/delete combined dialog.
-- After hard-delete from Archived tab: dispatch `item-operation-success` with `operationType: 'delete'` so the row fades out (already wired).
-- After restore: dispatch a new `item-operation-success` with `operationType: 'restore'` (already handled by `useOptimizedFeed`) plus `item-operation-undone` so `MyPifsGrid` / `UserPifsList` refetch and re-add the item.
+Implementation:
+- On `item-operation-success` with `archive` or `delete`:
+  - keep the existing fade-out behavior,
+  - also prune that item ID out of every cached optimized-feed page via `queryClient.setQueriesData`.
+- Clear the custom posts cache when destructive operations complete so later refetches cannot resurrect stale items.
 
+Files:
+- `src/hooks/feed/useOptimizedFeed.ts`
+- `src/services/posts/optimized.ts` (reuse `clearPostsCache()`)
+
+Result:
+- The item disappears immediately from the rendered feed.
+- A delayed background refresh cannot bring it back from stale cache.
+
+#### 3) Make restore repopulate the feed from a fresh source
+Restore should not rely on React Query invalidation alone.
+
+Files:
+- `src/hooks/feed/useOptimizedFeed.ts`
+- `src/services/posts/optimized.ts`
+
+Implementation:
+- On `restore`:
+  - remove the item from `removedIds`,
+  - clear the custom posts cache with `clearPostsCache()`,
+  - remove/invalidate all optimized-feed query pages,
+  - reset the optimized feed to page 0 and refetch fresh page-0 data.
+- Keep the undo/restore fade-in behavior after the fresh data arrives.
+
+Result:
+- Restored items reappear in `/feed` without a manual refresh.
+- This works even if the restored item should return to page 0 and was previously absent from cached pages.
+
+#### 4) Keep My PIFs/Profile synced through the same active event path
+Even though the latest report says issue 2 is resolved, the same unified event path should remain the source of truth for profile grids.
+
+File:
+- `src/components/profile/MyPifsGrid.tsx`
+
+Implementation:
+- Keep the existing archive/delete immediate removal and restore refetch logic.
+- Ensure it now receives events from the same active `SimpleDeleteDialog` path used in feed cards.
+
+### Technical details
+
+```text
+Current live route
+/feed
+  -> OptimizedFeedContainer
+  -> FeedItemList
+  -> FeedItemCard
+  -> ItemCard
+  -> ItemCardHeader + SimpleDeleteDialog
+
+Problem
+ItemCardHeader currently delegates to a different delete system
+that expects GlobalDeleteDialog / ItemDialogs, but those are not mounted.
+
+Fix
+Use the mounted SimpleDeleteDialog path for current item cards,
+and make useOptimizedFeed update both:
+1) local fade/remove state
+2) cached query pages
+3) custom DatabaseCache
+```
+
+### Files to update
+
+- `src/components/item/ItemCardHeader.tsx`
+- `src/components/item/ItemCardWrapper.tsx`
+- `src/components/item/ItemCardWrapperContent.tsx`
+- `src/components/item/types.ts`
+- `src/hooks/feed/useOptimizedFeed.ts`
+- `src/services/posts/optimized.ts`
+- `src/components/profile/MyPifsGrid.tsx` (verify only; minimal change if needed)
+
+### Expected behavior after the fix
+
+- Archiving from `/feed` removes the item instantly, without refresh.
+- Restoring from archived items makes the item reappear in `/feed` automatically.
+- The same archive/restore action continues to sync with My PIFs and Archived items.
+- No stale-cache delay remains between archive/restore operations and what the user sees.
