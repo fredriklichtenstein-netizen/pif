@@ -1,11 +1,21 @@
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { MapPin, ChevronRight, Home } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { usePifAddress } from '@/hooks/usePifAddress';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
+
+type LocationMode = 'current' | 'pif' | null;
+
+function readMode(): LocationMode {
+  try {
+    const v = sessionStorage.getItem('map_location_mode');
+    if (v === 'current' || v === 'pif') return v;
+  } catch {}
+  return null;
+}
 
 interface DistanceFiltersProps {
   selectedDistance: number | null;
