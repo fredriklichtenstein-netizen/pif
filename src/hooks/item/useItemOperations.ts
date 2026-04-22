@@ -46,6 +46,9 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         return false;
       }
       toast({ title: t('interactions.item_archived'), description: t('interactions.item_archived_description') });
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'archive' } }));
+      } catch (e) { console.error('Failed to dispatch archive event:', e); }
       if (onSuccess) onSuccess('archive');
       return true;
     } catch (err: any) {
@@ -76,6 +79,9 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         return false;
       }
       toast({ title: t('interactions.item_deleted'), description: t('interactions.item_deleted_description') });
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'delete' } }));
+      } catch (e) { console.error('Failed to dispatch delete event:', e); }
       if (onSuccess) onSuccess('delete');
       return true;
     } catch (err: any) {
