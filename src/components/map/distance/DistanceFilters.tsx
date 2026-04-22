@@ -42,6 +42,11 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
     onDistanceChange(stepToDistance(value[0]));
   };
 
+  const handleCurrentLocation = () => {
+    try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
+    onRequestLocation?.();
+  };
+
   const handleUsePifAddress = async () => {
     if (!user) {
       toast({
@@ -60,6 +65,7 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
       });
       return;
     }
+    try { sessionStorage.setItem('map_location_mode', 'pif'); } catch {}
     onUsePifAddress?.([result.coordinates.lng, result.coordinates.lat]);
   };
 
