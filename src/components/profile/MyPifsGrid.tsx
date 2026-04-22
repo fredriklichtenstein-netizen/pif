@@ -34,10 +34,11 @@ export function MyPifsGrid({ userId }: { userId: string }) {
     }
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("items")
-        .select("*")
+        .select("*") as any)
         .eq("user_id", userId)
+        .neq("pif_status", "archived")
         .order("created_at", { ascending: false });
         
       if (error) throw error;
