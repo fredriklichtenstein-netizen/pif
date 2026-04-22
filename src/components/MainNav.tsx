@@ -149,6 +149,7 @@ export function MainNav() {
           
           <Link
             to={initialized && !user ? "/auth" : "/profile"}
+            state={initialized && !user ? { from: location.pathname } : undefined}
             className={`flex flex-col items-center min-w-0 ${
               isProfileActive ? "text-primary" : "text-muted-foreground"
             }`}
