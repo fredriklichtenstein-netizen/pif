@@ -42,6 +42,11 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
     onDistanceChange(stepToDistance(value[0]));
   };
 
+  const handleCurrentLocation = () => {
+    try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
+    onRequestLocation?.();
+  };
+
   const handleUsePifAddress = async () => {
     if (!user) {
       toast({
@@ -60,13 +65,14 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
       });
       return;
     }
+    try { sessionStorage.setItem('map_location_mode', 'pif'); } catch {}
     onUsePifAddress?.([result.coordinates.lng, result.coordinates.lat]);
   };
 
   const locationButtons = (
     <div className="flex items-center gap-2 flex-wrap">
       <button
-        onClick={onRequestLocation}
+        onClick={handleCurrentLocation}
         className="flex items-center gap-1.5 text-muted-foreground px-2 py-0.5 rounded border border-border cursor-pointer hover:text-foreground hover:bg-muted/50 transition-colors group"
         type="button"
         title={t('interactions.enable_location_filters')}

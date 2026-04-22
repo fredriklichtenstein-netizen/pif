@@ -73,20 +73,33 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     }
   }, [isMapReady, map]);
 
-  // First-load: center on user's PIF address (once per session)
+  // First-load: restore saved mode (current/pif) or center on PIF address by default (once per session)
   useEffect(() => {
     if (!isMapReady || !map) return;
     try {
       const alreadyInitialized = sessionStorage.getItem(MAP_SESSION_INIT_KEY);
       if (alreadyInitialized) return;
+
+      const savedMode = sessionStorage.getItem('map_location_mode');
+
+      if (savedMode === 'current') {
+        sessionStorage.setItem(MAP_SESSION_INIT_KEY, '1');
+        locationTracking.goToMyLocation();
+        return;
+      }
+
+      // Default (and savedMode === 'pif'): center on PIF address if available
       if (!pifCoordinates) return;
       const { lng, lat } = pifCoordinates;
       if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) return;
       map.jumpTo({ center: [lng, lat], zoom: 14 });
+      locationTracking.setManualLocation([lng, lat]);
       sessionStorage.setItem(MAP_SESSION_INIT_KEY, '1');
+      if (!savedMode) sessionStorage.setItem('map_location_mode', 'pif');
     } catch (e) {
       console.error('[MapContainer] session init centering failed:', e);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapReady, map, pifCoordinates]);
 
   // Handle target item centering
@@ -186,7 +199,10 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
 
           <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
             <Button
-              onClick={locationTracking.goToMyLocation}
+              onClick={() => {
+                try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
+                locationTracking.goToMyLocation();
+              }}
               disabled={locationTracking.isLoadingLocation}
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
