@@ -54,6 +54,35 @@ export function MyPifsGrid({ userId }: { userId: string }) {
     fetchPifs();
   }, [userId]);
 
+  // Sync with global archive/delete/restore events so the grid updates without a refresh.
+  useEffect(() => {
+    const onSuccess = (e: Event) => {
+      const detail = (e as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
+      if (!detail) return;
+      const idStr = String(detail.itemId);
+      if (detail.operationType === 'archive' || detail.operationType === 'delete') {
+        // Remove from local list immediately.
+        setItems((prev) => prev.filter((i) => String(i.id) !== idStr));
+      } else if (detail.operationType === 'restore') {
+        // Refetch so the restored item reappears with full data.
+        fetchPifs();
+      }
+    };
+    const onUndone = (e: Event) => {
+      const detail = (e as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
+      if (!detail) return;
+      // Either an undone archive (item is back) or a restore — refetch to be safe.
+      fetchPifs();
+    };
+    document.addEventListener('item-operation-success', onSuccess as EventListener);
+    document.addEventListener('item-operation-undone', onUndone as EventListener);
+    return () => {
+      document.removeEventListener('item-operation-success', onSuccess as EventListener);
+      document.removeEventListener('item-operation-undone', onUndone as EventListener);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
   const handlePostClick = (postId: number | string) => {
     setSelectedPostId(postId);
     setModalOpen(true);

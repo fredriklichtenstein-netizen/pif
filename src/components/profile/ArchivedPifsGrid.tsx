@@ -7,11 +7,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Archive, ArchiveRestore, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArchiveRestore, Loader2, Trash2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useTranslation } from "react-i18next";
-import { formatRelativeTime } from "@/utils/formatDate";
 
 const FADE_DURATION_MS = 320;
 
@@ -19,9 +27,9 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<number | null>(null);
-  // Items currently animating out (still rendered, with fade-out class).
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
-  // Items fully removed (no longer rendered).
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const fadeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const { user } = useGlobalAuth();
@@ -29,9 +37,31 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const isOwner = user && user.id === userId;
 
+  const fadeAndRemove = (itemId: number | string) => {
+    const idStr = String(itemId);
+    setFadingIds((prev) => {
+      if (prev.has(idStr)) return prev;
+      const next = new Set(prev);
+      next.add(idStr);
+      return next;
+    });
+    const existing = fadeTimersRef.current.get(idStr);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(() => {
+      setItems((prev) => prev.filter((i) => String(i.id) !== idStr));
+      setFadingIds((prev) => {
+        if (!prev.has(idStr)) return prev;
+        const next = new Set(prev);
+        next.delete(idStr);
+        return next;
+      });
+      fadeTimersRef.current.delete(idStr);
+    }, FADE_DURATION_MS);
+    fadeTimersRef.current.set(idStr, timer);
+  };
+
   const fetchArchivedItems = async () => {
     if (!userId) return;
-    
     setLoading(true);
     try {
       const { data, error } = await (supabase
@@ -40,26 +70,22 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         .eq("user_id", userId)
         .eq("pif_status", "archived")
         .order("archived_at", { ascending: false });
-        
+
       if (error) throw error;
-      
-      const transformedData = data?.map(item => {
+
+      const transformedData = data?.map((item) => {
         let coordinates;
         if (item.coordinates) {
-          try {
-            coordinates = parseCoordinatesFromDB(String(item.coordinates));
-          } catch (err) {
-            console.error("Failed to parse coordinates:", err);
-          }
+          try { coordinates = parseCoordinatesFromDB(String(item.coordinates)); }
+          catch (err) { console.error("Failed to parse coordinates:", err); }
         }
-        
         return {
           id: item.id,
           title: item.title,
           description: item.description,
           images: item.images || [],
           location: item.location,
-          coordinates: coordinates,
+          coordinates,
           category: item.category,
           condition: item.condition,
           measurements: item.measurements || {},
@@ -67,53 +93,50 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
           archived_reason: item.archived_reason,
           postedBy: {
             id: item.user_id,
-            name: item.profiles ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() : 'Unknown User',
-            avatar: item.profiles?.avatar_url || ''
-          }
+            name: item.profiles
+              ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim()
+              : 'Unknown User',
+            avatar: item.profiles?.avatar_url || '',
+          },
         };
       }) || [];
-      
+
       setItems(transformedData);
     } catch (err) {
       console.error("Error fetching archived items:", err);
       toast({
         title: t('post.error'),
         description: t('interactions.error_load_archived'),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchArchivedItems();
-  }, [userId]);
+  useEffect(() => { fetchArchivedItems(); }, [userId]);
 
-  // Listen for global delete success events so deleted items animate out, then disappear.
+  // Listen for delete success events so deleted items animate out.
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
       if (!detail || detail.operationType !== 'delete') return;
       const idStr = String(detail.itemId);
-
-      setFadingIds(prev => {
+      setFadingIds((prev) => {
         if (prev.has(idStr)) return prev;
         const next = new Set(prev);
         next.add(idStr);
         return next;
       });
-
       const existing = fadeTimersRef.current.get(idStr);
       if (existing) clearTimeout(existing);
-
       const timer = setTimeout(() => {
-        setDeletedIds(prev => {
+        setDeletedIds((prev) => {
           const next = new Set(prev);
           next.add(idStr);
           return next;
         });
-        setFadingIds(prev => {
+        setFadingIds((prev) => {
           if (!prev.has(idStr)) return prev;
           const next = new Set(prev);
           next.delete(idStr);
@@ -121,86 +144,105 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         });
         fadeTimersRef.current.delete(idStr);
       }, FADE_DURATION_MS);
-
       fadeTimersRef.current.set(idStr, timer);
     };
     document.addEventListener('item-operation-success', handler as EventListener);
     return () => {
       document.removeEventListener('item-operation-success', handler as EventListener);
-      fadeTimersRef.current.forEach(t => clearTimeout(t));
+      fadeTimersRef.current.forEach((t) => clearTimeout(t));
       fadeTimersRef.current.clear();
     };
   }, []);
 
-  const visibleItems = items.filter(item => !deletedIds.has(String(item.id)));
+  const visibleItems = items.filter((item) => !deletedIds.has(String(item.id)));
 
   const handleRestore = async (itemId: number) => {
     if (!isOwner) return;
-
     setRestoring(itemId);
     try {
-      // Prefer the SECURITY DEFINER RPC (bypasses missing UPDATE RLS policy on items).
-      // Falls back to a direct UPDATE for environments where the RPC isn't deployed yet.
       let restored = false;
       const { data: rpcResult, error: rpcError } = await (supabase as any)
         .rpc('restore_item', { p_item_id: itemId });
 
       if (!rpcError) {
         restored = Boolean(rpcResult);
-      } else {
-        console.warn('restore_item RPC unavailable, falling back to direct update:', rpcError.message);
+      }
+      if (!restored) {
+        if (rpcError) console.warn('restore_item RPC unavailable, falling back:', rpcError.message);
         const { error: updateError, count } = await (supabase
           .from('items')
           .update({
-            pif_status: null,
+            pif_status: 'active',
             archived_at: null,
             archived_reason: null,
           } as any, { count: 'exact' }) as any)
           .eq('id', itemId);
-
         if (updateError) throw updateError;
-        restored = (count ?? 0) > 0;
+        restored = (count ?? 0) > 0 || count === null;
       }
 
-      if (!restored) {
-        throw new Error('Restore returned no rows — RLS or RPC permissions may be missing.');
-      }
+      if (!restored) throw new Error('Restore returned no rows.');
 
       toast({
         title: t('interactions.item_restored'),
         description: t('interactions.item_restored_description'),
       });
 
-      // Fade the restored item out, then remove from the local list.
-      const idStr = String(itemId);
-      setFadingIds(prev => {
-        if (prev.has(idStr)) return prev;
-        const next = new Set(prev);
-        next.add(idStr);
-        return next;
-      });
-      const existing = fadeTimersRef.current.get(idStr);
-      if (existing) clearTimeout(existing);
-      const timer = setTimeout(() => {
-        setItems(prev => prev.filter(item => item.id !== itemId));
-        setFadingIds(prev => {
-          if (!prev.has(idStr)) return prev;
-          const next = new Set(prev);
-          next.delete(idStr);
-          return next;
-        });
-        fadeTimersRef.current.delete(idStr);
-      }, FADE_DURATION_MS);
-      fadeTimersRef.current.set(idStr, timer);
+      // Notify other lists (feed, MyPifs, map) to re-add this item.
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', {
+          detail: { itemId, operationType: 'restore' },
+        }));
+        document.dispatchEvent(new CustomEvent('item-operation-undone', {
+          detail: { itemId, operationType: 'archive' },
+        }));
+      } catch (e) { console.error('dispatch restore failed', e); }
+
+      fadeAndRemove(itemId);
     } catch (err: any) {
       console.error("Error restoring item:", err);
       toast({
         title: t('post.error'),
         description: err?.message || t('interactions.restore_error'),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setRestoring(null);
+    }
+  };
+
+  const handleHardDelete = async (itemId: number) => {
+    if (!isOwner) return;
+    setDeleting(itemId);
+    try {
+      const { data: result, error } = await supabase.rpc('delete_item_with_related_records', {
+        p_item_id: itemId,
+        p_reason: null,
+      });
+      if (error) throw error;
+      if (!result) throw new Error('Delete returned no rows');
+
+      toast({
+        title: t('interactions.item_deleted'),
+        description: t('interactions.item_deleted_description'),
+      });
+
+      // Broadcast so other lists (and our own fade handler) remove it.
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', {
+          detail: { itemId, operationType: 'delete' },
+        }));
+      } catch (e) { console.error('dispatch delete failed', e); }
+    } catch (err: any) {
+      console.error('Error deleting archived item:', err);
+      toast({
+        title: t('post.error'),
+        description: err?.message || t('interactions.delete_failed'),
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -223,71 +265,92 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="space-y-4">
-      {visibleItems.map(item => {
-        const isFading = fadingIds.has(String(item.id));
-        return (
-          <div
-            key={item.id}
-            className={`relative${isFading ? ' animate-fade-out-collapse pointer-events-none' : ''}`}
-            aria-hidden={isFading || undefined}
-          >
-            <div className="relative overflow-hidden rounded-lg">
-              <ItemCard {...item} />
-              {/* Muted overlay so archived items look visually distinct from active pifs. */}
-              <div className="pointer-events-none absolute inset-0 bg-background/40" aria-hidden="true" />
-              {/* Archived badge sits above the overlay, top-left. */}
-              <Badge
-                variant="secondary"
-                className="absolute top-3 left-3 z-10 flex items-center gap-1 shadow-md"
-              >
-                <Archive className="h-3 w-3" />
-                {t('interactions.archived')}
-              </Badge>
-            </div>
+    <>
+      <div className="space-y-4">
+        {visibleItems.map((item) => {
+          const isFading = fadingIds.has(String(item.id));
+          const isBusy = restoring === item.id || deleting === item.id;
+          return (
+            <div
+              key={item.id}
+              className={`relative${isFading ? ' animate-fade-out-collapse pointer-events-none' : ''}`}
+              aria-hidden={isFading || undefined}
+            >
+              <div className="relative overflow-hidden rounded-lg">
+                {/* Disable all interaction inside the archived card itself. */}
+                <div className="pointer-events-none select-none">
+                  <ItemCard {...item} />
+                </div>
+                {/* Subtle muted overlay so archived items look distinct. */}
+                <div className="pointer-events-none absolute inset-0 bg-background/40" aria-hidden="true" />
+              </div>
 
-          {isOwner && (
-            <div className="absolute top-3 right-3 z-10">
-              <Button
-                variant="default"
-                size="sm"
-                className="shadow-lg flex items-center gap-1 font-medium"
-                onClick={() => handleRestore(item.id)}
-                disabled={restoring === item.id}
-              >
-                {restoring === item.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ArchiveRestore className="h-4 w-4" />
-                )}
-                {t('interactions.restore')}
-              </Button>
+              {isOwner && (
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-2 pointer-events-auto">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="shadow-lg flex items-center gap-1 font-medium"
+                    onClick={() => handleRestore(item.id)}
+                    disabled={isBusy}
+                  >
+                    {restoring === item.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArchiveRestore className="h-4 w-4" />
+                    )}
+                    {t('interactions.restore')}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="shadow-lg flex items-center gap-1 font-medium"
+                    onClick={() => setConfirmDeleteId(item.id)}
+                    disabled={isBusy}
+                  >
+                    {deleting === item.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    {t('interactions.delete')}
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
+          );
+        })}
+      </div>
 
-          {(item.archived_reason || item.archived_at) && (
-            <div className="mt-1.5 px-3 flex items-start gap-1.5 text-xs text-muted-foreground">
-              <Archive className="h-3 w-3 mt-0.5 shrink-0 opacity-70" aria-hidden="true" />
-              <span className="leading-snug">
-                {item.archived_at && (
-                  <span className="font-medium">
-                    {t('interactions.archived_time_ago', {
-                      time: formatRelativeTime(new Date(item.archived_at)),
-                    })}
-                  </span>
-                )}
-                {item.archived_reason && (
-                  <>
-                    {item.archived_at && <span> · </span>}
-                    <span className="italic">{item.archived_reason}</span>
-                  </>
-                )}
-              </span>
-            </div>
-          )}
-          </div>
-        );
-      })}
-    </div>
+      <AlertDialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('interactions.delete_archived_confirm_title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('interactions.delete_archived_confirm_description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting !== null}>
+              {t('interactions.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmDeleteId !== null && handleHardDelete(confirmDeleteId)}
+              disabled={deleting !== null}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting !== null ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />...</>
+              ) : (
+                t('interactions.delete_permanently')
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
