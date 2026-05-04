@@ -153,7 +153,7 @@ export const useCommentCreate = (
       console.log('[useCommentCreate] Insert success', data);
 
       if (data) {
-        const newComment = formatCommentFromDB(data, true);
+        const newComment = formatCommentFromDB(data as any, true);
         const updatedComments = [...comments, newComment];
         setComments(updatedComments);
       }
