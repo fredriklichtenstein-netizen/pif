@@ -8,18 +8,7 @@ export async function runCommentQuery(numericItemId: number, userId?: string, co
   const signal = controller?.signal;
   const query = supabase
     .from('comments')
-    .select(`
-      id,
-      content,
-      created_at,
-      user_id,
-      profiles:user_id (
-        id,
-        first_name,
-        last_name,
-        avatar_url
-      )
-    `)
+    .select('*, profiles:user_id(id, first_name, last_name, avatar_url)')
     .eq('item_id', numericItemId)
     .order('created_at', { ascending: true });
 
