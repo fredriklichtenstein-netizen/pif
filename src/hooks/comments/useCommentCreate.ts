@@ -151,6 +151,7 @@ export const useCommentCreate = (
       }
 
       console.log('[useCommentCreate] Insert success', data);
+      console.log('[useCommentCreate] Triggering refetch');
 
       if (data) {
         const newComment = formatCommentFromDB(data as any, true);
