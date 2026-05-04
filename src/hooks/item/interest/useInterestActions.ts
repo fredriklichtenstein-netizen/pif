@@ -14,25 +14,30 @@ export const useInterestActions = (
 
   const handleShowInterest = async (id: string, userId: string | undefined | null) => {
     if (!await checkAuth("show interest in this item")) return;
-    
+
     const numericId = parseInt(id, 10);
     if (isNaN(numericId) || !userId) return;
-    
+
     const wasInterested = await checkExistingInterest(numericId, userId);
+
+    // Optimistic UI: flip the toggle immediately so the button feels instant.
     setShowInterest(!wasInterested);
-    
+
     try {
       if (wasInterested) {
         await removeInterest(numericId, userId);
-        await fetchInterestedUsersInternal(numericId);
       } else {
         await addInterest(numericId, userId);
-        await fetchInterestedUsersInternal(numericId);
       }
+      // Refresh the interested users list in the background — don't block the UI on it.
+      fetchInterestedUsersInternal(numericId).catch((err) => {
+        console.error('Background interest refresh failed:', err);
+      });
     } catch (error) {
       console.error('Error toggling interest:', error);
+      // Revert optimistic update on failure.
       setShowInterest(wasInterested);
-      
+
       toast({
         title: t('post.error', 'Error'),
         description: t('interactions.interest_error', 'Failed to update interest status. Please try again.'),

@@ -90,7 +90,7 @@ function UserPifsGrid({ userId }: { userId: string }) {
     import("@/integrations/supabase/client").then(({ supabase }) => {
       supabase
         .from("items")
-        .select("id, title, description, created_at")
+        .select("id, title, description, created_at, images")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .then(({ data }) => {
@@ -115,15 +115,28 @@ function UserPifsGrid({ userId }: { userId: string }) {
     <div>
       <h3 className="text-lg font-semibold mt-4 mb-2">{t('profile.my_pifs')}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {items.map((item) => (
-          <Link to={`/post/${item.id}`} key={item.id} aria-label={item.title}>
-            <Card className="p-4 hover:ring-2 ring-primary transition flex flex-col gap-2">
-              <div className="font-bold text-lg">{item.title}</div>
-              <div className="text-xs text-muted-foreground">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
-              <div className="text-sm text-foreground/70">{item.description}</div>
-            </Card>
-          </Link>
-        ))}
+        {items.map((item) => {
+          const thumb = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
+          return (
+            <Link to={`/post/${item.id}`} key={item.id} aria-label={item.title}>
+              <Card className="overflow-hidden hover:ring-2 ring-primary transition flex flex-col">
+                {thumb && (
+                  <img
+                    src={thumb}
+                    alt={item.title}
+                    loading="lazy"
+                    className="w-full h-32 object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
+                  />
+                )}
+                <div className="p-3 flex flex-col gap-1">
+                  <div className="font-bold text-sm">{item.title}</div>
+                  <div className="text-xs text-muted-foreground">{item.created_at && new Date(item.created_at).toLocaleDateString()}</div>
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

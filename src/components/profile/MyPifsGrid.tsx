@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { PostModal } from "./PostModal";
-import { InterestUsersPopover } from "./interest/InterestUsersPopover";
+import { InterestUsersPopover } from "./InterestUsersPopover";
 import { formatRelativeTime } from "@/utils/formatDate";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoPostsStore } from "@/stores/demoPostsStore";
