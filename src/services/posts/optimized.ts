@@ -51,7 +51,26 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
       transformCache.set(cacheKey, transformed);
       return transformed;
     });
-    
+
+    // Seed the global initial counts store so feed cards show correct
+    // counters (likes/comments/interests) immediately on first render.
+    try {
+      const entries: Array<{ itemId: string | number; likesCount: number; commentsCount: number; interestsCount: number }> = [];
+      interactionsMap.forEach((value: any, key: any) => {
+        entries.push({
+          itemId: key,
+          likesCount: Number(value.likesCount) || 0,
+          commentsCount: Number(value.commentsCount) || 0,
+          interestsCount: Number(value.interestsCount) || 0,
+        });
+      });
+      if (entries.length > 0) {
+        useInitialCountsStore.getState().setBulkCounts(entries);
+      }
+    } catch {
+      // Non-fatal — counts will still load lazily.
+    }
+
     // Cache the results
     DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
     // Record performance metrics
