@@ -9,10 +9,11 @@ export function useInterestUsers(itemId: number) {
   const fetchInterests = async () => {
     setLoading(true);
     try {
+      const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
       const { data, error } = await supabase
         .from("interests")
-        .select("id,user_id,status,created_at,users:profiles!interests_user_id_fkey(*)")
-        .eq("item_id", itemId)
+        .select("*, profiles:user_id(id, first_name, last_name, avatar_url)")
+        .eq("item_id", numericItemId)
         .order("created_at", { ascending: false });
         
       if (error) throw error;
