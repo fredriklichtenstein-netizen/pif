@@ -35,6 +35,7 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [withdrawTargetId, setWithdrawTargetId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [selectingInterestId, setSelectingInterestId] = useState<number | null>(null);
   const { selectUser: demoSelectUser, unselectUser: demoUnselectUser, getSelectedUser, hasSelection } = useDemoSelectionsStore();
 
   useEffect(() => {
@@ -72,12 +73,15 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
 
   const handleSelectReceiver = async (interestId: number, userId: string, displayName: string) => {
     setConfirmDialogOpen(false);
+    if (selectingInterestId !== null) return;
+    setSelectingInterestId(interestId);
     if (DEMO_MODE) {
       demoSelectUser(itemId, userId); fetchInterests();
       toast({
         title: t('interactions.receiver_selected'),
         description: t('interactions.receiver_selected_with_name', { name: displayName }),
       });
+      setSelectingInterestId(null);
       return;
     }
     try {
@@ -107,6 +111,8 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
     } catch (err) {
       console.error("Error selecting receiver:", err);
       toast({ variant: "destructive", title: t('interactions.error_title'), description: t('interactions.error_select_receiver') });
+    } finally {
+      setSelectingInterestId(null);
     }
   };
 
@@ -229,8 +235,13 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                     </>
                   )}
                   {u.status === "pending" && isOwner && (
-                    <Button size="sm" onClick={() => { setSelectedUserId(u.id); setConfirmDialogOpen(true); }} className="text-xs py-1 px-2 h-auto whitespace-nowrap">
-                      {t('interactions.select_btn')}
+                    <Button
+                      size="sm"
+                      disabled={selectingInterestId !== null}
+                      onClick={() => { setSelectedUserId(u.id); setConfirmDialogOpen(true); }}
+                      className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                    >
+                      {selectingInterestId === u.id ? t('interactions.loading') : t('interactions.select_btn')}
                     </Button>
                   )}
                   {u.status === "not_selected" && (
