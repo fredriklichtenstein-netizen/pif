@@ -248,6 +248,17 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {ratingContext && post && (
+        <PifferRatingDialog
+          open={ratingOpen}
+          onOpenChange={setRatingOpen}
+          itemId={post.id}
+          receiverName={ratingContext.receiverName}
+          demoRaterId={ratingContext.demoRaterId}
+          demoRateeId={ratingContext.demoRateeId}
+        />
+      )}
     </>
   );
 }
