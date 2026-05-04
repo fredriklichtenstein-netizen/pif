@@ -19,9 +19,8 @@ export function useCommentRetry(maxRetries: number) {
   };
 
   const createAbortController = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+    // Always create a fresh controller; do not abort prior one here to avoid
+    // racing with in-flight refetches that re-enter this code path.
     abortControllerRef.current = new AbortController();
     return abortControllerRef.current;
   };
@@ -31,10 +30,10 @@ export function useCommentRetry(maxRetries: number) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
+    // Do not abort the controller here — the awaited request has already
+    // resolved by the time cleanUp runs in `finally`. Aborting can cancel
+    // a subsequent refetch that reused the ref.
+    abortControllerRef.current = null;
   };
 
   const setTimeoutFn = (callback: () => void, delay: number) => {
