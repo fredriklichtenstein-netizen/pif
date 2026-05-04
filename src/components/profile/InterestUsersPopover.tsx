@@ -73,12 +73,15 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
 
   const handleSelectReceiver = async (interestId: number, userId: string, displayName: string) => {
     setConfirmDialogOpen(false);
+    if (selectingInterestId !== null) return;
+    setSelectingInterestId(interestId);
     if (DEMO_MODE) {
       demoSelectUser(itemId, userId); fetchInterests();
       toast({
         title: t('interactions.receiver_selected'),
         description: t('interactions.receiver_selected_with_name', { name: displayName }),
       });
+      setSelectingInterestId(null);
       return;
     }
     try {
@@ -108,6 +111,8 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
     } catch (err) {
       console.error("Error selecting receiver:", err);
       toast({ variant: "destructive", title: t('interactions.error_title'), description: t('interactions.error_select_receiver') });
+    } finally {
+      setSelectingInterestId(null);
     }
   };
 
