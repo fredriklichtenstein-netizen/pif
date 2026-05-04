@@ -41,6 +41,7 @@ jobs:
           path: |
             node_modules/.vite
             .vite
+            dist
           key: ${{ runner.os }}-vite-${{ hashFiles('vite.config.ts', 'bun.lockb', 'bun.lock') }}-${{ hashFiles('src/**/*') }}
           restore-keys: |
             ${{ runner.os }}-vite-${{ hashFiles('vite.config.ts', 'bun.lockb', 'bun.lock') }}-
@@ -66,4 +67,7 @@ jobs:
 
       - name: Vite production build
         run: bun run build
+
+      - name: Prime Vite dep cache
+        run: bunx vite optimize
 
