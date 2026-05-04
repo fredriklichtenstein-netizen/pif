@@ -42,5 +42,9 @@ export const Functions = {
   },
   recompute_reliability: function(profile_id: string) {
     // function implementation here
+  },
+  select_receiver: {
+    Args: { p_item_id: number; p_receiver_id: string },
+    Returns: string
   }
 };
