@@ -58,8 +58,11 @@ export function LazyCommentsSection({
   // Wrap add to refetch from DB after insert (don't rely on realtime)
   const handleAddCommentWithRefetch = async (text: string) => {
     const result = await handleAddComment(text);
-    // Refetch to ensure consistency with DB regardless of realtime
-    refreshComments();
+    // Delay refetch to avoid AbortError race with in-flight controllers
+    console.log('[LazyCommentsSection] Scheduling post-insert refetch in 300ms');
+    setTimeout(() => {
+      refreshComments();
+    }, 300);
     return result;
   };
 
