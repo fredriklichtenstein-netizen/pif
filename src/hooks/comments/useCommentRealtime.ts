@@ -105,14 +105,18 @@ export const useCommentRealtime = (
       cleanupChannel();
       
       const newChannel = supabase
-        .channel(`comments-${numericItemId}-${Date.now()}`) // Add timestamp to make channel name unique
+        .channel(`comments-${numericItemId}-${Date.now()}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          handleCommentInsert(payload.new);
+          if (refreshComments) {
+            refreshComments();
+          } else {
+            handleCommentInsert(payload.new);
+          }
         })
         .on('postgres_changes', {
           event: 'UPDATE',
@@ -130,33 +134,38 @@ export const useCommentRealtime = (
         }, (payload) => {
           handleCommentDelete(payload.old);
         });
-        
-      // Setup subscription status handling — failures are non-fatal.
-      // Comments still work via regular fetch/refetch without realtime.
+
       try {
         newChannel.subscribe((status) => {
           if (status === 'SUBSCRIBED') {
+            isSubscribedRef.current = true;
             setIsSubscribed(true);
             setError(null);
             setSubscriptionAttempts(0);
+            stopPolling();
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-            // Silent: comments work without realtime
+            // Realtime unavailable — fall back to polling
+            isSubscribedRef.current = false;
             setIsSubscribed(false);
+            startPolling();
           }
         });
       } catch (subErr) {
-        // Silent: subscription failure should not break comments
+        isSubscribedRef.current = false;
         setIsSubscribed(false);
+        startPolling();
       }
 
       setChannel(newChannel);
 
       return () => {
         cleanupChannel();
+        stopPolling();
       };
     } catch (error) {
-      // Silent: realtime is optional, comments still load via fetch
+      isSubscribedRef.current = false;
       setIsSubscribed(false);
+      startPolling();
     }
   }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, cleanupChannel, subscriptionAttempts]);
 
