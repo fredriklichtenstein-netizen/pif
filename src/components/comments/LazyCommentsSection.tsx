@@ -55,6 +55,14 @@ export function LazyCommentsSection({
     handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser, useFallbackMode);
 
+  // Wrap add to refetch from DB after insert (don't rely on realtime)
+  const handleAddCommentWithRefetch = async (text: string) => {
+    const result = await handleAddComment(text);
+    // Refetch to ensure consistency with DB regardless of realtime
+    refreshComments();
+    return result;
+  };
+
   useEffect(() => {
     // Only process local comments if in fallback mode and we have a current user
     if (useFallbackMode && currentUser?.id && isInitialized) {
