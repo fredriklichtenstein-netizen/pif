@@ -45,6 +45,9 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           }}
           archived_at={post.archived_at}
           archived_reason={post.archived_reason}
+          likesCount={post.likesCount}
+          commentsCount={post.commentsCount}
+          interestsCount={post.interestsCount}
           onOperationSuccess={onItemOperationSuccess}
         />
       </div>
