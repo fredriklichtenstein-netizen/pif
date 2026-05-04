@@ -1,41 +1,26 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { fetchWithTimeout } from "@/utils/connectionRetryUtils";
 import { formatCommentFromDB } from "../utils/commentFormatters";
 import { Comment } from "@/types/comment";
 
-export async function runCommentQuery(numericItemId: number, userId?: string, controller?: AbortController): Promise<Comment[]> {
-  const signal = controller?.signal;
-  const query = supabase
+export async function runCommentQuery(
+  numericItemId: number,
+  userId?: string,
+  _controller?: AbortController
+): Promise<Comment[]> {
+  // Always use a fresh, unsignal-bound query. Reusing/abort-signaling here
+  // races with post-insert refetches and causes AbortError loops that wedge
+  // the UI in a loading state.
+  const { data, error } = await supabase
     .from('comments')
     .select('*, profiles:user_id(id, first_name, last_name, avatar_url)')
     .eq('item_id', numericItemId)
     .order('created_at', { ascending: true });
 
-  let queryResult: any;
-  // Support abortSignal if available
-  if (signal && typeof query.abortSignal === "function") {
-    queryResult = await query.abortSignal(signal);
-  } else {
-    queryResult = await query;
+  if (error) {
+    console.error("Error in comment query:", error);
+    throw error;
   }
-
-  const response = await fetchWithTimeout(
-    () => Promise.resolve(queryResult),
-    5000
-  );
-
-  if (response.error) {
-    console.error("Error in comment query:", response.error);
-    throw response.error;
-  }
-  
-  const commentsData = response.data;
-  if (!commentsData) {
-    return [];
-  }
-  return commentsData.map((comment: any) => {
-    const isOwnComment = comment.user_id === userId;
-    return formatCommentFromDB(comment, isOwnComment);
-  });
+  if (!data) return [];
+  return data.map((c: any) => formatCommentFromDB(c, c.user_id === userId));
 }

@@ -24,6 +24,10 @@ export interface ItemCardProps {
   archived_at?: string;
   archived_reason?: string;
   onOperationSuccess?: () => void;
+  /** Server-provided counts to seed UI before per-card hooks load. */
+  likesCount?: number;
+  commentsCount?: number;
+  interestsCount?: number;
 }
 
 export interface ItemInteractionsProps {

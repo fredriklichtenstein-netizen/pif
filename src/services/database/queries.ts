@@ -72,11 +72,18 @@ export class OptimizedQueries {
         }
         
         try {
-          // Use our optimized RPC function
-          const { data, error } = await (supabase.rpc as any)('get_bulk_interaction_counts', {
-            item_ids: itemIds
+          // Use our optimized RPC function. Live function signature uses
+          // `p_item_ids`; older deployments accepted `item_ids`.
+          let { data, error } = await (supabase.rpc as any)('get_bulk_interaction_counts', {
+            p_item_ids: itemIds,
           });
-          
+          if (error && (error.code === 'PGRST202' || /item_ids/.test(error.message || ''))) {
+            const fallback = await (supabase.rpc as any)('get_bulk_interaction_counts', {
+              item_ids: itemIds,
+            });
+            data = fallback.data;
+            error = fallback.error;
+          }
           if (error) throw error;
           
           const countsMap = new Map();
