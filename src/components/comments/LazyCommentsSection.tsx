@@ -119,7 +119,7 @@ export function LazyCommentsSection({
           useFallbackMode={useFallbackMode}
           isInitialized={isInitialized}
           currentUser={currentUser}
-          onAddComment={handleAddComment}
+          onAddComment={handleAddCommentWithRefetch}
           onLike={handleLikeComment}
           onDelete={handleDeleteComment}
           onEdit={handleEditComment}
