@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Comment } from '@/types/comment';
 import { formatCommentFromDB } from '@/hooks/item/utils/commentFormatters';
@@ -7,11 +7,33 @@ import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
+const POLL_INTERVAL_MS = 15000;
+
 export const useCommentRealtime = (
   itemId: string,
   comments: Comment[],
-  setComments: (comments: Comment[]) => void
+  setComments: (comments: Comment[]) => void,
+  refreshComments?: () => void
 ) => {
+  const isSubscribedRef = useRef(false);
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startPolling = useCallback(() => {
+    if (pollTimerRef.current || !refreshComments) return;
+    pollTimerRef.current = setInterval(() => {
+      if (!isSubscribedRef.current) {
+        refreshComments();
+      }
+    }, POLL_INTERVAL_MS);
+  }, [refreshComments]);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [subscriptionAttempts, setSubscriptionAttempts] = useState(0);
@@ -83,14 +105,18 @@ export const useCommentRealtime = (
       cleanupChannel();
       
       const newChannel = supabase
-        .channel(`comments-${numericItemId}-${Date.now()}`) // Add timestamp to make channel name unique
+        .channel(`comments-${numericItemId}-${Date.now()}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          handleCommentInsert(payload.new);
+          if (refreshComments) {
+            refreshComments();
+          } else {
+            handleCommentInsert(payload.new);
+          }
         })
         .on('postgres_changes', {
           event: 'UPDATE',
@@ -108,35 +134,40 @@ export const useCommentRealtime = (
         }, (payload) => {
           handleCommentDelete(payload.old);
         });
-        
-      // Setup subscription status handling — failures are non-fatal.
-      // Comments still work via regular fetch/refetch without realtime.
+
       try {
         newChannel.subscribe((status) => {
           if (status === 'SUBSCRIBED') {
+            isSubscribedRef.current = true;
             setIsSubscribed(true);
             setError(null);
             setSubscriptionAttempts(0);
+            stopPolling();
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-            // Silent: comments work without realtime
+            // Realtime unavailable — fall back to polling
+            isSubscribedRef.current = false;
             setIsSubscribed(false);
+            startPolling();
           }
         });
       } catch (subErr) {
-        // Silent: subscription failure should not break comments
+        isSubscribedRef.current = false;
         setIsSubscribed(false);
+        startPolling();
       }
 
       setChannel(newChannel);
 
       return () => {
         cleanupChannel();
+        stopPolling();
       };
     } catch (error) {
-      // Silent: realtime is optional, comments still load via fetch
+      isSubscribedRef.current = false;
       setIsSubscribed(false);
+      startPolling();
     }
-  }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, cleanupChannel, subscriptionAttempts]);
+  }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, cleanupChannel, subscriptionAttempts, refreshComments, startPolling, stopPolling]);
 
   return {
     isSubscribed,
