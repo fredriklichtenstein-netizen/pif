@@ -10,6 +10,8 @@ import { MOCK_POSTS } from "@/data/mockPosts";
 import { useDemoCompletionStore } from "@/stores/demoCompletionStore";
 import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
 import { useTranslation } from "react-i18next";
+import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -22,10 +24,17 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [markAsPiffedOpen, setMarkAsPiffedOpen] = useState(false);
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [ratingContext, setRatingContext] = useState<{
+    receiverName: string;
+    demoRaterId?: string;
+    demoRateeId?: string;
+  } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
-  
+  const { user } = useGlobalAuth();
+
   const { markAsPiffed: demoMarkAsPiffed, getStatus } = useDemoCompletionStore();
   const { getSelectedUser } = useDemoSelectionsStore();
 
