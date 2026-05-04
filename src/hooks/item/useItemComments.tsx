@@ -28,9 +28,14 @@ export const useItemComments = (itemId: string) => {
 
     try {
       const fetchedComments = await fetchComments();
+      const list = Array.isArray(fetchedComments) ? fetchedComments : [];
       // Replace local state entirely so count stays in sync
-      setComments(Array.isArray(fetchedComments) ? fetchedComments : []);
+      setComments(list);
       setCommentsFetched(true);
+      // Sync the bulk store so the feed counter reflects the latest count
+      useInitialCountsStore.getState().setBulkCounts([
+        { itemId: itemId, commentsCount: list.length },
+      ]);
     } catch (error) {
       console.error("Error fetching comments:", error);
       setCommentsError(error instanceof Error ? error : new Error('Unknown error fetching comments'));
@@ -42,10 +47,12 @@ export const useItemComments = (itemId: string) => {
   const handleCommentToggle = useCallback(() => {
     const isOpening = !showComments;
     setShowComments(isOpening);
-    if (isOpening && (!commentsFetched || comments.length === 0)) {
+    if (isOpening) {
+      // Always force a fresh fetch when opening so users see new comments from others
+      setCommentsFetched(false);
       fetchItemComments();
     }
-  }, [showComments, commentsFetched, comments.length, fetchItemComments]);
+  }, [showComments, fetchItemComments]);
 
   // No-op kept for API compatibility — count is derived from comments.length
   const setCommentsCount = useCallback((_n: number) => {}, []);
