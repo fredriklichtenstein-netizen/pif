@@ -63,3 +63,7 @@ jobs:
 
       - name: ESLint
         run: bun run lint
+
+      - name: Vite production build
+        run: bun run build
+
