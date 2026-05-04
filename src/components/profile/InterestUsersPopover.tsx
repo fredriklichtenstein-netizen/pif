@@ -61,10 +61,14 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
     try {
       const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
       const { data, error } = await supabase
-        .from("interests").select("id,user_id,status,message,created_at,users:profiles!interests_user_id_fkey(*)")
-        .eq("item_id", numericId).order("created_at", { ascending: false });
+        .from("interests")
+        .select("*, profiles:user_id(id, first_name, last_name, avatar_url)")
+        .eq("item_id", numericId)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      setUsers(data || []);
+      // Normalize: expose profile data under `users` for backward compat with this view.
+      const normalized = (data || []).map((row: any) => ({ ...row, users: row.profiles }));
+      setUsers(normalized);
     } catch (err) {
       console.error("Error fetching interested users:", err);
       toast({ variant: "destructive", title: t('interactions.error_title'), description: t('interactions.error_load_interested') });
