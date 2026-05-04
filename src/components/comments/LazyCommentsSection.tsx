@@ -33,10 +33,12 @@ export function LazyCommentsSection({
   } = useLazyComments(itemId);
 
   useEffect(() => {
-    if (isVisible && !isInitialized) {
-      loadComments();
+    if (isVisible) {
+      // Always force a fresh fetch when section opens so newly added
+      // comments by others are visible without a second click.
+      refreshComments();
     }
-  }, [isVisible, loadComments, isInitialized, itemId]);
+  }, [isVisible, refreshComments, itemId]);
 
   const currentUser = user ? {
     id: user.id,
