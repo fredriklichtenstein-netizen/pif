@@ -192,7 +192,7 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                   <AvatarImage src={u.users?.avatar_url} size={28} alt={u.users?.first_name || "User"} />
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-sm font-medium truncate">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
-                    <span className="text-xs text-muted-foreground">{format(new Date(u.created_at), "MMM d, HH:mm")}</span>
+                    <span className="text-xs text-muted-foreground">{format(new Date(u.created_at), "d MMM HH:mm", { locale: (i18n => i18n.language?.startsWith("sv") ? sv : enUS)({ language: typeof navigator !== "undefined" ? document.documentElement.lang : "en" }) })}</span>
                   </div>
                 </Link>
                 {isOwner && u.status === "pending" && (() => {
