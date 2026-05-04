@@ -93,34 +93,54 @@ export function NotificationList() {
                 <Badge variant="outline" className="ml-2">{groupNotifications.length}</Badge>
               </div>
               
-              {groupNotifications.map((notif) => (
-                <div 
-                  key={notif.id} 
-                  className={`py-3 px-4 flex items-start ${notif.is_read ? "bg-background" : "bg-primary/5"}`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold">{notif.title}</div>
-                    {notif.content && (
-                      <div className="text-sm text-muted-foreground mt-0.5">{notif.content}</div>
-                    )}
-                    <div className="text-xs text-muted-foreground mt-1">{new Date(notif.created_at).toLocaleString()}</div>
+              {groupNotifications.map((notif) => {
+                const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
+                const displayTitle = isReceiverSelected
+                  ? t('interactions.receiver_selected_notif_title')
+                  : notif.title;
+                const displayContent = isReceiverSelected
+                  ? notif.content || t('interactions.receiver_selected_notif_body')
+                  : notif.content;
+                // For receiver_selected we prefer to deep-link into the conversation when available.
+                const ctaUrl = isReceiverSelected
+                  ? notif.action_url || (notif.reference_type === 'conversation' && notif.reference_id ? `/messages?conversation=${notif.reference_id}` : '/messages')
+                  : notif.action_url;
+
+                return (
+                  <div
+                    key={notif.id}
+                    className={`py-3 px-4 flex items-start ${notif.is_read ? "bg-background" : "bg-primary/5"}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold">{displayTitle}</div>
+                      {displayContent && (
+                        <div className="text-sm text-muted-foreground mt-0.5">{displayContent}</div>
+                      )}
+                      <div className="text-xs text-muted-foreground mt-1">{new Date(notif.created_at).toLocaleString()}</div>
+                      {isReceiverSelected && ctaUrl && (
+                        <Link to={ctaUrl} className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline">
+                          {t('interactions.start_conversation')}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="flex items-center space-x-1">
+                      {!isReceiverSelected && ctaUrl && (
+                        <Link to={ctaUrl} className="ml-2">
+                          <Button size="icon" variant="ghost" title={t('interactions.view_details')}>
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      )}
+
+                      {!notif.is_read && (
+                        <Badge variant="outline" className="bg-primary text-primary-foreground border-primary text-xs">{t('interactions.new_badge')}</Badge>
+                      )}
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-1">
-                    {notif.action_url && (
-                      <Link to={notif.action_url} className="ml-2">
-                        <Button size="icon" variant="ghost" title={t('interactions.view_details')}>
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    )}
-                    
-                    {!notif.is_read && (
-                      <Badge variant="outline" className="bg-primary text-primary-foreground border-primary text-xs">{t('interactions.new_badge')}</Badge>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           );
         })}
