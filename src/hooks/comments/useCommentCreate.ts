@@ -158,6 +158,13 @@ export const useCommentCreate = (
         const newComment = formatCommentFromDB(data as any, true);
         const updatedComments = [...comments, newComment];
         setComments(updatedComments);
+        // Bump the global counter immediately so feed cards reflect the new
+        // comment without waiting for a refetch.
+        const store = useInitialCountsStore.getState();
+        const prev = store.counts[String(itemId)]?.commentsCount ?? comments.length;
+        store.setBulkCounts([
+          { itemId, commentsCount: Math.max(prev + 1, updatedComments.length) },
+        ]);
       }
     } catch (error) {
       console.error("Error adding comment:", error);
