@@ -71,7 +71,7 @@ export function ReceiverConfirmation({
         demoRaterId: user?.id ?? "demo-receiver",
         demoRateeId: pifferId,
       });
-      if (!ratingRes.ok) {
+      if (ratingRes.ok === false) {
         // Non-fatal: confirmation already persisted; surface a soft warning.
         console.warn("receiver rating not recorded", ratingRes.error);
       }
