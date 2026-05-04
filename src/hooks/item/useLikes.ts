@@ -8,13 +8,15 @@ import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { DEMO_USER } from "@/data/mockUser";
 import type { User } from "./utils/userUtils";
 import { useTranslation } from "react-i18next";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
   const demoIsLiked = demoStore.isLiked(id);
-  
+  const initialLikes = useInitialCountsStore((s) => s.counts[String(id)]?.likesCount);
+
   const [isLiked, setIsLiked] = useState(DEMO_MODE ? demoIsLiked : false);
-  const [likesCount, setLikesCount] = useState(0);
+  const [likesCount, setLikesCount] = useState(initialLikes ?? 0);
   const [likers, setLikers] = useState<User[]>([]);
   const [loading, setLoading] = useState(!DEMO_MODE);
   const { toast } = useToast();
