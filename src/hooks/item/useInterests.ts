@@ -9,12 +9,14 @@ import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { DEMO_USER } from "@/data/mockUser";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "./utils/userUtils";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 
 export const useInterests = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
   const demoIsInterested = demoStore.isInterested(id);
   const { toast } = useToast();
-  
+  const initialInterests = useInitialCountsStore((s) => s.counts[String(id)]?.interestsCount);
+
   const {
     showInterest,
     setShowInterest,
@@ -29,6 +31,15 @@ export const useInterests = (id: string, userId?: string | null) => {
     fetchAttemptCount,
     setFetchAttemptCount
   } = useInterestState();
+
+  // Seed initial interests count from bulk RPC if available
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (typeof initialInterests === 'number' && interestsCount === 0) {
+      setInterestsCount(initialInterests);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialInterests]);
 
   const { fetchInterestedUsers, fetchInterestedUsersInternal } = useInterestFetch(
     setInterestedUsers,
