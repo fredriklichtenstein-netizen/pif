@@ -16,6 +16,8 @@ import { useDemoCompletionStore } from "@/stores/demoCompletionStore";
 import { DEMO_MODE } from "@/config/demoMode";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { submitRating } from "@/services/ratings";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface ReceiverConfirmationProps {
   itemId: string | number;
