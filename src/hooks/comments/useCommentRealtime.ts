@@ -109,42 +109,32 @@ export const useCommentRealtime = (
           handleCommentDelete(payload.old);
         });
         
-      // Setup subscription status handling
-      newChannel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          setIsSubscribed(true);
-          setError(null);
-          setSubscriptionAttempts(0); // Reset attempts counter on success
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('[useCommentRealtime] Failed to subscribe to real-time comments');
-          setIsSubscribed(false);
-          setError(new Error('Failed to connect to real-time updates'));
-          
-          // Increment attempts and try again after delay if not at max attempts
-          if (subscriptionAttempts < MAX_SUBSCRIPTION_ATTEMPTS - 1) {
-            const nextAttempt = subscriptionAttempts + 1;
-            setSubscriptionAttempts(nextAttempt);
-            
-            // Try with increasing delays
-            const retryDelay = 1000 * Math.pow(2, nextAttempt);
+      // Setup subscription status handling — failures are non-fatal.
+      // Comments still work via regular fetch/refetch without realtime.
+      try {
+        newChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setIsSubscribed(true);
+            setError(null);
+            setSubscriptionAttempts(0);
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            // Silent: comments work without realtime
+            setIsSubscribed(false);
           }
-        }
-      });
-      
+        });
+      } catch (subErr) {
+        // Silent: subscription failure should not break comments
+        setIsSubscribed(false);
+      }
+
       setChannel(newChannel);
 
       return () => {
         cleanupChannel();
       };
     } catch (error) {
-      console.error('[useCommentRealtime] Error in real-time subscription:', error);
-      setError(error instanceof Error ? error : new Error('Unknown error'));
+      // Silent: realtime is optional, comments still load via fetch
       setIsSubscribed(false);
-      
-      // Increment attempts counter
-      if (subscriptionAttempts < MAX_SUBSCRIPTION_ATTEMPTS - 1) {
-        setSubscriptionAttempts(prevAttempts => prevAttempts + 1);
-      }
     }
   }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, cleanupChannel, subscriptionAttempts]);
 
