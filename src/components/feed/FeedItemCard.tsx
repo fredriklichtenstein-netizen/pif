@@ -2,6 +2,7 @@
 import { memo } from "react";
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 interface FeedItemCardProps {
@@ -12,16 +13,34 @@ interface FeedItemCardProps {
 function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardProps) {
   // Skip posts that have been optimistically deleted
   if (post.__deleted) return null;
-  
+
+  // Seed initial counts synchronously so child counters render correctly
+  // on the first paint, even before any per-card fetch resolves.
+  if (post && post.id != null) {
+    const hasAnyCount =
+      typeof post.likesCount === 'number' ||
+      typeof post.commentsCount === 'number' ||
+      typeof post.interestsCount === 'number';
+    if (hasAnyCount) {
+      useInitialCountsStore.getState().setBulkCounts([{
+        itemId: post.id,
+        likesCount: Number(post.likesCount) || 0,
+        commentsCount: Number(post.commentsCount) || 0,
+        interestsCount: Number(post.interestsCount) || 0,
+      }]);
+    }
+  }
+
   // Coordinates are now already parsed objects from the transform function
   const coordinates = post.coordinates;
-  
+
   // Apply optimistic UI transition class if the item was just modified
   const transitionClass = post.__modified ? "animate-fade-in" : "";
 
   // Defensive normalization: ensure legacy 'wish' renders as 'request'
   const normalizedItemType =
     post.item_type === 'wish' ? 'request' : post.item_type === 'pif' ? 'offer' : post.item_type;
+
 
   return (
     <NetworkStatusWrapper key={post.id}>
