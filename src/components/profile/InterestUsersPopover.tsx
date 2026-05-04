@@ -235,8 +235,13 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                     </>
                   )}
                   {u.status === "pending" && isOwner && (
-                    <Button size="sm" onClick={() => { setSelectedUserId(u.id); setConfirmDialogOpen(true); }} className="text-xs py-1 px-2 h-auto whitespace-nowrap">
-                      {t('interactions.select_btn')}
+                    <Button
+                      size="sm"
+                      disabled={selectingInterestId !== null}
+                      onClick={() => { setSelectedUserId(u.id); setConfirmDialogOpen(true); }}
+                      className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                    >
+                      {selectingInterestId === u.id ? t('interactions.loading') : t('interactions.select_btn')}
                     </Button>
                   )}
                   {u.status === "not_selected" && (
