@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Heart, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,7 @@ interface InterestUsersPopoverProps {
 export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopoverProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -69,18 +70,40 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
 
   useEffect(() => { if (!itemId) return; fetchInterests(); }, [itemId]);
 
-  const handleSelectReceiver = async (interestId: number, userId: string) => {
+  const handleSelectReceiver = async (interestId: number, userId: string, displayName: string) => {
     setConfirmDialogOpen(false);
     if (DEMO_MODE) {
       demoSelectUser(itemId, userId); fetchInterests();
-      toast({ title: t('interactions.receiver_selected'), description: t('interactions.receiver_selected_description') });
+      toast({
+        title: t('interactions.receiver_selected'),
+        description: t('interactions.receiver_selected_with_name', { name: displayName }),
+      });
       return;
     }
     try {
-      await supabase.from("interests").update({ status: "selected", selected_at: new Date().toISOString() }).eq("id", interestId);
-      await supabase.from("interests").update({ status: "not_selected" }).eq("item_id", typeof itemId === 'string' ? parseInt(itemId as string, 10) : itemId).neq("id", interestId);
-      fetchInterests();
-      toast({ title: t('interactions.receiver_selected'), description: t('interactions.receiver_selected_description') });
+      const numericItemId = typeof itemId === 'string' ? parseInt(itemId as string, 10) : itemId;
+      const { data: conversationId, error } = await (supabase.rpc as any)('select_receiver', {
+        p_item_id: numericItemId,
+        p_receiver_id: userId,
+      });
+      if (error) throw error;
+
+      // Optimistically update local interest status so the UI reflects the choice immediately.
+      setUsers((prev) =>
+        prev.map((u) => ({
+          ...u,
+          status: u.id === interestId ? 'selected' : 'not_selected',
+        })),
+      );
+
+      toast({
+        title: t('interactions.receiver_selected'),
+        description: t('interactions.receiver_selected_with_name', { name: displayName }),
+      });
+
+      if (conversationId) {
+        navigate(`/messages?conversation=${conversationId}`);
+      }
     } catch (err) {
       console.error("Error selecting receiver:", err);
       toast({ variant: "destructive", title: t('interactions.error_title'), description: t('interactions.error_select_receiver') });
@@ -231,7 +254,7 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('interactions.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { const user = users.find((u) => u.id === selectedUserId); if (user) handleSelectReceiver(selectedUserId!, user.user_id); }}>
+            <AlertDialogAction onClick={() => { const user = users.find((u) => u.id === selectedUserId); if (user) handleSelectReceiver(selectedUserId!, user.user_id, user.users?.first_name || t('interactions.interested')); }}>
               {t('interactions.confirm_selection_btn')}
             </AlertDialogAction>
           </AlertDialogFooter>
