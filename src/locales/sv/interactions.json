@@ -570,6 +570,18 @@
     "signed_out": "Utloggad",
     "signed_out_description": "Du har loggats ut från ditt konto",
     "error_signing_out": "Fel vid utloggning",
-    "signing_out": "Loggar ut..."
+    "signing_out": "Loggar ut...",
+    "rate_receiver_title": "Hur gick det med {{name}}?",
+    "rate_receiver_description": "Din återkoppling hjälper grannar att lita på varandra. Den hålls privat och påverkar bara en mjuk pålitlighetsindikation.",
+    "rate_positive_label": "Gick bra",
+    "rate_positive_hint": "Personen kom och överlämningen fungerade fint.",
+    "rate_no_show_label": "Dök inte upp",
+    "rate_no_show_hint": "Personen kom inte eller avbokade i sista stund.",
+    "rate_skip": "Hoppa över",
+    "rating_thanks_title": "Tack för återkopplingen",
+    "rating_thanks_positive": "Sparat som en lyckad överlämning.",
+    "rating_thanks_no_show": "Sparat som en utebliven träff.",
+    "rating_failed_title": "Kunde inte spara ditt omdöme",
+    "rating_failed_description": "Försök igen om en stund."
   }
 }
