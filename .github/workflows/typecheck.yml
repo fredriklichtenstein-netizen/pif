@@ -67,8 +67,15 @@ jobs:
         run: bun run lint
 
       - name: Vite production build
+        if: steps.vite_cache.outputs.cache-hit != 'true'
         run: bun run build
 
+      - name: Skip Vite build (cache hit)
+        if: steps.vite_cache.outputs.cache-hit == 'true'
+        run: echo "Vite cache hit — skipping production build."
+
       - name: Prime Vite dep cache
+        if: steps.vite_cache.outputs.cache-hit != 'true'
         run: bunx vite optimize
+
 
