@@ -23,6 +23,8 @@ interface ReceiverConfirmationProps {
   itemId: string | number;
   itemTitle: string;
   pifferName: string;
+  /** Required only in DEMO_MODE — the piffer's id, used to record the rating ratee. */
+  pifferId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirmed?: () => void;
@@ -32,6 +34,7 @@ export function ReceiverConfirmation({
   itemId,
   itemTitle,
   pifferName,
+  pifferId,
   open,
   onOpenChange,
   onConfirmed,
@@ -42,6 +45,7 @@ export function ReceiverConfirmation({
   const { toast } = useToast();
   const { confirmReceipt } = useDemoCompletionStore();
   const { t } = useTranslation();
+  const { user } = useGlobalAuth();
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
@@ -56,9 +60,20 @@ export function ReceiverConfirmation({
           .eq("id", typeof itemId === "string" ? parseInt(itemId, 10) : itemId);
 
         if (itemError) throw itemError;
+      }
 
-        if (feedback) {
-        }
+      // Record a positive rating from the receiver toward the piffer.
+      // Private feedback (when provided) is attached as the rating's note.
+      const ratingRes = await submitRating({
+        itemId,
+        outcome: "positive",
+        note: feedback || undefined,
+        demoRaterId: user?.id ?? "demo-receiver",
+        demoRateeId: pifferId,
+      });
+      if (!ratingRes.ok) {
+        // Non-fatal: confirmation already persisted; surface a soft warning.
+        console.warn("receiver rating not recorded", ratingRes.error);
       }
 
       toast({
