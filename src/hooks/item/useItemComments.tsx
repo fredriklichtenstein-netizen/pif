@@ -13,12 +13,15 @@ export const useItemComments = (itemId: string) => {
 
   const { fetchComments } = useComments(itemId);
 
-  // Use bulk-fetched count from feed load until comments are actually fetched.
+  // Prefer the bulk-fetched count from the feed query so the counter is
+  // immediately correct, even before the user opens the comments section.
+  // Once comments have actually been fetched locally, prefer the larger of
+  // the two so optimistic inserts/refetches keep the counter in sync.
   const initialCount = useInitialCountsStore(
     (s) => s.counts[String(itemId)]?.commentsCount
   );
   const commentsCount = commentsFetched
-    ? comments.length
+    ? Math.max(comments.length, initialCount ?? 0)
     : (initialCount ?? comments.length);
 
   const fetchItemComments = useCallback(async () => {
