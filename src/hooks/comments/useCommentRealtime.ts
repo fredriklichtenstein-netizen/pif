@@ -167,7 +167,7 @@ export const useCommentRealtime = (
       setIsSubscribed(false);
       startPolling();
     }
-  }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, cleanupChannel, subscriptionAttempts]);
+  }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, cleanupChannel, subscriptionAttempts, refreshComments, startPolling, stopPolling]);
 
   return {
     isSubscribed,
