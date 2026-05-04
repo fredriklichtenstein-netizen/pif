@@ -181,13 +181,13 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       // ratee from the 'selected' interest on this item, so no ids needed.
       const { data: selected } = await supabase
         .from("interests")
-        .select("users:profiles!interests_user_id_fkey(first_name)")
+        .select("profiles:user_id(first_name)")
         .eq("item_id", post.id)
         .eq("status", "selected")
         .maybeSingle();
       if (selected) {
         setRatingContext({
-          receiverName: (selected as any)?.users?.first_name || t('common.user'),
+          receiverName: (selected as any)?.profiles?.first_name || t('common.user'),
         });
         setRatingOpen(true);
       }
