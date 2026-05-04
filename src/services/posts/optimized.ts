@@ -5,6 +5,7 @@ import { transformPostData } from "./transform";
 import { OptimizedQueries, DatabaseCache } from "@/services/database";
 import { performanceMetrics } from "@/services/performance/metrics";
 import { memoryOptimizer } from "@/services/performance/memory";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 
 // Cache with TTL
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
