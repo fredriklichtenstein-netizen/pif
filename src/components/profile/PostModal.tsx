@@ -104,16 +104,26 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       if (DEMO_MODE) {
         const selectedReceiverId = getSelectedUser(post.id);
         demoMarkAsPiffed(post.id, selectedReceiverId || undefined);
-        
+
         toast({
           title: t('ui.done'),
           description: t('ui.pif_marked_piffed_receiver'),
         });
-        
+
         setPost({ ...post, status: "piffed" });
         if (onStatusChange) onStatusChange();
         setMarkAsPiffedOpen(false);
         setIsUpdating(false);
+
+        // Prompt the piffer to rate the selected receiver.
+        if (selectedReceiverId) {
+          setRatingContext({
+            receiverName: t('common.user'),
+            demoRaterId: post.postedBy?.id ?? user?.id ?? 'demo-piffer',
+            demoRateeId: selectedReceiverId,
+          });
+          setRatingOpen(true);
+        }
         return;
       }
       
@@ -159,13 +169,28 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
         title: t('ui.done'),
         description: t('ui.pif_marked_piffed'),
       });
-      
+
       setPost({ ...post, status: "piffed" });
-      
+
       if (onStatusChange) onStatusChange();
-      
+
       setMarkAsPiffedOpen(false);
-      
+
+      // Prompt the piffer to rate the selected receiver. The RPC infers the
+      // ratee from the 'selected' interest on this item, so no ids needed.
+      const { data: selected } = await supabase
+        .from("interests")
+        .select("users:profiles!interests_user_id_fkey(first_name)")
+        .eq("item_id", post.id)
+        .eq("status", "selected")
+        .maybeSingle();
+      if (selected) {
+        setRatingContext({
+          receiverName: (selected as any)?.users?.first_name || t('common.user'),
+        });
+        setRatingOpen(true);
+      }
+
     } catch (error) {
       console.error("Error marking post as piffed:", error);
       toast({
