@@ -35,6 +35,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tsc-
 
+      - name: Cache Vite build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.vite
+            .vite
+          key: ${{ runner.os }}-vite-${{ hashFiles('vite.config.ts', 'bun.lockb', 'bun.lock') }}-${{ hashFiles('src/**/*') }}
+          restore-keys: |
+            ${{ runner.os }}-vite-${{ hashFiles('vite.config.ts', 'bun.lockb', 'bun.lock') }}-
+            ${{ runner.os }}-vite-
+
+      - name: Cache ESLint
+        uses: actions/cache@v4
+        with:
+          path: .eslintcache
+          key: ${{ runner.os }}-eslint-${{ hashFiles('eslint.config.js') }}-${{ hashFiles('src/**/*.ts', 'src/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-eslint-${{ hashFiles('eslint.config.js') }}-
+            ${{ runner.os }}-eslint-
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
