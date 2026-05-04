@@ -148,7 +148,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           .eq("status", "selected")
           .single();
           
-        const receiverName = selectedInterest?.users?.first_name || t('common.user');
+        const receiverName = (selectedInterest?.users as any)?.first_name || (Array.isArray(selectedInterest?.users) ? selectedInterest?.users?.[0]?.first_name : undefined) || t('common.user');
         
         for (const interest of interests) {
           await supabase.rpc("create_notification", {
