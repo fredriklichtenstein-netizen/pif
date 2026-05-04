@@ -35,6 +35,7 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [withdrawTargetId, setWithdrawTargetId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [selectingInterestId, setSelectingInterestId] = useState<number | null>(null);
   const { selectUser: demoSelectUser, unselectUser: demoUnselectUser, getSelectedUser, hasSelection } = useDemoSelectionsStore();
 
   useEffect(() => {
