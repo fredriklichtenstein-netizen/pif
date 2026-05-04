@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { SkipToContent } from "@/components/accessibility/SkipToContent";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import { ReceiverConfirmationWatcher } from "@/components/profile/completion/ReceiverConfirmationWatcher";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -48,6 +49,7 @@ function App() {
                   <Routes />
                 </main>
               </NetworkStatusWrapper>
+              <ReceiverConfirmationWatcher />
               <Toaster />
               <Sonner />
             </BrowserRouter>

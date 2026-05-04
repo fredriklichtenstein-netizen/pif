@@ -44,7 +44,7 @@ export const Functions = {
     // function implementation here
   },
   select_receiver: {
-    Args: { p_item_id: number; p_receiver_id: string },
-    Returns: string
+    Args: { p_item_id: 0 as number, p_receiver_id: "" as string },
+    Returns: "" as string,
   }
 };
