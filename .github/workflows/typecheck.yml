@@ -68,3 +68,6 @@ jobs:
       - name: Vite production build
         run: bun run build
 
+      - name: Prime Vite dep cache
+        run: bunx vite optimize
+
