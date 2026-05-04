@@ -36,13 +36,14 @@ jobs:
             ${{ runner.os }}-tsc-
 
       - name: Cache Vite build artifacts
+        id: vite_cache
         uses: actions/cache@v4
         with:
           path: |
             node_modules/.vite
             .vite
             dist
-          key: ${{ runner.os }}-vite-${{ hashFiles('vite.config.ts', 'bun.lockb', 'bun.lock') }}-${{ hashFiles('src/**/*') }}
+          key: ${{ runner.os }}-vite-${{ hashFiles('vite.config.ts', 'bun.lockb', 'bun.lock') }}-${{ hashFiles('src/**/*', 'index.html', 'tailwind.config.ts', 'postcss.config.js') }}
           restore-keys: |
             ${{ runner.os }}-vite-${{ hashFiles('vite.config.ts', 'bun.lockb', 'bun.lock') }}-
             ${{ runner.os }}-vite-
