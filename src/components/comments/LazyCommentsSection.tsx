@@ -33,12 +33,13 @@ export function LazyCommentsSection({
   } = useLazyComments(itemId);
 
   useEffect(() => {
-    if (isVisible) {
-      // Always force a fresh fetch when section opens so newly added
-      // comments by others are visible without a second click.
-      refreshComments();
-    }
-  }, [isVisible, refreshComments, itemId]);
+    if (!isVisible) return;
+    // Load on open; subsequent updates come from realtime/polling.
+    // Intentionally exclude refreshComments from deps — its identity
+    // changes each render and would cause an infinite refetch loop.
+    refreshComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible, itemId]);
 
   const currentUser = user ? {
     id: user.id,
