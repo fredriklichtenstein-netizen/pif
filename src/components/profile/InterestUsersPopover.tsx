@@ -27,7 +27,8 @@ interface InterestUsersPopoverProps {
 
 export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopoverProps) {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,7 +193,7 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                   <AvatarImage src={u.users?.avatar_url} size={28} alt={u.users?.first_name || "User"} />
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-sm font-medium truncate">{u.users?.first_name} {u.users?.last_name?.[0] || ""}</span>
-                    <span className="text-xs text-muted-foreground">{format(new Date(u.created_at), "d MMM HH:mm", { locale: (i18n => i18n.language?.startsWith("sv") ? sv : enUS)({ language: typeof navigator !== "undefined" ? document.documentElement.lang : "en" }) })}</span>
+                    <span className="text-xs text-muted-foreground">{format(new Date(u.created_at), "d MMM HH:mm", { locale: dateLocale })}</span>
                   </div>
                 </Link>
                 {isOwner && u.status === "pending" && (() => {
