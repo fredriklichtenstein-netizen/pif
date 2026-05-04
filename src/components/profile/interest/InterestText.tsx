@@ -1,33 +1,40 @@
 
 import { Heart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface InterestTextProps {
   users: any[];
 }
 
 export function InterestText({ users }: InterestTextProps) {
-  const getInterestText = () => {
-    // Filter out null/undefined users and users without valid data
-    const validUsers = users.filter(user => user && user.users && user.users.first_name);
-    
-    if (validUsers.length === 0) return "";
-    
-    if (validUsers.length === 1) {
-      return `${validUsers[0].users.first_name || 'Someone'} is interested`;
-    }
-    if (validUsers.length === 2) {
-      return `${validUsers[0].users.first_name || 'Someone'} and ${validUsers[1].users.first_name || 'someone else'} are interested`;
-    }
-    return `${validUsers[0].users.first_name || 'Someone'} and ${validUsers.length - 1} others are interested`;
-  };
+  const { t } = useTranslation();
 
-  const interestText = getInterestText();
-  
-  // Don't render anything if there's no valid interest text
-  if (!interestText) return null;
+  const validUsers = users.filter(
+    (user) => user && (user.users?.first_name || user.profiles?.first_name),
+  );
+
+  if (validUsers.length === 0) return null;
+
+  const nameOf = (u: any) =>
+    u.users?.first_name || u.profiles?.first_name || t("interactions.interested");
+
+  let interestText = "";
+  if (validUsers.length === 1) {
+    interestText = t("interactions.someone_interested", { name: nameOf(validUsers[0]) });
+  } else if (validUsers.length === 2) {
+    interestText = t("interactions.two_interested", {
+      name1: nameOf(validUsers[0]),
+      name2: nameOf(validUsers[1]),
+    });
+  } else {
+    interestText = t("interactions.many_interested", {
+      name: nameOf(validUsers[0]),
+      count: validUsers.length - 1,
+    });
+  }
 
   return (
-    <div className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mt-2">
+    <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mt-2">
       <Heart className="h-5 w-5 text-primary fill-primary" />
       <span className="hover:underline">{interestText}</span>
     </div>
