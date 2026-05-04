@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Comment } from '@/types/comment';
 import { formatCommentFromDB } from '@/hooks/item/utils/commentFormatters';
@@ -7,11 +7,33 @@ import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
+const POLL_INTERVAL_MS = 15000;
+
 export const useCommentRealtime = (
   itemId: string,
   comments: Comment[],
-  setComments: (comments: Comment[]) => void
+  setComments: (comments: Comment[]) => void,
+  refreshComments?: () => void
 ) => {
+  const isSubscribedRef = useRef(false);
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startPolling = useCallback(() => {
+    if (pollTimerRef.current || !refreshComments) return;
+    pollTimerRef.current = setInterval(() => {
+      if (!isSubscribedRef.current) {
+        refreshComments();
+      }
+    }, POLL_INTERVAL_MS);
+  }, [refreshComments]);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [subscriptionAttempts, setSubscriptionAttempts] = useState(0);
