@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import { useComments } from "./useComments";
 import { Comment } from "@/types/comment";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 
 export const useItemComments = (itemId: string) => {
   const [showComments, setShowComments] = useState(false);
@@ -12,8 +13,13 @@ export const useItemComments = (itemId: string) => {
 
   const { fetchComments } = useComments(itemId);
 
-  // Always derive count directly from the comments array
-  const commentsCount = comments.length;
+  // Use bulk-fetched count from feed load until comments are actually fetched.
+  const initialCount = useInitialCountsStore(
+    (s) => s.counts[String(itemId)]?.commentsCount
+  );
+  const commentsCount = commentsFetched
+    ? comments.length
+    : (initialCount ?? comments.length);
 
   const fetchItemComments = useCallback(async () => {
     if (!itemId) return;

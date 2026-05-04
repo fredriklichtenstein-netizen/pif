@@ -7,6 +7,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
 import { parseCoordinatesFromDB } from "@/types/post";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 
 // Normalize item_type to match map marker expectations
 const normalizeItemType = (itemType: string): 'offer' | 'request' => {
@@ -119,6 +120,33 @@ export function useFetchPosts(options = { includeArchived: false }) {
       }) || [];
 
       setPosts(transformedData);
+
+      // Bulk-fetch interaction counts so feed cards show correct counters
+      // immediately (especially comments) without waiting for lazy fetches.
+      const itemIds = transformedData
+        .map((p: any) => Number(p.id))
+        .filter((n: number) => Number.isFinite(n));
+      if (itemIds.length > 0) {
+        try {
+          const { data: countsData, error: countsError } = await (supabase.rpc as any)(
+            'get_bulk_interaction_counts',
+            { p_item_ids: itemIds }
+          );
+          if (!countsError && Array.isArray(countsData)) {
+            useInitialCountsStore.getState().setBulkCounts(
+              countsData.map((row: any) => ({
+                itemId: row.item_id,
+                likesCount: Number(row.likes_count) || 0,
+                commentsCount: Number(row.comments_count) || 0,
+                interestsCount: Number(row.interests_count) || 0,
+                bookmarksCount: Number(row.bookmarks_count) || 0,
+              }))
+            );
+          }
+        } catch (e) {
+          // Silent fallback — individual hooks will still load counts lazily.
+        }
+      }
     } catch (err: any) {
       if (err.name !== 'AbortError' && !signal.aborted) {
         console.error('Error fetching posts:', err);
