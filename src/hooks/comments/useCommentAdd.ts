@@ -53,7 +53,7 @@ export const useCommentAdd = (itemId: string) => {
       
       if (!data) return null;
       
-      return formatCommentFromDB(data, true);
+      return formatCommentFromDB(data as any, true);
     } catch (error: any) {
       console.error("Error adding comment:", error);
       toast({
