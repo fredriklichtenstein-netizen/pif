@@ -7,7 +7,8 @@ import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
-const POLL_INTERVAL_MS = 15000;
+const POLL_INTERVAL_MIN_MS = 15000;
+const POLL_INTERVAL_MAX_MS = 120000;
 
 export const useCommentRealtime = (
   itemId: string,
@@ -17,22 +18,43 @@ export const useCommentRealtime = (
 ) => {
   const isSubscribedRef = useRef(false);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const startPolling = useCallback(() => {
-    if (pollTimerRef.current || !refreshComments) return;
-    pollTimerRef.current = setInterval(() => {
-      if (!isSubscribedRef.current) {
-        refreshComments();
-      }
-    }, POLL_INTERVAL_MS);
-  }, [refreshComments]);
+  const pollDelayRef = useRef<number>(POLL_INTERVAL_MIN_MS);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
-      clearInterval(pollTimerRef.current);
+      clearTimeout(pollTimerRef.current);
       pollTimerRef.current = null;
     }
   }, []);
+
+  const startPolling = useCallback(() => {
+    if (pollTimerRef.current || !refreshComments) return;
+
+    const schedule = () => {
+      pollTimerRef.current = setTimeout(async () => {
+        pollTimerRef.current = null;
+        if (isSubscribedRef.current) return;
+        try {
+          await Promise.resolve(refreshComments());
+          // success → reset backoff
+          pollDelayRef.current = POLL_INTERVAL_MIN_MS;
+        } catch (err) {
+          // failure → exponential backoff up to max
+          pollDelayRef.current = Math.min(
+            pollDelayRef.current * 2,
+            POLL_INTERVAL_MAX_MS
+          );
+          console.warn(
+            `[useCommentRealtime] Poll failed, backing off to ${pollDelayRef.current}ms`
+          );
+        }
+        if (!isSubscribedRef.current) schedule();
+      }, pollDelayRef.current);
+    };
+
+    pollDelayRef.current = POLL_INTERVAL_MIN_MS;
+    schedule();
+  }, [refreshComments]);
 
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
