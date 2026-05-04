@@ -132,6 +132,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
             'get_bulk_interaction_counts',
             { p_item_ids: itemIds }
           );
+          console.log('Bulk counts result:', countsData, countsError);
           if (!countsError && Array.isArray(countsData)) {
             useInitialCountsStore.getState().setBulkCounts(
               countsData.map((row: any) => ({
