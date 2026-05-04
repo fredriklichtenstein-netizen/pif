@@ -570,6 +570,18 @@
     "signed_out": "Signed out successfully",
     "signed_out_description": "You have been signed out of your account",
     "error_signing_out": "Error signing out",
-    "signing_out": "Signing out..."
+    "signing_out": "Signing out...",
+    "rate_receiver_title": "How did it go with {{name}}?",
+    "rate_receiver_description": "Your rating helps neighbors trust each other. It stays private and only shapes a gentle reliability hint.",
+    "rate_positive_label": "Went well",
+    "rate_positive_hint": "They showed up and the handover was good.",
+    "rate_no_show_label": "No-show",
+    "rate_no_show_hint": "They didn't show up or cancelled at the last moment.",
+    "rate_skip": "Skip for now",
+    "rating_thanks_title": "Thanks for the feedback",
+    "rating_thanks_positive": "Recorded as a positive handover.",
+    "rating_thanks_no_show": "Recorded as a no-show.",
+    "rating_failed_title": "Couldn't save your rating",
+    "rating_failed_description": "Please try again in a moment."
   }
 }

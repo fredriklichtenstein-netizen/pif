@@ -15,6 +15,7 @@ import { TrustIndicator } from "./interest/TrustIndicator";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_INTERESTED_USERS } from "@/data/mockProfiles";
 import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
+import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { UserMinus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -164,9 +165,25 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
                     <span className="text-xs text-muted-foreground">{format(new Date(u.created_at), "MMM d, HH:mm")}</span>
                   </div>
                 </Link>
-                {isOwner && u.status === "pending" && (
-                  <TrustIndicator reliabilityScore={u.users?.reliability_score} completedPifs={u.users?.completed_pifs} noShows={u.users?.no_shows} compact />
-                )}
+                {isOwner && u.status === "pending" && (() => {
+                  // In Demo Mode overlay live ratings on top of the seeded mock reliability
+                  // so a freshly recorded rating is reflected on the next selection view.
+                  const live = DEMO_MODE && u.user_id
+                    ? useDemoRatingsStore.getState().getReliability(u.user_id)
+                    : null;
+                  const score = live && (live.completed_pifs + live.no_shows) > 0
+                    ? live.reliability_score
+                    : u.users?.reliability_score;
+                  const completed = live && (live.completed_pifs + live.no_shows) > 0
+                    ? live.completed_pifs
+                    : u.users?.completed_pifs;
+                  const noShows = live && (live.completed_pifs + live.no_shows) > 0
+                    ? live.no_shows
+                    : u.users?.no_shows;
+                  return (
+                    <TrustIndicator reliabilityScore={score} completedPifs={completed} noShows={noShows} compact />
+                  );
+                })()}
                 <div className="ml-auto flex items-center gap-2">
                   {u.status === "selected" && (
                     <>

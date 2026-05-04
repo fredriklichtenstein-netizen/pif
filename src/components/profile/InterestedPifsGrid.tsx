@@ -272,6 +272,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
           itemId={confirmationItem.id}
           itemTitle={confirmationItem.title}
           pifferName={confirmationItem.postedBy?.name || "Piffern"}
+          pifferId={confirmationItem.postedBy?.id}
           open={!!confirmationItem}
           onOpenChange={(open) => !open && setConfirmationItem(null)}
           onConfirmed={() => {
