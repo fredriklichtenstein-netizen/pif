@@ -48,3 +48,7 @@ export const Functions = {
     Returns: "" as string,
   }
 };
+
+// Stub Database type for compatibility with supabase client
+export type Database = any;
+
