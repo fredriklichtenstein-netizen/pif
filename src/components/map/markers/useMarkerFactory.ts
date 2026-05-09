@@ -4,7 +4,12 @@ import type Supercluster from "supercluster";
 import { createMapPopup } from "../MapPopup";
 import { createMarkerElement } from "../MapMarkerElement";
 import { createClusterElement } from "../ClusterMarkerElement";
+import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
 import type { EnhancedPost } from "./types";
+
+/** True while a feed/map refresh is in flight. Read synchronously
+ *  inside Mapbox event callbacks (which live outside React). */
+const isRefreshNow = () => useRefreshSyncStore.getState().isRefreshing;
 
 interface UseMarkerFactoryArgs {
   map: mapboxgl.Map;
@@ -28,8 +33,12 @@ export function useMarkerFactory({
         rawType === "request" || rawType === "wish" ? "request" : "offer";
 
       const markerElement = createMarkerElement({
-        onClick: () => onPostClick(post.id),
+        onClick: () => {
+          if (isRefreshNow()) return;
+          onPostClick(post.id);
+        },
         onMouseEnter: () => {
+          if (isRefreshNow()) return;
           const popup = createMapPopup({
             post,
             displayCoordinates: privacyCoordinates,
@@ -56,6 +65,7 @@ export function useMarkerFactory({
       const clusterElement = createClusterElement({
         count,
         onClick: () => {
+          if (isRefreshNow()) return;
           if (clusterIndexRef.current) {
             const expansionZoom =
               clusterIndexRef.current.getClusterExpansionZoom(clusterId);
