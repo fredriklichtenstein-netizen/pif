@@ -36,6 +36,7 @@ export function InteractionButtonWithPopup({
   labelActive,
   iconPassive,
   iconActive,
+  itemId,
   fetchPage,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
