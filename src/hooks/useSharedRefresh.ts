@@ -22,7 +22,17 @@ import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
  *   - The fetcher is read through a ref so callers don't need to
  *     memoize it perfectly — the returned `refresh` stays stable.
  */
-export function useSharedRefresh(fetcher: () => Promise<unknown> | unknown) {
+export type RefreshSource = "feed" | "map";
+
+const ANNOUNCE_KEYS: Record<RefreshSource, { start: string; end: string }> = {
+  feed: { start: "interactions.refreshing_feed", end: "interactions.feed_refreshed" },
+  map: { start: "interactions.refreshing_map", end: "interactions.map_refreshed" },
+};
+
+export function useSharedRefresh(
+  fetcher: () => Promise<unknown> | unknown,
+  source: RefreshSource = "feed",
+) {
   const { t } = useTranslation();
   const { announce } = useAnnouncement();
   const isRefreshing = useRefreshSyncStore((s) => s.isRefreshing);
@@ -32,21 +42,20 @@ export function useSharedRefresh(fetcher: () => Promise<unknown> | unknown) {
   const inFlightRef = useRef(false);
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
 
   const refresh = useCallback(async () => {
-    // Synchronous guard: ignore overlapping calls instantly, before
-    // any store update or re-render can flip `isRefreshing`.
     if (inFlightRef.current) return;
-    // Cross-view guard: another component already kicked off a
-    // refresh. Skip so we don't double-fetch or double-announce.
     if (useRefreshSyncStore.getState().isRefreshing) return;
 
+    const keys = ANNOUNCE_KEYS[sourceRef.current];
     inFlightRef.current = true;
-    announce(t("interactions.refreshing_feed"), "polite");
+    announce(t(keys.start), "polite");
     begin();
     try {
       await fetcherRef.current();
-      announce(t("interactions.feed_refreshed"), "polite");
+      announce(t(keys.end), "polite");
     } finally {
       end();
       inFlightRef.current = false;
