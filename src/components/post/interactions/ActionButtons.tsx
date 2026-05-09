@@ -7,6 +7,7 @@ import {
   fetchCommentersPage,
 } from "@/services/interactions/fetchPaginatedUsers";
 import type { User } from "@/hooks/item/useItemInteractions";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface ActionButtonsProps {
   isLiked: boolean;
