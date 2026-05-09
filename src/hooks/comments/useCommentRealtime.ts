@@ -165,11 +165,8 @@ export const useCommentRealtime = (
           table: 'comments',
           filter: `item_id=eq.${numericItemId}`,
         }, (payload) => {
-          if (refreshComments) {
-            refreshComments();
-          } else {
-            handleCommentInsert(payload.new);
-          }
+          // Patch in realtime — never trigger a full refetch (causes flicker).
+          handleCommentInsert(payload.new);
         })
         .on('postgres_changes', {
           event: 'UPDATE',
