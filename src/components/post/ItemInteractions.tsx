@@ -104,6 +104,7 @@ export function ItemInteractions({
         isOwner={isOwner}
         isRealtimeSubscribed={isRealtimeSubscribed}
         itemId={id}
+        itemOwnerId={postedBy?.id}
         commentsCount={commentsCount}
         likesCount={likesCount}
         interestsCount={interestsCount}
