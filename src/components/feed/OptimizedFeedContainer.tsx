@@ -47,7 +47,7 @@ export function OptimizedFeedContainer() {
   // Single shared refresh action (announce + begin/end + try/finally)
   // — identical to the one used by the map view.
   const fetchFeed = useCallback(() => measureFetch(refresh), [measureFetch, refresh]);
-  const { refresh: handleRefresh, isRefreshing } = useSharedRefresh(fetchFeed);
+  const { refresh: handleRefresh, isRefreshing } = useSharedRefresh(fetchFeed, "feed");
 
   const handleLoadMore = useCallback(async () => {
     announce(t('interactions.loading_more_posts'), "polite");
