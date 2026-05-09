@@ -209,7 +209,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       setIsLoading(false);
       setIsFetching(false);
     }
-  }, [toast, t, options.includeArchived]);
+  }, [toast, t, options.includeArchived, cacheKey]);
 
   const cleanup = useCallback(() => {
     if (abortControllerRef.current) {
