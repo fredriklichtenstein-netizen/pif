@@ -32,6 +32,7 @@ interface CommentsPanelProps {
   onReply: (commentId: string, text: string) => void;
   onReport: (commentId: string) => void;
   refreshComments: () => void;
+  newCommentId?: string | null;
 }
 
 export function CommentsPanel({
@@ -49,6 +50,7 @@ export function CommentsPanel({
   onReply,
   onReport,
   refreshComments,
+  newCommentId,
 }: CommentsPanelProps) {
   const isReallyLoading = isLoading && !isInitialized;
   const { t } = useTranslation();
