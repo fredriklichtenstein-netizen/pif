@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthCheck } from "../utils/authCheck";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useMyInterestStore } from "@/stores/myInterestStore";
 
 export const useInterestActions = (
   setShowInterest: (show: boolean) => void,
@@ -11,6 +12,7 @@ export const useInterestActions = (
   const { checkAuth } = useAuthCheck();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const setMyInterest = useMyInterestStore((s) => s.set);
 
   const handleShowInterest = async (id: string, userId: string | undefined | null) => {
     if (!await checkAuth("show interest in this item")) return;
@@ -20,8 +22,11 @@ export const useInterestActions = (
 
     const wasInterested = await checkExistingInterest(numericId, userId);
 
-    // Optimistic UI: flip the toggle immediately so the button feels instant.
+    // Optimistic UI: flip the toggle immediately and broadcast the new
+    // value into the global store so other instances of this item's
+    // button update too.
     setShowInterest(!wasInterested);
+    setMyInterest(id, !wasInterested);
 
     try {
       if (wasInterested) {
@@ -37,6 +42,7 @@ export const useInterestActions = (
       console.error('Error toggling interest:', error);
       // Revert optimistic update on failure.
       setShowInterest(wasInterested);
+      setMyInterest(id, wasInterested);
 
       toast({
         title: t('post.error', 'Error'),
