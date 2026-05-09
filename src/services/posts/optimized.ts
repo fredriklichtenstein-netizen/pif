@@ -58,33 +58,53 @@ export const getOptimizedPosts = async (
     return persisted.data;
   }
   try {
-    // Use optimized query
+    // ---- Stage 1: items + profiles join ----
+    const itemsStart = performance.now();
     const data = await OptimizedQueries.getPosts({ limit, offset });
-    
+    const itemsMs = performance.now() - itemsStart;
+    performanceMetrics.recordStage('items-query', itemsMs, {
+      count: String(Array.isArray(data) ? data.length : 0),
+    });
+
     if (!data || !Array.isArray(data) || data.length === 0) {
       return [];
     }
 
-    // Get all interaction counts in a single batch
+    // ---- Stage 2: bulk interaction counts ----
     const itemIds = (data as any[]).map((item: any) => item.id);
+    const countsStart = performance.now();
     const interactionsMap = await OptimizedQueries.getInteractionCounts(itemIds);
+    const countsMs = performance.now() - countsStart;
+    performanceMetrics.recordStage('interaction-counts', countsMs, {
+      ids: String(itemIds.length),
+    });
 
-    // Transform all posts with memoization
+    // ---- Stage 3: transform (coordinate parsing, user extraction,
+    // image array passthrough — no remote URL resolution today, but this
+    // is where any media URL signing would land). ----
+    const transformStart = performance.now();
+    let imageCount = 0;
     const transformedPosts = (data as any[]).map((item: any) => {
+      imageCount += Array.isArray(item.images) ? item.images.length : 0;
       const cacheKey = `transform-v2-${item.id}-${item.created_at}`;
       const cached = transformCache.get(cacheKey);
       if (cached) {
         return cached;
       }
-      
+
       const transformed = transformPostData(item, interactionsMap.get(item.id) || {
         likesCount: 0,
         interestsCount: 0,
         commentsCount: 0
       });
-      
+
       transformCache.set(cacheKey, transformed);
       return transformed;
+    });
+    const transformMs = performance.now() - transformStart;
+    performanceMetrics.recordStage('transform', transformMs, {
+      posts: String(transformedPosts.length),
+      images: String(imageCount),
     });
 
     // Seed the global initial counts store so feed cards show correct
@@ -106,22 +126,46 @@ export const getOptimizedPosts = async (
       // Non-fatal — counts will still load lazily.
     }
 
-    // Cache the results in both layers.
+    // ---- Stage 4: cache writes (in-memory + sessionStorage) ----
+    const cacheStart = performance.now();
     DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
     setCache(persistentKey, transformedPosts, PERSISTENT_TTL);
-    // Record performance metrics
+    const cacheMs = performance.now() - cacheStart;
+    performanceMetrics.recordStage('cache-write', cacheMs);
+
+    // ---- Roll-up + breakdown ----
+    const totalMs = performance.now() - start;
     performanceMetrics.recordMetric({
       id: `posts-fetch-${Date.now()}`,
       name: 'api-request',
-      value: performance.now() - start,
+      value: totalMs,
       timestamp: Date.now(),
       category: 'network',
-      tags: { 
+      tags: {
         type: 'posts-fetch',
-        count: transformedPosts.length.toString()
-      }
+        count: transformedPosts.length.toString(),
+        items_ms: itemsMs.toFixed(0),
+        counts_ms: countsMs.toFixed(0),
+        transform_ms: transformMs.toFixed(0),
+        cache_ms: cacheMs.toFixed(0),
+      },
     });
-    
+
+    // Always emit a compact breakdown so the slowest stage is one line
+    // away when investigating slow loads. The metrics collector itself
+    // still flags individual stage outliers via its threshold checks.
+    performanceMetrics.logBreakdown(
+      'feed-fetch',
+      totalMs,
+      {
+        items: itemsMs,
+        counts: countsMs,
+        transform: transformMs,
+        cache: cacheMs,
+      },
+      { posts: String(transformedPosts.length), images: String(imageCount) },
+    );
+
     return transformedPosts;
   } catch (error) {
     console.error("Error fetching optimized posts:", error);
