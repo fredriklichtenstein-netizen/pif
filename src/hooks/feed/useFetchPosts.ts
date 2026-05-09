@@ -12,6 +12,10 @@ import {
   isAuthInvalidError,
   maybeRecoverFromAuthError,
 } from "@/hooks/auth/sessionRecovery";
+import { setCache, readCache, FEED_CACHE_KEYS } from "@/services/posts/cache";
+
+const FULL_LIST_TTL = 60 * 1000; // 60s
+const FULL_LIST_STALE_TTL = 5 * 60 * 1000; // serve stale up to 5min
 
 // Normalize item_type to match map marker expectations
 const normalizeItemType = (itemType: string): 'offer' | 'request' => {
