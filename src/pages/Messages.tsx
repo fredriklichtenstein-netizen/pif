@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationView } from "@/components/messaging/ConversationView";
