@@ -110,6 +110,7 @@ export function CommentsPanel({
             onEdit={onEdit}
             onReply={onReply}
             onReport={onReport}
+            newCommentId={newCommentId}
           />
         </div>
       );
@@ -127,6 +128,7 @@ export function CommentsPanel({
             onEdit={onEdit}
             onReply={onReply}
             onReport={onReport}
+            newCommentId={newCommentId}
           />
         </div>
       );
