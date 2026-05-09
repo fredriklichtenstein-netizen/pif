@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
 import { usePifAddress } from "@/hooks/usePifAddress";
 import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
 import { loadMapFilters, saveMapFilters } from "@/utils/mapFiltersStorage";
+import { useMyInterestedIds } from "@/hooks/useMyInterestedIds";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import "./MapStyles.css";
 
 const MAP_SESSION_INIT_KEY = 'map_session_initialized';
@@ -50,14 +52,25 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialFilters.categories);
   const [selectedConditions, setSelectedConditions] = useState<string[]>(initialFilters.conditions);
   const [selectedItemTypes, setSelectedItemTypes] = useState<string[]>(initialFilters.itemTypes);
+  const [onlyInterested, setOnlyInterested] = useState<boolean>(initialFilters.onlyInterested);
+
+  const { user } = useGlobalAuth();
+  const { ids: myInterestedIds } = useMyInterestedIds();
+
+  // Auto-disable the "interested only" filter on sign-out so a logged-out
+  // user never sees an empty map with a hidden invisible filter applied.
+  useEffect(() => {
+    if (!user && onlyInterested) setOnlyInterested(false);
+  }, [user, onlyInterested]);
 
   useEffect(() => {
     saveMapFilters({
       categories: selectedCategories,
       conditions: selectedConditions,
       itemTypes: selectedItemTypes,
+      onlyInterested,
     });
-  }, [selectedCategories, selectedConditions, selectedItemTypes]);
+  }, [selectedCategories, selectedConditions, selectedItemTypes, onlyInterested]);
 
   // Apply all filters including distance
   const finalFilteredPosts = filteredPosts.filter(post => {
@@ -70,6 +83,9 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     if (selectedConditions.length > 0 && (!post.condition || !selectedConditions.includes(post.condition))) {
       return false;
     }
+    if (onlyInterested && !myInterestedIds.has(String(post.id))) {
+      return false;
+    }
     return true;
   });
   const handleClearFilters = () => {
@@ -77,6 +93,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     setSelectedConditions([]);
     setSelectedItemTypes([]);
     setSelectedDistance(null);
+    setOnlyInterested(false);
   };
 
   // Defensive guard: even though the map is wrapped in an `inert`
