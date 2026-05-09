@@ -195,6 +195,45 @@ class PerformanceMetricsCollector {
     return sum / relevantMetrics.length;
   }
 
+  // Convenience helper for recording a single timed stage. Returns the
+  // value so callers can chain or log it.
+  recordStage(stage: string, value: number, tags: Record<string, string> = {}) {
+    this.recordMetric({
+      id: `${stage}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: `feed-stage:${stage}`,
+      value,
+      timestamp: Date.now(),
+      category: 'network',
+      tags: { stage, ...tags },
+    });
+    return value;
+  }
+
+  // Log a single grouped breakdown for an end-to-end pipeline. Helps
+  // pinpoint which DB stage (joins, counts, transforms, cache) dominates
+  // a slow request without wading through individual metric entries.
+  logBreakdown(label: string, total: number, stages: Record<string, number>, tags: Record<string, string> = {}) {
+    const ordered = Object.entries(stages)
+      .sort(([, a], [, b]) => b - a)
+      .map(([k, v]) => `${k}=${v.toFixed(0)}ms`)
+      .join('  ');
+    const accountedFor = Object.values(stages).reduce((a, b) => a + b, 0);
+    const overhead = Math.max(0, total - accountedFor);
+    const tagSuffix = Object.keys(tags).length
+      ? `  [${Object.entries(tags).map(([k, v]) => `${k}=${v}`).join(', ')}]`
+      : '';
+    // Use info so it's visible without being treated as an error.
+    // Picking the slowest stage up front makes triage instant.
+    const [slowestName, slowestValue] = Object.entries(stages).reduce(
+      (acc, cur) => (cur[1] > acc[1] ? cur : acc),
+      ['n/a', 0] as [string, number],
+    );
+    // eslint-disable-next-line no-console
+    console.info(
+      `📊 ${label} ${total.toFixed(0)}ms  →  slowest: ${slowestName} (${slowestValue.toFixed(0)}ms)\n   ${ordered}  overhead=${overhead.toFixed(0)}ms${tagSuffix}`,
+    );
+  }
+
   cleanup() {
     this.observers.forEach(observer => observer.disconnect());
     this.observers = [];
