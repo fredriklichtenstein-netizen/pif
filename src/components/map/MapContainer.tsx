@@ -238,6 +238,10 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             userLocation={locationTracking.userLocation}
             onRequestLocation={guarded(locationTracking.goToMyLocation)}
             onUsePifAddress={guarded(locationTracking.setManualLocation)}
+            onlyInterested={onlyInterested}
+            onOnlyInterestedChange={guarded(setOnlyInterested)}
+            showInterestedFilter={!!user}
+            interestedCount={myInterestedIds.size}
           />
 
           <DistanceRings
