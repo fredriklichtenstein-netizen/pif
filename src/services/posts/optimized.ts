@@ -97,19 +97,32 @@ export const getOptimizedPosts = async (
     return transformedPosts;
   } catch (error) {
     console.error("Error fetching optimized posts:", error);
-    
+
     performanceMetrics.recordMetric({
       id: `posts-error-${Date.now()}`,
       name: 'api-error',
       value: performance.now() - start,
       timestamp: Date.now(),
       category: 'network',
-      tags: { 
+      tags: {
         type: 'posts-fetch-error',
         error: error instanceof Error ? error.message : 'unknown'
       }
     });
-    
+
+    // If a stale JWT is to blame, clear it and retry exactly once as
+    // anon so the feed remains visible to logged-out viewers.
+    if (!_retryAfterRecovery && isAuthInvalidError(error)) {
+      maybeRecoverFromAuthError(error, "getOptimizedPosts");
+      // Give the recovery a tick to wipe tokens before retrying.
+      await new Promise((r) => setTimeout(r, 50));
+      try {
+        return await getOptimizedPosts(limit, offset, true);
+      } catch {
+        return [];
+      }
+    }
+
     throw error;
   }
 };
