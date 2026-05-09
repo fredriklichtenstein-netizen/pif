@@ -1,10 +1,14 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
-import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
+import {
+  subscribeItemTable,
+  subscribeItemStatus,
+} from "@/services/realtime/itemRealtimeManager";
 
 const DEBOUNCE_MS = 400;
 const MAX_DEFER_MS = 1500;
+const POLL_INTERVAL_MS = 15000;
 
 /**
  * Subscribes to inserts/deletes on the `comments` table for a given item
@@ -80,10 +84,28 @@ export const useCommentCountRealtime = (
       else if (payload.eventType === "DELETE") schedule("DELETE");
     });
 
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    const stopPolling = () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+    const startPolling = () => {
+      if (pollTimer) return;
+      pollTimer = setInterval(flush, POLL_INTERVAL_MS);
+    };
+    const offStatus = subscribeItemStatus(itemId, (status) => {
+      if (status === "SUBSCRIBED") stopPolling();
+      else startPolling();
+    });
+
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       if (maxWaitTimer) clearTimeout(maxWaitTimer);
       unsubscribe();
+      offStatus();
+      stopPolling();
     };
   }, [itemId]);
 };

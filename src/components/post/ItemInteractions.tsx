@@ -109,6 +109,7 @@ export function ItemInteractions({
         interestsCount={interestsCount}
         likers={likers}
         interestedUsers={interestedUsers}
+        commenters={commenters}
         onLikeToggle={onLikeToggle}
         onCommentToggle={onCommentToggle}
         onShowInterest={onShowInterest}

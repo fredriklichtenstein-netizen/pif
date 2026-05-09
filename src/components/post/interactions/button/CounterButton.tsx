@@ -10,7 +10,7 @@ interface CounterButtonProps {
   isActive: boolean;
   activeColor: string;
   passiveColor: string;
-  type: "like" | "interest";
+  type: "like" | "interest" | "comment";
   users: User[];
   loading: boolean;
   showPopup: boolean;
@@ -18,6 +18,12 @@ interface CounterButtonProps {
   onCounterClick: () => Promise<User[]>;
   isInteractive: boolean;
 }
+
+const labelKey = (type: CounterButtonProps["type"]) => {
+  if (type === "like") return "interactions.like";
+  if (type === "interest") return "interactions.interest";
+  return "interactions.comment";
+};
 
 export function CounterButton({
   count,
@@ -41,7 +47,7 @@ export function CounterButton({
         style={{
           color: isActive ? activeColor : passiveColor
         }}
-        aria-label={`${count} ${type === "like" ? t('interactions.like') : t('interactions.interest')}`}
+        aria-label={`${count} ${t(labelKey(type))}`}
       >
         {count}
       </span>
@@ -49,6 +55,7 @@ export function CounterButton({
   }
   
   const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setShowPopup(true);
     try {
@@ -69,14 +76,13 @@ export function CounterButton({
             cursor: "pointer",
             background: "none"
           }}
-          aria-label={`${count} ${type === "like" ? t('interactions.like') : t('interactions.interest')}`}
-          tabIndex={-1}
+          aria-label={`${count} ${t(labelKey(type))}`}
           type="button"
         >
           {count}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-60 p-2">
+      <PopoverContent className="w-60 p-2" onClick={(e) => e.stopPropagation()}>
         <UserPopoverContent 
           type={type} 
           users={users} 

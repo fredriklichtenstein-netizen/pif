@@ -9,6 +9,7 @@ import { DEMO_USER } from "@/data/mockUser";
 import type { User } from "./utils/userUtils";
 import { useTranslation } from "react-i18next";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { useItemLikesRealtime } from "./realtime/useItemLikesRealtime";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -149,10 +150,15 @@ export const useLikes = (id: string, userId?: string | null) => {
     const previousCount = likesCount;
     const previousLikers = [...likers];
     
+    // Optimistic flip — update UI immediately and adjust counter so the
+    // user gets instant feedback. Realtime / list refetch reconciles the
+    // exact list in the background.
     setIsLiked(!wasLiked);
+    setLikesCount(Math.max(0, previousCount + (wasLiked ? -1 : 1)));
     
     try {
       if (wasLiked) {
+        // DELETE is naturally idempotent — "no rows affected" is fine.
         const { error } = await supabase
           .from('likes')
           .delete()
@@ -161,16 +167,22 @@ export const useLikes = (id: string, userId?: string | null) => {
           
         if (error) throw error;
       } else {
+        // upsert with ignoreDuplicates absorbs the race where realtime
+        // hasn't yet told us our row already exists.
         const { error } = await supabase
           .from('likes')
-          .insert([
-            { user_id: userId, item_id: numericId }
-          ]);
+          .upsert([{ user_id: userId, item_id: numericId }], {
+            onConflict: 'user_id,item_id',
+            ignoreDuplicates: true,
+          });
           
         if (error) throw error;
       }
       
-      await fetchLikersInternal(numericId);
+      // Background reconcile — don't block the UI.
+      fetchLikersInternal(numericId).catch((err) => {
+        console.error('Background likers refresh failed:', err);
+      });
     } catch (error) {
       console.error('Error toggling like:', error);
       
@@ -197,6 +209,15 @@ export const useLikes = (id: string, userId?: string | null) => {
       return likers;
     }
   };
+
+  // Realtime: any change to likes for this item refreshes the
+  // authoritative likers list so popovers across mounted UIs stay in
+  // sync, not just the count.
+  useItemLikesRealtime(id, () => {
+    if (DEMO_MODE) return;
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) fetchLikersInternal(numericId);
+  });
 
   return {
     isLiked,

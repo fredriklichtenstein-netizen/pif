@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface UserPopoverContentProps {
-  type: "like" | "interest";
+  type: "like" | "interest" | "comment";
   users: User[];
   loading: boolean;
   setShowPopup: (show: boolean) => void;
@@ -19,6 +19,20 @@ export function UserPopoverContent({
 }: UserPopoverContentProps) {
   const { t } = useTranslation();
 
+  const titleKey =
+    type === "like"
+      ? "interactions.liked"
+      : type === "interest"
+      ? "common.interested_users"
+      : "interactions.commented";
+
+  const emptyKey =
+    type === "like"
+      ? "common.no_likes_yet"
+      : type === "interest"
+      ? "profile.no_interest_yet"
+      : "comments.no_comments";
+
   if (loading) {
     return (
       <div className="p-4 text-center">
@@ -31,9 +45,7 @@ export function UserPopoverContent({
   return (
     <div className="max-h-[300px] overflow-y-auto">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="font-semibold text-sm">
-          {type === "like" ? t('interactions.liked') : t('common.interested_users')}
-        </h3>
+        <h3 className="font-semibold text-sm">{t(titleKey)}</h3>
         <Button
           variant="ghost"
           size="sm"
@@ -46,7 +58,7 @@ export function UserPopoverContent({
       
       {users.length === 0 ? (
         <div className="text-center py-4 text-gray-500 text-sm">
-          {type === "like" ? t('common.no_likes_yet') : t('profile.no_interest_yet')}
+          {t(emptyKey)}
         </div>
       ) : (
         <div className="space-y-2">

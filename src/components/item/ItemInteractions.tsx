@@ -68,6 +68,7 @@ export function ItemInteractions({
               interestsCount={actualInterestCount}
               likers={likers}
               interestedUsers={interestedUsers}
+              commenters={commenters}
               onLikeToggle={() => handleAction(onLikeToggle)}
               onCommentToggle={() => handleAction(onCommentToggle, false)}
               onShowInterest={() => handleAction(onShowInterest)}

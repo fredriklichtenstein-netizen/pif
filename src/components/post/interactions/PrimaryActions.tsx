@@ -3,6 +3,7 @@ import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./button/ShareButton";
 import { useTranslation } from 'react-i18next';
+import { fetchCommentersForItem } from "@/services/comments/fetchCommenters";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -17,12 +18,14 @@ interface PrimaryActionsProps {
   interestsCount?: number;
   likers?: User[];
   interestedUsers?: User[];
+  commenters?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
   onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
+  fetchCommenters?: () => Promise<User[]>;
 }
 
 export function PrimaryActions({
@@ -38,19 +41,24 @@ export function PrimaryActions({
   interestsCount = 0,
   likers = [],
   interestedUsers = [],
+  commenters = [],
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
   onShare,
   fetchLikers,
   fetchInterestedUsers,
+  fetchCommenters,
 }: PrimaryActionsProps) {
   const { t } = useTranslation();
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onShare();
   };
-  
+
+  const fetchCommentersFn =
+    fetchCommenters || (() => fetchCommentersForItem(itemId));
+
   return (
     <div className="grid grid-cols-4 w-full gap-1 mb-1">
       <div className="flex justify-center">
@@ -75,6 +83,8 @@ export function PrimaryActions({
           type="comment"
           isActive={hasCommented}
           count={commentsCount}
+          users={commenters}
+          onCounterClick={fetchCommentersFn}
           itemId={itemId}
           onClick={onCommentToggle}
           labelPassive={t('interactions.comment')}
