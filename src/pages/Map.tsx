@@ -184,10 +184,18 @@ export default function Map() {
           )}
 
           {/* Translucent veil over the map while refreshing so the
-              stale data is visibly de-emphasised but still in place. */}
+              stale data is visibly de-emphasised but still in place.
+              Click handler informs the user why filters/markers are
+              unresponsive — sonner dedupes via the stable `id`. */}
           {isRefreshing && (
             <div
               className="absolute inset-0 z-40 bg-background/30 backdrop-blur-[1px] cursor-wait transition-opacity"
+              onClick={() =>
+                toast.message(t('interactions.filters_disabled_during_refresh'), {
+                  id: 'refresh-filters-disabled',
+                  duration: 1800,
+                })
+              }
               aria-hidden="true"
             />
           )}
