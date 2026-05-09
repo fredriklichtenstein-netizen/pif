@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { PostModal } from "./PostModal";
@@ -9,80 +9,65 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoPostsStore } from "@/stores/demoPostsStore";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { DEMO_USER } from "@/data/mockUser";
+import { useEffect } from "react";
+import { useMyItemsCache } from "@/hooks/cache/useMyItemsCache";
 
 export function MyPifsGrid({ userId }: { userId: string }) {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState<number | string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const demoUserPosts = useDemoPostsStore((state) => state.getUserPosts);
 
-  const fetchPifs = async () => {
-    setLoading(true);
-    
-    // Demo mode: show user-created demo posts + mock posts from "demo user"
-    if (DEMO_MODE) {
-      const userCreatedPosts = demoUserPosts(userId);
-      // In demo mode, if viewing demo user's profile, show their mock posts
-      const mockUserPosts = userId === DEMO_USER.id 
-        ? MOCK_POSTS.filter(p => p.item_type === 'pif' || p.item_type === 'offer').slice(0, 2)
+  const { items, isLoading, refresh, setItems } = useMyItemsCache(
+    DEMO_MODE ? null : userId,
+    {
+      scope: "my-active",
+      query: async (uid) => {
+        const res = await (supabase
+          .from("items")
+          .select("*") as any)
+          .eq("user_id", uid)
+          .neq("pif_status", "archived")
+          .order("created_at", { ascending: false });
+        return { data: res.data, error: res.error };
+      },
+    },
+  );
+
+  // Demo mode list (not cached — local mock data).
+  const demoItems = (() => {
+    if (!DEMO_MODE) return null;
+    const userCreatedPosts = demoUserPosts(userId);
+    const mockUserPosts =
+      userId === DEMO_USER.id
+        ? MOCK_POSTS.filter((p) => p.item_type === "pif" || p.item_type === "offer").slice(0, 2)
         : [];
-      
-      setItems([...userCreatedPosts, ...mockUserPosts]);
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      const { data, error } = await (supabase
-        .from("items")
-        .select("*") as any)
-        .eq("user_id", userId)
-        .neq("pif_status", "archived")
-        .order("created_at", { ascending: false });
-        
-      if (error) throw error;
-      setItems(data || []);
-    } catch (err) {
-      console.error("Error fetching piffar:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return [...userCreatedPosts, ...mockUserPosts];
+  })();
 
-  useEffect(() => {
-    if (!userId) return;
-    fetchPifs();
-  }, [userId]);
+  const displayedItems = DEMO_MODE ? demoItems ?? [] : items;
+  const showLoader = !DEMO_MODE && isLoading;
 
-  // Sync with global archive/delete/restore events so the grid updates without a refresh.
+  // Sync with global archive/delete/restore events.
   useEffect(() => {
     const onSuccess = (e: Event) => {
       const detail = (e as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
       if (!detail) return;
       const idStr = String(detail.itemId);
-      if (detail.operationType === 'archive' || detail.operationType === 'delete') {
-        // Remove from local list immediately.
-        setItems((prev) => prev.filter((i) => String(i.id) !== idStr));
-      } else if (detail.operationType === 'restore') {
-        // Refetch so the restored item reappears with full data.
-        fetchPifs();
+      if (detail.operationType === "archive" || detail.operationType === "delete") {
+        setItems(displayedItems.filter((i) => String(i.id) !== idStr));
+      } else if (detail.operationType === "restore") {
+        void refresh();
       }
     };
-    const onUndone = (e: Event) => {
-      const detail = (e as CustomEvent<{ itemId: string | number; operationType: string }>).detail;
-      if (!detail) return;
-      // Either an undone archive (item is back) or a restore — refetch to be safe.
-      fetchPifs();
-    };
-    document.addEventListener('item-operation-success', onSuccess as EventListener);
-    document.addEventListener('item-operation-undone', onUndone as EventListener);
+    const onUndone = () => void refresh();
+    document.addEventListener("item-operation-success", onSuccess as EventListener);
+    document.addEventListener("item-operation-undone", onUndone as EventListener);
     return () => {
-      document.removeEventListener('item-operation-success', onSuccess as EventListener);
-      document.removeEventListener('item-operation-undone', onUndone as EventListener);
+      document.removeEventListener("item-operation-success", onSuccess as EventListener);
+      document.removeEventListener("item-operation-undone", onUndone as EventListener);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [displayedItems]);
 
   const handlePostClick = (postId: number | string) => {
     setSelectedPostId(postId);
@@ -90,15 +75,14 @@ export function MyPifsGrid({ userId }: { userId: string }) {
   };
 
   const handleStatusChange = () => {
-    // Refresh the data after status change
-    fetchPifs();
+    if (!DEMO_MODE) void refresh();
   };
 
-  if (loading) {
+  if (showLoader) {
     return <div className="py-12 text-center text-gray-400">Laddar dina piffar...</div>;
   }
-  
-  if (items.length === 0) {
+
+  if (displayedItems.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
         <div className="text-lg font-semibold">Inga piffar än</div>
@@ -110,7 +94,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => {
+        {displayedItems.map((item) => {
           const imageUrl = item.images?.[0] || "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
           return (
             <Card key={item.id} className="overflow-hidden hover:shadow-lg transition">
@@ -120,7 +104,10 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                   alt={item.title}
                   className="w-full h-48 object-cover cursor-pointer"
                   onClick={() => handlePostClick(item.id)}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src =
+                      "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
+                  }}
                 />
                 {item.status === "piffed" && (
                   <div className="absolute top-0 right-0 bg-green-500 text-white px-2 py-1 text-xs">
@@ -139,10 +126,10 @@ export function MyPifsGrid({ userId }: { userId: string }) {
           );
         })}
       </div>
-      
-      <PostModal 
-        postId={selectedPostId} 
-        open={modalOpen} 
+
+      <PostModal
+        postId={selectedPostId}
+        open={modalOpen}
         onOpenChange={setModalOpen}
         onStatusChange={handleStatusChange}
       />
