@@ -78,17 +78,33 @@ export function useFetchPosts(options = { includeArchived: false }) {
       return;
     }
 
-    
+    // Persistent cache short-circuit. If we have a fresh cached payload,
+    // just hand it back without touching the network. If it's stale we
+    // serve it immediately and refresh in the background.
+    const cached = readCache<any[]>(cacheKey);
+    if (cached && !cached.isStale) {
+      setPosts(cached.data);
+      setIsLoading(false);
+      return;
+    }
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
-    
+
     setIsFetching(true);
-    setIsLoading(true);
+    // If we have stale data, keep showing it instead of flipping to a loader.
+    if (cached?.data?.length) {
+      setPosts(cached.data);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
+
 
     try {
       let query = supabase
