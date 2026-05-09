@@ -112,6 +112,7 @@ const dropUnknown = (data: MapFilterData, allowed: AllowedValues): MapFilterData
   itemTypes: allowed.itemTypes
     ? data.itemTypes.filter((c) => allowed.itemTypes!.includes(c))
     : data.itemTypes,
+  onlyInterested: data.onlyInterested,
 });
 
 /**
