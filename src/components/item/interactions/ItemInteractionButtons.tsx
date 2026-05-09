@@ -9,6 +9,7 @@ interface ItemInteractionButtonsProps {
   showInterest: boolean;
   isOwner: boolean;
   currentUserId?: string;
+  itemOwnerId?: string;
   hasCommented: boolean;
   commentsCount: number;
   likesCount: number;
