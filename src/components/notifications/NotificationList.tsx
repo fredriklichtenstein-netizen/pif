@@ -123,7 +123,7 @@ export function NotificationList() {
                     </>
                   );
                   displayContent = t('notifications.review_interest_to_select');
-                  ctaUrl = notif.item_id ? `/post/${notif.item_id}` : ctaUrl;
+                  ctaUrl = notif.item_id ? `/item/${notif.item_id}` : ctaUrl;
                   ctaLabel = t('notifications.review_interest_cta');
                 } else if (isReceiverSelected) {
                   displayTitle = t('interactions.receiver_selected_notif_title');
