@@ -65,16 +65,33 @@ export const useCommentRealtime = (
   const { t } = useTranslation();
   const MAX_SUBSCRIPTION_ATTEMPTS = 3;
 
-  // Add comment to the list (for inserts)
+  // Add comment to the list (for inserts) — supports replies via parent_id.
   const handleCommentInsert = useCallback((newComment: any) => {
     const formattedComment = formatCommentFromDB(newComment, newComment.user_id === user?.id);
-    
-    // Check for duplicates before adding
+    const parentId = newComment.parent_id ? String(newComment.parent_id) : null;
+
+    if (parentId) {
+      // Reply — append under parent if not already present.
+      const exists = comments.some(c => c.replies?.some(r => r.id === formattedComment.id));
+      if (exists) return;
+      setComments(comments.map(c =>
+        c.id === parentId
+          ? { ...c, replies: [...(c.replies ?? []), formattedComment] }
+          : c
+      ));
+
+      if (newComment.user_id !== user?.id) {
+        toast({
+          title: t('interactions.new_comment'),
+          description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
+        });
+      }
+      return;
+    }
+
     if (!comments.some(c => c.id === formattedComment.id)) {
-      const updatedComments = [...comments, formattedComment];
-      setComments(updatedComments);
-      
-      // Show toast for new comments from others
+      setComments([...comments, formattedComment]);
+
       if (newComment.user_id !== user?.id) {
         toast({
           title: t('interactions.new_comment'),
@@ -82,24 +99,38 @@ export const useCommentRealtime = (
         });
       }
     }
-  }, [comments, user?.id, setComments, toast]);
+  }, [comments, user?.id, setComments, toast, t]);
 
-  // Update an existing comment (for updates)
+  // Update an existing comment (for updates) — walks replies too.
   const handleCommentUpdate = useCallback((updatedComment: any) => {
-    const updatedComments = comments.map(comment => 
-      comment.id === updatedComment.id.toString()
-        ? formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id)
-        : comment
-    );
-    setComments(updatedComments);
+    const formatted = formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id);
+    const targetId = String(updatedComment.id);
+    setComments(comments.map(c => {
+      if (c.id === targetId) return { ...formatted, replies: c.replies, likes: c.likes, isLiked: c.isLiked };
+      if (c.replies?.some(r => r.id === targetId)) {
+        return {
+          ...c,
+          replies: c.replies.map(r =>
+            r.id === targetId ? { ...formatted, likes: r.likes, isLiked: r.isLiked } : r
+          ),
+        };
+      }
+      return c;
+    }));
   }, [comments, user?.id, setComments]);
 
-  // Remove a comment from the list (for deletes)
+  // Remove a comment from the list (for deletes) — walks replies too.
   const handleCommentDelete = useCallback((deletedComment: any) => {
-    const filteredComments = comments.filter(comment => 
-      comment.id !== deletedComment.id.toString()
+    const targetId = String(deletedComment.id);
+    setComments(
+      comments
+        .filter(c => c.id !== targetId)
+        .map(c =>
+          c.replies?.some(r => r.id === targetId)
+            ? { ...c, replies: c.replies.filter(r => r.id !== targetId) }
+            : c
+        )
     );
-    setComments(filteredComments);
   }, [comments, setComments]);
 
   // Clean up function for supabase channels
