@@ -64,6 +64,16 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     setSelectedDistance(null);
   };
 
+  // Defensive guard: even though the map is wrapped in an `inert`
+  // container during refresh, wrap every state-mutating handler so
+  // any stray event (programmatic dispatch, focus traps, etc.) cannot
+  // change map state mid-update.
+  const guarded = <A extends unknown[]>(fn: (...a: A) => void) =>
+    (...args: A) => {
+      if (useRefreshSyncStore.getState().isRefreshing) return;
+      fn(...args);
+    };
+
   useEffect(() => {
     if (isMapReady && map) {
       const timer = setTimeout(() => {
@@ -179,15 +189,15 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             selectedCategories={selectedCategories}
             selectedConditions={selectedConditions}
             selectedItemTypes={selectedItemTypes}
-            onCategoryChange={setSelectedCategories}
-            onConditionChange={setSelectedConditions}
-            onItemTypeChange={setSelectedItemTypes}
-            onClearFilters={handleClearFilters}
+            onCategoryChange={guarded(setSelectedCategories)}
+            onConditionChange={guarded(setSelectedConditions)}
+            onItemTypeChange={guarded(setSelectedItemTypes)}
+            onClearFilters={guarded(handleClearFilters)}
             selectedDistance={selectedDistance}
-            onDistanceChange={setSelectedDistance}
+            onDistanceChange={guarded(setSelectedDistance)}
             userLocation={locationTracking.userLocation}
-            onRequestLocation={locationTracking.goToMyLocation}
-            onUsePifAddress={locationTracking.setManualLocation}
+            onRequestLocation={guarded(locationTracking.goToMyLocation)}
+            onUsePifAddress={guarded(locationTracking.setManualLocation)}
           />
 
           <DistanceRings
