@@ -137,6 +137,21 @@ export const MapFilters = ({
         </Button>
       </div>
 
+      {showInterestedFilter && (
+        <div className="bg-background rounded-lg shadow-md p-1">
+          <Button
+            variant={onlyInterested ? "default" : "ghost"}
+            size="sm"
+            onClick={() => onOnlyInterestedChange?.(!onlyInterested)}
+            className={`text-xs px-3 w-full ${onlyInterested ? "bg-rose-500 hover:bg-rose-600 text-white" : "hover:bg-rose-50 text-rose-700"}`}
+            aria-pressed={onlyInterested}
+          >
+            <Heart className={`h-3.5 w-3.5 mr-1 ${onlyInterested ? "fill-current" : ""}`} />
+            {t('map_filters.only_interested')} ({interestedCount})
+          </Button>
+        </div>
+      )}
+
       <div className="bg-background/90 backdrop-blur-sm rounded-lg shadow-md p-2">
         <DistanceFilters
           selectedDistance={selectedDistance}
