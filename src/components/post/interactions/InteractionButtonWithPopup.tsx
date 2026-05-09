@@ -22,6 +22,8 @@ interface InteractionButtonWithPopupProps {
   iconActive: "heart" | "message-square" | "star";
   itemId: string;
   fetchPage?: FetchPage;
+  itemOwnerId?: string;
+  currentUserId?: string;
 }
 
 export function InteractionButtonWithPopup({
