@@ -110,7 +110,7 @@ export function InteractionButtonWithPopup({
 
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
-      {/* Toggle area — div with role=button so we don't nest a real button under another button */}
+      {/* Icon toggle */}
       <div
         role="button"
         aria-disabled={isToggleDisabled}
@@ -118,29 +118,30 @@ export function InteractionButtonWithPopup({
         tabIndex={isToggleDisabled ? -1 : 0}
         onClick={handleToggleClick}
         onKeyDown={handleKeyDown}
-        className={`flex flex-col items-center w-full rounded group select-none
+        className={`flex items-center justify-center h-7 rounded group select-none
           ${isToggleDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
         `}
       >
-        <div className="flex items-center justify-center h-7">
-          <InteractionIcon
-            type={isActive ? iconActive : iconPassive}
-            isActive={isActive}
-          />
-        </div>
-        <div className="flex flex-row items-center justify-center mt-1 gap-1">
-          <span
-            style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
-            className="text-xs font-medium select-none"
-          >
-            {isActive ? labelActive : labelPassive}
-          </span>
-        </div>
+        <InteractionIcon
+          type={isActive ? iconActive : iconPassive}
+          isActive={isActive}
+        />
       </div>
 
-      {/* Counter is a sibling, not a descendant, of the toggle area */}
-      {displayCount > 0 && (
-        <div className="mt-0.5">
+      {/* Label + counter on the same row */}
+      <div className="flex flex-row items-center justify-center mt-1 gap-1.5">
+        <span
+          role="button"
+          aria-disabled={isToggleDisabled}
+          tabIndex={isToggleDisabled ? -1 : 0}
+          onClick={handleToggleClick}
+          onKeyDown={handleKeyDown}
+          style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
+          className={`text-xs font-medium select-none ${isToggleDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          {isActive ? labelActive : labelPassive}
+        </span>
+        {displayCount > 0 && (
           <CounterButton
             count={displayCount}
             isActive={isActive}
@@ -158,8 +159,8 @@ export function InteractionButtonWithPopup({
             itemOwnerId={itemOwnerId}
             currentUserId={currentUserId}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
