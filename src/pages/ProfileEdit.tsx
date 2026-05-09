@@ -132,6 +132,10 @@ if (location) {
         updateData.avatar_url = avatarUrl;
       }
 
+      // Optimistically update the cached profile so name/avatar appear instantly
+      const { updateCachedProfile } = await import("@/hooks/profile/useCachedProfile");
+      updateCachedProfile(user.id, updateData);
+
       const { error } = await supabase
         .from("profiles")
         .update(updateData)

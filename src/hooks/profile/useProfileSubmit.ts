@@ -40,17 +40,23 @@ export const useProfileSubmit = (
         ? formData.dateOfBirth.toISOString().split('T')[0] 
         : null;
 
+      const patch = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        gender: formData.gender,
+        phone: formattedPhone,
+        address: formData.address,
+        date_of_birth: formattedDateOfBirth,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Optimistically update the cached profile so name/avatar appear instantly
+      const { updateCachedProfile } = await import("@/hooks/profile/useCachedProfile");
+      updateCachedProfile(user.id, patch);
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          gender: formData.gender,
-          phone: formattedPhone,
-          address: formData.address,
-          date_of_birth: formattedDateOfBirth,
-          updated_at: new Date().toISOString()
-        })
+        .update(patch)
         .eq('id', user.id)
         .abortSignal(abortController.signal);
 

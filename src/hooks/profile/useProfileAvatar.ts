@@ -85,6 +85,11 @@ export const useProfileAvatar = () => {
       // Update the UI immediately with the new avatar URL
       setAvatarUrl(publicUrl);
 
+      // Optimistically update the cached profile so the bottom-nav avatar
+      // and profile page reflect the change instantly.
+      const { updateCachedProfile } = await import("@/hooks/profile/useCachedProfile");
+      updateCachedProfile(user.id, { avatar_url: publicUrl });
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
