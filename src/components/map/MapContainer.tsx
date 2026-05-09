@@ -211,7 +211,10 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
           <MapMarkersLayer 
             map={map}
             posts={finalFilteredPosts}
-            onPostClick={onPostClick}
+            // Guarded so a tap on a Mapbox marker (which lives on the
+            // canvas, outside the React tree) cannot open a popup or
+            // navigate while a refresh is in flight.
+            onPostClick={guarded(onPostClick)}
             targetItemId={targetItemId}
           />
 
