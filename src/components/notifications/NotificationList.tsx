@@ -103,7 +103,7 @@ export function NotificationList() {
                 let ctaLabel: string | null = null;
 
                 if (isInterestReceived) {
-                  const name = notif.actor_name || t('interactions.someone');
+                  const name = notif.actor_name || t('someone');
                   const namePart = notif.actor_id ? (
                     <Link
                       to={`/user/${notif.actor_id}`}
