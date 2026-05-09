@@ -15,6 +15,8 @@ interface ActionButtonsProps {
   isOwner: boolean;
   isRealtimeSubscribed?: boolean;
   itemId: string;
+  itemOwnerId?: string;
+  currentUserId?: string;
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
