@@ -92,6 +92,29 @@ export const clearCachedProfile = (userId: string) => {
   notify(userId, null);
 };
 
+/**
+ * Wipe every cached profile (all users). Use on sign-out or when switching
+ * accounts so a new user never sees the previous user's profile data.
+ */
+export const clearAllCachedProfiles = () => {
+  const ids = Array.from(memoryCache.keys());
+  memoryCache.clear();
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith(STORAGE_PREFIX)) toRemove.push(k);
+      const id = k?.slice(STORAGE_PREFIX.length);
+      if (id) ids.push(id);
+    }
+    toRemove.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+  // Notify every known subscriber so live UI clears immediately.
+  new Set(ids).forEach((id) => notify(id, null));
+};
+
 const fetchProfileOnce = (userId: string): Promise<any | null> => {
   const existing = inFlight.get(userId);
   if (existing) return existing;
