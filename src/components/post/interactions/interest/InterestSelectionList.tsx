@@ -273,12 +273,23 @@ export function InterestSelectionList({
       } else {
         navigate(`/messages`);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[InterestSelectionList] select_receiver failed", e);
+      const code = e?.code || e?.details?.code;
+      let description = t("interactions.error_select_receiver");
+      if (code === "23505" || /already been selected|already selected/i.test(e?.message || "")) {
+        description = t("interactions.error_already_selected");
+        // Refresh so the UI reflects the winner picked by the other session.
+        reload();
+      } else if (code === "42501") {
+        description = t("interactions.error_not_authorized_select");
+      } else if (code === "P0002") {
+        description = t("interactions.error_interest_missing");
+      }
       toast({
         variant: "destructive",
         title: t("interactions.error_title"),
-        description: t("interactions.error_select_receiver"),
+        description,
       });
     } finally {
       setBusyId(null);
