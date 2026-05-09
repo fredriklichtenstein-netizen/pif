@@ -56,6 +56,8 @@ export function ActionButtons({
   fetchInterestedUsers,
   fetchCommenters,
 }: ActionButtonsProps) {
+  const { user } = useGlobalAuth();
+  const effectiveCurrentUserId = currentUserId ?? user?.id;
   const fetchLikersPageFn = (offset: number) => fetchLikersPage(itemId, offset);
   const fetchInterestedPageFn = (offset: number) =>
     fetchInterestedUsersPage(itemId, offset);
