@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { InteractionIcon } from "./button/InteractionIcon";
 import { CounterButton } from "./button/CounterButton";
 import type { User } from "@/hooks/item/useItemInteractions";
+import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
 type Type = "like" | "comment" | "interest";
 
@@ -20,6 +21,7 @@ interface InteractionButtonWithPopupProps {
   iconPassive: "heart" | "message-square" | "star";
   iconActive: "heart" | "message-square" | "star";
   itemId: string;
+  fetchPage?: FetchPage;
 }
 
 export function InteractionButtonWithPopup({
@@ -34,6 +36,7 @@ export function InteractionButtonWithPopup({
   labelActive,
   iconPassive,
   iconActive,
+  fetchPage,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
