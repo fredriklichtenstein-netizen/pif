@@ -44,6 +44,7 @@ export function CounterButton({
   onCounterClick,
   isInteractive,
   fetchPage,
+  itemId,
 }: CounterButtonProps) {
   const { t } = useTranslation();
   
