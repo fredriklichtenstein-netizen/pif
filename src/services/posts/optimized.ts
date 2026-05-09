@@ -34,11 +34,28 @@ export const getOptimizedPosts = async (
 ): Promise<Post[]> => {
   const start = performance.now();
   const cacheKey = `posts-v2-${limit}-${offset}`;
-  
-  // Try cache first
+  const persistentKey = FEED_CACHE_KEYS.optimizedPage(limit, offset);
+
+  // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
   if (cached) {
     return cached;
+  }
+
+  // 2) Persistent (sessionStorage) cache survives full-page refreshes and
+  // is shared across views, so switching feed↔map or hitting reload
+  // doesn't re-execute the heavy joined query immediately.
+  const persisted = readCache<Post[]>(persistentKey);
+  if (persisted && !persisted.isStale) {
+    // Re-warm the in-memory cache so subsequent reads stay O(1).
+    DatabaseCache.set(cacheKey, persisted.data, CACHE_TTL);
+    return persisted.data;
+  }
+  if (persisted && persisted.isStale && !_retryAfterRecovery) {
+    // Stale-while-revalidate: hand back stale data immediately, refresh in bg.
+    DatabaseCache.set(cacheKey, persisted.data, CACHE_TTL);
+    void revalidateInBackground(limit, offset);
+    return persisted.data;
   }
   try {
     // Use optimized query
