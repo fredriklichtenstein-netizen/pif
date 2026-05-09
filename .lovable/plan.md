@@ -1,102 +1,60 @@
-I traced the comment flow from feed loading through card state, lazy loading, insert, and realtime. I found multiple competing comment implementations and a few concrete break points.
+# Comments: Smoother UX, full realtime, two-level nesting
 
-Root causes identified:
+## 1. Smooth "add comment" UX (no flicker, scroll-to-new)
 
-1. Feed counters are seeded in the wrong place and with inconsistent RPC params
-- The live feed uses `useOptimizedFeed` -> `getOptimizedPosts` -> `OptimizedQueries.getInteractionCounts`.
-- `OptimizedQueries.getInteractionCounts` currently calls `get_bulk_interaction_counts` with `item_ids`, but the live Supabase RPC expects `p_item_ids`.
-- The older `useFetchPosts` path was changed to use `p_item_ids`, but that is not the main feed path.
-- Because the optimized path fails and falls back, counts can be stale/zero and the global initial-count store is not reliably seeded before cards render.
+**Problem:** After posting, `LazyCommentsSection.handleAddCommentWithRefetch` calls `refreshComments()`, which sets `isInitialized = false` and re-runs `loadComments`. This briefly hides the list and shows the loading skeleton — that's the "glitch".
 
-2. Initial card counters ignore the `post.commentsCount` prop
-- `FeedItemCard` receives posts that already contain `commentsCount`, but it does not pass that count into `ItemCard`.
-- `ItemCardProps` does not include initial counts, so every card creates its own `useItemComments` state starting from the global store or `0` instead of the feed item’s known count.
+**Fix:**
+- Remove the post-insert `refreshComments()` call. The optimistic insert in `useCommentCreate` already appends the new comment to state, and realtime/polling already covers any miss.
+- In `useLazyComments.refreshComments`, do not reset `isInitialized` when there are already comments in state — just refetch and merge. This prevents skeleton flicker on any future trigger too.
+- After a successful add, scroll to the new comment:
+  - Wrap each rendered comment in `CommentList` with a `data-comment-id` ref.
+  - Pass a `newCommentId` prop (or expose a ref/handler) from `LazyCommentsSection` → `CommentsPanel` → `CommentList`.
+  - On mount/update, if the new id is in the list and not in viewport, `element.scrollIntoView({ behavior: "smooth", block: "nearest" })`. If it is in viewport (fits within current UI), do nothing — it just appears.
+- Keep the existing optimistic append so the comment shows up immediately.
 
-3. Clicking “Kommentera” mounts a second, separate comment system
-- The item card owns `comments`, `commentsLoading`, and `commentsCount` through `useItemComments`.
-- But `ItemCommentsSection -> CommentSection -> LazyCommentsSection` discards those props and mounts `LazyCommentsSection`, which creates its own `useLazyComments` state and fetch flow.
-- This means the card’s loading/count state and the visible comments panel are not the same source of truth.
+## 2. Replies (comments-on-comments) realtime
 
-4. The lazy comments fetch path can get stuck because of nested hooks, fallback state, rate limiting, and abort-controller layers
-- `LazyCommentsSection` uses `useLazyComments`, which calls `useComments`, which calls `useFetchComments`, which uses `useCommentRetry` and `runCommentQuery`.
-- It is easy for this stack to enter fallback/loading/rate-limit states that are not reflected back to the parent card.
-- The post-insert refetch and realtime code call different refresh functions from different hook instances.
+**Problem:** `useCommentInteractions.handleReplyToComment` only mutates local React state. Replies are never written to the database, so they are not realtime, not persisted, and lost on reload.
 
-5. Realtime sync only updates the visible lazy section, not the card counter consistently
-- Comment realtime is mounted inside `LazyCommentsSection`, so it only exists while comments are open.
-- The item-level realtime can detect comment table changes, but `refreshData` only calls `fetchItemComments()` when comments are open, so closed-card counters do not reliably update when another user comments.
+**Fix:**
+- Persist replies in the existing `comments` table using the existing `parent_id` column.
+  - In `useCommentCreate`, add a `parentId?: string` arg. When provided, include `parent_id: parseInt(parentId)` in the insert payload.
+  - Replace the local-only `handleReplyToComment` with a real handler that calls the new `addReply(parentId, text)` (server-backed; demo-mode branch keeps local store behavior).
+- Fetch replies:
+  - Update the comment fetch query (in `useComments`/`useCommentData` and `useCommentAdd` selects) to also load child rows. Either:
+    - Fetch all rows for the item (without `.is('parent_id', null)`) and group children under their parent in the formatter, or
+    - Keep two queries (parents + children) and stitch.
+  - Update `formatCommentFromDB` / list builder to populate `replies: Comment[]`.
+- Realtime: `useCommentRealtime` already subscribes to all INSERT/UPDATE/DELETE on `comments` filtered by `item_id`. Update its insert/update/delete handlers to walk into `replies` when the row has a `parent_id`, so replies appear/update/disappear live for everyone.
 
-Implementation plan:
+## 3. Comment likes realtime
 
-1. Fix the bulk-count RPC call in the actual optimized feed path
-- Update `src/services/database/queries.ts` so `OptimizedQueries.getInteractionCounts` calls:
-  - `get_bulk_interaction_counts({ p_item_ids: itemIds })`
-- Keep a defensive fallback to `item_ids` only if needed, but make `p_item_ids` the primary path.
-- Add a temporary debug log for the result/error as requested earlier, but use `console.warn`/`console.error` responsibly and remove unnecessary noisy logs afterward if they are not needed.
+**Problem:** `useCommentInteractions.handleLikeComment` is pure local state — likes are never persisted and never broadcast.
 
-2. Pass server-provided initial counts directly through the feed card props
-- Extend `ItemCardProps` to include optional `likesCount`, `commentsCount`, and `interestsCount`.
-- In `FeedItemCard`, pass `post.likesCount`, `post.commentsCount`, and `post.interestsCount` into `ItemCard`.
-- In `ItemCardWrapper` / `useItemCardWrapper` / `useItemCard`, pass these initial counts down to `useItemComments`, `useLikes`, and `useInterests`.
-- This removes the race where cards mount before the global store is populated.
+**Fix (DB + realtime):**
+- Add a `comment_likes` table (migration): `id uuid pk`, `comment_id bigint fk → comments.id on delete cascade`, `user_id uuid fk → auth.users(id) on delete cascade`, `created_at timestamptz default now()`, unique `(comment_id, user_id)`. RLS: anyone authenticated can insert their own row; anyone can select; only owner can delete.
+- New hook `useCommentLike(commentId)` — toggles via insert/delete, optimistic update.
+- New realtime hook `useCommentLikesRealtime(itemId)` — single channel subscribed to `comment_likes` (no item-level filter on this table; filter client-side by mapping to comment ids in the current list, or join via a view). On any change, recompute counts/isLiked for affected comment + reply and update via `setComments`.
+- Replace the local `handleLikeComment` in `useCommentInteractions` with the DB-backed version. Demo mode keeps current local behavior.
 
-3. Make `useItemComments` the single source of truth for each card
-- Refactor `useItemComments(itemId, initialCommentsCount?)` to own:
-  - `comments`
-  - `commentsCount`
-  - `showComments`
-  - `commentsLoading`
-  - `commentsError`
-  - `fetchItemComments({ force })`
-  - `addComment(text)` or a callback to update state after create
-- Derive `commentsCount` from:
-  - fetched `comments.length` after a successful fetch
-  - otherwise `initialCommentsCount` / store count
-  - optimistic increment immediately after a successful insert
-- Sync every authoritative count update back to `useInitialCountsStore`.
+## 4. Limit nesting to two levels
 
-4. Remove the duplicate lazy comment state path from item cards
-- Stop rendering `LazyCommentsSection` inside the item card flow, or convert it to a pure presentational component that receives parent-owned state and callbacks.
-- `ItemCommentsSection` should render `CommentsPanel` directly using the `comments`, `isLoading`, `error`, and handlers owned by `useItemComments`.
-- Clicking “Kommentera” should call exactly one fresh fetch on the first click and then render the same fetched array.
+**Fix:** In `src/components/comments/CommentCard.tsx`, change `const maxReplyLevel = 3;` to `const maxReplyLevel = 1;`. This hides the Reply button on already-nested replies (level 1), so only `[comment]` and `[reply]` exist. Also guard `handleReplyToComment` so a reply to a level-1 comment is treated as a reply to its parent (defensive; the UI already prevents it).
 
-5. Simplify comment fetching to one reliable database function
-- Create or consolidate a `fetchCommentsForItem(itemId, userId?)` helper that directly queries `comments` with profiles:
-  - `comments.select(id, content, created_at, user_id, item_id, profiles:user_id(...))`
-  - `eq('item_id', numericItemId)`
-  - `is('parent_id', null)` if top-level-only is desired
-  - `order('created_at', { ascending: true })`
-- Do not use a shared/reused AbortController for this normal card fetch.
-- Use fresh calls for open/refetch/post-insert paths.
-- Keep demo-mode handling separate and simple.
+## Files to touch
 
-6. Make posting update UI immediately and then verify from DB
-- On successful insert:
-  - append/replace the returned comment in the parent-owned `comments` array without duplicates
-  - immediately set `commentsCount` to the updated array length
-  - update `useInitialCountsStore`
-  - schedule a fresh DB refetch after 300ms to confirm canonical state
-- Keep the requested log after insert success:
-  - `console.log('[useCommentCreate] Triggering refetch')`
+- `src/components/comments/CommentCard.tsx` — maxReplyLevel = 1; pass `data-comment-id`.
+- `src/components/comments/CommentList.tsx` / `CommentsPanel.tsx` / `LazyCommentsSection.tsx` — pipe `newCommentId` for scroll-to; remove post-insert `refreshComments` flicker.
+- `src/hooks/comments/useLazyComments.ts` — `refreshComments` no longer resets `isInitialized` when list non-empty.
+- `src/hooks/comments/useCommentCreate.ts` — accept `parentId`; insert with `parent_id`.
+- `src/hooks/comments/useCommentInteractions.ts` — replace local reply + like with DB-backed versions.
+- `src/hooks/comments/useCommentActions.ts` — wire new reply signature `(parentId, text)`.
+- `src/hooks/comments/useCommentRealtime.ts` — handle insert/update/delete for rows with `parent_id` (replies).
+- `src/hooks/item/useComments.ts` / `useCommentData.ts` / `useCommentAdd.ts` — fetch + format replies.
+- New: `src/hooks/comments/useCommentLike.ts`, `src/hooks/comments/useCommentLikesRealtime.ts`.
+- New migration: `comment_likes` table + RLS.
 
-7. Rework comment realtime and polling around the parent state
-- Mount a lightweight realtime subscription per visible/open card comment panel, and optionally have item-level realtime update counters while closed.
-- For comments panel realtime:
-  - subscribe to `INSERT` on `comments` filtered by `item_id`
-  - on insert, trigger the same parent-owned `fetchItemComments({ force: true })`
-  - if subscription fails or times out, start polling every 15s with exponential backoff: 15s -> 30s -> 60s -> 120s max, reset to 15s on success
-- For closed-card counters:
-  - when item-level realtime sees comment changes, refresh only the bulk count for that item or increment/decrement the count safely, without forcing the whole comments list to load.
-
-8. Clean up stale/noisy comment modules after the reliable path is in place
-- Either remove unused `LazyCommentsSection` fetch ownership from item cards or leave it only for routes that genuinely need it, but avoid two independent comment stores for the same card.
-- Remove unused imports/props caused by the refactor.
-- Keep production logging aligned with project memory: no unnecessary `console.log` except the temporary requested debug lines; retain `console.warn`/`console.error` for real failures.
-
-Expected result after implementation:
-
-- Feed counters show correct comment counts immediately from the optimized bulk RPC and/or post props.
-- First click on “Kommentera” performs one fresh fetch and displays comments without getting stuck.
-- Posting a comment immediately updates the visible list and counter, then reconciles with a DB refetch after 300ms.
-- Other users’ comments appear via realtime when available, and via polling fallback with exponential backoff when realtime is unavailable.
-- The app no longer has two competing comment states for the same item card.
+## Out of scope
+- No design changes beyond the two-level limit.
+- No changes to feed/map refresh logic.
