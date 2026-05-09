@@ -1,5 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import {
+  isAuthInvalidError,
+  maybeRecoverFromAuthError,
+} from "@/hooks/auth/sessionRecovery";
 
 // Connection pool configuration
 export const DB_CONFIG = {
@@ -22,19 +26,29 @@ export class DatabaseError extends Error {
   }
 }
 
-// Retry wrapper for database operations
+// Retry wrapper for database operations.
+// - Bails immediately on auth-invalid errors (and triggers session recovery)
+//   so a stale JWT doesn't trigger N exponential-backoff retries per query.
+// - Keeps retrying transient/network errors with exponential backoff.
 export const withRetry = async <T>(
   operation: () => Promise<T>,
   maxAttempts = DB_CONFIG.retryAttempts
 ): Promise<T> => {
   let lastError: Error;
-  
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error as Error;
-      
+
+      // Circuit-break on auth-invalid: retrying with the same bad token
+      // will only multiply errors. Trigger recovery and rethrow now.
+      if (isAuthInvalidError(error)) {
+        maybeRecoverFromAuthError(error, "withRetry: auth invalid");
+        throw error;
+      }
+
       if (attempt === maxAttempts) {
         throw new DatabaseError(
           `Operation failed after ${maxAttempts} attempts: ${lastError.message}`,
@@ -42,13 +56,13 @@ export const withRetry = async <T>(
           { originalError: lastError, attempts: maxAttempts }
         );
       }
-      
+
       // Exponential backoff
       const delay = DB_CONFIG.retryDelay * Math.pow(2, attempt - 1);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-  
+
   throw lastError!;
 };
 

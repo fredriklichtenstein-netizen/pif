@@ -144,14 +144,26 @@ export const recoverFromCorruptedSession = async (
     } catch {
       /* noop */
     }
-    if (
-      typeof window !== "undefined" &&
-      window.location.pathname !== "/auth" &&
-      window.location.pathname !== "/" &&
-      !window.location.pathname.startsWith("/reset-password") &&
-      !window.location.pathname.startsWith("/email-confirmation")
-    ) {
-      window.location.replace("/auth?recovered=1");
+    // Only redirect away when the current page actually requires auth.
+    // Public/read-only pages (feed, map, item details, public profiles,
+    // share redirects) should keep rendering after we've cleared the
+    // bad session — subsequent fetches just go through as anon.
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      const PUBLIC_PATHS = ["/", "/feed", "/map", "/auth"];
+      const PUBLIC_PREFIXES = [
+        "/reset-password",
+        "/email-confirmation",
+        "/item/",
+        "/user/",
+        "/share/",
+      ];
+      const isPublic =
+        PUBLIC_PATHS.includes(path) ||
+        PUBLIC_PREFIXES.some((p) => path.startsWith(p));
+      if (!isPublic) {
+        window.location.replace("/auth?recovered=1");
+      }
     }
     return true;
   })();
