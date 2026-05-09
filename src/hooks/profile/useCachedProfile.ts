@@ -200,15 +200,21 @@ const fetchProfileOnce = (userId: string): Promise<any | null> => {
 };
 
 interface Options {
-  /** Re-fetch on mount even if a fresh value is in memory. Default: true */
+  /**
+   * Re-fetch on mount even if a fresh (non-stale) value is in cache.
+   * Default: true. When false, the hook only revalidates if the cached
+   * entry has exceeded `STALE_TTL_MS`.
+   */
   revalidate?: boolean;
+  /** Override the default stale TTL (ms). */
+  staleTtlMs?: number;
 }
 
 export const useCachedProfile = (
   userId: string | null | undefined,
   options: Options = {},
 ) => {
-  const { revalidate = true } = options;
+  const { revalidate = true, staleTtlMs } = options;
   const [profile, setProfile] = useState<any | null>(() =>
     userId ? readCache(userId) : null,
   );
@@ -223,11 +229,19 @@ export const useCachedProfile = (
     }
   }, [userId]);
 
-  // Background revalidation
+  // Background revalidation on mount/userId change.
+  // - revalidate=true (default): always refetch.
+  // - revalidate=false: only refetch when the cache is stale (older than TTL).
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    if (!revalidate && readCache(userId)) return;
+
+    const cached = readCache(userId);
+    const stale = staleTtlMs != null
+      ? !cached || (Date.now() - (readEntry(userId)?.cachedAt ?? 0) > staleTtlMs)
+      : isStale(userId);
+
+    if (!revalidate && cached && !stale) return;
 
     setIsRevalidating(true);
     fetchProfileOnce(userId).then((fresh) => {
@@ -239,7 +253,36 @@ export const useCachedProfile = (
     return () => {
       cancelled = true;
     };
-  }, [userId, revalidate]);
+  }, [userId, revalidate, staleTtlMs]);
+
+  // Periodic + visibility-driven TTL revalidation: while the hook is
+  // mounted, check every minute whether the cache has gone stale and
+  // refresh silently in the background. Also refresh when the tab
+  // becomes visible again after being hidden.
+  useEffect(() => {
+    if (!userId) return;
+
+    const maybeRevalidate = () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      const ttl = staleTtlMs ?? STALE_TTL_MS;
+      const entry = readEntry(userId);
+      if (entry && Date.now() - entry.cachedAt <= ttl) return;
+      fetchProfileOnce(userId).then((fresh) => {
+        if (fresh) setProfile(fresh);
+      });
+    };
+
+    const interval = window.setInterval(maybeRevalidate, 60 * 1000);
+    const onVisible = () => {
+      if (!document.hidden) maybeRevalidate();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [userId, staleTtlMs]);
 
   // Listen for realtime profile updates. Merge changed fields into the
   // existing cached profile instead of replacing the whole object so the
