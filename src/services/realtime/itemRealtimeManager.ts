@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 /**
  * Shared per-item realtime subscription manager.
