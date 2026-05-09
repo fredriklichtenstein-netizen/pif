@@ -383,6 +383,8 @@
     "loading_more": "Loading...",
     "refreshing_feed": "Refreshing feed",
     "feed_refreshed": "Feed refreshed",
+    "refreshing_map": "Refreshing map",
+    "map_refreshed": "Map refreshed",
     "pull_to_refresh": "Pull down to refresh",
     "release_to_refresh": "Release to refresh",
     "filters_disabled_during_refresh": "Filters are disabled while refreshing",
