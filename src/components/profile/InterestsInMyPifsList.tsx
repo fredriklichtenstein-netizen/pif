@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -9,19 +9,53 @@ export function InterestsInMyPifsList({ userId }: { userId: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
+  const itemIdsRef = useRef<Set<number>>(new Set());
+
+  const fetchItems = async () => {
+    const { data } = await supabase
+      .from("items")
+      .select("id,title,created_at,interests:interests(*)")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    const list = (data as any[]) || [];
+    setItems(list);
+    itemIdsRef.current = new Set(list.map((i) => Number(i.id)).filter((n) => !isNaN(n)));
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    supabase
-      .from("items")
-      .select("id,title,created_at,interests:interests(*)")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setItems((data as any[]) || []);
-        setLoading(false);
-      });
+    fetchItems();
+  }, [userId]);
+
+  // Realtime: any insert/delete on `interests` for one of my items —
+  // refresh so the per-pif counts and rows update live.
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`interests-on-my-pifs-${userId}-${Date.now()}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "interests" },
+        (payload: any) => {
+          const row = payload.new ?? payload.old;
+          if (row?.item_id && itemIdsRef.current.has(Number(row.item_id))) {
+            fetchItems();
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "items", filter: `user_id=eq.${userId}` },
+        () => {
+          fetchItems();
+        }
+      )
+      .subscribe();
+    return () => {
+      try { supabase.removeChannel(channel); } catch { /* noop */ }
+    };
   }, [userId]);
 
   if (loading) {
