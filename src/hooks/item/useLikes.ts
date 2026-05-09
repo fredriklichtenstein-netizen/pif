@@ -210,7 +210,15 @@ export const useLikes = (id: string, userId?: string | null) => {
     }
   };
 
-  return {
+  // Realtime: any change to likes for this item refreshes the
+  // authoritative likers list so popovers across mounted UIs stay in
+  // sync, not just the count.
+  useItemLikesRealtime(id, () => {
+    if (DEMO_MODE) return;
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) fetchLikersInternal(numericId);
+  });
+
     isLiked,
     likesCount,
     likers,
