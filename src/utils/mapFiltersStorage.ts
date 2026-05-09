@@ -1,0 +1,146 @@
+/**
+ * Versioned, migrating storage for the map filter selection.
+ *
+ * Why versioned?
+ * --------------
+ * The set of valid categories, conditions, and item types can evolve
+ * over time (renames, removals, taxonomy reshuffles). When a user
+ * returns after such a change, their previously saved selections may
+ * reference values that no longer exist — silently ignoring them is
+ * fine, but we want a single, predictable place that handles it.
+ *
+ * Storage shape (current = v2):
+ *   { version: 2, data: { categories: string[], conditions: string[], itemTypes: string[] } }
+ *
+ * Legacy shape (v1, no `version` field, key `map_filters_v1`):
+ *   { categories, conditions, itemTypes }
+ *
+ * On read we detect the version, run any pending migrations, then
+ * sanitise the result against the *current* allowed-values lists
+ * supplied by the caller. The cleaned, upgraded payload is written
+ * back so the next read is a fast path.
+ */
+
+export interface MapFilterData {
+  categories: string[];
+  conditions: string[];
+  itemTypes: string[];
+}
+
+interface VersionedFilterPayload {
+  version: number;
+  data: MapFilterData;
+}
+
+const CURRENT_VERSION = 2;
+const STORAGE_KEY = "map_filters";
+const LEGACY_KEY_V1 = "map_filters_v1";
+
+const EMPTY: MapFilterData = { categories: [], conditions: [], itemTypes: [] };
+
+/**
+ * Sequential migrations. Each entry takes the data shape produced by
+ * the *previous* version and returns the next version's shape. To add
+ * a new version, append `{ to: N, run: prev => next }`.
+ */
+const MIGRATIONS: Array<{ to: number; run: (prev: any) => any }> = [
+  // v1 -> v2: keep the same shape but stamp the version envelope.
+  // Future migrations (e.g. renaming "kids" -> "children") would live
+  // here and run in order.
+  { to: 2, run: (prev) => prev },
+];
+
+const asStringArray = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+
+const sanitiseData = (raw: any): MapFilterData => ({
+  categories: asStringArray(raw?.categories),
+  conditions: asStringArray(raw?.conditions),
+  itemTypes: asStringArray(raw?.itemTypes),
+});
+
+const readRaw = (): { version: number; data: MapFilterData } | null => {
+  try {
+    const current = localStorage.getItem(STORAGE_KEY);
+    if (current) {
+      const parsed = JSON.parse(current);
+      if (parsed && typeof parsed === "object" && typeof parsed.version === "number") {
+        return { version: parsed.version, data: sanitiseData(parsed.data) };
+      }
+    }
+    // Fallback to legacy v1 (un-versioned) payload.
+    const legacy = localStorage.getItem(LEGACY_KEY_V1);
+    if (legacy) {
+      return { version: 1, data: sanitiseData(JSON.parse(legacy)) };
+    }
+  } catch {
+    /* corrupt JSON / no localStorage — fall through to defaults */
+  }
+  return null;
+};
+
+const runMigrations = (from: number, data: MapFilterData): MapFilterData => {
+  let current: any = data;
+  for (const m of MIGRATIONS) {
+    if (m.to > from) current = m.run(current);
+  }
+  return sanitiseData(current);
+};
+
+interface AllowedValues {
+  categories?: readonly string[];
+  conditions?: readonly string[];
+  itemTypes?: readonly string[];
+}
+
+const dropUnknown = (data: MapFilterData, allowed: AllowedValues): MapFilterData => ({
+  categories: allowed.categories
+    ? data.categories.filter((c) => allowed.categories!.includes(c))
+    : data.categories,
+  conditions: allowed.conditions
+    ? data.conditions.filter((c) => allowed.conditions!.includes(c))
+    : data.conditions,
+  itemTypes: allowed.itemTypes
+    ? data.itemTypes.filter((c) => allowed.itemTypes!.includes(c))
+    : data.itemTypes,
+});
+
+/**
+ * Load (and lazily migrate) the saved map filters. Pass the current
+ * allowed-values lists so any selection that no longer exists is
+ * dropped. Migrated payloads are persisted back to storage.
+ */
+export function loadMapFilters(allowed: AllowedValues = {}): MapFilterData {
+  const raw = readRaw();
+  if (!raw) return { ...EMPTY };
+
+  const migrated = raw.version < CURRENT_VERSION
+    ? runMigrations(raw.version, raw.data)
+    : raw.data;
+
+  const cleaned = dropUnknown(migrated, allowed);
+
+  // Upgrade-in-place when the stored version is stale or values were
+  // dropped. Also remove the legacy key so it can't shadow future writes.
+  const needsWrite =
+    raw.version !== CURRENT_VERSION ||
+    cleaned.categories.length !== migrated.categories.length ||
+    cleaned.conditions.length !== migrated.conditions.length ||
+    cleaned.itemTypes.length !== migrated.itemTypes.length;
+
+  if (needsWrite) {
+    saveMapFilters(cleaned);
+    try { localStorage.removeItem(LEGACY_KEY_V1); } catch { /* ignore */ }
+  }
+
+  return cleaned;
+}
+
+export function saveMapFilters(data: MapFilterData): void {
+  try {
+    const payload: VersionedFilterPayload = { version: CURRENT_VERSION, data };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    /* localStorage may be unavailable (private mode, quota); ignore */
+  }
+}
