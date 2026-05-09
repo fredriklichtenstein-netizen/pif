@@ -6,6 +6,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { useTranslation } from 'react-i18next';
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
+import { useCachedAvatarSrc } from "@/hooks/profile/useCachedAvatarSrc";
 
 export function MainNav() {
   const location = useLocation();
@@ -14,7 +15,7 @@ export function MainNav() {
   const { user, initialized } = useGlobalAuth();
   const { t } = useTranslation();
   const { profile: cachedProfile } = useCachedProfile(user?.id);
-  const avatarUrl = cachedProfile?.avatar_url ?? null;
+  const avatarUrl = useCachedAvatarSrc(cachedProfile?.avatar_url ?? null);
 
   const isActive = (path: string) => location.pathname === path;
   const isProfileActive = isActive("/profile") || isActive("/account-settings");
