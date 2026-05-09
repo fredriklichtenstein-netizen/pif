@@ -91,6 +91,29 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     }
   }, [completions]);
 
+  // Realtime: my interests change live (insert/delete) — keep the grid synced.
+  useEffect(() => {
+    if (DEMO_MODE || !userId) return;
+    const channel = supabase
+      .channel(`my-interests-${userId}-${Date.now()}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "interests",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchInterests();
+        }
+      )
+      .subscribe();
+    return () => {
+      try { supabase.removeChannel(channel); } catch { /* noop */ }
+    };
+  }, [userId]);
+
   const handlePostClick = (postId: number | string) => {
     setSelectedPostId(postId);
     setModalOpen(true);
