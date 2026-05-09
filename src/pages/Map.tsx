@@ -45,10 +45,15 @@ export default function Map() {
     refreshPosts();
   }, [announce, refreshPosts, t]);
 
-  // Auto-dismiss the "filters disabled" toast as soon as the refresh completes.
+  // One-shot guard: the "filters disabled" toast may only show once per
+  // refresh session, no matter how many times the veil is tapped.
+  const filtersToastShownRef = useRef(false);
+
+  // Auto-dismiss the toast and re-arm the guard when the refresh completes.
   useEffect(() => {
     if (!isRefreshing) {
       toast.dismiss('refresh-filters-disabled');
+      filtersToastShownRef.current = false;
     }
   }, [isRefreshing]);
 
