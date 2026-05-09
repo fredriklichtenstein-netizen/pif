@@ -20,8 +20,20 @@ const Messages = () => {
   const { conversations, isLoading: conversationsLoading, error } = useConversations();
   const { unreadCount } = useNotifications();
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isLoading = authLoading || conversationsLoading;
+
+  // Deep-link: open the conversation indicated by ?conversation=<id>
+  // (used by the receiver-selected notification + select-receiver flow).
+  useEffect(() => {
+    const cid = searchParams.get("conversation");
+    if (cid && cid !== activeConversationId) {
+      setActiveConversationId(cid);
+      setActiveTab("messages");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (!authLoading && !user) {
