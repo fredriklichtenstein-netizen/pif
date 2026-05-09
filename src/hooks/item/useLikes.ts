@@ -219,6 +219,7 @@ export const useLikes = (id: string, userId?: string | null) => {
     if (!isNaN(numericId)) fetchLikersInternal(numericId);
   });
 
+  return {
     isLiked,
     likesCount,
     likers,
