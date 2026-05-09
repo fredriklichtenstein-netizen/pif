@@ -36,6 +36,7 @@ export function InteractionButtonWithPopup({
   labelActive,
   iconPassive,
   iconActive,
+  itemId,
   fetchPage,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
@@ -147,6 +148,7 @@ export function InteractionButtonWithPopup({
             onCounterClick={handleCounterClick}
             isInteractive={isCounterInteractive}
             fetchPage={fetchPage}
+            itemId={itemId}
           />
         </div>
       )}

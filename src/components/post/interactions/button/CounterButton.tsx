@@ -21,6 +21,8 @@ interface CounterButtonProps {
   isInteractive: boolean;
   /** When provided, the popover paginates via this fn instead of showing the pre-fetched `users` list. */
   fetchPage?: FetchPage;
+  /** When provided alongside `fetchPage`, the paginated list refreshes itself on realtime changes. */
+  itemId?: string | number;
 }
 
 const labelKey = (type: CounterButtonProps["type"]) => {
@@ -42,6 +44,7 @@ export function CounterButton({
   onCounterClick,
   isInteractive,
   fetchPage,
+  itemId,
 }: CounterButtonProps) {
   const { t } = useTranslation();
   
@@ -94,6 +97,7 @@ export function CounterButton({
             type={type}
             fetchPage={fetchPage}
             setShowPopup={setShowPopup}
+            itemId={itemId}
           />
         ) : (
           <UserPopoverContent 
