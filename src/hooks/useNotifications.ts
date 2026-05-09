@@ -139,6 +139,7 @@ export function useNotifications() {
     
     const { error } = await (supabase.rpc as any)("mark_all_notifications_read");
     if (error) {
+      if (maybeRecoverFromAuthError(error, "mark_all_notifications_read")) return;
       toast({
         title: t('interactions.failed_mark_read'),
         description: error.message,
