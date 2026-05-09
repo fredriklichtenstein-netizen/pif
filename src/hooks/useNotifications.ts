@@ -64,15 +64,25 @@ export function useNotifications() {
       setIsLoading(false);
       return;
     }
-    const transformed: Notification[] = (data || []).map((n: any) => ({
-      id: String(n.id),
-      user_id: n.user_id,
-      type: n.type,
-      title: n.type,
-      is_read: n.read ?? false,
-      created_at: n.created_at,
-      content: typeof n.payload === 'object' ? JSON.stringify(n.payload) : undefined,
-    }));
+    const transformed: Notification[] = (data || []).map((n: any) => {
+      const p = (n.payload && typeof n.payload === "object" ? n.payload : {}) as Record<string, any>;
+      return {
+        id: String(n.id),
+        user_id: n.user_id,
+        type: n.type,
+        title: n.type,
+        is_read: n.read ?? n.is_read ?? false,
+        created_at: n.created_at,
+        actor_id: p.actor_id ?? null,
+        actor_name: p.actor_name ?? null,
+        item_id: p.item_id ?? null,
+        item_title: p.item_title ?? null,
+        conversation_id: p.conversation_id ?? null,
+        reference_id: n.reference_id ?? p.conversation_id ?? p.item_id ?? undefined,
+        reference_type: n.reference_type,
+        action_url: n.action_url,
+      };
+    });
     setNotifications(transformed);
     setIsLoading(false);
 
