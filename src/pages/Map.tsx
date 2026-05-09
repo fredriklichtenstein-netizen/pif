@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
 import { RefreshOverlay } from "@/components/common/RefreshOverlay";
-import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
+import { useSharedRefresh } from "@/hooks/useSharedRefresh";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -25,9 +25,8 @@ export default function Map() {
   const { announce } = useAnnouncement();
   const { posts, isLoading, refreshPosts } = useFeedPosts();
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
-  const isRefreshing = useRefreshSyncStore((s) => s.isRefreshing);
-  const beginRefresh = useRefreshSyncStore((s) => s.begin);
-  const endRefresh = useRefreshSyncStore((s) => s.end);
+  // Single shared refresh action — same hook used by the feed.
+  const { refresh: handleRefresh, isRefreshing } = useSharedRefresh(refreshPosts);
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken, needsToken, setDemoToken } = useMapbox();
   const [tokenInput, setTokenInput] = useState("");
   const { t } = useTranslation();
@@ -148,16 +147,7 @@ export default function Map() {
       <MainHeader />
       <Separator />
       <PullToRefresh
-        onRefresh={async () => {
-          announce(t('interactions.refreshing_feed'), 'polite');
-          beginRefresh();
-          try {
-            await refreshPosts();
-            announce(t('interactions.feed_refreshed'), 'polite');
-          } finally {
-            endRefresh();
-          }
-        }}
+        onRefresh={handleRefresh}
         disabled={isLoading || isRefreshing}
         ignoreSelector=".mapboxgl-map"
       >
