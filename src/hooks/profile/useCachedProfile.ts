@@ -21,8 +21,27 @@ import {
 const STORAGE_PREFIX = "profile-cache:v1:";
 const memoryCache = new Map<string, any>();
 const inFlight = new Map<string, Promise<any | null>>();
+const listeners = new Map<string, Set<(data: any) => void>>();
 
 const storageKey = (userId: string) => `${STORAGE_PREFIX}${userId}`;
+
+const notify = (userId: string, data: any) => {
+  const subs = listeners.get(userId);
+  if (subs) subs.forEach((cb) => cb(data));
+};
+
+const subscribe = (userId: string, cb: (data: any) => void) => {
+  let subs = listeners.get(userId);
+  if (!subs) {
+    subs = new Set();
+    listeners.set(userId, subs);
+  }
+  subs.add(cb);
+  return () => {
+    subs!.delete(cb);
+    if (subs!.size === 0) listeners.delete(userId);
+  };
+};
 
 const readCache = (userId: string): any | null => {
   if (memoryCache.has(userId)) return memoryCache.get(userId);
@@ -44,6 +63,23 @@ const writeCache = (userId: string, data: any) => {
   } catch {
     /* quota — ignore */
   }
+  notify(userId, data);
+};
+
+/**
+ * Optimistically merge a partial update into the cached profile and notify
+ * all subscribers immediately. Use this right after firing a profile update
+ * mutation so the UI reflects the change without waiting for the round-trip.
+ */
+export const updateCachedProfile = (
+  userId: string,
+  patch: Record<string, any>,
+) => {
+  if (!userId) return null;
+  const current = readCache(userId) ?? {};
+  const next = { ...current, ...patch, updated_at: new Date().toISOString() };
+  writeCache(userId, next);
+  return next;
 };
 
 export const clearCachedProfile = (userId: string) => {
@@ -53,6 +89,7 @@ export const clearCachedProfile = (userId: string) => {
   } catch {
     /* ignore */
   }
+  notify(userId, null);
 };
 
 const fetchProfileOnce = (userId: string): Promise<any | null> => {
