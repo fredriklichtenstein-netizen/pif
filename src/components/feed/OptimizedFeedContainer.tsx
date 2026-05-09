@@ -123,7 +123,15 @@ export function OptimizedFeedContainer() {
   return (
     <PullToRefresh onRefresh={handleRefresh} disabled={isLoading || isRefreshing}>
       <RefreshOverlay show={isRefreshing} />
-      <div className="space-y-4">
+      {/* While a refresh is in flight, neutralize all interactive
+          children (filters, post actions, load-more button) so users
+          can't fire likes/comments/new-post flows that would race the
+          incoming data. `inert` blocks pointer + keyboard + focus. */}
+      <div
+        className={isRefreshing ? "space-y-4 opacity-60 pointer-events-none select-none" : "space-y-4"}
+        aria-busy={isRefreshing}
+        {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
+      >
         <FeedDistanceFilter
           selectedDistance={selectedDistance}
           onDistanceChange={setSelectedDistance}
@@ -160,7 +168,7 @@ export function OptimizedFeedContainer() {
           <div className="flex justify-center" role="navigation" aria-label={t('interactions.load_more_posts')}>
             <button
               onClick={handleLoadMore}
-              disabled={isLoadingMore}
+              disabled={isLoadingMore || isRefreshing}
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 focus:ring-2 focus:ring-primary focus:ring-offset-2"
               aria-label={isLoadingMore ? t('interactions.loading_more') : t('interactions.load_more_posts')}
             >
