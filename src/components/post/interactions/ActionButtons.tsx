@@ -1,6 +1,7 @@
 
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./ShareButton";
+import { fetchCommentersForItem } from "@/services/comments/fetchCommenters";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface ActionButtonsProps {
@@ -15,12 +16,14 @@ interface ActionButtonsProps {
   interestsCount?: number;
   likers?: User[];
   interestedUsers?: User[];
+  commenters?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
   onShare: (e: React.MouseEvent) => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
+  fetchCommenters?: () => Promise<User[]>;
 }
 
 export function ActionButtons({
@@ -35,13 +38,16 @@ export function ActionButtons({
   interestsCount = 0,
   likers = [],
   interestedUsers = [],
+  commenters = [],
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
   onShare,
   fetchLikers,
-  fetchInterestedUsers
+  fetchInterestedUsers,
+  fetchCommenters,
 }: ActionButtonsProps) {
+  const fetchCommentersFn = fetchCommenters || (() => fetchCommentersForItem(itemId));
   return (
     <div className="flex flex-row border-t border-b border-gray-100 py-1">
       <InteractionButtonWithPopup
@@ -63,8 +69,10 @@ export function ActionButtons({
         type="comment"
         isActive={showComments}
         count={commentsCount}
+        users={commenters}
+        onCounterClick={fetchCommentersFn}
         onClick={onCommentToggle}
-        isOwner={false} // Anyone can comment
+        isOwner={false}
         labelPassive="Comment"
         labelActive="Comment"
         iconPassive="message-square"
