@@ -40,10 +40,43 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     userLocation: locationTracking.userLocation
   });
 
-  // Filter states
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [selectedItemTypes, setSelectedItemTypes] = useState<string[]>([]);
+  // Filter states — persisted to localStorage so a refresh (which
+  // unmounts/remounts MapContainer's children) restores the user's
+  // last selection automatically. Distance persistence already lives
+  // inside useDistanceFiltering.
+  const FILTER_STORAGE_KEY = "map_filters_v1";
+  const readStored = (): { categories: string[]; conditions: string[]; itemTypes: string[] } => {
+    try {
+      const raw = localStorage.getItem(FILTER_STORAGE_KEY);
+      if (!raw) return { categories: [], conditions: [], itemTypes: [] };
+      const parsed = JSON.parse(raw);
+      return {
+        categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+        conditions: Array.isArray(parsed.conditions) ? parsed.conditions : [],
+        itemTypes: Array.isArray(parsed.itemTypes) ? parsed.itemTypes : [],
+      };
+    } catch {
+      return { categories: [], conditions: [], itemTypes: [] };
+    }
+  };
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => readStored().categories);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(() => readStored().conditions);
+  const [selectedItemTypes, setSelectedItemTypes] = useState<string[]>(() => readStored().itemTypes);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        FILTER_STORAGE_KEY,
+        JSON.stringify({
+          categories: selectedCategories,
+          conditions: selectedConditions,
+          itemTypes: selectedItemTypes,
+        })
+      );
+    } catch {
+      /* localStorage may be unavailable (private mode, quota); ignore */
+    }
+  }, [selectedCategories, selectedConditions, selectedItemTypes]);
 
   // Apply all filters including distance
   const finalFilteredPosts = filteredPosts.filter(post => {
