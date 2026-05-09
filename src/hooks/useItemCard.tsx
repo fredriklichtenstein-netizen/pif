@@ -8,6 +8,9 @@ import { useItemCardRefresh } from "./item/useItemCardRefresh";
 import { useInteractionCountsRealtime } from "./item/realtime/useInteractionCountsRealtime";
 
 export const useItemCard = (itemId: string) => {
+  // Live counter sync for likes & interests across all users.
+  useInteractionCountsRealtime(itemId);
+
   // Get comments functionality
   const {
     showComments,
