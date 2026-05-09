@@ -186,7 +186,7 @@ export default function Map() {
               stale data is visibly de-emphasised but still in place. */}
           {isRefreshing && (
             <div
-              className="absolute inset-0 z-40 bg-background/30 backdrop-blur-[1px] pointer-events-none transition-opacity"
+              className="absolute inset-0 z-40 bg-background/30 backdrop-blur-[1px] cursor-wait transition-opacity"
               aria-hidden="true"
             />
           )}
