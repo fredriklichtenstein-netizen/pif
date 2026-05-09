@@ -39,6 +39,7 @@ export function PrimaryActions({
   showInterest,
   isOwner,
   itemId,
+  itemOwnerId,
   currentUserId,
   hasCommented = false,
   commentsCount = 0,
