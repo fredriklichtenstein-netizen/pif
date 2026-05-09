@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/types/post";
 import { DistanceFilters } from "./distance/DistanceFilters";
@@ -29,6 +29,10 @@ interface MapFiltersProps {
   userLocation: [number, number] | null;
   onRequestLocation?: () => void;
   onUsePifAddress?: (coords: [number, number]) => void;
+  onlyInterested?: boolean;
+  onOnlyInterestedChange?: (value: boolean) => void;
+  showInterestedFilter?: boolean;
+  interestedCount?: number;
 }
 
 // Sorted alphabetically by Swedish display name
@@ -56,7 +60,11 @@ export const MapFilters = ({
   onDistanceChange,
   userLocation,
   onRequestLocation,
-  onUsePifAddress
+  onUsePifAddress,
+  onlyInterested = false,
+  onOnlyInterestedChange,
+  showInterestedFilter = false,
+  interestedCount = 0,
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
@@ -78,7 +86,7 @@ export const MapFilters = ({
   }));
 
   const activeFiltersCount = selectedCategories.length + selectedConditions.length;
-  const hasActiveFilters = activeFiltersCount > 0 || selectedItemTypes.length > 0;
+  const hasActiveFilters = activeFiltersCount > 0 || selectedItemTypes.length > 0 || onlyInterested;
 
   const toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
