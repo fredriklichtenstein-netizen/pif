@@ -16,6 +16,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
+import { RefreshOverlay } from "@/components/common/RefreshOverlay";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function Map() {
   const { announce } = useAnnouncement();
   const { posts, isLoading, refreshPosts } = useFeedPosts();
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken, needsToken, setDemoToken } = useMapbox();
   const [tokenInput, setTokenInput] = useState("");
   const { t } = useTranslation();
@@ -145,10 +147,15 @@ export default function Map() {
       <PullToRefresh
         onRefresh={async () => {
           announce(t('interactions.refreshing_feed'), 'polite');
-          await refreshPosts();
-          announce(t('interactions.feed_refreshed'), 'polite');
+          setIsRefreshing(true);
+          try {
+            await refreshPosts();
+            announce(t('interactions.feed_refreshed'), 'polite');
+          } finally {
+            setIsRefreshing(false);
+          }
         }}
-        disabled={isLoading}
+        disabled={isLoading || isRefreshing}
         ignoreSelector=".mapboxgl-map"
       >
         <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
@@ -175,16 +182,20 @@ export default function Map() {
             </div>
           )}
 
-          {isLoading && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50" style={{ marginTop: DEMO_MODE ? '48px' : 0 }}>
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm text-muted-foreground">{t('map.loading_posts')}</span>
-                </div>
-              </div>
-            </div>
+          {/* Translucent veil over the map while refreshing so the
+              stale data is visibly de-emphasised but still in place. */}
+          {isRefreshing && (
+            <div
+              className="absolute inset-0 z-40 bg-background/30 backdrop-blur-[1px] pointer-events-none transition-opacity"
+              aria-hidden="true"
+            />
           )}
+
+          <RefreshOverlay
+            show={isRefreshing || isLoading}
+            label={isRefreshing ? t('interactions.refreshing_feed') : t('map.loading_posts')}
+            className="!fixed"
+          />
         </main>
       </PullToRefresh>
       <MainNav />
