@@ -97,6 +97,7 @@ export function CounterButton({
             type={type}
             fetchPage={fetchPage}
             setShowPopup={setShowPopup}
+            itemId={itemId}
           />
         ) : (
           <UserPopoverContent 
