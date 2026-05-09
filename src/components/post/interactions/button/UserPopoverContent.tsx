@@ -31,7 +31,7 @@ export function UserPopoverContent({
       ? "common.no_likes_yet"
       : type === "interest"
       ? "profile.no_interest_yet"
-      : "comments.no_comments_yet";
+      : "comments.no_comments";
 
   if (loading) {
     return (
