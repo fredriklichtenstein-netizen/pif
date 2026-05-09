@@ -39,6 +39,8 @@ export function ActionButtons({
   isOwner,
   isRealtimeSubscribed = false,
   itemId,
+  itemOwnerId,
+  currentUserId,
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
