@@ -9,15 +9,18 @@ export const calculateDistance = (
   lng2: number,
   lat2: number
 ): number => {
-  // Validate input coordinates
-  if (typeof lng1 !== 'number' || typeof lat1 !== 'number' || 
+  // Silently bail on missing coordinates — items without geo data are
+  // a normal case and shouldn't flood the console with red errors.
+  if (lng1 == null || lat1 == null || lng2 == null || lat2 == null) {
+    return NaN;
+  }
+  if (typeof lng1 !== 'number' || typeof lat1 !== 'number' ||
       typeof lng2 !== 'number' || typeof lat2 !== 'number') {
-    console.error('Invalid coordinate types for distance calculation:', { lng1, lat1, lng2, lat2 });
+    console.warn('Invalid coordinate types for distance calculation:', { lng1, lat1, lng2, lat2 });
     return NaN;
   }
 
   if (isNaN(lng1) || isNaN(lat1) || isNaN(lng2) || isNaN(lat2)) {
-    console.error('NaN coordinates for distance calculation:', { lng1, lat1, lng2, lat2 });
     return NaN;
   }
 

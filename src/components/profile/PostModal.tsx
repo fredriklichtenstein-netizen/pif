@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ItemCard } from "@/components/post/ItemCard";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,6 +209,10 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
+          <VisuallyHidden>
+            <DialogTitle>{post?.title || t('ui.loading_info')}</DialogTitle>
+            <DialogDescription>{t('ui.post_details') ?? 'Post details'}</DialogDescription>
+          </VisuallyHidden>
           {loading ? (
             <div className="p-8 text-center">{t('ui.loading_info')}</div>
           ) : post ? (
