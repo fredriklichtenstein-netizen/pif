@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Separator } from "@/components/ui/separator";
