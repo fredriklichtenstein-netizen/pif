@@ -128,38 +128,34 @@ export function InteractionButtonWithPopup({
             isActive={isActive}
           />
         </div>
-        <div className="flex flex-row items-center justify-center mt-1 gap-1">
+        <div className="flex flex-row items-center justify-center mt-1 gap-1.5">
           <span
             style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
             className="text-xs font-medium select-none"
           >
             {isActive ? labelActive : labelPassive}
           </span>
+          {displayCount > 0 && (
+            <CounterButton
+              count={displayCount}
+              isActive={isActive}
+              activeColor={ACTIVE_COLOR}
+              passiveColor={PASSIVE_COLOR}
+              type={type}
+              users={popupUsers}
+              loading={loading}
+              showPopup={showPopup}
+              setShowPopup={setShowPopup}
+              onCounterClick={handleCounterClick}
+              isInteractive={isCounterInteractive}
+              fetchPage={fetchPage}
+              itemId={itemId}
+              itemOwnerId={itemOwnerId}
+              currentUserId={currentUserId}
+            />
+          )}
         </div>
       </div>
-
-      {/* Counter is a sibling, not a descendant, of the toggle area */}
-      {displayCount > 0 && (
-        <div className="mt-0.5">
-          <CounterButton
-            count={displayCount}
-            isActive={isActive}
-            activeColor={ACTIVE_COLOR}
-            passiveColor={PASSIVE_COLOR}
-            type={type}
-            users={popupUsers}
-            loading={loading}
-            showPopup={showPopup}
-            setShowPopup={setShowPopup}
-            onCounterClick={handleCounterClick}
-            isInteractive={isCounterInteractive}
-            fetchPage={fetchPage}
-            itemId={itemId}
-            itemOwnerId={itemOwnerId}
-            currentUserId={currentUserId}
-          />
-        </div>
-      )}
     </div>
   );
 }
