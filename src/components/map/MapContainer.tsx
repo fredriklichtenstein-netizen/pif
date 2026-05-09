@@ -5,13 +5,14 @@ import { MapMarkersLayer } from "./MapMarkersLayer";
 import { MapFilters } from "./MapFilters";
 import { Button } from "@/components/ui/button";
 import { Locate, AlertCircle, RefreshCw } from "lucide-react";
-import { useEffect, useState, memo } from "react";
+import { useEffect, useMemo, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
 import { DistanceRings } from "./distance/DistanceRings";
 import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import { useTranslation } from "react-i18next";
 import { usePifAddress } from "@/hooks/usePifAddress";
 import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
+import { loadMapFilters, saveMapFilters } from "@/utils/mapFiltersStorage";
 import "./MapStyles.css";
 
 const MAP_SESSION_INIT_KEY = 'map_session_initialized';
