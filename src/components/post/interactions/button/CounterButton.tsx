@@ -69,11 +69,13 @@ export function CounterButton({
     );
   }
   
+  const useInterestList = type === "interest" && !!itemId;
+
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setShowPopup(true);
-    if (fetchPage) return; // PaginatedUserList handles its own loading
+    if (fetchPage || useInterestList) return; // child handles its own loading
     try {
       await onCounterClick();
     } catch (error) {
