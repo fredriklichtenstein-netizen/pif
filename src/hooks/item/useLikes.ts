@@ -40,6 +40,13 @@ export const useLikes = (id: string, userId?: string | null) => {
     }
   }, [demoIsLiked]);
 
+  // Sync local count with the global store so realtime updates from
+  // other users propagate instantly to this card's counter.
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (typeof initialLikes === "number") setLikesCount(initialLikes);
+  }, [initialLikes]);
+
   useEffect(() => {
     if (DEMO_MODE) return;
     
