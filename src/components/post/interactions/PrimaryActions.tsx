@@ -3,6 +3,7 @@ import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./button/ShareButton";
 import { useTranslation } from 'react-i18next';
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import {
   fetchLikersPage,
   fetchInterestedUsersPage,
