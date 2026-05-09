@@ -16,6 +16,11 @@ export function SignOutButton() {
   const handleSignOut = async () => {
     setLoading(true);
     try {
+      const { clearAllUserCaches } = await import("@/hooks/cache/clearUserCaches");
+      // Clear user-scoped caches BEFORE Supabase fires SIGNED_OUT so the UI
+      // never flashes stale profile/items from the previous account.
+      clearAllUserCaches();
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       navigate("/auth");

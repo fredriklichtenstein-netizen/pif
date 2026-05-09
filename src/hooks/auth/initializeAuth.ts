@@ -164,6 +164,24 @@ export const initializeAuth = async () => {
       
 
       const currentAuth = useAuthStore.getState();
+      const previousUserId = currentAuth.user?.id ?? null;
+      const nextUserId = session?.user?.id ?? null;
+
+      // Account switching: a different user signed in than the one we had.
+      // Wipe user-scoped caches before applying the new session so the UI
+      // never shows the previous user's profile/avatar/items.
+      if (
+        nextUserId &&
+        previousUserId &&
+        nextUserId !== previousUserId
+      ) {
+        try {
+          const { clearAllUserCaches } = await import("@/hooks/cache/clearUserCaches");
+          clearAllUserCaches();
+        } catch (err) {
+          console.warn("Cache clear on account switch failed", err);
+        }
+      }
 
       // Handle token refresh and tab-focus sign-in silently
       if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' ||
@@ -178,6 +196,12 @@ export const initializeAuth = async () => {
       }
 
       if (event === 'SIGNED_OUT') {
+        try {
+          const { clearAllUserCaches } = await import("@/hooks/cache/clearUserCaches");
+          clearAllUserCaches();
+        } catch (err) {
+          console.warn("Cache clear on sign-out failed", err);
+        }
         currentAuth.clearAuth();
         return;
       }

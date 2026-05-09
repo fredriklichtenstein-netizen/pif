@@ -112,3 +112,24 @@ export const clearMyItemsCache = (userId: string) => {
     /* ignore */
   }
 };
+
+/**
+ * Wipe ALL cached lists and items, regardless of user. Use on sign-out or
+ * account switching so a different user never sees the previous user's data.
+ */
+export const clearAllItemsCache = () => {
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && (k.startsWith(LIST_PREFIX) || k.startsWith(ITEM_PREFIX))) {
+        toRemove.push(k);
+      }
+    }
+    toRemove.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+  listListeners.forEach((set) => set.forEach((l) => l([])));
+  itemListeners.forEach((set) => set.forEach((l) => l(null)));
+};
