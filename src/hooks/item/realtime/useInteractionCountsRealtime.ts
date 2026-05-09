@@ -5,6 +5,7 @@ import {
   subscribeItemTable,
   subscribeItemStatus,
 } from "@/services/realtime/itemRealtimeManager";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 const POLL_INTERVAL_MS = 15000;
 
@@ -27,7 +28,11 @@ export const useInteractionCountsRealtime = (itemId: string) => {
         .from("likes")
         .select("id", { count: "exact", head: true })
         .eq("item_id", numericId);
-      if (!error && typeof count === "number") {
+      if (error) {
+        maybeRecoverFromAuthError(error, "useInteractionCountsRealtime likes");
+        return;
+      }
+      if (typeof count === "number") {
         useInitialCountsStore
           .getState()
           .setBulkCounts([{ itemId, likesCount: count }]);
@@ -39,7 +44,14 @@ export const useInteractionCountsRealtime = (itemId: string) => {
         .from("interests")
         .select("id", { count: "exact", head: true })
         .eq("item_id", numericId);
-      if (!error && typeof count === "number") {
+      if (error) {
+        maybeRecoverFromAuthError(
+          error,
+          "useInteractionCountsRealtime interests",
+        );
+        return;
+      }
+      if (typeof count === "number") {
         useInitialCountsStore
           .getState()
           .setBulkCounts([{ itemId, interestsCount: count }]);
