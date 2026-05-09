@@ -15,12 +15,14 @@ interface ItemInteractionButtonsProps {
   interestsCount: number;
   likers: User[];
   interestedUsers: User[];
+  commenters?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
   onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
+  fetchCommenters?: () => Promise<User[]>;
 }
 
 export const ItemInteractionButtons = ({
@@ -36,12 +38,14 @@ export const ItemInteractionButtons = ({
   interestsCount,
   likers,
   interestedUsers,
+  commenters,
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
   onShare,
   fetchLikers,
   fetchInterestedUsers,
+  fetchCommenters,
 }: ItemInteractionButtonsProps) => {
   return (
     <PrimaryActions
@@ -57,12 +61,14 @@ export const ItemInteractionButtons = ({
       interestsCount={interestsCount}
       likers={likers}
       interestedUsers={interestedUsers}
+      commenters={commenters}
       onLikeToggle={onLikeToggle}
       onCommentToggle={onCommentToggle}
       onShowInterest={onShowInterest}
       onShare={onShare}
       fetchLikers={fetchLikers}
       fetchInterestedUsers={fetchInterestedUsers}
+      fetchCommenters={fetchCommenters}
     />
   );
 };
