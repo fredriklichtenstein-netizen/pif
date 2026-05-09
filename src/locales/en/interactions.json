@@ -385,6 +385,7 @@
     "feed_refreshed": "Feed refreshed",
     "pull_to_refresh": "Pull down to refresh",
     "release_to_refresh": "Release to refresh",
+    "filters_disabled_during_refresh": "Filters are disabled while refreshing",
     "loading_more_posts": "Loading more posts",
     "new_posts_available": "{{count}} new posts available",
     "delete_item_title": "Delete Item",
