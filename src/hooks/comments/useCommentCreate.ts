@@ -37,29 +37,15 @@ export const useCommentCreate = (
     return fullName;
   };
 
-  // Add a new comment
-  const handleAddComment = async (text: string) => {
-    console.log('[useCommentCreate] handleAddComment called', {
-      text,
-      itemId,
-      currentUser,
-      useFallbackMode,
-      DEMO_MODE,
-    });
-
-    if (!text.trim()) {
-      console.warn('[useCommentCreate] Aborted: empty text');
-      return;
-    }
-    if (!currentUser || !currentUser.id) {
-      console.warn('[useCommentCreate] Aborted: no currentUser.id', currentUser);
-      return;
-    }
+  // Add a new comment (or reply when parentId is provided)
+  const handleAddComment = async (text: string, parentId?: string) => {
+    if (!text.trim()) return;
+    if (!currentUser || !currentUser.id) return;
 
     setIsLoading(true);
 
     try {
-      // Demo mode: add to local store
+      // Demo mode: add to local store (no parent threading in demo).
       if (DEMO_MODE) {
         const displayName = formatUserName(currentUser.name || 'Demo User');
         const newComment = addDemoComment(itemId, text.trim(), {
@@ -68,14 +54,20 @@ export const useCommentCreate = (
           avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
         });
 
-        setComments([...comments, newComment]);
+        if (parentId) {
+          setComments(comments.map(c =>
+            c.id === parentId ? { ...c, replies: [...c.replies, newComment] } : c
+          ));
+        } else {
+          setComments([...comments, newComment]);
+        }
 
         setIsLoading(false);
-        return;
+        return newComment;
       }
 
-      // If in fallback mode, create a local comment
-      if (useFallbackMode) {
+      // Fallback (offline) mode: only top-level allowed; replies require server.
+      if (useFallbackMode && !parentId) {
         const displayName = formatUserName(currentUser.name || '');
 
         const tempComment: Comment = {
@@ -94,8 +86,7 @@ export const useCommentCreate = (
           isPending: true
         };
 
-        const updatedComments = [...comments, tempComment];
-        setComments(updatedComments);
+        setComments([...comments, tempComment]);
 
         try {
           const pendingComments = JSON.parse(localStorage.getItem(`pending_comments_${itemId}`) || '[]');
@@ -112,22 +103,21 @@ export const useCommentCreate = (
         }
 
         setIsLoading(false);
-        return;
+        return tempComment;
       }
 
-      // Regular online mode - send to server
       const numericItemId = parseInt(itemId, 10);
-      console.log('[useCommentCreate] Parsing itemId', { itemId, numericItemId });
-      if (isNaN(numericItemId)) {
-        throw new Error(`Invalid item ID: ${itemId}`);
-      }
+      if (isNaN(numericItemId)) throw new Error(`Invalid item ID: ${itemId}`);
 
-      const insertPayload = {
+      const insertPayload: any = {
         item_id: numericItemId,
         user_id: currentUser.id,
         content: text.trim(),
       };
-      console.log('[useCommentCreate] Inserting comment payload', insertPayload);
+      if (parentId) {
+        const numericParentId = parseInt(parentId, 10);
+        if (!isNaN(numericParentId)) insertPayload.parent_id = numericParentId;
+      }
 
       const { data, error } = await supabase
         .from('comments')
@@ -146,25 +136,30 @@ export const useCommentCreate = (
         `)
         .single();
 
-      if (error) {
-        console.error('[useCommentCreate] Supabase insert error', error);
-        throw error;
-      }
-
-      console.log('[useCommentCreate] Insert success', data);
-      console.log('[useCommentCreate] Triggering refetch');
+      if (error) throw error;
 
       if (data) {
         const newComment = formatCommentFromDB(data as any, true);
-        const updatedComments = [...comments, newComment];
-        setComments(updatedComments);
-        // Bump the global counter immediately so feed cards reflect the new
-        // comment without waiting for a refetch.
-        const store = useInitialCountsStore.getState();
-        const prev = store.counts[String(itemId)]?.commentsCount ?? comments.length;
-        store.setBulkCounts([
-          { itemId, commentsCount: Math.max(prev + 1, updatedComments.length) },
-        ]);
+
+        if (parentId) {
+          setComments(comments.map(c =>
+            c.id === parentId
+              ? { ...c, replies: c.replies.some(r => r.id === newComment.id) ? c.replies : [...c.replies, newComment] }
+              : c
+          ));
+        } else {
+          const updatedComments = comments.some(c => c.id === newComment.id)
+            ? comments
+            : [...comments, newComment];
+          setComments(updatedComments);
+          // Bump global counter for top-level only (matches feed counter semantics).
+          const store = useInitialCountsStore.getState();
+          const prev = store.counts[String(itemId)]?.commentsCount ?? comments.length;
+          store.setBulkCounts([
+            { itemId, commentsCount: Math.max(prev + 1, updatedComments.length) },
+          ]);
+        }
+        return newComment;
       }
     } catch (error) {
       console.error("Error adding comment:", error);
