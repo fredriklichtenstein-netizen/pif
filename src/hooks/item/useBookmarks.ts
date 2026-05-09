@@ -100,6 +100,7 @@ export const useBookmarks = (id: string, userId?: string | null) => {
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
+      if (maybeRecoverFromAuthError(error, "toggle bookmark")) return;
       toast({
         title: t('post.error'),
         description: t('interactions.bookmark_error'),
