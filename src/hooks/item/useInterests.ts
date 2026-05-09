@@ -10,12 +10,16 @@ import { DEMO_USER } from "@/data/mockUser";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "./utils/userUtils";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { useMyInterestStore } from "@/stores/myInterestStore";
+import { useItemInterestRealtime } from "./realtime/useItemInterestRealtime";
 
 export const useInterests = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
   const demoIsInterested = demoStore.isInterested(id);
   const { toast } = useToast();
   const initialInterests = useInitialCountsStore((s) => s.counts[String(id)]?.interestsCount);
+  const myInterestRealtime = useMyInterestStore((s) => s.byItem[String(id)]);
+  const setMyInterest = useMyInterestStore((s) => s.set);
 
   const {
     showInterest,
