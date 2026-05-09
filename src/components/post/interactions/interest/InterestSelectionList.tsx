@@ -136,7 +136,11 @@ export function InterestSelectionList({
       else setLoadingMore(true);
       try {
         const offset = initial ? 0 : offsetRef.current;
-        const { data, error: err } = await supabase
+        // Hard timeout so the popup never hangs forever on a stalled request.
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 8000),
+        );
+        const queryPromise = supabase
           .from("interests")
           .select(
             "id, user_id, status, created_at, profiles:user_id(id, first_name, last_name, avatar_url, reliability_score, completed_pifs, no_shows)"
@@ -144,6 +148,10 @@ export function InterestSelectionList({
           .eq("item_id", numericItemId)
           .order("created_at", { ascending: false })
           .range(offset, offset + PAGE_SIZE);
+        const { data, error: err } = (await Promise.race([
+          queryPromise,
+          timeoutPromise,
+        ])) as { data: any[] | null; error: any };
         if (err) throw err;
         const fetched = (data || []) as any[];
         const more = fetched.length > PAGE_SIZE;
@@ -349,6 +357,15 @@ export function InterestSelectionList({
         <div className="p-4 text-center">
           <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">{t("status.loading")}</p>
+        </div>
+      ) : error && rows.length === 0 ? (
+        <div className="text-center py-4 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            {t("common.unable_to_load_list", "Could not load list")}
+          </p>
+          <Button size="sm" variant="outline" onClick={reload}>
+            {t("interactions.retry", "Retry")}
+          </Button>
         </div>
       ) : rows.length === 0 ? (
         <div className="text-center py-4 text-muted-foreground text-sm">
