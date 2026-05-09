@@ -56,6 +56,7 @@ export const ItemInteractionButtons = ({
       showInterest={showInterest}
       isOwner={isOwner}
       itemId={id}
+      itemOwnerId={itemOwnerId}
       hasCommented={hasCommented}
       currentUserId={currentUserId}
       commentsCount={commentsCount}
