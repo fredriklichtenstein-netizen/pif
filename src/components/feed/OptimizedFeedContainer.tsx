@@ -1,11 +1,12 @@
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
 import { FeedItemList } from './FeedItemList';
 import { FeedLoadingState } from './FeedLoadingState';
 import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
 import { DemoModeBanner } from './DemoModeBanner';
+import { FeedDistanceFilter } from './FeedDistanceFilter';
 
 
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
@@ -16,6 +17,9 @@ import { EnhancedLoading } from '@/components/ui/enhanced-loading';
 import { PullToRefresh } from '@/components/common/PullToRefresh';
 import { DEMO_MODE } from '@/config/demoMode';
 import { useTranslation } from 'react-i18next';
+import { useDistanceFiltering } from '@/hooks/useDistanceFiltering';
+import { useLocationStorage } from '@/components/map/location/useLocationStorage';
+import type { Post } from '@/types/post';
 
 export function OptimizedFeedContainer() {
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
@@ -24,7 +28,17 @@ export function OptimizedFeedContainer() {
   const { vibrate } = useVibration();
   const { t } = useTranslation();
 
+  // Shared with the map view (same localStorage key) so the user only
+  // has to grant location once and the distance preference syncs.
+  const { getStoredLocation } = useLocationStorage();
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    () => getStoredLocation()
+  );
+
   const memoizedPosts = useMemo(() => posts, [posts]);
+
+  const { filteredPosts, selectedDistance, setSelectedDistance } =
+    useDistanceFiltering({ posts: memoizedPosts as Post[], userLocation });
 
   const handleRefresh = useCallback(async () => {
     announce(t('interactions.refreshing_feed'), "polite");
@@ -100,13 +114,20 @@ export function OptimizedFeedContainer() {
   return (
     <PullToRefresh onRefresh={handleRefresh} disabled={isLoading}>
       <div className="space-y-4">
+        <FeedDistanceFilter
+          selectedDistance={selectedDistance}
+          onDistanceChange={setSelectedDistance}
+          userLocation={userLocation}
+          onUserLocationChange={setUserLocation}
+        />
+
         <section role="feed" aria-label={t('interactions.community_posts')}>
           <FeedItemList
-            posts={memoizedPosts}
+            posts={filteredPosts}
             fadingIds={fadingIds}
             restoringIds={restoringIds}
             selectedCategories={[]}
-            clearFilters={() => {}}
+            clearFilters={() => setSelectedDistance(null)}
             viewMode="all"
             isLoading={isLoadingMore}
             onItemOperationSuccess={handleRefresh}
