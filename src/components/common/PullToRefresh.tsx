@@ -38,6 +38,11 @@ export function PullToRefresh({
   const { t } = useTranslation();
   const startYRef = useRef<number | null>(null);
   const activeRef = useRef(false);
+  // Synchronous lock that flips to true the instant a refresh is
+  // triggered. Touch handlers consult this ref (not the React state,
+  // which updates on the next render) so a fast follow-up gesture
+  // cannot start a second overlapping reload.
+  const refreshingRef = useRef(false);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,7 +55,7 @@ export function PullToRefresh({
     };
 
     const onTouchStart = (e: TouchEvent) => {
-      if (refreshing || !isAtTop() || e.touches.length !== 1) {
+      if (refreshingRef.current || !isAtTop() || e.touches.length !== 1) {
         startYRef.current = null;
         return;
       }
@@ -66,7 +71,7 @@ export function PullToRefresh({
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (startYRef.current == null || refreshing) return;
+      if (startYRef.current == null || refreshingRef.current) return;
       const dy = e.touches[0].clientY - startYRef.current;
       if (dy <= 0) {
         setPull(0);
@@ -84,15 +89,25 @@ export function PullToRefresh({
     };
 
     const onTouchEnd = async () => {
+      // Ignore release events that happen while a refresh is already
+      // in flight — we never want to fire onRefresh a second time.
+      if (refreshingRef.current) {
+        startYRef.current = null;
+        activeRef.current = false;
+        return;
+      }
       const shouldRefresh = activeRef.current && pull >= threshold;
       startYRef.current = null;
       activeRef.current = false;
       if (shouldRefresh) {
+        // Lock synchronously so any in-flight gesture is a no-op.
+        refreshingRef.current = true;
         setRefreshing(true);
         setPull(threshold);
         try {
           await onRefresh();
         } finally {
+          refreshingRef.current = false;
           setRefreshing(false);
           setPull(0);
         }
@@ -111,7 +126,7 @@ export function PullToRefresh({
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [disabled, refreshing, pull, threshold, maxPull, onRefresh, ignoreSelector]);
+  }, [disabled, pull, threshold, maxPull, onRefresh, ignoreSelector]);
 
   const ready = pull >= threshold;
   const indicatorOpacity = Math.min(1, pull / threshold);
