@@ -89,9 +89,17 @@ export function OptimizedFeedContainer() {
   }
 
   if (isLoading) {
+    // Show skeleton cards instead of a centered spinner so the layout
+    // (filters bar + card stack) is already in place by the time real
+    // posts arrive — no flash, no jump, no frozen-feeling page.
     return (
-      <div role="status" aria-label={t('interactions.loading_feed')}>
-        <EnhancedLoading size="lg" text={t('interactions.loading_feed')} />
+      <div
+        className="space-y-4"
+        role="status"
+        aria-label={t('interactions.loading_feed')}
+        aria-busy="true"
+      >
+        <FeedSkeleton count={4} />
       </div>
     );
   }
