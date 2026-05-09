@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/types/post";
 import { DistanceFilters } from "./distance/DistanceFilters";
@@ -29,6 +29,10 @@ interface MapFiltersProps {
   userLocation: [number, number] | null;
   onRequestLocation?: () => void;
   onUsePifAddress?: (coords: [number, number]) => void;
+  onlyInterested?: boolean;
+  onOnlyInterestedChange?: (value: boolean) => void;
+  showInterestedFilter?: boolean;
+  interestedCount?: number;
 }
 
 // Sorted alphabetically by Swedish display name
@@ -56,7 +60,11 @@ export const MapFilters = ({
   onDistanceChange,
   userLocation,
   onRequestLocation,
-  onUsePifAddress
+  onUsePifAddress,
+  onlyInterested = false,
+  onOnlyInterestedChange,
+  showInterestedFilter = false,
+  interestedCount = 0,
 }: MapFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
@@ -78,7 +86,7 @@ export const MapFilters = ({
   }));
 
   const activeFiltersCount = selectedCategories.length + selectedConditions.length;
-  const hasActiveFilters = activeFiltersCount > 0 || selectedItemTypes.length > 0;
+  const hasActiveFilters = activeFiltersCount > 0 || selectedItemTypes.length > 0 || onlyInterested;
 
   const toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
@@ -128,6 +136,21 @@ export const MapFilters = ({
           ✨ {t('map_filters.wishes')} ({counts.wishes})
         </Button>
       </div>
+
+      {showInterestedFilter && (
+        <div className="bg-background rounded-lg shadow-md p-1">
+          <Button
+            variant={onlyInterested ? "default" : "ghost"}
+            size="sm"
+            onClick={() => onOnlyInterestedChange?.(!onlyInterested)}
+            className={`text-xs px-3 w-full ${onlyInterested ? "bg-rose-500 hover:bg-rose-600 text-white" : "hover:bg-rose-50 text-rose-700"}`}
+            aria-pressed={onlyInterested}
+          >
+            <Heart className={`h-3.5 w-3.5 mr-1 ${onlyInterested ? "fill-current" : ""}`} />
+            {t('map_filters.only_interested')} ({interestedCount})
+          </Button>
+        </div>
+      )}
 
       <div className="bg-background/90 backdrop-blur-sm rounded-lg shadow-md p-2">
         <DistanceFilters

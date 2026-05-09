@@ -45,6 +45,7 @@
     "filter": "Filter",
     "clear": "Clear",
     "offers": "Offers",
-    "requests": "Requests"
+    "requests": "Requests",
+    "only_interested": "Only ones I'm interested in"
   }
 }

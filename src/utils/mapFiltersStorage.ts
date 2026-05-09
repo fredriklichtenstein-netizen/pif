@@ -25,6 +25,7 @@ export interface MapFilterData {
   categories: string[];
   conditions: string[];
   itemTypes: string[];
+  onlyInterested: boolean;
 }
 
 interface VersionedFilterPayload {
@@ -32,11 +33,16 @@ interface VersionedFilterPayload {
   data: MapFilterData;
 }
 
-const CURRENT_VERSION = 2;
+const CURRENT_VERSION = 3;
 const STORAGE_KEY = "map_filters";
 const LEGACY_KEY_V1 = "map_filters_v1";
 
-const EMPTY: MapFilterData = { categories: [], conditions: [], itemTypes: [] };
+const EMPTY: MapFilterData = {
+  categories: [],
+  conditions: [],
+  itemTypes: [],
+  onlyInterested: false,
+};
 
 /**
  * Sequential migrations. Each entry takes the data shape produced by
@@ -48,6 +54,8 @@ const MIGRATIONS: Array<{ to: number; run: (prev: any) => any }> = [
   // Future migrations (e.g. renaming "kids" -> "children") would live
   // here and run in order.
   { to: 2, run: (prev) => prev },
+  // v2 -> v3: introduce `onlyInterested` toggle (default off).
+  { to: 3, run: (prev) => ({ ...prev, onlyInterested: false }) },
 ];
 
 const asStringArray = (v: unknown): string[] =>
@@ -57,6 +65,7 @@ const sanitiseData = (raw: any): MapFilterData => ({
   categories: asStringArray(raw?.categories),
   conditions: asStringArray(raw?.conditions),
   itemTypes: asStringArray(raw?.itemTypes),
+  onlyInterested: typeof raw?.onlyInterested === "boolean" ? raw.onlyInterested : false,
 });
 
 const readRaw = (): { version: number; data: MapFilterData } | null => {
@@ -103,6 +112,7 @@ const dropUnknown = (data: MapFilterData, allowed: AllowedValues): MapFilterData
   itemTypes: allowed.itemTypes
     ? data.itemTypes.filter((c) => allowed.itemTypes!.includes(c))
     : data.itemTypes,
+  onlyInterested: data.onlyInterested,
 });
 
 /**
