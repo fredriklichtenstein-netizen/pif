@@ -7,7 +7,13 @@ import { MOCK_POSTS } from '@/data/mockPosts';
 import type { Post } from '@/types/post';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 
+// Smaller first page = faster cold paint. Subsequent pages use a
+// larger size to reduce round-trips while scrolling.
+const FIRST_PAGE_SIZE = 6;
 const POSTS_PER_PAGE = 10;
+const pageSize = (page: number) => (page === 0 ? FIRST_PAGE_SIZE : POSTS_PER_PAGE);
+const offsetForPage = (page: number) =>
+  page === 0 ? 0 : FIRST_PAGE_SIZE + (page - 1) * POSTS_PER_PAGE;
 
 // Duration of the fade-out animation before items are fully removed.
 const FADE_DURATION_MS = 320;
@@ -176,7 +182,7 @@ export function useOptimizedFeed() {
     refetch
   } = useQuery({
     queryKey: ['posts', 'optimized', page],
-    queryFn: () => getOptimizedPosts(POSTS_PER_PAGE, page * POSTS_PER_PAGE),
+    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page)),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -204,9 +210,9 @@ export function useOptimizedFeed() {
     const nextPage = page + 1;
     setPage(nextPage);
     
-    // Prefetch the page after next
+    // Prefetch the page after next using the correct (variable) sizes.
     setTimeout(() => {
-      prefetchNextPage(POSTS_PER_PAGE, (nextPage + 1) * POSTS_PER_PAGE);
+      prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1));
     }, 100);
   }, [page]);
 
@@ -231,7 +237,7 @@ export function useOptimizedFeed() {
   useEffect(() => {
     if (DEMO_MODE) return;
     const timer = setTimeout(() => {
-      prefetchNextPage(POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE);
+      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1));
     }, 1000);
     
     return () => clearTimeout(timer);
@@ -242,7 +248,7 @@ export function useOptimizedFeed() {
     return demoData;
   }
 
-  const hasMore = currentPageData && currentPageData.length === POSTS_PER_PAGE;
+  const hasMore = currentPageData && currentPageData.length === pageSize(page);
 
   return {
     posts: allPosts,

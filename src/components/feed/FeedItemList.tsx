@@ -9,6 +9,7 @@ import { FeedErrorBoundary } from "./FeedErrorBoundary";
 import { useSearchParams } from "react-router-dom";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 import { useTranslation } from "react-i18next";
+import { LazyMount } from "./LazyMount";
 
 interface FeedItemListProps {
   posts: any[];
@@ -209,7 +210,7 @@ export function FeedItemList({
   return (
     <FeedErrorBoundary onReset={handleRecoveryAction}>
       <div className="space-y-4" key={refreshKey}>
-        {validPosts?.map((post) => {
+        {validPosts?.map((post, index) => {
           const isFading = fadingIds?.has(String(post.id));
           const isRestoring = restoringIds?.has(String(post.id));
           const animationClass = isFading
@@ -217,6 +218,15 @@ export function FeedItemList({
             : isRestoring
               ? 'animate-fade-in'
               : undefined;
+          // Render the first 3 cards eagerly (above-the-fold); lazy-mount
+          // the rest so heavy per-card subscriptions/fetches only fire
+          // as the user scrolls them into view.
+          const card = (
+            <FeedItemCard
+              post={post}
+              onItemOperationSuccess={isShowingMockData ? undefined : handleItemSuccess}
+            />
+          );
           return (
             <div
               key={post.id}
@@ -224,10 +234,7 @@ export function FeedItemList({
               className={animationClass}
               aria-hidden={isFading || undefined}
             >
-              <FeedItemCard
-                post={post}
-                onItemOperationSuccess={isShowingMockData ? undefined : handleItemSuccess}
-              />
+              {index < 3 ? card : <LazyMount>{card}</LazyMount>}
             </div>
           );
         })}
