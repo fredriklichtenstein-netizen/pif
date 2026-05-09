@@ -28,6 +28,13 @@ class PerformanceMetricsCollector {
     'api-request': { warning: 5000, critical: 8000 },
     'component-render': { warning: 100, critical: 300 },
     'memory-usage': { warning: 50, critical: 80 }, // MB
+    // Per-stage feed timing budgets. Together they should stay under
+    // 'api-request' thresholds; individually we flag outliers so it's
+    // obvious which stage is the culprit when the feed is slow.
+    'feed-stage:items-query': { warning: 1500, critical: 3000 },
+    'feed-stage:interaction-counts': { warning: 800, critical: 2000 },
+    'feed-stage:transform': { warning: 50, critical: 200 },
+    'feed-stage:cache-write': { warning: 50, critical: 200 },
   };
 
   constructor() {
