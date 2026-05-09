@@ -138,7 +138,9 @@ export function useLazyComments(itemId: string) {
 
   const refreshComments = useCallback(() => {
     setRetryCount(0);
-    setIsInitialized(false);
+    // Do NOT reset isInitialized when we already have comments rendered —
+    // that would briefly show the loading skeleton and cause a flicker.
+    // loadComments(true) refetches in the background and replaces the list.
     return loadComments(true);
   }, [loadComments, itemId]);
 

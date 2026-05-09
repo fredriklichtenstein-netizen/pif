@@ -26,7 +26,8 @@ export function CommentCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(comment.text);
   const [showReplyInput, setShowReplyInput] = useState(false);
-  const maxReplyLevel = 3;
+  // Two-level threading only: top-level comments and one level of replies.
+  const maxReplyLevel = 1;
   const { toast } = useToast();
   const { t } = useTranslation();
   
@@ -51,7 +52,7 @@ export function CommentCard({
   const authorInitials = authorName.split(' ').map(name => name.charAt(0)).join('').toUpperCase() || 'U';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-comment-id={comment.id}>
       <div className={`bg-gray-50 p-3 rounded-lg ${level > 0 ? 'ml-8' : ''}`}>
         <div className="flex items-start gap-2">
           <div className="flex-1">

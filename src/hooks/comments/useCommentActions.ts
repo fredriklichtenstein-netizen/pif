@@ -55,23 +55,18 @@ export const useCommentActions = (
   const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser, useFallbackMode);
   const { deleteComment } = useCommentDelete();
   const { handleEditComment } = useCommentEdit(comments, setComments);
-  const { handleLikeComment: baseLikeComment, handleReplyToComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
+  const { handleLikeComment: baseLikeComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
   const { refreshComments, isRefreshing } = useCommentRefresh(itemId, setComments, currentUser);
 
-  // Demo mode like handler
+  // Replies are persisted through the same DB-backed creation path as
+  // top-level comments — they appear in realtime for everyone.
+  const handleReplyToComment = (commentId: string, text: string) => handleAddComment(text, commentId);
+
+  // Like handler — demo mode persists to local store, real mode delegates
+  // to the DB-backed handler in useCommentInteractions.
   const handleLikeComment = (commentId: string) => {
     if (DEMO_MODE) {
       toggleDemoCommentLike(itemId, commentId);
-      // Update local state
-      const updatedComments = comments.map(comment => {
-        if (comment.id === commentId) {
-          const liked = !comment.isLiked;
-          return { ...comment, isLiked: liked, likes: liked ? comment.likes + 1 : Math.max(0, comment.likes - 1) };
-        }
-        return comment;
-      });
-      setComments(updatedComments);
-      return;
     }
     baseLikeComment(commentId);
   };
