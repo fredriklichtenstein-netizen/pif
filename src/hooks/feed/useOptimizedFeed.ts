@@ -7,7 +7,13 @@ import { MOCK_POSTS } from '@/data/mockPosts';
 import type { Post } from '@/types/post';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 
+// Smaller first page = faster cold paint. Subsequent pages use a
+// larger size to reduce round-trips while scrolling.
+const FIRST_PAGE_SIZE = 6;
 const POSTS_PER_PAGE = 10;
+const pageSize = (page: number) => (page === 0 ? FIRST_PAGE_SIZE : POSTS_PER_PAGE);
+const offsetForPage = (page: number) =>
+  page === 0 ? 0 : FIRST_PAGE_SIZE + (page - 1) * POSTS_PER_PAGE;
 
 // Duration of the fade-out animation before items are fully removed.
 const FADE_DURATION_MS = 320;
