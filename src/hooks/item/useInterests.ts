@@ -34,7 +34,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     setInterestedUsersError,
     fetchAttemptCount,
     setFetchAttemptCount
-  } = useInterestState();
+  } = useInterestState(id);
 
   // Keep the local interests count in sync with the global store so
   // realtime updates (from other users) immediately reflect in the
@@ -57,7 +57,11 @@ export const useInterests = (id: string, userId?: string | null) => {
     interestedUsers
   );
 
-  const { handleShowInterest: originalHandleShowInterest } = useInterestActions(setShowInterest, fetchInterestedUsersInternal);
+  const { handleShowInterest: originalHandleShowInterest } = useInterestActions(
+    setShowInterest,
+    fetchInterestedUsersInternal,
+    () => showInterest
+  );
 
   // Sync demo state
   useEffect(() => {
