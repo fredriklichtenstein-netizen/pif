@@ -358,6 +358,15 @@ export function InterestSelectionList({
           <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">{t("status.loading")}</p>
         </div>
+      ) : error && rows.length === 0 ? (
+        <div className="text-center py-4 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            {t("common.unable_to_load_list", "Could not load list")}
+          </p>
+          <Button size="sm" variant="outline" onClick={reload}>
+            {t("interactions.retry", "Retry")}
+          </Button>
+        </div>
       ) : rows.length === 0 ? (
         <div className="text-center py-4 text-muted-foreground text-sm">
           {t("profile.no_interest_yet")}
