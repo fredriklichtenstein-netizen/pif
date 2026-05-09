@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
 
 const DEBOUNCE_MS = 400;
 const MAX_DEFER_MS = 1500;
@@ -15,6 +16,9 @@ const MAX_DEFER_MS = 1500;
  * window, with a hard ceiling so the counter never lags too long. The
  * optional `onChange` callback fires once per flushed batch so an open
  * comments panel can refetch the visible list a single time.
+ *
+ * Uses the shared per-item channel manager — multiple mounted components
+ * for the same item share a single Supabase channel.
  */
 export const useCommentCountRealtime = (
   itemId: string,
@@ -30,7 +34,6 @@ export const useCommentCountRealtime = (
 
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let maxWaitTimer: ReturnType<typeof setTimeout> | null = null;
-    // Track the most recent event kind so we can pass it to onChange.
     let lastEvent: "INSERT" | "DELETE" = "INSERT";
     let inFlight = false;
 
@@ -67,45 +70,20 @@ export const useCommentCountRealtime = (
       lastEvent = event;
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(flush, DEBOUNCE_MS);
-      // Guarantee an upper bound so a continuous stream of events
-      // can't postpone the flush forever.
       if (!maxWaitTimer) {
         maxWaitTimer = setTimeout(flush, MAX_DEFER_MS);
       }
     };
 
-    const channel = supabase
-      .channel(`comment-count-${numericId}-${Date.now()}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "comments",
-          filter: `item_id=eq.${numericId}`,
-        },
-        () => schedule("INSERT")
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "comments",
-          filter: `item_id=eq.${numericId}`,
-        },
-        () => schedule("DELETE")
-      )
-      .subscribe();
+    const unsubscribe = subscribeItemTable(itemId, "comments", (payload) => {
+      if (payload.eventType === "INSERT") schedule("INSERT");
+      else if (payload.eventType === "DELETE") schedule("DELETE");
+    });
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       if (maxWaitTimer) clearTimeout(maxWaitTimer);
-      try {
-        supabase.removeChannel(channel);
-      } catch {
-        /* noop */
-      }
+      unsubscribe();
     };
   }, [itemId]);
 };
