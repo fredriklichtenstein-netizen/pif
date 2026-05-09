@@ -383,6 +383,8 @@
     "loading_more": "Loading...",
     "refreshing_feed": "Refreshing feed",
     "feed_refreshed": "Feed refreshed",
+    "pull_to_refresh": "Pull down to refresh",
+    "release_to_refresh": "Release to refresh",
     "loading_more_posts": "Loading more posts",
     "new_posts_available": "{{count}} new posts available",
     "delete_item_title": "Delete Item",

@@ -15,6 +15,7 @@ import { RefreshCw, AlertCircle, MapPin, ExternalLink } from "lucide-react";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
+import { PullToRefresh } from "@/components/common/PullToRefresh";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -141,41 +142,51 @@ export default function Map() {
     <div className="min-h-screen bg-gray-50">
       <MainHeader />
       <Separator />
-      <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
-        <FadeIn className="h-full">
-          <div className="absolute inset-0 z-0">
-            <SlideIn direction="up" className="h-full">
-              <MapContainer
-                mapboxToken={mapToken}
-                posts={posts}
-                onPostClick={handlePostClick}
-                targetItemId={targetItemId}
-              />
-            </SlideIn>
-          </div>
-        </FadeIn>
-        
-        {DEMO_MODE && (
-          <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
-            <div className="bg-amber-50/95 backdrop-blur-sm border border-amber-200 rounded-lg px-4 py-2 shadow-lg pointer-events-auto">
-              <p className="text-xs text-amber-800 text-center">
-                <strong>{t('map.demo_mode')}</strong> — {t('map.demo_viewing')}
-              </p>
+      <PullToRefresh
+        onRefresh={async () => {
+          announce(t('interactions.refreshing_feed'), 'polite');
+          await refreshPosts();
+          announce(t('interactions.feed_refreshed'), 'polite');
+        }}
+        disabled={isLoading}
+        ignoreSelector=".mapboxgl-map"
+      >
+        <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
+          <FadeIn className="h-full">
+            <div className="absolute inset-0 z-0">
+              <SlideIn direction="up" className="h-full">
+                <MapContainer
+                  mapboxToken={mapToken}
+                  posts={posts}
+                  onPostClick={handlePostClick}
+                  targetItemId={targetItemId}
+                />
+              </SlideIn>
             </div>
-          </div>
-        )}
-        
-        {isLoading && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50" style={{ marginTop: DEMO_MODE ? '48px' : 0 }}>
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm text-muted-foreground">{t('map.loading_posts')}</span>
+          </FadeIn>
+
+          {DEMO_MODE && (
+            <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
+              <div className="bg-amber-50/95 backdrop-blur-sm border border-amber-200 rounded-lg px-4 py-2 shadow-lg pointer-events-auto">
+                <p className="text-xs text-amber-800 text-center">
+                  <strong>{t('map.demo_mode')}</strong> — {t('map.demo_viewing')}
+                </p>
               </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
+
+          {isLoading && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50" style={{ marginTop: DEMO_MODE ? '48px' : 0 }}>
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm text-muted-foreground">{t('map.loading_posts')}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </PullToRefresh>
       <MainNav />
     </div>
   );
