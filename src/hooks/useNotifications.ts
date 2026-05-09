@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_NOTIFICATIONS } from "@/data/mockNotifications";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export interface Notification {
   id: string;
@@ -55,6 +56,12 @@ export function useNotifications() {
       .order("created_at", { ascending: false });
 
     if (error) {
+      // Stale JWT after a deploy (or RLS-evicted session) lands here too —
+      // trigger global session recovery instead of just toasting.
+      if (maybeRecoverFromAuthError(error, "notifications fetch")) {
+        setIsLoading(false);
+        return;
+      }
       setFetchError(error);
       toast({
         title: t('interactions.failed_load_notifications'),
@@ -109,7 +116,11 @@ export function useNotifications() {
           fetchNotifications();
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          maybeRecoverFromAuthError(err, `notifications channel: ${status}`);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -128,6 +139,7 @@ export function useNotifications() {
     
     const { error } = await (supabase.rpc as any)("mark_all_notifications_read");
     if (error) {
+      if (maybeRecoverFromAuthError(error, "mark_all_notifications_read")) return;
       toast({
         title: t('interactions.failed_mark_read'),
         description: error.message,
