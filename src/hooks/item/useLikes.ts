@@ -10,6 +10,7 @@ import type { User } from "./utils/userUtils";
 import { useTranslation } from "react-i18next";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useItemLikesRealtime } from "./realtime/useItemLikesRealtime";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -76,6 +77,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         await fetchLikersInternal(numericId);
       } catch (error) {
         console.error("Error fetching likes:", error);
+        maybeRecoverFromAuthError(error, "useLikes initial fetch");
       } finally {
         setLoading(false);
       }
