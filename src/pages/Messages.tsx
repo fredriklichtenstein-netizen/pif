@@ -20,7 +20,8 @@ const Messages = () => {
   const { conversations, isLoading: conversationsLoading, error } = useConversations();
   const { unreadCount } = useNotifications();
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
 
   const isLoading = authLoading || conversationsLoading;
 
@@ -39,8 +40,6 @@ const Messages = () => {
     if (!authLoading && !user) {
     }
   }, [authLoading, user]);
-
-  const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
 
   const handleTabChange = (value: string) => {
     if (value === "messages" || value === "notifications") {
