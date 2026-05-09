@@ -100,8 +100,18 @@ export function CounterButton({
           {count}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2" onClick={(e) => e.stopPropagation()}>
-        {fetchPage ? (
+      <PopoverContent
+        className={useInterestList ? "w-80 p-2" : "w-64 p-2"}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {useInterestList ? (
+          <InterestSelectionList
+            itemId={itemId!}
+            itemOwnerId={itemOwnerId}
+            currentUserId={currentUserId}
+            setShowPopup={setShowPopup}
+          />
+        ) : fetchPage ? (
           <PaginatedUserList
             type={type}
             fetchPage={fetchPage}
@@ -109,11 +119,11 @@ export function CounterButton({
             itemId={itemId}
           />
         ) : (
-          <UserPopoverContent 
-            type={type} 
-            users={users} 
-            loading={loading} 
-            setShowPopup={setShowPopup} 
+          <UserPopoverContent
+            type={type}
+            users={users}
+            loading={loading}
+            setShowPopup={setShowPopup}
           />
         )}
       </PopoverContent>
