@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
 import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
-import { supabase } from "@/integrations/supabase/client";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import { ProfileBasicInfo } from "@/components/profile/info/ProfileBasicInfo";
 import { MainNav } from "@/components/MainNav";
@@ -16,7 +15,7 @@ import { ArchivedPifsGrid } from "@/components/profile/ArchivedPifsGrid";
 import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_PROFILE } from "@/data/mockProfiles";
 import { useTranslation } from "react-i18next";
-import { isAuthInvalidError, isNetworkError, recoverFromCorruptedSession } from "@/hooks/auth/sessionRecovery";
+import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
@@ -26,90 +25,25 @@ function formatPublicName(profile: any) {
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
-  const [profile, setProfile] = useState<any>(user || null);
-  const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
-  const [profileData, setProfileData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("my-pifs");
   const { t } = useTranslation();
 
-  const fetchProfileData = async () => {
-    if (!user) return;
-    
-    if (DEMO_MODE) {
-      setProfileData(DEMO_PROFILE);
-      setCoordinates({ lng: 18.0686, lat: 59.3293 });
-      setLoading(false);
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-        
-      if (error) {
-        console.error("Error fetching profile data:", error);
-        if (isAuthInvalidError(error) || !isNetworkError(error)) {
-          await recoverFromCorruptedSession(`profile page fetch: ${error.message}`);
-        }
-        return;
-      }
-      
-      setProfileData(data);
-      
-      if (data?.location) {
-        const locationCoords = parseCoordinates(data.location);
-        if (locationCoords) {
-          setCoordinates(locationCoords);
-        }
-      } else {
-        if (data?.address) {
-          setCoordinates({ lat: 59.3293, lng: 18.0686 });
-        }
-      }
-    } catch (err) {
-      console.error("Error in profile data fetch:", err);
-      if (!isNetworkError(err)) {
-        await recoverFromCorruptedSession(
-          `profile page exception: ${err instanceof Error ? err.message : String(err)}`
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { profile: liveProfile, isLoading: profileLoading } = useCachedProfile(user?.id);
+  const profileData = DEMO_MODE ? DEMO_PROFILE : liveProfile;
+  const profile = profileData || user || null;
 
-  useEffect(() => {
-    if (user) {
-      setProfile(user);
-      fetchProfileData();
-      
-      const userAny = user as any;
-      if (userAny && typeof userAny === 'object') {
-        if ('location' in userAny && userAny.location) {
-          const coord = parseCoordinates(userAny.location);
-          if (coord) {
-            setCoordinates(coord);
-          }
-        }
-      }
+  const coordinates = (() => {
+    if (DEMO_MODE) return { lng: 18.0686, lat: 59.3293 };
+    if (profileData?.location) {
+      const c = parseCoordinates(profileData.location);
+      if (c) return c;
     }
-  }, [user]);
+    if (profileData?.address) return { lat: 59.3293, lng: 18.0686 };
+    return null;
+  })();
 
-  // Prevent re-fetch on tab focus if profile data is already loaded
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && user && !profileData) {
-        fetchProfileData();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, profileData]);
+  // Only show full-page loader on the very first load with no cached data.
+  const loading = !DEMO_MODE && profileLoading && !profileData;
 
   if (authLoading || loading) {
     return (
