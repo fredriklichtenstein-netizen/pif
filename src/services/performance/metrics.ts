@@ -19,9 +19,13 @@ class PerformanceMetricsCollector {
   private readonly MAX_METRICS = 1000;
   private observers: PerformanceObserver[] = [];
   
+  // Realistic thresholds for a Supabase-backed feed: cold queries that
+  // join items + profiles + bulk interaction counts routinely take 2-4s
+  // on first load. Anything under 5s is normal, only flag the truly slow
+  // outliers above 8s as critical.
   private readonly thresholds: Record<string, PerformanceThreshold> = {
     'page-load': { warning: 3000, critical: 5000 },
-    'api-request': { warning: 1000, critical: 2000 },
+    'api-request': { warning: 5000, critical: 8000 },
     'component-render': { warning: 100, critical: 300 },
     'memory-usage': { warning: 50, critical: 80 }, // MB
   };
