@@ -11,6 +11,7 @@ import { DistanceRings } from "./distance/DistanceRings";
 import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import { useTranslation } from "react-i18next";
 import { usePifAddress } from "@/hooks/usePifAddress";
+import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
 import "./MapStyles.css";
 
 const MAP_SESSION_INIT_KEY = 'map_session_initialized';
@@ -24,6 +25,7 @@ interface MapContainerProps {
 
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemId }: MapContainerProps) => {
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
+  const isRefreshing = useRefreshSyncStore((s) => s.isRefreshing);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
   const { t } = useTranslation();
@@ -62,6 +64,16 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     setSelectedItemTypes([]);
     setSelectedDistance(null);
   };
+
+  // Defensive guard: even though the map is wrapped in an `inert`
+  // container during refresh, wrap every state-mutating handler so
+  // any stray event (programmatic dispatch, focus traps, etc.) cannot
+  // change map state mid-update.
+  const guarded = <A extends unknown[]>(fn: (...a: A) => void) =>
+    (...args: A) => {
+      if (useRefreshSyncStore.getState().isRefreshing) return;
+      fn(...args);
+    };
 
   useEffect(() => {
     if (isMapReady && map) {
@@ -178,15 +190,15 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             selectedCategories={selectedCategories}
             selectedConditions={selectedConditions}
             selectedItemTypes={selectedItemTypes}
-            onCategoryChange={setSelectedCategories}
-            onConditionChange={setSelectedConditions}
-            onItemTypeChange={setSelectedItemTypes}
-            onClearFilters={handleClearFilters}
+            onCategoryChange={guarded(setSelectedCategories)}
+            onConditionChange={guarded(setSelectedConditions)}
+            onItemTypeChange={guarded(setSelectedItemTypes)}
+            onClearFilters={guarded(handleClearFilters)}
             selectedDistance={selectedDistance}
-            onDistanceChange={setSelectedDistance}
+            onDistanceChange={guarded(setSelectedDistance)}
             userLocation={locationTracking.userLocation}
-            onRequestLocation={locationTracking.goToMyLocation}
-            onUsePifAddress={locationTracking.setManualLocation}
+            onRequestLocation={guarded(locationTracking.goToMyLocation)}
+            onUsePifAddress={guarded(locationTracking.setManualLocation)}
           />
 
           <DistanceRings
@@ -205,11 +217,11 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
 
           <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
             <Button
-              onClick={() => {
+              onClick={guarded(() => {
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
                 locationTracking.goToMyLocation();
-              }}
-              disabled={locationTracking.isLoadingLocation}
+              })}
+              disabled={locationTracking.isLoadingLocation || isRefreshing}
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
               variant="outline"
