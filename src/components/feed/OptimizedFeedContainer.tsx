@@ -148,6 +148,14 @@ export function OptimizedFeedContainer() {
           )}
         </section>
 
+        {/* Append skeleton placeholders while a "load more" page is in
+            flight so the list visibly grows instead of freezing. */}
+        {isLoadingMore && !isRefreshing && (
+          <div aria-label={t('interactions.loading_more')} role="status">
+            <FeedSkeleton count={2} />
+          </div>
+        )}
+
         {hasMore && (
           <div className="flex justify-center" role="navigation" aria-label={t('interactions.load_more_posts')}>
             <button
