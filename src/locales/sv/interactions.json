@@ -385,6 +385,7 @@
     "feed_refreshed": "Flödet uppdaterat",
     "pull_to_refresh": "Dra ner för att uppdatera",
     "release_to_refresh": "Släpp för att uppdatera",
+    "filters_disabled_during_refresh": "Filter är inaktiverade under uppdateringen",
     "loading_more_posts": "Laddar fler inlägg",
     "new_posts_available": "{{count}} nya inlägg tillgängliga",
     "delete_item_title": "Radera objekt",
