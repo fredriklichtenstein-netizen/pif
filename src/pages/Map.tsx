@@ -150,12 +150,12 @@ export default function Map() {
       <PullToRefresh
         onRefresh={async () => {
           announce(t('interactions.refreshing_feed'), 'polite');
-          setIsRefreshing(true);
+          beginRefresh();
           try {
             await refreshPosts();
             announce(t('interactions.feed_refreshed'), 'polite');
           } finally {
-            setIsRefreshing(false);
+            endRefresh();
           }
         }}
         disabled={isLoading || isRefreshing}
