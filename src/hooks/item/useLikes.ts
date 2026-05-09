@@ -199,6 +199,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       });
     } catch (error) {
       console.error('Error toggling like:', error);
+      if (maybeRecoverFromAuthError(error, "toggle like")) return;
       
       setIsLiked(wasLiked);
       setLikesCount(previousCount);
