@@ -3,6 +3,7 @@ import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./button/ShareButton";
 import { useTranslation } from 'react-i18next';
+import { fetchCommentersForItem } from "@/services/comments/fetchCommenters";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -17,12 +18,14 @@ interface PrimaryActionsProps {
   interestsCount?: number;
   likers?: User[];
   interestedUsers?: User[];
+  commenters?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
   onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
+  fetchCommenters?: () => Promise<User[]>;
 }
 
 export function PrimaryActions({
