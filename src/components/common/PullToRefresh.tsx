@@ -12,6 +12,12 @@ interface PullToRefreshProps {
   maxPull?: number;
   /** Disable the gesture (e.g. while another loader runs). */
   disabled?: boolean;
+  /**
+   * CSS selector for descendants that should NOT trigger the pull
+   * (e.g. interactive Mapbox canvas). Touches starting inside a
+   * matching element are ignored.
+   */
+  ignoreSelector?: string;
   className?: string;
 }
 
@@ -26,6 +32,7 @@ export function PullToRefresh({
   threshold = 70,
   maxPull = 120,
   disabled = false,
+  ignoreSelector,
   className,
 }: PullToRefreshProps) {
   const { t } = useTranslation();
@@ -46,6 +53,13 @@ export function PullToRefresh({
       if (refreshing || !isAtTop() || e.touches.length !== 1) {
         startYRef.current = null;
         return;
+      }
+      if (ignoreSelector) {
+        const target = e.target as Element | null;
+        if (target && target.closest && target.closest(ignoreSelector)) {
+          startYRef.current = null;
+          return;
+        }
       }
       startYRef.current = e.touches[0].clientY;
       activeRef.current = false;
@@ -97,7 +111,7 @@ export function PullToRefresh({
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [disabled, refreshing, pull, threshold, maxPull, onRefresh]);
+  }, [disabled, refreshing, pull, threshold, maxPull, onRefresh, ignoreSelector]);
 
   const ready = pull >= threshold;
   const indicatorOpacity = Math.min(1, pull / threshold);
