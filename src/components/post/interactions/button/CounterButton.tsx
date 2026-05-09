@@ -50,6 +50,8 @@ export function CounterButton({
   isInteractive,
   fetchPage,
   itemId,
+  itemOwnerId,
+  currentUserId,
 }: CounterButtonProps) {
   const { t } = useTranslation();
   
