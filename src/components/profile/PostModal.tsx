@@ -13,6 +13,7 @@ import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
 import { useTranslation } from "react-i18next";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -39,61 +40,76 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
   const { markAsPiffed: demoMarkAsPiffed, getStatus } = useDemoCompletionStore();
   const { getSelectedUser } = useDemoSelectionsStore();
 
+  const formatFromRow = (data: any) => ({
+    ...data,
+    postedBy: {
+      id: data.user_id,
+      name: data.profiles?.first_name
+        ? `${data.profiles.first_name} ${data.profiles.last_name?.[0] || ""}`
+        : t('common.user'),
+      avatar: data.profiles?.avatar_url || "",
+    },
+    image: data.images?.[0] || "",
+    coordinates: data.coordinates
+      ? {
+          lat: typeof data.coordinates === 'object' && data.coordinates !== null
+            ? (data.coordinates as any).y
+            : null,
+          lng: typeof data.coordinates === 'object' && data.coordinates !== null
+            ? (data.coordinates as any).x
+            : null,
+        }
+      : undefined,
+  });
+
   useEffect(() => {
-    if (open && postId) {
+    if (!open || !postId) return;
+
+    if (DEMO_MODE) {
       setLoading(true);
-      
-      if (DEMO_MODE) {
-        const mockPost = MOCK_POSTS.find(p => String(p.id) === String(postId));
-        if (mockPost) {
-          const completionStatus = getStatus(mockPost.id);
-          setPost({
-            ...mockPost,
-            image: mockPost.images?.[0] || "",
-            status: completionStatus === "pending_confirmation" ? "piffed" :
-                    completionStatus === "completed" ? "completed" :
-                    completionStatus === "archived" ? "archived" : "active",
-          });
+      const mockPost = MOCK_POSTS.find(p => String(p.id) === String(postId));
+      if (mockPost) {
+        const completionStatus = getStatus(mockPost.id);
+        setPost({
+          ...mockPost,
+          image: mockPost.images?.[0] || "",
+          status: completionStatus === "pending_confirmation" ? "piffed" :
+                  completionStatus === "completed" ? "completed" :
+                  completionStatus === "archived" ? "archived" : "active",
+        });
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Hydrate instantly from cache.
+    const cached = readCachedItem(postId);
+    if (cached) {
+      setPost(cached.postedBy ? cached : formatFromRow(cached));
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    // Background refresh.
+    supabase
+      .from("items")
+      .select("*, profiles!items_user_id_fkey(*)")
+      .eq("id", typeof postId === 'string' ? parseInt(postId, 10) : postId)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error fetching post:", error);
+          setLoading(false);
+          return;
+        }
+        if (data) {
+          const formatted = formatFromRow(data);
+          setPost(formatted);
+          writeCachedItem(formatted);
         }
         setLoading(false);
-        return;
-      }
-      
-      supabase
-        .from("items")
-        .select("*, profiles!items_user_id_fkey(*)")
-        .eq("id", typeof postId === 'string' ? parseInt(postId, 10) : postId)
-        .single()
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("Error fetching post:", error);
-            return;
-          }
-          if (data) {
-            const formattedPost = {
-              ...data,
-              postedBy: {
-                id: data.user_id,
-                name: data.profiles?.first_name 
-                  ? `${data.profiles.first_name} ${data.profiles.last_name?.[0] || ""}`
-                  : t('common.user'),
-                avatar: data.profiles?.avatar_url || "",
-              },
-              image: data.images?.[0] || "",
-              coordinates: data.coordinates 
-                ? { 
-                    lat: typeof data.coordinates === 'object' && data.coordinates !== null ? 
-                         (data.coordinates as any).y : null,
-                    lng: typeof data.coordinates === 'object' && data.coordinates !== null ? 
-                         (data.coordinates as any).x : null 
-                  } 
-                : undefined,
-            };
-            setPost(formattedPost);
-          }
-          setLoading(false);
-        });
-    }
+      });
   }, [open, postId]);
 
   const handleMarkAsPiffed = async () => {
