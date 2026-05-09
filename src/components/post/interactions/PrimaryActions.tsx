@@ -131,6 +131,8 @@ export function PrimaryActions({
           iconPassive="star"
           iconActive="star"
           itemId={itemId}
+          itemOwnerId={itemOwnerId}
+          currentUserId={currentUserId}
         />
       </div>
     </div>
