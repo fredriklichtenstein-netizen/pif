@@ -3,7 +3,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UserPopoverContent } from './UserPopoverContent';
+import { PaginatedUserList } from './PaginatedUserList';
 import type { User } from '@/hooks/item/useItemInteractions';
+import type { FetchPage } from '@/services/interactions/fetchPaginatedUsers';
 
 interface CounterButtonProps {
   count: number;
@@ -17,6 +19,8 @@ interface CounterButtonProps {
   setShowPopup: (show: boolean) => void;
   onCounterClick: () => Promise<User[]>;
   isInteractive: boolean;
+  /** When provided, the popover paginates via this fn instead of showing the pre-fetched `users` list. */
+  fetchPage?: FetchPage;
 }
 
 const labelKey = (type: CounterButtonProps["type"]) => {
@@ -36,7 +40,8 @@ export function CounterButton({
   showPopup,
   setShowPopup,
   onCounterClick,
-  isInteractive
+  isInteractive,
+  fetchPage,
 }: CounterButtonProps) {
   const { t } = useTranslation();
   
@@ -58,6 +63,7 @@ export function CounterButton({
     e.preventDefault();
     e.stopPropagation();
     setShowPopup(true);
+    if (fetchPage) return; // PaginatedUserList handles its own loading
     try {
       await onCounterClick();
     } catch (error) {
@@ -82,13 +88,21 @@ export function CounterButton({
           {count}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-60 p-2" onClick={(e) => e.stopPropagation()}>
-        <UserPopoverContent 
-          type={type} 
-          users={users} 
-          loading={loading} 
-          setShowPopup={setShowPopup} 
-        />
+      <PopoverContent className="w-64 p-2" onClick={(e) => e.stopPropagation()}>
+        {fetchPage ? (
+          <PaginatedUserList
+            type={type}
+            fetchPage={fetchPage}
+            setShowPopup={setShowPopup}
+          />
+        ) : (
+          <UserPopoverContent 
+            type={type} 
+            users={users} 
+            loading={loading} 
+            setShowPopup={setShowPopup} 
+          />
+        )}
       </PopoverContent>
     </Popover>
   );
