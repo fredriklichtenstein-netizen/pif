@@ -148,6 +148,8 @@ export function useFetchPosts(options = { includeArchived: false }) {
       }) || [];
 
       setPosts(transformedData);
+      setCache(cacheKey, transformedData, FULL_LIST_TTL);
+      void FULL_LIST_STALE_TTL;
 
       // Bulk-fetch interaction counts so feed cards show correct counters
       // immediately (especially comments) without waiting for lazy fetches.
