@@ -55,8 +55,12 @@ export const useCommentActions = (
   const { handleAddComment } = useCommentCreate(itemId, comments, setComments, currentUser, useFallbackMode);
   const { deleteComment } = useCommentDelete();
   const { handleEditComment } = useCommentEdit(comments, setComments);
-  const { handleLikeComment: baseLikeComment, handleReplyToComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
+  const { handleLikeComment: baseLikeComment, handleReportComment } = useCommentInteractions(comments, setComments, currentUser);
   const { refreshComments, isRefreshing } = useCommentRefresh(itemId, setComments, currentUser);
+
+  // Replies are persisted through the same DB-backed creation path as
+  // top-level comments — they appear in realtime for everyone.
+  const handleReplyToComment = (commentId: string, text: string) => handleAddComment(text, commentId);
 
   // Demo mode like handler
   const handleLikeComment = (commentId: string) => {
