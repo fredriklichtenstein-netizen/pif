@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
-import { Loader2 } from "lucide-react";
+import { FeedSkeleton } from "./FeedSkeleton";
 import { FeedFilters } from "./FeedFilters";
 import { FeedItemList } from "./FeedItemList";
 import { OfflineBanner } from "./OfflineBanner";
@@ -221,10 +221,17 @@ export function FeedContainer() {
   }, []);
 
   // Only show loading spinner on initial load if we're not showing mock data and no error
+  // Initial cold load: render skeleton cards so the page feels populated
+  // immediately while the heavy items + counts query runs in the background.
   if (isLoading && isInitialLoad && !isShowingMockData && !error) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div
+        className="space-y-4"
+        role="status"
+        aria-busy="true"
+        aria-label="Loading posts"
+      >
+        <FeedSkeleton count={4} />
       </div>
     );
   }
