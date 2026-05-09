@@ -6,6 +6,7 @@ import { useAuthCheck } from "./utils/authCheck";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useTranslation } from "react-i18next";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export const useBookmarks = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -47,6 +48,7 @@ export const useBookmarks = (id: string, userId?: string | null) => {
         }
       } catch (error) {
         console.error("Error fetching bookmark status:", error);
+        maybeRecoverFromAuthError(error, "useBookmarks initial fetch");
       } finally {
         setLoading(false);
       }

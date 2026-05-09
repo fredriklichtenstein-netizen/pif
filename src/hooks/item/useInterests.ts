@@ -12,6 +12,7 @@ import type { User } from "./utils/userUtils";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useMyInterestStore } from "@/stores/myInterestStore";
 import { useItemInterestRealtime } from "./realtime/useItemInterestRealtime";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export const useInterests = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -114,6 +115,7 @@ export const useInterests = (id: string, userId?: string | null) => {
         await fetchInterestedUsersInternal(numericId);
       } catch (error) {
         console.error("Error fetching interests:", error);
+        maybeRecoverFromAuthError(error, "useInterests initial fetch");
       }
     };
 

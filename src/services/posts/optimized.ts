@@ -6,6 +6,10 @@ import { OptimizedQueries, DatabaseCache } from "@/services/database";
 import { performanceMetrics } from "@/services/performance/metrics";
 import { memoryOptimizer } from "@/services/performance/memory";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import {
+  isAuthInvalidError,
+  maybeRecoverFromAuthError,
+} from "@/hooks/auth/sessionRecovery";
 
 // Cache with TTL
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -13,7 +17,11 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 // Create a memoized cache for transformed posts
 const transformCache = memoryOptimizer.createMemoCache<Post>(50);
 
-export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]> => {
+export const getOptimizedPosts = async (
+  limit = 20,
+  offset = 0,
+  _retryAfterRecovery = false,
+): Promise<Post[]> => {
   const start = performance.now();
   const cacheKey = `posts-v2-${limit}-${offset}`;
   
@@ -89,19 +97,32 @@ export const getOptimizedPosts = async (limit = 20, offset = 0): Promise<Post[]>
     return transformedPosts;
   } catch (error) {
     console.error("Error fetching optimized posts:", error);
-    
+
     performanceMetrics.recordMetric({
       id: `posts-error-${Date.now()}`,
       name: 'api-error',
       value: performance.now() - start,
       timestamp: Date.now(),
       category: 'network',
-      tags: { 
+      tags: {
         type: 'posts-fetch-error',
         error: error instanceof Error ? error.message : 'unknown'
       }
     });
-    
+
+    // If a stale JWT is to blame, clear it and retry exactly once as
+    // anon so the feed remains visible to logged-out viewers.
+    if (!_retryAfterRecovery && isAuthInvalidError(error)) {
+      maybeRecoverFromAuthError(error, "getOptimizedPosts");
+      // Give the recovery a tick to wipe tokens before retrying.
+      await new Promise((r) => setTimeout(r, 50));
+      try {
+        return await getOptimizedPosts(limit, offset, true);
+      } catch {
+        return [];
+      }
+    }
+
     throw error;
   }
 };

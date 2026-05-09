@@ -8,6 +8,10 @@ import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import {
+  isAuthInvalidError,
+  maybeRecoverFromAuthError,
+} from "@/hooks/auth/sessionRecovery";
 
 // Normalize item_type to match map marker expectations
 const normalizeItemType = (itemType: string): 'offer' | 'request' => {
@@ -151,6 +155,18 @@ export function useFetchPosts(options = { includeArchived: false }) {
     } catch (err: any) {
       if (err.name !== 'AbortError' && !signal.aborted) {
         console.error('Error fetching posts:', err);
+
+        // Stale JWT? Clear it silently — the auth-recovery flow will
+        // either redirect (private routes) or wipe the bad token so the
+        // next fetch goes through as anon. Skip the destructive toast.
+        if (isAuthInvalidError(err)) {
+          maybeRecoverFromAuthError(err, "useFetchPosts");
+          setError(err);
+          setIsLoading(false);
+          setIsFetching(false);
+          return;
+        }
+
         setError(err);
         setIsLoading(false);
         setIsFetching(false);
