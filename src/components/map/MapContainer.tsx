@@ -85,6 +85,14 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     }
   }, [isMapReady, map]);
 
+  // When a refresh starts, dismiss any open marker popup so the user
+  // can't tap a popup CTA mid-update.
+  useEffect(() => {
+    if (!isRefreshing) return;
+    const popups = document.getElementsByClassName("mapboxgl-popup");
+    while (popups[0]) popups[0].remove();
+  }, [isRefreshing]);
+
   // First-load: restore saved mode (current/pif) or center on PIF address by default (once per session)
   useEffect(() => {
     if (!isMapReady || !map) return;
