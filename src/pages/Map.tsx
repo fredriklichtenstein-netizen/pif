@@ -203,13 +203,15 @@ export default function Map() {
           {isRefreshing && (
             <div
               className="absolute inset-0 z-40 bg-background/30 backdrop-blur-[1px] cursor-wait transition-opacity"
-              onClick={() =>
+              onClick={() => {
+                if (filtersToastShownRef.current) return;
+                filtersToastShownRef.current = true;
                 toast.message(t('interactions.filters_disabled_during_refresh'), {
                   id: 'refresh-filters-disabled',
                   description: t('interactions.filters_disabled_during_refresh_description'),
                   duration: 1800,
-                })
-              }
+                });
+              }}
               aria-hidden="true"
             />
           )}
