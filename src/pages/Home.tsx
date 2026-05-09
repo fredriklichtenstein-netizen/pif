@@ -79,7 +79,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-blue-50">
       <MainHeader />
-      <div className="container max-w-md mx-auto px-4 pb-20 py-[30px]">
+      <div className="container max-w-md sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 py-[30px]">
         {/* Network status banner */}
         <NetworkStatus onRetry={handleRetry} />
         
@@ -95,16 +95,16 @@ export default function Home() {
           </div>
           
           {/* Content over background */}
-          <div className="relative text-center py-8">
+          <div className="relative text-center py-8 sm:py-12 lg:py-16">
             {/* PiF Logo */}
             <div className="flex justify-center mb-6">
               <img 
                 src="/lovable-uploads/a139121f-d6c7-4487-bd2e-4f530bea4e21.png"
                 alt="Pay it Forward Logo"
-                className="h-32 w-auto object-contain"
+                className="h-28 sm:h-36 lg:h-44 w-auto object-contain"
               />
             </div>
-            <p className="text-lg text-gray-600 mb-8 max-w-sm mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 max-w-sm sm:max-w-xl lg:max-w-2xl mx-auto leading-relaxed">
               {t('home.hero_description')}
             </p>
           </div>
