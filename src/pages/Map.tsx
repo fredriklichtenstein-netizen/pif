@@ -18,6 +18,7 @@ import { MainNav } from "@/components/MainNav";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
 import { RefreshOverlay } from "@/components/common/RefreshOverlay";
 import { useSharedRefresh } from "@/hooks/useSharedRefresh";
+import { toast } from "sonner";
 
 export default function Map() {
   const navigate = useNavigate();
