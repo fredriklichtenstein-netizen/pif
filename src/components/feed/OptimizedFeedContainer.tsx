@@ -15,6 +15,8 @@ import { useSwipeGestures } from '@/hooks/mobile/useSwipeGestures';
 import { useVibration } from '@/hooks/mobile/useVibration';
 import { EnhancedLoading } from '@/components/ui/enhanced-loading';
 import { PullToRefresh } from '@/components/common/PullToRefresh';
+import { RefreshOverlay } from '@/components/common/RefreshOverlay';
+import { FeedSkeleton } from './FeedSkeleton';
 import { DEMO_MODE } from '@/config/demoMode';
 import { useTranslation } from 'react-i18next';
 import { useDistanceFiltering } from '@/hooks/useDistanceFiltering';
@@ -35,6 +37,8 @@ export function OptimizedFeedContainer() {
     () => getStoredLocation()
   );
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const memoizedPosts = useMemo(() => posts, [posts]);
 
   const { filteredPosts, selectedDistance, setSelectedDistance } =
@@ -42,8 +46,13 @@ export function OptimizedFeedContainer() {
 
   const handleRefresh = useCallback(async () => {
     announce(t('interactions.refreshing_feed'), "polite");
-    await measureFetch(refresh);
-    announce(t('interactions.feed_refreshed'), "polite");
+    setIsRefreshing(true);
+    try {
+      await measureFetch(refresh);
+      announce(t('interactions.feed_refreshed'), "polite");
+    } finally {
+      setIsRefreshing(false);
+    }
   }, [announce, measureFetch, refresh, t]);
 
   const handleLoadMore = useCallback(async () => {
