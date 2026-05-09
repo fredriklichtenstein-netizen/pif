@@ -106,8 +106,9 @@ export const getOptimizedPosts = async (
       // Non-fatal — counts will still load lazily.
     }
 
-    // Cache the results
+    // Cache the results in both layers.
     DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
+    setCache(persistentKey, transformedPosts, PERSISTENT_TTL);
     // Record performance metrics
     performanceMetrics.recordMetric({
       id: `posts-fetch-${Date.now()}`,
