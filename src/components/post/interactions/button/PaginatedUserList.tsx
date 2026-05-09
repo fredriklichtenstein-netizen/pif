@@ -88,15 +88,38 @@ export function PaginatedUserList({
     [fetchPage, hasMore, type]
   );
 
-  // Initial page on mount.
-  useEffect(() => {
+  const reload = useCallback(() => {
+    inFlightRef.current = false;
     offsetRef.current = 0;
     seenRef.current = new Set();
-    setUsers([]);
     setHasMore(true);
+    setUsers([]);
     loadNext(true);
+  }, [loadNext]);
+
+  // Initial page on mount.
+  useEffect(() => {
+    reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Realtime: when the underlying table changes for this item, refresh
+  // the list (debounced) so the popover stays in sync across sessions.
+  useEffect(() => {
+    if (!itemId) return;
+    const table = TYPE_TO_TABLE[type];
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribeItemTable(itemId, table, () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        reload();
+      }, 400);
+    });
+    return () => {
+      unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
+  }, [itemId, type, reload]);
 
   // IntersectionObserver to auto-load next page as the sentinel scrolls into view.
   useEffect(() => {
