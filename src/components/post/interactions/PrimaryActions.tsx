@@ -15,6 +15,7 @@ interface PrimaryActionsProps {
   showInterest: boolean;
   isOwner: boolean;
   itemId: string;
+  itemOwnerId?: string;
   currentUserId?: string;
   hasCommented?: boolean;
   commentsCount?: number;
