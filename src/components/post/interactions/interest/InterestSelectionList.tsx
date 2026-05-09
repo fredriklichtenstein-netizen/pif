@@ -136,7 +136,11 @@ export function InterestSelectionList({
       else setLoadingMore(true);
       try {
         const offset = initial ? 0 : offsetRef.current;
-        const { data, error: err } = await supabase
+        // Hard timeout so the popup never hangs forever on a stalled request.
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 8000),
+        );
+        const queryPromise = supabase
           .from("interests")
           .select(
             "id, user_id, status, created_at, profiles:user_id(id, first_name, last_name, avatar_url, reliability_score, completed_pifs, no_shows)"
@@ -144,6 +148,10 @@ export function InterestSelectionList({
           .eq("item_id", numericItemId)
           .order("created_at", { ascending: false })
           .range(offset, offset + PAGE_SIZE);
+        const { data, error: err } = (await Promise.race([
+          queryPromise,
+          timeoutPromise,
+        ])) as { data: any[] | null; error: any };
         if (err) throw err;
         const fetched = (data || []) as any[];
         const more = fetched.length > PAGE_SIZE;
