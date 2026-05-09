@@ -12,7 +12,7 @@ import type { User } from "./utils/userUtils";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useMyInterestStore } from "@/stores/myInterestStore";
 import { useItemInterestRealtime } from "./realtime/useItemInterestRealtime";
-import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export const useInterests = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -88,6 +88,8 @@ export const useInterests = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     
     const initializeInterests = async () => {
+      if (isAuthRequestCircuitOpen()) return;
+
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) {
         return;
@@ -106,7 +108,9 @@ export const useInterests = (id: string, userId?: string | null) => {
             .eq('item_id', numericId)
             .maybeSingle();
 
-          if (!userInterestError) {
+          if (userInterestError) {
+            maybeRecoverFromAuthError(userInterestError, "useInterests user interest fetch");
+          } else {
             setShowInterest(!!userInterest);
             setMyInterest(id, !!userInterest);
           }
@@ -126,6 +130,7 @@ export const useInterests = (id: string, userId?: string | null) => {
   // state in the global store and refetches the interested users list.
   useItemInterestRealtime(id, () => {
     if (DEMO_MODE) return;
+    if (isAuthRequestCircuitOpen()) return;
     const numericId = parseInt(id, 10);
     if (!isNaN(numericId)) fetchInterestedUsersInternal(numericId);
   });
