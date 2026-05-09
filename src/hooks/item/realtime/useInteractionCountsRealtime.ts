@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
 
 /**
  * Subscribes to inserts/deletes on the `likes` and `interests` tables
@@ -10,6 +11,9 @@ import { useInitialCountsStore } from "@/stores/initialCountsStore";
  * Uses authoritative HEAD COUNT queries instead of incrementing, to
  * avoid drift between the optimistic local state and what the database
  * actually has.
+ *
+ * Backed by the shared per-item channel manager so multiple mounted
+ * components don't each spin up their own Supabase channel.
  */
 export const useInteractionCountsRealtime = (itemId: string) => {
   useEffect(() => {
@@ -41,36 +45,12 @@ export const useInteractionCountsRealtime = (itemId: string) => {
       }
     };
 
-    const channel = supabase
-      .channel(`interaction-counts-${numericId}-${Date.now()}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "likes",
-          filter: `item_id=eq.${numericId}`,
-        },
-        setLikes
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "interests",
-          filter: `item_id=eq.${numericId}`,
-        },
-        setInterests
-      )
-      .subscribe();
+    const offLikes = subscribeItemTable(itemId, "likes", setLikes);
+    const offInterests = subscribeItemTable(itemId, "interests", setInterests);
 
     return () => {
-      try {
-        supabase.removeChannel(channel);
-      } catch {
-        /* noop */
-      }
+      offLikes();
+      offInterests();
     };
   }, [itemId]);
 };

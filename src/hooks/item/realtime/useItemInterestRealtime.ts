@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useMyInterestStore } from "@/stores/myInterestStore";
+import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
 
 /**
  * Per-item realtime subscription on the `interests` table:
@@ -10,6 +10,9 @@ import { useMyInterestStore } from "@/stores/myInterestStore";
  *    `interestedUsers` when anyone shows / removes interest.
  *
  * Counts are handled separately by useInteractionCountsRealtime.
+ *
+ * Uses the shared per-item channel manager — multiple components
+ * subscribing to the same item share one Supabase channel.
  */
 export const useItemInterestRealtime = (
   itemId: string,
@@ -24,39 +27,21 @@ export const useItemInterestRealtime = (
 
   useEffect(() => {
     if (!itemId) return;
-    const numericId = parseInt(itemId, 10);
-    if (isNaN(numericId)) return;
 
-    const channel = supabase
-      .channel(`item-interest-${numericId}-${Date.now()}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "interests",
-          filter: `item_id=eq.${numericId}`,
-        },
-        (payload: any) => {
-          const row = payload.new ?? payload.old;
-          if (row && userId && row.user_id === userId) {
-            if (payload.eventType === "INSERT") setMine(itemId, true);
-            else if (payload.eventType === "DELETE") setMine(itemId, false);
-          }
-          if (debounceRef.current) clearTimeout(debounceRef.current);
-          debounceRef.current = setTimeout(() => {
-            cbRef.current?.();
-          }, 300);
-        }
-      )
-      .subscribe();
+    const unsubscribe = subscribeItemTable(itemId, "interests", (payload) => {
+      const row = payload.new ?? payload.old;
+      if (row && userId && row.user_id === userId) {
+        if (payload.eventType === "INSERT") setMine(itemId, true);
+        else if (payload.eventType === "DELETE") setMine(itemId, false);
+      }
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        cbRef.current?.();
+      }, 300);
+    });
 
     return () => {
-      try {
-        supabase.removeChannel(channel);
-      } catch {
-        /* noop */
-      }
+      unsubscribe();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [itemId, userId, setMine]);
