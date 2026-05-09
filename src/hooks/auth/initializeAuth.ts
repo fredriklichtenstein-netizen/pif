@@ -4,6 +4,82 @@ import { useAuthStore } from "./authStore";
 import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_USER, DEMO_SESSION } from "@/data/mockUser";
 
+/**
+ * Recover from a corrupted auth state (e.g. stale JWT after a deploy).
+ * Clears Supabase auth tokens from localStorage, signs out, and redirects
+ * to /auth so the user can start a clean session — instead of being stuck
+ * on a blank page.
+ */
+const recoverFromCorruptedSession = async (reason: string) => {
+  console.warn("[auth] Detected corrupted session, recovering:", reason);
+  try {
+    await supabase.auth.signOut({ scope: "local" } as any);
+  } catch (e) {
+    // ignore — we'll wipe storage manually below
+  }
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const keys: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (k && (k.startsWith("sb-") || k.includes("supabase.auth"))) {
+          keys.push(k);
+        }
+      }
+      keys.forEach((k) => window.localStorage.removeItem(k));
+    }
+  } catch (e) {
+    console.error("[auth] failed to clear local storage", e);
+  }
+  try {
+    useAuthStore.getState().clearAuth();
+    useAuthStore.getState().setLoading(false);
+    useAuthStore.getState().setInitialized(true);
+  } catch {
+    // noop
+  }
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/auth" &&
+    window.location.pathname !== "/" &&
+    !window.location.pathname.startsWith("/reset-password") &&
+    !window.location.pathname.startsWith("/email-confirmation")
+  ) {
+    window.location.replace("/auth?recovered=1");
+  }
+};
+
+const isAuthInvalidError = (err: any): boolean => {
+  if (!err) return false;
+  const msg = String(err.message || err.error_description || "").toLowerCase();
+  const code = String(err.code || "").toUpperCase();
+  const status = Number(err.status || err.statusCode || 0);
+  if (status === 401 || status === 403) return true;
+  if (code === "PGRST301" || code === "PGRST302") return true;
+  return (
+    msg.includes("jwt expired") ||
+    msg.includes("invalid jwt") ||
+    msg.includes("jwt malformed") ||
+    msg.includes("invalid refresh token") ||
+    msg.includes("refresh token not found") ||
+    msg.includes("user from sub claim") ||
+    msg.includes("session not found") ||
+    msg.includes("token has expired")
+  );
+};
+
+const isNetworkError = (err: any): boolean => {
+  const msg = String(err?.message || "").toLowerCase();
+  return (
+    msg.includes("load failed") ||
+    msg.includes("fetch failed") ||
+    msg.includes("failed to fetch") ||
+    msg.includes("network error") ||
+    msg.includes("timeout")
+  );
+};
+
+
 export const initializeAuth = async () => {
   const auth = useAuthStore.getState();
   
@@ -35,13 +111,17 @@ export const initializeAuth = async () => {
     if (sessionError) {
       console.error('Error getting session:', sessionError);
       
-      // Check if it's a network error
-      if (sessionError.message?.includes('Load failed') || 
-          sessionError.message?.includes('fetch failed') || 
-          sessionError.message?.includes('Failed to fetch') || 
-          sessionError.message?.includes('Network Error') ||
-          sessionError.message?.includes('Timeout')) {
+      if (isNetworkError(sessionError)) {
         auth.setNetworkError(true);
+        auth.setError(sessionError);
+        auth.setLoading(false);
+        auth.setInitialized(true);
+        return;
+      }
+      
+      if (isAuthInvalidError(sessionError)) {
+        await recoverFromCorruptedSession(`getSession: ${sessionError.message}`);
+        return;
       }
       
       auth.setError(sessionError);
@@ -72,6 +152,11 @@ export const initializeAuth = async () => {
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
+          if (isAuthInvalidError(profileError)) {
+            await recoverFromCorruptedSession(`profile fetch: ${profileError.message}`);
+            return;
+          }
+          // Network/transient errors: don't wipe the session, just continue.
           auth.setError(profileError);
         } else {
           auth.setProfileCompleted(profile?.onboarding_completed ?? false);
