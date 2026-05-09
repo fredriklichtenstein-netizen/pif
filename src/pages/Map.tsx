@@ -194,6 +194,7 @@ export default function Map() {
               onClick={() =>
                 toast.message(t('interactions.filters_disabled_during_refresh'), {
                   id: 'refresh-filters-disabled',
+                  description: t('interactions.filters_disabled_during_refresh_description'),
                   duration: 1800,
                 })
               }
