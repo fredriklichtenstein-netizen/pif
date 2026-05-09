@@ -118,41 +118,41 @@ export default function Home() {
         )}
         
         {/* Community Stats */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-green-100 shadow-sm">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-green-100 shadow-sm max-w-3xl mx-auto w-full">
           <h3 className="text-center text-green-700 font-semibold mb-4 flex items-center justify-center space-x-2">
             <Users className="h-5 w-5" />
             <span>{t('home.community_growing')}</span>
           </h3>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-green-600">🤝</div>
-              <p className="text-xs text-gray-600 mt-1">{t('home.shared_pifs')}</p>
+              <div className="text-2xl sm:text-3xl font-bold text-green-600">🤝</div>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">{t('home.shared_pifs')}</p>
             </div>
             <div>
-              <div className="text-2xl font-bold text-blue-600">🌱</div>
-              <p className="text-xs text-gray-600 mt-1">{t('home.sustainable_choices')}</p>
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600">🌱</div>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">{t('home.sustainable_choices')}</p>
             </div>
             <div>
-              <div className="text-2xl font-bold text-purple-600">♻️</div>
-              <p className="text-xs text-gray-600 mt-1">{t('home.circular_economy')}</p>
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600">♻️</div>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">{t('home.circular_economy')}</p>
             </div>
           </div>
         </div>
         
         {/* Action Cards */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-4 mb-8 max-w-3xl mx-auto w-full">
           {/* Main CTA - Browse */}
           <Button
             onClick={() => navigate("/feed")}
-            className="w-full h-20 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded-2xl flex items-center justify-between p-6 shadow-lg transform transition-all hover:scale-105"
+            className="w-full h-20 sm:h-24 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white rounded-2xl flex items-center justify-between p-6 shadow-lg transform transition-all hover:scale-105"
           >
             <div className="flex items-center space-x-4">
               <div className="bg-white/20 rounded-full p-3">
                 <Heart className="h-6 w-6" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-lg">{t('home.discover_pifs')}</h3>
-                <p className="text-white/80 text-sm">{t('home.discover_description')}</p>
+                <h3 className="font-semibold text-base sm:text-lg">{t('home.discover_pifs')}</h3>
+                <p className="text-white/80 text-xs sm:text-sm">{t('home.discover_description')}</p>
               </div>
             </div>
             <ArrowRight className="h-5 w-5" />
@@ -162,7 +162,7 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-4">
             <Button
               onClick={() => navigate("/post")}
-              className="h-24 bg-gradient-to-br from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 border-2 border-green-300 rounded-2xl flex flex-col items-center justify-center space-y-2 text-green-700 transition-all"
+              className="h-24 sm:h-28 bg-gradient-to-br from-green-100 to-green-200 hover:from-green-200 hover:to-green-300 border-2 border-green-300 rounded-2xl flex flex-col items-center justify-center space-y-2 text-green-700 transition-all"
             >
               <Gift className="h-6 w-6" />
               <div className="text-center">
@@ -173,7 +173,7 @@ export default function Home() {
             
             <Button
               onClick={() => navigate("/map")}
-              className="h-24 bg-gradient-to-br from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 border-2 border-blue-300 rounded-2xl flex flex-col items-center justify-center space-y-2 text-blue-700 transition-all"
+              className="h-24 sm:h-28 bg-gradient-to-br from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 border-2 border-blue-300 rounded-2xl flex flex-col items-center justify-center space-y-2 text-blue-700 transition-all"
             >
               <MapPin className="h-6 w-6" />
               <div className="text-center">
@@ -185,9 +185,9 @@ export default function Home() {
         </div>
         
         {/* Mission Statement */}
-        <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-700">{t('home.why_pif')}</h2>
-          <div className="grid grid-cols-1 gap-4">
+        <div className="text-center space-y-4 max-w-5xl mx-auto">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-700">{t('home.why_pif')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
               <div className="flex items-start space-x-3">
                 <span className="text-green-600 text-lg">🌍</span>
