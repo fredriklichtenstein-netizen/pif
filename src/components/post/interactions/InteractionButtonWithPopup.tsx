@@ -99,7 +99,7 @@ export function InteractionButtonWithPopup({
   };
 
   const displayCount = count;
-  const isCounterInteractive = displayCount > 0 && !!onCounterClick;
+  const isCounterInteractive = displayCount > 0 && (!!onCounterClick || !!fetchPage);
 
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
