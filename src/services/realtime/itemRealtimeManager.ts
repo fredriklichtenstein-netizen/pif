@@ -93,10 +93,8 @@ const buildChannel = (entry: Entry) => {
     if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") {
       // If the failure is due to a stale/invalid JWT (e.g. after a deploy),
       // trigger global session recovery instead of looping reconnects.
-      void import("@/hooks/auth/sessionRecovery").then(({ maybeRecoverFromAuthError }) => {
-        if (maybeRecoverFromAuthError(err, `realtime channel ${s}`)) return;
-        scheduleReconnect(entry);
-      }).catch(() => scheduleReconnect(entry));
+      if (maybeRecoverFromAuthError(err, `realtime channel ${s}`)) return;
+      scheduleReconnect(entry);
     }
   });
 };
