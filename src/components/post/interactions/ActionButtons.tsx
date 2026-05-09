@@ -51,7 +51,11 @@ export function ActionButtons({
   fetchInterestedUsers,
   fetchCommenters,
 }: ActionButtonsProps) {
-  const fetchCommentersFn = fetchCommenters || (() => fetchCommentersForItem(itemId));
+  const fetchLikersPageFn = (offset: number) => fetchLikersPage(itemId, offset);
+  const fetchInterestedPageFn = (offset: number) =>
+    fetchInterestedUsersPage(itemId, offset);
+  const fetchCommentersPageFn = (offset: number, seen?: Set<string>) =>
+    fetchCommentersPage(itemId, offset, undefined, seen);
   return (
     <div className="flex flex-row border-t border-b border-gray-100 py-1">
       <InteractionButtonWithPopup
@@ -61,6 +65,7 @@ export function ActionButtons({
         users={likers}
         onClick={onLikeToggle}
         onCounterClick={fetchLikers}
+        fetchPage={fetchLikersPageFn}
         isOwner={isOwner}
         labelPassive="Like"
         labelActive="Liked"
@@ -74,7 +79,7 @@ export function ActionButtons({
         isActive={showComments}
         count={commentsCount}
         users={commenters}
-        onCounterClick={fetchCommentersFn}
+        fetchPage={fetchCommentersPageFn}
         onClick={onCommentToggle}
         isOwner={false}
         labelPassive="Comment"
@@ -91,6 +96,7 @@ export function ActionButtons({
         users={interestedUsers}
         onClick={onShowInterest}
         onCounterClick={fetchInterestedUsers}
+        fetchPage={fetchInterestedPageFn}
         isOwner={isOwner}
         labelPassive="Interest"
         labelActive="Interested"
