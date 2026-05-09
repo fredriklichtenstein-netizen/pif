@@ -163,7 +163,15 @@ export default function Map() {
       >
         <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
           <FadeIn className="h-full">
-            <div className="absolute inset-0 z-0">
+            {/* `inert` blocks pointer + keyboard + focus on every
+                descendant — including MapFilters, the distance slider
+                and the "my location" control — so users can't change
+                the map state while a refresh is in flight. */}
+            <div
+              className="absolute inset-0 z-0"
+              aria-busy={isRefreshing}
+              {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
+            >
               <SlideIn direction="up" className="h-full">
                 <MapContainer
                   mapboxToken={mapToken}
