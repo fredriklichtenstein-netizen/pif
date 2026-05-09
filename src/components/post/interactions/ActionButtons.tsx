@@ -1,7 +1,11 @@
 
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./ShareButton";
-import { fetchCommentersForItem } from "@/services/comments/fetchCommenters";
+import {
+  fetchLikersPage,
+  fetchInterestedUsersPage,
+  fetchCommentersPage,
+} from "@/services/interactions/fetchPaginatedUsers";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface ActionButtonsProps {
