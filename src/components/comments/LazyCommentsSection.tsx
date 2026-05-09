@@ -1,13 +1,13 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useLazyComments } from "@/hooks/comments/useLazyComments";
 import { useCommentActions } from "@/hooks/comments/useCommentActions";
 import { useCommentRealtime } from "@/hooks/comments/useCommentRealtime";
+import { useCommentLikesRealtime } from "@/hooks/comments/useCommentLikesRealtime";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { CommentsPanel } from "./CommentsPanel";
 import { CommentsBannerSection } from "./CommentsBannerSection";
-import type { Comment } from "@/types/comment";
 
 interface LazyCommentsSectionProps {
   itemId: string;
@@ -26,17 +26,16 @@ export function LazyCommentsSection({
     setComments,
     isLoading,
     error,
-    loadComments,
     refreshComments,
     isInitialized,
     useFallbackMode
   } = useLazyComments(itemId);
 
+  // Tracks the most recently added comment id so we can smoothly scroll to it.
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!isVisible) return;
-    // Load on open; subsequent updates come from realtime/polling.
-    // Intentionally exclude refreshComments from deps — its identity
-    // changes each render and would cause an infinite refetch loop.
     refreshComments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible, itemId]);
@@ -48,6 +47,7 @@ export function LazyCommentsSection({
   } : undefined;
 
   const { isSubscribed, error: realtimeError } = useCommentRealtime(itemId, comments, setComments, refreshComments);
+  useCommentLikesRealtime(itemId, comments, setComments);
 
   const {
     handleAddComment,
@@ -58,50 +58,18 @@ export function LazyCommentsSection({
     handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser, useFallbackMode);
 
-  // Wrap add to refetch from DB after insert (don't rely on realtime)
-  const handleAddCommentWithRefetch = async (text: string) => {
-    const result = await handleAddComment(text);
-    // Delay refetch to avoid AbortError race with in-flight controllers
-    console.log('[LazyCommentsSection] Scheduling post-insert refetch in 300ms');
-    setTimeout(() => {
-      refreshComments();
-    }, 300);
+  // Optimistic add — no flicker, no full refetch. Realtime fills in for others.
+  const handleAddCommentSmooth = async (text: string) => {
+    const result: any = await handleAddComment(text);
+    if (result?.id) setHighlightedCommentId(String(result.id));
     return result;
   };
 
-  useEffect(() => {
-    // Only process local comments if in fallback mode and we have a current user
-    if (useFallbackMode && currentUser?.id && isInitialized) {
-      try {
-        const pendingCommentsJson = localStorage.getItem(`pending_comments_${itemId}`);
-        if (!pendingCommentsJson) return;
-        const pendingComments = JSON.parse(pendingCommentsJson);
-        if (!Array.isArray(pendingComments) || pendingComments.length === 0) return;
-        const existingIds = new Set(comments.map(c => c.id));
-        const newPendingComments = pendingComments.filter(pc => !existingIds.has(pc.id));
-        if (newPendingComments.length > 0) {
-          const formattedComments = newPendingComments.map((pc: any) => ({
-            id: pc.id,
-            text: pc.content,
-            author: {
-              id: currentUser.id,
-              name: currentUser.name || 'User',
-              avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`
-            },
-            createdAt: new Date(pc.createdAt),
-            likes: 0,
-            isLiked: false,
-            replies: [],
-            isOwn: true,
-            isPending: true
-          }));
-          setComments([...comments, ...formattedComments]);
-        }
-      } catch (err) {
-        console.error("Error processing pending comments:", err);
-      }
-    }
-  }, [useFallbackMode, currentUser, itemId, isInitialized, comments, setComments]);
+  const handleReplySmooth = async (commentId: string, text: string) => {
+    const result: any = await handleReplyToComment(commentId, text);
+    if (result?.id) setHighlightedCommentId(String(result.id));
+    return result;
+  };
 
   if (!isVisible) return null;
 
@@ -125,13 +93,14 @@ export function LazyCommentsSection({
           useFallbackMode={useFallbackMode}
           isInitialized={isInitialized}
           currentUser={currentUser}
-          onAddComment={handleAddCommentWithRefetch}
+          onAddComment={handleAddCommentSmooth}
           onLike={handleLikeComment}
           onDelete={handleDeleteComment}
           onEdit={handleEditComment}
-          onReply={handleReplyToComment}
+          onReply={handleReplySmooth}
           onReport={handleReportComment}
           refreshComments={refreshComments}
+          newCommentId={highlightedCommentId}
         />
       </div>
     </Card>
