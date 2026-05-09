@@ -21,6 +21,7 @@ import { DEMO_MODE } from '@/config/demoMode';
 import { useTranslation } from 'react-i18next';
 import { useDistanceFiltering } from '@/hooks/useDistanceFiltering';
 import { useLocationStorage } from '@/components/map/location/useLocationStorage';
+import { useRefreshSyncStore } from '@/stores/refreshSyncStore';
 import type { Post } from '@/types/post';
 
 export function OptimizedFeedContainer() {
@@ -37,7 +38,11 @@ export function OptimizedFeedContainer() {
     () => getStoredLocation()
   );
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // Shared cross-view refresh state — when the map kicks off a refresh
+  // we mirror the overlay/skeletons here, and vice versa.
+  const isRefreshing = useRefreshSyncStore((s) => s.isRefreshing);
+  const beginRefresh = useRefreshSyncStore((s) => s.begin);
+  const endRefresh = useRefreshSyncStore((s) => s.end);
 
   const memoizedPosts = useMemo(() => posts, [posts]);
 
@@ -46,14 +51,14 @@ export function OptimizedFeedContainer() {
 
   const handleRefresh = useCallback(async () => {
     announce(t('interactions.refreshing_feed'), "polite");
-    setIsRefreshing(true);
+    beginRefresh();
     try {
       await measureFetch(refresh);
       announce(t('interactions.feed_refreshed'), "polite");
     } finally {
-      setIsRefreshing(false);
+      endRefresh();
     }
-  }, [announce, measureFetch, refresh, t]);
+  }, [announce, measureFetch, refresh, t, beginRefresh, endRefresh]);
 
   const handleLoadMore = useCallback(async () => {
     announce(t('interactions.loading_more_posts'), "polite");

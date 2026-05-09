@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
 import { RefreshOverlay } from "@/components/common/RefreshOverlay";
+import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -24,7 +25,9 @@ export default function Map() {
   const { announce } = useAnnouncement();
   const { posts, isLoading, refreshPosts } = useFeedPosts();
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isRefreshing = useRefreshSyncStore((s) => s.isRefreshing);
+  const beginRefresh = useRefreshSyncStore((s) => s.begin);
+  const endRefresh = useRefreshSyncStore((s) => s.end);
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken, needsToken, setDemoToken } = useMapbox();
   const [tokenInput, setTokenInput] = useState("");
   const { t } = useTranslation();
@@ -147,12 +150,12 @@ export default function Map() {
       <PullToRefresh
         onRefresh={async () => {
           announce(t('interactions.refreshing_feed'), 'polite');
-          setIsRefreshing(true);
+          beginRefresh();
           try {
             await refreshPosts();
             announce(t('interactions.feed_refreshed'), 'polite');
           } finally {
-            setIsRefreshing(false);
+            endRefresh();
           }
         }}
         disabled={isLoading || isRefreshing}
