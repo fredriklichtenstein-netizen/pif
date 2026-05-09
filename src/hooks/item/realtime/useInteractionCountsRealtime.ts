@@ -5,7 +5,7 @@ import {
   subscribeItemTable,
   subscribeItemStatus,
 } from "@/services/realtime/itemRealtimeManager";
-import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 const POLL_INTERVAL_MS = 15000;
 
@@ -24,6 +24,7 @@ export const useInteractionCountsRealtime = (itemId: string) => {
     if (isNaN(numericId)) return;
 
     const setLikes = async () => {
+      if (isAuthRequestCircuitOpen()) return;
       const { count, error } = await supabase
         .from("likes")
         .select("id", { count: "exact", head: true })
@@ -40,6 +41,7 @@ export const useInteractionCountsRealtime = (itemId: string) => {
     };
 
     const setInterests = async () => {
+      if (isAuthRequestCircuitOpen()) return;
       const { count, error } = await supabase
         .from("interests")
         .select("id", { count: "exact", head: true })
@@ -69,6 +71,7 @@ export const useInteractionCountsRealtime = (itemId: string) => {
       }
     };
     const startPolling = () => {
+      if (isAuthRequestCircuitOpen()) return;
       if (pollTimer) return;
       pollTimer = setInterval(() => {
         setLikes();

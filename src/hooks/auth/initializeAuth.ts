@@ -12,6 +12,30 @@ import {
 
 export { clearRecoveryGuard } from "./sessionRecovery";
 
+const applyProfileCompletion = async (
+  profile: { onboarding_completed?: boolean | null } | null | undefined,
+  context: string,
+  setCompleted: (completed: boolean | null) => void,
+) => {
+  if (!profile) {
+    setCompleted(false);
+    return true;
+  }
+
+  if (typeof profile.onboarding_completed === "boolean") {
+    setCompleted(profile.onboarding_completed);
+    return true;
+  }
+
+  if (profile.onboarding_completed === null) {
+    setCompleted(false);
+    return true;
+  }
+
+  await recoverFromCorruptedSession(`${context}: onboarding_completed missing`);
+  return false;
+};
+
 
 export const initializeAuth = async () => {
   const auth = useAuthStore.getState();
@@ -85,19 +109,26 @@ export const initializeAuth = async () => {
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          if (isAuthInvalidError(profileError)) {
+          if (isAuthInvalidError(profileError) || !isNetworkError(profileError)) {
             await recoverFromCorruptedSession(`profile fetch: ${profileError.message}`);
             return;
           }
           // Network/transient errors: don't wipe the session, just continue.
           auth.setError(profileError);
         } else {
-          auth.setProfileCompleted(profile?.onboarding_completed ?? false);
+          const ok = await applyProfileCompletion(profile, "profile fetch", auth.setProfileCompleted);
+          if (!ok) return;
         }
       } catch (error) {
         console.error('Error in profile check:', error);
-        // Don't fail the whole auth process for profile check errors
-        auth.setProfileCompleted(false);
+        if (!isNetworkError(error)) {
+          await recoverFromCorruptedSession(
+            `profile fetch exception: ${error instanceof Error ? error.message : String(error)}`
+          );
+          return;
+        }
+        // Network/transient errors should not force users out.
+        auth.setError(error instanceof Error ? error : new Error(String(error)));
       }
     } else {
       
@@ -159,12 +190,19 @@ export const initializeAuth = async () => {
             .eq('id', session.user.id)
             .maybeSingle();
 
-          currentAuth.setProfileCompleted(profile?.onboarding_completed ?? false);
+          const ok = await applyProfileCompletion(profile, "auth change profile fetch", currentAuth.setProfileCompleted);
+          if (!ok) return;
           // Successful sign-in + profile load — reset recovery loop guard.
           clearRecoveryGuard();
         } catch (error) {
           console.error('Error in profile check on auth change:', error);
-          currentAuth.setProfileCompleted(false);
+          if (!isNetworkError(error)) {
+            await recoverFromCorruptedSession(
+              `auth change profile exception: ${error instanceof Error ? error.message : String(error)}`
+            );
+            return;
+          }
+          currentAuth.setError(error instanceof Error ? error : new Error(String(error)));
         }
       }
     }

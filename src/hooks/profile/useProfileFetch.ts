@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProfileFormData } from "./types";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useTranslation } from "react-i18next";
+import { isAuthInvalidError, isNetworkError, recoverFromCorruptedSession } from "@/hooks/auth/sessionRecovery";
 
 const profileCache = new Map<string, {
   data: ProfileFormData;
@@ -64,7 +65,14 @@ export const useProfileFetch = () => {
       
       clearTimeout(timeoutId);
 
-      if (profileError) { console.error("Error fetching profile:", profileError); throw profileError; }
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        if (isAuthInvalidError(profileError) || !isNetworkError(profileError)) {
+          await recoverFromCorruptedSession(`profile edit fetch: ${profileError.message}`);
+          return;
+        }
+        throw profileError;
+      }
 
       if (profile) {
         fetchAttempts.current = 0;
@@ -98,6 +106,12 @@ export const useProfileFetch = () => {
         return;
       }
       console.error("Error fetching profile:", error);
+      if (!isNetworkError(error)) {
+        await recoverFromCorruptedSession(
+          `profile edit exception: ${error instanceof Error ? error.message : String(error)}`
+        );
+        return;
+      }
       setError(error instanceof Error ? error : new Error(String(error)));
       toast({ title: t('interactions.error_title'), description: t('interactions.profile_load_failed', { error: error.message || 'Unknown error' }), variant: "destructive" });
     } finally { setLoading(false); }

@@ -10,7 +10,7 @@ import type { User } from "./utils/userUtils";
 import { useTranslation } from "react-i18next";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useItemLikesRealtime } from "./realtime/useItemLikesRealtime";
-import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -53,6 +53,11 @@ export const useLikes = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     
     const fetchLikes = async () => {
+      if (isAuthRequestCircuitOpen()) {
+        setLoading(false);
+        return;
+      }
+
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) {
         setLoading(false);
@@ -69,7 +74,9 @@ export const useLikes = (id: string, userId?: string | null) => {
             .eq('item_id', numericId)
             .maybeSingle();
 
-          if (!likeError) {
+          if (likeError) {
+            maybeRecoverFromAuthError(likeError, "useLikes like status fetch");
+          } else {
             setIsLiked(!!likeData);
           }
         }
@@ -87,6 +94,8 @@ export const useLikes = (id: string, userId?: string | null) => {
   }, [id, userId]);
 
   const fetchLikersInternal = async (numericId: number): Promise<User[]> => {
+    if (isAuthRequestCircuitOpen()) return [];
+
     try {
       const { data: likesData, error: likesError } = await supabase
         .from('likes')
@@ -94,6 +103,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         .eq('item_id', numericId);
         
       if (likesError) {
+        if (maybeRecoverFromAuthError(likesError, "useLikes likers fetch")) throw likesError;
         console.error('Error fetching likes data:', likesError);
         return [];
       }
@@ -114,6 +124,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         .in('id', userIds);
       
       if (profilesError) {
+        if (maybeRecoverFromAuthError(profilesError, "useLikes profiles fetch")) throw profilesError;
         console.error('Error fetching profiles:', profilesError);
         return [];
       }
@@ -132,6 +143,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       setLikers(users);
       return users;
     } catch (error) {
+      if (maybeRecoverFromAuthError(error, "useLikes fetchLikersInternal")) throw error;
       console.error('Error in fetchLikersInternal:', error);
       return [];
     }
@@ -187,6 +199,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       });
     } catch (error) {
       console.error('Error toggling like:', error);
+      if (maybeRecoverFromAuthError(error, "toggle like")) return;
       
       setIsLiked(wasLiked);
       setLikesCount(previousCount);

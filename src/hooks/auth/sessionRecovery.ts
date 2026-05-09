@@ -19,12 +19,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "./authStore";
 
 const RECOVERY_GUARD_KEY = "auth.recoveryGuard";
+const AUTH_REQUEST_CIRCUIT_KEY = "auth.requestCircuit";
 const RECOVERY_WINDOW_MS = 60_000;
 const RECOVERY_MAX_ATTEMPTS = 2;
+const AUTH_REQUEST_CIRCUIT_OPEN_MS = 60_000;
 
 interface RecoveryGuardState {
   count: number;
   firstAt: number;
+}
+
+interface AuthRequestCircuitState {
+  openUntil: number;
+  reason: string;
 }
 
 const readGuard = (): RecoveryGuardState => {
@@ -51,8 +58,36 @@ const writeGuard = (state: RecoveryGuardState) => {
 export const clearRecoveryGuard = () => {
   try {
     window.sessionStorage.removeItem(RECOVERY_GUARD_KEY);
+    window.sessionStorage.removeItem(AUTH_REQUEST_CIRCUIT_KEY);
   } catch {
     /* ignore */
+  }
+};
+
+const writeAuthCircuit = (state: AuthRequestCircuitState) => {
+  try {
+    window.sessionStorage.setItem(AUTH_REQUEST_CIRCUIT_KEY, JSON.stringify(state));
+  } catch {
+    /* ignore */
+  }
+};
+
+export const openAuthRequestCircuit = (reason: string) => {
+  writeAuthCircuit({ openUntil: Date.now() + AUTH_REQUEST_CIRCUIT_OPEN_MS, reason });
+};
+
+export const isAuthRequestCircuitOpen = (): boolean => {
+  try {
+    const raw = window.sessionStorage.getItem(AUTH_REQUEST_CIRCUIT_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw) as AuthRequestCircuitState;
+    if (!state?.openUntil || Date.now() >= state.openUntil) {
+      window.sessionStorage.removeItem(AUTH_REQUEST_CIRCUIT_KEY);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
   }
 };
 
@@ -117,6 +152,7 @@ export const recoverFromCorruptedSession = async (
       firstAt: guard.firstAt || Date.now(),
     });
 
+    openAuthRequestCircuit(reason);
     console.warn("[auth] Detected corrupted session, recovering:", reason);
     try {
       await supabase.auth.signOut({ scope: "local" } as any);
@@ -189,6 +225,7 @@ export const maybeRecoverFromAuthError = (
   reason: string,
 ): boolean => {
   if (!isAuthInvalidError(err)) return false;
+  openAuthRequestCircuit(reason);
   // Fire and forget — caller doesn't need to await.
   void recoverFromCorruptedSession(reason);
   return true;

@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError, openAuthRequestCircuit } from "@/hooks/auth/sessionRecovery";
 
 /**
  * Shared per-item realtime subscription manager.
@@ -40,6 +40,7 @@ interface Entry {
 const entries = new Map<number, Entry>();
 const TABLES: ItemTable[] = ["likes", "interests", "comments"];
 const BACKOFFS_MS = [1000, 2000, 5000, 10000, 15000];
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 const setStatus = (entry: Entry, status: RealtimeStatus) => {
   entry.status = status;
@@ -53,6 +54,7 @@ const setStatus = (entry: Entry, status: RealtimeStatus) => {
 };
 
 const buildChannel = (entry: Entry) => {
+  if (isAuthRequestCircuitOpen()) return;
   const { numericId, listeners } = entry;
   const channel = supabase.channel(`item-shared-${numericId}-${Date.now()}`);
 
@@ -102,6 +104,15 @@ const buildChannel = (entry: Entry) => {
 const scheduleReconnect = (entry: Entry) => {
   if (entry.retryTimer) return;
   if (entry.refCount <= 0) return;
+  if (isAuthRequestCircuitOpen()) return;
+  if (entry.retryCount >= MAX_RECONNECT_ATTEMPTS) {
+    openAuthRequestCircuit(`item realtime retry limit for ${entry.numericId}`);
+    console.warn("[itemRealtimeManager] reconnect circuit opened", {
+      itemId: entry.numericId,
+      attempts: entry.retryCount,
+    });
+    return;
+  }
   const delay =
     BACKOFFS_MS[Math.min(entry.retryCount, BACKOFFS_MS.length - 1)];
   entry.retryTimer = setTimeout(() => {

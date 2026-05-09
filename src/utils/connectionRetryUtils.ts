@@ -13,6 +13,12 @@
  * @returns A Promise that resolves with the successful result of the function,
  *          or rejects if all retry attempts fail.
  */
+import {
+  isAuthInvalidError,
+  isAuthRequestCircuitOpen,
+  maybeRecoverFromAuthError,
+} from "@/hooks/auth/sessionRecovery";
+
 export const withRetry = async <T>(
   fn: () => Promise<T>,
   options: {
@@ -37,9 +43,18 @@ export const withRetry = async <T>(
   let delay = initialDelay;
 
   while (attempt < maxAttempts) {
+    if (isAuthRequestCircuitOpen()) {
+      throw new Error("Auth request circuit is open");
+    }
+
     try {
       return await fn();
     } catch (error) {
+      if (isAuthInvalidError(error)) {
+        maybeRecoverFromAuthError(error, "connection retry auth invalid");
+        throw error;
+      }
+
       attempt++;
       if (attempt >= maxAttempts) {
         onFail?.();

@@ -16,6 +16,7 @@ import { ArchivedPifsGrid } from "@/components/profile/ArchivedPifsGrid";
 import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_PROFILE } from "@/data/mockProfiles";
 import { useTranslation } from "react-i18next";
+import { isAuthInvalidError, isNetworkError, recoverFromCorruptedSession } from "@/hooks/auth/sessionRecovery";
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
@@ -52,6 +53,9 @@ const Profile = () => {
         
       if (error) {
         console.error("Error fetching profile data:", error);
+        if (isAuthInvalidError(error) || !isNetworkError(error)) {
+          await recoverFromCorruptedSession(`profile page fetch: ${error.message}`);
+        }
         return;
       }
       
@@ -69,6 +73,11 @@ const Profile = () => {
       }
     } catch (err) {
       console.error("Error in profile data fetch:", err);
+      if (!isNetworkError(err)) {
+        await recoverFromCorruptedSession(
+          `profile page exception: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
     } finally {
       setLoading(false);
     }

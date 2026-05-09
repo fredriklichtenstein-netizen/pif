@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { isAuthRequestCircuitOpen, openAuthRequestCircuit } from "@/hooks/auth/sessionRecovery";
 
 /**
  * Single shared global channel for `comment_likes` realtime events.
@@ -19,6 +20,7 @@ const listeners = new Set<Listener>();
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let retryCount = 0;
 const BACKOFFS_MS = [1000, 2000, 5000, 10000, 15000];
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 const teardown = () => {
   if (channel) {
@@ -32,6 +34,7 @@ const teardown = () => {
 };
 
 const build = () => {
+  if (isAuthRequestCircuitOpen()) return;
   channel = supabase
     .channel(`comment-likes-shared-${Date.now()}`)
     .on(
@@ -58,6 +61,12 @@ const build = () => {
         status === "CLOSED"
       ) {
         if (retryTimer || listeners.size === 0) return;
+        if (isAuthRequestCircuitOpen()) return;
+        if (retryCount >= MAX_RECONNECT_ATTEMPTS) {
+          openAuthRequestCircuit("comment likes realtime retry limit");
+          console.warn("[commentLikesManager] reconnect circuit opened", { attempts: retryCount });
+          return;
+        }
         const delay = BACKOFFS_MS[Math.min(retryCount, BACKOFFS_MS.length - 1)];
         retryTimer = setTimeout(() => {
           retryTimer = null;

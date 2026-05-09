@@ -6,7 +6,7 @@ import { useAuthCheck } from "./utils/authCheck";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useTranslation } from "react-i18next";
-import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export const useBookmarks = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -28,6 +28,11 @@ export const useBookmarks = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     
     const fetchBookmarks = async () => {
+      if (isAuthRequestCircuitOpen()) {
+        setLoading(false);
+        return;
+      }
+
       const numericId = parseInt(id, 10);
       if (isNaN(numericId) || !userId) {
         setLoading(false);
@@ -43,7 +48,9 @@ export const useBookmarks = (id: string, userId?: string | null) => {
           .eq('item_id', numericId)
           .maybeSingle();
           
-        if (!bookmarkError) {
+        if (bookmarkError) {
+          maybeRecoverFromAuthError(bookmarkError, "useBookmarks status fetch");
+        } else {
           setIsBookmarked(!!bookmark);
         }
       } catch (error) {
@@ -93,6 +100,7 @@ export const useBookmarks = (id: string, userId?: string | null) => {
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
+      if (maybeRecoverFromAuthError(error, "toggle bookmark")) return;
       toast({
         title: t('post.error'),
         description: t('interactions.bookmark_error'),
