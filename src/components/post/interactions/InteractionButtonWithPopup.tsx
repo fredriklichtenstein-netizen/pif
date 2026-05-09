@@ -153,6 +153,8 @@ export function InteractionButtonWithPopup({
             isInteractive={isCounterInteractive}
             fetchPage={fetchPage}
             itemId={itemId}
+            itemOwnerId={itemOwnerId}
+            currentUserId={currentUserId}
           />
         </div>
       )}
