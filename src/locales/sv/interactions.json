@@ -595,5 +595,12 @@
     "rating_thanks_no_show": "Sparat som en utebliven träff.",
     "rating_failed_title": "Kunde inte spara ditt omdöme",
     "rating_failed_description": "Försök igen om en stund."
-  }
+  },
+  "notifications": {
+    "is_interested_in_your_pif": "är intresserad av din pif",
+    "review_interest_to_select": "Öppna inlägget för att se intresserade och välja en mottagare.",
+    "review_interest_cta": "Granska intresse",
+    "selected_for_item": "Du har valts som mottagare för \"{{title}}\". Öppna konversationen för att samordna hämtning."
+  },
+  "someone": "Någon"
 }
