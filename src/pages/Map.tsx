@@ -25,7 +25,9 @@ export default function Map() {
   const { announce } = useAnnouncement();
   const { posts, isLoading, refreshPosts } = useFeedPosts();
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isRefreshing = useRefreshSyncStore((s) => s.isRefreshing);
+  const beginRefresh = useRefreshSyncStore((s) => s.begin);
+  const endRefresh = useRefreshSyncStore((s) => s.end);
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken, needsToken, setDemoToken } = useMapbox();
   const [tokenInput, setTokenInput] = useState("");
   const { t } = useTranslation();
