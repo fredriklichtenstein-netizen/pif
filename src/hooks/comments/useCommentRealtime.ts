@@ -1,15 +1,23 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Comment } from '@/types/comment';
 import { formatCommentFromDB } from '@/hooks/item/utils/commentFormatters';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import {
+  subscribeItemTable,
+  subscribeItemStatus,
+} from '@/services/realtime/itemRealtimeManager';
 
 const POLL_INTERVAL_MIN_MS = 15000;
 const POLL_INTERVAL_MAX_MS = 120000;
 
+/**
+ * Subscribes to comments changes for an item, with polling fallback when
+ * realtime is unavailable. Backed by the shared per-item channel manager
+ * so multiple comment panels for the same item reuse one Supabase channel.
+ */
 export const useCommentRealtime = (
   itemId: string,
   comments: Comment[],
@@ -36,10 +44,8 @@ export const useCommentRealtime = (
         if (isSubscribedRef.current) return;
         try {
           await Promise.resolve(refreshComments());
-          // success → reset backoff
           pollDelayRef.current = POLL_INTERVAL_MIN_MS;
         } catch (err) {
-          // failure → exponential backoff up to max
           pollDelayRef.current = Math.min(
             pollDelayRef.current * 2,
             POLL_INTERVAL_MAX_MS
@@ -58,29 +64,36 @@ export const useCommentRealtime = (
 
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [subscriptionAttempts, setSubscriptionAttempts] = useState(0);
-  const [channel, setChannel] = useState<ReturnType<typeof supabase.channel> | null>(null);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const MAX_SUBSCRIPTION_ATTEMPTS = 3;
 
-  // Add comment to the list (for inserts) — supports replies via parent_id.
+  // Stable refs so the manager callbacks always see latest values without
+  // re-subscribing (which would defeat the shared-channel purpose).
+  const commentsRef = useRef(comments);
+  commentsRef.current = comments;
+  const setCommentsRef = useRef(setComments);
+  setCommentsRef.current = setComments;
+  const userIdRef = useRef(user?.id);
+  userIdRef.current = user?.id;
+
   const handleCommentInsert = useCallback((newComment: any) => {
-    const formattedComment = formatCommentFromDB(newComment, newComment.user_id === user?.id);
+    const list = commentsRef.current;
+    const setList = setCommentsRef.current;
+    const myId = userIdRef.current;
+    const formattedComment = formatCommentFromDB(newComment, newComment.user_id === myId);
     const parentId = newComment.parent_id ? String(newComment.parent_id) : null;
 
     if (parentId) {
-      // Reply — append under parent if not already present.
-      const exists = comments.some(c => c.replies?.some(r => r.id === formattedComment.id));
+      const exists = list.some(c => c.replies?.some(r => r.id === formattedComment.id));
       if (exists) return;
-      setComments(comments.map(c =>
+      setList(list.map(c =>
         c.id === parentId
           ? { ...c, replies: [...(c.replies ?? []), formattedComment] }
           : c
       ));
 
-      if (newComment.user_id !== user?.id) {
+      if (newComment.user_id !== myId) {
         toast({
           title: t('interactions.new_comment'),
           description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
@@ -89,23 +102,25 @@ export const useCommentRealtime = (
       return;
     }
 
-    if (!comments.some(c => c.id === formattedComment.id)) {
-      setComments([...comments, formattedComment]);
+    if (!list.some(c => c.id === formattedComment.id)) {
+      setList([...list, formattedComment]);
 
-      if (newComment.user_id !== user?.id) {
+      if (newComment.user_id !== myId) {
         toast({
           title: t('interactions.new_comment'),
           description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
         });
       }
     }
-  }, [comments, user?.id, setComments, toast, t]);
+  }, [toast, t]);
 
-  // Update an existing comment (for updates) — walks replies too.
   const handleCommentUpdate = useCallback((updatedComment: any) => {
-    const formatted = formatCommentFromDB(updatedComment, updatedComment.user_id === user?.id);
+    const list = commentsRef.current;
+    const setList = setCommentsRef.current;
+    const myId = userIdRef.current;
+    const formatted = formatCommentFromDB(updatedComment, updatedComment.user_id === myId);
     const targetId = String(updatedComment.id);
-    setComments(comments.map(c => {
+    setList(list.map(c => {
       if (c.id === targetId) return { ...formatted, replies: c.replies, likes: c.likes, isLiked: c.isLiked };
       if (c.replies?.some(r => r.id === targetId)) {
         return {
@@ -117,13 +132,14 @@ export const useCommentRealtime = (
       }
       return c;
     }));
-  }, [comments, user?.id, setComments]);
+  }, []);
 
-  // Remove a comment from the list (for deletes) — walks replies too.
   const handleCommentDelete = useCallback((deletedComment: any) => {
+    const list = commentsRef.current;
+    const setList = setCommentsRef.current;
     const targetId = String(deletedComment.id);
-    setComments(
-      comments
+    setList(
+      list
         .filter(c => c.id !== targetId)
         .map(c =>
           c.replies?.some(r => r.id === targetId)
@@ -131,96 +147,49 @@ export const useCommentRealtime = (
             : c
         )
     );
-  }, [comments, setComments]);
-
-  // Clean up function for supabase channels
-  const cleanupChannel = useCallback(() => {
-    if (channel) {
-      supabase.removeChannel(channel);
-      setChannel(null);
-    } else {
-    }
-  }, [channel, itemId]);
+  }, []);
 
   useEffect(() => {
-    if (!itemId || subscriptionAttempts >= MAX_SUBSCRIPTION_ATTEMPTS) {
-      if (subscriptionAttempts >= MAX_SUBSCRIPTION_ATTEMPTS) {
-      }
+    if (!itemId) return;
+    const numericItemId = parseInt(itemId);
+    if (isNaN(numericItemId)) {
+      setError(new Error(`[useCommentRealtime] Invalid item ID: ${itemId}`));
       return;
     }
-    
-    try {
-      const numericItemId = parseInt(itemId);
-      if (isNaN(numericItemId)) {
-        throw new Error(`[useCommentRealtime] Invalid item ID: ${itemId}`);
-      }
-      // Clean up existing subscription if any
-      cleanupChannel();
-      
-      const newChannel = supabase
-        .channel(`comments-${numericItemId}-${Date.now()}`)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'comments',
-          filter: `item_id=eq.${numericItemId}`,
-        }, (payload) => {
-          // Patch in realtime — never trigger a full refetch (causes flicker).
-          handleCommentInsert(payload.new);
-        })
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'comments',
-          filter: `item_id=eq.${numericItemId}`,
-        }, (payload) => {
-          handleCommentUpdate(payload.new);
-        })
-        .on('postgres_changes', {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'comments',
-          filter: `item_id=eq.${numericItemId}`,
-        }, (payload) => {
-          handleCommentDelete(payload.old);
-        });
 
-      try {
-        newChannel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            isSubscribedRef.current = true;
-            setIsSubscribed(true);
-            setError(null);
-            setSubscriptionAttempts(0);
-            stopPolling();
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-            // Realtime unavailable — fall back to polling
-            isSubscribedRef.current = false;
-            setIsSubscribed(false);
-            startPolling();
-          }
-        });
-      } catch (subErr) {
+    const unsubscribe = subscribeItemTable(itemId, 'comments', (payload) => {
+      const ev = payload.eventType;
+      if (ev === 'INSERT') handleCommentInsert(payload.new);
+      else if (ev === 'UPDATE') handleCommentUpdate(payload.new);
+      else if (ev === 'DELETE') handleCommentDelete(payload.old);
+    });
+
+    const unsubscribeStatus = subscribeItemStatus(itemId, (status) => {
+      if (status === 'SUBSCRIBED') {
+        isSubscribedRef.current = true;
+        setIsSubscribed(true);
+        setError(null);
+        stopPolling();
+      } else if (
+        status === 'CHANNEL_ERROR' ||
+        status === 'TIMED_OUT' ||
+        status === 'CLOSED'
+      ) {
         isSubscribedRef.current = false;
         setIsSubscribed(false);
         startPolling();
       }
+    });
 
-      setChannel(newChannel);
-
-      return () => {
-        cleanupChannel();
-        stopPolling();
-      };
-    } catch (error) {
-      isSubscribedRef.current = false;
-      setIsSubscribed(false);
-      startPolling();
-    }
-  }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, cleanupChannel, subscriptionAttempts, refreshComments, startPolling, stopPolling]);
+    return () => {
+      unsubscribe();
+      unsubscribeStatus();
+      stopPolling();
+    };
+  }, [itemId, handleCommentInsert, handleCommentUpdate, handleCommentDelete, startPolling, stopPolling]);
 
   return {
     isSubscribed,
-    error
+    error,
   };
 };
