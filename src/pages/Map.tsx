@@ -45,6 +45,13 @@ export default function Map() {
     refreshPosts();
   }, [announce, refreshPosts, t]);
 
+  // Auto-dismiss the "filters disabled" toast as soon as the refresh completes.
+  useEffect(() => {
+    if (!isRefreshing) {
+      toast.dismiss('refresh-filters-disabled');
+    }
+  }, [isRefreshing]);
+
   const handlePostClick = (postId: string) => {
     navigate(`/feed?post=${postId}&t=${Date.now()}`);
   };
