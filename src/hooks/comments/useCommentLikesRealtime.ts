@@ -33,12 +33,23 @@ export const useCommentLikesRealtime = (
           if (!isInsert && !isDelete) return;
 
           const list = commentsRef.current;
-          const inTree =
-            list.some(c => c.id === targetId) ||
-            list.some(c => c.replies?.some(r => r.id === targetId));
-          if (!inTree) return;
+          const findInTree = (): Comment | undefined => {
+            for (const c of list) {
+              if (c.id === targetId) return c;
+              const r = c.replies?.find(r => r.id === targetId);
+              if (r) return r;
+            }
+            return undefined;
+          };
+          const target = findInTree();
+          if (!target) return;
 
-          const isMine = user?.id && row.user_id === user.id;
+          const isMine = !!user?.id && row.user_id === user.id;
+          // Skip if our own optimistic update has already applied this change.
+          if (isMine && ((isInsert && target.isLiked) || (isDelete && !target.isLiked))) {
+            return;
+          }
+
           const updateNode = (c: Comment): Comment => {
             if (c.id !== targetId) return c;
             const next = { ...c };
