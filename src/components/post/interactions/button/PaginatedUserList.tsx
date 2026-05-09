@@ -4,12 +4,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "react-i18next";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
+import {
+  subscribeItemTable,
+  type ItemTable,
+} from "@/services/realtime/itemRealtimeManager";
 
 interface PaginatedUserListProps {
   type: "like" | "interest" | "comment";
   fetchPage: FetchPage;
   setShowPopup: (show: boolean) => void;
+  /** When provided, the list refreshes itself on realtime changes for this item. */
+  itemId?: string | number;
 }
+
+const TYPE_TO_TABLE: Record<"like" | "interest" | "comment", ItemTable> = {
+  like: "likes",
+  interest: "interests",
+  comment: "comments",
+};
 
 /**
  * Lazy, paginated user list rendered inside the like / interest /
