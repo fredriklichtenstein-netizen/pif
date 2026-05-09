@@ -82,7 +82,7 @@ const buildChannel = (entry: Entry) => {
   entry.channel = channel;
   setStatus(entry, "PENDING");
 
-  channel.subscribe((status) => {
+  channel.subscribe((status, err) => {
     const s = status as RealtimeStatus;
     setStatus(entry, s);
     if (s === "SUBSCRIBED") {
@@ -90,7 +90,12 @@ const buildChannel = (entry: Entry) => {
       return;
     }
     if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") {
-      scheduleReconnect(entry);
+      // If the failure is due to a stale/invalid JWT (e.g. after a deploy),
+      // trigger global session recovery instead of looping reconnects.
+      void import("@/hooks/auth/sessionRecovery").then(({ maybeRecoverFromAuthError }) => {
+        if (maybeRecoverFromAuthError(err, `realtime channel ${s}`)) return;
+        scheduleReconnect(entry);
+      }).catch(() => scheduleReconnect(entry));
     }
   });
 };
