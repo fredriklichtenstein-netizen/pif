@@ -27,7 +27,7 @@ export default function Map() {
   const { posts, isLoading, refreshPosts } = useFeedPosts();
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
   // Single shared refresh action — same hook used by the feed.
-  const { refresh: handleRefresh, isRefreshing } = useSharedRefresh(refreshPosts);
+  const { refresh: handleRefresh, isRefreshing } = useSharedRefresh(refreshPosts, "map");
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken, needsToken, setDemoToken } = useMapbox();
   const [tokenInput, setTokenInput] = useState("");
   const { t } = useTranslation();

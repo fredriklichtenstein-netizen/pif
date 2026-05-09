@@ -383,6 +383,8 @@
     "loading_more": "Laddar...",
     "refreshing_feed": "Uppdaterar flödet",
     "feed_refreshed": "Flödet uppdaterat",
+    "refreshing_map": "Uppdaterar kartan",
+    "map_refreshed": "Kartan uppdaterad",
     "pull_to_refresh": "Dra ner för att uppdatera",
     "release_to_refresh": "Släpp för att uppdatera",
     "filters_disabled_during_refresh": "Filter är inaktiverade under uppdateringen",
