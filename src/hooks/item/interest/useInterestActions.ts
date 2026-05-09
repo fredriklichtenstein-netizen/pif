@@ -3,6 +3,7 @@ import { useAuthCheck } from "../utils/authCheck";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useMyInterestStore } from "@/stores/myInterestStore";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 /**
  * Toggle interest with an instant optimistic flip.
@@ -55,6 +56,7 @@ export const useInterestActions = (
       });
     } catch (error) {
       console.error('Error toggling interest:', error);
+      if (maybeRecoverFromAuthError(error, "toggle interest")) return;
       // Revert optimistic update on failure.
       setShowInterest(wasInterested);
       setMyInterest(id, wasInterested);
