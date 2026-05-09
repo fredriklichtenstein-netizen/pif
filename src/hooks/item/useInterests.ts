@@ -32,10 +32,12 @@ export const useInterests = (id: string, userId?: string | null) => {
     setFetchAttemptCount
   } = useInterestState();
 
-  // Seed initial interests count from bulk RPC if available
+  // Keep the local interests count in sync with the global store so
+  // realtime updates (from other users) immediately reflect in the
+  // counter, not only on first mount.
   useEffect(() => {
     if (DEMO_MODE) return;
-    if (typeof initialInterests === 'number' && interestsCount === 0) {
+    if (typeof initialInterests === "number") {
       setInterestsCount(initialInterests);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
