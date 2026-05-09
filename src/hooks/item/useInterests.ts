@@ -101,6 +101,7 @@ export const useInterests = (id: string, userId?: string | null) => {
             
           if (!userInterestError) {
             setShowInterest(!!userInterest);
+            setMyInterest(id, !!userInterest);
           }
         }
         
@@ -114,6 +115,22 @@ export const useInterests = (id: string, userId?: string | null) => {
     
     initializeInterests();
   }, [id, userId]);
+
+  // Realtime: any change to interests for this item updates "my" interest
+  // state in the global store and refetches the interested users list.
+  useItemInterestRealtime(id, () => {
+    if (DEMO_MODE) return;
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) fetchInterestedUsersInternal(numericId);
+  });
+
+  // Mirror the global "my interest" state into local state so the button
+  // colour/state updates live across tabs and devices.
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (typeof myInterestRealtime === "boolean") setShowInterest(myInterestRealtime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myInterestRealtime]);
 
   // Demo mode handler
   const handleShowInterestDemo = () => {
