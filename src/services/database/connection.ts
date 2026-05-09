@@ -32,7 +32,7 @@ export class DatabaseError extends Error {
 // - Keeps retrying transient/network errors with exponential backoff.
 export const withRetry = async <T>(
   operation: () => Promise<T>,
-  maxAttempts = DB_CONFIG.retryAttempts
+  maxAttempts: number = DB_CONFIG.retryAttempts
 ): Promise<T> => {
   let lastError: Error;
 
