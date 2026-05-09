@@ -46,8 +46,12 @@ const transformMockPosts = () => {
 };
 
 export function useFetchPosts(options = { includeArchived: false }) {
-  const [posts, setPosts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const cacheKey = FEED_CACHE_KEYS.fullList(options.includeArchived);
+  // Seed from the persistent cache so switching feed↔map or refreshing
+  // shows content immediately without waiting on the network.
+  const seeded = !DEMO_MODE ? readCache<any[]>(cacheKey) : null;
+  const [posts, setPosts] = useState<any[]>(seeded?.data ?? []);
+  const [isLoading, setIsLoading] = useState(!seeded);
   const [error, setError] = useState<Error | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
