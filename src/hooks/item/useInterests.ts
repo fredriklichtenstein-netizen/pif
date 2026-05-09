@@ -34,7 +34,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     setInterestedUsersError,
     fetchAttemptCount,
     setFetchAttemptCount
-  } = useInterestState();
+  } = useInterestState(id);
 
   // Keep the local interests count in sync with the global store so
   // realtime updates (from other users) immediately reflect in the
@@ -57,7 +57,11 @@ export const useInterests = (id: string, userId?: string | null) => {
     interestedUsers
   );
 
-  const { handleShowInterest: originalHandleShowInterest } = useInterestActions(setShowInterest, fetchInterestedUsersInternal);
+  const { handleShowInterest: originalHandleShowInterest } = useInterestActions(
+    setShowInterest,
+    fetchInterestedUsersInternal,
+    () => showInterest
+  );
 
   // Sync demo state
   useEffect(() => {
@@ -85,11 +89,13 @@ export const useInterests = (id: string, userId?: string | null) => {
     const initializeInterests = async () => {
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) {
-        setLoading(false);
         return;
       }
-      
-      setLoading(true);
+
+      // Silent background fetch — no `setLoading(true)` so the
+      // ActionButtons never flicker into a skeleton on mount. The card
+      // already shows the correct state seeded from the global stores;
+      // we just reconcile here in case the seed was stale.
       try {
         if (userId) {
           const { data: userInterest, error: userInterestError } = await supabase
@@ -98,21 +104,19 @@ export const useInterests = (id: string, userId?: string | null) => {
             .eq('user_id', userId)
             .eq('item_id', numericId)
             .maybeSingle();
-            
+
           if (!userInterestError) {
             setShowInterest(!!userInterest);
             setMyInterest(id, !!userInterest);
           }
         }
-        
+
         await fetchInterestedUsersInternal(numericId);
       } catch (error) {
         console.error("Error fetching interests:", error);
-      } finally {
-        setLoading(false);
       }
     };
-    
+
     initializeInterests();
   }, [id, userId]);
 

@@ -12,7 +12,11 @@ import type { User } from "./utils/userUtils";
 export const useItemInteractions = (id: string) => {
   const { user } = useGlobalAuth();
   const userId = user?.id;
-  const [loading, setLoading] = useState(true);
+  // Default to `false` — each interaction hook now seeds its initial
+  // state from the global stores so buttons render immediately with the
+  // correct on/off state. Showing the skeleton on every mount caused a
+  // visible flicker as cached data was already available.
+  const [loading, setLoading] = useState(false);
 
   // Individual interaction hooks
   const { 
