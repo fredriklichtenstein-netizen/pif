@@ -142,35 +142,6 @@ export function PullToRefresh({
         setPull(0);
       }
     };
-
-    const onTouchEnd = async () => {
-      // Ignore release events that happen while a refresh is already
-      // in flight — we never want to fire onRefresh a second time.
-      if (refreshingRef.current) {
-        startYRef.current = null;
-        activeRef.current = false;
-        return;
-      }
-      const shouldRefresh = activeRef.current && pull >= threshold;
-      startYRef.current = null;
-      activeRef.current = false;
-      if (shouldRefresh) {
-        // Lock synchronously so any in-flight gesture is a no-op.
-        refreshingRef.current = true;
-        setRefreshing(true);
-        setPull(threshold);
-        try {
-          await onRefresh();
-        } finally {
-          refreshingRef.current = false;
-          setRefreshing(false);
-          setPull(0);
-        }
-      } else {
-        setPull(0);
-      }
-    };
-
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd);
