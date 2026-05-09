@@ -93,42 +93,46 @@ export const initializeAuth = async () => {
       auth.setSession(session);
       
       try {
-        // Use a simpler query with timeout
+        // Generous timeout — slow networks should not surface as auth errors.
         const profilePromise = Promise.race([
           supabase
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', session.user.id)
             .maybeSingle(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout fetching profile')), 5000)
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout fetching profile')), 15000)
           )
         ]);
-        
+
         const { data: profile, error: profileError } = await profilePromise as any;
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          if (isAuthInvalidError(profileError) || !isNetworkError(profileError)) {
+          if (isAuthInvalidError(profileError)) {
             await recoverFromCorruptedSession(`profile fetch: ${profileError.message}`);
             return;
           }
-          // Network/transient errors: don't wipe the session, just continue.
-          auth.setError(profileError);
+          // Network/transient/unknown errors: keep the session, log only.
+          // Don't set auth.error — PrivateRoute would surface it as a destructive toast
+          // even though the user is fully signed in.
+          auth.setProfileCompleted(null);
         } else {
           const ok = await applyProfileCompletion(profile, "profile fetch", auth.setProfileCompleted);
           if (!ok) return;
         }
       } catch (error) {
         console.error('Error in profile check:', error);
-        if (!isNetworkError(error)) {
+        if (isAuthInvalidError(error)) {
           await recoverFromCorruptedSession(
             `profile fetch exception: ${error instanceof Error ? error.message : String(error)}`
           );
           return;
         }
-        // Network/transient errors should not force users out.
-        auth.setError(error instanceof Error ? error : new Error(String(error)));
+        // Timeout / network / transient: don't sign the user out and don't
+        // surface a destructive auth-error toast. Profile data will reload
+        // when the user navigates or via background refresh.
+        auth.setProfileCompleted(null);
       }
     } else {
       
