@@ -48,6 +48,7 @@ export const useBookmarks = (id: string, userId?: string | null) => {
         }
       } catch (error) {
         console.error("Error fetching bookmark status:", error);
+        maybeRecoverFromAuthError(error, "useBookmarks initial fetch");
       } finally {
         setLoading(false);
       }
