@@ -13,6 +13,7 @@ import { SkipToContent } from "@/components/accessibility/SkipToContent";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { ReceiverConfirmationWatcher } from "@/components/profile/completion/ReceiverConfirmationWatcher";
+import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessionRecovery";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -21,6 +22,9 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes
       retry: (failureCount, error) => {
+        if (isAuthRequestCircuitOpen() || isAuthInvalidError(error)) {
+          return false;
+        }
         // Don't retry on 4xx errors
         if (error && typeof error === 'object' && 'status' in error) {
           const status = error.status as number;
