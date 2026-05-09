@@ -1,12 +1,18 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export function useInterestUsers(itemId: number) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchInterests = async () => {
+    if (isAuthRequestCircuitOpen()) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
@@ -19,6 +25,7 @@ export function useInterestUsers(itemId: number) {
       if (error) throw error;
       setUsers(data || []);
     } catch (err) {
+      maybeRecoverFromAuthError(err, "profile interest users fetch");
       console.error("Error fetching interested users:", err);
     } finally {
       setLoading(false);
