@@ -33,6 +33,7 @@ export const ItemInteractionButtons = ({
   showInterest,
   isOwner,
   currentUserId,
+  itemOwnerId,
   hasCommented,
   commentsCount,
   likesCount,
