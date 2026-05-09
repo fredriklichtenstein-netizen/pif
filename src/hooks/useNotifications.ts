@@ -56,6 +56,12 @@ export function useNotifications() {
       .order("created_at", { ascending: false });
 
     if (error) {
+      // Stale JWT after a deploy (or RLS-evicted session) lands here too —
+      // trigger global session recovery instead of just toasting.
+      if (maybeRecoverFromAuthError(error, "notifications fetch")) {
+        setIsLoading(false);
+        return;
+      }
       setFetchError(error);
       toast({
         title: t('interactions.failed_load_notifications'),
