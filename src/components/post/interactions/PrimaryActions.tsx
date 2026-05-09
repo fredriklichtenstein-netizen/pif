@@ -58,6 +58,8 @@ export function PrimaryActions({
   fetchCommenters,
 }: PrimaryActionsProps) {
   const { t } = useTranslation();
+  const { user } = useGlobalAuth();
+  const effectiveCurrentUserId = currentUserId ?? user?.id;
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onShare();
