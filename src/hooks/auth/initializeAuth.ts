@@ -152,6 +152,11 @@ export const initializeAuth = async () => {
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
+          if (isAuthInvalidError(profileError)) {
+            await recoverFromCorruptedSession(`profile fetch: ${profileError.message}`);
+            return;
+          }
+          // Network/transient errors: don't wipe the session, just continue.
           auth.setError(profileError);
         } else {
           auth.setProfileCompleted(profile?.onboarding_completed ?? false);
