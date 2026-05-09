@@ -44,10 +44,17 @@ export function useSharedRefresh(
   fetcherRef.current = fetcher;
   const sourceRef = useRef(source);
   sourceRef.current = source;
+  // Throttle: ignore refresh taps that arrive within this window after
+  // the previous refresh finished. Prevents rapid-fire button mashing
+  // from queueing redundant fetches and showing flickering overlays.
+  const THROTTLE_MS = 1500;
+  const lastFinishedAtRef = useRef(0);
 
   const refresh = useCallback(async () => {
     if (inFlightRef.current) return;
     if (useRefreshSyncStore.getState().isRefreshing) return;
+    const sinceLast = Date.now() - lastFinishedAtRef.current;
+    if (sinceLast < THROTTLE_MS) return;
 
     const keys = ANNOUNCE_KEYS[sourceRef.current];
     inFlightRef.current = true;
@@ -59,6 +66,7 @@ export function useSharedRefresh(
     } finally {
       end();
       inFlightRef.current = false;
+      lastFinishedAtRef.current = Date.now();
     }
   }, [announce, begin, end, t]);
 
