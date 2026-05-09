@@ -121,7 +121,8 @@ export function OptimizedFeedContainer() {
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} disabled={isLoading}>
+    <PullToRefresh onRefresh={handleRefresh} disabled={isLoading || isRefreshing}>
+      <RefreshOverlay show={isRefreshing} />
       <div className="space-y-4">
         <FeedDistanceFilter
           selectedDistance={selectedDistance}
@@ -131,16 +132,20 @@ export function OptimizedFeedContainer() {
         />
 
         <section role="feed" aria-label={t('interactions.community_posts')}>
-          <FeedItemList
-            posts={filteredPosts}
-            fadingIds={fadingIds}
-            restoringIds={restoringIds}
-            selectedCategories={[]}
-            clearFilters={() => setSelectedDistance(null)}
-            viewMode="all"
-            isLoading={isLoadingMore}
-            onItemOperationSuccess={handleRefresh}
-          />
+          {isRefreshing ? (
+            <FeedSkeleton count={Math.min(3, Math.max(1, filteredPosts.length))} />
+          ) : (
+            <FeedItemList
+              posts={filteredPosts}
+              fadingIds={fadingIds}
+              restoringIds={restoringIds}
+              selectedCategories={[]}
+              clearFilters={() => setSelectedDistance(null)}
+              viewMode="all"
+              isLoading={isLoadingMore}
+              onItemOperationSuccess={handleRefresh}
+            />
+          )}
         </section>
 
         {hasMore && (
