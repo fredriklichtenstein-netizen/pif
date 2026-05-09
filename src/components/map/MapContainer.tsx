@@ -216,11 +216,11 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
 
           <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
             <Button
-              onClick={() => {
+              onClick={guarded(() => {
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
                 locationTracking.goToMyLocation();
-              }}
-              disabled={locationTracking.isLoadingLocation}
+              })}
+              disabled={locationTracking.isLoadingLocation || useRefreshSyncStore.getState().isRefreshing}
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
               variant="outline"
