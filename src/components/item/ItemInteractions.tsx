@@ -62,6 +62,7 @@ export function ItemInteractions({
               showInterest={showInterest}
               isOwner={isOwner}
               currentUserId={currentUserId}
+              itemOwnerId={postedBy?.id}
               hasCommented={userHasCommented}
               commentsCount={commentsCount}
               likesCount={actualLikeCount}
