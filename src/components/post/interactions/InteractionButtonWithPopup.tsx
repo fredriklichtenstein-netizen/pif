@@ -148,6 +148,7 @@ export function InteractionButtonWithPopup({
             onCounterClick={handleCounterClick}
             isInteractive={isCounterInteractive}
             fetchPage={fetchPage}
+            itemId={itemId}
           />
         </div>
       )}
