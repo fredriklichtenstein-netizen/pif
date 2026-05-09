@@ -202,6 +202,12 @@ export const useCachedProfile = (
     };
   }, [userId]);
 
+  // Subscribe to optimistic cache writes from anywhere in the app
+  useEffect(() => {
+    if (!userId) return;
+    return subscribe(userId, (data) => setProfile(data));
+  }, [userId]);
+
   const refresh = async () => {
     if (!userId) return null;
     setIsRevalidating(true);
