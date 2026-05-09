@@ -19,7 +19,22 @@ import {
  */
 
 const STORAGE_PREFIX = "profile-cache:v1:";
-const memoryCache = new Map<string, any>();
+
+/**
+ * Time after which a cached profile is considered "stale" and should be
+ * revalidated against the backend on the next mount/render. Until then the
+ * cached value is served without any network request.
+ */
+const STALE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+/**
+ * Hard expiry — older than this and the cache is treated as missing, so the
+ * UI shows a loader instead of potentially long-stale data.
+ */
+const HARD_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+type CacheEntry = { data: any; cachedAt: number };
+
+const memoryCache = new Map<string, CacheEntry>();
 const inFlight = new Map<string, Promise<any | null>>();
 const listeners = new Map<string, Set<(data: any) => void>>();
 
@@ -43,23 +58,52 @@ const subscribe = (userId: string, cb: (data: any) => void) => {
   };
 };
 
-const readCache = (userId: string): any | null => {
-  if (memoryCache.has(userId)) return memoryCache.get(userId);
+const readEntry = (userId: string): CacheEntry | null => {
+  const mem = memoryCache.get(userId);
+  if (mem) return mem;
   try {
     const raw = window.localStorage.getItem(storageKey(userId));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    memoryCache.set(userId, parsed);
-    return parsed;
+    // Backward-compat: older cache stored the bare profile object.
+    const entry: CacheEntry =
+      parsed && typeof parsed === "object" && "data" in parsed && "cachedAt" in parsed
+        ? (parsed as CacheEntry)
+        : { data: parsed, cachedAt: Date.now() };
+    memoryCache.set(userId, entry);
+    return entry;
   } catch {
     return null;
   }
 };
 
+const readCache = (userId: string): any | null => {
+  const entry = readEntry(userId);
+  if (!entry) return null;
+  // Hard expiry — drop the entry entirely.
+  if (Date.now() - entry.cachedAt > HARD_TTL_MS) {
+    memoryCache.delete(userId);
+    try {
+      window.localStorage.removeItem(storageKey(userId));
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+  return entry.data;
+};
+
+const isStale = (userId: string): boolean => {
+  const entry = readEntry(userId);
+  if (!entry) return true;
+  return Date.now() - entry.cachedAt > STALE_TTL_MS;
+};
+
 const writeCache = (userId: string, data: any) => {
-  memoryCache.set(userId, data);
+  const entry: CacheEntry = { data, cachedAt: Date.now() };
+  memoryCache.set(userId, entry);
   try {
-    window.localStorage.setItem(storageKey(userId), JSON.stringify(data));
+    window.localStorage.setItem(storageKey(userId), JSON.stringify(entry));
   } catch {
     /* quota — ignore */
   }
