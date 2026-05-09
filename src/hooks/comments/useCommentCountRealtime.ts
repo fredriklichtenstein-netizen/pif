@@ -84,10 +84,28 @@ export const useCommentCountRealtime = (
       else if (payload.eventType === "DELETE") schedule("DELETE");
     });
 
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    const stopPolling = () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+    const startPolling = () => {
+      if (pollTimer) return;
+      pollTimer = setInterval(flush, POLL_INTERVAL_MS);
+    };
+    const offStatus = subscribeItemStatus(itemId, (status) => {
+      if (status === "SUBSCRIBED") stopPolling();
+      else startPolling();
+    });
+
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       if (maxWaitTimer) clearTimeout(maxWaitTimer);
       unsubscribe();
+      offStatus();
+      stopPolling();
     };
   }, [itemId]);
 };
