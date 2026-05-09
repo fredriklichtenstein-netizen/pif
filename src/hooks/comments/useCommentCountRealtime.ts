@@ -1,10 +1,14 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
-import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
+import {
+  subscribeItemTable,
+  subscribeItemStatus,
+} from "@/services/realtime/itemRealtimeManager";
 
 const DEBOUNCE_MS = 400;
 const MAX_DEFER_MS = 1500;
+const POLL_INTERVAL_MS = 15000;
 
 /**
  * Subscribes to inserts/deletes on the `comments` table for a given item
