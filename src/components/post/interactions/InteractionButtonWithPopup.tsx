@@ -40,6 +40,8 @@ export function InteractionButtonWithPopup({
   iconActive,
   itemId,
   fetchPage,
+  itemOwnerId,
+  currentUserId,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
