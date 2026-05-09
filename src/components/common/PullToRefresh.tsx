@@ -98,9 +98,49 @@ export function PullToRefresh({
       if (!activeRef.current) return;
       // Resist the pull so it feels rubber-banded.
       const eased = Math.min(maxPull, dy * 0.55);
+      // Fire a single short buzz the first time the user crosses the
+      // refresh threshold during this gesture.
+      if (!hapticFiredRef.current && eased >= threshold) {
+        hapticFiredRef.current = true;
+        vibrate(10);
+      } else if (hapticFiredRef.current && eased < threshold) {
+        // Allow re-firing if the user pulls back up and down again.
+        hapticFiredRef.current = false;
+      }
       setPull(eased);
       // Prevent the page from also scrolling while we're pulling.
       if (e.cancelable) e.preventDefault();
+    };
+
+    const onTouchEnd = async () => {
+      // Ignore release events that happen while a refresh is already
+      // in flight — we never want to fire onRefresh a second time.
+      if (refreshingRef.current) {
+        startYRef.current = null;
+        activeRef.current = false;
+        return;
+      }
+      const shouldRefresh = activeRef.current && pull >= threshold;
+      startYRef.current = null;
+      activeRef.current = false;
+      hapticFiredRef.current = false;
+      if (shouldRefresh) {
+        // Lock synchronously so any in-flight gesture is a no-op.
+        refreshingRef.current = true;
+        setRefreshing(true);
+        setPull(threshold);
+        try {
+          await onRefresh();
+        } finally {
+          refreshingRef.current = false;
+          setRefreshing(false);
+          setPull(0);
+          // Gentle double-tap buzz to confirm the refresh finished.
+          vibrate([15, 40, 15]);
+        }
+      } else {
+        setPull(0);
+      }
     };
 
     const onTouchEnd = async () => {
