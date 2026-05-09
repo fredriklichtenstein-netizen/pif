@@ -6,6 +6,7 @@
  */
 import { clearAllCachedProfiles } from "@/hooks/profile/useCachedProfile";
 import { clearAllItemsCache } from "@/hooks/cache/itemCache";
+import { clearAllCachedAvatars } from "@/hooks/profile/useCachedAvatarSrc";
 
 export const clearAllUserCaches = () => {
   try {
@@ -18,4 +19,10 @@ export const clearAllUserCaches = () => {
   } catch (err) {
     console.warn("clearAllUserCaches: items clear failed", err);
   }
+  try {
+    clearAllCachedAvatars();
+  } catch (err) {
+    console.warn("clearAllUserCaches: avatar clear failed", err);
+  }
 };
+
