@@ -17,6 +17,11 @@
     "return_to_home": "Return to Home",
     "try_again": "Try Again",
     "browse_feed": "Browse Feed",
-    "browse_map": "Browse Map"
+    "browse_map": "Browse Map",
+    "requested_url": "Requested URL",
+    "came_from": "Came from",
+    "diagnostic_details": "Diagnostic details",
+    "copy_details": "Copy details",
+    "details_copied": "Details copied"
   }
 }
