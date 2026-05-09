@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { Loader2 } from "lucide-react";
+import { FeedSkeleton } from "./FeedSkeleton";
 import { FeedFilters } from "./FeedFilters";
 import { FeedItemList } from "./FeedItemList";
 import { OfflineBanner } from "./OfflineBanner";
