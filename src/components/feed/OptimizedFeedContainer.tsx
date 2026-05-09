@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useDistanceFiltering } from '@/hooks/useDistanceFiltering';
 import { useLocationStorage } from '@/components/map/location/useLocationStorage';
 import { useRefreshSyncStore } from '@/stores/refreshSyncStore';
+import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
 
 export function OptimizedFeedContainer() {
