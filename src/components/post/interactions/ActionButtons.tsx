@@ -111,7 +111,7 @@ export function ActionButtons({
         iconActive="star"
         itemId={itemId}
         itemOwnerId={itemOwnerId}
-        currentUserId={currentUserId}
+        currentUserId={effectiveCurrentUserId}
       />
       
       <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
