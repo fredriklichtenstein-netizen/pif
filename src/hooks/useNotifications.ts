@@ -18,6 +18,11 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
   action_url?: string;
+  actor_id?: string | null;
+  actor_name?: string | null;
+  item_id?: number | string | null;
+  item_title?: string | null;
+  conversation_id?: string | null;
 }
 
 export function useNotifications() {
