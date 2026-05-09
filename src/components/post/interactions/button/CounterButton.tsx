@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UserPopoverContent } from './UserPopoverContent';
 import { PaginatedUserList } from './PaginatedUserList';
+import { InterestSelectionList } from '../interest/InterestSelectionList';
 import type { User } from '@/hooks/item/useItemInteractions';
 import type { FetchPage } from '@/services/interactions/fetchPaginatedUsers';
 
@@ -23,6 +24,10 @@ interface CounterButtonProps {
   fetchPage?: FetchPage;
   /** When provided alongside `fetchPage`, the paginated list refreshes itself on realtime changes. */
   itemId?: string | number;
+  /** For type="interest": item owner id, used to enable receiver-selection UI. */
+  itemOwnerId?: string;
+  /** Currently authenticated user id. */
+  currentUserId?: string;
 }
 
 const labelKey = (type: CounterButtonProps["type"]) => {
@@ -45,6 +50,8 @@ export function CounterButton({
   isInteractive,
   fetchPage,
   itemId,
+  itemOwnerId,
+  currentUserId,
 }: CounterButtonProps) {
   const { t } = useTranslation();
   
@@ -62,11 +69,13 @@ export function CounterButton({
     );
   }
   
+  const useInterestList = type === "interest" && !!itemId;
+
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setShowPopup(true);
-    if (fetchPage) return; // PaginatedUserList handles its own loading
+    if (fetchPage || useInterestList) return; // child handles its own loading
     try {
       await onCounterClick();
     } catch (error) {
@@ -91,8 +100,18 @@ export function CounterButton({
           {count}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2" onClick={(e) => e.stopPropagation()}>
-        {fetchPage ? (
+      <PopoverContent
+        className={useInterestList ? "w-80 p-2" : "w-64 p-2"}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {useInterestList ? (
+          <InterestSelectionList
+            itemId={itemId!}
+            itemOwnerId={itemOwnerId}
+            currentUserId={currentUserId}
+            setShowPopup={setShowPopup}
+          />
+        ) : fetchPage ? (
           <PaginatedUserList
             type={type}
             fetchPage={fetchPage}
@@ -100,11 +119,11 @@ export function CounterButton({
             itemId={itemId}
           />
         ) : (
-          <UserPopoverContent 
-            type={type} 
-            users={users} 
-            loading={loading} 
-            setShowPopup={setShowPopup} 
+          <UserPopoverContent
+            type={type}
+            users={users}
+            loading={loading}
+            setShowPopup={setShowPopup}
           />
         )}
       </PopoverContent>

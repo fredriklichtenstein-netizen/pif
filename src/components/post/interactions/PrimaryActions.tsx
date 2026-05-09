@@ -3,6 +3,7 @@ import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./button/ShareButton";
 import { useTranslation } from 'react-i18next';
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import {
   fetchLikersPage,
   fetchInterestedUsersPage,
@@ -15,6 +16,7 @@ interface PrimaryActionsProps {
   showInterest: boolean;
   isOwner: boolean;
   itemId: string;
+  itemOwnerId?: string;
   currentUserId?: string;
   hasCommented?: boolean;
   commentsCount?: number;
@@ -38,6 +40,7 @@ export function PrimaryActions({
   showInterest,
   isOwner,
   itemId,
+  itemOwnerId,
   currentUserId,
   hasCommented = false,
   commentsCount = 0,
@@ -55,6 +58,8 @@ export function PrimaryActions({
   fetchCommenters,
 }: PrimaryActionsProps) {
   const { t } = useTranslation();
+  const { user } = useGlobalAuth();
+  const effectiveCurrentUserId = currentUserId ?? user?.id;
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onShare();
@@ -129,6 +134,8 @@ export function PrimaryActions({
           iconPassive="star"
           iconActive="star"
           itemId={itemId}
+          itemOwnerId={itemOwnerId}
+          currentUserId={effectiveCurrentUserId}
         />
       </div>
     </div>

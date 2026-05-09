@@ -595,5 +595,12 @@
     "rating_thanks_no_show": "Recorded as a no-show.",
     "rating_failed_title": "Couldn't save your rating",
     "rating_failed_description": "Please try again in a moment."
-  }
+  },
+  "notifications": {
+    "is_interested_in_your_pif": "is interested in your pif",
+    "review_interest_to_select": "Open the post to view interested users and select a receiver.",
+    "review_interest_cta": "Review interest",
+    "selected_for_item": "You've been selected as the receiver for \"{{title}}\". Open the conversation to coordinate pickup."
+  },
+  "someone": "Someone"
 }

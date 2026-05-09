@@ -94,17 +94,47 @@ export function NotificationList() {
               </div>
               
               {groupNotifications.map((notif) => {
+                const isInterestReceived = notif.type === 'interest_received' || notif.type === 'interest';
                 const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
-                const displayTitle = isReceiverSelected
-                  ? t('interactions.receiver_selected_notif_title')
-                  : notif.title;
-                const displayContent = isReceiverSelected
-                  ? notif.content || t('interactions.receiver_selected_notif_body')
-                  : notif.content;
-                // For receiver_selected we prefer to deep-link into the conversation when available.
-                const ctaUrl = isReceiverSelected
-                  ? notif.action_url || (notif.reference_type === 'conversation' && notif.reference_id ? `/messages?conversation=${notif.reference_id}` : '/messages')
-                  : notif.action_url;
+
+                let displayTitle: React.ReactNode = notif.title;
+                let displayContent: React.ReactNode = notif.content;
+                let ctaUrl = notif.action_url;
+                let ctaLabel: string | null = null;
+
+                if (isInterestReceived) {
+                  const name = notif.actor_name || t('someone');
+                  const namePart = notif.actor_id ? (
+                    <Link
+                      to={`/user/${notif.actor_id}`}
+                      className="font-semibold text-primary hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {name}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold">{name}</span>
+                  );
+                  displayTitle = (
+                    <>
+                      {namePart} {t('notifications.is_interested_in_your_pif')}
+                      {notif.item_title ? <> "{notif.item_title}"</> : null}
+                    </>
+                  );
+                  displayContent = t('notifications.review_interest_to_select');
+                  ctaUrl = notif.item_id ? `/post/${notif.item_id}` : ctaUrl;
+                  ctaLabel = t('notifications.review_interest_cta');
+                } else if (isReceiverSelected) {
+                  displayTitle = t('interactions.receiver_selected_notif_title');
+                  displayContent = notif.item_title
+                    ? t('notifications.selected_for_item', { title: notif.item_title })
+                    : t('interactions.receiver_selected_notif_body');
+                  ctaUrl = notif.conversation_id
+                    ? `/messages?conversation=${notif.conversation_id}`
+                    : '/messages';
+                  ctaLabel = t('interactions.start_conversation');
+                }
 
                 return (
                   <div
@@ -117,16 +147,16 @@ export function NotificationList() {
                         <div className="text-sm text-muted-foreground mt-0.5">{displayContent}</div>
                       )}
                       <div className="text-xs text-muted-foreground mt-1">{new Date(notif.created_at).toLocaleString()}</div>
-                      {isReceiverSelected && ctaUrl && (
+                      {ctaUrl && ctaLabel && (
                         <Link to={ctaUrl} className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline">
-                          {t('interactions.start_conversation')}
+                          {ctaLabel}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                       )}
                     </div>
 
                     <div className="flex items-center space-x-1">
-                      {!isReceiverSelected && ctaUrl && (
+                      {!ctaLabel && ctaUrl && (
                         <Link to={ctaUrl} className="ml-2">
                           <Button size="icon" variant="ghost" title={t('interactions.view_details')}>
                             <ArrowRight className="h-4 w-4" />

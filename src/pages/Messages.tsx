@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationView } from "@/components/messaging/ConversationView";
@@ -19,15 +20,26 @@ const Messages = () => {
   const { conversations, isLoading: conversationsLoading, error } = useConversations();
   const { unreadCount } = useNotifications();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
 
   const isLoading = authLoading || conversationsLoading;
+
+  // Deep-link: open the conversation indicated by ?conversation=<id>
+  // (used by the receiver-selected notification + select-receiver flow).
+  useEffect(() => {
+    const cid = searchParams.get("conversation");
+    if (cid && cid !== activeConversationId) {
+      setActiveConversationId(cid);
+      setActiveTab("messages");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (!authLoading && !user) {
     }
   }, [authLoading, user]);
-
-  const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
 
   const handleTabChange = (value: string) => {
     if (value === "messages" || value === "notifications") {

@@ -7,6 +7,7 @@ import {
   fetchCommentersPage,
 } from "@/services/interactions/fetchPaginatedUsers";
 import type { User } from "@/hooks/item/useItemInteractions";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface ActionButtonsProps {
   isLiked: boolean;
@@ -15,6 +16,8 @@ interface ActionButtonsProps {
   isOwner: boolean;
   isRealtimeSubscribed?: boolean;
   itemId: string;
+  itemOwnerId?: string;
+  currentUserId?: string;
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
@@ -37,6 +40,8 @@ export function ActionButtons({
   isOwner,
   isRealtimeSubscribed = false,
   itemId,
+  itemOwnerId,
+  currentUserId,
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
@@ -51,6 +56,8 @@ export function ActionButtons({
   fetchInterestedUsers,
   fetchCommenters,
 }: ActionButtonsProps) {
+  const { user } = useGlobalAuth();
+  const effectiveCurrentUserId = currentUserId ?? user?.id;
   const fetchLikersPageFn = (offset: number) => fetchLikersPage(itemId, offset);
   const fetchInterestedPageFn = (offset: number) =>
     fetchInterestedUsersPage(itemId, offset);
@@ -103,6 +110,8 @@ export function ActionButtons({
         iconPassive="star"
         iconActive="star"
         itemId={itemId}
+        itemOwnerId={itemOwnerId}
+        currentUserId={effectiveCurrentUserId}
       />
       
       <div className="relative flex flex-col items-center flex-1 min-w-[60px]">

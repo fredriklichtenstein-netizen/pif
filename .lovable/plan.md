@@ -1,111 +1,160 @@
+# Interest → Selection → Messaging Flow Fix
 
-## Goal
+## Goals (steps 1–4 from the brief)
 
-Make likes / comments / interests reliably update in realtime across all UIs, eliminate the spurious "couldn't update" errors, and make the counter number next to each button consistently open a popup listing the users behind that count (including comments).
+1. Click "Interest" → button flips to active and counter increments (already works after the recent realtime fixes).
+2. Click the counter → consistent popover everywhere (feed, profile, expanded post) listing interested users. **If the current user is the piffer (item owner), the same popover lets them select a receiver.**
+3. When someone shows interest, the piffer gets a **realtime notification** with the actor's name as a clickable link to that user's public profile.
+4. When the piffer selects a receiver, the receiver gets a realtime notification, and a conversation between piffer and receiver opens up.
 
-## Diagnosis
+## Current state (what's broken)
 
-After tracing the code paths there are four distinct bugs causing the symptoms you described.
+| Concern | Status today |
+|---|---|
+| Counter popup parity | Feed / expanded post show only a name list (`PaginatedUserList`). Selection UI lives in a separate `InterestUsersPopover` rendered only on the profile page's `MyPifsGrid` / `UserPifsList`. |
+| Realtime notifications to piffer | `useNotifications` is realtime-subscribed per user, but no DB trigger creates a notification when an interest row is inserted, so nothing arrives. |
+| Notification rendering | `useNotifications` stuffs the raw `payload` JSON into `content` and uses `n.type` as `title`. UI shows raw type strings and stringified JSON, no clickable actor link. |
+| Receiver-selected notification | `select_receiver` RPC returns a `conversationId`, but it's unclear whether it inserts a notification for the receiver. To be safe, we add a trigger on `interests` status change. |
+| Messaging deep-link | `Messages.tsx` ignores `?conversation=<id>`, so the deep-link from the toast / notification doesn't auto-open the conversation. |
 
-### 1. Counter popup is a `<button>` inside a `<button>`
+## Plan
 
-In `InteractionButtonWithPopup.tsx` the entire row is wrapped in one outer `<button onClick={handleButtonClick}>`. Inside that button we render `<CounterButton>`, which itself renders a `<PopoverTrigger asChild><button>…</button></PopoverTrigger>`.
+### 1. Shared "interested users" list component
 
-Nested buttons are invalid HTML. Browsers fold the inner click into the outer one, so the popover trigger almost never fires (and when it does, also toggles like/interest). That is why:
-- Like popup "very occasionally" works (only when the click lands exactly on the inner span).
-- Interest popup "never" works (on small viewports the outer button consumes every tap).
-- Comments has no popup at all because `CounterButton` is hard-coded `isInteractive=false` for `type === "comment"`.
+Create `src/components/post/interactions/interest/InterestSelectionList.tsx`. Single source of truth for the list rendered inside any interest popover. It:
 
-### 2. Like INSERT collides with stale optimistic state
+- Loads paginated interested users for `itemId` (reusing the existing `fetchInterestedUsersPage`).
+- Subscribes to the shared per-item realtime channel for `interests` and reloads on change (same pattern as `PaginatedUserList`).
+- Renders each row: avatar + name as a `<Link to="/user/:id" target="_blank">` (always — so anyone can open the user's public profile).
+- When `isOwner` is true: shows `TrustIndicator`, "Select" button, "Selected" badge, "Withdraw" button — reusing the logic currently in `src/components/profile/InterestUsersPopover.tsx`.
+- Calls the existing `select_receiver` RPC, then navigates to `/messages?conversation=<id>`.
 
-`useLikes.handleLike` flips `isLiked` then runs `INSERT … FROM likes` with no `onConflict`. When realtime is slightly behind, the local state believes "not liked" but the row already exists → unique-constraint error → we revert the optimistic flip and show the red "Kunde inte uppdatera gillningsstatus" toast. Interests was already fixed with `upsert({ onConflict: 'user_id,item_id', ignoreDuplicates: true })`; likes needs the same pattern (and DELETE should treat "row not found" as success).
+Wire it into:
 
-### 3. Realtime updates the count but not the user list
+- `CounterButton` / `PaginatedUserList`: when `type === "interest"`, render `InterestSelectionList` instead of the plain paginated list, and pass `itemId` + `itemOwnerId` + `currentUserId`. Plain `PaginatedUserList` keeps handling `like` / `comment`.
+- `InteractionButtonWithPopup` already receives `itemId`; thread `itemOwnerId` (from each call site) down through `PrimaryActions` and `ActionButtons`.
+- The two existing `InterestUsersPopover` files in `src/components/profile/` and `src/components/profile/interest/` collapse to a thin wrapper around `InterestSelectionList` so the profile grid uses the same component.
 
-`useInteractionCountsRealtime` keeps `likesCount` / `interestsCount` / `commentsCount` in sync via HEAD COUNT queries, but the `likers` / `interestedUsers` / `commenters` arrays on the card are only refreshed:
-- on initial mount, or
-- (for interests) inside `useItemInterestRealtime` via a debounced refetch.
+Outcome: identical interest popover behavior on feed, expanded post, and profile.
 
-There is no equivalent `useItemLikesRealtime` and no commenters refetch. So when another user likes/comments while a card is mounted, the counter ticks up but the popover list stays empty → "Inga gillningar än" / "Ingen mottagare än" even though the count says 1.
+### 2. Notifications data model + rendering
 
-### 4. Shared channel never recovers from errors
+Update `src/hooks/useNotifications.ts` to read the structured payload instead of stringifying it:
 
-`itemRealtimeManager` creates the channel once and stores its status. On `CHANNEL_ERROR`, `TIMED_OUT`, or `CLOSED` (network blip, tab sleep, JWT refresh) it never re-subscribes, so the card silently goes "stale" until a full reload — matching the "occasionally fail to load / take very long" symptom. We also have no polling fallback when realtime is unhealthy.
-
-## Changes
-
-### A. Restructure the interaction button to fix the popup
-
-`src/components/post/interactions/InteractionButtonWithPopup.tsx`
-- Replace the single outer `<button>` with two siblings inside one container:
-  1. A clickable area containing the icon + label that calls `handleButtonClick` (toggle).
-  2. Beside/below it, the `CounterButton` rendered as its own popover trigger.
-- Use `<div role="button" tabIndex={0} onClick={…} onKeyDown={…}>` for the toggle area so it is no longer a real `<button>` parent — eliminates the nested-button issue.
-- Stop using `popupUsers.length` to override `count` in `displayCount`; always show the authoritative `count` from props so realtime store updates are visible immediately.
-
-### B. Make the counter popup work for comments too
-
-`src/components/post/interactions/button/CounterButton.tsx` and `UserPopoverContent.tsx`
-- Add `"comment"` to the `type` union and a third popover content variant that lists commenters (avatar + name, click → open the comments panel for full context).
-- `PrimaryActions` and `ActionButtons` already receive `commenters` upstream via `ItemInteractions` props; thread `commenters` and a `fetchCommenters` callback into the `comment` `InteractionButtonWithPopup`.
-- Add a tiny `fetchCommenters(itemId)` helper that runs a `select user_id from comments where item_id = … group by user_id` followed by a profile lookup (mirrors `fetchLikersInternal`).
-
-### C. Fix the like error & make toggles idempotent
-
-`src/hooks/item/useLikes.ts`
-- Change `INSERT` to `upsert([{ user_id, item_id }], { onConflict: 'user_id,item_id', ignoreDuplicates: true })`.
-- Treat the `DELETE` "no rows affected" path as success.
-- Drop the post-action `await fetchLikersInternal(numericId)` round-trip from the optimistic path (rely on realtime to sync the list, like interests now does), so the UI no longer depends on the network call to look correct.
-
-Mirror the same hardening in `useInterestActions` if any path still throws on duplicates (already partially done — verify).
-
-### D. Realtime user-list refresh for likes & comments
-
-New `src/hooks/item/realtime/useItemLikesRealtime.ts`
-- Mirrors `useItemInterestRealtime`: subscribes via the shared per-item channel for table `likes`, debounces, and calls a supplied `onAnyChange()` so `useLikes` can re-run `fetchLikersInternal`.
-- Wire it into `useLikes` exactly like interests does.
-
-`src/hooks/comments/useCommentRealtime.ts` / `useLazyComments.ts`
-- When `useCommentCountRealtime`'s `onChange` fires, also invalidate the cached commenters list used by `ItemInteractions` (so the comment counter popup rebuilds). Expose a `fetchCommenters` from `useItemCard`-level hooks.
-
-### E. Make the shared channel self-heal
-
-`src/services/realtime/itemRealtimeManager.ts`
-- In the `channel.subscribe` status callback, when status is `CHANNEL_ERROR`, `TIMED_OUT`, or `CLOSED`, schedule a re-subscribe with exponential backoff (1s → 2s → 5s → 10s, capped) as long as `refCount > 0`.
-- Re-emit the new status to all `statusListeners` so polling fallbacks can engage / disengage.
-- Also subscribe to `window` `online` / `visibilitychange` once at module load and force an immediate resubscribe of all entries when the tab becomes visible / network returns.
-
-`src/services/realtime/commentLikesManager.ts`
-- Apply the same self-healing pattern.
-
-### F. Lightweight polling fallback while channel is unhealthy
-
-In `useInteractionCountsRealtime`, `useItemInterestRealtime`, `useItemLikesRealtime`, and `useCommentCountRealtime`:
-- Use `subscribeItemStatus` from the manager. While status ≠ `SUBSCRIBED`, run a 15s `setInterval` that re-runs the same HEAD COUNT / list refetch the realtime handler would have done. Stop polling once `SUBSCRIBED` returns.
-- This gives a hard upper bound on staleness even when realtime is broken.
-
-## Files touched
-
-```text
-src/components/post/interactions/InteractionButtonWithPopup.tsx   (restructure)
-src/components/post/interactions/button/CounterButton.tsx         (add comment variant)
-src/components/post/interactions/button/UserPopoverContent.tsx    (comment list)
-src/components/post/interactions/PrimaryActions.tsx               (pass commenters + fetchCommenters)
-src/components/post/interactions/ActionButtons.tsx                (same)
-src/components/post/ItemInteractions.tsx                          (wire fetchCommenters)
-src/components/item/ItemInteractions.tsx                          (same)
-src/hooks/item/useLikes.ts                                        (upsert + realtime list refresh)
-src/hooks/item/useInterests.ts                                    (verify upsert path)
-src/hooks/item/realtime/useItemLikesRealtime.ts                   (NEW)
-src/hooks/comments/useCommentCountRealtime.ts                     (expose commenters refresh)
-src/hooks/item/useItemCard.tsx / useItemCardUsers.tsx             (fetchCommenters helper)
-src/services/realtime/itemRealtimeManager.ts                      (self-heal + visibility)
-src/services/realtime/commentLikesManager.ts                      (self-heal)
+```ts
+const transformed = (data ?? []).map((n) => {
+  const p = (n.payload ?? {}) as Record<string, any>;
+  return {
+    id: String(n.id),
+    user_id: n.user_id,
+    type: n.type,                      // 'interest_received' | 'receiver_selected' | ...
+    actor_id: p.actor_id ?? null,
+    actor_name: p.actor_name ?? null,
+    item_id: p.item_id ?? null,
+    item_title: p.item_title ?? null,
+    conversation_id: p.conversation_id ?? null,
+    is_read: n.read ?? false,
+    created_at: n.created_at,
+  };
+});
 ```
 
-## Validation
+Update `NotificationList.tsx`:
 
-- Manual: open the same item in two browser windows; like/comment/show interest in one and confirm counters AND popover lists update within ~1s in the other, with no error toast.
-- Manual: tap the counter number on each of the three buttons (like / comment / interest) on mobile viewport (460px) and confirm a popover with the user list opens every time, without also toggling the action.
-- Tab-sleep test: leave a card mounted, sleep the tab for >2 min, return — counters should reconcile within 15s via polling fallback.
-- `bunx tsc --noEmit` after changes.
+- For `type === "interest_received"`: render `t('notifications.interest_received', { name })` with the name wrapped in a `<Link to="/user/:actor_id">` and a CTA to `/post/:item_id`.
+- For `type === "receiver_selected"`: keep existing copy + deep-link to `/messages?conversation=:conversation_id`.
+- Add the matching `notifications.*` strings to `src/locales/{en,sv}/interactions.json`.
+
+### 3. DB triggers for notifications
+
+Add a migration `supabase/migrations/<ts>_interest_notifications.sql`:
+
+```sql
+-- Notify the item owner whenever someone shows interest.
+create or replace function public.notify_interest_received()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_owner uuid;
+  v_actor_name text;
+  v_item_title text;
+begin
+  select user_id, title into v_owner, v_item_title from items where id = new.item_id;
+  if v_owner is null or v_owner = new.user_id then
+    return new;
+  end if;
+  select coalesce(first_name || ' ' || coalesce(last_name, ''), 'Someone')
+    into v_actor_name from profiles where id = new.user_id;
+
+  insert into notifications (user_id, type, payload, read)
+  values (
+    v_owner,
+    'interest_received',
+    jsonb_build_object(
+      'actor_id', new.user_id,
+      'actor_name', v_actor_name,
+      'item_id', new.item_id,
+      'item_title', v_item_title
+    ),
+    false
+  );
+  return new;
+end $$;
+
+drop trigger if exists trg_notify_interest_received on interests;
+create trigger trg_notify_interest_received
+after insert on interests
+for each row execute function public.notify_interest_received();
+
+-- Notify the receiver when the piffer selects them.
+create or replace function public.notify_receiver_selected()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_conversation_id uuid;
+  v_item_title text;
+begin
+  if new.status = 'selected' and (old.status is distinct from 'selected') then
+    select id into v_conversation_id from conversations
+      where item_id = new.item_id
+        and (buyer_id = new.user_id or seller_id = new.user_id)
+      order by created_at desc limit 1;
+    select title into v_item_title from items where id = new.item_id;
+
+    insert into notifications (user_id, type, payload, read)
+    values (
+      new.user_id,
+      'receiver_selected',
+      jsonb_build_object(
+        'item_id', new.item_id,
+        'item_title', v_item_title,
+        'conversation_id', v_conversation_id
+      ),
+      false
+    );
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_notify_receiver_selected on interests;
+create trigger trg_notify_receiver_selected
+after update on interests
+for each row execute function public.notify_receiver_selected();
+```
+
+Column names (`profiles.first_name`, `conversations.buyer_id` / `seller_id`, etc.) will be verified against the live schema before the migration is committed and adjusted if needed. The trigger is idempotent (`drop … if exists`) so re-running is safe even if a similar trigger already exists.
+
+### 4. Messages deep-link
+
+In `src/pages/Messages.tsx`, read `?conversation=<id>` from `useSearchParams` on mount and call `setActiveConversationId` so the receiver lands directly in the right conversation when they tap the notification or the toast.
+
+### 5. Verification checklist (after build)
+
+- Feed card → Interest → counter shows; counter popup opens. Same on expanded post and on the profile pifs grid.
+- Logged in as piffer, opening any of those popups, "Select" button appears for pending interest rows; pressing it navigates to `/messages?conversation=…` and the conversation auto-opens.
+- Logged in as the interested user: notification appears in real time on the piffer's session listing the actor's name as a clickable link to `/user/<id>`.
+- Logged in as the selected receiver: notification appears in real time with a "Start the conversation" CTA that opens the right conversation.
+
+## Out of scope (queued for follow-up)
+
+- Push / email notification delivery.
+- Bulk-select multiple receivers for a request (reverse direction).
+- Selection withdrawal notifications.
