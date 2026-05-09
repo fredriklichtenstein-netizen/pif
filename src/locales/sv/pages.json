@@ -17,6 +17,11 @@
     "return_to_home": "Tillbaka till startsidan",
     "try_again": "Försök igen",
     "browse_feed": "Bläddra i flödet",
-    "browse_map": "Bläddra på kartan"
+    "browse_map": "Bläddra på kartan",
+    "requested_url": "Begärd URL",
+    "came_from": "Kom från",
+    "diagnostic_details": "Diagnostikinformation",
+    "copy_details": "Kopiera detaljer",
+    "details_copied": "Detaljer kopierade"
   }
 }
