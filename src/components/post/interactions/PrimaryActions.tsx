@@ -41,19 +41,24 @@ export function PrimaryActions({
   interestsCount = 0,
   likers = [],
   interestedUsers = [],
+  commenters = [],
   onLikeToggle,
   onCommentToggle,
   onShowInterest,
   onShare,
   fetchLikers,
   fetchInterestedUsers,
+  fetchCommenters,
 }: PrimaryActionsProps) {
   const { t } = useTranslation();
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onShare();
   };
-  
+
+  const fetchCommentersFn =
+    fetchCommenters || (() => fetchCommentersForItem(itemId));
+
   return (
     <div className="grid grid-cols-4 w-full gap-1 mb-1">
       <div className="flex justify-center">
@@ -78,6 +83,8 @@ export function PrimaryActions({
           type="comment"
           isActive={hasCommented}
           count={commentsCount}
+          users={commenters}
+          onCounterClick={fetchCommentersFn}
           itemId={itemId}
           onClick={onCommentToggle}
           labelPassive={t('interactions.comment')}
