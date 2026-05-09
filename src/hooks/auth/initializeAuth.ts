@@ -111,13 +111,17 @@ export const initializeAuth = async () => {
     if (sessionError) {
       console.error('Error getting session:', sessionError);
       
-      // Check if it's a network error
-      if (sessionError.message?.includes('Load failed') || 
-          sessionError.message?.includes('fetch failed') || 
-          sessionError.message?.includes('Failed to fetch') || 
-          sessionError.message?.includes('Network Error') ||
-          sessionError.message?.includes('Timeout')) {
+      if (isNetworkError(sessionError)) {
         auth.setNetworkError(true);
+        auth.setError(sessionError);
+        auth.setLoading(false);
+        auth.setInitialized(true);
+        return;
+      }
+      
+      if (isAuthInvalidError(sessionError)) {
+        await recoverFromCorruptedSession(`getSession: ${sessionError.message}`);
+        return;
       }
       
       auth.setError(sessionError);
