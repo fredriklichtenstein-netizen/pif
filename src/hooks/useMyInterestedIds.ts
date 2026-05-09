@@ -4,6 +4,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useMyInterestStore } from "@/stores/myInterestStore";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 /**
  * Returns the set of item IDs that the current user is interested in.
@@ -30,6 +31,10 @@ export const useMyInterestedIds = () => {
       setIsLoaded(true);
       return;
     }
+    if (isAuthRequestCircuitOpen()) {
+      setIsLoaded(true);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from("interests")
@@ -43,6 +48,7 @@ export const useMyInterestedIds = () => {
       setMany(Array.from(next).map((id) => ({ itemId: id, value: true })));
       setIsLoaded(true);
     } catch (err) {
+      maybeRecoverFromAuthError(err, "useMyInterestedIds fetch");
       console.warn("[useMyInterestedIds] fetch failed", err);
       setIsLoaded(true);
     }
