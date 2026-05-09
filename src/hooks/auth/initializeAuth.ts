@@ -270,6 +270,8 @@ export const initializeAuth = async () => {
         if (session) {
           currentAuth.setSession(session);
           currentAuth.setUser(session.user);
+          // Healthy session — reset recovery loop guard.
+          clearRecoveryGuard();
         }
         return; // Don't trigger any loading state or re-initialization
       }
