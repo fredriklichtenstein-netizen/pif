@@ -1,6 +1,7 @@
 
 import { useCallback } from "react";
 import { useItemComments } from "./useItemComments";
+import { useCommentCountRealtime } from "@/hooks/comments/useCommentCountRealtime";
 
 /**
  * Hook that handles comment functionality for an item card
@@ -24,6 +25,15 @@ export const useItemCardComments = (itemId: string) => {
       fetchItemComments();
     }
   }, [showComments, fetchItemComments]);
+
+  // Live-update the counter (and refetch the open list) whenever a
+  // comment is inserted or deleted server-side, without requiring the
+  // user to reopen the comments section.
+  useCommentCountRealtime(itemId, () => {
+    if (showComments) {
+      fetchItemComments();
+    }
+  });
 
   return {
     showComments,
