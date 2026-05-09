@@ -25,6 +25,7 @@ interface MapContainerProps {
 
 export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemId }: MapContainerProps) => {
   const { mapContainer, map, isMapReady, error, retryInitialization } = useMapInitialization(mapboxToken);
+  const isRefreshing = useRefreshSyncStore((s) => s.isRefreshing);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const locationTracking = useLocationTracking(isMapReady ? map : null);
   const { t } = useTranslation();
@@ -220,7 +221,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
                 locationTracking.goToMyLocation();
               })}
-              disabled={locationTracking.isLoadingLocation || useRefreshSyncStore.getState().isRefreshing}
+              disabled={locationTracking.isLoadingLocation || isRefreshing}
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
               size="icon"
               variant="outline"
