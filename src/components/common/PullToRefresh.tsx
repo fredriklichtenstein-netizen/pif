@@ -43,8 +43,23 @@ export function PullToRefresh({
   // which updates on the next render) so a fast follow-up gesture
   // cannot start a second overlapping reload.
   const refreshingRef = useRef(false);
+  // Tracks whether we've already buzzed for the current pull gesture so
+  // the haptic only fires once when the user crosses the threshold.
+  const hapticFiredRef = useRef(false);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Subtle haptic helper. Safely no-ops on devices without the API
+  // (most desktop browsers and iOS Safari).
+  const vibrate = (pattern: number | number[]) => {
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        navigator.vibrate(pattern);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
 
   useEffect(() => {
     if (disabled) return;
