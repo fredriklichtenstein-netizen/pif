@@ -10,7 +10,73 @@ import { DEMO_USER, DEMO_SESSION } from "@/data/mockUser";
  * to /auth so the user can start a clean session — instead of being stuck
  * on a blank page.
  */
+const RECOVERY_GUARD_KEY = "auth.recoveryGuard";
+const RECOVERY_WINDOW_MS = 60_000; // 1 minute
+const RECOVERY_MAX_ATTEMPTS = 2;
+
+interface RecoveryGuardState {
+  count: number;
+  firstAt: number;
+}
+
+const readGuard = (): RecoveryGuardState => {
+  try {
+    const raw = window.sessionStorage.getItem(RECOVERY_GUARD_KEY);
+    if (!raw) return { count: 0, firstAt: 0 };
+    const parsed = JSON.parse(raw) as RecoveryGuardState;
+    if (!parsed || typeof parsed.firstAt !== "number") return { count: 0, firstAt: 0 };
+    if (Date.now() - parsed.firstAt > RECOVERY_WINDOW_MS) {
+      return { count: 0, firstAt: 0 };
+    }
+    return parsed;
+  } catch {
+    return { count: 0, firstAt: 0 };
+  }
+};
+
+const writeGuard = (state: RecoveryGuardState) => {
+  try {
+    window.sessionStorage.setItem(RECOVERY_GUARD_KEY, JSON.stringify(state));
+  } catch {
+    // ignore
+  }
+};
+
+export const clearRecoveryGuard = () => {
+  try {
+    window.sessionStorage.removeItem(RECOVERY_GUARD_KEY);
+  } catch {
+    // ignore
+  }
+};
+
 const recoverFromCorruptedSession = async (reason: string) => {
+  // Loop guard: if we've already tried recovery recently, stop bouncing the
+  // user. Surface the broken state to the auth store instead so the existing
+  // error UI ("can't sign in / network error") takes over.
+  const guard = readGuard();
+  if (guard.count >= RECOVERY_MAX_ATTEMPTS) {
+    console.warn(
+      "[auth] recovery loop guard tripped, skipping redirect:",
+      reason,
+      guard,
+    );
+    try {
+      const auth = useAuthStore.getState();
+      auth.clearAuth();
+      auth.setError(new Error("Session recovery failed repeatedly"));
+      auth.setLoading(false);
+      auth.setInitialized(true);
+    } catch {
+      // noop
+    }
+    return;
+  }
+  writeGuard({
+    count: guard.count + 1,
+    firstAt: guard.firstAt || Date.now(),
+  });
+
   console.warn("[auth] Detected corrupted session, recovering:", reason);
   try {
     await supabase.auth.signOut({ scope: "local" } as any);
@@ -48,6 +114,7 @@ const recoverFromCorruptedSession = async (reason: string) => {
     window.location.replace("/auth?recovered=1");
   }
 };
+
 
 const isAuthInvalidError = (err: any): boolean => {
   if (!err) return false;
@@ -203,6 +270,8 @@ export const initializeAuth = async () => {
         if (session) {
           currentAuth.setSession(session);
           currentAuth.setUser(session.user);
+          // Healthy session — reset recovery loop guard.
+          clearRecoveryGuard();
         }
         return; // Don't trigger any loading state or re-initialization
       }
@@ -225,6 +294,8 @@ export const initializeAuth = async () => {
             .maybeSingle();
 
           currentAuth.setProfileCompleted(profile?.onboarding_completed ?? false);
+          // Successful sign-in + profile load — reset recovery loop guard.
+          clearRecoveryGuard();
         } catch (error) {
           console.error('Error in profile check on auth change:', error);
           currentAuth.setProfileCompleted(false);
