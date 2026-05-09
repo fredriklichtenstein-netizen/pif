@@ -9,6 +9,7 @@ import { FeedErrorBoundary } from "./FeedErrorBoundary";
 import { useSearchParams } from "react-router-dom";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 import { useTranslation } from "react-i18next";
+import { LazyMount } from "./LazyMount";
 
 interface FeedItemListProps {
   posts: any[];
