@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Separator } from "@/components/ui/separator";
@@ -45,10 +45,15 @@ export default function Map() {
     refreshPosts();
   }, [announce, refreshPosts, t]);
 
-  // Auto-dismiss the "filters disabled" toast as soon as the refresh completes.
+  // One-shot guard: the "filters disabled" toast may only show once per
+  // refresh session, no matter how many times the veil is tapped.
+  const filtersToastShownRef = useRef(false);
+
+  // Auto-dismiss the toast and re-arm the guard when the refresh completes.
   useEffect(() => {
     if (!isRefreshing) {
       toast.dismiss('refresh-filters-disabled');
+      filtersToastShownRef.current = false;
     }
   }, [isRefreshing]);
 
@@ -198,13 +203,15 @@ export default function Map() {
           {isRefreshing && (
             <div
               className="absolute inset-0 z-40 bg-background/30 backdrop-blur-[1px] cursor-wait transition-opacity"
-              onClick={() =>
+              onClick={() => {
+                if (filtersToastShownRef.current) return;
+                filtersToastShownRef.current = true;
                 toast.message(t('interactions.filters_disabled_during_refresh'), {
                   id: 'refresh-filters-disabled',
                   description: t('interactions.filters_disabled_during_refresh_description'),
                   duration: 1800,
-                })
-              }
+                });
+              }}
               aria-hidden="true"
             />
           )}
