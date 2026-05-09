@@ -39,6 +39,28 @@ export default function Auth() {
     initializeAuth();
   }, []);
 
+  // Show a toast when the user landed here via the auto-recovery flow
+  // (stale/expired session was cleared after a deploy).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("recovered") === "1") {
+      toast({
+        title: t("auth.session_expired_title", "Session expired"),
+        description: t(
+          "auth.session_expired_description",
+          "Your session expired. Please sign in again to continue."
+        ),
+      });
+      params.delete("recovered");
+      const qs = params.toString();
+      navigate(
+        { pathname: location.pathname, search: qs ? `?${qs}` : "" },
+        { replace: true, state: location.state }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     
