@@ -114,13 +114,20 @@ export function OptimizedFeedContainer() {
   return (
     <PullToRefresh onRefresh={handleRefresh} disabled={isLoading}>
       <div className="space-y-4">
+        <FeedDistanceFilter
+          selectedDistance={selectedDistance}
+          onDistanceChange={setSelectedDistance}
+          userLocation={userLocation}
+          onUserLocationChange={setUserLocation}
+        />
+
         <section role="feed" aria-label={t('interactions.community_posts')}>
           <FeedItemList
-            posts={memoizedPosts}
+            posts={filteredPosts}
             fadingIds={fadingIds}
             restoringIds={restoringIds}
             selectedCategories={[]}
-            clearFilters={() => {}}
+            clearFilters={() => setSelectedDistance(null)}
             viewMode="all"
             isLoading={isLoadingMore}
             onItemOperationSuccess={handleRefresh}
