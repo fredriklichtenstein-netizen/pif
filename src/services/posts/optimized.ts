@@ -10,9 +10,19 @@ import {
   isAuthInvalidError,
   maybeRecoverFromAuthError,
 } from "@/hooks/auth/sessionRecovery";
+import {
+  setCache,
+  readCache,
+  clearCacheByPrefix,
+  FEED_CACHE_KEYS,
+} from "./cache";
 
 // Cache with TTL
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// Persistent (sessionStorage) TTL — short, so a refresh or feed↔map switch
+// reuses the result without serving stale data for long.
+const PERSISTENT_TTL = 60 * 1000; // 60s
+const STALE_REVALIDATE_TTL = 5 * 60 * 1000; // serve stale up to 5min while revalidating
 
 // Create a memoized cache for transformed posts
 const transformCache = memoryOptimizer.createMemoCache<Post>(50);
@@ -24,11 +34,28 @@ export const getOptimizedPosts = async (
 ): Promise<Post[]> => {
   const start = performance.now();
   const cacheKey = `posts-v2-${limit}-${offset}`;
-  
-  // Try cache first
+  const persistentKey = FEED_CACHE_KEYS.optimizedPage(limit, offset);
+
+  // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
   if (cached) {
     return cached;
+  }
+
+  // 2) Persistent (sessionStorage) cache survives full-page refreshes and
+  // is shared across views, so switching feed↔map or hitting reload
+  // doesn't re-execute the heavy joined query immediately.
+  const persisted = readCache<Post[]>(persistentKey);
+  if (persisted && !persisted.isStale) {
+    // Re-warm the in-memory cache so subsequent reads stay O(1).
+    DatabaseCache.set(cacheKey, persisted.data, CACHE_TTL);
+    return persisted.data;
+  }
+  if (persisted && persisted.isStale && !_retryAfterRecovery) {
+    // Stale-while-revalidate: hand back stale data immediately, refresh in bg.
+    DatabaseCache.set(cacheKey, persisted.data, CACHE_TTL);
+    void revalidateInBackground(limit, offset);
+    return persisted.data;
   }
   try {
     // Use optimized query
@@ -79,8 +106,9 @@ export const getOptimizedPosts = async (
       // Non-fatal — counts will still load lazily.
     }
 
-    // Cache the results
+    // Cache the results in both layers.
     DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
+    setCache(persistentKey, transformedPosts, PERSISTENT_TTL);
     // Record performance metrics
     performanceMetrics.recordMetric({
       id: `posts-fetch-${Date.now()}`,
@@ -145,7 +173,19 @@ export const clearPostsCache = () => {
   // Clear all posts-related cache entries
   DatabaseCache.clear();
   transformCache.clear();
+  clearCacheByPrefix("posts:");
 };
+
+// Background revalidation used by the stale-while-revalidate path.
+function revalidateInBackground(limit: number, offset: number) {
+  // Drop the in-memory entry so the next call performs the real fetch,
+  // then trigger it without awaiting the result.
+  DatabaseCache.delete(`posts-v2-${limit}-${offset}`);
+  getOptimizedPosts(limit, offset, true).catch(() => {
+    // ignore — we already returned stale data to the caller
+  });
+}
+void STALE_REVALIDATE_TTL; // reserved for future tuning
 
 // Register cleanup tasks for memory management
 memoryOptimizer.addCleanupTask(() => {

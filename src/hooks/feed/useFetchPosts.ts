@@ -12,6 +12,10 @@ import {
   isAuthInvalidError,
   maybeRecoverFromAuthError,
 } from "@/hooks/auth/sessionRecovery";
+import { setCache, readCache, FEED_CACHE_KEYS } from "@/services/posts/cache";
+
+const FULL_LIST_TTL = 60 * 1000; // 60s
+const FULL_LIST_STALE_TTL = 5 * 60 * 1000; // serve stale up to 5min
 
 // Normalize item_type to match map marker expectations
 const normalizeItemType = (itemType: string): 'offer' | 'request' => {
@@ -42,8 +46,12 @@ const transformMockPosts = () => {
 };
 
 export function useFetchPosts(options = { includeArchived: false }) {
-  const [posts, setPosts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const cacheKey = FEED_CACHE_KEYS.fullList(options.includeArchived);
+  // Seed from the persistent cache so switching feed↔map or refreshing
+  // shows content immediately without waiting on the network.
+  const seeded = !DEMO_MODE ? readCache<any[]>(cacheKey) : null;
+  const [posts, setPosts] = useState<any[]>(seeded?.data ?? []);
+  const [isLoading, setIsLoading] = useState(!seeded);
   const [error, setError] = useState<Error | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -70,17 +78,33 @@ export function useFetchPosts(options = { includeArchived: false }) {
       return;
     }
 
-    
+    // Persistent cache short-circuit. If we have a fresh cached payload,
+    // just hand it back without touching the network. If it's stale we
+    // serve it immediately and refresh in the background.
+    const cached = readCache<any[]>(cacheKey);
+    if (cached && !cached.isStale) {
+      setPosts(cached.data);
+      setIsLoading(false);
+      return;
+    }
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
-    
+
     setIsFetching(true);
-    setIsLoading(true);
+    // If we have stale data, keep showing it instead of flipping to a loader.
+    if (cached?.data?.length) {
+      setPosts(cached.data);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
+
 
     try {
       let query = supabase
@@ -124,6 +148,8 @@ export function useFetchPosts(options = { includeArchived: false }) {
       }) || [];
 
       setPosts(transformedData);
+      setCache(cacheKey, transformedData, FULL_LIST_TTL);
+      void FULL_LIST_STALE_TTL;
 
       // Bulk-fetch interaction counts so feed cards show correct counters
       // immediately (especially comments) without waiting for lazy fetches.
@@ -183,7 +209,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       setIsLoading(false);
       setIsFetching(false);
     }
-  }, [toast, t, options.includeArchived]);
+  }, [toast, t, options.includeArchived, cacheKey]);
 
   const cleanup = useCallback(() => {
     if (abortControllerRef.current) {
