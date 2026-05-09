@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UserPopoverContent } from './UserPopoverContent';
 import { PaginatedUserList } from './PaginatedUserList';
+import { InterestSelectionList } from '../interest/InterestSelectionList';
 import type { User } from '@/hooks/item/useItemInteractions';
 import type { FetchPage } from '@/services/interactions/fetchPaginatedUsers';
 
@@ -23,6 +24,10 @@ interface CounterButtonProps {
   fetchPage?: FetchPage;
   /** When provided alongside `fetchPage`, the paginated list refreshes itself on realtime changes. */
   itemId?: string | number;
+  /** For type="interest": item owner id, used to enable receiver-selection UI. */
+  itemOwnerId?: string;
+  /** Currently authenticated user id. */
+  currentUserId?: string;
 }
 
 const labelKey = (type: CounterButtonProps["type"]) => {
