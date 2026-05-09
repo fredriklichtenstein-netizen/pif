@@ -35,6 +35,7 @@ export function PaginatedUserList({
   type,
   fetchPage,
   setShowPopup,
+  itemId,
 }: PaginatedUserListProps) {
   const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
