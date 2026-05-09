@@ -294,6 +294,8 @@ export const initializeAuth = async () => {
             .maybeSingle();
 
           currentAuth.setProfileCompleted(profile?.onboarding_completed ?? false);
+          // Successful sign-in + profile load — reset recovery loop guard.
+          clearRecoveryGuard();
         } catch (error) {
           console.error('Error in profile check on auth change:', error);
           currentAuth.setProfileCompleted(false);
