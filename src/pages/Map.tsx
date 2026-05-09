@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { PullToRefresh } from "@/components/common/PullToRefresh";
 import { RefreshOverlay } from "@/components/common/RefreshOverlay";
+import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
 
 export default function Map() {
   const navigate = useNavigate();
