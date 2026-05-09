@@ -141,8 +141,11 @@ class PerformanceMetricsCollector {
     const threshold = this.thresholds[metric.name];
     if (!threshold) return;
 
+    // Use console.warn (not console.error) — these are diagnostic
+    // signals, not application errors, and shouldn't surface as red
+    // errors in the user's console or in error-tracking dashboards.
     if (metric.value >= threshold.critical) {
-      console.error(`🚨 Critical performance issue: ${metric.name} took ${metric.value.toFixed(2)}ms`);
+      console.warn(`🚨 Critical performance issue: ${metric.name} took ${metric.value.toFixed(2)}ms`);
       this.reportCriticalIssue(metric);
     } else if (metric.value >= threshold.warning) {
       console.warn(`⚠️ Performance warning: ${metric.name} took ${metric.value.toFixed(2)}ms`);
