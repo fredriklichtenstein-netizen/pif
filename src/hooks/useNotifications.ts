@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_NOTIFICATIONS } from "@/data/mockNotifications";
+import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
 export interface Notification {
   id: string;
