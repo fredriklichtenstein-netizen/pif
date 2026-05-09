@@ -17,6 +17,7 @@ import { EnhancedLoading } from '@/components/ui/enhanced-loading';
 import { PullToRefresh } from '@/components/common/PullToRefresh';
 import { RefreshOverlay } from '@/components/common/RefreshOverlay';
 import { FeedSkeleton } from './FeedSkeleton';
+import { InfiniteScrollSentinel } from './InfiniteScrollSentinel';
 import { DEMO_MODE } from '@/config/demoMode';
 import { useTranslation } from 'react-i18next';
 import { useDistanceFiltering } from '@/hooks/useDistanceFiltering';
@@ -157,6 +158,15 @@ export function OptimizedFeedContainer() {
             <FeedSkeleton count={2} />
           </div>
         )}
+
+        {/* Auto-load the next page as the user nears the bottom — no
+            manual "Load more" tap needed. The button is kept as a
+            keyboard/a11y fallback below. */}
+        <InfiniteScrollSentinel
+          hasMore={!!hasMore}
+          isLoading={isLoadingMore || isRefreshing}
+          onLoadMore={handleLoadMore}
+        />
 
         {hasMore && (
           <div className="flex justify-center" role="navigation" aria-label={t('interactions.load_more_posts')}>
