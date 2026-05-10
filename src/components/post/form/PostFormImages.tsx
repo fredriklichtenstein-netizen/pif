@@ -91,7 +91,7 @@ export function PostFormImages({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleClick}
-        onImageUpload={onImageUpload}
+        onImageUpload={wrappedOnImageUpload}
         fileInputRef={fileInputRef}
       />
 
