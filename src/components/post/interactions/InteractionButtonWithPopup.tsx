@@ -199,9 +199,20 @@ export function InteractionButtonWithPopup({
             itemId={itemId}
             itemOwnerId={itemOwnerId}
             currentUserId={currentUserId}
+            itemType={itemType}
           />
         )}
       </div>
+
+      {useWishGrantFlow && (
+        <GrantWishDialog
+          open={grantOpen}
+          onOpenChange={(o) => !granting && setGrantOpen(o)}
+          onConfirm={handleGrantConfirm}
+          wishTitle={itemTitle}
+          submitting={granting}
+        />
+      )}
     </div>
   );
 }
