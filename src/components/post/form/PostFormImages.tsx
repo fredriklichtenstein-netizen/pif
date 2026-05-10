@@ -5,6 +5,8 @@ import { ImageUploadArea } from "./images/ImageUploadArea";
 import { ImagePreviewList } from "./images/ImagePreviewList";
 import { ImageFormTips } from "./images/ImageFormTips";
 import { useImageDragAndDrop } from "./images/useImageDragAndDrop";
+import { useImageCropQueue } from "./images/useImageCropQueue";
+import { PostImageCropDialog } from "./images/PostImageCropDialog";
 import { useTranslation } from 'react-i18next';
 
 interface PostFormImagesProps {
@@ -24,7 +26,17 @@ export function PostFormImages({
 }: PostFormImagesProps) {
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
-  
+
+  // Route every newly selected file through a crop dialog before upload.
+  const {
+    handleImageUpload: wrappedOnImageUpload,
+    cropImage,
+    cropProgress,
+    handleCropSave,
+    handleCropSkip,
+    handleCancelAll,
+  } = useImageCropQueue(onImageUpload);
+
   const {
     isDragOver,
     draggedIndex,
@@ -45,7 +57,7 @@ export function PostFormImages({
   } = useImageDragAndDrop({
     images,
     onImagesChange,
-    onImageUpload,
+    onImageUpload: wrappedOnImageUpload,
     isRequest,
   });
 
@@ -79,7 +91,7 @@ export function PostFormImages({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleClick}
-        onImageUpload={onImageUpload}
+        onImageUpload={wrappedOnImageUpload}
         fileInputRef={fileInputRef}
       />
 
@@ -106,6 +118,14 @@ export function PostFormImages({
           <span>{t('post.analyzing_image')}</span>
         </div>
       )}
+
+      <PostImageCropDialog
+        image={cropImage}
+        progress={cropProgress}
+        onSave={handleCropSave}
+        onSkip={handleCropSkip}
+        onCancel={handleCancelAll}
+      />
     </div>
   );
 }
