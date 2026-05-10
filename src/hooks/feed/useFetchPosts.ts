@@ -8,6 +8,7 @@ import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
 import { parseCoordinatesFromDB } from "@/types/post";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { useAuthStore } from "@/hooks/auth/authStore";
 import {
   isAuthInvalidError,
   maybeRecoverFromAuthError,
@@ -55,6 +56,8 @@ export function useFetchPosts(options = { includeArchived: false }) {
   const [error, setError] = useState<Error | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const countsFetchKeyRef = useRef<string | null>(null);
+  const authInitialized = useAuthStore((s) => s.initialized);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -150,34 +153,6 @@ export function useFetchPosts(options = { includeArchived: false }) {
       setPosts(transformedData);
       setCache(cacheKey, transformedData, FULL_LIST_TTL);
       void FULL_LIST_STALE_TTL;
-
-      // Bulk-fetch interaction counts so feed cards show correct counters
-      // immediately (especially comments) without waiting for lazy fetches.
-      const itemIds = transformedData
-        .map((p: any) => Number(p.id))
-        .filter((n: number) => Number.isFinite(n));
-      if (itemIds.length > 0) {
-        try {
-          const { data: countsData, error: countsError } = await (supabase.rpc as any)(
-            'get_bulk_interaction_counts',
-            { p_item_ids: itemIds }
-          );
-          console.log('Bulk counts result:', countsData, countsError);
-          if (!countsError && Array.isArray(countsData)) {
-            useInitialCountsStore.getState().setBulkCounts(
-              countsData.map((row: any) => ({
-                itemId: row.item_id,
-                likesCount: Number(row.likes_count) || 0,
-                commentsCount: Number(row.comments_count) || 0,
-                interestsCount: Number(row.interests_count) || 0,
-                bookmarksCount: Number(row.bookmarks_count) || 0,
-              }))
-            );
-          }
-        } catch (e) {
-          // Silent fallback — individual hooks will still load counts lazily.
-        }
-      }
     } catch (err: any) {
       if (err.name !== 'AbortError' && !signal.aborted) {
         console.error('Error fetching posts:', err);
@@ -210,6 +185,52 @@ export function useFetchPosts(options = { includeArchived: false }) {
       setIsFetching(false);
     }
   }, [toast, t, options.includeArchived, cacheKey]);
+
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (!authInitialized) return;
+
+    const itemIds = posts
+      .map((p: any) => Number(p.id))
+      .filter((n: number) => Number.isFinite(n));
+    if (itemIds.length === 0) return;
+
+    const countsFetchKey = `${cacheKey}:${itemIds.join(",")}`;
+    if (countsFetchKeyRef.current === countsFetchKey) return;
+    countsFetchKeyRef.current = countsFetchKey;
+
+    let cancelled = false;
+
+    const fetchInteractionCounts = async () => {
+      try {
+        const { data: countsData, error: countsError } = await (supabase.rpc as any)(
+          'get_bulk_interaction_counts',
+          { p_item_ids: itemIds }
+        );
+
+        if (cancelled || countsError || !Array.isArray(countsData)) return;
+
+        useInitialCountsStore.getState().setBulkCounts(
+          countsData.map((row: any) => ({
+            itemId: row.item_id,
+            likesCount: Number(row.likes_count) || 0,
+            commentsCount: Number(row.comments_count) || 0,
+            interestsCount: Number(row.interests_count) || 0,
+            bookmarksCount: Number(row.bookmarks_count) || 0,
+          }))
+        );
+      } catch (e) {
+        // Silent fallback — individual hooks will still load counts lazily.
+      }
+    };
+
+    const timer = window.setTimeout(fetchInteractionCounts, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [posts, authInitialized, cacheKey]);
 
   const cleanup = useCallback(() => {
     if (abortControllerRef.current) {
