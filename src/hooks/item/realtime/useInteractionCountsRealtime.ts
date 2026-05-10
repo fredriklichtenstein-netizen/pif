@@ -6,6 +6,7 @@ import {
   subscribeItemStatus,
 } from "@/services/realtime/itemRealtimeManager";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 const POLL_INTERVAL_MS = 15000;
 
