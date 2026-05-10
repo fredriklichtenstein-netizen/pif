@@ -15,6 +15,24 @@
 alter table public.interests
   add column if not exists note text;
 
+-- Defence-in-depth uniqueness so concurrent grants from the same
+-- helper can never produce two pending interest rows. The
+-- application-side upsert already targets this conflict key.
+create unique index if not exists interests_unique_user_item
+  on public.interests (user_id, item_id);
+
+-- Conversations between the same wisher+helper for the same item
+-- must be unique regardless of which side initiated. Two concurrent
+-- "Choose this helper" clicks could otherwise each insert one before
+-- either commits — this index makes that race a hard error the RPC
+-- can recover from by re-reading the surviving row.
+create unique index if not exists conversations_unique_pair_per_item
+  on public.conversations (
+    item_id,
+    least(user1_id, user2_id),
+    greatest(user1_id, user2_id)
+  );
+
 create or replace function public.select_wish_helper(
   p_item_id bigint,
   p_helper_id uuid,
