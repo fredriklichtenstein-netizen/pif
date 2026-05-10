@@ -224,10 +224,11 @@ export function useFetchPosts(options = { includeArchived: false }) {
       }
     };
 
-    window.setTimeout(fetchInteractionCounts, 0);
+    const timer = window.setTimeout(fetchInteractionCounts, 0);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [posts, authInitialized, cacheKey]);
 
