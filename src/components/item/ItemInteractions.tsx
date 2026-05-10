@@ -14,6 +14,8 @@ export function ItemInteractions({
   isBookmarked,
   showInterest,
   isOwner = false,
+  itemType,
+  itemTitle,
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
@@ -61,6 +63,8 @@ export function ItemInteractions({
               showComments={showComments}
               showInterest={showInterest}
               isOwner={isOwner}
+              itemType={itemType}
+              itemTitle={itemTitle}
               currentUserId={currentUserId}
               itemOwnerId={postedBy?.id}
               hasCommented={userHasCommented}
@@ -72,7 +76,7 @@ export function ItemInteractions({
               commenters={commenters}
               onLikeToggle={() => handleAction(onLikeToggle)}
               onCommentToggle={() => handleAction(onCommentToggle, false)}
-              onShowInterest={() => handleAction(onShowInterest)}
+              onShowInterest={(note?: string) => handleAction(() => onShowInterest(note))}
               onShare={handleShareAction}
               fetchLikers={async () => likers}
               fetchInterestedUsers={async () => interestedUsers}
