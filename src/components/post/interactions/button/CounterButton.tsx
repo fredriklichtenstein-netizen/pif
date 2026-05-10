@@ -28,6 +28,8 @@ interface CounterButtonProps {
   itemOwnerId?: string;
   /** Currently authenticated user id. */
   currentUserId?: string;
+  /** For type="interest": switches the selection list to wish (multi-helper) mode. */
+  itemType?: 'offer' | 'request';
 }
 
 const labelKey = (type: CounterButtonProps["type"]) => {
@@ -52,6 +54,7 @@ export function CounterButton({
   itemId,
   itemOwnerId,
   currentUserId,
+  itemType,
 }: CounterButtonProps) {
   const { t } = useTranslation();
   
@@ -109,6 +112,7 @@ export function CounterButton({
             itemId={itemId!}
             itemOwnerId={itemOwnerId}
             currentUserId={currentUserId}
+            itemType={itemType}
             setShowPopup={setShowPopup}
           />
         ) : fetchPage ? (
