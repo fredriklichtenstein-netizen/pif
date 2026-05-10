@@ -19,6 +19,28 @@ serve(async (req) => {
   }
 
   try {
+    // Require authentication to prevent anonymous token harvesting
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const token_jwt = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: authError } = await supabase.auth.getClaims(token_jwt);
+    if (authError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const token = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
     
     console.log("Edge function: Token exists:", !!token);
