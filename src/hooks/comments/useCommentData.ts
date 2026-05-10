@@ -113,10 +113,11 @@ export function useCommentData(itemId: string) {
     };
     
     fetchComments();
-  }, [itemId, session?.user?.id]);
+  }, [itemId, session?.user?.id, authInitialized]);
   
   // Fetch profile data from the profiles table
   useEffect(() => {
+    if (!authInitialized) return;
     if (session?.user?.id) {
       const fetchProfile = async () => {
         const { data, error } = await supabase
@@ -134,7 +135,7 @@ export function useCommentData(itemId: string) {
       
       fetchProfile();
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, authInitialized]);
 
   // Construct the user's full name from profile data with the new format
   const getFullName = () => {
