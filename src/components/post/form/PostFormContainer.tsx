@@ -158,7 +158,7 @@ export function PostFormContainer({
           size="icon"
           onClick={() => setCancelDialogOpen(true)}
           aria-label={t('post.cancel_button_aria')}
-          className="absolute right-0 top-0 h-9 w-9 text-muted-foreground hover:text-foreground"
+          className="absolute right-0 top-0 h-9 w-9 rounded-full bg-white/80 text-foreground shadow-[0_1px_4px_rgba(0,0,0,0.2)] ring-1 ring-black/10 backdrop-blur-sm hover:bg-white"
         >
           <X className="h-5 w-5" />
         </Button>
