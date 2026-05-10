@@ -47,7 +47,7 @@ export function useItemBookmark(itemId: number | string) {
     if (user && numericItemId) {
       checkBookmarkStatus();
     }
-  }, [numericItemId, user]);
+  }, [numericItemId, user, authInitialized]);
   
   // Toggle bookmark status
   const toggleBookmark = async () => {
