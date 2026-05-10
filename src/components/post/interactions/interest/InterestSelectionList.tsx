@@ -540,11 +540,38 @@ export function InterestSelectionList({
                 <div className="ml-auto flex items-center gap-1">
                   {r.status === "selected" && (
                     <>
-                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
-                        {isWish
-                          ? t("interactions.helper_chosen_badge", "Chosen")
-                          : t("interactions.selected_badge")}
-                      </span>
+                      {isWish && ratedHelperIds.has(r.user_id) ? (
+                        <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs whitespace-nowrap inline-flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {t("interactions.helper_granted_badge", "Granted")}
+                        </span>
+                      ) : (
+                        <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                          {isWish
+                            ? t("interactions.helper_chosen_badge", "Chosen")
+                            : t("interactions.selected_badge")}
+                        </span>
+                      )}
+                      {isOwner && isWish && !ratedHelperIds.has(r.user_id) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap text-amber-700 border-amber-200 hover:bg-amber-50"
+                          onClick={() =>
+                            setRatingHelper({
+                              helperId: r.user_id,
+                              helperName: displayName(r),
+                            })
+                          }
+                          aria-label={t(
+                            "interactions.mark_wish_granted_btn",
+                            "Mark as granted"
+                          )}
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          {t("interactions.mark_wish_granted_btn", "Mark as granted")}
+                        </Button>
+                      )}
                       {isOwner && isWish && (
                         <Button
                           size="sm"
