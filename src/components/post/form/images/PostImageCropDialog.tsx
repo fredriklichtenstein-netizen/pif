@@ -1,6 +1,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import Cropper from "react-easy-crop";
 import { useState } from "react";
@@ -41,6 +42,13 @@ export function PostImageCropDialog({
     if (pixels) onSave(pixels);
   };
 
+  const handleReset = () => {
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
+  const isPristine = zoom === 1 && crop.x === 0 && crop.y === 0;
+
   return (
     <Dialog open={!!image} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent className="sm:max-w-[480px]">
@@ -71,9 +79,22 @@ export function PostImageCropDialog({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t("post.zoom", { defaultValue: "Zoom" })}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  {t("post.zoom", { defaultValue: "Zoom" })}
+                </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={handleReset}
+                  disabled={isPristine}
+                >
+                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                  {t("post.reset_crop", { defaultValue: "Reset crop" })}
+                </Button>
+              </div>
               <Slider
                 value={[zoom]}
                 min={1}
