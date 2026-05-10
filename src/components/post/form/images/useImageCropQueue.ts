@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { getCroppedImg } from "@/utils/image";
+import { getCroppedImg, normalizeImageOrientation } from "@/utils/image";
 
 /**
  * Pre-upload image cropping queue.
