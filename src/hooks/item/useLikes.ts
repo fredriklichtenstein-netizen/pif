@@ -117,6 +117,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         .select('user_id')
         .eq('item_id', numericId);
         
+      if (cancelled()) return [];
       if (likesError) {
         if (maybeRecoverFromAuthError(likesError, "useLikes likers fetch")) throw likesError;
         console.error('Error fetching likes data:', likesError);
@@ -124,12 +125,11 @@ export const useLikes = (id: string, userId?: string | null) => {
       }
       
       if (!likesData || likesData.length === 0) {
-        setLikesCount(0);
-        setLikers([]);
+        if (!cancelled()) { setLikesCount(0); setLikers([]); }
         return [];
       }
       
-      setLikesCount(likesData.length);
+      if (!cancelled()) setLikesCount(likesData.length);
       
       const userIds = [...new Set(likesData.map(like => like.user_id))];
       
@@ -138,6 +138,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         .select('id, first_name, last_name, avatar_url')
         .in('id', userIds);
       
+      if (cancelled()) return [];
       if (profilesError) {
         if (maybeRecoverFromAuthError(profilesError, "useLikes profiles fetch")) throw profilesError;
         console.error('Error fetching profiles:', profilesError);
@@ -145,7 +146,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       }
       
       if (!profilesData || profilesData.length === 0) {
-        setLikers([]);
+        if (!cancelled()) setLikers([]);
         return [];
       }
       
@@ -155,7 +156,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
       }));
       
-      setLikers(users);
+      if (!cancelled()) setLikers(users);
       return users;
     } catch (error) {
       if (maybeRecoverFromAuthError(error, "useLikes fetchLikersInternal")) throw error;
