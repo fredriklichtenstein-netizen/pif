@@ -2,10 +2,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 export function useInterestUsers(itemId: number) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const authInitialized = useAuthStore((s) => s.initialized);
 
   const fetchInterests = async () => {
     if (isAuthRequestCircuitOpen()) {
@@ -33,9 +35,10 @@ export function useInterestUsers(itemId: number) {
   };
 
   useEffect(() => {
+    if (!authInitialized) return;
     if (!itemId) return;
     fetchInterests();
-  }, [itemId]);
+  }, [itemId, authInitialized]);
 
   return {
     users,

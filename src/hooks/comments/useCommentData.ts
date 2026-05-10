@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 interface ProfileData {
   first_name?: string;
@@ -15,9 +16,11 @@ export function useCommentData(itemId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const { session } = useAuth();
+  const authInitialized = useAuthStore((s) => s.initialized);
   
   // Fetch comments when component mounts
   useEffect(() => {
+    if (!authInitialized) return;
     const fetchComments = async () => {
       setIsLoading(true);
       try {
@@ -110,10 +113,11 @@ export function useCommentData(itemId: string) {
     };
     
     fetchComments();
-  }, [itemId, session?.user?.id]);
+  }, [itemId, session?.user?.id, authInitialized]);
   
   // Fetch profile data from the profiles table
   useEffect(() => {
+    if (!authInitialized) return;
     if (session?.user?.id) {
       const fetchProfile = async () => {
         const { data, error } = await supabase
@@ -131,7 +135,7 @@ export function useCommentData(itemId: string) {
       
       fetchProfile();
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, authInitialized]);
 
   // Construct the user's full name from profile data with the new format
   const getFullName = () => {
