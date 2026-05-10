@@ -31,7 +31,10 @@ export const useDemoRatingsStore = create<DemoRatingsState>()(
       ratings: [],
 
       submitRating: (input) => {
-        // Upsert by (itemId, raterId) — re-submitting overwrites prior rating.
+        // Upsert by (itemId, raterId, rateeId) — a single rater may
+        // rate multiple ratees on the same item (wishes can have many
+        // selected helpers). Re-rating the same (item, rater, ratee)
+        // overwrites the previous outcome/note.
         const next: RatingRecord = {
           ...input,
           id:
@@ -46,7 +49,8 @@ export const useDemoRatingsStore = create<DemoRatingsState>()(
               (r) =>
                 !(
                   String(r.itemId) === String(input.itemId) &&
-                  r.raterId === input.raterId
+                  r.raterId === input.raterId &&
+                  r.rateeId === input.rateeId
                 )
             ),
             next,
