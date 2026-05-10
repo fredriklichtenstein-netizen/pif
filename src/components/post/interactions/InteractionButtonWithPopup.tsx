@@ -3,27 +3,34 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
 import { InteractionIcon } from "./button/InteractionIcon";
 import { CounterButton } from "./button/CounterButton";
+import { GrantWishDialog } from "./GrantWishDialog";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
 type Type = "like" | "comment" | "interest";
+type Icon = "heart" | "message-square" | "star" | "sparkles";
 
 interface InteractionButtonWithPopupProps {
   type: Type;
   isActive: boolean;
   count: number;
   users?: User[];
-  onClick: () => void;
+  /** Receives the optional helper note when the wish-grant flow is used. */
+  onClick: (note?: string) => void | Promise<void>;
   onCounterClick?: () => Promise<User[]>;
   isOwner: boolean;
   labelPassive: string;
   labelActive: string;
-  iconPassive: "heart" | "message-square" | "star";
-  iconActive: "heart" | "message-square" | "star";
+  iconPassive: Icon;
+  iconActive: Icon;
   itemId: string;
   fetchPage?: FetchPage;
   itemOwnerId?: string;
   currentUserId?: string;
+  /** When 'request', activating opens a Grant Wish dialog that captures a required note. */
+  itemType?: 'offer' | 'request';
+  /** Surfaced inside the Grant Wish dialog as context. */
+  itemTitle?: string;
 }
 
 export function InteractionButtonWithPopup({
@@ -42,6 +49,8 @@ export function InteractionButtonWithPopup({
   fetchPage,
   itemOwnerId,
   currentUserId,
+  itemType,
+  itemTitle,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
