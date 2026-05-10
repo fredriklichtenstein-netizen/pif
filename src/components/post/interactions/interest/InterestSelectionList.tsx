@@ -291,20 +291,11 @@ export function InterestSelectionList({
           };
         })
       );
-      // Pre-seed the conversation with the helper's note so the wisher
-      // sees the "how I can help" message as the first message in the
-      // thread without anyone having to retype it.
-      if (isWish && conversationId && row.note && row.note.trim()) {
-        try {
-          await (supabase.from("messages") as any).insert({
-            conversation_id: conversationId,
-            sender_id: row.user_id,
-            content: row.note.trim(),
-          });
-        } catch (seedErr) {
-          console.warn("[InterestSelectionList] seed first message failed", seedErr);
-        }
-      }
+      // Note: the wish-helper RPC seeds the helper's note as the first
+      // message inside the same transaction, guarded so repeated calls
+      // never insert duplicates. We intentionally do NOT insert from
+      // the client here anymore — that path created a duplicate seed
+      // every time the wisher re-clicked "Select".
       toast({
         title: isWish
           ? t("interactions.helper_selected", "Helper added")
