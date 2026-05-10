@@ -263,7 +263,15 @@ export function InterestSelectionList({
     try {
       const rpcName = isWish ? "select_wish_helper" : "select_receiver";
       const rpcArgs = isWish
-        ? { p_item_id: numericItemId, p_helper_id: row.user_id }
+        ? {
+            p_item_id: numericItemId,
+            p_helper_id: row.user_id,
+            // Pass the note so the RPC can idempotently seed the first
+            // message inside a single transaction. The RPC guards
+            // against duplicate seeds, so re-selecting the same helper
+            // never inserts the note twice.
+            p_note: row.note ?? null,
+          }
         : { p_item_id: numericItemId, p_receiver_id: row.user_id };
       const { data: conversationId, error: rpcError } = await (supabase.rpc as any)(
         rpcName,
