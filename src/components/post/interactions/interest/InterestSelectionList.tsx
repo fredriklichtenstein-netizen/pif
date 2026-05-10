@@ -25,6 +25,8 @@ import { MOCK_INTERESTED_USERS } from "@/data/mockProfiles";
 import {
   useDemoSelectionsStore,
 } from "@/stores/demoSelectionsStore";
+import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
+import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
 
 interface InterestSelectionListProps {
   itemId: string | number;
