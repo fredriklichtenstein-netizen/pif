@@ -23,6 +23,7 @@ const CATEGORIES = [
   "bicycle",       // Cykel
   "electronics",   // Elektronik
   "vehicles",      // Fordon
+  "hobby",         // Hobby
   "home_garden",   // Hem & Trädgård
   "pets",          // Husdjur
   "household",     // Husgeråd
@@ -34,6 +35,7 @@ const CATEGORIES = [
   "food",          // Mat & dryck
   "music",         // Musik & instrument
   "furniture",     // Möbler
+  "games",         // Spel
   "sports",        // Sport
   "garden",        // Trädgård
   "tools",         // Verktyg
