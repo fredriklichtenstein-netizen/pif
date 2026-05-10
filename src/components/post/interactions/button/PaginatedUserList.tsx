@@ -164,9 +164,11 @@ export function PaginatedUserList({
       ) : (
         <div className="space-y-2">
           {users.map((user) => (
-            <div
+            <Link
               key={user.id}
-              className="flex items-center gap-2 p-2 rounded hover:bg-gray-50"
+              to={`/user/${user.id}`}
+              onClick={() => setShowPopup(false)}
+              className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user.avatar} alt={user.name} />
@@ -175,7 +177,7 @@ export function PaginatedUserList({
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium">{user.name}</span>
-            </div>
+            </Link>
           ))}
 
           <div ref={sentinelRef} className="h-4" />
