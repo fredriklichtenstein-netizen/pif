@@ -464,6 +464,18 @@ export function InterestSelectionList({
                           ? t("interactions.helper_chosen_badge", "Chosen")
                           : t("interactions.selected_badge")}
                       </span>
+                      {isOwner && isWish && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                          onClick={() => openConversationWith(r.user_id)}
+                          aria-label={t("interactions.message_btn")}
+                        >
+                          <MessageCircle className="h-3 w-3 mr-1" />
+                          {t("interactions.message_btn")}
+                        </Button>
+                      )}
                       {isOwner && (
                         <Button
                           size="sm"
