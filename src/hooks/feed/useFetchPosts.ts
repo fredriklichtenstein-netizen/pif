@@ -239,6 +239,18 @@ export function useFetchPosts(options = { includeArchived: false }) {
     }
   }, []);
 
+  // Auto-abort any in-flight fetch on unmount so nothing lingers across
+  // login/reload cycles.
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        try { abortControllerRef.current.abort(); } catch { /* noop */ }
+        abortControllerRef.current = null;
+      }
+      countsFetchKeyRef.current = null;
+    };
+  }, []);
+
   return {
     posts,
     isLoading,

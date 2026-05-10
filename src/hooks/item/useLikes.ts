@@ -55,19 +55,21 @@ export const useLikes = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     if (!authInitialized) return;
 
+    let cancelled = false;
+
     const fetchLikes = async () => {
       if (isAuthRequestCircuitOpen()) {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
         return;
       }
 
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
         return;
       }
 
-      setLoading(true);
+      if (!cancelled) setLoading(true);
       try {
         if (userId) {
           const { data: likeData, error: likeError } = await supabase
@@ -77,6 +79,8 @@ export const useLikes = (id: string, userId?: string | null) => {
             .eq('item_id', numericId)
             .maybeSingle();
 
+          if (cancelled) return;
+
           if (likeError) {
             maybeRecoverFromAuthError(likeError, "useLikes like status fetch");
           } else {
@@ -84,19 +88,26 @@ export const useLikes = (id: string, userId?: string | null) => {
           }
         }
 
-        await fetchLikersInternal(numericId);
+        if (cancelled) return;
+        await fetchLikersInternal(numericId, () => cancelled);
       } catch (error) {
+        if (cancelled) return;
         console.error("Error fetching likes:", error);
         maybeRecoverFromAuthError(error, "useLikes initial fetch");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchLikes();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, userId, authInitialized]);
 
-  const fetchLikersInternal = async (numericId: number): Promise<User[]> => {
+  const fetchLikersInternal = async (numericId: number, isCancelled?: () => boolean): Promise<User[]> => {
+    const cancelled = () => isCancelled?.() === true;
     if (!authInitialized) return [];
     if (isAuthRequestCircuitOpen()) return [];
 
@@ -106,6 +117,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         .select('user_id')
         .eq('item_id', numericId);
         
+      if (cancelled()) return [];
       if (likesError) {
         if (maybeRecoverFromAuthError(likesError, "useLikes likers fetch")) throw likesError;
         console.error('Error fetching likes data:', likesError);
@@ -113,12 +125,11 @@ export const useLikes = (id: string, userId?: string | null) => {
       }
       
       if (!likesData || likesData.length === 0) {
-        setLikesCount(0);
-        setLikers([]);
+        if (!cancelled()) { setLikesCount(0); setLikers([]); }
         return [];
       }
       
-      setLikesCount(likesData.length);
+      if (!cancelled()) setLikesCount(likesData.length);
       
       const userIds = [...new Set(likesData.map(like => like.user_id))];
       
@@ -127,6 +138,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         .select('id, first_name, last_name, avatar_url')
         .in('id', userIds);
       
+      if (cancelled()) return [];
       if (profilesError) {
         if (maybeRecoverFromAuthError(profilesError, "useLikes profiles fetch")) throw profilesError;
         console.error('Error fetching profiles:', profilesError);
@@ -134,7 +146,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       }
       
       if (!profilesData || profilesData.length === 0) {
-        setLikers([]);
+        if (!cancelled()) setLikers([]);
         return [];
       }
       
@@ -144,7 +156,7 @@ export const useLikes = (id: string, userId?: string | null) => {
         avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
       }));
       
-      setLikers(users);
+      if (!cancelled()) setLikers(users);
       return users;
     } catch (error) {
       if (maybeRecoverFromAuthError(error, "useLikes fetchLikersInternal")) throw error;
