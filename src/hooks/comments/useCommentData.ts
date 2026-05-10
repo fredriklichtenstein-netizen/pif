@@ -16,6 +16,7 @@ export function useCommentData(itemId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const { session } = useAuth();
+  const authInitialized = useAuthStore((s) => s.initialized);
   
   // Fetch comments when component mounts
   useEffect(() => {
