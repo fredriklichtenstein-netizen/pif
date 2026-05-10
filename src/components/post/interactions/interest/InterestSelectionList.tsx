@@ -300,15 +300,27 @@ export function InterestSelectionList({
         title: isWish
           ? t("interactions.helper_selected", "Helper added")
           : t("interactions.receiver_selected"),
-        description: t("interactions.receiver_selected_with_name", {
-          name: displayName(row),
-        }),
+        description: isWish
+          ? t(
+              "interactions.helper_selected_keep_choosing",
+              "{{name}} can now message you. You can keep choosing more helpers.",
+              { name: displayName(row) }
+            )
+          : t("interactions.receiver_selected_with_name", {
+              name: displayName(row),
+            }),
       });
-      setShowPopup(false);
-      if (conversationId) {
-        navigate(`/messages?conversation=${conversationId}`);
-      } else {
-        navigate(`/messages`);
+      // Pifs are single-receiver: close + jump to the unlocked thread.
+      // Wishes can have many helpers, so we keep the popup open so the
+      // wisher can keep selecting. They can open the conversation from
+      // the inline "Message" button next to each chosen helper.
+      if (!isWish) {
+        setShowPopup(false);
+        if (conversationId) {
+          navigate(`/messages?conversation=${conversationId}`);
+        } else {
+          navigate(`/messages`);
+        }
       }
     } catch (e: any) {
       console.error("[InterestSelectionList] select_receiver failed", e);
@@ -333,6 +345,35 @@ export function InterestSelectionList({
     }
   };
 
+  const openConversationWith = useCallback(
+    async (helperUserId: string) => {
+      if (DEMO_MODE) {
+        setShowPopup(false);
+        navigate(`/messages`);
+        return;
+      }
+      try {
+        const { data, error: convErr } = await (supabase
+          .from("conversations") as any)
+          .select("id")
+          .eq("item_id", numericItemId)
+          .or(
+            `and(user1_id.eq.${itemOwnerId},user2_id.eq.${helperUserId}),and(user1_id.eq.${helperUserId},user2_id.eq.${itemOwnerId})`
+          )
+          .limit(1)
+          .maybeSingle();
+        if (convErr) throw convErr;
+        setShowPopup(false);
+        if (data?.id) navigate(`/messages?conversation=${data.id}`);
+        else navigate(`/messages`);
+      } catch (e) {
+        console.warn("[InterestSelectionList] open conversation failed", e);
+        setShowPopup(false);
+        navigate(`/messages`);
+      }
+    },
+    [itemOwnerId, navigate, numericItemId, setShowPopup]
+  );
   const handleWithdraw = async () => {
     setWithdrawId(null);
     if (DEMO_MODE) {
@@ -452,6 +493,18 @@ export function InterestSelectionList({
                           ? t("interactions.helper_chosen_badge", "Chosen")
                           : t("interactions.selected_badge")}
                       </span>
+                      {isOwner && isWish && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                          onClick={() => openConversationWith(r.user_id)}
+                          aria-label={t("interactions.message_btn")}
+                        >
+                          <MessageCircle className="h-3 w-3 mr-1" />
+                          {t("interactions.message_btn")}
+                        </Button>
+                      )}
                       {isOwner && (
                         <Button
                           size="sm"

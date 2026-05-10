@@ -21,6 +21,7 @@
     "grant_wish_submitting": "Sending…",
     "grant_wish_confirm": "Offer to grant",
     "helper_selected": "Helper added",
+    "helper_selected_keep_choosing": "{{name}} can now message you. You can keep choosing more helpers.",
     "helper_chosen_badge": "Chosen",
     "choose_helpers": "Choose helpers",
     "choose_helper_btn": "Choose",
