@@ -146,10 +146,10 @@ export function InterestSelectionList({
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("timeout")), 8000),
         );
-        const queryPromise = supabase
-          .from("interests")
+        const queryPromise = (supabase
+          .from("interests") as any)
           .select(
-            "id, user_id, status, created_at, profiles:user_id(id, first_name, last_name, avatar_url, reliability_score, completed_pifs, no_shows)"
+            "id, user_id, status, created_at, note, profiles:user_id(id, first_name, last_name, avatar_url, reliability_score, completed_pifs, no_shows)"
           )
           .eq("item_id", numericItemId)
           .order("created_at", { ascending: false })
@@ -166,6 +166,7 @@ export function InterestSelectionList({
           user_id: r.user_id,
           status: r.status,
           created_at: r.created_at,
+          note: r.note ?? null,
           profile: r.profiles,
         })) as InterestRow[];
         offsetRef.current = offset + slice.length;
@@ -260,23 +261,46 @@ export function InterestSelectionList({
     }
 
     try {
+      const rpcName = isWish ? "select_wish_helper" : "select_receiver";
+      const rpcArgs = isWish
+        ? { p_item_id: numericItemId, p_helper_id: row.user_id }
+        : { p_item_id: numericItemId, p_receiver_id: row.user_id };
       const { data: conversationId, error: rpcError } = await (supabase.rpc as any)(
-        "select_receiver",
-        {
-          p_item_id: numericItemId,
-          p_receiver_id: row.user_id,
-        }
+        rpcName,
+        rpcArgs,
       );
       if (rpcError) throw rpcError;
-      // Optimistically update UI
+      // Optimistically update UI: pifs are single-receiver, wishes can
+      // have many helpers, so for wishes we only flip the picked row.
       setRows((prev) =>
-        prev.map((r) => ({
-          ...r,
-          status: r.id === interestId ? "selected" : "not_selected",
-        }))
+        prev.map((r) => {
+          if (isWish) {
+            return r.id === interestId ? { ...r, status: "selected" } : r;
+          }
+          return {
+            ...r,
+            status: r.id === interestId ? "selected" : "not_selected",
+          };
+        })
       );
+      // Pre-seed the conversation with the helper's note so the wisher
+      // sees the "how I can help" message as the first message in the
+      // thread without anyone having to retype it.
+      if (isWish && conversationId && row.note && row.note.trim()) {
+        try {
+          await (supabase.from("messages") as any).insert({
+            conversation_id: conversationId,
+            sender_id: row.user_id,
+            content: row.note.trim(),
+          });
+        } catch (seedErr) {
+          console.warn("[InterestSelectionList] seed first message failed", seedErr);
+        }
+      }
       toast({
-        title: t("interactions.receiver_selected"),
+        title: isWish
+          ? t("interactions.helper_selected", "Helper added")
+          : t("interactions.receiver_selected"),
         description: t("interactions.receiver_selected_with_name", {
           name: displayName(row),
         }),
