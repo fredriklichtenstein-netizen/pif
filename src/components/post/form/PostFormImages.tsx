@@ -118,6 +118,14 @@ export function PostFormImages({
           <span>{t('post.analyzing_image')}</span>
         </div>
       )}
+
+      <PostImageCropDialog
+        image={cropImage}
+        progress={cropProgress}
+        onSave={handleCropSave}
+        onSkip={handleCropSkip}
+        onCancel={handleCancelAll}
+      />
     </div>
   );
 }
