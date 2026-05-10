@@ -18,6 +18,11 @@ interface DemoRatingsState {
   submitRating: (input: Omit<RatingRecord, "id" | "createdAt">) => RatingRecord;
   getForItem: (itemId: string | number) => RatingRecord[];
   hasRated: (itemId: string | number, raterId: string) => boolean;
+  hasRatedHelper: (
+    itemId: string | number,
+    raterId: string,
+    rateeId: string
+  ) => boolean;
   getReliability: (userId: string) => {
     reliability_score: number;
     completed_pifs: number;
@@ -31,7 +36,10 @@ export const useDemoRatingsStore = create<DemoRatingsState>()(
       ratings: [],
 
       submitRating: (input) => {
-        // Upsert by (itemId, raterId) — re-submitting overwrites prior rating.
+        // Upsert by (itemId, raterId, rateeId) — a single rater may
+        // rate multiple ratees on the same item (wishes can have many
+        // selected helpers). Re-rating the same (item, rater, ratee)
+        // overwrites the previous outcome/note.
         const next: RatingRecord = {
           ...input,
           id:
@@ -46,7 +54,8 @@ export const useDemoRatingsStore = create<DemoRatingsState>()(
               (r) =>
                 !(
                   String(r.itemId) === String(input.itemId) &&
-                  r.raterId === input.raterId
+                  r.raterId === input.raterId &&
+                  r.rateeId === input.rateeId
                 )
             ),
             next,
@@ -61,6 +70,14 @@ export const useDemoRatingsStore = create<DemoRatingsState>()(
       hasRated: (itemId, raterId) =>
         get().ratings.some(
           (r) => String(r.itemId) === String(itemId) && r.raterId === raterId
+        ),
+
+      hasRatedHelper: (itemId, raterId, rateeId) =>
+        get().ratings.some(
+          (r) =>
+            String(r.itemId) === String(itemId) &&
+            r.raterId === raterId &&
+            r.rateeId === rateeId
         ),
 
       getReliability: (userId) => {

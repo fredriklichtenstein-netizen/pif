@@ -18,6 +18,12 @@ interface PifferRatingDialogProps {
   onOpenChange: (open: boolean) => void;
   itemId: string | number;
   receiverName: string;
+  /**
+   * When provided, this is a wish-helper rating: the dialog rates a
+   * specific helper and routes to submit_helper_rating instead of the
+   * single-receiver submit_rating RPC.
+   */
+  helperId?: string;
   /** Demo Mode only */
   demoRaterId?: string;
   demoRateeId?: string;
@@ -25,8 +31,9 @@ interface PifferRatingDialogProps {
 }
 
 /**
- * Shown to the piffer right after they mark a pif as piffed.
- * Captures positive vs no-show outcome on the selected receiver.
+ * Shown to the piffer right after they mark a pif as piffed, and to the
+ * wisher when they mark an individual helper as having granted their
+ * wish. Captures positive vs no-show outcome on a single counter-party.
  * Skipping is allowed — no rating is recorded in that case.
  */
 export function PifferRatingDialog({
@@ -34,6 +41,7 @@ export function PifferRatingDialog({
   onOpenChange,
   itemId,
   receiverName,
+  helperId,
   demoRaterId,
   demoRateeId,
   onSubmitted,
@@ -41,14 +49,16 @@ export function PifferRatingDialog({
   const { t } = useTranslation();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState<RatingOutcome | null>(null);
+  const isHelper = !!helperId;
 
   const handleRate = async (outcome: RatingOutcome) => {
     setSubmitting(outcome);
     const res = await submitRating({
       itemId,
       outcome,
+      helperId,
       demoRaterId,
-      demoRateeId,
+      demoRateeId: demoRateeId ?? helperId,
     });
     setSubmitting(null);
 
@@ -84,10 +94,17 @@ export function PifferRatingDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t("interactions.rate_receiver_title", { name: receiverName })}
+            {isHelper
+              ? t("interactions.rate_helper_title", "Did {{name}} grant your wish?", { name: receiverName })
+              : t("interactions.rate_receiver_title", { name: receiverName })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("interactions.rate_receiver_description")}
+            {isHelper
+              ? t(
+                  "interactions.rate_helper_description",
+                  "Your feedback stays private and helps neighbors trust each other."
+                )
+              : t("interactions.rate_receiver_description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
