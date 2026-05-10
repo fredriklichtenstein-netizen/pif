@@ -91,6 +91,8 @@ export const useInterests = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     if (!authInitialized) return;
 
+    let cancelled = false;
+
     const initializeInterests = async () => {
       if (isAuthRequestCircuitOpen()) return;
 
@@ -99,10 +101,6 @@ export const useInterests = (id: string, userId?: string | null) => {
         return;
       }
 
-      // Silent background fetch — no `setLoading(true)` so the
-      // ActionButtons never flicker into a skeleton on mount. The card
-      // already shows the correct state seeded from the global stores;
-      // we just reconcile here in case the seed was stale.
       try {
         if (userId) {
           const { data: userInterest, error: userInterestError } = await supabase
@@ -112,6 +110,8 @@ export const useInterests = (id: string, userId?: string | null) => {
             .eq('item_id', numericId)
             .maybeSingle();
 
+          if (cancelled) return;
+
           if (userInterestError) {
             maybeRecoverFromAuthError(userInterestError, "useInterests user interest fetch");
           } else {
@@ -120,14 +120,20 @@ export const useInterests = (id: string, userId?: string | null) => {
           }
         }
 
+        if (cancelled) return;
         await fetchInterestedUsersInternal(numericId);
       } catch (error) {
+        if (cancelled) return;
         console.error("Error fetching interests:", error);
         maybeRecoverFromAuthError(error, "useInterests initial fetch");
       }
     };
 
     initializeInterests();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, userId, authInitialized]);
 
   // Realtime: any change to interests for this item updates "my" interest
