@@ -300,15 +300,27 @@ export function InterestSelectionList({
         title: isWish
           ? t("interactions.helper_selected", "Helper added")
           : t("interactions.receiver_selected"),
-        description: t("interactions.receiver_selected_with_name", {
-          name: displayName(row),
-        }),
+        description: isWish
+          ? t(
+              "interactions.helper_selected_keep_choosing",
+              "{{name}} can now message you. You can keep choosing more helpers.",
+              { name: displayName(row) }
+            )
+          : t("interactions.receiver_selected_with_name", {
+              name: displayName(row),
+            }),
       });
-      setShowPopup(false);
-      if (conversationId) {
-        navigate(`/messages?conversation=${conversationId}`);
-      } else {
-        navigate(`/messages`);
+      // Pifs are single-receiver: close + jump to the unlocked thread.
+      // Wishes can have many helpers, so we keep the popup open so the
+      // wisher can keep selecting. They can open the conversation from
+      // the inline "Message" button next to each chosen helper.
+      if (!isWish) {
+        setShowPopup(false);
+        if (conversationId) {
+          navigate(`/messages?conversation=${conversationId}`);
+        } else {
+          navigate(`/messages`);
+        }
       }
     } catch (e: any) {
       console.error("[InterestSelectionList] select_receiver failed", e);
