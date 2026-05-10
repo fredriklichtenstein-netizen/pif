@@ -34,13 +34,15 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Apply EXIF orientation so the crop preview isn't sideways.
+      const normalized = await normalizeImageOrientation(file);
       const reader = new FileReader();
       reader.onload = () => {
         setTempImage(reader.result as string);
         setShowCropper(true);
         setIsEditing(false);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(normalized);
     }
   }, []);
 
