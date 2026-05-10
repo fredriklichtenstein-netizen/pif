@@ -30,6 +30,8 @@ interface InterestSelectionListProps {
   itemId: string | number;
   itemOwnerId?: string;
   currentUserId?: string;
+  /** When 'request', enables multi-helper selection and the wish-flow copy. */
+  itemType?: 'offer' | 'request';
   setShowPopup: (show: boolean) => void;
 }
 
@@ -38,6 +40,8 @@ interface InterestRow {
   user_id: string;
   status: "pending" | "selected" | "not_selected" | string;
   created_at: string;
+  /** Helper note left when granting a wish. */
+  note?: string | null;
   profile?: {
     id: string;
     first_name?: string | null;
@@ -64,6 +68,7 @@ export function InterestSelectionList({
   itemId,
   itemOwnerId,
   currentUserId,
+  itemType,
   setShowPopup,
 }: InterestSelectionListProps) {
   const { t, i18n } = useTranslation();
@@ -71,6 +76,7 @@ export function InterestSelectionList({
   const navigate = useNavigate();
   const { toast } = useToast();
   const isOwner = !!currentUserId && currentUserId === itemOwnerId;
+  const isWish = itemType === 'request';
 
   const [rows, setRows] = useState<InterestRow[]>([]);
   const [loading, setLoading] = useState(true);
