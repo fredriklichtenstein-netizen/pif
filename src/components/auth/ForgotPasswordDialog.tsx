@@ -92,10 +92,13 @@ export function ForgotPasswordDialog({
         ) : (
           <div className="space-y-4">
             <Alert>
-              <AlertDescription 
-                className="text-center py-2"
-                dangerouslySetInnerHTML={{ __html: t('auth.reset_email_sent', { email }) }}
-              />
+              <AlertDescription className="text-center py-2">
+                <Trans
+                  i18nKey="auth.reset_email_sent"
+                  values={{ email }}
+                  components={{ strong: <strong /> }}
+                />
+              </AlertDescription>
             </Alert>
             <DialogFooter>
               <Button onClick={handleClose}>{t('auth.close')}</Button>
