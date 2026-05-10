@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 export function useInterestUsers(itemId: number) {
   const [users, setUsers] = useState<any[]>([]);
