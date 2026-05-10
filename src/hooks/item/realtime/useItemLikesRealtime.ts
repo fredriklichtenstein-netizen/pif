@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 /**
  * Per-item realtime subscription on the `likes` table.
