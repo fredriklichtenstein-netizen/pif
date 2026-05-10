@@ -726,6 +726,22 @@ export function InterestSelectionList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {ratingHelper && (
+        <PifferRatingDialog
+          open={!!ratingHelper}
+          onOpenChange={(o) => !o && setRatingHelper(null)}
+          itemId={itemId}
+          receiverName={ratingHelper.helperName}
+          helperId={ratingHelper.helperId}
+          demoRaterId={currentUserId}
+          demoRateeId={ratingHelper.helperId}
+          onSubmitted={() => {
+            setRatingHelper(null);
+            reloadRatedHelpers();
+          }}
+        />
+      )}
     </div>
   );
 }
