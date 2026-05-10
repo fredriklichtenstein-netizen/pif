@@ -186,6 +186,51 @@ export function useFetchPosts(options = { includeArchived: false }) {
     }
   }, [toast, t, options.includeArchived, cacheKey]);
 
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (!authInitialized) return;
+
+    const itemIds = posts
+      .map((p: any) => Number(p.id))
+      .filter((n: number) => Number.isFinite(n));
+    if (itemIds.length === 0) return;
+
+    const countsFetchKey = `${cacheKey}:${itemIds.join(",")}`;
+    if (countsFetchKeyRef.current === countsFetchKey) return;
+    countsFetchKeyRef.current = countsFetchKey;
+
+    let cancelled = false;
+
+    const fetchInteractionCounts = async () => {
+      try {
+        const { data: countsData, error: countsError } = await (supabase.rpc as any)(
+          'get_bulk_interaction_counts',
+          { p_item_ids: itemIds }
+        );
+
+        if (cancelled || countsError || !Array.isArray(countsData)) return;
+
+        useInitialCountsStore.getState().setBulkCounts(
+          countsData.map((row: any) => ({
+            itemId: row.item_id,
+            likesCount: Number(row.likes_count) || 0,
+            commentsCount: Number(row.comments_count) || 0,
+            interestsCount: Number(row.interests_count) || 0,
+            bookmarksCount: Number(row.bookmarks_count) || 0,
+          }))
+        );
+      } catch (e) {
+        // Silent fallback — individual hooks will still load counts lazily.
+      }
+    };
+
+    window.setTimeout(fetchInteractionCounts, 0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [posts, authInitialized, cacheKey]);
+
   const cleanup = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
