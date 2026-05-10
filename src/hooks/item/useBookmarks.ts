@@ -31,19 +31,21 @@ export const useBookmarks = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     if (!authInitialized) return;
 
+    let cancelled = false;
+
     const fetchBookmarks = async () => {
       if (isAuthRequestCircuitOpen()) {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
         return;
       }
 
       const numericId = parseInt(id, 10);
       if (isNaN(numericId) || !userId) {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
         return;
       }
-      
-      setLoading(true);
+
+      if (!cancelled) setLoading(true);
       try {
         const { data: bookmark, error: bookmarkError } = await supabase
           .from('bookmarks')
@@ -51,21 +53,28 @@ export const useBookmarks = (id: string, userId?: string | null) => {
           .eq('user_id', userId)
           .eq('item_id', numericId)
           .maybeSingle();
-          
+
+        if (cancelled) return;
+
         if (bookmarkError) {
           maybeRecoverFromAuthError(bookmarkError, "useBookmarks status fetch");
         } else {
           setIsBookmarked(!!bookmark);
         }
       } catch (error) {
+        if (cancelled) return;
         console.error("Error fetching bookmark status:", error);
         maybeRecoverFromAuthError(error, "useBookmarks initial fetch");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    
+
     fetchBookmarks();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, userId, authInitialized]);
 
   const handleBookmark = async () => {
