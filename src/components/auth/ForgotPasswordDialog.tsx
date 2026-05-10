@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 interface ForgotPasswordDialogProps {
   isOpen: boolean;
@@ -92,10 +92,13 @@ export function ForgotPasswordDialog({
         ) : (
           <div className="space-y-4">
             <Alert>
-              <AlertDescription 
-                className="text-center py-2"
-                dangerouslySetInnerHTML={{ __html: t('auth.reset_email_sent', { email }) }}
-              />
+              <AlertDescription className="text-center py-2">
+                <Trans
+                  i18nKey="auth.reset_email_sent"
+                  values={{ email }}
+                  components={{ strong: <strong /> }}
+                />
+              </AlertDescription>
             </Alert>
             <DialogFooter>
               <Button onClick={handleClose}>{t('auth.close')}</Button>
