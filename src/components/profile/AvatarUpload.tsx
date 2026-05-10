@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
-import { getCroppedImg } from "@/utils/image";
+import { getCroppedImg, normalizeImageOrientation } from "@/utils/image";
 import { compressImage } from "@/utils/image/compress";
 import { Button } from "../ui/button";
 import { useTranslation } from "react-i18next";
