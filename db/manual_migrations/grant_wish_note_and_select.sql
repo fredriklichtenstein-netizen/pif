@@ -4,10 +4,15 @@
 -- flipping the others to "not_selected" (unlike select_receiver, which
 -- enforces a single receiver for pifs).
 --
--- The RPC is fully idempotent:
---   * Re-selecting the same helper does NOT change selected_at.
+-- The RPC is fully idempotent and race-safe:
+--   * Re-selecting the same helper does NOT change selected_at and
+--     does NOT create a second pending interest row (unique index on
+--     interests(user_id, item_id) plus the upsert on the helper side).
 --   * The conversation between the wisher and the helper for this
---     item is reused if it already exists (never duplicated).
+--     item is reused if it already exists. The item row is locked
+--     FOR UPDATE so concurrent calls serialize, and a unique index on
+--     conversations(item_id, least(user1,user2), greatest(user1,user2))
+--     guards against any remaining race.
 --   * The seeded "how I can help" first message is inserted only when
 --     the conversation has zero messages — re-running the RPC with the
 --     same arguments will never produce a duplicate seed message.
