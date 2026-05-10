@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useItemLikesRealtime } from "./realtime/useItemLikesRealtime";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -49,9 +50,12 @@ export const useLikes = (id: string, userId?: string | null) => {
     if (typeof initialLikes === "number") setLikesCount(initialLikes);
   }, [initialLikes]);
 
+  const authInitialized = useAuthStore((s) => s.initialized);
+
   useEffect(() => {
     if (DEMO_MODE) return;
-    
+    if (!authInitialized) return;
+
     const fetchLikes = async () => {
       if (isAuthRequestCircuitOpen()) {
         setLoading(false);
@@ -91,7 +95,7 @@ export const useLikes = (id: string, userId?: string | null) => {
     };
 
     fetchLikes();
-  }, [id, userId]);
+  }, [id, userId, authInitialized]);
 
   const fetchLikersInternal = async (numericId: number): Promise<User[]> => {
     if (isAuthRequestCircuitOpen()) return [];
