@@ -26,7 +26,17 @@ export function PostFormImages({
 }: PostFormImagesProps) {
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
-  
+
+  // Route every newly selected file through a crop dialog before upload.
+  const {
+    handleImageUpload: wrappedOnImageUpload,
+    cropImage,
+    cropProgress,
+    handleCropSave,
+    handleCropSkip,
+    handleCancelAll,
+  } = useImageCropQueue(onImageUpload);
+
   const {
     isDragOver,
     draggedIndex,
@@ -47,7 +57,7 @@ export function PostFormImages({
   } = useImageDragAndDrop({
     images,
     onImagesChange,
-    onImageUpload,
+    onImageUpload: wrappedOnImageUpload,
     isRequest,
   });
 
