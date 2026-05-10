@@ -18,6 +18,11 @@ interface DemoRatingsState {
   submitRating: (input: Omit<RatingRecord, "id" | "createdAt">) => RatingRecord;
   getForItem: (itemId: string | number) => RatingRecord[];
   hasRated: (itemId: string | number, raterId: string) => boolean;
+  hasRatedHelper: (
+    itemId: string | number,
+    raterId: string,
+    rateeId: string
+  ) => boolean;
   getReliability: (userId: string) => {
     reliability_score: number;
     completed_pifs: number;
