@@ -25,6 +25,7 @@ export const useLikes = (id: string, userId?: string | null) => {
   const { toast } = useToast();
   const { checkAuth } = useAuthCheck();
   const { t } = useTranslation();
+  const authInitialized = useAuthStore((s) => s.initialized);
 
   useEffect(() => {
     if (DEMO_MODE) {
@@ -49,8 +50,6 @@ export const useLikes = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     if (typeof initialLikes === "number") setLikesCount(initialLikes);
   }, [initialLikes]);
-
-  const authInitialized = useAuthStore((s) => s.initialized);
 
   useEffect(() => {
     if (DEMO_MODE) return;
@@ -98,6 +97,7 @@ export const useLikes = (id: string, userId?: string | null) => {
   }, [id, userId, authInitialized]);
 
   const fetchLikersInternal = async (numericId: number): Promise<User[]> => {
+    if (!authInitialized) return [];
     if (isAuthRequestCircuitOpen()) return [];
 
     try {
@@ -218,6 +218,7 @@ export const useLikes = (id: string, userId?: string | null) => {
   };
   
   const fetchLikers = async (): Promise<User[]> => {
+    if (!authInitialized) return likers;
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
     
@@ -234,6 +235,7 @@ export const useLikes = (id: string, userId?: string | null) => {
   // sync, not just the count.
   useItemLikesRealtime(id, () => {
     if (DEMO_MODE) return;
+    if (!authInitialized) return;
     const numericId = parseInt(id, 10);
     if (!isNaN(numericId)) fetchLikersInternal(numericId);
   });
