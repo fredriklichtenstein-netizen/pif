@@ -10,13 +10,14 @@ export function useItemBookmark(itemId: number | string) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { user } = useGlobalAuth();
+  const { user, initialized: authInitialized } = useGlobalAuth();
   
   // Ensure itemId is numeric for database operations
   const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
   
   // Check if the item is bookmarked when the component mounts
   useEffect(() => {
+    if (!authInitialized) return;
     const checkBookmarkStatus = async () => {
       if (!user) return;
       

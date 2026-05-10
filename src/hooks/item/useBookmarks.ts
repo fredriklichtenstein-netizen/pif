@@ -66,7 +66,7 @@ export const useBookmarks = (id: string, userId?: string | null) => {
     };
     
     fetchBookmarks();
-  }, [id, userId]);
+  }, [id, userId, authInitialized]);
 
   const handleBookmark = async () => {
     if (DEMO_MODE) {
