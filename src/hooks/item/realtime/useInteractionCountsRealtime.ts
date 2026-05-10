@@ -19,7 +19,9 @@ const POLL_INTERVAL_MS = 15000;
  * 15s so the UI never lags more than that even if realtime is broken.
  */
 export const useInteractionCountsRealtime = (itemId: string) => {
+  const authInitialized = useAuthStore((s) => s.initialized);
   useEffect(() => {
+    if (!authInitialized) return;
     if (!itemId) return;
     const numericId = parseInt(itemId);
     if (isNaN(numericId)) return;
