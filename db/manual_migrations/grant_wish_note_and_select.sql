@@ -49,7 +49,13 @@ declare
   v_existing_messages int;
   v_seed text;
 begin
-  select user_id into v_owner_id from public.items where id = p_item_id;
+  -- Lock the item row so concurrent select_wish_helper calls for the
+  -- same wish serialize here. This prevents two parallel re-selects
+  -- from each seeing "no conversation yet" and racing to create one.
+  select user_id into v_owner_id
+    from public.items
+   where id = p_item_id
+   for update;
   if v_owner_id is null then
     raise exception 'item not found' using errcode = 'P0002';
   end if;
@@ -73,9 +79,22 @@ begin
    limit 1;
 
   if v_conversation_id is null then
-    insert into public.conversations (item_id, user1_id, user2_id)
-      values (p_item_id, v_owner_id, p_helper_id)
-      returning id into v_conversation_id;
+    -- The unique index `conversations_unique_pair_per_item` guarantees
+    -- only one row can win. If a competing transaction inserted the
+    -- pair just before us, the unique violation is recovered from by
+    -- re-reading the row they committed.
+    begin
+      insert into public.conversations (item_id, user1_id, user2_id)
+        values (p_item_id, v_owner_id, p_helper_id)
+        returning id into v_conversation_id;
+    exception when unique_violation then
+      select id into v_conversation_id
+        from public.conversations
+       where item_id = p_item_id
+         and ((user1_id = v_owner_id and user2_id = p_helper_id)
+           or (user1_id = p_helper_id and user2_id = v_owner_id))
+       limit 1;
+    end;
   end if;
 
   -- Seed the helper's note as the first message, but only when the
