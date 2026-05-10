@@ -21,6 +21,7 @@
     "grant_wish_submitting": "Skickar…",
     "grant_wish_confirm": "Erbjud dig att uppfylla",
     "helper_selected": "Hjälpare tillagd",
+    "helper_selected_keep_choosing": "{{name}} kan nu meddela dig. Du kan välja fler hjälpare när du vill.",
     "helper_chosen_badge": "Vald",
     "choose_helpers": "Välj hjälpare",
     "choose_helper_btn": "Välj",
