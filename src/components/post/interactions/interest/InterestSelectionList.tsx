@@ -244,6 +244,47 @@ export function InterestSelectionList({
     return () => observer.disconnect();
   }, [hasMore, loading, loadingMore, loadPage]);
 
+  // Wisher-only: keep track of which helpers we've already rated so we
+  // can swap the "Mark as granted" CTA for a "Granted ✓" badge and
+  // avoid asking again. Cheap query (filtered by item + current user).
+  const reloadRatedHelpers = useCallback(async () => {
+    if (!isWish || !isOwner || !currentUserId) return;
+    if (DEMO_MODE) {
+      const set = new Set<string>();
+      for (const r of demoRatings.ratings) {
+        if (
+          String(r.itemId) === String(itemId) &&
+          r.raterId === currentUserId
+        ) {
+          set.add(r.rateeId);
+        }
+      }
+      setRatedHelperIds(set);
+      return;
+    }
+    if (isNaN(numericItemId)) return;
+    try {
+      const { data, error: rerr } = await (supabase
+        .from("ratings") as any)
+        .select("rated_user_id")
+        .eq("item_id", numericItemId)
+        .eq("rater_id", currentUserId);
+      if (rerr) throw rerr;
+      const set = new Set<string>();
+      for (const row of (data || []) as Array<{ rated_user_id: string }>) {
+        set.add(row.rated_user_id);
+      }
+      setRatedHelperIds(set);
+    } catch (e) {
+      console.warn("[InterestSelectionList] load my ratings failed", e);
+    }
+  }, [isWish, isOwner, currentUserId, numericItemId, itemId, demoRatings.ratings]);
+
+  useEffect(() => {
+    reloadRatedHelpers();
+  }, [reloadRatedHelpers]);
+
+
   const displayName = (r: InterestRow) => {
     const p = r.profile;
     if (!p) return t("interactions.interested");
