@@ -7,6 +7,7 @@ import { useAuthStore } from "@/hooks/auth/authStore";
 export function useInterestUsers(itemId: number) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const authInitialized = useAuthStore((s) => s.initialized);
 
   const fetchInterests = async () => {
     if (isAuthRequestCircuitOpen()) {
