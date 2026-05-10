@@ -56,7 +56,11 @@ export function InteractionsList({
   return (
     <div className="max-h-[300px] overflow-y-auto space-y-2 p-1">
       {users.map((user) => (
-        <div key={user.id} className="flex items-center gap-3 p-2 hover:bg-accent rounded-md">
+        <Link
+          key={user.id}
+          to={`/user/${user.id}`}
+          className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors"
+        >
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
@@ -64,7 +68,7 @@ export function InteractionsList({
           <div>
             <p className="text-sm font-medium leading-none">{user.name}</p>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );
