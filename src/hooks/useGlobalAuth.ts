@@ -1,28 +1,12 @@
 
-import { useEffect } from 'react';
 import { useAuthStore } from './auth/authStore';
 import { initializeAuth as initAuth } from './auth/initializeAuth';
 import { checkNetworkConnection as checkNetwork } from './auth/networkUtils';
 
-const MAX_LOADING_TIMEOUT = 5000;
-
-// Wrapper hook that adds a safety timeout to prevent stuck loading states
+// Wrapper hook for the global auth state. Do not force-clear loading here:
+// initializeAuth must be allowed to await supabase.auth.getSession() fully.
 export const useGlobalAuth = () => {
   const state = useAuthStore();
-
-  useEffect(() => {
-    if (!state.isLoading) return;
-
-    const timeoutId = setTimeout(() => {
-      const current = useAuthStore.getState();
-      if (current.isLoading) {
-        console.warn('useGlobalAuth: Loading state timed out after 5s, forcing to false.');
-        current.setLoading(false);
-      }
-    }, MAX_LOADING_TIMEOUT);
-
-    return () => clearTimeout(timeoutId);
-  }, [state.isLoading]);
 
   return state;
 };
