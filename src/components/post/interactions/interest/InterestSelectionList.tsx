@@ -88,6 +88,15 @@ export function InterestSelectionList({
   const [busyId, setBusyId] = useState<number | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [withdrawId, setWithdrawId] = useState<number | null>(null);
+  /** Helper currently being rated via the per-helper "Mark as granted" flow. */
+  const [ratingHelper, setRatingHelper] = useState<{
+    helperId: string;
+    helperName: string;
+  } | null>(null);
+  /** Helper user_ids the wisher has already rated for this item. */
+  const [ratedHelperIds, setRatedHelperIds] = useState<Set<string>>(new Set());
+
+  const demoRatings = useDemoRatingsStore();
 
   const offsetRef = useRef(0);
   const inFlightRef = useRef(false);
