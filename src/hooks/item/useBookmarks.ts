@@ -7,6 +7,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useTranslation } from "react-i18next";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 export const useBookmarks = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -24,9 +25,12 @@ export const useBookmarks = (id: string, userId?: string | null) => {
     }
   }, [demoIsBookmarked]);
 
+  const authInitialized = useAuthStore((s) => s.initialized);
+
   useEffect(() => {
     if (DEMO_MODE) return;
-    
+    if (!authInitialized) return;
+
     const fetchBookmarks = async () => {
       if (isAuthRequestCircuitOpen()) {
         setLoading(false);
