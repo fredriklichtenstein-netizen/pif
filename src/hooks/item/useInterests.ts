@@ -13,6 +13,7 @@ import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useMyInterestStore } from "@/stores/myInterestStore";
 import { useItemInterestRealtime } from "./realtime/useItemInterestRealtime";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 export const useInterests = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -83,10 +84,13 @@ export const useInterests = (id: string, userId?: string | null) => {
     }
   }, [demoIsInterested]);
 
+  const authInitialized = useAuthStore((s) => s.initialized);
+
   // Initial fetch of interests
   useEffect(() => {
     if (DEMO_MODE) return;
-    
+    if (!authInitialized) return;
+
     const initializeInterests = async () => {
       if (isAuthRequestCircuitOpen()) return;
 
@@ -124,7 +128,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     };
 
     initializeInterests();
-  }, [id, userId]);
+  }, [id, userId, authInitialized]);
 
   // Realtime: any change to interests for this item updates "my" interest
   // state in the global store and refetches the interested users list.
