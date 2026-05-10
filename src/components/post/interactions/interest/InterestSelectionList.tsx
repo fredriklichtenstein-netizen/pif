@@ -345,7 +345,37 @@ export function InterestSelectionList({
     }
   };
 
-  const handleWithdraw = async () => {
+  const openConversationWith = useCallback(
+    async (helperUserId: string) => {
+      if (DEMO_MODE) {
+        setShowPopup(false);
+        navigate(`/messages`);
+        return;
+      }
+      try {
+        const { data, error: convErr } = await (supabase
+          .from("conversations") as any)
+          .select("id")
+          .eq("item_id", numericItemId)
+          .or(
+            `and(user1_id.eq.${itemOwnerId},user2_id.eq.${helperUserId}),and(user1_id.eq.${helperUserId},user2_id.eq.${itemOwnerId})`
+          )
+          .limit(1)
+          .maybeSingle();
+        if (convErr) throw convErr;
+        setShowPopup(false);
+        if (data?.id) navigate(`/messages?conversation=${data.id}`);
+        else navigate(`/messages`);
+      } catch (e) {
+        console.warn("[InterestSelectionList] open conversation failed", e);
+        setShowPopup(false);
+        navigate(`/messages`);
+      }
+    },
+    [itemOwnerId, navigate, numericItemId, setShowPopup]
+  );
+
+
     setWithdrawId(null);
     if (DEMO_MODE) {
       demoSelections.unselectUser(itemId);
