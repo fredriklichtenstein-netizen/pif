@@ -104,7 +104,7 @@ export default function Home() {
                 className="h-28 sm:h-36 lg:h-44 w-auto object-contain"
               />
             </div>
-            <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 max-w-sm sm:max-w-xl lg:max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 max-w-sm sm:max-w-xl lg:max-w-2xl mx-auto leading-relaxed px-px">
               {t('home.hero_description')}
             </p>
           </div>
