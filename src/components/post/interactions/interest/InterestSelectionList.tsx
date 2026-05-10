@@ -374,8 +374,7 @@ export function InterestSelectionList({
     },
     [itemOwnerId, navigate, numericItemId, setShowPopup]
   );
-
-
+  const handleWithdraw = async () => {
     setWithdrawId(null);
     if (DEMO_MODE) {
       demoSelections.unselectUser(itemId);
