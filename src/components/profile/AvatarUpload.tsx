@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
-import { getCroppedImg } from "@/utils/image";
+import { getCroppedImg, normalizeImageOrientation } from "@/utils/image";
 import { compressImage } from "@/utils/image/compress";
 import { Button } from "../ui/button";
 import { useTranslation } from "react-i18next";
@@ -34,13 +34,15 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Apply EXIF orientation so the crop preview isn't sideways.
+      const normalized = await normalizeImageOrientation(file);
       const reader = new FileReader();
       reader.onload = () => {
         setTempImage(reader.result as string);
         setShowCropper(true);
         setIsEditing(false);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(normalized);
     }
   }, []);
 

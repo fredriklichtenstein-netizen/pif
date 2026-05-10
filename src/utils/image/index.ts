@@ -5,3 +5,4 @@ export * from './loading';
 export * from './preload';
 export * from './cropping';
 export * from './compress';
+export * from './orientation';

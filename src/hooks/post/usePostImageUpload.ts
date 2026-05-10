@@ -4,6 +4,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { compressImage } from "@/utils/image/compress";
+import { normalizeImageOrientation } from "@/utils/image/orientation";
 
 /**
  * Hook for handling image uploads for posts
@@ -30,10 +31,11 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
       
       let completedUploads = 0;
       
-      const uploadPromises = files.map(async (originalFile) => {
+      const uploadPromises = files.map(async (rawFile) => {
         try {
-          // Compress: resize to max 1600px and convert to WEBP
-          const file = await compressImage(originalFile, { maxDimension: 1600, quality: 0.82 });
+          // Normalize EXIF orientation, then compress to upright WEBP.
+          const oriented = await normalizeImageOrientation(rawFile);
+          const file = await compressImage(oriented, { maxDimension: 1600, quality: 0.82 });
           const timestamp = new Date().getTime();
           const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
 

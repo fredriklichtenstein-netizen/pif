@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { getCroppedImg } from "@/utils/image";
+import { getCroppedImg, normalizeImageOrientation } from "@/utils/image";
 
 /**
  * Pre-upload image cropping queue.
@@ -60,15 +60,18 @@ export function useImageCropQueue(
 
   /** Drop-in replacement for the underlying file-input change handler. */
   const handleImageUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || []);
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const rawFiles = Array.from(e.target.files || []);
       // Reset the input so selecting the same file again still fires change.
       try {
         if (e.target) (e.target as HTMLInputElement).value = "";
       } catch {
         /* no-op */
       }
-      if (files.length === 0) return;
+      if (rawFiles.length === 0) return;
+      // Normalize EXIF orientation up-front so the crop preview and the
+      // resulting cropped file are oriented the way the user expects.
+      const files = await Promise.all(rawFiles.map(normalizeImageOrientation));
       resultsRef.current = [];
       setQueue(files);
       advance(0, files);
