@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useAuthStore } from "@/hooks/auth/authStore";
 import { useMyInterestStore } from "@/stores/myInterestStore";
 import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
 
