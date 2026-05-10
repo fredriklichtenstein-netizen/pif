@@ -35,9 +35,10 @@ export function useInterestUsers(itemId: number) {
   };
 
   useEffect(() => {
+    if (!authInitialized) return;
     if (!itemId) return;
     fetchInterests();
-  }, [itemId]);
+  }, [itemId, authInitialized]);
 
   return {
     users,
