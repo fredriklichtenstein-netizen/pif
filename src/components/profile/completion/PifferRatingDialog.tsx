@@ -94,10 +94,17 @@ export function PifferRatingDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {t("interactions.rate_receiver_title", { name: receiverName })}
+            {isHelper
+              ? t("interactions.rate_helper_title", "Did {{name}} grant your wish?", { name: receiverName })
+              : t("interactions.rate_receiver_title", { name: receiverName })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("interactions.rate_receiver_description")}
+            {isHelper
+              ? t(
+                  "interactions.rate_helper_description",
+                  "Your feedback stays private and helps neighbors trust each other."
+                )
+              : t("interactions.rate_receiver_description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
