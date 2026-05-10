@@ -235,9 +235,31 @@ const forceReconnectAll = () => {
   });
 };
 
+// Force teardown of every entry — used on SIGNED_OUT so no stale
+// channels (with the previous user's JWT) survive into the next session.
+const teardownAll = () => {
+  entries.forEach((entry) => {
+    if (entry.retryTimer) {
+      clearTimeout(entry.retryTimer);
+      entry.retryTimer = null;
+    }
+    teardownChannel(entry);
+  });
+  entries.clear();
+};
+
 if (typeof window !== "undefined") {
   window.addEventListener("online", forceReconnectAll);
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") forceReconnectAll();
+  });
+
+  // Tear down every shared item channel when the user signs out so the
+  // next sign-in starts with a clean slate (no leftover subscriptions
+  // running under the previous JWT).
+  import("@/integrations/supabase/client").then(({ supabase }) => {
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") teardownAll();
+    });
   });
 }
