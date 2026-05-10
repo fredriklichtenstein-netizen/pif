@@ -158,22 +158,6 @@ export function ItemCardHeader({
               </>
             ) : (
               <>
-                {handleBookmark && (
-                  <DropdownMenuItem onClick={handleBookmarkClick}>
-                    {isBookmarked ? (
-                      <>
-                        <BookmarkCheck className="mr-2 h-4 w-4" />
-                        <span>{t('ui.unsave')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <BookmarkPlus className="mr-2 h-4 w-4" />
-                        <span>{t('ui.save')}</span>
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                )}
-                
                 {handleReport && (
                   <DropdownMenuItem onClick={handleReportClick} className="text-destructive">
                     <Flag className="mr-2 h-4 w-4" />
