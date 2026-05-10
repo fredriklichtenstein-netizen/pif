@@ -1,6 +1,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import Cropper from "react-easy-crop";
 import { useState } from "react";
