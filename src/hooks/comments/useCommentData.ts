@@ -20,6 +20,7 @@ export function useCommentData(itemId: string) {
   
   // Fetch comments when component mounts
   useEffect(() => {
+    if (!authInitialized) return;
     const fetchComments = async () => {
       setIsLoading(true);
       try {
