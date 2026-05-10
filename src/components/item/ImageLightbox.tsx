@@ -98,7 +98,7 @@ export function ImageLightbox({
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-4 right-4 z-10 rounded-full bg-white/10 hover:bg-white/20 text-white p-2 transition-colors"
+        className="absolute top-4 right-4 z-10 rounded-full bg-white/90 hover:bg-white text-foreground p-2 shadow-[0_2px_6px_rgba(0,0,0,0.35)] ring-1 ring-black/10 transition-colors"
         aria-label={t("interactions.close", "Close")}
       >
         <X className="h-5 w-5" />
