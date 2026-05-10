@@ -65,15 +65,30 @@ export function InteractionButtonWithPopup({
     setPopupUsers(users);
   }, [users]);
 
-  const ACTIVE_COLOR = "#00D1A0";
+  const ACTIVE_COLOR = type === "interest" && itemType === "request" ? "#F59E0B" : "#00D1A0";
   const PASSIVE_COLOR = "#333333";
 
   const isToggleDisabled = isOwner && (type === "like" || type === "interest");
+
+  // The Grant Wish flow only kicks in when a non-owner is *activating*
+  // interest on a wish. Withdrawing (or any pif interaction) keeps the
+  // existing one-tap behaviour.
+  const useWishGrantFlow =
+    type === "interest" &&
+    itemType === "request" &&
+    !isOwner &&
+    !isActive;
+  const [grantOpen, setGrantOpen] = useState(false);
+  const [granting, setGranting] = useState(false);
 
   const handleToggleClick = async (e: React.MouseEvent | React.KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isToggleDisabled) return;
+    if (useWishGrantFlow) {
+      setGrantOpen(true);
+      return;
+    }
     try {
       await onClick();
     } catch (error) {
@@ -83,6 +98,23 @@ export function InteractionButtonWithPopup({
         description: error instanceof Error ? error.message : t('common.unable_to_action'),
         variant: "destructive",
       });
+    }
+  };
+
+  const handleGrantConfirm = async (note: string) => {
+    setGranting(true);
+    try {
+      await onClick(note);
+      setGrantOpen(false);
+    } catch (error) {
+      console.error('grant wish failed:', error);
+      toast({
+        title: t('common.action_failed'),
+        description: error instanceof Error ? error.message : t('common.unable_to_action'),
+        variant: "destructive",
+      });
+    } finally {
+      setGranting(false);
     }
   };
 
