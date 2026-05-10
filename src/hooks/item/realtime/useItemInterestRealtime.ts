@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useAuthStore } from "@/hooks/auth/authStore";
 import { useMyInterestStore } from "@/stores/myInterestStore";
 import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
 
@@ -20,12 +21,14 @@ export const useItemInterestRealtime = (
 ) => {
   const { user } = useGlobalAuth();
   const userId = user?.id;
+  const authInitialized = useAuthStore((s) => s.initialized);
   const cbRef = useRef(onAnyChange);
   cbRef.current = onAnyChange;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setMine = useMyInterestStore((s) => s.set);
 
   useEffect(() => {
+    if (!authInitialized) return;
     if (!itemId) return;
 
     const unsubscribe = subscribeItemTable(itemId, "interests", (payload) => {
@@ -44,5 +47,5 @@ export const useItemInterestRealtime = (
       unsubscribe();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [itemId, userId, setMine]);
+  }, [itemId, userId, setMine, authInitialized]);
 };

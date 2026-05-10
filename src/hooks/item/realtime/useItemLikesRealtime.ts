@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { subscribeItemTable } from "@/services/realtime/itemRealtimeManager";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 /**
  * Per-item realtime subscription on the `likes` table.
@@ -10,11 +11,13 @@ export const useItemLikesRealtime = (
   itemId: string,
   onAnyChange?: () => void
 ) => {
+  const authInitialized = useAuthStore((s) => s.initialized);
   const cbRef = useRef(onAnyChange);
   cbRef.current = onAnyChange;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (!authInitialized) return;
     if (!itemId) return;
     const unsubscribe = subscribeItemTable(itemId, "likes", () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -26,5 +29,5 @@ export const useItemLikesRealtime = (
       unsubscribe();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [itemId]);
+  }, [itemId, authInitialized]);
 };
