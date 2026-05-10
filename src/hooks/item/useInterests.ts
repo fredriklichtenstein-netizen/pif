@@ -154,7 +154,9 @@ export const useInterests = (id: string, userId?: string | null) => {
     interestedUsers,
     loading: DEMO_MODE ? false : loading,
     interestedUsersError,
-    handleShowInterest: DEMO_MODE ? handleShowInterestDemo : () => originalHandleShowInterest(id, userId),
+    handleShowInterest: DEMO_MODE
+      ? (_note?: string) => handleShowInterestDemo()
+      : (note?: string) => originalHandleShowInterest(id, userId, note),
     fetchInterestedUsers: () => DEMO_MODE ? Promise.resolve(interestedUsers) : fetchInterestedUsers(id)
   };
 };
