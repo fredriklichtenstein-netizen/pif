@@ -9,7 +9,7 @@ export const useCategoryTranslations = () => {
     'electronics', 'furniture', 'clothing', 'books', 'sports',
     'toys', 'home_garden', 'vehicles', 'kitchen', 'garden',
     'tools', 'household', 'food', 'kids', 'pets', 'bicycle',
-    'health', 'art', 'music', 'mixed', 'other'
+    'health', 'art', 'music', 'games', 'hobby', 'mixed', 'other'
   ];
 
   // Build category map from keys + legacy English/Swedish names
