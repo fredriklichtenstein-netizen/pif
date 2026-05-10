@@ -47,5 +47,5 @@ export const useItemInterestRealtime = (
       unsubscribe();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [itemId, userId, setMine]);
+  }, [itemId, userId, setMine, authInitialized]);
 };
