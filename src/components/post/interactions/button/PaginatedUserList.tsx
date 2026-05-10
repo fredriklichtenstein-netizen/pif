@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 import {
