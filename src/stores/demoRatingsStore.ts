@@ -72,6 +72,14 @@ export const useDemoRatingsStore = create<DemoRatingsState>()(
           (r) => String(r.itemId) === String(itemId) && r.raterId === raterId
         ),
 
+      hasRatedHelper: (itemId, raterId, rateeId) =>
+        get().ratings.some(
+          (r) =>
+            String(r.itemId) === String(itemId) &&
+            r.raterId === raterId &&
+            r.rateeId === rateeId
+        ),
+
       getReliability: (userId) => {
         const mine = get().ratings.filter((r) => r.rateeId === userId);
         const completed = mine.filter((r) => r.outcome === "positive").length;
