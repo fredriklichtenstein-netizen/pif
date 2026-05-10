@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
-import { UserMinus, MessageCircle } from "lucide-react";
+import { UserMinus, MessageCircle, Sparkles, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
