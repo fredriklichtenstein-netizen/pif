@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 interface ProfileData {
   first_name?: string;
