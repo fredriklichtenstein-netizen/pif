@@ -93,5 +93,5 @@ export const useInteractionCountsRealtime = (itemId: string) => {
       offStatus();
       stopPolling();
     };
-  }, [itemId]);
+  }, [itemId, authInitialized]);
 };
