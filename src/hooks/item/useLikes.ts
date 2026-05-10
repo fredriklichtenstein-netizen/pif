@@ -106,7 +106,8 @@ export const useLikes = (id: string, userId?: string | null) => {
     };
   }, [id, userId, authInitialized]);
 
-  const fetchLikersInternal = async (numericId: number): Promise<User[]> => {
+  const fetchLikersInternal = async (numericId: number, isCancelled?: () => boolean): Promise<User[]> => {
+    const cancelled = () => isCancelled?.() === true;
     if (!authInitialized) return [];
     if (isAuthRequestCircuitOpen()) return [];
 
