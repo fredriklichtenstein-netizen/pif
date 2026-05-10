@@ -42,6 +42,10 @@ export interface ItemInteractionsProps {
   isBookmarked: boolean;
   showInterest: boolean;
   isOwner?: boolean;
+  /** Used to flip "Interest" → "Grant wish" UX on requests. */
+  itemType?: ItemType;
+  /** Wish title — surfaced inside the Grant Wish dialog as context. */
+  itemTitle?: string;
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
@@ -50,7 +54,7 @@ export interface ItemInteractionsProps {
   commenters?: any[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
-  onShowInterest: () => void;
+  onShowInterest: (note?: string) => void;
   onBookmarkToggle: () => void;
   onMessage: (e: React.MouseEvent) => void;
   onShare: () => void;
