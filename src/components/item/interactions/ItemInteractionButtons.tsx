@@ -1,6 +1,7 @@
 
 import { PrimaryActions } from "@/components/post/interactions/PrimaryActions";
 import type { User } from "@/hooks/item/useItemInteractions";
+import type { ItemType } from "@/components/item/types";
 
 interface ItemInteractionButtonsProps {
   id: string;
@@ -8,6 +9,8 @@ interface ItemInteractionButtonsProps {
   showComments: boolean;
   showInterest: boolean;
   isOwner: boolean;
+  itemType?: ItemType;
+  itemTitle?: string;
   currentUserId?: string;
   itemOwnerId?: string;
   hasCommented: boolean;
@@ -19,7 +22,7 @@ interface ItemInteractionButtonsProps {
   commenters?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
-  onShowInterest: () => void;
+  onShowInterest: (note?: string) => void;
   onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
@@ -32,6 +35,8 @@ export const ItemInteractionButtons = ({
   showComments,
   showInterest,
   isOwner,
+  itemType,
+  itemTitle,
   currentUserId,
   itemOwnerId,
   hasCommented,
@@ -57,6 +62,8 @@ export const ItemInteractionButtons = ({
       isOwner={isOwner}
       itemId={id}
       itemOwnerId={itemOwnerId}
+      itemType={itemType}
+      itemTitle={itemTitle}
       hasCommented={hasCommented}
       currentUserId={currentUserId}
       commentsCount={commentsCount}
