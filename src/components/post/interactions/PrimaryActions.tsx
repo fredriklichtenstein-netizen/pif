@@ -17,6 +17,8 @@ interface PrimaryActionsProps {
   isOwner: boolean;
   itemId: string;
   itemOwnerId?: string;
+  itemType?: 'offer' | 'request';
+  itemTitle?: string;
   currentUserId?: string;
   hasCommented?: boolean;
   commentsCount?: number;
@@ -27,7 +29,7 @@ interface PrimaryActionsProps {
   commenters?: User[];
   onLikeToggle: () => void;
   onCommentToggle: () => void;
-  onShowInterest: () => void;
+  onShowInterest: (note?: string) => void;
   onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
@@ -41,6 +43,8 @@ export function PrimaryActions({
   isOwner,
   itemId,
   itemOwnerId,
+  itemType,
+  itemTitle,
   currentUserId,
   hasCommented = false,
   commentsCount = 0,
@@ -129,13 +133,23 @@ export function PrimaryActions({
           onCounterClick={fetchInterestedUsers}
           fetchPage={fetchInterestedPageFn}
           isOwner={isOwner}
-          labelPassive={t('interactions.interest')}
-          labelActive={t('interactions.interested')}
-          iconPassive="star"
-          iconActive="star"
+          labelPassive={
+            itemType === 'request'
+              ? t('interactions.grant_wish', 'Grant wish')
+              : t('interactions.interest')
+          }
+          labelActive={
+            itemType === 'request'
+              ? t('interactions.granting', 'Granting')
+              : t('interactions.interested')
+          }
+          iconPassive={itemType === 'request' ? 'sparkles' : 'star'}
+          iconActive={itemType === 'request' ? 'sparkles' : 'star'}
           itemId={itemId}
           itemOwnerId={itemOwnerId}
           currentUserId={effectiveCurrentUserId}
+          itemType={itemType}
+          itemTitle={itemTitle}
         />
       </div>
     </div>

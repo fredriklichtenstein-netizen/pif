@@ -115,17 +115,20 @@ export function useItemCardWrapper({
   // about to *withdraw* an existing interest. Adding interest stays one-tap.
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
 
-  const handleShowInterestWithConfirm = useCallback(() => {
-    if (showInterest) {
-      setWithdrawConfirmOpen(true);
-      return;
-    }
-    handleShowInterest();
-  }, [showInterest, handleShowInterest]);
+  const handleShowInterestWithConfirm = useCallback(
+    (note?: string) => {
+      if (showInterest) {
+        setWithdrawConfirmOpen(true);
+        return;
+      }
+      (handleShowInterest as (n?: string) => void)(note);
+    },
+    [showInterest, handleShowInterest]
+  );
 
   const confirmWithdrawInterest = useCallback(() => {
     setWithdrawConfirmOpen(false);
-    handleShowInterest();
+    (handleShowInterest as (n?: string) => void)();
   }, [handleShowInterest]);
 
   return {

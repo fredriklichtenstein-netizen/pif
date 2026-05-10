@@ -30,6 +30,8 @@ interface InterestSelectionListProps {
   itemId: string | number;
   itemOwnerId?: string;
   currentUserId?: string;
+  /** When 'request', enables multi-helper selection and the wish-flow copy. */
+  itemType?: 'offer' | 'request';
   setShowPopup: (show: boolean) => void;
 }
 
@@ -38,6 +40,8 @@ interface InterestRow {
   user_id: string;
   status: "pending" | "selected" | "not_selected" | string;
   created_at: string;
+  /** Helper note left when granting a wish. */
+  note?: string | null;
   profile?: {
     id: string;
     first_name?: string | null;
@@ -64,6 +68,7 @@ export function InterestSelectionList({
   itemId,
   itemOwnerId,
   currentUserId,
+  itemType,
   setShowPopup,
 }: InterestSelectionListProps) {
   const { t, i18n } = useTranslation();
@@ -71,6 +76,7 @@ export function InterestSelectionList({
   const navigate = useNavigate();
   const { toast } = useToast();
   const isOwner = !!currentUserId && currentUserId === itemOwnerId;
+  const isWish = itemType === 'request';
 
   const [rows, setRows] = useState<InterestRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,10 +146,10 @@ export function InterestSelectionList({
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("timeout")), 8000),
         );
-        const queryPromise = supabase
-          .from("interests")
+        const queryPromise = (supabase
+          .from("interests") as any)
           .select(
-            "id, user_id, status, created_at, profiles:user_id(id, first_name, last_name, avatar_url, reliability_score, completed_pifs, no_shows)"
+            "id, user_id, status, created_at, note, profiles:user_id(id, first_name, last_name, avatar_url, reliability_score, completed_pifs, no_shows)"
           )
           .eq("item_id", numericItemId)
           .order("created_at", { ascending: false })
@@ -160,6 +166,7 @@ export function InterestSelectionList({
           user_id: r.user_id,
           status: r.status,
           created_at: r.created_at,
+          note: r.note ?? null,
           profile: r.profiles,
         })) as InterestRow[];
         offsetRef.current = offset + slice.length;
@@ -254,23 +261,46 @@ export function InterestSelectionList({
     }
 
     try {
+      const rpcName = isWish ? "select_wish_helper" : "select_receiver";
+      const rpcArgs = isWish
+        ? { p_item_id: numericItemId, p_helper_id: row.user_id }
+        : { p_item_id: numericItemId, p_receiver_id: row.user_id };
       const { data: conversationId, error: rpcError } = await (supabase.rpc as any)(
-        "select_receiver",
-        {
-          p_item_id: numericItemId,
-          p_receiver_id: row.user_id,
-        }
+        rpcName,
+        rpcArgs,
       );
       if (rpcError) throw rpcError;
-      // Optimistically update UI
+      // Optimistically update UI: pifs are single-receiver, wishes can
+      // have many helpers, so for wishes we only flip the picked row.
       setRows((prev) =>
-        prev.map((r) => ({
-          ...r,
-          status: r.id === interestId ? "selected" : "not_selected",
-        }))
+        prev.map((r) => {
+          if (isWish) {
+            return r.id === interestId ? { ...r, status: "selected" } : r;
+          }
+          return {
+            ...r,
+            status: r.id === interestId ? "selected" : "not_selected",
+          };
+        })
       );
+      // Pre-seed the conversation with the helper's note so the wisher
+      // sees the "how I can help" message as the first message in the
+      // thread without anyone having to retype it.
+      if (isWish && conversationId && row.note && row.note.trim()) {
+        try {
+          await (supabase.from("messages") as any).insert({
+            conversation_id: conversationId,
+            sender_id: row.user_id,
+            content: row.note.trim(),
+          });
+        } catch (seedErr) {
+          console.warn("[InterestSelectionList] seed first message failed", seedErr);
+        }
+      }
       toast({
-        title: t("interactions.receiver_selected"),
+        title: isWish
+          ? t("interactions.helper_selected", "Helper added")
+          : t("interactions.receiver_selected"),
         description: t("interactions.receiver_selected_with_name", {
           name: displayName(row),
         }),
@@ -340,8 +370,12 @@ export function InterestSelectionList({
       <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
         <h3 className="font-semibold text-sm">
           {isOwner
-            ? t("interactions.choose_receiver")
-            : t("common.interested_users")}
+            ? isWish
+              ? t("interactions.choose_helpers", "Choose helpers")
+              : t("interactions.choose_receiver")
+            : isWish
+              ? t("interactions.helpers_offering", "Neighbors offering to help")
+              : t("common.interested_users")}
         </h3>
         <Button
           variant="ghost"
@@ -376,92 +410,106 @@ export function InterestSelectionList({
           {rows.map((r) => (
             <div
               key={r.id}
-              className="flex items-center gap-2 p-2 rounded hover:bg-muted/50"
+              className="flex flex-col gap-1 p-2 rounded hover:bg-muted/50"
             >
-              <Link
-                to={`/user/${r.user_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 min-w-0 flex-1 hover:underline"
-              >
-                <AvatarImage
-                  src={r.profile?.avatar_url || ""}
-                  size={28}
-                  alt={displayName(r)}
-                />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">
-                    {displayName(r)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(r.created_at), "d MMM HH:mm", {
-                      locale: dateLocale,
-                    })}
-                  </span>
-                </div>
-              </Link>
-
-              {isOwner && r.status === "pending" && (
-                <TrustIndicator
-                  reliabilityScore={r.profile?.reliability_score ?? undefined}
-                  completedPifs={r.profile?.completed_pifs ?? undefined}
-                  noShows={r.profile?.no_shows ?? undefined}
-                  compact
-                />
-              )}
-
-              <div className="ml-auto flex items-center gap-1">
-                {r.status === "selected" && (
-                  <>
-                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
-                      {t("interactions.selected_badge")}
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/user/${r.user_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 min-w-0 flex-1 hover:underline"
+                >
+                  <AvatarImage
+                    src={r.profile?.avatar_url || ""}
+                    size={28}
+                    alt={displayName(r)}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium truncate">
+                      {displayName(r)}
                     </span>
-                    {isOwner && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
-                        onClick={() => setWithdrawId(r.id)}
-                        aria-label={t("interactions.withdraw_selection_aria")}
-                      >
-                        <UserMinus className="h-3 w-3 mr-1" />
-                        {t("interactions.withdraw_selection_btn")}
-                      </Button>
-                    )}
-                    {!isOwner && currentUserId === r.user_id && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs py-1 px-2 h-auto whitespace-nowrap"
-                        onClick={() => {
-                          setShowPopup(false);
-                          navigate(`/messages`);
-                        }}
-                      >
-                        <MessageCircle className="h-3 w-3 mr-1" />
-                        {t("interactions.message_btn")}
-                      </Button>
-                    )}
-                  </>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(r.created_at), "d MMM HH:mm", {
+                        locale: dateLocale,
+                      })}
+                    </span>
+                  </div>
+                </Link>
+
+                {isOwner && r.status === "pending" && (
+                  <TrustIndicator
+                    reliabilityScore={r.profile?.reliability_score ?? undefined}
+                    completedPifs={r.profile?.completed_pifs ?? undefined}
+                    noShows={r.profile?.no_shows ?? undefined}
+                    compact
+                  />
                 )}
-                {r.status === "pending" && isOwner && (
-                  <Button
-                    size="sm"
-                    disabled={busyId !== null}
-                    onClick={() => setConfirmId(r.id)}
-                    className="text-xs py-1 px-2 h-auto whitespace-nowrap"
-                  >
-                    {busyId === r.id
-                      ? t("interactions.loading")
-                      : t("interactions.select_btn")}
-                  </Button>
-                )}
-                {r.status === "not_selected" && (
-                  <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-xs whitespace-nowrap">
-                    {t("interactions.not_selected_badge")}
-                  </span>
-                )}
+
+                <div className="ml-auto flex items-center gap-1">
+                  {r.status === "selected" && (
+                    <>
+                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                        {isWish
+                          ? t("interactions.helper_chosen_badge", "Chosen")
+                          : t("interactions.selected_badge")}
+                      </span>
+                      {isOwner && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
+                          onClick={() => setWithdrawId(r.id)}
+                          aria-label={t("interactions.withdraw_selection_aria")}
+                        >
+                          <UserMinus className="h-3 w-3 mr-1" />
+                          {t("interactions.withdraw_selection_btn")}
+                        </Button>
+                      )}
+                      {!isOwner && currentUserId === r.user_id && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                          onClick={() => {
+                            setShowPopup(false);
+                            navigate(`/messages`);
+                          }}
+                        >
+                          <MessageCircle className="h-3 w-3 mr-1" />
+                          {t("interactions.message_btn")}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {r.status === "pending" && isOwner && (
+                    <Button
+                      size="sm"
+                      disabled={busyId !== null}
+                      onClick={() => setConfirmId(r.id)}
+                      className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                    >
+                      {busyId === r.id
+                        ? t("interactions.loading")
+                        : isWish
+                          ? t("interactions.choose_helper_btn", "Choose")
+                          : t("interactions.select_btn")}
+                    </Button>
+                  )}
+                  {r.status === "not_selected" && !isWish && (
+                    <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                      {t("interactions.not_selected_badge")}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* Helper note for wishes — visible to the wisher and to
+                  the helper themselves so they remember what they offered. */}
+              {isWish && r.note && (isOwner || currentUserId === r.user_id) && (
+                <div className="ml-9 text-xs text-muted-foreground bg-amber-50 border border-amber-100 rounded px-2 py-1 italic">
+                  “{r.note}”
+                </div>
+              )}
             </div>
           ))}
 
@@ -481,11 +529,17 @@ export function InterestSelectionList({
         </div>
       )}
 
-      {isOwner && rows.some((r) => r.status === "pending") && !rows.some((r) => r.status === "selected") && (
-        <p className="text-xs text-muted-foreground mt-3 border-t pt-2">
-          {t("interactions.unlock_messaging")}
-        </p>
-      )}
+      {isOwner && rows.some((r) => r.status === "pending") &&
+        (isWish || !rows.some((r) => r.status === "selected")) && (
+          <p className="text-xs text-muted-foreground mt-3 border-t pt-2">
+            {isWish
+              ? t(
+                  "interactions.unlock_messaging_wish",
+                  "Choose one or more helpers to start a conversation. You can add more anytime."
+                )
+              : t("interactions.unlock_messaging")}
+          </p>
+        )}
 
       <AlertDialog
         open={confirmId !== null}
@@ -494,10 +548,17 @@ export function InterestSelectionList({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("interactions.confirm_selection")}
+              {isWish
+                ? t("interactions.confirm_helper", "Choose this helper?")
+                : t("interactions.confirm_selection")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("interactions.confirm_selection_description")}
+              {isWish
+                ? t(
+                    "interactions.confirm_helper_description",
+                    "We'll open a private conversation and share their note with you to get things started."
+                  )
+                : t("interactions.confirm_selection_description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

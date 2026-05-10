@@ -3,27 +3,34 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
 import { InteractionIcon } from "./button/InteractionIcon";
 import { CounterButton } from "./button/CounterButton";
+import { GrantWishDialog } from "./GrantWishDialog";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
 type Type = "like" | "comment" | "interest";
+type Icon = "heart" | "message-square" | "star" | "sparkles";
 
 interface InteractionButtonWithPopupProps {
   type: Type;
   isActive: boolean;
   count: number;
   users?: User[];
-  onClick: () => void;
+  /** Receives the optional helper note when the wish-grant flow is used. */
+  onClick: (note?: string) => void | Promise<void>;
   onCounterClick?: () => Promise<User[]>;
   isOwner: boolean;
   labelPassive: string;
   labelActive: string;
-  iconPassive: "heart" | "message-square" | "star";
-  iconActive: "heart" | "message-square" | "star";
+  iconPassive: Icon;
+  iconActive: Icon;
   itemId: string;
   fetchPage?: FetchPage;
   itemOwnerId?: string;
   currentUserId?: string;
+  /** When 'request', activating opens a Grant Wish dialog that captures a required note. */
+  itemType?: 'offer' | 'request';
+  /** Surfaced inside the Grant Wish dialog as context. */
+  itemTitle?: string;
 }
 
 export function InteractionButtonWithPopup({
@@ -42,6 +49,8 @@ export function InteractionButtonWithPopup({
   fetchPage,
   itemOwnerId,
   currentUserId,
+  itemType,
+  itemTitle,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -56,15 +65,30 @@ export function InteractionButtonWithPopup({
     setPopupUsers(users);
   }, [users]);
 
-  const ACTIVE_COLOR = "#00D1A0";
+  const ACTIVE_COLOR = type === "interest" && itemType === "request" ? "#F59E0B" : "#00D1A0";
   const PASSIVE_COLOR = "#333333";
 
   const isToggleDisabled = isOwner && (type === "like" || type === "interest");
+
+  // The Grant Wish flow only kicks in when a non-owner is *activating*
+  // interest on a wish. Withdrawing (or any pif interaction) keeps the
+  // existing one-tap behaviour.
+  const useWishGrantFlow =
+    type === "interest" &&
+    itemType === "request" &&
+    !isOwner &&
+    !isActive;
+  const [grantOpen, setGrantOpen] = useState(false);
+  const [granting, setGranting] = useState(false);
 
   const handleToggleClick = async (e: React.MouseEvent | React.KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isToggleDisabled) return;
+    if (useWishGrantFlow) {
+      setGrantOpen(true);
+      return;
+    }
     try {
       await onClick();
     } catch (error) {
@@ -74,6 +98,23 @@ export function InteractionButtonWithPopup({
         description: error instanceof Error ? error.message : t('common.unable_to_action'),
         variant: "destructive",
       });
+    }
+  };
+
+  const handleGrantConfirm = async (note: string) => {
+    setGranting(true);
+    try {
+      await onClick(note);
+      setGrantOpen(false);
+    } catch (error) {
+      console.error('grant wish failed:', error);
+      toast({
+        title: t('common.action_failed'),
+        description: error instanceof Error ? error.message : t('common.unable_to_action'),
+        variant: "destructive",
+      });
+    } finally {
+      setGranting(false);
     }
   };
 
@@ -158,9 +199,20 @@ export function InteractionButtonWithPopup({
             itemId={itemId}
             itemOwnerId={itemOwnerId}
             currentUserId={currentUserId}
+            itemType={itemType}
           />
         )}
       </div>
+
+      {useWishGrantFlow && (
+        <GrantWishDialog
+          open={grantOpen}
+          onOpenChange={(o) => !granting && setGrantOpen(o)}
+          onConfirm={handleGrantConfirm}
+          wishTitle={itemTitle}
+          submitting={granting}
+        />
+      )}
     </div>
   );
 }

@@ -29,7 +29,11 @@ export const useInterestActions = (
   const { t } = useTranslation();
   const setMyInterest = useMyInterestStore((s) => s.set);
 
-  const handleShowInterest = async (id: string, userId: string | undefined | null) => {
+  const handleShowInterest = async (
+    id: string,
+    userId: string | undefined | null,
+    note?: string
+  ) => {
     if (!await checkAuth("show interest in this item")) return;
 
     const numericId = parseInt(id, 10);
@@ -46,7 +50,7 @@ export const useInterestActions = (
 
     try {
       if (nextInterested) {
-        await addInterest(numericId, userId);
+        await addInterest(numericId, userId, note);
       } else {
         await removeInterest(numericId, userId);
       }
@@ -82,16 +86,24 @@ const removeInterest = async (itemId: number, userId: string) => {
   if (error) throw error;
 };
 
-const addInterest = async (itemId: number, userId: string) => {
+const addInterest = async (itemId: number, userId: string, note?: string) => {
   // Use upsert to silently absorb the case where a stale local state
   // tried to re-insert an existing row (e.g. realtime hadn't propagated
   // yet). `ignoreDuplicates` keeps the existing row — we just want
   // "this user is interested" to be true.
-  const { error } = await supabase
-    .from('interests')
-    .upsert([{ user_id: userId, item_id: itemId }], {
+  //
+  // For wishes (item_type = 'request') the UI requires a `note`
+  // explaining HOW the helper can grant the wish — we persist it on
+  // the interest row so the wisher can see it inline and so we can
+  // pre-seed the first message thread on selection.
+  const payload: Record<string, unknown> = { user_id: userId, item_id: itemId };
+  if (note && note.trim()) payload.note = note.trim();
+
+  const { error } = await (supabase
+    .from('interests') as any)
+    .upsert([payload], {
       onConflict: 'user_id,item_id',
-      ignoreDuplicates: true,
+      ignoreDuplicates: !note, // re-upsert when a note is provided so the note isn't lost
     });
 
   if (error) throw error;

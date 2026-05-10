@@ -3,6 +3,7 @@ import { ItemInteractions } from "./ItemInteractions";
 import { ItemCommentsSection } from "./comments/ItemCommentsSection";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import type { User } from "@/hooks/item/useItemInteractions";
+import type { ItemType } from "./types";
 
 interface ItemCardActionsProps {
   id: string | number;
@@ -16,6 +17,8 @@ interface ItemCardActionsProps {
   showComments: boolean;
   isBookmarked: boolean;
   showInterest: boolean;
+  itemType?: ItemType;
+  itemTitle?: string;
   commentsCount: number;
   likesCount: number;
   interestsCount: number;
@@ -30,7 +33,7 @@ interface ItemCardActionsProps {
   interestedError: Error | null;
   onLikeToggle: () => void;
   onCommentToggle: () => void;
-  onShowInterest: () => void;
+  onShowInterest: (note?: string) => void;
   onBookmarkToggle: () => void;
   onMessage: () => void;
   onShare: () => void;
@@ -50,6 +53,8 @@ export function ItemCardActions({
   showComments,
   isBookmarked,
   showInterest,
+  itemType,
+  itemTitle,
   commentsCount,
   likesCount,
   interestsCount,
@@ -88,6 +93,8 @@ export function ItemCardActions({
         isBookmarked={isBookmarked}
         showInterest={showInterest}
         isOwner={isOwner}
+        itemType={itemType}
+        itemTitle={itemTitle}
         commentsCount={commentsCount}
         likesCount={likesCount}
         interestsCount={interestsCount}

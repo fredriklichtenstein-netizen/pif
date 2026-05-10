@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Heart, MessageSquare, Star } from 'lucide-react';
+import { Heart, MessageSquare, Star, Sparkles } from 'lucide-react';
 
-type IconType = "heart" | "message-square" | "star";
+type IconType = "heart" | "message-square" | "star" | "sparkles";
 
 interface InteractionIconProps {
   type: IconType;
@@ -12,7 +12,11 @@ interface InteractionIconProps {
 export function InteractionIcon({ type, isActive }: InteractionIconProps) {
   const ACTIVE_COLOR = "#00D1A0";
   const PASSIVE_COLOR = "#333333";
-  
+  const isWishGrant = type === "sparkles";
+  // Wishes use the project's amber accent so the "Grant wish" affordance
+  // visually matches the wish/star colour family used elsewhere.
+  const activeColor = isWishGrant ? "#F59E0B" : ACTIVE_COLOR;
+
   let IconComponent;
   switch (type) {
     case "heart":
@@ -20,6 +24,9 @@ export function InteractionIcon({ type, isActive }: InteractionIconProps) {
       break;
     case "message-square":
       IconComponent = MessageSquare;
+      break;
+    case "sparkles":
+      IconComponent = Sparkles;
       break;
     case "star":
       IconComponent = Star;
@@ -29,11 +36,11 @@ export function InteractionIcon({ type, isActive }: InteractionIconProps) {
   }
 
   return (
-    <IconComponent 
-      className="w-6 h-6 flex-shrink-0" 
-      fill={isActive ? ACTIVE_COLOR : "none"} 
-      stroke={isActive ? ACTIVE_COLOR : PASSIVE_COLOR} 
-      strokeWidth={isActive ? 2.4 : 2} 
+    <IconComponent
+      className="w-6 h-6 flex-shrink-0"
+      fill={isActive && !isWishGrant ? activeColor : "none"}
+      stroke={isActive ? activeColor : PASSIVE_COLOR}
+      strokeWidth={isActive ? 2.4 : 2}
     />
   );
 }
