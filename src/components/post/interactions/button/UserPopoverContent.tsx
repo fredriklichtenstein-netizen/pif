@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from 'react-i18next';
+import { Link } from "react-router-dom";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface UserPopoverContentProps {
@@ -63,7 +64,12 @@ export function UserPopoverContent({
       ) : (
         <div className="space-y-2">
           {users.map((user) => (
-            <div key={user.id} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50">
+            <Link
+              key={user.id}
+              to={`/user/${user.id}`}
+              onClick={() => setShowPopup(false)}
+              className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback>
@@ -71,7 +77,7 @@ export function UserPopoverContent({
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium">{user.name}</span>
-            </div>
+            </Link>
           ))}
         </div>
       )}

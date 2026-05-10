@@ -21,6 +21,8 @@
     "health": "Health & Beauty",
     "art": "Art & Crafts",
     "mixed": "Mixed",
+    "games": "Games",
+    "hobby": "Hobbies & Crafts",
     "other": "Other"
   },
   "conditions": {

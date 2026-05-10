@@ -83,22 +83,6 @@ export function ActionMenuItems({
 
   return (
     <>
-      {!isOwner && (
-        <DropdownMenuItem onClick={onBookmarkToggle} className="cursor-pointer">
-          {isBookmarked ? (
-            <>
-              <BookmarkCheck className="mr-2 h-4 w-4 text-primary" />
-              <span>{t('interactions.remove_from_saved')}</span>
-            </>
-          ) : (
-            <>
-              <BookmarkPlus className="mr-2 h-4 w-4" />
-              <span>{t('interactions.save')}</span>
-            </>
-          )}
-        </DropdownMenuItem>
-      )}
-      
       <DropdownMenuItem onClick={onShare} className="cursor-pointer">
         <Share className="mr-2 h-4 w-4" />
         <span>{t('interactions.share')}</span>

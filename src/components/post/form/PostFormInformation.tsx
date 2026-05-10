@@ -23,6 +23,7 @@ const CATEGORIES = [
   "bicycle",       // Cykel
   "electronics",   // Elektronik
   "vehicles",      // Fordon
+  "hobby",         // Hobby
   "home_garden",   // Hem & Trädgård
   "pets",          // Husdjur
   "household",     // Husgeråd
@@ -34,6 +35,7 @@ const CATEGORIES = [
   "food",          // Mat & dryck
   "music",         // Musik & instrument
   "furniture",     // Möbler
+  "games",         // Spel
   "sports",        // Sport
   "garden",        // Trädgård
   "tools",         // Verktyg
@@ -215,16 +217,19 @@ export function PostFormInformation({
             <div className="space-y-4">
               <Label className="text-sm font-medium">{t('post.detailed_measurements')}</Label>
               <div className="grid grid-cols-2 gap-4">
-                {CATEGORY_MEASUREMENTS[formData.category].map((field) => (
-                  <div key={field} className="space-y-2">
-                    <Label className="text-sm text-gray-600">{field}</Label>
-                    <Input
-                      value={measurements[field] || ""}
-                      onChange={(e) => onMeasurementChange(field, e.target.value)}
-                      placeholder={field}
-                    />
-                  </div>
-                ))}
+                {CATEGORY_MEASUREMENTS[formData.category].map((field) => {
+                  const label = t(`post.measurement.${field}`, field);
+                  return (
+                    <div key={field} className="space-y-2">
+                      <Label className="text-sm text-gray-600">{label}</Label>
+                      <Input
+                        value={measurements[field] || ""}
+                        onChange={(e) => onMeasurementChange(field, e.target.value)}
+                        placeholder={label}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
