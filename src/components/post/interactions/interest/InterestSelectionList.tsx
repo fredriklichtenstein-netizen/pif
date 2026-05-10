@@ -370,8 +370,12 @@ export function InterestSelectionList({
       <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
         <h3 className="font-semibold text-sm">
           {isOwner
-            ? t("interactions.choose_receiver")
-            : t("common.interested_users")}
+            ? isWish
+              ? t("interactions.choose_helpers", "Choose helpers")
+              : t("interactions.choose_receiver")
+            : isWish
+              ? t("interactions.helpers_offering", "Neighbors offering to help")
+              : t("common.interested_users")}
         </h3>
         <Button
           variant="ghost"
@@ -406,92 +410,106 @@ export function InterestSelectionList({
           {rows.map((r) => (
             <div
               key={r.id}
-              className="flex items-center gap-2 p-2 rounded hover:bg-muted/50"
+              className="flex flex-col gap-1 p-2 rounded hover:bg-muted/50"
             >
-              <Link
-                to={`/user/${r.user_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 min-w-0 flex-1 hover:underline"
-              >
-                <AvatarImage
-                  src={r.profile?.avatar_url || ""}
-                  size={28}
-                  alt={displayName(r)}
-                />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">
-                    {displayName(r)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(r.created_at), "d MMM HH:mm", {
-                      locale: dateLocale,
-                    })}
-                  </span>
-                </div>
-              </Link>
-
-              {isOwner && r.status === "pending" && (
-                <TrustIndicator
-                  reliabilityScore={r.profile?.reliability_score ?? undefined}
-                  completedPifs={r.profile?.completed_pifs ?? undefined}
-                  noShows={r.profile?.no_shows ?? undefined}
-                  compact
-                />
-              )}
-
-              <div className="ml-auto flex items-center gap-1">
-                {r.status === "selected" && (
-                  <>
-                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
-                      {t("interactions.selected_badge")}
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/user/${r.user_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 min-w-0 flex-1 hover:underline"
+                >
+                  <AvatarImage
+                    src={r.profile?.avatar_url || ""}
+                    size={28}
+                    alt={displayName(r)}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium truncate">
+                      {displayName(r)}
                     </span>
-                    {isOwner && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
-                        onClick={() => setWithdrawId(r.id)}
-                        aria-label={t("interactions.withdraw_selection_aria")}
-                      >
-                        <UserMinus className="h-3 w-3 mr-1" />
-                        {t("interactions.withdraw_selection_btn")}
-                      </Button>
-                    )}
-                    {!isOwner && currentUserId === r.user_id && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs py-1 px-2 h-auto whitespace-nowrap"
-                        onClick={() => {
-                          setShowPopup(false);
-                          navigate(`/messages`);
-                        }}
-                      >
-                        <MessageCircle className="h-3 w-3 mr-1" />
-                        {t("interactions.message_btn")}
-                      </Button>
-                    )}
-                  </>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(r.created_at), "d MMM HH:mm", {
+                        locale: dateLocale,
+                      })}
+                    </span>
+                  </div>
+                </Link>
+
+                {isOwner && r.status === "pending" && (
+                  <TrustIndicator
+                    reliabilityScore={r.profile?.reliability_score ?? undefined}
+                    completedPifs={r.profile?.completed_pifs ?? undefined}
+                    noShows={r.profile?.no_shows ?? undefined}
+                    compact
+                  />
                 )}
-                {r.status === "pending" && isOwner && (
-                  <Button
-                    size="sm"
-                    disabled={busyId !== null}
-                    onClick={() => setConfirmId(r.id)}
-                    className="text-xs py-1 px-2 h-auto whitespace-nowrap"
-                  >
-                    {busyId === r.id
-                      ? t("interactions.loading")
-                      : t("interactions.select_btn")}
-                  </Button>
-                )}
-                {r.status === "not_selected" && (
-                  <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-xs whitespace-nowrap">
-                    {t("interactions.not_selected_badge")}
-                  </span>
-                )}
+
+                <div className="ml-auto flex items-center gap-1">
+                  {r.status === "selected" && (
+                    <>
+                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                        {isWish
+                          ? t("interactions.helper_chosen_badge", "Chosen")
+                          : t("interactions.selected_badge")}
+                      </span>
+                      {isOwner && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
+                          onClick={() => setWithdrawId(r.id)}
+                          aria-label={t("interactions.withdraw_selection_aria")}
+                        >
+                          <UserMinus className="h-3 w-3 mr-1" />
+                          {t("interactions.withdraw_selection_btn")}
+                        </Button>
+                      )}
+                      {!isOwner && currentUserId === r.user_id && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                          onClick={() => {
+                            setShowPopup(false);
+                            navigate(`/messages`);
+                          }}
+                        >
+                          <MessageCircle className="h-3 w-3 mr-1" />
+                          {t("interactions.message_btn")}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {r.status === "pending" && isOwner && (
+                    <Button
+                      size="sm"
+                      disabled={busyId !== null}
+                      onClick={() => setConfirmId(r.id)}
+                      className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                    >
+                      {busyId === r.id
+                        ? t("interactions.loading")
+                        : isWish
+                          ? t("interactions.choose_helper_btn", "Choose")
+                          : t("interactions.select_btn")}
+                    </Button>
+                  )}
+                  {r.status === "not_selected" && !isWish && (
+                    <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                      {t("interactions.not_selected_badge")}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* Helper note for wishes — visible to the wisher and to
+                  the helper themselves so they remember what they offered. */}
+              {isWish && r.note && (isOwner || currentUserId === r.user_id) && (
+                <div className="ml-9 text-xs text-muted-foreground bg-amber-50 border border-amber-100 rounded px-2 py-1 italic">
+                  “{r.note}”
+                </div>
+              )}
             </div>
           ))}
 
