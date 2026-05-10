@@ -529,11 +529,17 @@ export function InterestSelectionList({
         </div>
       )}
 
-      {isOwner && rows.some((r) => r.status === "pending") && !rows.some((r) => r.status === "selected") && (
-        <p className="text-xs text-muted-foreground mt-3 border-t pt-2">
-          {t("interactions.unlock_messaging")}
-        </p>
-      )}
+      {isOwner && rows.some((r) => r.status === "pending") &&
+        (isWish || !rows.some((r) => r.status === "selected")) && (
+          <p className="text-xs text-muted-foreground mt-3 border-t pt-2">
+            {isWish
+              ? t(
+                  "interactions.unlock_messaging_wish",
+                  "Choose one or more helpers to start a conversation. You can add more anytime."
+                )
+              : t("interactions.unlock_messaging")}
+          </p>
+        )}
 
       <AlertDialog
         open={confirmId !== null}
@@ -542,10 +548,17 @@ export function InterestSelectionList({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("interactions.confirm_selection")}
+              {isWish
+                ? t("interactions.confirm_helper", "Choose this helper?")
+                : t("interactions.confirm_selection")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("interactions.confirm_selection_description")}
+              {isWish
+                ? t(
+                    "interactions.confirm_helper_description",
+                    "We'll open a private conversation and share their note with you to get things started."
+                  )
+                : t("interactions.confirm_selection_description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
