@@ -42,6 +42,13 @@ export function PostImageCropDialog({
     if (pixels) onSave(pixels);
   };
 
+  const handleReset = () => {
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
+  const isPristine = zoom === 1 && crop.x === 0 && crop.y === 0;
+
   return (
     <Dialog open={!!image} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent className="sm:max-w-[480px]">
