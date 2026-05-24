@@ -16,7 +16,7 @@ import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { ReceiverConfirmationWatcher } from "@/components/profile/completion/ReceiverConfirmationWatcher";
 import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessionRecovery";
-import { initializeAuth, useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { initializeAuth } from "@/hooks/useGlobalAuth";
 import "./App.css";
 
 const queryClient = new QueryClient({
