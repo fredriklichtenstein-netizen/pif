@@ -62,7 +62,9 @@ export const initializeAuth = async () => {
   }
 
   authInitPromise = (async () => {
-  try {
+    let subscription: AuthSubscription | undefined;
+
+    try {
     
     auth.setLoading(true);
     auth.setError(null);
@@ -70,7 +72,7 @@ export const initializeAuth = async () => {
     
     // Register the listener before reading storage. This mirrors the private-route
     // restore path and ensures Supabase's INITIAL_SESSION event cannot be missed.
-    const subscription = setupAuthListener();
+    subscription = setupAuthListener();
 
     // Restore session directly from storage. Do NOT race against a short timeout —
     // getSession() reads from localStorage synchronously in practice, and racing it
@@ -155,7 +157,7 @@ export const initializeAuth = async () => {
         auth.clearAuth();
       }
     }
-  } catch (error) {
+    } catch (error) {
     console.error('Error initializing auth:', error);
     
     // Check if it's a network error
@@ -169,10 +171,12 @@ export const initializeAuth = async () => {
     }
     
     auth.setError(error instanceof Error ? error : new Error('Unknown error during auth initialization'));
-  } finally {
+    } finally {
     auth.setLoading(false);
     auth.setInitialized(true);
     
+    }
+
     return subscription;
   })();
 
