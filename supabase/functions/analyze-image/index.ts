@@ -38,11 +38,49 @@ serve(async (req) => {
     }
 
     const { imageUrl } = await req.json();
-    console.log("Analyzing image:", imageUrl);
 
-    if (!imageUrl) {
-      throw new Error("No image URL provided");
+    if (!imageUrl || typeof imageUrl !== "string") {
+      return new Response(JSON.stringify({ error: "No image URL provided" }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+
+    if (imageUrl.length > 2048) {
+      return new Response(JSON.stringify({ error: "Image URL too long" }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(imageUrl);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid image URL" }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (parsedUrl.protocol !== "https:") {
+      return new Response(JSON.stringify({ error: "Image URL must use https" }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Allowlist: only accept images hosted on our own Supabase storage.
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    let allowedHost = '';
+    try { allowedHost = new URL(supabaseUrl).hostname; } catch { /* noop */ }
+    if (!allowedHost || parsedUrl.hostname !== allowedHost) {
+      return new Response(JSON.stringify({ error: "Image host not allowed" }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
 
     // Add a timeout to prevent hanging
     const timeoutPromise = new Promise((_, reject) => {
