@@ -12,6 +12,11 @@ import {
 
 export { clearRecoveryGuard } from "./sessionRecovery";
 
+type AuthSubscription = { unsubscribe: () => void };
+
+let authInitPromise: Promise<AuthSubscription | undefined> | null = null;
+let authSubscription: AuthSubscription | undefined;
+
 const applyProfileCompletion = async (
   profile: { onboarding_completed?: boolean | null } | null | undefined,
   context: string,
@@ -40,7 +45,9 @@ const applyProfileCompletion = async (
 export const initializeAuth = async () => {
   const auth = useAuthStore.getState();
   
-  if (auth.initialized) return;
+  if (auth.initialized) return authSubscription;
+
+  if (authInitPromise) return authInitPromise;
 
   // In demo mode, skip Supabase entirely and set demo user immediately
   if (DEMO_MODE) {
@@ -54,12 +61,17 @@ export const initializeAuth = async () => {
     return undefined;
   }
 
+  authInitPromise = (async () => {
   try {
     
     auth.setLoading(true);
     auth.setError(null);
     auth.setNetworkError(false);
     
+    // Register the listener before reading storage. This mirrors the private-route
+    // restore path and ensures Supabase's INITIAL_SESSION event cannot be missed.
+    const subscription = setupAuthListener();
+
     // Restore session directly from storage. Do NOT race against a short timeout —
     // getSession() reads from localStorage synchronously in practice, and racing it
     // can cause refreshed pages to appear signed-out before storage is read.
@@ -136,7 +148,12 @@ export const initializeAuth = async () => {
       }
     } else {
       
-      auth.clearAuth();
+      // If INITIAL_SESSION already restored the session through the listener,
+      // do not clear it just because this getSession call returned null.
+      const currentAuth = useAuthStore.getState();
+      if (!currentAuth.session?.user) {
+        auth.clearAuth();
+      }
     }
   } catch (error) {
     console.error('Error initializing auth:', error);
@@ -156,9 +173,15 @@ export const initializeAuth = async () => {
     auth.setLoading(false);
     auth.setInitialized(true);
     
-  }
+    return subscription;
+  })();
 
-  // Set up auth listener
+  return authInitPromise;
+};
+
+const setupAuthListener = () => {
+  if (authSubscription) return authSubscription;
+
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
       
@@ -236,5 +259,6 @@ export const initializeAuth = async () => {
     }
   );
 
+  authSubscription = subscription;
   return subscription;
 };
