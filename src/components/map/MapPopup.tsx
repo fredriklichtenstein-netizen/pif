@@ -24,18 +24,30 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
     ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
     : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>`;
 
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
   const hasImage = post.images && post.images.length > 0 && post.images[0];
-  const imageUrl = hasImage ? post.images[0] : '';
-  const isValidImageUrl = imageUrl &&
-    (imageUrl.startsWith('http') || imageUrl.startsWith('data:') || imageUrl.startsWith('/'));
+  const rawImageUrl = hasImage ? String(post.images[0]) : '';
+  const isValidImageUrl =
+    rawImageUrl &&
+    (rawImageUrl.startsWith('https://') ||
+      rawImageUrl.startsWith('http://') ||
+      rawImageUrl.startsWith('/'));
+  const safeImageUrl = isValidImageUrl ? escapeHtml(rawImageUrl) : '';
 
   const fallbackBg = isWish
     ? 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)'
     : 'linear-gradient(135deg, #CCFBF1 0%, #99F6E4 100%)';
 
-  const innerContent = isValidImageUrl
+  const innerContent = safeImageUrl
     ? `<img
-        src="${imageUrl}"
+        src="${safeImageUrl}"
         alt=""
         style="width:100%;height:100%;object-fit:cover;display:block;"
         onerror="this.style.display='none'; this.parentNode.style.background='${fallbackBg}';"
