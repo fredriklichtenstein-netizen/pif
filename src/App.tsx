@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { Routes } from "./routes/Routes";
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
@@ -14,6 +16,7 @@ import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { ReceiverConfirmationWatcher } from "@/components/profile/completion/ReceiverConfirmationWatcher";
 import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessionRecovery";
+import { initializeAuth, useGlobalAuth } from "@/hooks/useGlobalAuth";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -39,6 +42,20 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const { initialized, isLoading } = useGlobalAuth();
+
+  useEffect(() => {
+    void initializeAuth();
+  }, []);
+
+  if (!initialized || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
