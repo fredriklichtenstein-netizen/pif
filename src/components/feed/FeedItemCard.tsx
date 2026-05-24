@@ -1,5 +1,5 @@
 
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
@@ -11,25 +11,26 @@ interface FeedItemCardProps {
 }
 
 function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardProps) {
+  // Seed initial counts in an effect — calling the Zustand setter during
+  // render mutates the store synchronously and forces every subscriber
+  // (likes/interests/comments hooks across the whole feed) to re-render,
+  // which re-runs this render and causes an infinite mount/unmount loop.
+  const likesCount = typeof post?.likesCount === 'number' ? post.likesCount : undefined;
+  const commentsCount = typeof post?.commentsCount === 'number' ? post.commentsCount : undefined;
+  const interestsCount = typeof post?.interestsCount === 'number' ? post.interestsCount : undefined;
+  useEffect(() => {
+    if (post == null || post.id == null) return;
+    if (likesCount === undefined && commentsCount === undefined && interestsCount === undefined) return;
+    useInitialCountsStore.getState().setBulkCounts([{
+      itemId: post.id,
+      likesCount: likesCount ?? 0,
+      commentsCount: commentsCount ?? 0,
+      interestsCount: interestsCount ?? 0,
+    }]);
+  }, [post?.id, likesCount, commentsCount, interestsCount]);
+
   // Skip posts that have been optimistically deleted
   if (post.__deleted) return null;
-
-  // Seed initial counts synchronously so child counters render correctly
-  // on the first paint, even before any per-card fetch resolves.
-  if (post && post.id != null) {
-    const hasAnyCount =
-      typeof post.likesCount === 'number' ||
-      typeof post.commentsCount === 'number' ||
-      typeof post.interestsCount === 'number';
-    if (hasAnyCount) {
-      useInitialCountsStore.getState().setBulkCounts([{
-        itemId: post.id,
-        likesCount: Number(post.likesCount) || 0,
-        commentsCount: Number(post.commentsCount) || 0,
-        interestsCount: Number(post.interestsCount) || 0,
-      }]);
-    }
-  }
 
   // Coordinates are now already parsed objects from the transform function
   const coordinates = post.coordinates;
