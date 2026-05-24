@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeConnection } from "./useRealtimeConnection";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 interface RealtimeUpdatesOptions {
   maxAttempts?: number;
@@ -28,6 +29,7 @@ export const useRealtimeUpdates = (
     setupAttemptedRef,
     handleCleanup
   } = useRealtimeConnection(itemId);
+  const authInitialized = useAuthStore((s) => s.initialized);
 
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,6 +62,7 @@ export const useRealtimeUpdates = (
 
   // Set up real-time subscription for item interactions
   const setupRealtimeSubscription = useCallback(() => {
+    if (!authInitialized) return;
     if (!itemId || isSubscribedRef.current) return;
     
     // Prevent excessive retry attempts
@@ -135,11 +138,11 @@ export const useRealtimeUpdates = (
         }, 2000 * attemptCountRef.current); // Exponential backoff
       }
     }
-  }, [itemId, debouncedRefresh, maxAttempts, setError, setIsSubscribed, channelsRef]);
+  }, [authInitialized, itemId, debouncedRefresh, maxAttempts, setError, setIsSubscribed, channelsRef]);
 
   // Setup subscription on mount
   useEffect(() => {
-    if (itemId && !isSubscribed && !setupAttemptedRef.current) {
+    if (authInitialized && itemId && !isSubscribed && !setupAttemptedRef.current) {
       setupRealtimeSubscription();
     }
     
@@ -154,7 +157,7 @@ export const useRealtimeUpdates = (
         retryTimeoutRef.current = null;
       }
     };
-  }, [itemId, setupRealtimeSubscription, cleanupChannels]);
+  }, [authInitialized, itemId, setupRealtimeSubscription, cleanupChannels]);
 
   // Reset and retry on itemId change
   useEffect(() => {
