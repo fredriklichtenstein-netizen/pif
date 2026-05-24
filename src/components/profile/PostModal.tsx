@@ -94,7 +94,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     // Background refresh.
     supabase
       .from("items")
-      .select("*, profiles!items_user_id_fkey(*)")
+      .select("*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)")
       .eq("id", typeof postId === 'string' ? parseInt(postId, 10) : postId)
       .single()
       .then(({ data, error }) => {
