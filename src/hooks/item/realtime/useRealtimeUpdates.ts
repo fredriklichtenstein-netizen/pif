@@ -121,7 +121,9 @@ export const useRealtimeUpdates = (
       
       // Retry subscription after delay if not max attempts
       if (attemptCountRef.current < maxAttempts) {
-        setTimeout(() => {
+        if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = setTimeout(() => {
+          retryTimeoutRef.current = null;
           if (!isSubscribed) {
             setupRealtimeSubscription();
           }
@@ -140,9 +142,14 @@ export const useRealtimeUpdates = (
       cleanupChannels();
       if (refreshTimeoutRef.current !== null) {
         clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
+      if (retryTimeoutRef.current !== null) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
       }
     };
-  }, [itemId, isSubscribed, setupRealtimeSubscription, cleanupChannels]);
+  }, [itemId, setupRealtimeSubscription, cleanupChannels]);
 
   // Reset and retry on itemId change
   useEffect(() => {
@@ -158,6 +165,11 @@ export const useRealtimeUpdates = (
       handleCleanup();
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
       }
     };
   }, [handleCleanup]);
