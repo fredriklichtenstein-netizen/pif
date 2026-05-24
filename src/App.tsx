@@ -42,19 +42,11 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const { initialized, isLoading } = useGlobalAuth();
-
   useEffect(() => {
     void initializeAuth();
   }, []);
 
-  if (!initialized || isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
-      </div>
-    );
-  }
+
 
   return (
     <ErrorBoundary>
