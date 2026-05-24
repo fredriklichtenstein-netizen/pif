@@ -32,6 +32,7 @@ export const useRealtimeUpdates = (
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const refreshItemDataRef = useRef(refreshItemData);
+  const isSubscribedRef = useRef(isSubscribed);
   const numericIdRef = useRef<number | null>(null);
   const attemptCountRef = useRef(0);
   const maxAttempts = options.maxAttempts || 3;
@@ -40,6 +41,10 @@ export const useRealtimeUpdates = (
   useEffect(() => {
     refreshItemDataRef.current = refreshItemData;
   }, [refreshItemData]);
+
+  useEffect(() => {
+    isSubscribedRef.current = isSubscribed;
+  }, [isSubscribed]);
 
   // Debounced refresh function to prevent multiple rapid refreshes
   const debouncedRefresh = useCallback(() => {
@@ -55,7 +60,7 @@ export const useRealtimeUpdates = (
 
   // Set up real-time subscription for item interactions
   const setupRealtimeSubscription = useCallback(() => {
-    if (!itemId || isSubscribed) return;
+    if (!itemId || isSubscribedRef.current) return;
     
     // Prevent excessive retry attempts
     if (attemptCountRef.current >= maxAttempts) {
@@ -124,13 +129,13 @@ export const useRealtimeUpdates = (
         if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = setTimeout(() => {
           retryTimeoutRef.current = null;
-          if (!isSubscribed) {
+          if (!isSubscribedRef.current) {
             setupRealtimeSubscription();
           }
         }, 2000 * attemptCountRef.current); // Exponential backoff
       }
     }
-  }, [itemId, debouncedRefresh, isSubscribed, maxAttempts, setError, setIsSubscribed, channelsRef]);
+  }, [itemId, debouncedRefresh, maxAttempts, setError, setIsSubscribed, channelsRef]);
 
   // Setup subscription on mount
   useEffect(() => {
