@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthCheck } from "./utils/authCheck";
@@ -229,7 +229,7 @@ export const useLikes = (id: string, userId?: string | null) => {
     }
   };
   
-  const fetchLikers = async (): Promise<User[]> => {
+  const fetchLikers = useCallback(async (): Promise<User[]> => {
     if (!authInitialized) return likers;
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
@@ -240,7 +240,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       console.error('Error in fetchLikers:', error);
       return likers;
     }
-  };
+  }, [authInitialized, id, likers]);
 
   return {
     isLiked,
