@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeConnection } from "./useRealtimeConnection";
 
@@ -30,10 +30,16 @@ export const useRealtimeUpdates = (
   } = useRealtimeConnection(itemId);
 
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshItemDataRef = useRef(refreshItemData);
   const numericIdRef = useRef<number | null>(null);
   const attemptCountRef = useRef(0);
   const maxAttempts = options.maxAttempts || 3;
   const debounceMs = options.debounceMs || 500;
+
+  useEffect(() => {
+    refreshItemDataRef.current = refreshItemData;
+  }, [refreshItemData]);
 
   // Debounced refresh function to prevent multiple rapid refreshes
   const debouncedRefresh = useCallback(() => {
@@ -42,10 +48,10 @@ export const useRealtimeUpdates = (
     }
     
     refreshTimeoutRef.current = setTimeout(() => {
-      refreshItemData();
+      refreshItemDataRef.current();
       refreshTimeoutRef.current = null;
     }, debounceMs);
-  }, [refreshItemData, itemId, debounceMs]);
+  }, [debounceMs]);
 
   // Set up real-time subscription for item interactions
   const setupRealtimeSubscription = useCallback(() => {
