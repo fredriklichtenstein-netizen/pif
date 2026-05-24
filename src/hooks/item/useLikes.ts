@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthCheck } from "./utils/authCheck";
@@ -9,7 +9,6 @@ import { DEMO_USER } from "@/data/mockUser";
 import type { User } from "./utils/userUtils";
 import { useTranslation } from "react-i18next";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
-import { useItemLikesRealtime } from "./realtime/useItemLikesRealtime";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
 
@@ -88,8 +87,9 @@ export const useLikes = (id: string, userId?: string | null) => {
           }
         }
 
-        if (cancelled) return;
-        await fetchLikersInternal(numericId, () => cancelled);
+        // Do not fetch the full liker list during card mount. Feed counts are
+        // seeded by the bulk counts query and kept fresh by count realtime;
+        // full liker lists are loaded only on explicit counter interaction.
       } catch (error) {
         if (cancelled) return;
         console.error("Error fetching likes:", error);
@@ -229,7 +229,7 @@ export const useLikes = (id: string, userId?: string | null) => {
     }
   };
   
-  const fetchLikers = async (): Promise<User[]> => {
+  const fetchLikers = useCallback(async (): Promise<User[]> => {
     if (!authInitialized) return likers;
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return [];
@@ -240,17 +240,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       console.error('Error in fetchLikers:', error);
       return likers;
     }
-  };
-
-  // Realtime: any change to likes for this item refreshes the
-  // authoritative likers list so popovers across mounted UIs stay in
-  // sync, not just the count.
-  useItemLikesRealtime(id, () => {
-    if (DEMO_MODE) return;
-    if (!authInitialized) return;
-    const numericId = parseInt(id, 10);
-    if (!isNaN(numericId)) fetchLikersInternal(numericId);
-  });
+  }, [authInitialized, id, likers]);
 
   return {
     isLiked,

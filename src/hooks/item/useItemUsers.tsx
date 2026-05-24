@@ -4,7 +4,6 @@ import { Comment } from "@/types/comment";
 import type { User } from "./utils/userUtils";
 
 interface UserCacheState {
-  likers: User[];
   commenters: User[];
   interestedUsers: User[];
   isLoadingInterested: boolean;
@@ -13,13 +12,10 @@ interface UserCacheState {
 
 export const useItemUsers = (
   comments: Comment[],
-  fetchLikers: () => Promise<User[]>,
-  likesCount: number,
   fetchInterestedUsers: () => Promise<User[]>,
   interestsCount: number
 ) => {
   const [state, setState] = useState<UserCacheState>({
-    likers: [],
     commenters: [],
     interestedUsers: [],
     isLoadingInterested: false,
@@ -47,22 +43,6 @@ export const useItemUsers = (
       commenters: Object.values(uniqueCommenters)
     }));
   }, [comments]);
-
-  // Fetch likers when likesCount changes
-  useEffect(() => {
-    if (likesCount > 0 && state.likers.length === 0) {
-      fetchLikers()
-        .then(users => {
-          setState(prev => ({
-            ...prev,
-            likers: users
-          }));
-        })
-        .catch(error => {
-          console.error("Error fetching likers:", error);
-        });
-    }
-  }, [likesCount, fetchLikers, state.likers.length]);
 
   // Function to fetch interested users on demand
   const getInterestedUsers = useCallback(() => {

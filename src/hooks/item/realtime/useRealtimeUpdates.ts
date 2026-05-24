@@ -1,7 +1,8 @@
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeConnection } from "./useRealtimeConnection";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 interface RealtimeUpdatesOptions {
   maxAttempts?: number;
@@ -28,12 +29,24 @@ export const useRealtimeUpdates = (
     setupAttemptedRef,
     handleCleanup
   } = useRealtimeConnection(itemId);
+  const authInitialized = useAuthStore((s) => s.initialized);
 
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshItemDataRef = useRef(refreshItemData);
+  const isSubscribedRef = useRef(isSubscribed);
   const numericIdRef = useRef<number | null>(null);
   const attemptCountRef = useRef(0);
   const maxAttempts = options.maxAttempts || 3;
   const debounceMs = options.debounceMs || 500;
+
+  useEffect(() => {
+    refreshItemDataRef.current = refreshItemData;
+  }, [refreshItemData]);
+
+  useEffect(() => {
+    isSubscribedRef.current = isSubscribed;
+  }, [isSubscribed]);
 
   // Debounced refresh function to prevent multiple rapid refreshes
   const debouncedRefresh = useCallback(() => {
@@ -42,14 +55,15 @@ export const useRealtimeUpdates = (
     }
     
     refreshTimeoutRef.current = setTimeout(() => {
-      refreshItemData();
+      refreshItemDataRef.current();
       refreshTimeoutRef.current = null;
     }, debounceMs);
-  }, [refreshItemData, itemId, debounceMs]);
+  }, [debounceMs]);
 
   // Set up real-time subscription for item interactions
   const setupRealtimeSubscription = useCallback(() => {
-    if (!itemId || isSubscribed) return;
+    if (!authInitialized) return;
+    if (!itemId || isSubscribedRef.current) return;
     
     // Prevent excessive retry attempts
     if (attemptCountRef.current >= maxAttempts) {
@@ -115,18 +129,20 @@ export const useRealtimeUpdates = (
       
       // Retry subscription after delay if not max attempts
       if (attemptCountRef.current < maxAttempts) {
-        setTimeout(() => {
-          if (!isSubscribed) {
+        if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = setTimeout(() => {
+          retryTimeoutRef.current = null;
+          if (!isSubscribedRef.current) {
             setupRealtimeSubscription();
           }
         }, 2000 * attemptCountRef.current); // Exponential backoff
       }
     }
-  }, [itemId, debouncedRefresh, isSubscribed, maxAttempts, setError, setIsSubscribed, channelsRef]);
+  }, [authInitialized, itemId, debouncedRefresh, maxAttempts, setError, setIsSubscribed, channelsRef]);
 
   // Setup subscription on mount
   useEffect(() => {
-    if (itemId && !isSubscribed && !setupAttemptedRef.current) {
+    if (authInitialized && itemId && !isSubscribed && !setupAttemptedRef.current) {
       setupRealtimeSubscription();
     }
     
@@ -134,9 +150,14 @@ export const useRealtimeUpdates = (
       cleanupChannels();
       if (refreshTimeoutRef.current !== null) {
         clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
+      if (retryTimeoutRef.current !== null) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
       }
     };
-  }, [itemId, isSubscribed, setupRealtimeSubscription, cleanupChannels]);
+  }, [authInitialized, itemId, setupRealtimeSubscription, cleanupChannels]);
 
   // Reset and retry on itemId change
   useEffect(() => {
@@ -152,6 +173,11 @@ export const useRealtimeUpdates = (
       handleCleanup();
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
       }
     };
   }, [handleCleanup]);

@@ -35,8 +35,8 @@ export const useItemCard = (itemId: string) => {
     handleLike,
     handleShowInterest,
     handleBookmark,
-    fetchLikers,
     fetchInterestedUsers,
+    likers,
     loading: interactionsLoading,
     interestedUsersError
   } = useItemInteractions(itemId);
@@ -46,7 +46,6 @@ export const useItemCard = (itemId: string) => {
 
   // Data refresh functionality
   const { refreshData } = useItemCardRefresh(
-    fetchLikers,
     fetchInterestedUsers,
     showComments,
     fetchItemComments
@@ -54,17 +53,13 @@ export const useItemCard = (itemId: string) => {
 
   // User data management
   const { 
-    likers, 
     commenters, 
     interestedUsers, 
     getInterestedUsers,
     isLoadingInterested,
     interestedError
   } = useItemCardUsers(
-    itemId,
     comments,
-    fetchLikers,
-    likesCount,
     fetchInterestedUsers,
     interestsCount
   );
