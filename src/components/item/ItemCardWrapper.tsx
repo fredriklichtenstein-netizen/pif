@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useItemCardWrapper } from "./hooks/useItemCardWrapper";
 import { ItemCardWrapperContent } from "./ItemCardWrapperContent";
 import { ItemCardError } from "./ItemCardError";
+import { ReportPostDialog } from "./ReportPostDialog";
 import {
   AlertDialog,
   AlertDialogAction,
