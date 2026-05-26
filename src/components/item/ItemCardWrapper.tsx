@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useItemCardWrapper } from "./hooks/useItemCardWrapper";
 import { ItemCardWrapperContent } from "./ItemCardWrapperContent";
 import { ItemCardError } from "./ItemCardError";
+import { ReportPostDialog } from "./ReportPostDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,8 @@ export function ItemCardWrapper({
   onOperationSuccess
 }: ItemCardProps) {
   const {
+    isReportDialogOpen,
+    setIsReportDialogOpen,
     isItemArchived,
     errors,
     showError,
@@ -185,6 +188,12 @@ export function ItemCardWrapper({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ReportPostDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        itemId={id}
+      />
     </>
   );
 }
