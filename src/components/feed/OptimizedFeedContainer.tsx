@@ -153,7 +153,7 @@ export function OptimizedFeedContainer() {
               selectedCategories={[]}
               clearFilters={() => setSelectedDistance(null)}
               viewMode="all"
-              isLoading={isLoadingMore}
+              isLoading={false}
               onItemOperationSuccess={handleRefresh}
             />
           )}
