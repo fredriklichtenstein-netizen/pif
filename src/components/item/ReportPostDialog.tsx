@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,15 +17,8 @@ interface ReportPostDialogProps {
   itemId: string | number;
 }
 
-const REASONS = [
-  "Olämpligt innehåll",
-  "Spam",
-  "Felaktig information",
-  "Trakasserier",
-  "Annat",
-] as const;
-
 export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialogProps) {
+  const { t } = useTranslation();
   const { session } = useGlobalAuth();
   const userId = session?.user?.id;
   const profile = useCachedProfile(userId);
@@ -32,6 +26,19 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
   const [reasonText, setReasonText] = useState("");
   const [comments, setComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Stable canonical keys + localized labels. The canonical key is what gets
+  // stored / emailed so it stays consistent across languages.
+  const reasons = useMemo(
+    () => [
+      { key: "inappropriate", label: t("interactions.report_post_reason_inappropriate") },
+      { key: "spam", label: t("interactions.report_post_reason_spam") },
+      { key: "misleading", label: t("interactions.report_post_reason_misleading") },
+      { key: "harassment", label: t("interactions.report_post_reason_harassment") },
+      { key: "other", label: t("interactions.report_post_reason_other") },
+    ],
+    [t],
+  );
 
   useEffect(() => {
     if (open) {
@@ -46,31 +53,33 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
     (profile as any)?.full_name ||
     [(profile as any)?.first_name, (profile as any)?.last_name].filter(Boolean).join(" ") ||
     session?.user?.email ||
-    "Du";
-  const avatarUrl = (profile as any)?.avatar_url || (profile as any)?.profile_picture_url || undefined;
+    "";
+  const avatarUrl =
+    (profile as any)?.avatar_url || (profile as any)?.profile_picture_url || undefined;
   const initial = (displayName || "?").trim().charAt(0).toUpperCase();
 
   const canSubmit =
-    !!reason && (reason !== "Annat" || reasonText.trim().length > 0) && !submitting;
+    !!reason && (reason !== "other" || reasonText.trim().length > 0) && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
+      const selected = reasons.find((r) => r.key === reason);
       const { error } = await supabase.functions.invoke("send-report", {
         body: {
           itemId: String(itemId),
-          reason,
-          reasonText: reason === "Annat" ? reasonText.trim() : null,
+          reason: selected?.label ?? reason,
+          reasonText: reason === "other" ? reasonText.trim() : null,
           comments: comments.trim() || null,
         },
       });
       if (error) throw error;
-      toast.success("Tack för din rapport. Vi granskar den inom kort.");
+      toast.success(t("interactions.report_post_success"));
       onOpenChange(false);
     } catch (e) {
       console.error("Failed to submit report", e);
-      toast.error("Kunde inte skicka rapporten. Försök igen.");
+      toast.error(t("interactions.report_post_error"));
     } finally {
       setSubmitting(false);
     }
@@ -78,16 +87,13 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-md p-0 gap-0 overflow-hidden"
-        // Hide built-in close so we can render a custom one
-      >
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="text-lg font-semibold">Rapportera inlägg</h2>
+          <h2 className="text-lg font-semibold">{t("interactions.report_post_title")}</h2>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            aria-label="Stäng"
+            aria-label={t("interactions.report_post_close_aria")}
             className="rounded-full p-1 hover:bg-muted text-muted-foreground"
           >
             <X className="h-5 w-5" />
@@ -103,21 +109,25 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
             </Avatar>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{displayName}</p>
-              <p className="text-xs text-muted-foreground">Rapporten skickas i ditt namn</p>
+              <p className="text-xs text-muted-foreground">
+                {t("interactions.report_post_identity")}
+              </p>
             </div>
           </div>
 
           {/* Reasons */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Anledning</Label>
+            <Label className="text-sm font-medium">
+              {t("interactions.report_post_reason_label")}
+            </Label>
             <div className="space-y-2">
-              {REASONS.map((r) => {
-                const selected = reason === r;
+              {reasons.map((r) => {
+                const selected = reason === r.key;
                 return (
                   <button
-                    key={r}
+                    key={r.key}
                     type="button"
-                    onClick={() => setReason(r)}
+                    onClick={() => setReason(r.key)}
                     className={`w-full text-left rounded-lg border px-3 py-2.5 text-sm transition-colors ${
                       selected
                         ? "border-primary bg-primary/5 text-foreground"
@@ -133,7 +143,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
                       >
                         {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
                       </span>
-                      <span>{r}</span>
+                      <span>{r.label}</span>
                     </div>
                   </button>
                 );
@@ -141,17 +151,17 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
             </div>
           </div>
 
-          {/* "Annat" free text */}
-          {reason === "Annat" && (
+          {/* "Other" free text */}
+          {reason === "other" && (
             <div className="space-y-1.5">
               <Label htmlFor="report-reason-text" className="text-sm font-medium">
-                Beskriv anledningen
+                {t("interactions.report_post_other_label")}
               </Label>
               <Textarea
                 id="report-reason-text"
                 value={reasonText}
                 onChange={(e) => setReasonText(e.target.value)}
-                placeholder="Berätta vad som är problemet…"
+                placeholder={t("interactions.report_post_other_placeholder")}
                 rows={3}
                 maxLength={2000}
               />
@@ -161,13 +171,13 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
           {/* Additional comments */}
           <div className="space-y-1.5">
             <Label htmlFor="report-comments" className="text-sm font-medium">
-              Övriga kommentarer (valfritt)
+              {t("interactions.report_post_comments_label")}
             </Label>
             <Textarea
               id="report-comments"
               value={comments}
               onChange={(e) => setComments(e.target.value)}
-              placeholder="Lägg till mer information om du vill…"
+              placeholder={t("interactions.report_post_comments_placeholder")}
               rows={3}
               maxLength={2000}
             />
@@ -182,7 +192,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
               onClick={() => onOpenChange(false)}
               disabled={submitting}
             >
-              Avbryt
+              {t("interactions.report_post_cancel")}
             </Button>
             <Button
               type="button"
@@ -191,7 +201,9 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
               onClick={handleSubmit}
               disabled={!canSubmit}
             >
-              {submitting ? "Skickar…" : "Rapportera"}
+              {submitting
+                ? t("interactions.report_post_submitting")
+                : t("interactions.report_post_submit")}
             </Button>
           </div>
         </div>
