@@ -64,17 +64,28 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
+    // Hard safety timeout so the dialog can never get stuck on "Skickar…"
+    // even if the network/edge function hangs.
+    const timeout = new Promise<{ error: { message: string } }>((resolve) =>
+      setTimeout(
+        () => resolve({ error: { message: "Request timed out" } }),
+        15000,
+      ),
+    );
     try {
       const selected = reasons.find((r) => r.key === reason);
-      const { error } = await supabase.functions.invoke("send-report", {
-        body: {
-          itemId: String(itemId),
-          reason: selected?.label ?? reason,
-          reasonText: reason === "other" ? reasonText.trim() : null,
-          comments: comments.trim() || null,
-        },
-      });
-      if (error) throw error;
+      const result = (await Promise.race([
+        supabase.functions.invoke("send-report", {
+          body: {
+            itemId: String(itemId),
+            reason: selected?.label ?? reason,
+            reasonText: reason === "other" ? reasonText.trim() : null,
+            comments: comments.trim() || null,
+          },
+        }),
+        timeout,
+      ])) as { error?: { message?: string } | null };
+      if (result?.error) throw new Error(result.error.message || "Failed");
       toast.success(t("interactions.report_post_success"));
       onOpenChange(false);
     } catch (e) {
