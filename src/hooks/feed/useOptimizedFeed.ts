@@ -248,6 +248,7 @@ export function useOptimizedFeed() {
     fadeTimersRef.current.clear();
     restoreTimersRef.current.forEach(t => clearTimeout(t));
     restoreTimersRef.current.clear();
+    loadMoreInFlightRef.current = false;
   }, [queryClient, refetch]);
 
   // Prefetch next page on mount and when page changes
