@@ -188,6 +188,12 @@ export function ItemCardWrapper({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ReportPostDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        itemId={id}
+      />
     </>
   );
 }
