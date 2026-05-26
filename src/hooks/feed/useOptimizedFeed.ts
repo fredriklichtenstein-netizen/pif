@@ -204,17 +204,34 @@ export function useOptimizedFeed() {
     return posts.filter(p => !removedIds.has(String(p.id)));
   }, [page, queryClient, currentPageData, removedIds]);
 
-  // Load more posts
+  // Load more posts. Uses a ref-guarded functional updater so rapid
+  // back-to-back intersection events from InfiniteScrollSentinel
+  // (which fires again the moment its observer is re-created with a
+  // fresh `isLoading=false` closure) cannot skip a page. Without this,
+  // two calls landing across React commits jump `page` by 2 and the
+  // in-between offset is never fetched — leaving the feed appearing
+  // stuck with skeletons that never resolve to real posts.
+  const loadMoreInFlightRef = useRef(false);
   const loadMore = useCallback(() => {
     if (DEMO_MODE) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    
-    // Prefetch the page after next using the correct (variable) sizes.
-    setTimeout(() => {
-      prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1));
-    }, 100);
-  }, [page]);
+    if (loadMoreInFlightRef.current) return;
+    loadMoreInFlightRef.current = true;
+    setPage((prev) => {
+      const nextPage = prev + 1;
+      setTimeout(() => {
+        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1));
+      }, 100);
+      return nextPage;
+    });
+  }, []);
+
+  // Release the in-flight guard once the new page has finished loading
+  // so the next intersection can trigger the page after it.
+  useEffect(() => {
+    if (!isLoading) {
+      loadMoreInFlightRef.current = false;
+    }
+  }, [isLoading, page]);
 
   // Refresh all data
   const refresh = useCallback(async () => {
