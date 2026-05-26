@@ -136,7 +136,6 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
   return (
     <div className="flex items-center gap-3 min-w-0 flex-wrap">
       {locationButtons}
-      {modeBadge}
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
           {t('interactions.distance')}:
