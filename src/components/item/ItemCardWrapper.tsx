@@ -36,6 +36,8 @@ export function ItemCardWrapper({
   onOperationSuccess
 }: ItemCardProps) {
   const {
+    isReportDialogOpen,
+    setIsReportDialogOpen,
     isItemArchived,
     errors,
     showError,
