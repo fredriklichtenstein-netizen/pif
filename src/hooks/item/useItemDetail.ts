@@ -84,4 +84,12 @@ export function useItemDetail(id: string) {
     // the page stuck on the loading skeleton.
     enabled: authInitialized && !!id,
   });
+
+  // Treat the query as "loading" while auth is still initializing so the
+  // page keeps showing the skeleton instead of falling through to an
+  // undefined-displayItem render path.
+  return {
+    ...query,
+    isLoading: query.isLoading || !authInitialized,
+  };
 }
