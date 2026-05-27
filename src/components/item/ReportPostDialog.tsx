@@ -87,6 +87,8 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
         supabase.functions.invoke("send-report", {
           body: {
             itemId: String(itemId),
+            commentId: commentId != null ? String(commentId) : null,
+            commentText: commentText ?? null,
             reason: selected?.label ?? reason,
             reasonText: reason === "other" ? reasonText.trim() : null,
             comments: comments.trim() || null,
