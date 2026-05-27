@@ -95,12 +95,9 @@ export const useCommentInteractions = (
     /* handled at the panel level */
   };
 
-  const handleReportComment = (_commentId: string) => {
-    toast({
-      title: t('interactions.comment_reported'),
-      description: t('interactions.comment_reported_description')
-    });
-  };
+  // No-op: the actual report flow runs through ReportPostDialog, which
+  // shows its own success toast only after a successful submission.
+  const handleReportComment = (_commentId: string) => {};
 
   return { handleLikeComment, handleReplyToComment, handleReportComment };
 };

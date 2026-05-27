@@ -8,6 +8,7 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Flag } from "lucide-react";
 import { Button } from "../ui/button";
 import { useTranslation } from 'react-i18next';
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface CommentActionsProps {
   isCurrentUserAuthor: boolean;
@@ -23,6 +24,12 @@ export function CommentActions({
   onReport 
 }: CommentActionsProps) {
   const { t } = useTranslation();
+  const { session } = useGlobalAuth();
+  const isAuthenticated = !!session?.user;
+
+  // Hide the menu entirely for unauthenticated users — they have no
+  // available actions (can't edit/delete others' comments, can't report).
+  if (!isAuthenticated) return null;
 
   return (
     <DropdownMenu>
