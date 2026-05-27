@@ -11,8 +11,8 @@ export function useItemDetail(id: string) {
   const { t } = useTranslation();
   const authInitialized = useAuthStore((s) => s.initialized);
 
-  
-  return useQuery({
+
+  const query = useQuery({
     queryKey: ['item', id],
     queryFn: async () => {
       try {
