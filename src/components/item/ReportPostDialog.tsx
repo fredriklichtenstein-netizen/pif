@@ -16,9 +16,11 @@ interface ReportPostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemId: string | number;
+  commentId?: string | number | null;
+  commentText?: string | null;
 }
 
-export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialogProps) {
+export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commentText }: ReportPostDialogProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { session } = useGlobalAuth();
@@ -85,6 +87,8 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
         supabase.functions.invoke("send-report", {
           body: {
             itemId: String(itemId),
+            commentId: commentId != null ? String(commentId) : null,
+            commentText: commentText ?? null,
             reason: selected?.label ?? reason,
             reasonText: reason === "other" ? reasonText.trim() : null,
             comments: comments.trim() || null,

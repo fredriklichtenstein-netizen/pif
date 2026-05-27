@@ -8,6 +8,8 @@ import { useCommentLikesRealtime } from "@/hooks/comments/useCommentLikesRealtim
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { CommentsPanel } from "./CommentsPanel";
 import { CommentsBannerSection } from "./CommentsBannerSection";
+import { ReportPostDialog } from "@/components/item/ReportPostDialog";
+import type { Comment } from "@/types/comment";
 
 interface LazyCommentsSectionProps {
   itemId: string;
@@ -33,6 +35,20 @@ export function LazyCommentsSection({
 
   // Tracks the most recently added comment id so we can smoothly scroll to it.
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ id: string; text: string } | null>(null);
+
+  const findCommentText = (id: string): string => {
+    for (const c of comments as Comment[]) {
+      if (c.id === id) return c.text;
+      const r = c.replies?.find((r) => r.id === id);
+      if (r) return r.text;
+    }
+    return "";
+  };
+
+  const handleReportCommentOpen = (commentId: string) => {
+    setReportTarget({ id: String(commentId), text: findCommentText(commentId) });
+  };
 
   useEffect(() => {
     if (!isVisible) return;
@@ -55,7 +71,6 @@ export function LazyCommentsSection({
     handleEditComment,
     handleDeleteComment,
     handleReplyToComment,
-    handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser, useFallbackMode);
 
   // Optimistic add — no flicker, no full refetch. Realtime fills in for others.
@@ -98,11 +113,18 @@ export function LazyCommentsSection({
           onDelete={handleDeleteComment}
           onEdit={handleEditComment}
           onReply={handleReplySmooth}
-          onReport={handleReportComment}
+          onReport={handleReportCommentOpen}
           refreshComments={refreshComments}
           newCommentId={highlightedCommentId}
         />
       </div>
+      <ReportPostDialog
+        open={!!reportTarget}
+        onOpenChange={(o) => { if (!o) setReportTarget(null); }}
+        itemId={itemId}
+        commentId={reportTarget?.id ?? null}
+        commentText={reportTarget?.text ?? null}
+      />
     </Card>
   );
 }
