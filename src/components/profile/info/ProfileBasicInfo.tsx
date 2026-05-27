@@ -15,7 +15,9 @@ interface ProfileBasicInfoProps {
 
 export function ProfileBasicInfo({ avatarUrl, displayName, gender, coordinates }: ProfileBasicInfoProps) {
   const { t } = useTranslation();
-  
+
+  const genderLabel = gender ? t(`profile.gender_${gender}`) : t('common.gender_undisclosed');
+
   return (
     <div className="w-full flex flex-col items-center">
       <AvatarImage
@@ -26,7 +28,7 @@ export function ProfileBasicInfo({ avatarUrl, displayName, gender, coordinates }
       />
       <div className="text-2xl font-semibold mb-1">{displayName || t('common.user')}</div>
       <div className="text-muted-foreground capitalize mb-4">
-        {gender ? gender.replace('_', ' ') : t('common.gender_undisclosed')}
+        {genderLabel}
       </div>
       
       {coordinates && (
