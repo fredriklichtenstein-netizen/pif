@@ -77,6 +77,11 @@ export function useItemDetail(id: string) {
       return false;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000),
-    staleTime: 30000
+    staleTime: 30000,
+    // Wait for auth initialization before issuing the query. Without this,
+    // direct navigation can fire the request before the Supabase client has
+    // restored its session, which sometimes leaves the request hanging and
+    // the page stuck on the loading skeleton.
+    enabled: authInitialized && !!id,
   });
 }
