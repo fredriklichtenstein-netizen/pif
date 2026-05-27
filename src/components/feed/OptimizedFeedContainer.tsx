@@ -22,6 +22,10 @@ import { DEMO_MODE } from '@/config/demoMode';
 import { useTranslation } from 'react-i18next';
 import { useDistanceFiltering } from '@/hooks/useDistanceFiltering';
 import { useLocationStorage } from '@/components/map/location/useLocationStorage';
+import { PostTypeAndCategoryFilters } from '@/components/filters/PostTypeAndCategoryFilters';
+import { useFeedFiltersStore } from '@/stores/feedFiltersStore';
+import { applyPostFilters } from '@/utils/postFilters';
+import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
@@ -45,6 +49,39 @@ export function OptimizedFeedContainer() {
   const { filteredPosts, selectedDistance, setSelectedDistance } =
     useDistanceFiltering({ posts: memoizedPosts as Post[], userLocation });
 
+  // Shared filter state with the /map view.
+  const selectedCategories = useFeedFiltersStore((s) => s.categories);
+  const selectedConditions = useFeedFiltersStore((s) => s.conditions);
+  const selectedItemTypes = useFeedFiltersStore((s) => s.itemTypes);
+  const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
+  const setCategories = useFeedFiltersStore((s) => s.setCategories);
+  const setItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
+  const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
+
+  const { ids: myInterestedIds } = useMyInterestedIds();
+
+  const fullyFilteredPosts = useMemo(
+    () =>
+      applyPostFilters(
+        filteredPosts,
+        {
+          categories: selectedCategories,
+          conditions: selectedConditions,
+          itemTypes: selectedItemTypes,
+          onlyInterested,
+        },
+        myInterestedIds,
+      ),
+    [
+      filteredPosts,
+      selectedCategories,
+      selectedConditions,
+      selectedItemTypes,
+      onlyInterested,
+      myInterestedIds,
+    ],
+  );
+
   // Single shared refresh action (announce + begin/end + try/finally)
   // — identical to the one used by the map view.
   const fetchFeed = useCallback(() => measureFetch(refresh), [measureFetch, refresh]);
@@ -55,10 +92,6 @@ export function OptimizedFeedContainer() {
     await measureFetch(loadMore);
   }, [announce, measureFetch, loadMore, t]);
 
-  const handlePostUpdate = useCallback((updatedPosts: any[]) => {
-    announce(t('interactions.new_posts_available', { count: updatedPosts.length }), "polite");
-  }, [announce, t]);
-
   useSwipeGestures({
     onSwipeDown: () => {
       if (!isLoading) {
@@ -67,6 +100,11 @@ export function OptimizedFeedContainer() {
       }
     }
   });
+
+  const handleClearAll = useCallback(() => {
+    clearAllFilters();
+    setSelectedDistance(null);
+  }, [clearAllFilters, setSelectedDistance]);
 
   if (DEMO_MODE) {
     return (
@@ -89,9 +127,6 @@ export function OptimizedFeedContainer() {
   }
 
   if (isLoading) {
-    // Show skeleton cards instead of a centered spinner so the layout
-    // (filters bar + card stack) is already in place by the time real
-    // posts arrive — no flash, no jump, no frozen-feeling page.
     return (
       <div
         className="space-y-4"
@@ -106,19 +141,19 @@ export function OptimizedFeedContainer() {
 
   if (error) {
     return (
-      <FeedErrorState 
-        errorMessage={error.message || t('interactions.error_label')} 
-        onRetry={handleRefresh} 
+      <FeedErrorState
+        errorMessage={error.message || t('interactions.error_label')}
+        onRetry={handleRefresh}
       />
     );
   }
 
   if (posts.length === 0) {
     return (
-      <FeedEmptyState 
-        viewMode="all" 
-        selectedCategories={[]} 
-        clearFilters={() => {}} 
+      <FeedEmptyState
+        viewMode="all"
+        selectedCategories={[]}
+        clearFilters={() => {}}
       />
     );
   }
@@ -126,10 +161,6 @@ export function OptimizedFeedContainer() {
   return (
     <PullToRefresh onRefresh={handleRefresh} disabled={isLoading || isRefreshing}>
       <RefreshOverlay show={isRefreshing} />
-      {/* While a refresh is in flight, neutralize all interactive
-          children (filters, post actions, load-more button) so users
-          can't fire likes/comments/new-post flows that would race the
-          incoming data. `inert` blocks pointer + keyboard + focus. */}
       <div
         className={isRefreshing ? "space-y-4 opacity-60 pointer-events-none select-none" : "space-y-4"}
         aria-busy={isRefreshing}
@@ -142,16 +173,26 @@ export function OptimizedFeedContainer() {
           onUserLocationChange={setUserLocation}
         />
 
+        <PostTypeAndCategoryFilters
+          posts={filteredPosts}
+          selectedCategories={selectedCategories}
+          selectedItemTypes={selectedItemTypes}
+          onCategoryChange={setCategories}
+          onItemTypeChange={setItemTypes}
+          onClearCategories={() => setCategories([])}
+          variant="feed"
+        />
+
         <section role="feed" aria-label={t('interactions.community_posts')}>
           {isRefreshing ? (
-            <FeedSkeleton count={Math.min(3, Math.max(1, filteredPosts.length))} />
+            <FeedSkeleton count={Math.min(3, Math.max(1, fullyFilteredPosts.length))} />
           ) : (
             <FeedItemList
-              posts={filteredPosts}
+              posts={fullyFilteredPosts}
               fadingIds={fadingIds}
               restoringIds={restoringIds}
-              selectedCategories={[]}
-              clearFilters={() => setSelectedDistance(null)}
+              selectedCategories={selectedCategories}
+              clearFilters={handleClearAll}
               viewMode="all"
               isLoading={false}
               onItemOperationSuccess={handleRefresh}
@@ -159,17 +200,12 @@ export function OptimizedFeedContainer() {
           )}
         </section>
 
-        {/* Append skeleton placeholders while a "load more" page is in
-            flight so the list visibly grows instead of freezing. */}
         {isLoadingMore && !isRefreshing && (
           <div aria-label={t('interactions.loading_more')} role="status">
             <FeedSkeleton count={2} />
           </div>
         )}
 
-        {/* Auto-load the next page as the user nears the bottom — no
-            manual "Load more" tap needed. The button is kept as a
-            keyboard/a11y fallback below. */}
         <InfiniteScrollSentinel
           hasMore={!!hasMore}
           isLoading={isLoadingMore || isRefreshing}
