@@ -44,12 +44,17 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
 
   useEffect(() => {
     if (open) {
+      if (!session?.user) {
+        onOpenChange(false);
+        navigate("/auth");
+        return;
+      }
       setReason("");
       setReasonText("");
       setComments("");
       setSubmitting(false);
     }
-  }, [open]);
+  }, [open, session, navigate, onOpenChange]);
 
   const displayName =
     (profile as any)?.full_name ||
