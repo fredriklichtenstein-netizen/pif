@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface ActionMenuItemsProps {
   isBookmarked: boolean;
@@ -39,6 +40,8 @@ export function ActionMenuItems({
 }: ActionMenuItemsProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { session } = useGlobalAuth();
+  const isAuthenticated = !!session?.user;
   
   const handleEdit = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -110,7 +113,7 @@ export function ActionMenuItems({
         </>
       )}
       
-      {!isOwner && (
+      {!isOwner && isAuthenticated && (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onReportClick} className="cursor-pointer text-destructive focus:text-destructive">

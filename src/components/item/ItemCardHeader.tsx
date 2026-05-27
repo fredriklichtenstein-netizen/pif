@@ -11,6 +11,7 @@ import { useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
 import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil } from "lucide-react";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -57,8 +58,10 @@ export function ItemCardHeader({
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { session } = useGlobalAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { handleShare: shareItem } = useItemSharing(String(itemId));
+  const isAuthenticated = !!session?.user;
   
   const handleBookmarkClick = async () => {
     // Check authentication
@@ -158,7 +161,7 @@ export function ItemCardHeader({
               </>
             ) : (
               <>
-                {handleReport && (
+                {isAuthenticated && handleReport && (
                   <DropdownMenuItem onClick={handleReportClick} className="text-destructive">
                     <Flag className="mr-2 h-4 w-4" />
                     <span>{t('ui.report')}</span>

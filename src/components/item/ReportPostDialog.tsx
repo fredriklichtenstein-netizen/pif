@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +20,7 @@ interface ReportPostDialogProps {
 
 export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialogProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { session } = useGlobalAuth();
   const userId = session?.user?.id;
   const profile = useCachedProfile(userId);
@@ -42,12 +44,17 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
 
   useEffect(() => {
     if (open) {
+      if (!session?.user) {
+        onOpenChange(false);
+        navigate("/auth");
+        return;
+      }
       setReason("");
       setReasonText("");
       setComments("");
       setSubmitting(false);
     }
-  }, [open]);
+  }, [open, session, navigate, onOpenChange]);
 
   const displayName =
     (profile as any)?.full_name ||
