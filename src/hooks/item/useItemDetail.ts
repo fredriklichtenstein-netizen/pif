@@ -4,12 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/hooks/auth/authStore';
 
 export function useItemDetail(id: string) {
   const { toast } = useToast();
   const { t } = useTranslation();
-  
-  return useQuery({
+  const authInitialized = useAuthStore((s) => s.initialized);
+
+
+  const query = useQuery({
     queryKey: ['item', id],
     queryFn: async () => {
       try {
@@ -74,6 +77,19 @@ export function useItemDetail(id: string) {
       return false;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000),
-    staleTime: 30000
+    staleTime: 30000,
+    // Wait for auth initialization before issuing the query. Without this,
+    // direct navigation can fire the request before the Supabase client has
+    // restored its session, which sometimes leaves the request hanging and
+    // the page stuck on the loading skeleton.
+    enabled: authInitialized && !!id,
   });
+
+  // Treat the query as "loading" while auth is still initializing so the
+  // page keeps showing the skeleton instead of falling through to an
+  // undefined-displayItem render path.
+  return {
+    ...query,
+    isLoading: query.isLoading || !authInitialized,
+  };
 }
