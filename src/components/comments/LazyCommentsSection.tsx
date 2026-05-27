@@ -8,6 +8,8 @@ import { useCommentLikesRealtime } from "@/hooks/comments/useCommentLikesRealtim
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { CommentsPanel } from "./CommentsPanel";
 import { CommentsBannerSection } from "./CommentsBannerSection";
+import { ReportPostDialog } from "@/components/item/ReportPostDialog";
+import type { Comment } from "@/types/comment";
 
 interface LazyCommentsSectionProps {
   itemId: string;
