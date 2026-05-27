@@ -35,6 +35,20 @@ export function LazyCommentsSection({
 
   // Tracks the most recently added comment id so we can smoothly scroll to it.
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ id: string; text: string } | null>(null);
+
+  const findCommentText = (id: string): string => {
+    for (const c of comments as Comment[]) {
+      if (c.id === id) return c.text;
+      const r = c.replies?.find((r) => r.id === id);
+      if (r) return r.text;
+    }
+    return "";
+  };
+
+  const handleReportCommentOpen = (commentId: string) => {
+    setReportTarget({ id: String(commentId), text: findCommentText(commentId) });
+  };
 
   useEffect(() => {
     if (!isVisible) return;
