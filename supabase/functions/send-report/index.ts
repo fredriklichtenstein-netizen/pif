@@ -160,6 +160,8 @@ serve(async (req) => {
           <tr><td><strong>Rapportör</strong></td><td>${escape(reporterName)}${reporterEmail ? ` (${escape(reporterEmail)})` : ""}</td></tr>
           <tr><td><strong>Rapportör-ID</strong></td><td><code>${escape(userId)}</code></td></tr>
           <tr><td><strong>Inlägg-ID</strong></td><td><code>${escape(itemIdRaw)}</code></td></tr>
+          ${commentIdRaw ? `<tr><td><strong>Kommentar-ID</strong></td><td><code>${escape(commentIdRaw)}</code></td></tr>` : ""}
+          ${commentText ? `<tr><td><strong>Kommentarinnehåll</strong></td><td>${escape(commentText).replace(/\n/g, "<br>")}</td></tr>` : ""}
           <tr><td><strong>Anledning</strong></td><td>${escape(reason)}</td></tr>
           ${reasonText ? `<tr><td><strong>Beskrivning</strong></td><td>${escape(reasonText).replace(/\n/g, "<br>")}</td></tr>` : ""}
           ${comments ? `<tr><td><strong>Övriga kommentarer</strong></td><td>${escape(comments).replace(/\n/g, "<br>")}</td></tr>` : ""}
