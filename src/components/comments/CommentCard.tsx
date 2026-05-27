@@ -40,12 +40,11 @@ export function CommentCard({
     setShowReplyInput(false);
   };
 
+  // Toast is fired by ReportPostDialog after a successful submission —
+  // do NOT toast here, otherwise it appears the moment the menu item is
+  // clicked (before the dialog has even been submitted).
   const handleReport = () => {
     onReport(comment.id);
-    toast({
-      title: t('interactions.comment_reported'),
-      description: t('interactions.comment_reported_description'),
-    });
   };
   
   const authorName = comment.author.name || 'Anonymous';
