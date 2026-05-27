@@ -20,6 +20,7 @@ interface ReportPostDialogProps {
 
 export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialogProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { session } = useGlobalAuth();
   const userId = session?.user?.id;
   const profile = useCachedProfile(userId);
