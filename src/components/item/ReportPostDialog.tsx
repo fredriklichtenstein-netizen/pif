@@ -100,7 +100,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="text-lg font-semibold">{t("interactions.report_post_title")}</h2>
+          <DialogTitle className="text-lg font-semibold">{t("interactions.report_post_title")}</DialogTitle>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
