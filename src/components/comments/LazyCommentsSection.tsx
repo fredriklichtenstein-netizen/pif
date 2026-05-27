@@ -71,7 +71,6 @@ export function LazyCommentsSection({
     handleEditComment,
     handleDeleteComment,
     handleReplyToComment,
-    handleReportComment
   } = useCommentActions(itemId, comments, setComments, currentUser, useFallbackMode);
 
   // Optimistic add — no flicker, no full refetch. Realtime fills in for others.
