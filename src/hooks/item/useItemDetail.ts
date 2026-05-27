@@ -4,10 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/hooks/auth/authStore';
 
 export function useItemDetail(id: string) {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const authInitialized = useAuthStore((s) => s.initialized);
+
   
   return useQuery({
     queryKey: ['item', id],
