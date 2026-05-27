@@ -12,7 +12,8 @@ import { useDistanceFiltering } from "@/hooks/useDistanceFiltering";
 import { useTranslation } from "react-i18next";
 import { usePifAddress } from "@/hooks/usePifAddress";
 import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
-import { loadMapFilters, saveMapFilters } from "@/utils/mapFiltersStorage";
+import { useFeedFiltersStore } from "@/stores/feedFiltersStore";
+import { applyPostFilters } from "@/utils/postFilters";
 import { useMyInterestedIds } from "@/hooks/useMyInterestedIds";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import "./MapStyles.css";
@@ -43,16 +44,18 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     userLocation: locationTracking.userLocation
   });
 
-  // Filter states — persisted via the versioned mapFiltersStorage
-  // helper so older saved selections are auto-migrated and any values
-  // that no longer exist in the current taxonomies are dropped.
-  // Allowed values are intentionally left empty here so unknown values
-  // pass through (the filter UI itself owns the canonical lists).
-  const initialFilters = useMemo(() => loadMapFilters(), []);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialFilters.categories);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>(initialFilters.conditions);
-  const [selectedItemTypes, setSelectedItemTypes] = useState<string[]>(initialFilters.itemTypes);
-  const [onlyInterested, setOnlyInterested] = useState<boolean>(initialFilters.onlyInterested);
+  // Filter state lives in the shared feedFiltersStore so changes made
+  // here are mirrored on /feed (and vice-versa) and persisted via the
+  // existing versioned mapFiltersStorage helper.
+  const selectedCategories = useFeedFiltersStore((s) => s.categories);
+  const selectedConditions = useFeedFiltersStore((s) => s.conditions);
+  const selectedItemTypes = useFeedFiltersStore((s) => s.itemTypes);
+  const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
+  const setSelectedCategories = useFeedFiltersStore((s) => s.setCategories);
+  const setSelectedConditions = useFeedFiltersStore((s) => s.setConditions);
+  const setSelectedItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
+  const setOnlyInterested = useFeedFiltersStore((s) => s.setOnlyInterested);
+  const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { user } = useGlobalAuth();
   const { ids: myInterestedIds } = useMyInterestedIds();
@@ -61,39 +64,22 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   // user never sees an empty map with a hidden invisible filter applied.
   useEffect(() => {
     if (!user && onlyInterested) setOnlyInterested(false);
-  }, [user, onlyInterested]);
+  }, [user, onlyInterested, setOnlyInterested]);
 
-  useEffect(() => {
-    saveMapFilters({
+  // Apply all filters including distance
+  const finalFilteredPosts = applyPostFilters(
+    filteredPosts,
+    {
       categories: selectedCategories,
       conditions: selectedConditions,
       itemTypes: selectedItemTypes,
       onlyInterested,
-    });
-  }, [selectedCategories, selectedConditions, selectedItemTypes, onlyInterested]);
-
-  // Apply all filters including distance
-  const finalFilteredPosts = filteredPosts.filter(post => {
-    if (selectedItemTypes.length > 0 && !selectedItemTypes.includes(post.item_type || 'offer')) {
-      return false;
-    }
-    if (selectedCategories.length > 0 && (!post.category || !selectedCategories.includes(post.category))) {
-      return false;
-    }
-    if (selectedConditions.length > 0 && (!post.condition || !selectedConditions.includes(post.condition))) {
-      return false;
-    }
-    if (onlyInterested && !myInterestedIds.has(String(post.id))) {
-      return false;
-    }
-    return true;
-  });
+    },
+    myInterestedIds,
+  );
   const handleClearFilters = () => {
-    setSelectedCategories([]);
-    setSelectedConditions([]);
-    setSelectedItemTypes([]);
+    clearAllFilters();
     setSelectedDistance(null);
-    setOnlyInterested(false);
   };
 
   // Defensive guard: even though the map is wrapped in an `inert`
