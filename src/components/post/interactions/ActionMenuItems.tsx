@@ -40,6 +40,8 @@ export function ActionMenuItems({
 }: ActionMenuItemsProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { session } = useGlobalAuth();
+  const isAuthenticated = !!session?.user;
   
   const handleEdit = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
