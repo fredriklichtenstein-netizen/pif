@@ -113,7 +113,7 @@ export function ActionMenuItems({
         </>
       )}
       
-      {!isOwner && (
+      {!isOwner && isAuthenticated && (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onReportClick} className="cursor-pointer text-destructive focus:text-destructive">
