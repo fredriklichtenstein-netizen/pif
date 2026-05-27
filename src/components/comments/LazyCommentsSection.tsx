@@ -113,11 +113,18 @@ export function LazyCommentsSection({
           onDelete={handleDeleteComment}
           onEdit={handleEditComment}
           onReply={handleReplySmooth}
-          onReport={handleReportComment}
+          onReport={handleReportCommentOpen}
           refreshComments={refreshComments}
           newCommentId={highlightedCommentId}
         />
       </div>
+      <ReportPostDialog
+        open={!!reportTarget}
+        onOpenChange={(o) => { if (!o) setReportTarget(null); }}
+        itemId={itemId}
+        commentId={reportTarget?.id ?? null}
+        commentText={reportTarget?.text ?? null}
+      />
     </Card>
   );
 }
