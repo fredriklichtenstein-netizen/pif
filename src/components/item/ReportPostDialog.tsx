@@ -16,9 +16,11 @@ interface ReportPostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemId: string | number;
+  commentId?: string | number | null;
+  commentText?: string | null;
 }
 
-export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialogProps) {
+export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commentText }: ReportPostDialogProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { session } = useGlobalAuth();
