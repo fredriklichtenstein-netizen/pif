@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 interface ActionMenuItemsProps {
   isBookmarked: boolean;
