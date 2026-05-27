@@ -161,7 +161,7 @@ export function ItemCardHeader({
               </>
             ) : (
               <>
-                {handleReport && (
+                {isAuthenticated && handleReport && (
                   <DropdownMenuItem onClick={handleReportClick} className="text-destructive">
                     <Flag className="mr-2 h-4 w-4" />
                     <span>{t('ui.report')}</span>
