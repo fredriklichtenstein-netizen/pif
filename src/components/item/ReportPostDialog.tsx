@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -100,7 +100,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId }: ReportPostDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="text-lg font-semibold">{t("interactions.report_post_title")}</h2>
+          <DialogTitle className="text-lg font-semibold">{t("interactions.report_post_title")}</DialogTitle>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
