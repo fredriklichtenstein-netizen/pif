@@ -46,6 +46,10 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const itemIdRaw = String(body.itemId ?? "").trim();
+    const commentIdRaw = body.commentId ? String(body.commentId).trim() : "";
+    const commentText = body.commentText
+      ? String(body.commentText).slice(0, 4000)
+      : null;
     const reason = String(body.reason ?? "").trim();
     const reasonText = body.reasonText
       ? String(body.reasonText).slice(0, 2000)
