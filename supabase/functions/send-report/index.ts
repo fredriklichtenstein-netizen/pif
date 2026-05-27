@@ -178,7 +178,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: REPORT_FROM,
             to: [REPORT_TO],
-            subject: `PIF-rapport: ${reason}`,
+            subject: `PIF-rapport${commentIdRaw ? " (kommentar)" : ""}: ${reason}`,
             html,
           }),
         });
