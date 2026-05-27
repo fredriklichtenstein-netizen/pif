@@ -58,8 +58,10 @@ export function ItemCardHeader({
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { session } = useGlobalAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { handleShare: shareItem } = useItemSharing(String(itemId));
+  const isAuthenticated = !!session?.user;
   
   const handleBookmarkClick = async () => {
     // Check authentication
