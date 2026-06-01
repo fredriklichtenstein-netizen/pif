@@ -132,7 +132,9 @@ export function NotificationList() {
                     : t('interactions.receiver_selected_notif_body');
                   ctaUrl = notif.conversation_id
                     ? `/messages?conversation=${notif.conversation_id}`
-                    : '/messages';
+                    : notif.item_id
+                      ? `/messages?item=${notif.item_id}`
+                      : '/messages';
                   ctaLabel = t('interactions.start_conversation');
                 }
 
