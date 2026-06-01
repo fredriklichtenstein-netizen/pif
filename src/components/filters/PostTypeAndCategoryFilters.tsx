@@ -134,15 +134,28 @@ export function PostTypeAndCategoryFilters({
             className="w-64 max-h-80 overflow-y-auto bg-background z-50"
           >
             <DropdownMenuLabel>
+              {t("categories.mixed", "Blandat")}
+            </DropdownMenuLabel>
+            {MIXED_CATEGORY_KEYS.map((key) => (
+              <DropdownMenuCheckboxItem
+                key={key}
+                checked={selectedCategories.includes(key)}
+                onCheckedChange={() => toggleCategory(key)}
+              >
+                {t(`categories.${key}`)}
+              </DropdownMenuCheckboxItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>
               {t("map_filters.categories_label")}
             </DropdownMenuLabel>
-            {categories.map((cat) => (
+            {REST_CATEGORY_KEYS.map((key) => (
               <DropdownMenuCheckboxItem
-                key={cat.key}
-                checked={selectedCategories.includes(cat.key)}
-                onCheckedChange={() => toggleCategory(cat.key)}
+                key={key}
+                checked={selectedCategories.includes(key)}
+                onCheckedChange={() => toggleCategory(key)}
               >
-                {cat.label}
+                {t(`categories.${key}`)}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
