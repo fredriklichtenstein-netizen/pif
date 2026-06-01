@@ -22,36 +22,9 @@ interface PostFormInformationProps {
   onMeasurementChange: (field: string, value: string) => void;
 }
 
-// Sorted alphabetically by Swedish display name
-const CATEGORIES = [
-  "kids",          // Barnartiklar
-  "mixed",         // Blandat
-  "books",         // Böcker
-  "bicycle",       // Cykel
-  "electronics",   // Elektronik
-  "vehicles",      // Fordon
-  "hobby",         // Hobby
-  "home_garden",   // Hem & Trädgård
-  "pets",          // Husdjur
-  "household",     // Husgeråd
-  "health",        // Hälsa & skönhet
-  "art",           // Konst & hantverk
-  "clothing",      // Kläder
-  "kitchen",       // Kök
-  "toys",          // Leksaker
-  "food",          // Mat & dryck
-  "music",         // Musik & instrument
-  "furniture",     // Möbler
-  "games",         // Spel
-  "sports",        // Sport
-  "garden",        // Trädgård
-  "tools",         // Verktyg
-  "other"          // Övrigt
-];
-
 const CONDITIONS = [
   { key: "new", value: "conditions.new" },
-  { key: "like_new", value: "conditions.like_new" }, 
+  { key: "like_new", value: "conditions.like_new" },
   { key: "very_good", value: "conditions.very_good" },
   { key: "good", value: "conditions.good" },
   { key: "acceptable", value: "conditions.acceptable" },
@@ -63,13 +36,6 @@ const REQUEST_CONDITIONS = [
   { key: "good", value: "conditions.good_enough" },
   { key: "new", value: "conditions.prefer_new" },
 ];
-
-const CATEGORY_MEASUREMENTS: { [key: string]: string[] } = {
-  "clothing": ["Chest", "Length", "Shoulders", "Sleeves"],
-  "shoes": ["EU Size", "US Size", "UK Size", "Insole Length"],
-  "kids": ["Age", "Height", "Chest", "Length"],
-  "furniture": ["Width", "Depth", "Height"],
-};
 
 export function PostFormInformation({
   formData,
