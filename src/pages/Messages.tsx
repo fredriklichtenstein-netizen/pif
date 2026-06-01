@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 import { MainNav } from "@/components/MainNav";
 import { useTranslation } from "react-i18next";
 
@@ -19,22 +20,35 @@ const Messages = () => {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { conversations, isLoading: conversationsLoading, error } = useConversations();
   const { unreadCount } = useNotifications();
+  const { unreadMessagesCount } = useUnreadMessagesCount();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
 
   const isLoading = authLoading || conversationsLoading;
 
-  // Deep-link: open the conversation indicated by ?conversation=<id>
-  // (used by the receiver-selected notification + select-receiver flow).
+  // Deep-link: open the conversation indicated by ?conversation=<id> or,
+  // as a fallback, the conversation tied to ?item=<id> (used by the
+  // receiver-selected notification when no conversation_id is in payload).
   useEffect(() => {
     const cid = searchParams.get("conversation");
     if (cid && cid !== activeConversationId) {
       setActiveConversationId(cid);
       setActiveTab("messages");
+      return;
+    }
+    const itemId = searchParams.get("item");
+    if (itemId && conversations.length > 0) {
+      const match = conversations.find(
+        (c) => String(c.item_id ?? "") === String(itemId)
+      );
+      if (match && match.id !== activeConversationId) {
+        setActiveConversationId(match.id);
+        setActiveTab("messages");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, conversations]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -52,9 +66,14 @@ const Messages = () => {
       <div className="container mx-auto px-4 pb-20 pt-4">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-4 w-full flex justify-center border rounded-lg bg-background">
-            <TabsTrigger value="messages" className="flex items-center gap-2 border-r border-border last:border-0">
+            <TabsTrigger value="messages" className="flex items-center gap-2 border-r border-border last:border-0 relative">
               <MessageSquare className="h-5 w-5" />
               {t('nav.messages')}
+              {unreadMessagesCount > 0 && (
+                <span className="absolute top-0 right-0 -mt-1 -mr-2 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5 min-w-[20px] text-center shadow-lg">
+                  {unreadMessagesCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2 relative">
               <Bell className="h-5 w-5" />

@@ -7,6 +7,8 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 import { useTranslation } from 'react-i18next';
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
 import { useCachedAvatarSrc } from "@/hooks/profile/useCachedAvatarSrc";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 
 export function MainNav() {
   const location = useLocation();
@@ -16,6 +18,9 @@ export function MainNav() {
   const { t } = useTranslation();
   const { profile: cachedProfile } = useCachedProfile(user?.id);
   const avatarUrl = useCachedAvatarSrc(cachedProfile?.avatar_url ?? null);
+  const { unreadCount: unreadNotifications } = useNotifications();
+  const { unreadMessagesCount } = useUnreadMessagesCount();
+  const combinedUnread = user ? unreadNotifications + unreadMessagesCount : 0;
 
   const isActive = (path: string) => location.pathname === path;
   const isProfileActive = isActive("/profile") || isActive("/account-settings");
@@ -104,7 +109,14 @@ export function MainNav() {
             }`}
             onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
           >
-            <MessageSquare size={24} />
+            <div className="relative">
+              <MessageSquare size={24} />
+              {combinedUnread > 0 && (
+                <span className="absolute -top-1 -right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+                  {combinedUnread > 99 ? "99+" : combinedUnread}
+                </span>
+              )}
+            </div>
             <span className="text-xs mt-1">{t('nav.messages')}</span>
           </Link>
           
