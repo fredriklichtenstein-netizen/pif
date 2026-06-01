@@ -126,7 +126,10 @@ export function FeedFilters({
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
+          {(() => {
+            const mixed = categories.filter((c) => c === 'mixed' || c === 'mixed_kids');
+            const rest = categories.filter((c) => c !== 'mixed' && c !== 'mixed_kids');
+            const renderBtn = (category: string) => (
               <Button
                 key={category}
                 variant={selectedCategories.includes(category) ? "default" : "outline"}
@@ -135,7 +138,20 @@ export function FeedFilters({
               >
                 {t(`categories.${category}`, category)}
               </Button>
-            ))}
+            );
+            return (
+              <>
+                {mixed.length > 0 && (
+                  <div className="w-full flex flex-wrap gap-2 pb-2 mb-2 border-b">
+                    {mixed.map(renderBtn)}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {rest.map(renderBtn)}
+                </div>
+              </>
+            );
+          })()}
           </div>
         </div>
       )}
