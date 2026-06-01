@@ -47,6 +47,8 @@ function App() {
     void initializeAuth();
   }, []);
 
+  useVersionCheck();
+
 
 
   return (
