@@ -161,7 +161,11 @@ export function NotificationList() {
                       )}
                       <div className="text-xs text-muted-foreground mt-1">{new Date(notif.created_at).toLocaleString()}</div>
                       {ctaUrl && ctaLabel && (
-                        <Link to={ctaUrl} className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline">
+                        <Link
+                          to={ctaUrl}
+                          onClick={() => markAsRead(notif.id)}
+                          className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline"
+                        >
                           {ctaLabel}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
@@ -170,7 +174,7 @@ export function NotificationList() {
 
                     <div className="flex items-center space-x-1">
                       {!ctaLabel && ctaUrl && (
-                        <Link to={ctaUrl} className="ml-2">
+                        <Link to={ctaUrl} onClick={() => markAsRead(notif.id)} className="ml-2">
                           <Button size="icon" variant="ghost" title={t('interactions.view_details')}>
                             <ArrowRight className="h-4 w-4" />
                           </Button>
