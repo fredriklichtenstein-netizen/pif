@@ -27,7 +27,9 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     reference_type: "item",
     is_read: false,
     created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    action_url: "/item/2",
+    action_url: "/messages?conversation=mock-conv-1",
+    conversation_id: "mock-conv-1",
+    item_id: 2,
   },
   {
     id: "notif-3",
