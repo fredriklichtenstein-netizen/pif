@@ -108,11 +108,22 @@ export function PostFormInformation({
                 <SelectValue placeholder={t('post.select_category')} />
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {t(`categories.${category}`)}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  <SelectLabel>{t('categories.mixed', 'Blandat')}</SelectLabel>
+                  {MIXED_CATEGORY_KEYS.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {t(`categories.${category}`)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectSeparator />
+                <SelectGroup>
+                  {REST_CATEGORY_KEYS.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {t(`categories.${category}`)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
