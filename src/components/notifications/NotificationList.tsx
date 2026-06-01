@@ -88,7 +88,11 @@ export function NotificationList() {
     );
   }
 
+  const GROUP_PRIORITY: Record<string, number> = { interest: 0, status: 1, comment: 2, profile: 3, other: 4 };
   const sortedGroupKeys = Object.keys(groupedNotifications).sort((a, b) => {
+    const pa = GROUP_PRIORITY[a] ?? 99;
+    const pb = GROUP_PRIORITY[b] ?? 99;
+    if (pa !== pb) return pa - pb;
     const mostRecentA = groupedNotifications[a][0]?.created_at || '';
     const mostRecentB = groupedNotifications[b][0]?.created_at || '';
     return new Date(mostRecentB).getTime() - new Date(mostRecentA).getTime();
