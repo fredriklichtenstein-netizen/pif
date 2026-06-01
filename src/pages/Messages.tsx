@@ -32,8 +32,8 @@ const Messages = () => {
   // receiver-selected notification when no conversation_id is in payload).
   useEffect(() => {
     const cid = searchParams.get("conversation");
-    if (cid && cid !== activeConversationId) {
-      setActiveConversationId(cid);
+    if (cid) {
+      if (cid !== activeConversationId) setActiveConversationId(cid);
       setActiveTab("messages");
       return;
     }
@@ -42,8 +42,8 @@ const Messages = () => {
       const match = conversations.find(
         (c) => String(c.item_id ?? "") === String(itemId)
       );
-      if (match && match.id !== activeConversationId) {
-        setActiveConversationId(match.id);
+      if (match) {
+        if (match.id !== activeConversationId) setActiveConversationId(match.id);
         setActiveTab("messages");
       }
     }
