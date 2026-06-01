@@ -7,6 +7,8 @@ import { AvatarImage } from "@/components/ui/optimized-image";
 import { useTranslation } from 'react-i18next';
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
 import { useCachedAvatarSrc } from "@/hooks/profile/useCachedAvatarSrc";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 
 export function MainNav() {
   const location = useLocation();
