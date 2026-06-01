@@ -6,10 +6,10 @@ export const useCategoryTranslations = () => {
   
   // All category keys used in the system
   const CATEGORY_KEYS = [
-    'electronics', 'furniture', 'clothing', 'books', 'sports',
+    'electronics', 'furniture', 'clothing', 'kids_clothing', 'books', 'sports',
     'toys', 'home_garden', 'vehicles', 'kitchen', 'garden',
     'tools', 'household', 'food', 'kids', 'pets', 'bicycle',
-    'health', 'art', 'music', 'games', 'hobby', 'mixed', 'other'
+    'health', 'art', 'music', 'games', 'hobby', 'mixed', 'mixed_kids', 'other'
   ];
 
   // Build category map from keys + legacy English/Swedish names

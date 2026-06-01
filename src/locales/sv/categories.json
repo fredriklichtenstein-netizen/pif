@@ -2,7 +2,9 @@
 {
   "categories": {
     "kids": "Barnartiklar",
+    "kids_clothing": "Barnkläder",
     "mixed": "Blandat",
+    "mixed_kids": "Blandat - barn",
     "books": "Böcker",
     "bicycle": "Cykel",
     "electronics": "Elektronik",

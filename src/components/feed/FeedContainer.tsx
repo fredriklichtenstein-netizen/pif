@@ -35,11 +35,12 @@ export function FeedContainer() {
     return () => clearTimeout(timer);
   }, []);
   
-  // Categories sorted alphabetically by Swedish display name
+  // Categories: Blandat group first, then alphabetical by Swedish display name
   const CATEGORIES = [
-    'kids', 'mixed', 'books', 'bicycle', 'electronics', 'vehicles',
-    'home_garden', 'pets', 'household', 'health', 'art', 'clothing',
-    'kitchen', 'toys', 'food', 'music', 'furniture', 'sports',
+    'mixed', 'mixed_kids',
+    'kids', 'kids_clothing', 'books', 'bicycle', 'electronics', 'vehicles',
+    'hobby', 'home_garden', 'pets', 'household', 'health', 'art', 'clothing',
+    'kitchen', 'toys', 'food', 'music', 'furniture', 'games', 'sports',
     'garden', 'tools', 'other'
   ];
   
