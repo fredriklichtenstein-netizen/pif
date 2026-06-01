@@ -152,7 +152,16 @@ export function NotificationList() {
                 return (
                   <div
                     key={notif.id}
-                    className={`py-3 px-4 flex items-start ${notif.is_read ? "bg-background" : "bg-primary/5"}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => { if (!notif.is_read) markAsRead(notif.id); }}
+                    onKeyDown={(e) => {
+                      if ((e.key === "Enter" || e.key === " ") && !notif.is_read) {
+                        e.preventDefault();
+                        markAsRead(notif.id);
+                      }
+                    }}
+                    className={`py-3 px-4 flex items-start cursor-pointer transition-colors ${notif.is_read ? "bg-background hover:bg-muted/40" : "bg-primary/5 hover:bg-primary/10"}`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold">{displayTitle}</div>
