@@ -11,17 +11,54 @@ import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 // Cross-instance sync: when one mounted useNotifications marks read or
 // receives a new notification via realtime, every other instance updates
 // its local state immediately (no refetch / no loading flash).
+//
+// Cross-tab sync (same browser): a BroadcastChannel mirrors these events
+// to every other tab on this device, so read state and counts stay aligned
+// without waiting for realtime / refetch.
+// Cross-device sync (different browsers/devices): handled by the per-user
+// Supabase realtime subscription below — every device subscribed as the
+// same user picks up INSERT/UPDATE/DELETE on `notifications`.
 const NOTIF_SYNC_EVENT = "pif:notifications:read-sync";
 const NOTIF_NEW_EVENT = "pif:notifications:new";
+const NOTIF_BC_NAME = "pif:notifications";
 type NotifSyncDetail = { ids?: string[]; all?: boolean };
+type NotifBcMessage =
+  | { kind: "sync"; detail: NotifSyncDetail }
+  | { kind: "new"; detail: Notification };
+
+let notifBc: BroadcastChannel | null = null;
+const getNotifBc = (): BroadcastChannel | null => {
+  if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") return null;
+  if (!notifBc) {
+    try {
+      notifBc = new BroadcastChannel(NOTIF_BC_NAME);
+    } catch {
+      notifBc = null;
+    }
+  }
+  return notifBc;
+};
+
 const emitNotifSync = (detail: NotifSyncDetail) => {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(NOTIF_SYNC_EVENT, { detail }));
+  try {
+    getNotifBc()?.postMessage({ kind: "sync", detail } satisfies NotifBcMessage);
+  } catch {
+    // BroadcastChannel may fail in private mode; in-window listeners still fire.
+  }
 };
 const emitNotifNew = (notif: Notification) => {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(NOTIF_NEW_EVENT, { detail: notif }));
+  try {
+    getNotifBc()?.postMessage({ kind: "new", detail: notif } satisfies NotifBcMessage);
+  } catch {
+    // see above
+  }
 };
+
+
 
 
 export interface Notification {
@@ -215,6 +252,20 @@ export function useNotifications() {
     window.addEventListener(NOTIF_SYNC_EVENT, onSync);
     window.addEventListener(NOTIF_NEW_EVENT, onNew);
 
+    // Cross-tab bridge: receive BroadcastChannel messages from other tabs
+    // and re-dispatch as local CustomEvents (no re-broadcast, no echo).
+    const bc = getNotifBc();
+    const onBcMessage = (e: MessageEvent<NotifBcMessage>) => {
+      const msg = e.data;
+      if (!msg || typeof msg !== "object") return;
+      if (msg.kind === "sync") {
+        window.dispatchEvent(new CustomEvent(NOTIF_SYNC_EVENT, { detail: msg.detail }));
+      } else if (msg.kind === "new") {
+        window.dispatchEvent(new CustomEvent(NOTIF_NEW_EVENT, { detail: msg.detail }));
+      }
+    };
+    bc?.addEventListener("message", onBcMessage);
+
     return () => {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
@@ -222,8 +273,10 @@ export function useNotifications() {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener(NOTIF_SYNC_EVENT, onSync);
       window.removeEventListener(NOTIF_NEW_EVENT, onNew);
+      bc?.removeEventListener("message", onBcMessage);
       window.clearInterval(interval);
     };
+
   }, [user?.id, fetchNotifications]);
 
 
