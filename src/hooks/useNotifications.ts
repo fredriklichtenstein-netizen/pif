@@ -149,14 +149,13 @@ export function useNotifications() {
 
   const markAllAsRead = async () => {
     if (!user?.id) return;
-    
-    // Demo mode: mark all as read locally
-    if (DEMO_MODE) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-      return;
-    }
-    
+
+    // Optimistic: clear the badge immediately.
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    setUnreadCount(0);
+
+    if (DEMO_MODE) return;
+
     const { error } = await (supabase.rpc as any)("mark_all_notifications_read");
     if (error) {
       if (maybeRecoverFromAuthError(error, "mark_all_notifications_read")) return;
@@ -165,10 +164,43 @@ export function useNotifications() {
         description: error.message,
         variant: "destructive",
       });
+      // Re-sync on failure so UI matches server.
+      fetchNotifications();
       return;
     }
     fetchNotifications();
   };
+
+  const markAsRead = useCallback(async (notificationId: string) => {
+    if (!user?.id || !notificationId) return;
+
+    // Optimistic update.
+    let wasUnread = false;
+    setNotifications((prev) =>
+      prev.map((n) => {
+        if (n.id === notificationId) {
+          if (!n.is_read) wasUnread = true;
+          return { ...n, is_read: true };
+        }
+        return n;
+      })
+    );
+    if (wasUnread) setUnreadCount((c) => Math.max(0, c - 1));
+
+    if (DEMO_MODE) return;
+
+    const { error } = await (supabase
+      .from("notifications") as any)
+      .update({ read: true })
+      .eq("id", notificationId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      if (maybeRecoverFromAuthError(error, "mark_notification_read")) return;
+      // Silent: re-sync to recover UI state.
+      fetchNotifications();
+    }
+  }, [user?.id, fetchNotifications]);
 
   return {
     notifications,
@@ -176,6 +208,7 @@ export function useNotifications() {
     fetchError,
     unreadCount,
     markAllAsRead,
+    markAsRead,
     fetchNotifications,
   };
 }
