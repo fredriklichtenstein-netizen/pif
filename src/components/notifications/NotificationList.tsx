@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, ArrowRight, AlertCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 export function NotificationList() {
@@ -14,8 +14,19 @@ export function NotificationList() {
     isLoading,
     fetchError,
     markAllAsRead,
+    markAsRead,
     unreadCount,
   } = useNotifications();
+
+  // Auto-mark all notifications as read once the list is mounted/visible.
+  // Runs once per mount after the initial load resolves.
+  const autoMarkedRef = useRef(false);
+  useEffect(() => {
+    if (isLoading || autoMarkedRef.current) return;
+    autoMarkedRef.current = true;
+    if (unreadCount > 0) markAllAsRead();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const groupedNotifications = useMemo(() => {
     if (!notifications || notifications.length === 0) return {};
