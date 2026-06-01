@@ -147,11 +147,35 @@ export function useNotifications() {
     document.addEventListener("visibilitychange", onVisibility);
     const interval = window.setInterval(fetchNotifications, 60_000);
 
+    const onSync = (e: Event) => {
+      const detail = (e as CustomEvent<NotifSyncDetail>).detail || {};
+      if (detail.all) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+        setUnreadCount(0);
+        return;
+      }
+      const ids = new Set(detail.ids || []);
+      if (ids.size === 0) return;
+      let cleared = 0;
+      setNotifications((prev) =>
+        prev.map((n) => {
+          if (ids.has(n.id) && !n.is_read) {
+            cleared += 1;
+            return { ...n, is_read: true };
+          }
+          return n;
+        })
+      );
+      if (cleared > 0) setUnreadCount((c) => Math.max(0, c - cleared));
+    };
+    window.addEventListener(NOTIF_SYNC_EVENT, onSync);
+
     return () => {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener(NOTIF_SYNC_EVENT, onSync);
       window.clearInterval(interval);
     };
   }, [user?.id, fetchNotifications]);
