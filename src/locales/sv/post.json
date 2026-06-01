@@ -3,7 +3,7 @@
   "post": {
     "create_offer": "Piffa något",
     "create_request": "Önska något",
-    "offer_subtitle": "Piffa bort något du inte behöver",
+    "offer_subtitle": "Ge bort något du inte behöver",
     "request_subtitle": "Beskriv vad du önskar och ditt sökområde",
     "step_type": "Typ",
     "step_images": "Bilder",
