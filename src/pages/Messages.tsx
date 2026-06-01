@@ -27,16 +27,28 @@ const Messages = () => {
 
   const isLoading = authLoading || conversationsLoading;
 
-  // Deep-link: open the conversation indicated by ?conversation=<id>
-  // (used by the receiver-selected notification + select-receiver flow).
+  // Deep-link: open the conversation indicated by ?conversation=<id> or,
+  // as a fallback, the conversation tied to ?item=<id> (used by the
+  // receiver-selected notification when no conversation_id is in payload).
   useEffect(() => {
     const cid = searchParams.get("conversation");
     if (cid && cid !== activeConversationId) {
       setActiveConversationId(cid);
       setActiveTab("messages");
+      return;
+    }
+    const itemId = searchParams.get("item");
+    if (itemId && conversations.length > 0) {
+      const match = conversations.find(
+        (c) => String(c.item_id ?? "") === String(itemId)
+      );
+      if (match && match.id !== activeConversationId) {
+        setActiveConversationId(match.id);
+        setActiveTab("messages");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, conversations]);
 
   useEffect(() => {
     if (!authLoading && !user) {
