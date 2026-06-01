@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, ArrowRight, AlertCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 export function NotificationList() {
@@ -14,8 +14,19 @@ export function NotificationList() {
     isLoading,
     fetchError,
     markAllAsRead,
+    markAsRead,
     unreadCount,
   } = useNotifications();
+
+  // Auto-mark all notifications as read once the list is mounted/visible.
+  // Runs once per mount after the initial load resolves.
+  const autoMarkedRef = useRef(false);
+  useEffect(() => {
+    if (isLoading || autoMarkedRef.current) return;
+    autoMarkedRef.current = true;
+    if (unreadCount > 0) markAllAsRead();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const groupedNotifications = useMemo(() => {
     if (!notifications || notifications.length === 0) return {};
@@ -150,7 +161,11 @@ export function NotificationList() {
                       )}
                       <div className="text-xs text-muted-foreground mt-1">{new Date(notif.created_at).toLocaleString()}</div>
                       {ctaUrl && ctaLabel && (
-                        <Link to={ctaUrl} className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline">
+                        <Link
+                          to={ctaUrl}
+                          onClick={() => markAsRead(notif.id)}
+                          className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline"
+                        >
                           {ctaLabel}
                           <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
@@ -159,7 +174,7 @@ export function NotificationList() {
 
                     <div className="flex items-center space-x-1">
                       {!ctaLabel && ctaUrl && (
-                        <Link to={ctaUrl} className="ml-2">
+                        <Link to={ctaUrl} onClick={() => markAsRead(notif.id)} className="ml-2">
                           <Button size="icon" variant="ghost" title={t('interactions.view_details')}>
                             <ArrowRight className="h-4 w-4" />
                           </Button>
