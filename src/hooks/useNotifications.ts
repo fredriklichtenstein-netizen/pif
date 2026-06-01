@@ -223,7 +223,10 @@ export function useNotifications() {
         return n;
       })
     );
-    if (wasUnread) setUnreadCount((c) => Math.max(0, c - 1));
+    if (wasUnread) {
+      setUnreadCount((c) => Math.max(0, c - 1));
+      emitNotifSync({ ids: [notificationId] });
+    }
 
     if (DEMO_MODE) return;
 
