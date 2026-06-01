@@ -513,8 +513,18 @@
     "no_conversations_description": "När du skickar meddelande till någon om en pif visas det här.",
     "failed_load_conversations": "Misslyckades att ladda konversationer",
     "try_refreshing": "Försök att uppdatera sidan",
-    "regarding": "Ang:"
+    "regarding": "Ang:",
+    "select_conversation": "Välj en konversation för att se meddelanden",
+    "active_section": "Aktiva",
+    "history_section": "Historik",
+    "history_empty": "Inga avslutade konversationer än.",
+    "active_empty": "Inga aktiva konversationer just nu.",
+    "unknown_user": "Granne",
+    "online": "Online",
+    "last_seen": "Senast aktiv {{time}}",
+    "completed_badge": "Avslutad"
   },
+
   "map": {
     "error_initializing": "Fel vid initiering av karta",
     "initializing": "Initierar karta...",

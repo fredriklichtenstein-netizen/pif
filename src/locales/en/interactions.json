@@ -513,8 +513,18 @@
     "no_conversations_description": "When you message someone about an item, it will appear here.",
     "failed_load_conversations": "Failed to load conversations",
     "try_refreshing": "Please try refreshing the page",
-    "regarding": "Re:"
+    "regarding": "Re:",
+    "select_conversation": "Pick a conversation to see messages",
+    "active_section": "Active",
+    "history_section": "History",
+    "history_empty": "No completed conversations yet.",
+    "active_empty": "No active conversations right now.",
+    "unknown_user": "Neighbor",
+    "online": "Online",
+    "last_seen": "Last seen {{time}}",
+    "completed_badge": "Completed"
   },
+
   "map": {
     "error_initializing": "Error initializing map",
     "initializing": "Initializing map...",

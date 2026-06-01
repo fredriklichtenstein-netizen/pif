@@ -213,7 +213,7 @@ export const ThreadedMessages = ({
           onChange={setNewMessage}
           onSend={handleSendMessage}
           placeholder={t('messages.type_message')}
-          showTypingIndicator={true}
+
         />
       </div>
     </div>

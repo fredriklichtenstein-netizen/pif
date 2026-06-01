@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
+import { useTranslation } from "react-i18next";
 
 interface EnhancedMessageInputProps {
   value: string;
@@ -12,7 +13,6 @@ interface EnhancedMessageInputProps {
   onSend: () => void | Promise<void>;
   disabled?: boolean;
   placeholder?: string;
-  showTypingIndicator?: boolean;
   onTyping?: () => void;
 }
 
@@ -21,13 +21,14 @@ export const EnhancedMessageInput = ({
   onChange,
   onSend,
   disabled = false,
-  placeholder = "Type a message...",
-  showTypingIndicator = false,
-  onTyping
+  placeholder,
+  onTyping,
 }: EnhancedMessageInputProps) => {
+  const { t } = useTranslation();
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const resolvedPlaceholder = placeholder ?? t("messages.type_message");
 
   const handleSend = async () => {
     if (!value.trim() || disabled || isSending) return;
@@ -73,12 +74,8 @@ export const EnhancedMessageInput = ({
   const sendDisabled = !value.trim() || disabled || isSending;
 
   return (
-    <div className="border-t bg-white p-3">
-      {showTypingIndicator && (
-        <div className="mb-2 text-sm text-gray-500 italic">
-          Someone is typing...
-        </div>
-      )}
+    <div className="border-t bg-background p-3">
+
 
       <div className="flex gap-2 items-end">
         <div className="flex-1 relative">
