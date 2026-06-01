@@ -214,15 +214,35 @@ export function useNotifications() {
         }
       });
 
+    // Coalesce wake-up refreshes: focus + visibilitychange + pageshow can
+    // all fire in the same tick when returning to the tab. We dedupe to a
+    // single fetch per ~250ms window.
+    let wakeRefreshTimer: number | null = null;
     const refreshSilent = () => fetchNotifications({ silent: true });
-    const onFocus = () => refreshSilent();
+    const scheduleWakeRefresh = () => {
+      if (wakeRefreshTimer != null) return;
+      wakeRefreshTimer = window.setTimeout(() => {
+        wakeRefreshTimer = null;
+        refreshSilent();
+      }, 50);
+    };
+    const onFocus = () => scheduleWakeRefresh();
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refreshSilent();
+      if (document.visibilityState === "visible") scheduleWakeRefresh();
+    };
+    // pageshow fires after bfcache restore on mobile Safari / Firefox — a
+    // case where neither focus nor visibilitychange always fires.
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted || document.visibilityState === "visible") scheduleWakeRefresh();
     };
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onFocus);
+    window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisibility);
+    // Safety poll. Throttled by the browser when hidden, but still fires
+    // immediately on resume because the wake handlers above trigger first.
     const interval = window.setInterval(refreshSilent, 60_000);
+
 
     const onSync = (e: Event) => {
       const detail = (e as CustomEvent<NotifSyncDetail>).detail || {};
@@ -270,12 +290,15 @@ export function useNotifications() {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener(NOTIF_SYNC_EVENT, onSync);
       window.removeEventListener(NOTIF_NEW_EVENT, onNew);
       bc?.removeEventListener("message", onBcMessage);
       window.clearInterval(interval);
+      if (wakeRefreshTimer != null) window.clearTimeout(wakeRefreshTimer);
     };
+
 
   }, [user?.id, fetchNotifications]);
 
