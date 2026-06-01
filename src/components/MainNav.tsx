@@ -109,7 +109,14 @@ export function MainNav() {
             }`}
             onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
           >
-            <MessageSquare size={24} />
+            <div className="relative">
+              <MessageSquare size={24} />
+              {combinedUnread > 0 && (
+                <span className="absolute -top-1 -right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+                  {combinedUnread > 99 ? "99+" : combinedUnread}
+                </span>
+              )}
+            </div>
             <span className="text-xs mt-1">{t('nav.messages')}</span>
           </Link>
           
