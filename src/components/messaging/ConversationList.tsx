@@ -7,6 +7,7 @@ import type { Conversation } from "@/types/messaging";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
+import { UserAvatar } from "./UserAvatar";
 
 interface ConversationListProps {
   conversations: Conversation[];
