@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, ArrowRight, AlertCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+type NotificationFilter = "all" | "unread";
 
 export function NotificationList() {
   const { t } = useTranslation();
@@ -18,30 +20,27 @@ export function NotificationList() {
     unreadCount,
   } = useNotifications();
 
-  // Auto-mark all notifications as read once the list is mounted/visible.
-  // Runs once per mount after the initial load resolves.
-  const autoMarkedRef = useRef(false);
-  useEffect(() => {
-    if (isLoading || autoMarkedRef.current) return;
-    autoMarkedRef.current = true;
-    if (unreadCount > 0) markAllAsRead();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
+  const [filter, setFilter] = useState<NotificationFilter>("all");
+
+  const visibleNotifications = useMemo(
+    () => (filter === "unread" ? notifications.filter((n) => !n.is_read) : notifications),
+    [notifications, filter]
+  );
 
   const groupedNotifications = useMemo(() => {
-    if (!notifications || notifications.length === 0) return {};
-    
-    return notifications.reduce((groups, notification) => {
+    if (!visibleNotifications || visibleNotifications.length === 0) return {};
+
+    return visibleNotifications.reduce((groups, notification) => {
       const type = notification.type.split('_')[0] || 'other';
-      
+
       if (!groups[type]) {
         groups[type] = [];
       }
-      
+
       groups[type].push(notification);
       return groups;
-    }, {} as Record<string, typeof notifications>);
-  }, [notifications]);
+    }, {} as Record<string, typeof visibleNotifications>);
+  }, [visibleNotifications]);
 
   const groupDisplayInfo = {
     interest: { name: t('interactions.group_interest'), icon: <AlertCircle className="h-5 w-5 text-blue-500" /> },
