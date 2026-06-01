@@ -97,7 +97,7 @@ export function useNotifications() {
     setUnreadCount(unread);
   }, [user?.id, toast]);
 
-  // Realtime notifications
+  // Realtime notifications + recovery on focus/visibility/online + safety poll
   useEffect(() => {
     fetchNotifications();
     if (!user?.id || DEMO_MODE) return;
@@ -112,7 +112,14 @@ export function useNotifications() {
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          // Optimistic bump on INSERT so the nav badge updates instantly,
+          // even before the refetch roundtrip completes.
+          if (payload.eventType === "INSERT") {
+            const row: any = payload.new;
+            const isRead = row?.read ?? row?.is_read ?? false;
+            if (!isRead) setUnreadCount((c) => c + 1);
+          }
           fetchNotifications();
         }
       )
@@ -122,8 +129,21 @@ export function useNotifications() {
         }
       });
 
+    const onFocus = () => fetchNotifications();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchNotifications();
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("online", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    const interval = window.setInterval(fetchNotifications, 60_000);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("online", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(interval);
     };
   }, [user?.id, fetchNotifications]);
 
