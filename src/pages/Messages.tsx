@@ -61,12 +61,24 @@ const Messages = () => {
     }
   };
 
+  // Clicking the already-active "Messages" tab collapses the expanded
+  // conversation so the overview is fully visible again.
+  const handleMessagesTabClick = () => {
+    if (activeTab === "messages" && activeConversationId) {
+      setActiveConversationId(null);
+    }
+  };
+
   return (
     <>
       <div className="container mx-auto px-4 pb-20 pt-4">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-4 w-full flex justify-center border rounded-lg bg-background">
-            <TabsTrigger value="messages" className="flex items-center gap-2 border-r border-border last:border-0 relative">
+            <TabsTrigger
+              value="messages"
+              onClick={handleMessagesTabClick}
+              className="flex items-center gap-2 border-r border-border last:border-0 relative"
+            >
               <MessageSquare className="h-5 w-5" />
               {t('nav.messages')}
               {unreadMessagesCount > 0 && (
@@ -114,25 +126,30 @@ const Messages = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1 border rounded-lg overflow-hidden">
-                  <ConversationList 
+                <div className="md:col-span-1 border rounded-lg overflow-hidden md:max-h-[70vh]">
+                  <ConversationList
                     conversations={conversations}
                     activeConversationId={activeConversationId}
                     onSelectConversation={(id) => setActiveConversationId(id)}
                   />
                 </div>
-                <div className={`md:col-span-2 border rounded-lg overflow-hidden ${activeConversationId ? '' : 'hidden md:block'}`}>
+                <div
+                  className={`md:col-span-2 border rounded-lg overflow-hidden flex flex-col h-[70vh] max-h-[70vh] min-h-0 ${
+                    activeConversationId ? '' : 'hidden md:flex'
+                  }`}
+                >
                   {activeConversationId ? (
                     <ConversationView conversationId={activeConversationId} />
                   ) : (
-                    <div className="flex items-center justify-center h-96 text-muted-foreground">
-                      <p>{t('messages.select_conversation', 'Välj en konversation för att se meddelanden')}</p>
+                    <div className="flex items-center justify-center flex-1 text-muted-foreground">
+                      <p>{t('messages.select_conversation')}</p>
                     </div>
                   )}
                 </div>
               </div>
             )}
           </TabsContent>
+
 
           <TabsContent value="notifications">
             <NotificationList />
