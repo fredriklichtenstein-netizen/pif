@@ -3,11 +3,18 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { PostFormSizeSelector } from "./PostFormSizeSelector";
 import { Weight } from "lucide-react";
 import type { CreatePostInput } from "@/types/post";
 import { useTranslation } from 'react-i18next';
+import {
+  MIXED_CATEGORY_KEYS,
+  REST_CATEGORY_KEYS,
+  CATEGORY_MEASUREMENT_FIELDS,
+  shouldShowSizeMeasurements,
+  getSizeOptionsForCategory,
+} from "@/utils/categories";
 
 interface PostFormInformationProps {
   formData: CreatePostInput;
