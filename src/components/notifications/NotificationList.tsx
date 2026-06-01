@@ -235,6 +235,7 @@ export function NotificationList() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }
