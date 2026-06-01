@@ -121,12 +121,12 @@ const Messages = () => {
                     onSelectConversation={(id) => setActiveConversationId(id)}
                   />
                 </div>
-                <div className="md:col-span-2 border rounded-lg overflow-hidden">
+                <div className={`md:col-span-2 border rounded-lg overflow-hidden ${activeConversationId ? '' : 'hidden md:block'}`}>
                   {activeConversationId ? (
                     <ConversationView conversationId={activeConversationId} />
                   ) : (
                     <div className="flex items-center justify-center h-96 text-muted-foreground">
-                      <p>{t('messages.no_messages_yet')}</p>
+                      <p>{t('messages.select_conversation', 'Välj en konversation för att se meddelanden')}</p>
                     </div>
                   )}
                 </div>
