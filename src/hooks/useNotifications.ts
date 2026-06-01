@@ -156,7 +156,11 @@ export function useNotifications() {
 
     if (DEMO_MODE) return;
 
-    const { error } = await (supabase.rpc as any)("mark_all_notifications_read");
+    const { error } = await (supabase
+      .from("notifications") as any)
+      .update({ read: true })
+      .eq("user_id", user.id)
+      .eq("read", false);
     if (error) {
       if (maybeRecoverFromAuthError(error, "mark_all_notifications_read")) return;
       toast({
