@@ -66,25 +66,23 @@ export function ConversationList({
           {otherParticipant?.user_id ? (
             <Link
               to={`/user/${otherParticipant.user_id}`}
-              className="h-10 w-10 rounded-full bg-muted flex-shrink-0 overflow-hidden"
+              className="flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
-              {otherParticipant?.profile?.avatar_url ? (
-                <img
-                  src={otherParticipant.profile.avatar_url}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-muted-foreground font-medium">
-                  {initial}
-                </div>
-              )}
+              <UserAvatar
+                src={otherParticipant?.profile?.avatar_url}
+                name={displayName}
+                initial={initial}
+                className="h-10 w-10"
+              />
             </Link>
           ) : (
-            <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0 flex items-center justify-center text-muted-foreground font-medium">
-              {initial}
-            </div>
+            <UserAvatar
+              src={otherParticipant?.profile?.avatar_url}
+              name={displayName}
+              initial={initial}
+              className="h-10 w-10"
+            />
           )}
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start gap-2">
