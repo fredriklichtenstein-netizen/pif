@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
+import { getSizeOptionsForCategory } from "@/utils/categories";
 
 interface PostFormSizeSelectorProps {
   category: string;
@@ -11,9 +12,6 @@ interface PostFormSizeSelectorProps {
   onCustomSizeChange: (customSize: string) => void;
   itemType?: 'offer' | 'request';
 }
-
-const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"];
 
 export function PostFormSizeSelector({
   category,
@@ -24,20 +22,15 @@ export function PostFormSizeSelector({
 }: PostFormSizeSelectorProps) {
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
-  const isClothing = category?.toLowerCase().includes("clothing");
-  const isShoes = category?.toLowerCase().includes("shoes");
-  
-  let sizes: string[] = [];
+  const { sizes, kind } = getSizeOptionsForCategory(category);
+
   let placeholder = isRequest ? t('interactions.desired_size') : t('interactions.select_size');
-  
-  if (isClothing) {
-    sizes = CLOTHING_SIZES;
-  } else if (isShoes) {
-    sizes = SHOE_SIZES;
+  if (kind === 'shoes') {
     placeholder = isRequest ? t('interactions.desired_shoe_size') : t('interactions.select_shoe_size');
   }
 
   if (sizes.length === 0) return null;
+
 
   return (
     <div className="space-y-4">
