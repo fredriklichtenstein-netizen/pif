@@ -78,9 +78,16 @@ export function NotificationList() {
     return new Date(mostRecentB).getTime() - new Date(mostRecentA).getTime();
   });
 
+  const filterPillClass = (active: boolean) =>
+    `px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+      active
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted text-muted-foreground hover:bg-muted/70"
+    }`;
+
   return (
     <div className="border rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between p-3 border-b bg-background sticky top-0 z-10">
+      <div className="flex items-center justify-between gap-2 p-3 border-b bg-background sticky top-0 z-10">
         <div className="font-medium text-lg">{t('interactions.notifications_title')}</div>
         {unreadCount > 0 && (
           <Button size="sm" variant="outline" onClick={markAllAsRead}>
@@ -88,7 +95,35 @@ export function NotificationList() {
           </Button>
         )}
       </div>
-      
+
+      <div className="flex items-center gap-2 px-3 py-2 border-b bg-background">
+        <button
+          type="button"
+          onClick={() => setFilter("all")}
+          className={filterPillClass(filter === "all")}
+          aria-pressed={filter === "all"}
+        >
+          {t('interactions.filter_all', 'All')}
+          <span className="ml-1 opacity-70">({notifications.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter("unread")}
+          className={filterPillClass(filter === "unread")}
+          aria-pressed={filter === "unread"}
+        >
+          {t('interactions.filter_unread', 'Unread')}
+          <span className="ml-1 opacity-70">({unreadCount})</span>
+        </button>
+      </div>
+
+      {visibleNotifications.length === 0 ? (
+        <div className="p-8 text-center text-sm text-muted-foreground">
+          {filter === "unread"
+            ? t('interactions.no_unread_notifications', 'No unread notifications.')
+            : t('interactions.no_notifications')}
+        </div>
+      ) : (
       <div className="divide-y">
         {sortedGroupKeys.map(groupKey => {
           const groupNotifications = groupedNotifications[groupKey];
