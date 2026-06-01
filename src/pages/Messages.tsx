@@ -20,6 +20,7 @@ const Messages = () => {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { conversations, isLoading: conversationsLoading, error } = useConversations();
   const { unreadCount } = useNotifications();
+  const { unreadMessagesCount } = useUnreadMessagesCount();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
