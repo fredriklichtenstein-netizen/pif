@@ -186,6 +186,7 @@ export function useNotifications() {
     // Optimistic: clear the badge immediately.
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
+    emitNotifSync({ all: true });
 
     if (DEMO_MODE) return;
 
