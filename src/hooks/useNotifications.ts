@@ -8,14 +8,21 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_NOTIFICATIONS } from "@/data/mockNotifications";
 import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
-// Cross-instance sync: when one mounted useNotifications marks read,
-// every other instance updates its local state immediately (no refetch).
+// Cross-instance sync: when one mounted useNotifications marks read or
+// receives a new notification via realtime, every other instance updates
+// its local state immediately (no refetch / no loading flash).
 const NOTIF_SYNC_EVENT = "pif:notifications:read-sync";
+const NOTIF_NEW_EVENT = "pif:notifications:new";
 type NotifSyncDetail = { ids?: string[]; all?: boolean };
 const emitNotifSync = (detail: NotifSyncDetail) => {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(NOTIF_SYNC_EVENT, { detail }));
 };
+const emitNotifNew = (notif: Notification) => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(NOTIF_NEW_EVENT, { detail: notif }));
+};
+
 
 export interface Notification {
   id: string;
@@ -44,9 +51,9 @@ export function useNotifications() {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (opts?: { silent?: boolean }) => {
     if (!user?.id) return;
-    
+
     // Demo mode: use mock notifications
     if (DEMO_MODE) {
       setNotifications(MOCK_NOTIFICATIONS);
@@ -54,9 +61,10 @@ export function useNotifications() {
       setIsLoading(false);
       return;
     }
-    
-    setIsLoading(true);
+
+    if (!opts?.silent) setIsLoading(true);
     setFetchError(null);
+
 
     const { data, error } = await supabase
       .from("notifications")
@@ -111,6 +119,34 @@ export function useNotifications() {
     fetchNotifications();
     if (!user?.id || DEMO_MODE) return;
 
+    const transformRow = (n: any): Notification => {
+      const p = (n.payload && typeof n.payload === "object" ? n.payload : {}) as Record<string, any>;
+      return {
+        id: String(n.id),
+        user_id: n.user_id,
+        type: n.type,
+        title: n.type,
+        is_read: n.read ?? n.is_read ?? false,
+        created_at: n.created_at,
+        actor_id: p.actor_id ?? null,
+        actor_name: p.actor_name ?? null,
+        item_id: p.item_id ?? null,
+        item_title: p.item_title ?? null,
+        conversation_id: p.conversation_id ?? null,
+        reference_id: n.reference_id ?? p.conversation_id ?? p.item_id ?? undefined,
+        reference_type: n.reference_type,
+        action_url: n.action_url,
+      };
+    };
+
+    const applyNew = (notif: Notification) => {
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === notif.id)) return prev;
+        return [notif, ...prev];
+      });
+      if (!notif.is_read) setUnreadCount((c) => c + 1);
+    };
+
     const channel = supabase
       .channel(`public:notifications:${user.id}`)
       .on(
@@ -122,14 +158,17 @@ export function useNotifications() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          // Optimistic bump on INSERT so the nav badge updates instantly,
-          // even before the refetch roundtrip completes.
           if (payload.eventType === "INSERT") {
-            const row: any = payload.new;
-            const isRead = row?.read ?? row?.is_read ?? false;
-            if (!isRead) setUnreadCount((c) => c + 1);
+            const notif = transformRow(payload.new);
+            // Optimistically merge into this instance and broadcast to siblings
+            // so every mounted hook (nav badge + notifications list) updates
+            // instantly without waiting on its own realtime/refetch roundtrip.
+            applyNew(notif);
+            emitNotifNew(notif);
+            return;
           }
-          fetchNotifications();
+          // UPDATE/DELETE: silent background refresh (no loading flash).
+          fetchNotifications({ silent: true });
         }
       )
       .subscribe((status, err) => {
@@ -138,14 +177,15 @@ export function useNotifications() {
         }
       });
 
-    const onFocus = () => fetchNotifications();
+    const refreshSilent = () => fetchNotifications({ silent: true });
+    const onFocus = () => refreshSilent();
     const onVisibility = () => {
-      if (document.visibilityState === "visible") fetchNotifications();
+      if (document.visibilityState === "visible") refreshSilent();
     };
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
-    const interval = window.setInterval(fetchNotifications, 60_000);
+    const interval = window.setInterval(refreshSilent, 60_000);
 
     const onSync = (e: Event) => {
       const detail = (e as CustomEvent<NotifSyncDetail>).detail || {};
@@ -168,7 +208,12 @@ export function useNotifications() {
       );
       if (cleared > 0) setUnreadCount((c) => Math.max(0, c - cleared));
     };
+    const onNew = (e: Event) => {
+      const notif = (e as CustomEvent<Notification>).detail;
+      if (notif) applyNew(notif);
+    };
     window.addEventListener(NOTIF_SYNC_EVENT, onSync);
+    window.addEventListener(NOTIF_NEW_EVENT, onNew);
 
     return () => {
       supabase.removeChannel(channel);
@@ -176,9 +221,11 @@ export function useNotifications() {
       window.removeEventListener("online", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener(NOTIF_SYNC_EVENT, onSync);
+      window.removeEventListener(NOTIF_NEW_EVENT, onNew);
       window.clearInterval(interval);
     };
   }, [user?.id, fetchNotifications]);
+
 
   const markAllAsRead = async () => {
     if (!user?.id) return;
