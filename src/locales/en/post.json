@@ -3,7 +3,7 @@
   "post": {
     "create_offer": "Pif something",
     "create_request": "Wish for something", 
-    "offer_subtitle": "Pif away something you don't need",
+    "offer_subtitle": "Give away something you don't need",
     "request_subtitle": "Describe what you wish for and your search area",
     "step_type": "Type",
     "step_images": "Images",
