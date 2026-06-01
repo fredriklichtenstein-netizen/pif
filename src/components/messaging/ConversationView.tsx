@@ -73,19 +73,12 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
       {/* Conversation header — sticky/fixed inside the column */}
       <div className="border-b p-3 bg-background flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0 overflow-hidden">
-            {otherParticipant?.profile?.avatar_url ? (
-              <img
-                src={otherParticipant.profile.avatar_url}
-                alt={otherName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center text-muted-foreground font-medium">
-                {otherInitial}
-              </div>
-            )}
-          </div>
+          <UserAvatar
+            src={otherParticipant?.profile?.avatar_url}
+            name={otherName}
+            initial={otherInitial}
+            className="h-10 w-10"
+          />
           <div className="min-w-0">
             <h3 className="font-medium truncate">{otherName}</h3>
             {item && (
