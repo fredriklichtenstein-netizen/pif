@@ -252,6 +252,20 @@ export function useNotifications() {
     window.addEventListener(NOTIF_SYNC_EVENT, onSync);
     window.addEventListener(NOTIF_NEW_EVENT, onNew);
 
+    // Cross-tab bridge: receive BroadcastChannel messages from other tabs
+    // and re-dispatch as local CustomEvents (no re-broadcast, no echo).
+    const bc = getNotifBc();
+    const onBcMessage = (e: MessageEvent<NotifBcMessage>) => {
+      const msg = e.data;
+      if (!msg || typeof msg !== "object") return;
+      if (msg.kind === "sync") {
+        window.dispatchEvent(new CustomEvent(NOTIF_SYNC_EVENT, { detail: msg.detail }));
+      } else if (msg.kind === "new") {
+        window.dispatchEvent(new CustomEvent(NOTIF_NEW_EVENT, { detail: msg.detail }));
+      }
+    };
+    bc?.addEventListener("message", onBcMessage);
+
     return () => {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
@@ -259,8 +273,10 @@ export function useNotifications() {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener(NOTIF_SYNC_EVENT, onSync);
       window.removeEventListener(NOTIF_NEW_EVENT, onNew);
+      bc?.removeEventListener("message", onBcMessage);
       window.clearInterval(interval);
     };
+
   }, [user?.id, fetchNotifications]);
 
 
