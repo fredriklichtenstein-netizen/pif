@@ -51,9 +51,9 @@ export function useNotifications() {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (opts?: { silent?: boolean }) => {
     if (!user?.id) return;
-    
+
     // Demo mode: use mock notifications
     if (DEMO_MODE) {
       setNotifications(MOCK_NOTIFICATIONS);
@@ -61,9 +61,10 @@ export function useNotifications() {
       setIsLoading(false);
       return;
     }
-    
-    setIsLoading(true);
+
+    if (!opts?.silent) setIsLoading(true);
     setFetchError(null);
+
 
     const { data, error } = await supabase
       .from("notifications")
