@@ -290,12 +290,15 @@ export function useNotifications() {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener(NOTIF_SYNC_EVENT, onSync);
       window.removeEventListener(NOTIF_NEW_EVENT, onNew);
       bc?.removeEventListener("message", onBcMessage);
       window.clearInterval(interval);
+      if (wakeRefreshTimer != null) window.clearTimeout(wakeRefreshTimer);
     };
+
 
   }, [user?.id, fetchNotifications]);
 
