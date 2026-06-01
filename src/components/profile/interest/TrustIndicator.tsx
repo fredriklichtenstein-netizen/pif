@@ -58,6 +58,10 @@ export function TrustIndicator({
     },
   };
 
+  // Temporarily hide the "low" trust warning per product decision.
+  // Logic retained for future re-enable.
+  if (trustLevel === "low") return null;
+
   const config = trustConfig[trustLevel];
   const Icon = config.icon;
 
