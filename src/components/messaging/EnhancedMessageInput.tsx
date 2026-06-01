@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Send, Smile, Paperclip } from "lucide-react";
+import { Send, Smile, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,7 +9,7 @@ import data from "@emoji-mart/data";
 interface EnhancedMessageInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSend: () => void;
+  onSend: () => void | Promise<void>;
   disabled?: boolean;
   placeholder?: string;
   showTypingIndicator?: boolean;
@@ -26,38 +26,39 @@ export const EnhancedMessageInput = ({
   onTyping
 }: EnhancedMessageInputProps) => {
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleSend = async () => {
+    if (!value.trim() || disabled || isSending) return;
+    try {
+      setIsSending(true);
+      await onSend();
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+      return;
     }
-    
-    // Call typing indicator
-    if (onTyping) {
-      onTyping();
-    }
-  };
-
-  const handleSend = () => {
-    if (value.trim() && !disabled) {
-      onSend();
-    }
+    if (onTyping) onTyping();
   };
 
   const handleEmojiSelect = (emoji: any) => {
     const currentValue = value;
     const cursorPosition = textareaRef.current?.selectionStart || currentValue.length;
-    const newValue = 
-      currentValue.slice(0, cursorPosition) + 
-      emoji.native + 
+    const newValue =
+      currentValue.slice(0, cursorPosition) +
+      emoji.native +
       currentValue.slice(cursorPosition);
-    
+
     onChange(newValue);
     setIsEmojiPickerOpen(false);
-    
-    // Focus back to textarea
+
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
@@ -69,6 +70,8 @@ export const EnhancedMessageInput = ({
     }, 100);
   };
 
+  const sendDisabled = !value.trim() || disabled || isSending;
+
   return (
     <div className="border-t bg-white p-3">
       {showTypingIndicator && (
@@ -76,7 +79,7 @@ export const EnhancedMessageInput = ({
           Someone is typing...
         </div>
       )}
-      
+
       <div className="flex gap-2 items-end">
         <div className="flex-1 relative">
           <Textarea
@@ -85,10 +88,10 @@ export const EnhancedMessageInput = ({
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="min-h-[60px] max-h-32 resize-none pr-20"
-            disabled={disabled}
+            className="min-h-[60px] max-h-32 resize-none pr-12"
+            disabled={disabled || isSending}
           />
-          
+
           <div className="absolute right-2 bottom-2 flex gap-1">
             <Popover open={isEmojiPickerOpen} onOpenChange={setIsEmojiPickerOpen}>
               <PopoverTrigger asChild>
@@ -113,24 +116,16 @@ export const EnhancedMessageInput = ({
                 />
               </PopoverContent>
             </Popover>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-              type="button"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
           </div>
         </div>
-        
-        <Button 
+
+        <Button
           onClick={handleSend}
-          disabled={!value.trim() || disabled}
+          disabled={sendDisabled}
           className="h-12 w-12 shrink-0"
+          aria-busy={isSending}
         >
-          <Send className="h-5 w-5" />
+          {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
         </Button>
       </div>
     </div>
