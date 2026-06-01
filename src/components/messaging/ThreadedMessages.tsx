@@ -63,17 +63,18 @@ const MessageThread = ({
         }`}>
           {!isOwnMessage && (
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center overflow-hidden text-xs font-semibold text-muted-foreground">
                 {message.senderAvatar ? (
-                  <img 
-                    src={message.senderAvatar} 
+                  <img
+                    src={message.senderAvatar}
                     alt={message.senderName}
                     className="w-full h-full rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 ) : (
-                  <span className="text-xs font-semibold">
-                    {message.senderName[0]?.toUpperCase()}
-                  </span>
+                  <span>{(message.senderName?.[0] || "?").toUpperCase()}</span>
                 )}
               </div>
               <span className="text-xs font-semibold text-gray-600">
