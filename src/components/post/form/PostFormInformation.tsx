@@ -179,86 +179,89 @@ export function PostFormInformation({
           )}
         </div>
 
-        {/* Storlek och mått */}
-        <div className="space-y-4">
-          <h4 className="font-medium text-foreground">
-            {isRequest ? t('post.size_preferences') : t('common.size_measurements')}
-          </h4>
+        {/* Storlek och mått — only relevant categories */}
+        {shouldShowSizeMeasurements(formData.category) && (
+          <div className="space-y-4">
+            <h4 className="font-medium text-foreground">
+              {isRequest ? t('post.size_preferences') : t('common.size_measurements')}
+            </h4>
 
-          {/* Storlek för kläder */}
-          {formData.category === "clothing" && (
-            <PostFormSizeSelector 
-              category={formData.category} 
-              measurements={measurements} 
-              onSizeChange={handleSizeChange}
-              onCustomSizeChange={handleCustomSizeChange}
-              itemType={formData.item_type}
-            />
-          )}
-          
-          {/* Detaljerade mått för erbjudanden */}
-          {!isRequest && formData.category && CATEGORY_MEASUREMENTS[formData.category] && (
-            <div className="space-y-4">
-              <Label className="text-sm font-medium">{t('post.detailed_measurements')}</Label>
-              <div className="grid grid-cols-2 gap-4">
-                {CATEGORY_MEASUREMENTS[formData.category].map((field) => {
-                  const label = t(`post.measurement.${field}`, field);
-                  return (
-                    <div key={field} className="space-y-2">
-                      <Label className="text-sm text-gray-600">{label}</Label>
-                      <Input
-                        value={measurements[field] || ""}
-                        onChange={(e) => onMeasurementChange(field, e.target.value)}
-                        placeholder={label}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Preferenser för önskningar */}
-          {isRequest && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">{t('post.other_preferences')}</Label>
-              <Input
-                value={measurements.preferences || ""}
-                onChange={(e) => onMeasurementChange("preferences", e.target.value)}
-                placeholder={t('post.preferences_placeholder')}
+            {/* Storlek (klädstorlek / barnstorlek / skostorlek) */}
+            {getSizeOptionsForCategory(formData.category).sizes.length > 0 && (
+              <PostFormSizeSelector
+                category={formData.category}
+                measurements={measurements}
+                onSizeChange={handleSizeChange}
+                onCustomSizeChange={handleCustomSizeChange}
+                itemType={formData.item_type}
               />
-              <p className="text-xs text-muted-foreground">
-                {t('post.preferences_description')}
+            )}
+
+            {/* Detaljerade mått för erbjudanden */}
+            {!isRequest && formData.category && CATEGORY_MEASUREMENT_FIELDS[formData.category] && (
+              <div className="space-y-4">
+                <Label className="text-sm font-medium">{t('post.detailed_measurements')}</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  {CATEGORY_MEASUREMENT_FIELDS[formData.category].map((field) => {
+                    const label = t(`post.measurement.${field}`, { defaultValue: field }) as string;
+                    return (
+                      <div key={field} className="space-y-2">
+                        <Label className="text-sm text-gray-600">{label}</Label>
+                        <Input
+                          value={measurements[field] || ""}
+                          onChange={(e) => onMeasurementChange(field, e.target.value)}
+                          placeholder={label}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Preferenser för önskningar */}
+            {isRequest && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">{t('post.other_preferences')}</Label>
+                <Input
+                  value={measurements.preferences || ""}
+                  onChange={(e) => onMeasurementChange("preferences", e.target.value)}
+                  placeholder={t('post.preferences_placeholder')}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('post.preferences_description')}
+                </p>
+              </div>
+            )}
+
+            {/* Vikt endast för erbjudanden */}
+            {showWeightField && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Weight className="h-4 w-4 text-gray-500" />
+                  <Label className="text-sm font-medium">{t('post.weight')}</Label>
+                </div>
+                <Input
+                  value={measurements.weight || ""}
+                  onChange={(e) => onMeasurementChange("weight", e.target.value)}
+                  placeholder={t('post.weight_placeholder')}
+                  className="max-w-[200px]"
+                />
+              </div>
+            )}
+
+            {/* Tips */}
+            <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
+              <p>
+                <strong>{t('post.tip_icon')} {t('post.tip_label')}</strong> {isRequest
+                  ? t('post.information_tip_request')
+                  : t('post.information_tip_offer')
+                }
               </p>
             </div>
-          )}
-          
-          {/* Vikt endast för erbjudanden */}
-          {showWeightField && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Weight className="h-4 w-4 text-gray-500" />
-                <Label className="text-sm font-medium">{t('post.weight')}</Label>
-              </div>
-              <Input
-                value={measurements.weight || ""}
-                onChange={(e) => onMeasurementChange("weight", e.target.value)}
-                placeholder={t('post.weight_placeholder')}
-                className="max-w-[200px]"
-              />
-            </div>
-          )}
-
-          {/* Tips */}
-          <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
-            <p>
-              <strong>{t('post.tip_icon')} {t('post.tip_label')}</strong> {isRequest
-                ? t('post.information_tip_request')
-                : t('post.information_tip_offer')
-              }
-            </p>
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   );
