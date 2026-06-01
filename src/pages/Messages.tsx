@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 import { MainNav } from "@/components/MainNav";
 import { useTranslation } from "react-i18next";
 
