@@ -7,18 +7,15 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Filter, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/types/post";
+import { MIXED_CATEGORY_KEYS, REST_CATEGORY_KEYS, CATEGORY_KEYS as CENTRAL_CATEGORY_KEYS } from "@/utils/categories";
 
-// Sorted alphabetically by Swedish display name (kept in sync with MapFilters).
-export const CATEGORY_KEYS = [
-  "kids", "mixed", "books", "bicycle", "electronics", "vehicles",
-  "home_garden", "pets", "household", "health", "art", "clothing",
-  "kitchen", "toys", "food", "music", "furniture", "sports",
-  "garden", "tools", "other",
-];
+// Re-export for backwards compatibility with existing imports.
+export const CATEGORY_KEYS = CENTRAL_CATEGORY_KEYS;
 
 interface Props {
   posts: Post[];
