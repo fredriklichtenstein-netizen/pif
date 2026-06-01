@@ -54,9 +54,14 @@ const Messages = () => {
       <div className="container mx-auto px-4 pb-20 pt-4">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-4 w-full flex justify-center border rounded-lg bg-background">
-            <TabsTrigger value="messages" className="flex items-center gap-2 border-r border-border last:border-0">
+            <TabsTrigger value="messages" className="flex items-center gap-2 border-r border-border last:border-0 relative">
               <MessageSquare className="h-5 w-5" />
               {t('nav.messages')}
+              {unreadMessagesCount > 0 && (
+                <span className="absolute top-0 right-0 -mt-1 -mr-2 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5 min-w-[20px] text-center shadow-lg">
+                  {unreadMessagesCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2 relative">
               <Bell className="h-5 w-5" />
