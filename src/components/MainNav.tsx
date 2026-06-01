@@ -18,6 +18,9 @@ export function MainNav() {
   const { t } = useTranslation();
   const { profile: cachedProfile } = useCachedProfile(user?.id);
   const avatarUrl = useCachedAvatarSrc(cachedProfile?.avatar_url ?? null);
+  const { unreadCount: unreadNotifications } = useNotifications();
+  const { unreadMessagesCount } = useUnreadMessagesCount();
+  const combinedUnread = user ? unreadNotifications + unreadMessagesCount : 0;
 
   const isActive = (path: string) => location.pathname === path;
   const isProfileActive = isActive("/profile") || isActive("/account-settings");
