@@ -9,6 +9,14 @@ import { useTranslation } from "react-i18next";
 
 type NotificationFilter = "all" | "unread";
 
+const FILTER_STORAGE_KEY = "pif.notifications.filter";
+
+function loadStoredFilter(): NotificationFilter {
+  if (typeof window === "undefined") return "all";
+  const v = window.localStorage.getItem(FILTER_STORAGE_KEY);
+  return v === "unread" || v === "all" ? v : "all";
+}
+
 export function NotificationList() {
   const { t } = useTranslation();
   const {
@@ -20,7 +28,15 @@ export function NotificationList() {
     unreadCount,
   } = useNotifications();
 
-  const [filter, setFilter] = useState<NotificationFilter>("all");
+  const [filter, setFilterState] = useState<NotificationFilter>(loadStoredFilter);
+  const setFilter = (next: NotificationFilter) => {
+    setFilterState(next);
+    try {
+      window.localStorage.setItem(FILTER_STORAGE_KEY, next);
+    } catch {
+      // Storage may be unavailable (private mode); selection still works in-session.
+    }
+  };
 
   const visibleNotifications = useMemo(
     () => (filter === "unread" ? notifications.filter((n) => !n.is_read) : notifications),
