@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EnhancedMessageInput } from "./EnhancedMessageInput";
 import { useTranslation } from "react-i18next";
 import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
+import { UserAvatar } from "./UserAvatar";
 
 interface ConversationViewProps {
   conversationId: string;
