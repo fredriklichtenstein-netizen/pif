@@ -8,6 +8,15 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_NOTIFICATIONS } from "@/data/mockNotifications";
 import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 
+// Cross-instance sync: when one mounted useNotifications marks read,
+// every other instance updates its local state immediately (no refetch).
+const NOTIF_SYNC_EVENT = "pif:notifications:read-sync";
+type NotifSyncDetail = { ids?: string[]; all?: boolean };
+const emitNotifSync = (detail: NotifSyncDetail) => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(NOTIF_SYNC_EVENT, { detail }));
+};
+
 export interface Notification {
   id: string;
   user_id: string;
