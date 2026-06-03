@@ -17,9 +17,7 @@ interface ConversationListProps {
 
 const isHistoricStatus = (status: string | undefined): boolean => {
   const s = (status || "").toLowerCase();
-  // Anything that isn't an active pif goes to history (completed, archived,
-  // cancelled, pending confirmation that has been resolved, etc.)
-  return s === "completed" || s === "archived" || s === "cancelled";
+  return s === "completed" || s === "archived";
 };
 
 export function ConversationList({
