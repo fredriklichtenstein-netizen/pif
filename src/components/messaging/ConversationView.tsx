@@ -9,12 +9,15 @@ import { EnhancedMessageInput } from "./EnhancedMessageInput";
 import { useTranslation } from "react-i18next";
 import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface ConversationViewProps {
   conversationId: string;
+  onBack?: () => void;
 }
 
-export function ConversationView({ conversationId }: ConversationViewProps) {
+export function ConversationView({ conversationId, onBack }: ConversationViewProps) {
   const { session } = useAuth();
   const currentUserId = session?.user?.id;
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -73,6 +76,18 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
       {/* Conversation header — sticky/fixed inside the column */}
       <div className="border-b p-3 bg-background flex-shrink-0">
         <div className="flex items-center gap-3">
+          {onBack && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-9 w-9 -ml-1"
+              onClick={onBack}
+              aria-label={t("common.back", { defaultValue: "Tillbaka" })}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
           <UserAvatar
             src={otherParticipant?.profile?.avatar_url}
             name={otherName}

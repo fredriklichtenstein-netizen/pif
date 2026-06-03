@@ -126,7 +126,11 @@ const Messages = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1 border rounded-lg overflow-hidden md:max-h-[70vh]">
+                <div
+                  className={`md:col-span-1 border rounded-lg overflow-hidden md:max-h-[70vh] ${
+                    activeConversationId ? 'hidden md:block' : ''
+                  }`}
+                >
                   <ConversationList
                     conversations={conversations}
                     activeConversationId={activeConversationId}
@@ -139,7 +143,10 @@ const Messages = () => {
                   }`}
                 >
                   {activeConversationId ? (
-                    <ConversationView conversationId={activeConversationId} />
+                    <ConversationView
+                      conversationId={activeConversationId}
+                      onBack={() => setActiveConversationId(null)}
+                    />
                   ) : (
                     <div className="flex items-center justify-center flex-1 text-muted-foreground">
                       <p>{t('messages.select_conversation')}</p>
