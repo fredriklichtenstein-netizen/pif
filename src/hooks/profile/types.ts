@@ -9,4 +9,5 @@ export interface ProfileFormData {
   dateOfBirth?: Date;
   pickupPreference?: 'meetup' | 'leave_at_door' | '';
   pickupAddress?: string;
+  pickupAddressMode?: 'primary' | 'custom';
 }

@@ -74,6 +74,11 @@
     "pickup_meetup": "Mötas upp",
     "pickup_leave_at_door": "Lämna vid dörren",
     "pickup_address": "Hämtningsadress",
-    "pickup_address_placeholder": "T.ex. Storgatan 1, Stockholm"
+    "pickup_address_placeholder": "T.ex. Storgatan 1, Stockholm",
+    "pickup_use_primary": "Använd min primära PIF-adress",
+    "pickup_use_other": "Använd annan adress",
+    "pickup_address_in_use": "Adress som används vid överlämning",
+    "pickup_no_primary": "Ingen primär adress sparad ännu",
+    "pickup_no_address_set": "Ingen adress vald"
   }
 }
