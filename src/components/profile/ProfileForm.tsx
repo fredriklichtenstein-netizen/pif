@@ -1,12 +1,10 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { AddressInput } from "./address/AddressInput";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "@/components/forms/fields/NameFields";
 import { GenderSelector } from "@/components/forms/fields/GenderSelector";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Map } from "lucide-react";
 import { useTranslation } from "react-i18next";
