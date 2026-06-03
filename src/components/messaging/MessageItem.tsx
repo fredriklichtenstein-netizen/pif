@@ -90,7 +90,7 @@ export function MessageItem({
           aria-label={t("messages.message_actions", {
             defaultValue: "Meddelandeåtgärder",
           })}
-          className="md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted text-muted-foreground"
+          className="opacity-70 hover:opacity-100 md:opacity-50 md:group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted text-muted-foreground"
         >
           <MoreVertical className="h-4 w-4" />
         </button>

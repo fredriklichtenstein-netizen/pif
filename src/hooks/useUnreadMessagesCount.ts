@@ -107,9 +107,12 @@ export function useUnreadMessagesCount() {
     const onVisibility = () => {
       if (document.visibilityState === "visible") compute();
     };
+    const onConversationRead = () => compute();
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onFocus);
+    window.addEventListener("pif:conversation-read", onConversationRead);
     document.addEventListener("visibilitychange", onVisibility);
+
 
     // Safety poll every 60s in case realtime drops.
     const interval = window.setInterval(compute, 60_000);
@@ -118,9 +121,11 @@ export function useUnreadMessagesCount() {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onFocus);
+      window.removeEventListener("pif:conversation-read", onConversationRead);
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearInterval(interval);
     };
+
   }, [user?.id, compute]);
 
   return { unreadMessagesCount: unreadCount, refresh: compute };
