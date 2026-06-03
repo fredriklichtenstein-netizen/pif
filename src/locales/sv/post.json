@@ -114,6 +114,12 @@
     "address_error": "Kunde inte bestämma din adress. Vänligen ange den manuellt.",
     "location_access_error": "Kunde inte komma åt din plats. Vänligen ange din adress manuellt.",
     "enter_address_first": "Vänligen ange en adress först.",
-    "address_locate_error": "Kunde inte hitta adressen på kartan. Vänligen verifiera adressen."
+    "address_locate_error": "Kunde inte hitta adressen på kartan. Vänligen verifiera adressen.",
+    "pickup_details_optional": "Upphämtningsdetaljer (valfritt)",
+    "pickup_preference": "Hämtningspreferens",
+    "pickup_meetup": "Mötas upp",
+    "pickup_leave_at_door": "Lämna vid dörren",
+    "preferred_time_window": "Önskad tid för upphämtning",
+    "preferred_time_window_placeholder": "T.ex. Vardagar efter 17:00"
   }
 }
