@@ -69,6 +69,11 @@
     "month_october": "Oktober",
     "month_november": "November",
     "month_december": "December",
-    "profile_updated": "Din profil har uppdaterats."
+    "profile_updated": "Din profil har uppdaterats.",
+    "pickup_preference": "Hämtningspreferens",
+    "pickup_meetup": "Mötas upp",
+    "pickup_leave_at_door": "Lämna vid dörren",
+    "pickup_address": "Hämtningsadress",
+    "pickup_address_placeholder": "T.ex. Storgatan 1, Stockholm"
   }
 }
