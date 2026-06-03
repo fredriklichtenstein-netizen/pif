@@ -27,6 +27,8 @@ function ProfileEdit() {
     phone: "",
     address: "",
     countryCode: "+46",
+    pickupPreference: "",
+    pickupAddress: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
