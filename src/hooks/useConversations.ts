@@ -52,10 +52,31 @@ export function useConversations() {
           .in('id', conversationIds).order('updated_at', { ascending: false });
         if (conversationsError) throw conversationsError;
 
-        const { data: participantsData, error: participantsError } = await supabase
-          .from('conversation_participants').select(`*, profile:profiles(id, username, avatar_url, first_name, last_name)`)
+        const { data: participantsRaw, error: participantsError } = await supabase
+          .from('conversation_participants').select(`*`)
           .in('conversation_id', conversationIds);
         if (participantsError) throw participantsError;
+
+        // Fetch profiles separately (FK from conversation_participants.user_id
+        // points at auth.users, not public.profiles, so PostgREST embed fails).
+        const otherUserIds = Array.from(
+          new Set((participantsRaw || []).map((p: any) => p.user_id).filter(Boolean))
+        );
+        let profilesById = new Map<string, any>();
+        if (otherUserIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, username, avatar_url, first_name, last_name')
+            .in('id', otherUserIds);
+          for (const pr of (profilesData || []) as any[]) {
+            profilesById.set(String(pr.id), pr);
+          }
+        }
+        const participantsData = (participantsRaw || []).map((p: any) => ({
+          ...p,
+          profile: profilesById.get(String(p.user_id)) || null,
+        }));
+
 
         // Fetch the latest message per conversation as authoritative preview
         // (last_message_text on conversations is not always kept in sync).
