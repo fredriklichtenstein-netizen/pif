@@ -30,38 +30,56 @@ export function useConversationDetails(conversationId: string | null) {
         setIsLoading(true);
         setError(null);
 
-        // Fetch conversation with participants and item details.
-        // Note: conversation_participants.user_id FKs to auth.users, not
-        // public.profiles, so we fetch profiles separately and merge.
+        // Fetch the conversation row + item. Participants are fetched
+        // separately via a SECURITY DEFINER RPC because RLS on
+        // conversation_participants restricts direct SELECT to the caller's
+        // own row, hiding the "other" participant in 1:1 conversations.
         const { data, error: conversationError } = await supabase
           .from('conversations')
-          .select(`
-            *,
-            participants:conversation_participants(*),
-            item:items(*)
-          `)
+          .select(`*, item:items(*)`)
           .eq('id', conversationId)
           .single();
 
         if (conversationError) throw conversationError;
 
-        if (data?.participants?.length) {
-          const ids = Array.from(
-            new Set((data.participants as any[]).map((p) => p.user_id).filter(Boolean))
-          );
-          if (ids.length > 0) {
-            const { data: profilesData } = await supabase
-              .from('profiles')
-              .select('id, username, avatar_url, first_name, last_name')
-              .in('id', ids);
-            const map = new Map<string, any>();
-            for (const pr of (profilesData || []) as any[]) {
-              map.set(String(pr.id), pr);
-            }
-            (data.participants as any[]).forEach((p) => {
-              p.profile = map.get(String(p.user_id)) || null;
-            });
+        // Step 1: participants for this conversation (RPC, with fallback).
+        let participantsRaw: any[] = [];
+        const rpcRes = await (supabase.rpc as any)('get_conversation_participants', {
+          p_conversation_ids: [conversationId],
+        });
+        if (!rpcRes.error && Array.isArray(rpcRes.data)) {
+          participantsRaw = rpcRes.data;
+        } else {
+          const { data: directData } = await supabase
+            .from('conversation_participants')
+            .select('*')
+            .eq('conversation_id', conversationId);
+          participantsRaw = directData || [];
+        }
+
+        // Step 2: profiles for all participant user_ids from public.profiles.
+        const ids = Array.from(
+          new Set(participantsRaw.map((p: any) => p.user_id).filter(Boolean))
+        );
+        const profilesById = new Map<string, any>();
+        if (ids.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, avatar_url, first_name, last_name')
+            .in('id', ids);
+          if (profilesError) {
+            console.error('Failed to fetch participant profiles:', profilesError);
           }
+          for (const pr of (profilesData || []) as any[]) {
+            profilesById.set(String(pr.id), pr);
+          }
+        }
+        const participantsWithProfiles = participantsRaw.map((p: any) => ({
+          ...p,
+          profile: profilesById.get(String(p.user_id)) || null,
+        }));
+        if (data) {
+          (data as any).participants = participantsWithProfiles;
         }
 
 
