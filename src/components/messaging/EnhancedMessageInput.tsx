@@ -109,7 +109,7 @@ export const EnhancedMessageInput = ({
                   previewPosition="none"
                   searchPosition="none"
                   skinTonePosition="none"
-                  set="apple"
+                  set="native"
                 />
               </PopoverContent>
             </Popover>
