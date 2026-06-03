@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -14,10 +14,6 @@ export function useMessages(conversationId: string) {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
-  // Guard so mark_conversation_read is only called ONCE per conversationId
-  // for the lifetime of this hook instance. Without this, re-renders or
-  // realtime updates can re-trigger the RPC and loop.
-  const markedReadForRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!conversationId) {
@@ -62,12 +58,6 @@ export function useMessages(conversationId: string) {
         if (messagesError) throw messagesError;
 
         setMessages((data || []).map((m: any) => ({ ...m, id: String(m.id) })));
-
-        // Mark messages as read ONCE per conversation open.
-        if (markedReadForRef.current !== conversationId) {
-          markedReadForRef.current = conversationId;
-          markConversationRead();
-        }
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError(err as Error);
@@ -121,44 +111,6 @@ export function useMessages(conversationId: string) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, toast]);
-
-  // Mark the whole conversation as read for the current user.
-  // Uses the server RPC so RLS / timestamps are handled in one place.
-  const markConversationRead = useCallback(async () => {
-    if (DEMO_MODE || !conversationId) return;
-    try {
-      console.log('[messages] mark_conversation_read →', conversationId);
-      const { error: rpcError } = await (supabase.rpc as any)('mark_conversation_read', {
-        p_conversation_id: conversationId,
-      });
-      if (rpcError) {
-        console.warn('[messages] mark_conversation_read RPC failed, falling back:', rpcError);
-        // Fallback to direct update if RPC is unavailable.
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user.id;
-        if (!userId) return;
-        await supabase
-          .from('conversation_participants')
-          .update({ last_read_at: new Date().toISOString() })
-          .eq('conversation_id', conversationId)
-          .eq('user_id', userId);
-        await supabase
-          .from('messages')
-          .update({ read_at: new Date().toISOString() })
-          .eq('conversation_id', conversationId)
-          .neq('sender_id', userId)
-          .is('read_at', null);
-      }
-      // Notify any unread-count listeners (nav badge, tab counter)
-      // so the badge drops to zero immediately without waiting for realtime.
-      window.dispatchEvent(
-        new CustomEvent('pif:conversation-read', { detail: { conversationId } }),
-      );
-    } catch (err) {
-      console.error('Error marking conversation as read:', err);
-    }
-  }, [conversationId]);
-
 
   const sendMessage = async (content: string) => {
     if (!conversationId || !content.trim()) {
@@ -245,5 +197,5 @@ export function useMessages(conversationId: string) {
     }
   }, [toast, t]);
 
-  return { messages, isLoading, error, sendMessage, deleteMessage, markMessagesAsRead: markConversationRead };
+  return { messages, isLoading, error, sendMessage, deleteMessage };
 }
