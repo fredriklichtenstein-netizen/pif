@@ -55,7 +55,8 @@ export function useUnreadMessagesCount() {
         .select("id", { count: "exact", head: true })
         .in("conversation_id", ids as any)
         .neq("sender_id", user.id)
-        .is("read_at", null);
+        .is("read_at", null)
+        .eq("is_system_message", false);
 
       if (error) throw error;
       setUnreadCount(count ?? 0);
@@ -84,6 +85,7 @@ export function useUnreadMessagesCount() {
             row &&
             row.sender_id !== user.id &&
             !row.read_at &&
+            !row.is_system_message &&
             conversationIdsRef.current.includes(String(row.conversation_id))
           ) {
             setUnreadCount((c) => c + 1);
