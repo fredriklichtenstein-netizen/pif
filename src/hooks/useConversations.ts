@@ -171,8 +171,14 @@ export function useConversations() {
     fetchConversations();
 
     if (user) {
-      channel = supabase.channel('public:conversations')
+      channel = supabase.channel(`public:conversations:${user.id}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
+          fetchConversations();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+          fetchConversations();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_participants' }, () => {
           fetchConversations();
         }).subscribe();
     }
