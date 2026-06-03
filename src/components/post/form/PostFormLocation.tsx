@@ -1,13 +1,21 @@
 
 import React from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { AddressInput } from "@/components/profile/address/AddressInput";
-import type { CreatePostInput } from "@/types/post";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import type { PostFormData } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 
 interface PostFormLocationProps {
-  formData: CreatePostInput;
-  setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
+  formData: PostFormData;
+  setFormData: (formData: PostFormData | ((prev: PostFormData) => PostFormData)) => void;
   onAddressSelect?: (address: string, coordinates: { lat: number; lng: number }) => void;
 }
 
