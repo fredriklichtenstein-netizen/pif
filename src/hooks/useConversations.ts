@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Conversation } from "@/types/messaging";
@@ -12,6 +12,7 @@ export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const hasLoadedRef = useRef(false);
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useGlobalAuth();
   const { t } = useTranslation();
@@ -37,7 +38,7 @@ export function useConversations() {
       }
 
       try {
-        if (conversations.length === 0) setIsLoading(true);
+        if (!hasLoadedRef.current) setIsLoading(true);
         setError(null);
 
         const { data: conversationIds, error: funcError } = await supabase.rpc('get_user_conversation_ids');
@@ -156,17 +157,7 @@ export function useConversations() {
               } : undefined
             };
           });
-          setConversations((current) => {
-            const currentUnreadById = new Map(
-              current.map((conversation) => [String(conversation.id), conversation.unread_count ?? 0])
-            );
-            return (transformedConversations as Conversation[]).map((conversation) => ({
-              ...conversation,
-              unread_count: currentUnreadById.get(String(conversation.id)) === 0
-                ? 0
-                : conversation.unread_count,
-            }));
-          });
+          setConversations(transformedConversations as Conversation[]);
         }
 
       } catch (err) {
@@ -175,7 +166,12 @@ export function useConversations() {
           setError(err as Error);
           toast({ variant: "destructive", title: t('interactions.failed_load_conversations'), description: (err as Error).message });
         }
-      } finally { if (mounted) setIsLoading(false); }
+      } finally {
+        if (mounted) {
+          hasLoadedRef.current = true;
+          setIsLoading(false);
+        }
+      }
     };
 
     fetchConversations();
