@@ -9,6 +9,7 @@ import { EnhancedMessageInput } from "./EnhancedMessageInput";
 import { useTranslation } from "react-i18next";
 import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
+import { ProfilePopup } from "./ProfilePopup";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -22,11 +23,13 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const currentUserId = session?.user?.id;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
   const { t } = useTranslation();
   const {
     messages,
     isLoading: messagesLoading,
     sendMessage,
+    deleteMessage,
   } = useMessages(conversationId);
   const {
     otherParticipant,
@@ -38,6 +41,22 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const fallbackInitial = fallbackName.charAt(0).toUpperCase();
   const otherName = resolveDisplayName(otherParticipant?.profile, fallbackName);
   const otherInitial = resolveAvatarInitial(otherParticipant?.profile, fallbackInitial);
+
+  // Role label: piffer = item owner; receiver = the other side.
+  // item.postedBy.id is populated with items.user_id by useConversationDetails.
+  const itemOwnerId = item?.postedBy?.id;
+  const isCurrentUserPiffer = !!itemOwnerId && itemOwnerId === currentUserId;
+  const roleLabel = item
+    ? isCurrentUserPiffer
+      ? t("messages.role_you_pif", {
+          defaultValue: "Du piffar: {{title}}",
+          title: item.title,
+        })
+      : t("messages.role_you_receive", {
+          defaultValue: "Du tar emot: {{title}}",
+          title: item.title,
+        })
+    : null;
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -88,22 +107,36 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <UserAvatar
-            src={otherParticipant?.profile?.avatar_url}
-            name={otherName}
-            initial={otherInitial}
-            className="h-10 w-10"
-          />
+          <button
+            type="button"
+            onClick={() => setHeaderProfileOpen(true)}
+            className="flex-shrink-0"
+            aria-label={otherName}
+          >
+            <UserAvatar
+              src={otherParticipant?.profile?.avatar_url}
+              name={otherName}
+              initial={otherInitial}
+              className="h-10 w-10"
+            />
+          </button>
           <div className="min-w-0">
             <h3 className="font-medium truncate">{otherName}</h3>
-            {item && (
-              <p className="text-xs text-muted-foreground truncate">
-                {t("interactions.about_item", { title: item.title })}
-              </p>
+            {roleLabel && (
+              <p className="text-xs text-muted-foreground truncate">{roleLabel}</p>
             )}
           </div>
         </div>
       </div>
+
+      <ProfilePopup
+        open={headerProfileOpen}
+        onOpenChange={setHeaderProfileOpen}
+        profile={otherParticipant?.profile}
+        userId={otherParticipant?.user_id}
+        displayName={otherName}
+        initial={otherInitial}
+      />
 
       {/* Scrollable message list */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
@@ -123,6 +156,12 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
                 key={message.id}
                 message={message}
                 isOwnMessage={message.sender_id === currentUserId}
+                otherProfile={otherParticipant?.profile}
+                otherUserId={otherParticipant?.user_id}
+                otherDisplayName={otherName}
+                otherInitial={otherInitial}
+                itemId={item?.id}
+                onDelete={deleteMessage}
               />
             ))}
             <div ref={messagesEndRef} />
