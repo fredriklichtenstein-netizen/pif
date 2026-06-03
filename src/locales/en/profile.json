@@ -69,6 +69,11 @@
     "month_october": "October",
     "month_november": "November",
     "month_december": "December",
-    "profile_updated": "Your profile has been updated."
+    "profile_updated": "Your profile has been updated.",
+    "pickup_preference": "Pickup preference",
+    "pickup_meetup": "Meet up",
+    "pickup_leave_at_door": "Leave at the door",
+    "pickup_address": "Pickup address",
+    "pickup_address_placeholder": "E.g. 1 Main Street, Stockholm"
   }
 }
