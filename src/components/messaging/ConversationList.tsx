@@ -51,6 +51,7 @@ export function ConversationList({
     const displayName = resolveDisplayName(otherParticipant?.profile, fallbackName);
     const initial = resolveAvatarInitial(otherParticipant?.profile, fallbackInitial);
     const preview = conversation.last_message_text?.trim();
+    const unread = conversation.unread_count ?? 0;
 
     return (
       <div
@@ -84,20 +85,33 @@ export function ConversationList({
           )}
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start gap-2">
-              <h4 className="font-medium truncate flex items-center gap-1.5">
+              <h4 className={`truncate flex items-center gap-1.5 ${unread > 0 ? "font-semibold" : "font-medium"}`}>
                 {displayName}
                 {isHistory && (
                   <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" aria-label={t("messages.completed_badge")} />
                 )}
               </h4>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {formatDistanceToNow(new Date(conversation.updated_at), {
-                  addSuffix: true,
-                  locale: dateLocale,
-                })}
-              </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {formatDistanceToNow(new Date(conversation.updated_at), {
+                    addSuffix: true,
+                    locale: dateLocale,
+                  })}
+                </span>
+                {unread > 0 && (
+                  <span
+                    className="rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5 min-w-[20px] text-center"
+                    aria-label={t("messages.unread_aria", {
+                      defaultValue: "{{count}} olästa",
+                      count: unread,
+                    })}
+                  >
+                    {unread}
+                  </span>
+                )}
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground truncate mt-1">
+            <p className={`text-sm truncate mt-1 ${unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
               {preview || t("interactions.no_messages_yet_short")}
             </p>
           </div>
