@@ -70,6 +70,8 @@ function ProfileEdit() {
           phone: data.phone || "",
           address: data.address || "",
           countryCode: "+46",
+          pickupPreference: (data as any).pickup_preference || "",
+          pickupAddress: (data as any).pickup_address || "",
         });
         if (data.avatar_url) {
           setAvatarUrl(data.avatar_url);
