@@ -121,9 +121,11 @@ export function useUnreadMessagesCount() {
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onFocus);
+      window.removeEventListener("pif:conversation-read", onConversationRead);
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearInterval(interval);
     };
+
   }, [user?.id, compute]);
 
   return { unreadMessagesCount: unreadCount, refresh: compute };
