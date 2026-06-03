@@ -7,4 +7,6 @@ export interface ProfileFormData {
   address: string;
   countryCode: string;
   dateOfBirth?: Date;
+  pickupPreference?: 'meetup' | 'leave_at_door' | '';
+  pickupAddress?: string;
 }

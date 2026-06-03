@@ -114,6 +114,12 @@
     "address_error": "Could not determine your address. Please enter it manually.",
     "location_access_error": "Could not access your location. Please enter your address manually.",
     "enter_address_first": "Please enter an address first.",
-    "address_locate_error": "Could not locate the address on the map. Please verify the address."
+    "address_locate_error": "Could not locate the address on the map. Please verify the address.",
+    "pickup_details_optional": "Pickup details (optional)",
+    "pickup_preference": "Pickup preference",
+    "pickup_meetup": "Meet up",
+    "pickup_leave_at_door": "Leave at the door",
+    "preferred_time_window": "Preferred time for pickup",
+    "preferred_time_window_placeholder": "E.g. Weekdays after 5pm"
   }
 }

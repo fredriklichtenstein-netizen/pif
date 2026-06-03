@@ -1,13 +1,21 @@
 
 import React from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { AddressInput } from "@/components/profile/address/AddressInput";
-import type { CreatePostInput } from "@/types/post";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import type { PostFormData } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 
 interface PostFormLocationProps {
-  formData: CreatePostInput;
-  setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
+  formData: PostFormData;
+  setFormData: (formData: PostFormData | ((prev: PostFormData) => PostFormData)) => void;
   onAddressSelect?: (address: string, coordinates: { lat: number; lng: number }) => void;
 }
 
@@ -72,6 +80,55 @@ export function PostFormLocation({
             </div>
           </div>
         )}
+
+        <Collapsible className="border rounded-lg">
+          <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
+            <span>{t('post.pickup_details_optional')}</span>
+            <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="p-4 pt-0 space-y-4">
+            <div className="space-y-2">
+              <Label>{t('post.pickup_preference')}</Label>
+              <RadioGroup
+                value={formData.pickup_preference || ''}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    pickup_preference: value as 'meetup' | 'leave_at_door',
+                  }))
+                }
+                className="flex flex-col gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="meetup" id="post-pp-meetup" />
+                  <Label htmlFor="post-pp-meetup" className="font-normal cursor-pointer">
+                    {t('post.pickup_meetup')}
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="leave_at_door" id="post-pp-leave" />
+                  <Label htmlFor="post-pp-leave" className="font-normal cursor-pointer">
+                    {t('post.pickup_leave_at_door')}
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="preferred-time-window">
+                {t('post.preferred_time_window')}
+              </Label>
+              <Input
+                id="preferred-time-window"
+                value={formData.preferred_time_window || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, preferred_time_window: e.target.value }))
+                }
+                placeholder={t('post.preferred_time_window_placeholder')}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </div>
   );

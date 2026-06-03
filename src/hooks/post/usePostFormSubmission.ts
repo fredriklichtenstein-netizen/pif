@@ -112,6 +112,8 @@ export function usePostFormSubmission(initialData?: any) {
         location: formData.location,
         images: formData.images,
         measurements: formData.measurements,
+        pickup_preference: formData.pickup_preference || null,
+        preferred_time_window: formData.preferred_time_window?.trim() || null,
       };
       let result;
       if (initialData?.id) {

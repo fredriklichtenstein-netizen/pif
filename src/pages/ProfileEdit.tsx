@@ -27,6 +27,8 @@ function ProfileEdit() {
     phone: "",
     address: "",
     countryCode: "+46",
+    pickupPreference: "",
+    pickupAddress: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -68,6 +70,8 @@ function ProfileEdit() {
           phone: data.phone || "",
           address: data.address || "",
           countryCode: "+46",
+          pickupPreference: (data as any).pickup_preference || "",
+          pickupAddress: (data as any).pickup_address || "",
         });
         if (data.avatar_url) {
           setAvatarUrl(data.avatar_url);
@@ -121,6 +125,8 @@ function ProfileEdit() {
   gender: formData.gender || null,
   phone: formData.phone || null,
   address: formData.address || null,
+  pickup_preference: formData.pickupPreference || null,
+  pickup_address: formData.pickupPreference === 'leave_at_door' ? (formData.pickupAddress || null) : null,
 };
 
 // Only update location if geocoding succeeded
