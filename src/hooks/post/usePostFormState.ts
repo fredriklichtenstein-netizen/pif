@@ -18,14 +18,16 @@ export function usePostFormState(initialData?: any) {
     condition: initialData?.condition || "",
     item_type: initialItemType,
     coordinates: initialData?.coordinates ? {
-      lat: typeof initialData.coordinates === 'object' && initialData.coordinates !== null ? 
+      lat: typeof initialData.coordinates === 'object' && initialData.coordinates !== null ?
            (initialData.coordinates as any).y : null,
-      lng: typeof initialData.coordinates === 'object' && initialData.coordinates !== null ? 
-           (initialData.coordinates as any).x : null 
+      lng: typeof initialData.coordinates === 'object' && initialData.coordinates !== null ?
+           (initialData.coordinates as any).x : null
     } : null,
     location: initialData?.location || "",
     images: initialData?.images || [],
     measurements: initialData?.measurements || {},
+    pickup_preference: initialData?.pickup_preference || "",
+    preferred_time_window: initialData?.preferred_time_window || "",
   });
 
   const handleImagesChange = (images: string[]) => {
