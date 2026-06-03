@@ -85,6 +85,7 @@ export function useUnreadMessagesCount() {
             row &&
             row.sender_id !== user.id &&
             !row.read_at &&
+            !row.is_system_message &&
             conversationIdsRef.current.includes(String(row.conversation_id))
           ) {
             setUnreadCount((c) => c + 1);
