@@ -114,6 +114,11 @@ export function usePostFormSubmission(initialData?: any) {
         measurements: formData.measurements,
         pickup_preference: formData.pickup_preference || null,
         preferred_time_window: formData.preferred_time_window?.trim() || null,
+        pickup_address: formData.pickup_preference
+          ? (formData.pickup_address_mode === 'custom'
+              ? (formData.pickup_address?.trim() || null)
+              : (formData.primary_address || null))
+          : null,
       };
       let result;
       if (initialData?.id) {
