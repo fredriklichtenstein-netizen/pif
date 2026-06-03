@@ -101,11 +101,12 @@ export function useConversations() {
         // (last_message_text on conversations is not always kept in sync).
         const { data: recentMessages } = await supabase
           .from('messages')
-          .select('conversation_id, content, created_at, sender_id, deleted_at')
+          .select('conversation_id, content, created_at, sender_id, deleted_at, is_system_message')
           .in('conversation_id', conversationIds)
           .order('created_at', { ascending: false });
         const lastByConv = new Map<string, string>();
         for (const m of (recentMessages || []) as any[]) {
+          if (m.is_system_message) continue;
           const cid = String(m.conversation_id);
           if (!lastByConv.has(cid) && typeof m.content === 'string' && m.content.trim()) {
             lastByConv.set(cid, m.content);
