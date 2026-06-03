@@ -92,7 +92,7 @@ export function useConversations() {
                 id: String(itemAny.id), title: itemAny.title, description: "", category: "",
                 condition: "", measurements: {}, images: itemAny.images || [], location: "",
                 coordinates: null, postedBy: { id: "", name: "", avatar: "" },
-                createdAt: "", status: itemAny.pif_status || itemAny.status || "",
+                createdAt: "", status: itemAny.pif_status || "",
                 likesCount: 0, interestsCount: 0, commentsCount: 0
               } : undefined
             };
