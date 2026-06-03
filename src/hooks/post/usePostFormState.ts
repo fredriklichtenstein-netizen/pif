@@ -29,6 +29,9 @@ export function usePostFormState(initialData?: any) {
     measurements: initialData?.measurements || {},
     pickup_preference: initialData?.pickup_preference || "",
     preferred_time_window: initialData?.preferred_time_window || "",
+    pickup_address: initialData?.pickup_address || "",
+    pickup_address_mode: initialData?.pickup_address_mode || "primary",
+    primary_address: initialData?.primary_address || "",
   });
 
   // Prefill pickup_preference from user's profile default (only for new posts)
@@ -41,13 +44,24 @@ export function usePostFormState(initialData?: any) {
         if (!user || cancelled) return;
         const { data } = await supabase
           .from('profiles')
-          .select('pickup_preference')
+          .select('pickup_preference, address, pickup_address')
           .eq('id', user.id)
           .single();
+        if (cancelled || !data) return;
         const pref = (data as any)?.pickup_preference;
-        if (pref && !cancelled) {
-          setFormData((prev) => prev.pickup_preference ? prev : { ...prev, pickup_preference: pref });
-        }
+        const primary = (data as any)?.address || "";
+        const savedPickup = (data as any)?.pickup_address || "";
+        setFormData((prev) => {
+          const next = { ...prev };
+          if (pref && !prev.pickup_preference) next.pickup_preference = pref;
+          if (!prev.primary_address) next.primary_address = primary;
+          // Default the post's pickup_address to the user's saved preference
+          if (!prev.pickup_address) {
+            next.pickup_address = savedPickup || primary;
+            next.pickup_address_mode = savedPickup && savedPickup !== primary ? 'custom' : 'primary';
+          }
+          return next;
+        });
       } catch {
         // ignore
       }
