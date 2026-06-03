@@ -31,6 +31,30 @@ export function usePostFormState(initialData?: any) {
     preferred_time_window: initialData?.preferred_time_window || "",
   });
 
+  // Prefill pickup_preference from user's profile default (only for new posts)
+  useEffect(() => {
+    if (initialData?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data } = await supabase
+          .from('profiles')
+          .select('pickup_preference')
+          .eq('id', user.id)
+          .single();
+        const pref = (data as any)?.pickup_preference;
+        if (pref && !cancelled) {
+          setFormData((prev) => prev.pickup_preference ? prev : { ...prev, pickup_preference: pref });
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [initialData?.id]);
+
   const handleImagesChange = (images: string[]) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
