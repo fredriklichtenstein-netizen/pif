@@ -183,8 +183,16 @@ export function useConversations() {
         }).subscribe();
     }
 
-    return () => { mounted = false; if (channel) supabase.removeChannel(channel); };
+    const onConversationRead = () => fetchConversations();
+    window.addEventListener('pif:conversation-read', onConversationRead);
+
+    return () => {
+      mounted = false;
+      if (channel) supabase.removeChannel(channel);
+      window.removeEventListener('pif:conversation-read', onConversationRead);
+    };
   }, [toast, user, authLoading, t]);
+
 
   return { conversations, isLoading, error };
 }
