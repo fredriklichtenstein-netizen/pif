@@ -65,7 +65,7 @@ export function useConversationDetails(conversationId: string | null) {
         if (ids.length > 0) {
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
-            .select('id, username, avatar_url, first_name, last_name')
+            .select('id, username, avatar_url, first_name, last_name, bio')
             .in('id', ids);
           if (profilesError) {
             console.error('Failed to fetch participant profiles:', profilesError);
