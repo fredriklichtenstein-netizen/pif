@@ -30,21 +30,40 @@ export function useConversationDetails(conversationId: string | null) {
         setIsLoading(true);
         setError(null);
 
-        // Fetch conversation with participants and item details
+        // Fetch conversation with participants and item details.
+        // Note: conversation_participants.user_id FKs to auth.users, not
+        // public.profiles, so we fetch profiles separately and merge.
         const { data, error: conversationError } = await supabase
           .from('conversations')
           .select(`
             *,
-            participants:conversation_participants(
-              *,
-              profile:profiles(id, username, avatar_url, first_name, last_name)
-            ),
+            participants:conversation_participants(*),
             item:items(*)
           `)
           .eq('id', conversationId)
           .single();
 
         if (conversationError) throw conversationError;
+
+        if (data?.participants?.length) {
+          const ids = Array.from(
+            new Set((data.participants as any[]).map((p) => p.user_id).filter(Boolean))
+          );
+          if (ids.length > 0) {
+            const { data: profilesData } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url, first_name, last_name')
+              .in('id', ids);
+            const map = new Map<string, any>();
+            for (const pr of (profilesData || []) as any[]) {
+              map.set(String(pr.id), pr);
+            }
+            (data.participants as any[]).forEach((p) => {
+              p.profile = map.get(String(p.user_id)) || null;
+            });
+          }
+        }
+
 
         // Transform the data to match our Conversation type
         if (data) {
