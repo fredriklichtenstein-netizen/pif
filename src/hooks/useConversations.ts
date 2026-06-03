@@ -37,7 +37,7 @@ export function useConversations() {
       }
 
       try {
-        setIsLoading(true);
+        if (conversations.length === 0) setIsLoading(true);
         setError(null);
 
         const { data: conversationIds, error: funcError } = await supabase.rpc('get_user_conversation_ids');
@@ -156,7 +156,17 @@ export function useConversations() {
               } : undefined
             };
           });
-          setConversations(transformedConversations as Conversation[]);
+          setConversations((current) => {
+            const currentUnreadById = new Map(
+              current.map((conversation) => [String(conversation.id), conversation.unread_count ?? 0])
+            );
+            return (transformedConversations as Conversation[]).map((conversation) => ({
+              ...conversation,
+              unread_count: currentUnreadById.get(String(conversation.id)) === 0
+                ? 0
+                : conversation.unread_count,
+            }));
+          });
         }
 
       } catch (err) {
@@ -183,7 +193,19 @@ export function useConversations() {
         }).subscribe();
     }
 
-    const onConversationRead = () => fetchConversations();
+    const onConversationRead = (event: Event) => {
+      const conversationId = (event as CustomEvent<{ conversationId?: string }>).detail?.conversationId;
+      if (conversationId) {
+        setConversations((current) =>
+          current.map((conversation) =>
+            String(conversation.id) === String(conversationId)
+              ? { ...conversation, unread_count: 0 }
+              : conversation,
+          ),
+        );
+      }
+      fetchConversations();
+    };
     window.addEventListener('pif:conversation-read', onConversationRead);
 
     return () => {
