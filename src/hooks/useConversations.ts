@@ -100,7 +100,7 @@ export function useConversations() {
         // (last_message_text on conversations is not always kept in sync).
         const { data: recentMessages } = await supabase
           .from('messages')
-          .select('conversation_id, content, created_at')
+          .select('conversation_id, content, created_at, sender_id, deleted_at')
           .in('conversation_id', conversationIds)
           .order('created_at', { ascending: false });
         const lastByConv = new Map<string, string>();
@@ -118,6 +118,25 @@ export function useConversations() {
             return acc;
           }, {} as Record<string, typeof participantsData>);
 
+          // Per-conversation unread count: messages from the other user
+          // created strictly after the current user's last_read_at.
+          const unreadByConv = new Map<string, number>();
+          const currentUserId = user.id;
+          for (const m of (recentMessages || []) as any[]) {
+            const cid = String(m.conversation_id);
+            if (m.sender_id === currentUserId) continue;
+            const myParticipant = (participantsByConversation[cid] || []).find(
+              (p: any) => p.user_id === currentUserId,
+            );
+            const lastRead = myParticipant?.last_read_at
+              ? new Date(myParticipant.last_read_at).getTime()
+              : 0;
+            const created = new Date(m.created_at).getTime();
+            if (created > lastRead) {
+              unreadByConv.set(cid, (unreadByConv.get(cid) ?? 0) + 1);
+            }
+          }
+
           const transformedConversations = conversationsData.map(conv => {
             const participants = (participantsByConversation[conv.id] || []).map((p: any) => ({ ...p, id: String(p.id) }));
             const latest = lastByConv.get(String(conv.id));
@@ -127,6 +146,7 @@ export function useConversations() {
               item_id: conv.item_id,
               last_message_text: latest ?? conv.last_message_text,
               participants,
+              unread_count: unreadByConv.get(String(conv.id)) ?? 0,
               item: itemAny ? {
                 id: String(itemAny.id), title: itemAny.title, description: "", category: "",
                 condition: "", measurements: {}, images: itemAny.images || [], location: "",
