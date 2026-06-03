@@ -125,6 +125,8 @@ function ProfileEdit() {
   gender: formData.gender || null,
   phone: formData.phone || null,
   address: formData.address || null,
+  pickup_preference: formData.pickupPreference || null,
+  pickup_address: formData.pickupPreference === 'leave_at_door' ? (formData.pickupAddress || null) : null,
 };
 
 // Only update location if geocoding succeeded
