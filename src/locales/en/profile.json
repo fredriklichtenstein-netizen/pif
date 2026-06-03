@@ -74,6 +74,11 @@
     "pickup_meetup": "Meet up",
     "pickup_leave_at_door": "Leave at the door",
     "pickup_address": "Pickup address",
-    "pickup_address_placeholder": "E.g. 1 Main Street, Stockholm"
+    "pickup_address_placeholder": "E.g. 1 Main Street, Stockholm",
+    "pickup_use_primary": "Use my primary PIF address",
+    "pickup_use_other": "Use a different address",
+    "pickup_address_in_use": "Address used for handover",
+    "pickup_no_primary": "No primary address saved yet",
+    "pickup_no_address_set": "No address selected"
   }
 }
