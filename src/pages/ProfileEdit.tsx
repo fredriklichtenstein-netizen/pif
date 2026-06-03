@@ -132,7 +132,11 @@ function ProfileEdit() {
   phone: formData.phone || null,
   address: formData.address || null,
   pickup_preference: formData.pickupPreference || null,
-  pickup_address: formData.pickupPreference === 'leave_at_door' ? (formData.pickupAddress || null) : null,
+  pickup_address: formData.pickupPreference
+    ? (formData.pickupAddressMode === 'custom'
+        ? (formData.pickupAddress || null)
+        : (formData.address || null))
+    : null,
 };
 
 // Only update location if geocoding succeeded
