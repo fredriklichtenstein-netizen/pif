@@ -9,12 +9,15 @@ import { EnhancedMessageInput } from "./EnhancedMessageInput";
 import { useTranslation } from "react-i18next";
 import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface ConversationViewProps {
   conversationId: string;
+  onBack?: () => void;
 }
 
-export function ConversationView({ conversationId }: ConversationViewProps) {
+export function ConversationView({ conversationId, onBack }: ConversationViewProps) {
   const { session } = useAuth();
   const currentUserId = session?.user?.id;
   const messagesEndRef = useRef<HTMLDivElement>(null);
