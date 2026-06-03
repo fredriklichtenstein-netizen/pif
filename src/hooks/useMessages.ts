@@ -89,7 +89,7 @@ export function useMessages(conversationId: string) {
             if (currentMessages.some(m => m.id === newMessage.id)) return currentMessages;
             return [...currentMessages, newMessage];
           });
-          // Do NOT call markConversationRead here — it would loop via the
+          // Do NOT mark the conversation as read here — it would loop via the
           // realtime UPDATE on messages.read_at and re-trigger fetches in
           // useConversations. Marking happens once on open.
         })
