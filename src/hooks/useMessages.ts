@@ -99,7 +99,9 @@ export function useMessages(conversationId: string) {
             if (currentMessages.some(m => m.id === newMessage.id)) return currentMessages;
             return [...currentMessages, newMessage];
           });
-          markConversationRead();
+          // Do NOT call markConversationRead here — it would loop via the
+          // realtime UPDATE on messages.read_at and re-trigger fetches in
+          // useConversations. Marking happens once on open.
         })
       .on('postgres_changes',
         {
