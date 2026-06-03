@@ -125,6 +125,7 @@ export function useConversations() {
           const unreadByConv = new Map<string, number>();
           const currentUserId = user.id;
           for (const m of (recentMessages || []) as any[]) {
+            if (m.is_system_message) continue;
             const cid = String(m.conversation_id);
             if (m.sender_id === currentUserId) continue;
             const myParticipant = (participantsByConversation[cid] || []).find(
