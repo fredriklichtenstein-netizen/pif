@@ -52,22 +52,40 @@ export function useConversations() {
           .in('id', conversationIds).order('updated_at', { ascending: false });
         if (conversationsError) throw conversationsError;
 
-        const { data: participantsRaw, error: participantsError } = await supabase
-          .from('conversation_participants').select(`*`)
-          .in('conversation_id', conversationIds);
-        if (participantsError) throw participantsError;
+        // Step 1: fetch ALL participants for these conversations.
+        // RLS on conversation_participants restricts direct SELECT to the
+        // caller's own rows, so we use a SECURITY DEFINER RPC that returns
+        // every participant in conversations the caller is a member of.
+        // Fall back to direct select if the RPC is unavailable.
+        let participantsRaw: any[] | null = null;
+        const rpcRes = await (supabase.rpc as any)('get_conversation_participants', {
+          p_conversation_ids: conversationIds,
+        });
+        if (!rpcRes.error && Array.isArray(rpcRes.data)) {
+          participantsRaw = rpcRes.data;
+        } else {
+          const { data: directData, error: directErr } = await supabase
+            .from('conversation_participants').select(`*`)
+            .in('conversation_id', conversationIds);
+          if (directErr) throw directErr;
+          participantsRaw = directData || [];
+        }
 
-        // Fetch profiles separately (FK from conversation_participants.user_id
-        // points at auth.users, not public.profiles, so PostgREST embed fails).
-        const otherUserIds = Array.from(
+        // Step 2: fetch profiles separately from public.profiles.
+        // (conversation_participants.user_id FKs to auth.users, so PostgREST
+        // embedding through that relation silently returns null.)
+        const userIds = Array.from(
           new Set((participantsRaw || []).map((p: any) => p.user_id).filter(Boolean))
         );
-        let profilesById = new Map<string, any>();
-        if (otherUserIds.length > 0) {
-          const { data: profilesData } = await supabase
+        const profilesById = new Map<string, any>();
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
             .select('id, username, avatar_url, first_name, last_name')
-            .in('id', otherUserIds);
+            .in('id', userIds);
+          if (profilesError) {
+            console.error('Failed to fetch participant profiles:', profilesError);
+          }
           for (const pr of (profilesData || []) as any[]) {
             profilesById.set(String(pr.id), pr);
           }
