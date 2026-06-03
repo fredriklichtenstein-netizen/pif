@@ -1,7 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { PostFormData } from "@/types/post";
+import { supabase } from "@/integrations/supabase/client";
 
 export function usePostFormState(initialData?: any) {
   const [searchParams] = useSearchParams();
