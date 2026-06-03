@@ -76,6 +76,18 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       {/* Conversation header — sticky/fixed inside the column */}
       <div className="border-b p-3 bg-background flex-shrink-0">
         <div className="flex items-center gap-3">
+          {onBack && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-9 w-9 -ml-1"
+              onClick={onBack}
+              aria-label={t("common.back", { defaultValue: "Tillbaka" })}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
           <UserAvatar
             src={otherParticipant?.profile?.avatar_url}
             name={otherName}
