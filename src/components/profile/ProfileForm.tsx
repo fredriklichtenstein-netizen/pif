@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { AddressInput } from "./address/AddressInput";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "@/components/forms/fields/NameFields";
 import { GenderSelector } from "@/components/forms/fields/GenderSelector";
@@ -20,6 +21,7 @@ interface ProfileFormData {
   countryCode: string;
   pickupPreference?: 'meetup' | 'leave_at_door' | '';
   pickupAddress?: string;
+  pickupAddressMode?: 'primary' | 'custom';
 }
 
 interface ProfileFormProps {
@@ -99,20 +101,89 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               </RadioGroup>
             </div>
 
-            {formData.pickupPreference === 'leave_at_door' && (
-              <div className="space-y-2">
-                <Label htmlFor="pickup-address">{t('profile.pickup_address')}</Label>
-                <Input
-                  id="pickup-address"
-                  value={formData.pickupAddress || ''}
-                  onChange={(e) => handleChange({ pickupAddress: e.target.value })}
-                  placeholder={t('profile.pickup_address_placeholder')}
-                />
-              </div>
+            {formData.pickupPreference && (
+              <PickupAddressSection
+                primaryAddress={formData.address}
+                mode={formData.pickupAddressMode || 'primary'}
+                customAddress={formData.pickupAddress || ''}
+                onModeChange={(mode) => {
+                  if (mode === 'primary') {
+                    handleChange({ pickupAddressMode: 'primary', pickupAddress: formData.address || '' });
+                  } else {
+                    handleChange({ pickupAddressMode: 'custom' });
+                  }
+                }}
+                onCustomAddressChange={(addr) =>
+                  handleChange({ pickupAddressMode: 'custom', pickupAddress: addr })
+                }
+              />
             )}
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+interface PickupAddressSectionProps {
+  primaryAddress: string;
+  mode: 'primary' | 'custom';
+  customAddress: string;
+  onModeChange: (mode: 'primary' | 'custom') => void;
+  onCustomAddressChange: (address: string) => void;
+}
+
+function PickupAddressSection({
+  primaryAddress,
+  mode,
+  customAddress,
+  onModeChange,
+  onCustomAddressChange,
+}: PickupAddressSectionProps) {
+  const { t } = useTranslation();
+  const resolved = mode === 'primary' ? primaryAddress : customAddress;
+
+  return (
+    <div className="space-y-3 pt-2">
+      <Label>{t('profile.pickup_address')}</Label>
+      <RadioGroup
+        value={mode}
+        onValueChange={(v) => onModeChange(v as 'primary' | 'custom')}
+        className="flex flex-col gap-2"
+      >
+        <div className="flex items-center gap-2">
+          <RadioGroupItem value="primary" id="pa-primary" />
+          <Label htmlFor="pa-primary" className="font-normal cursor-pointer">
+            {t('profile.pickup_use_primary')}
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <RadioGroupItem value="custom" id="pa-custom" />
+          <Label htmlFor="pa-custom" className="font-normal cursor-pointer">
+            {t('profile.pickup_use_other')}
+          </Label>
+        </div>
+      </RadioGroup>
+
+      {mode === 'primary' ? (
+        <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+          {primaryAddress || t('profile.pickup_no_primary')}
+        </div>
+      ) : (
+        <AddressInput
+          value={customAddress}
+          onChange={(addr) => onCustomAddressChange(addr)}
+          mapButtonLabel={<Map className="w-4 h-4" />}
+          hideSearch
+        />
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        {t('profile.pickup_address_in_use')}:{' '}
+        <span className="font-medium text-foreground">
+          {resolved || t('profile.pickup_no_address_set')}
+        </span>
+      </p>
     </div>
   );
 }
