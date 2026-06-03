@@ -63,8 +63,11 @@ export function useMessages(conversationId: string) {
 
         setMessages((data || []).map((m: any) => ({ ...m, id: String(m.id) })));
 
-        // Mark messages as read after retrieving them
-        markConversationRead();
+        // Mark messages as read ONCE per conversation open.
+        if (markedReadForRef.current !== conversationId) {
+          markedReadForRef.current = conversationId;
+          markConversationRead();
+        }
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError(err as Error);
