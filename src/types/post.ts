@@ -28,6 +28,8 @@ export interface PostFormData {
   location: string;
   images: string[];
   measurements: Record<string, string>;
+  pickup_preference?: 'meetup' | 'leave_at_door' | '';
+  preferred_time_window?: string;
 }
 
 export interface Coordinates {
