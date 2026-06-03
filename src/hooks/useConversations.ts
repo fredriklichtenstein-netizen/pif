@@ -200,7 +200,6 @@ export function useConversations() {
           ),
         );
       }
-      fetchConversations();
     };
     window.addEventListener('pif:conversation-read', onConversationRead);
 
