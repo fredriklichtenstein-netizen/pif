@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,10 @@ export function useMessages(conversationId: string) {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+  // Guard so mark_conversation_read is only called ONCE per conversationId
+  // for the lifetime of this hook instance. Without this, re-renders or
+  // realtime updates can re-trigger the RPC and loop.
+  const markedReadForRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!conversationId) {
@@ -59,8 +63,11 @@ export function useMessages(conversationId: string) {
 
         setMessages((data || []).map((m: any) => ({ ...m, id: String(m.id) })));
 
-        // Mark messages as read after retrieving them
-        markConversationRead();
+        // Mark messages as read ONCE per conversation open.
+        if (markedReadForRef.current !== conversationId) {
+          markedReadForRef.current = conversationId;
+          markConversationRead();
+        }
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError(err as Error);
@@ -92,7 +99,9 @@ export function useMessages(conversationId: string) {
             if (currentMessages.some(m => m.id === newMessage.id)) return currentMessages;
             return [...currentMessages, newMessage];
           });
-          markConversationRead();
+          // Do NOT call markConversationRead here — it would loop via the
+          // realtime UPDATE on messages.read_at and re-trigger fetches in
+          // useConversations. Marking happens once on open.
         })
       .on('postgres_changes',
         {
