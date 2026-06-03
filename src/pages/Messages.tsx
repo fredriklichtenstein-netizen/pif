@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationList } from "@/components/messaging/ConversationList";
@@ -14,6 +14,8 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 import { MainNav } from "@/components/MainNav";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
+import { DEMO_MODE } from "@/config/demoMode";
 
 const Messages = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
@@ -24,6 +26,7 @@ const Messages = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
+  const markedAsRead = useRef(new Set<string>());
 
   const isLoading = authLoading || conversationsLoading;
 
@@ -60,6 +63,51 @@ const Messages = () => {
       setActiveTab(value);
     }
   };
+
+  const markConversationReadOnce = useCallback(async (conversationId: string) => {
+    if (DEMO_MODE || !conversationId || markedAsRead.current.has(conversationId)) return;
+
+    markedAsRead.current.add(conversationId);
+
+    try {
+      const { error: rpcError } = await (supabase.rpc as any)('mark_conversation_read', {
+        p_conversation_id: conversationId,
+      });
+
+      if (rpcError) {
+        console.warn('[messages] mark_conversation_read RPC failed, falling back:', rpcError);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
+        if (!userId) return;
+
+        await supabase
+          .from('conversation_participants')
+          .update({ last_read_at: new Date().toISOString() })
+          .eq('conversation_id', conversationId)
+          .eq('user_id', userId);
+
+        await supabase
+          .from('messages')
+          .update({ read_at: new Date().toISOString() })
+          .eq('conversation_id', conversationId)
+          .neq('sender_id', userId)
+          .is('read_at', null);
+      }
+
+      window.dispatchEvent(
+        new CustomEvent('pif:conversation-read', { detail: { conversationId } }),
+      );
+    } catch (err) {
+      markedAsRead.current.delete(conversationId);
+      console.error('Error marking conversation as read:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeConversationId) {
+      void markConversationReadOnce(activeConversationId);
+    }
+  }, [activeConversationId, markConversationReadOnce]);
 
   // Clicking the already-active "Messages" tab collapses the expanded
   // conversation so the overview is fully visible again.
