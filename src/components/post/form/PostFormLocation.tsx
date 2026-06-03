@@ -114,6 +114,69 @@ export function PostFormLocation({
               </RadioGroup>
             </div>
 
+            {formData.pickup_preference && (
+              <div className="space-y-3">
+                <Label>{t('post.pickup_address')}</Label>
+                <RadioGroup
+                  value={formData.pickup_address_mode || 'primary'}
+                  onValueChange={(value) =>
+                    setFormData((prev) => {
+                      const mode = value as 'primary' | 'custom';
+                      return {
+                        ...prev,
+                        pickup_address_mode: mode,
+                        pickup_address:
+                          mode === 'primary'
+                            ? (prev.primary_address || '')
+                            : (prev.pickup_address === prev.primary_address ? '' : prev.pickup_address || ''),
+                      };
+                    })
+                  }
+                  className="flex flex-col gap-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="primary" id="post-pa-primary" />
+                    <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
+                      {t('profile.pickup_use_primary')}
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="custom" id="post-pa-custom" />
+                    <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
+                      {t('profile.pickup_use_other')}
+                    </Label>
+                  </div>
+                </RadioGroup>
+
+                {formData.pickup_address_mode === 'custom' ? (
+                  <AddressInput
+                    value={formData.pickup_address || ''}
+                    onChange={(addr) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        pickup_address_mode: 'custom',
+                        pickup_address: addr,
+                      }))
+                    }
+                    hideSearch
+                  />
+                ) : (
+                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                    {formData.primary_address || t('profile.pickup_no_primary')}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  {t('profile.pickup_address_in_use')}:{' '}
+                  <span className="font-medium text-foreground">
+                    {(formData.pickup_address_mode === 'custom'
+                      ? formData.pickup_address
+                      : formData.primary_address) || t('profile.pickup_no_address_set')}
+                  </span>
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="preferred-time-window">
                 {t('post.preferred_time_window')}
