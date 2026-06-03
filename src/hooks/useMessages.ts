@@ -14,6 +14,10 @@ export function useMessages(conversationId: string) {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+  // Guard so mark_conversation_read is only called ONCE per conversationId
+  // for the lifetime of this hook instance. Without this, re-renders or
+  // realtime updates can re-trigger the RPC and loop.
+  const markedReadForRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!conversationId) {
