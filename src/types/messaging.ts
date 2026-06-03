@@ -7,6 +7,7 @@ export interface Profile {
   avatar_url?: string;
   first_name?: string;
   last_name?: string;
+  bio?: string;
 }
 
 export interface ConversationParticipant {
@@ -26,6 +27,8 @@ export interface Conversation {
   last_message_text?: string;
   participants: ConversationParticipant[];
   item?: Post;
+  /** Unread message count for the current user. Computed client-side. */
+  unread_count?: number;
 }
 
 export interface Message {
@@ -35,4 +38,5 @@ export interface Message {
   content: string;
   created_at: string;
   read_at?: string;
+  deleted_at?: string | null;
 }
