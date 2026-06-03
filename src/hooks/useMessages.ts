@@ -118,10 +118,12 @@ export function useMessages(conversationId: string) {
   const markConversationRead = useCallback(async () => {
     if (DEMO_MODE || !conversationId) return;
     try {
+      console.log('[messages] mark_conversation_read →', conversationId);
       const { error: rpcError } = await (supabase.rpc as any)('mark_conversation_read', {
         p_conversation_id: conversationId,
       });
       if (rpcError) {
+        console.warn('[messages] mark_conversation_read RPC failed, falling back:', rpcError);
         // Fallback to direct update if RPC is unavailable.
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData.session?.user.id;
@@ -138,10 +140,16 @@ export function useMessages(conversationId: string) {
           .neq('sender_id', userId)
           .is('read_at', null);
       }
+      // Notify any unread-count listeners (nav badge, tab counter)
+      // so the badge drops to zero immediately without waiting for realtime.
+      window.dispatchEvent(
+        new CustomEvent('pif:conversation-read', { detail: { conversationId } }),
+      );
     } catch (err) {
       console.error('Error marking conversation as read:', err);
     }
   }, [conversationId]);
+
 
   const sendMessage = async (content: string) => {
     if (!conversationId || !content.trim()) {
