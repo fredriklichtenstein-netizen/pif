@@ -53,6 +53,22 @@ export function MessageItem({
 
   const isDeleted = !!message.deleted_at;
 
+  if (message.is_system_message) {
+    return (
+      <div className="flex justify-center my-2">
+        <div className="max-w-[85%] rounded-lg bg-muted/60 border border-border px-3 py-2 text-center">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+            {t("messages.system_message_label", { defaultValue: "Systemmeddelande" })}
+          </div>
+          <p className="whitespace-pre-wrap break-words text-sm text-foreground">
+            {message.content}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+
   const bubble = (
     <div
       className={`max-w-[75%] rounded-lg p-3 ${
