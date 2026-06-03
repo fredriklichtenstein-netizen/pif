@@ -39,4 +39,6 @@ export interface Message {
   created_at: string;
   read_at?: string;
   deleted_at?: string | null;
+  is_system_message?: boolean;
+  target_user_id?: string | null;
 }
