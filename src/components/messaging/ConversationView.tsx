@@ -151,19 +151,27 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           </div>
         ) : (
           <>
-            {messages.map((message) => (
-              <MessageItem
-                key={message.id}
-                message={message}
-                isOwnMessage={message.sender_id === currentUserId}
-                otherProfile={otherParticipant?.profile}
-                otherUserId={otherParticipant?.user_id}
-                otherDisplayName={otherName}
-                otherInitial={otherInitial}
-                itemId={item?.id}
-                onDelete={deleteMessage}
-              />
-            ))}
+            {messages
+              .filter((m) =>
+                !m.is_system_message ||
+                !m.target_user_id ||
+                m.target_user_id === currentUserId,
+              )
+              .map((message) => (
+                <MessageItem
+                  key={message.id}
+                  message={message}
+                  isOwnMessage={
+                    !message.is_system_message && message.sender_id === currentUserId
+                  }
+                  otherProfile={otherParticipant?.profile}
+                  otherUserId={otherParticipant?.user_id}
+                  otherDisplayName={otherName}
+                  otherInitial={otherInitial}
+                  itemId={item?.id}
+                  onDelete={deleteMessage}
+                />
+              ))}
             <div ref={messagesEndRef} />
           </>
         )}
