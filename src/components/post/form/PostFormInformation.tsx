@@ -151,24 +151,23 @@ export function PostFormInformation({
           </div>
         </div>
 
-        {/* Beskrivning */}
+        {/* Beskrivning (valfri) */}
         <div className="space-y-4">
           <h4 className="font-medium text-foreground">{t('post.description')}</h4>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">
-              {isRequest ? t('post.description_request') : t('post.description')} *
+              {isRequest ? t('post.description_request') : t('post.description')}
             </Label>
             <Textarea
               id="description"
               value={formData.description || ""}
               onChange={handleDescriptionChange}
-              placeholder={isRequest 
+              placeholder={isRequest
                 ? t('post.description_request_placeholder')
                 : t('post.description_placeholder')
               }
               className="min-h-[120px]"
-              required
             />
           </div>
           
