@@ -60,6 +60,9 @@ export function OptimizedFeedContainer() {
   const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { ids: myInterestedIds } = useMyInterestedIds();
+  // Bulk-prefetch the current user's liked items on mount so heart
+  // buttons across the feed hydrate correctly after a page reload.
+  useMyLikedIds();
 
   const fullyFilteredPosts = useMemo(
     () =>
