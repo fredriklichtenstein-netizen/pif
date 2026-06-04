@@ -26,6 +26,7 @@ import { PostTypeAndCategoryFilters } from '@/components/filters/PostTypeAndCate
 import { useFeedFiltersStore } from '@/stores/feedFiltersStore';
 import { applyPostFilters } from '@/utils/postFilters';
 import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
+import { useMyLikedIds } from '@/hooks/useMyLikedIds';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
