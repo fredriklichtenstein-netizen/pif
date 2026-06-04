@@ -29,7 +29,7 @@ export function usePostFormValidation(props?: UsePostFormValidationProps) {
       case "images":
         return formData.images.length > 0;
       case "information":
-        return !!(formData.title?.trim() && formData.category && formData.condition && formData.description?.trim());
+        return !!(formData.title?.trim() && formData.category && formData.condition);
       case "location":
         return !!(formData.location && formData.coordinates);
       default:

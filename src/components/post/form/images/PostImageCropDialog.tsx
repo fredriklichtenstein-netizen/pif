@@ -11,19 +11,18 @@ interface PostImageCropDialogProps {
   image: string | null;
   progress: { current: number; total: number } | null;
   onSave: (pixelCrop: { width: number; height: number; x: number; y: number }) => void;
-  onSkip: () => void;
+  onSkip?: () => void;
   onCancel: () => void;
 }
 
 /**
  * Cropping dialog for newly uploaded post images. Free aspect ratio with
- * zoom + pan; the user can either save the crop or skip it for that image.
+ * zoom + pan; the user can either save the crop or cancel it for that image.
  */
 export function PostImageCropDialog({
   image,
   progress,
   onSave,
-  onSkip,
   onCancel,
 }: PostImageCropDialogProps) {
   const { t } = useTranslation();
@@ -31,7 +30,6 @@ export function PostImageCropDialog({
   const [zoom, setZoom] = useState(1);
   const [pixels, setPixels] = useState<any>(null);
 
-  // Reset crop when a new image becomes active.
   React.useEffect(() => {
     setCrop({ x: 0, y: 0 });
     setZoom(1);
@@ -54,7 +52,7 @@ export function PostImageCropDialog({
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>
-            {t("post.crop_image", { defaultValue: "Crop image" })}
+            {t("post.crop_image", { defaultValue: "Beskär bild" })}
             {progress && progress.total > 1 && (
               <span className="ml-2 text-sm font-normal text-muted-foreground">
                 ({progress.current}/{progress.total})
@@ -92,7 +90,7 @@ export function PostImageCropDialog({
                   disabled={isPristine}
                 >
                   <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                  {t("post.reset_crop", { defaultValue: "Reset crop" })}
+                  {t("post.reset_crop", { defaultValue: "Återställ" })}
                 </Button>
               </div>
               <Slider
@@ -108,13 +106,10 @@ export function PostImageCropDialog({
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
-            {t("common.cancel", { defaultValue: "Cancel" })}
-          </Button>
-          <Button type="button" variant="secondary" onClick={onSkip}>
-            {t("post.skip_crop", { defaultValue: "Skip" })}
+            {t("common.cancel", { defaultValue: "Avbryt" })}
           </Button>
           <Button type="button" onClick={handleSave} disabled={!pixels}>
-            {t("post.apply_crop", { defaultValue: "Apply crop" })}
+            {t("post.apply_crop", { defaultValue: "Beskär" })}
           </Button>
         </DialogFooter>
       </DialogContent>

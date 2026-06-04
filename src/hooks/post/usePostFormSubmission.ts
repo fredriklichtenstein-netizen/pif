@@ -113,13 +113,13 @@ export function usePostFormSubmission(initialData?: any) {
         images: formData.images,
         measurements: formData.measurements,
         pickup_preference: formData.pickup_preference || null,
-        preferred_time_window: formData.preferred_time_window?.trim() || null,
-        pickup_address: formData.pickup_preference
-          ? (formData.pickup_address_mode === 'custom'
-              ? (formData.pickup_address?.trim() || null)
-              : (formData.primary_address || null))
+        pickup_door_code: formData.pickup_preference === 'leave_at_door'
+          ? (formData.pickup_door_code?.trim() || null)
           : null,
-      };
+        pickup_instructions: formData.pickup_instructions?.trim() || null,
+        preferred_time_window: formData.preferred_time_window?.trim() || null,
+        pickup_address: null,
+      } as any;
       let result;
       if (initialData?.id) {
         result = await supabase

@@ -2,22 +2,26 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { AddressInput } from "@/components/profile/address/AddressInput";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Handshake, DoorOpen, Sparkles } from "lucide-react";
 import type { PostFormData } from "@/types/post";
 import { useTranslation } from 'react-i18next';
+import { cn } from "@/lib/utils";
 
 interface PostFormLocationProps {
   formData: PostFormData;
   setFormData: (formData: PostFormData | ((prev: PostFormData) => PostFormData)) => void;
   onAddressSelect?: (address: string, coordinates: { lat: number; lng: number }) => void;
 }
+
+type PickupOption = 'meetup' | 'leave_at_door' | 'flexible';
 
 export function PostFormLocation({
   formData,
@@ -27,6 +31,22 @@ export function PostFormLocation({
   const { t } = useTranslation();
   const isRequest = formData.item_type === 'request';
 
+  const pickupOptions: { value: PickupOption; label: string; icon: React.ElementType }[] = [
+    { value: 'meetup', label: t('post.pickup_meetup'), icon: Handshake },
+    { value: 'leave_at_door', label: t('post.pickup_leave_at_door'), icon: DoorOpen },
+    { value: 'flexible', label: t('post.pickup_flexible'), icon: Sparkles },
+  ];
+
+  const selectedPref = formData.pickup_preference as PickupOption | '' | undefined;
+
+  const selectPref = (value: PickupOption) => {
+    setFormData((prev) => ({
+      ...prev,
+      pickup_preference: prev.pickup_preference === value ? '' : value,
+      pickup_door_code: value === 'leave_at_door' ? (prev.pickup_door_code || '') : '',
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -34,7 +54,7 @@ export function PostFormLocation({
           {isRequest ? t('post.step_search_area') : t('post.step_location')}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {isRequest 
+          {isRequest
             ? t('post.search_area_placeholder')
             : t('post.location_placeholder')
           }
@@ -49,8 +69,8 @@ export function PostFormLocation({
           <AddressInput
             value={formData.location}
             onChange={(address, coordinates) => {
-              setFormData(prev => ({ 
-                ...prev, 
+              setFormData(prev => ({
+                ...prev,
                 location: address,
                 coordinates: coordinates || null
               }));
@@ -81,117 +101,65 @@ export function PostFormLocation({
           </div>
         )}
 
-        <Collapsible className="border rounded-lg">
-          <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
-            <span>{t('post.pickup_details_optional')}</span>
-            <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="p-4 pt-0 space-y-4">
-            <div className="space-y-2">
-              <Label>{t('post.pickup_preference')}</Label>
-              <RadioGroup
-                value={formData.pickup_preference || ''}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    pickup_preference: value as 'meetup' | 'leave_at_door',
-                  }))
-                }
-                className="flex flex-col gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="meetup" id="post-pp-meetup" />
-                  <Label htmlFor="post-pp-meetup" className="font-normal cursor-pointer">
-                    {t('post.pickup_meetup')}
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="leave_at_door" id="post-pp-leave" />
-                  <Label htmlFor="post-pp-leave" className="font-normal cursor-pointer">
-                    {t('post.pickup_leave_at_door')}
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {formData.pickup_preference && (
-              <div className="space-y-3">
-                <Label>{t('post.pickup_address')}</Label>
-                <RadioGroup
-                  value={formData.pickup_address_mode || 'primary'}
-                  onValueChange={(value) =>
-                    setFormData((prev) => {
-                      const mode = value as 'primary' | 'custom';
-                      return {
-                        ...prev,
-                        pickup_address_mode: mode,
-                        pickup_address:
-                          mode === 'primary'
-                            ? (prev.primary_address || '')
-                            : (prev.pickup_address === prev.primary_address ? '' : prev.pickup_address || ''),
-                      };
-                    })
-                  }
-                  className="flex flex-col gap-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="primary" id="post-pa-primary" />
-                    <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
-                      {t('profile.pickup_use_primary')}
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="custom" id="post-pa-custom" />
-                    <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
-                      {t('profile.pickup_use_other')}
-                    </Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.pickup_address_mode === 'custom' ? (
-                  <AddressInput
-                    value={formData.pickup_address || ''}
-                    onChange={(addr) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        pickup_address_mode: 'custom',
-                        pickup_address: addr,
-                      }))
-                    }
-                    hideSearch
-                  />
-                ) : (
-                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-                    {formData.primary_address || t('profile.pickup_no_primary')}
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">
-                  {t('profile.pickup_address_in_use')}:{' '}
-                  <span className="font-medium text-foreground">
-                    {(formData.pickup_address_mode === 'custom'
-                      ? formData.pickup_address
-                      : formData.primary_address) || t('profile.pickup_no_address_set')}
-                  </span>
-                </p>
+        {!isRequest && (
+          <Collapsible className="border rounded-lg">
+            <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
+              <span>{t('post.pickup_details_optional')}</span>
+              <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="p-4 pt-0 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {pickupOptions.map(({ value, label, icon: Icon }) => {
+                  const active = selectedPref === value;
+                  return (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant={active ? "default" : "outline"}
+                      onClick={() => selectPref(value)}
+                      className={cn(
+                        "h-auto min-h-[64px] py-3 px-3 flex flex-col items-center justify-center gap-1.5 text-center whitespace-normal",
+                        active && "ring-2 ring-primary"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="text-sm font-medium leading-tight">{label}</span>
+                    </Button>
+                  );
+                })}
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="preferred-time-window">
-                {t('post.preferred_time_window')}
-              </Label>
-              <Input
-                id="preferred-time-window"
-                value={formData.preferred_time_window || ''}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, preferred_time_window: e.target.value }))
-                }
-                placeholder={t('post.preferred_time_window_placeholder')}
-              />
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+              {selectedPref === 'leave_at_door' && (
+                <div className="space-y-2">
+                  <Label htmlFor="pickup-door-code">{t('post.pickup_door_code')}</Label>
+                  <Input
+                    id="pickup-door-code"
+                    value={formData.pickup_door_code || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, pickup_door_code: e.target.value }))
+                    }
+                    placeholder={t('post.pickup_door_code_placeholder')}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="pickup-instructions">
+                  {t('post.pickup_instructions')}
+                </Label>
+                <Textarea
+                  id="pickup-instructions"
+                  value={formData.pickup_instructions || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, pickup_instructions: e.target.value }))
+                  }
+                  placeholder={t('post.pickup_instructions_placeholder')}
+                  className="min-h-[80px]"
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </div>
     </div>
   );
