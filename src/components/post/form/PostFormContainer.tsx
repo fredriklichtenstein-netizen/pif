@@ -65,7 +65,7 @@ export function PostFormContainer({
   ];
 
   // Initialize navigation first
-  const { currentStep, nextStep, prevStep, isOnFinalStep } = usePostFormNavigation({
+  const { currentStep, nextStep, prevStep, isOnFinalStep, maxVisitedStep, goToStep } = usePostFormNavigation({
     steps,
     canProceed: () => false // Temporary, will be updated below
   });
@@ -78,7 +78,14 @@ export function PostFormContainer({
   });
 
   // Update navigation with the real canProceed function
-  const { currentStep: finalCurrentStep, nextStep: finalNextStep, prevStep: finalPrevStep, isOnFinalStep: finalIsOnFinalStep } = usePostFormNavigation({
+  const {
+    currentStep: finalCurrentStep,
+    nextStep: finalNextStep,
+    prevStep: finalPrevStep,
+    isOnFinalStep: finalIsOnFinalStep,
+    maxVisitedStep: finalMaxVisited,
+    goToStep: finalGoToStep,
+  } = usePostFormNavigation({
     steps,
     canProceed: validation.canProceed
   });
@@ -164,7 +171,12 @@ export function PostFormContainer({
         </Button>
       </div>
 
-      <PostFormProgress steps={steps} currentStep={finalCurrentStep} />
+      <PostFormProgress
+        steps={steps}
+        currentStep={finalCurrentStep}
+        maxVisitedStep={finalMaxVisited}
+        onStepClick={finalGoToStep}
+      />
 
       <form onSubmit={handleFormSubmit} className="space-y-6">
         <Card className="p-6">
