@@ -55,6 +55,15 @@ export const useLikes = (id: string, userId?: string | null) => {
     if (typeof initialLikes === "number") setLikesCount(initialLikes);
   }, [initialLikes]);
 
+  // Mirror the global "my liked" state into local state so the heart
+  // colour/state hydrates correctly on mount (from the bulk pre-fetch)
+  // and updates live across tabs and devices.
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (typeof myLikedRealtime === "boolean") setIsLiked(myLikedRealtime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myLikedRealtime]);
+
   useEffect(() => {
     if (DEMO_MODE) return;
     if (!authInitialized) return;
