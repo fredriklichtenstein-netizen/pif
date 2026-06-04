@@ -262,6 +262,31 @@ export function useOptimizedFeed() {
     return () => clearTimeout(timer);
   }, [page]);
 
+  // Realtime: when a new item is created by any user, refresh the first
+  // page so the new post shows up at the top of the feed without
+  // requiring a manual page refresh.
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    const channel = supabase
+      .channel('feed-items-inserts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'items' },
+        () => {
+          clearPostsCache();
+          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized', 0] });
+        }
+      )
+      .subscribe();
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {
+        /* noop */
+      }
+    };
+  }, [queryClient]);
+
   // Return demo data if in demo mode
   if (demoData) {
     return demoData;
