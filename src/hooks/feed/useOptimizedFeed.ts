@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getOptimizedPosts, prefetchNextPage, clearPostsCache } from '@/services/posts/optimized';
+import { supabase } from '@/integrations/supabase/client';
 import { DEMO_MODE } from '@/config/demoMode';
 import { MOCK_POSTS } from '@/data/mockPosts';
 import type { Post } from '@/types/post';
