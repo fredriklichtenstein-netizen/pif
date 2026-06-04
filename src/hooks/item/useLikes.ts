@@ -89,6 +89,7 @@ export const useLikes = (id: string, userId?: string | null) => {
             maybeRecoverFromAuthError(likeError, "useLikes like status fetch");
           } else {
             setIsLiked(!!likeData);
+            setMyLiked(id, !!likeData);
           }
         }
 
