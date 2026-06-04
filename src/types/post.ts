@@ -28,7 +28,9 @@ export interface PostFormData {
   location: string;
   images: string[];
   measurements: Record<string, string>;
-  pickup_preference?: 'meetup' | 'leave_at_door' | '';
+  pickup_preference?: 'meetup' | 'leave_at_door' | 'flexible' | '';
+  pickup_door_code?: string;
+  pickup_instructions?: string;
   preferred_time_window?: string;
   pickup_address?: string;
   pickup_address_mode?: 'primary' | 'custom';

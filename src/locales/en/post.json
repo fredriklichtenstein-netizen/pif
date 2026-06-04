@@ -119,7 +119,15 @@
     "pickup_preference": "Pickup preference",
     "pickup_meetup": "Meet up",
     "pickup_leave_at_door": "Leave at the door",
+    "pickup_flexible": "Flexible",
+    "pickup_door_code": "Door code",
+    "pickup_door_code_placeholder": "E.g. 1234B",
+    "pickup_instructions": "Pickup instructions",
+    "pickup_instructions_placeholder": "E.g. Weekdays after 5pm, ring the doorbell",
     "preferred_time_window": "Preferred time for pickup",
-    "preferred_time_window_placeholder": "E.g. Weekdays after 5pm"
+    "preferred_time_window_placeholder": "E.g. Weekdays after 5pm",
+    "crop_image": "Crop image",
+    "apply_crop": "Crop",
+    "reset_crop": "Reset"
   }
 }

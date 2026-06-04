@@ -118,8 +118,16 @@
     "pickup_details_optional": "Upphämtningsdetaljer (valfritt)",
     "pickup_preference": "Hämtningspreferens",
     "pickup_meetup": "Mötas upp",
-    "pickup_leave_at_door": "Lämna vid dörren",
+    "pickup_leave_at_door": "Lämnas vid dörren",
+    "pickup_flexible": "Flexibelt",
+    "pickup_door_code": "Portkod",
+    "pickup_door_code_placeholder": "T.ex. 1234B",
+    "pickup_instructions": "Upphämtningsinstruktioner",
+    "pickup_instructions_placeholder": "T.ex. Vardagar efter 17:00, ring på dörrklockan",
     "preferred_time_window": "Önskad tid för upphämtning",
-    "preferred_time_window_placeholder": "T.ex. Vardagar efter 17:00"
+    "preferred_time_window_placeholder": "T.ex. Vardagar efter 17:00",
+    "crop_image": "Beskär bild",
+    "apply_crop": "Beskär",
+    "reset_crop": "Återställ"
   }
 }
