@@ -198,8 +198,16 @@ export const useLikes = (id: string, userId?: string | null) => {
     // Optimistic flip — update UI immediately and adjust counter so the
     // user gets instant feedback. Realtime / list refetch reconciles the
     // exact list in the background.
+    const newCount = Math.max(0, previousCount + (wasLiked ? -1 : 1));
     setIsLiked(!wasLiked);
-    setLikesCount(Math.max(0, previousCount + (wasLiked ? -1 : 1)));
+    setLikesCount(newCount);
+    // Mirror into the shared store so the count is consistent across
+    // any other consumer of this item's counts (and survives even if the
+    // realtime DELETE event is dropped by Postgres replica identity).
+    useInitialCountsStore
+      .getState()
+      .setBulkCounts([{ itemId: id, likesCount: newCount }]);
+    setMyLiked(id, !wasLiked);
     
     try {
       if (wasLiked) {
