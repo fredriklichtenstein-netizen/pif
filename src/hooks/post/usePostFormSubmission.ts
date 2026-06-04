@@ -113,12 +113,10 @@ export function usePostFormSubmission(initialData?: any) {
         images: formData.images,
         measurements: formData.measurements,
         pickup_preference: formData.pickup_preference || null,
-        preferred_time_window: formData.preferred_time_window?.trim() || null,
-        pickup_address: formData.pickup_preference
-          ? (formData.pickup_address_mode === 'custom'
-              ? (formData.pickup_address?.trim() || null)
-              : (formData.primary_address || null))
-          : null,
+        preferred_time_window: formData.pickup_instructions?.trim()
+          || formData.preferred_time_window?.trim()
+          || null,
+        pickup_address: (formData as any).pickup_door_code?.trim() || null,
       };
       let result;
       if (initialData?.id) {
