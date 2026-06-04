@@ -9,6 +9,7 @@ import { DEMO_USER } from "@/data/mockUser";
 import type { User } from "./utils/userUtils";
 import { useTranslation } from "react-i18next";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { useMyLikedStore } from "@/stores/myLikedStore";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
 
