@@ -81,7 +81,7 @@ begin
 
   v_receiver_msg :=
     'Du har valts som mottagare för "' || v_title || '".'
-    || E'\n\nOm föremålet: ' || v_desc
+    || case when btrim(coalesce(v_desc,'')) <> '' then E'\n\nOm föremålet: ' || v_desc else '' end
     || case when v_handover_line is not null then E'\n\n' || v_handover_line else '' end
     || case when v_addr_line is not null then E'\n' || v_addr_line else '' end
     || case when v_time_line is not null then E'\n' || v_time_line else '' end
