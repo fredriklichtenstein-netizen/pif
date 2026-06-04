@@ -17,8 +17,12 @@ export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
   const demoIsLiked = demoStore.isLiked(id);
   const initialLikes = useInitialCountsStore((s) => s.counts[String(id)]?.likesCount);
+  const myLikedRealtime = useMyLikedStore((s) => s.byItem[String(id)]);
+  const setMyLiked = useMyLikedStore((s) => s.set);
 
-  const [isLiked, setIsLiked] = useState(DEMO_MODE ? demoIsLiked : false);
+  const [isLiked, setIsLiked] = useState(
+    DEMO_MODE ? demoIsLiked : (typeof myLikedRealtime === "boolean" ? myLikedRealtime : false)
+  );
   const [likesCount, setLikesCount] = useState(initialLikes ?? 0);
   const [likers, setLikers] = useState<User[]>([]);
   const [loading, setLoading] = useState(!DEMO_MODE);
