@@ -9,6 +9,7 @@ import { DEMO_USER } from "@/data/mockUser";
 import type { User } from "./utils/userUtils";
 import { useTranslation } from "react-i18next";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { useMyLikedStore } from "@/stores/myLikedStore";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
 
@@ -16,8 +17,12 @@ export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
   const demoIsLiked = demoStore.isLiked(id);
   const initialLikes = useInitialCountsStore((s) => s.counts[String(id)]?.likesCount);
+  const myLikedRealtime = useMyLikedStore((s) => s.byItem[String(id)]);
+  const setMyLiked = useMyLikedStore((s) => s.set);
 
-  const [isLiked, setIsLiked] = useState(DEMO_MODE ? demoIsLiked : false);
+  const [isLiked, setIsLiked] = useState(
+    DEMO_MODE ? demoIsLiked : (typeof myLikedRealtime === "boolean" ? myLikedRealtime : false)
+  );
   const [likesCount, setLikesCount] = useState(initialLikes ?? 0);
   const [likers, setLikers] = useState<User[]>([]);
   const [loading, setLoading] = useState(!DEMO_MODE);
@@ -49,6 +54,15 @@ export const useLikes = (id: string, userId?: string | null) => {
     if (DEMO_MODE) return;
     if (typeof initialLikes === "number") setLikesCount(initialLikes);
   }, [initialLikes]);
+
+  // Mirror the global "my liked" state into local state so the heart
+  // colour/state hydrates correctly on mount (from the bulk pre-fetch)
+  // and updates live across tabs and devices.
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (typeof myLikedRealtime === "boolean") setIsLiked(myLikedRealtime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myLikedRealtime]);
 
   useEffect(() => {
     if (DEMO_MODE) return;
@@ -84,6 +98,7 @@ export const useLikes = (id: string, userId?: string | null) => {
             maybeRecoverFromAuthError(likeError, "useLikes like status fetch");
           } else {
             setIsLiked(!!likeData);
+            setMyLiked(id, !!likeData);
           }
         }
 

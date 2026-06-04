@@ -26,6 +26,7 @@ import { PostTypeAndCategoryFilters } from '@/components/filters/PostTypeAndCate
 import { useFeedFiltersStore } from '@/stores/feedFiltersStore';
 import { applyPostFilters } from '@/utils/postFilters';
 import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
+import { useMyLikedIds } from '@/hooks/useMyLikedIds';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
@@ -59,6 +60,9 @@ export function OptimizedFeedContainer() {
   const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { ids: myInterestedIds } = useMyInterestedIds();
+  // Bulk-prefetch the current user's liked items on mount so heart
+  // buttons across the feed hydrate correctly after a page reload.
+  useMyLikedIds();
 
   const fullyFilteredPosts = useMemo(
     () =>
