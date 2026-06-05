@@ -9,6 +9,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoPostsStore } from "@/stores/demoPostsStore";
 import { DEMO_USER } from "@/data/mockUser";
 import { useTranslation } from "react-i18next";
+import { clearPostsCache } from "@/services/posts/optimized";
 
 export function usePostFormSubmission(initialData?: any) {
   const { toast } = useToast();
@@ -140,7 +141,10 @@ export function usePostFormSubmission(initialData?: any) {
         });
         throw result.error;
       }
-      // Invalidate feed queries so new post appears immediately
+      // Clear secondary feed caches before invalidating; otherwise the
+      // publisher can navigate to /feed and get a stale cached first page
+      // before the INSERT realtime event is observed there.
+      clearPostsCache();
       await queryClient.invalidateQueries({ queryKey: ['posts'] });
 
       toast({

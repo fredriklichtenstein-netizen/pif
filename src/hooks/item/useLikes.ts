@@ -67,6 +67,11 @@ export const useLikes = (id: string, userId?: string | null) => {
   useEffect(() => {
     if (DEMO_MODE) return;
     if (!authInitialized) return;
+    if (typeof myLikedRealtime === "boolean") {
+      setIsLiked(myLikedRealtime);
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
 
@@ -119,7 +124,7 @@ export const useLikes = (id: string, userId?: string | null) => {
     return () => {
       cancelled = true;
     };
-  }, [id, userId, authInitialized]);
+  }, [id, userId, authInitialized, myLikedRealtime, setMyLiked]);
 
   const fetchLikersInternal = async (numericId: number, isCancelled?: () => boolean): Promise<User[]> => {
     const cancelled = () => isCancelled?.() === true;

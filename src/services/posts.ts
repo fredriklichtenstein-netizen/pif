@@ -84,7 +84,8 @@ export const getPosts = async (): Promise<Post[]> => {
       });
     }
     
-    // If the interactions table doesn't have all items, perform individual counts
+    // If the interactions table doesn't have all items, fetch missing counts in
+    // three batched queries. Never loop per item for feed counters.
     const likesMap = new Map();
     const interestsMap = new Map();
     const commentsMap = new Map();
@@ -93,43 +94,15 @@ export const getPosts = async (): Promise<Post[]> => {
     const missingItemIds = itemIds.filter(id => !interactionsMap.has(id));
     
     if (missingItemIds.length > 0) {
-      await Promise.all([
-        // Fetch likes counts for each item individually
-        ...missingItemIds.map(async (itemId) => {
-          const { count, error } = await supabase
-            .from('likes')
-            .select('*', { count: 'exact', head: true })
-            .eq('item_id', itemId);
-            
-          if (count !== null && !error) {
-            likesMap.set(itemId, count);
-          }
-        }),
-        
-        // Fetch interests counts for each item individually
-        ...missingItemIds.map(async (itemId) => {
-          const { count, error } = await supabase
-            .from('interests')
-            .select('*', { count: 'exact', head: true })
-            .eq('item_id', itemId);
-            
-          if (count !== null && !error) {
-            interestsMap.set(itemId, count);
-          }
-        }),
-        
-        // Fetch comments counts for each item individually
-        ...missingItemIds.map(async (itemId) => {
-          const { count, error } = await supabase
-            .from('comments')
-            .select('*', { count: 'exact', head: true })
-            .eq('item_id', itemId);
-            
-          if (count !== null && !error) {
-            commentsMap.set(itemId, count);
-          }
-        })
+      const [likes, interests, comments] = await Promise.all([
+        supabase.from('likes').select('item_id').in('item_id', missingItemIds),
+        supabase.from('interests').select('item_id').in('item_id', missingItemIds),
+        supabase.from('comments').select('item_id').in('item_id', missingItemIds),
       ]);
+
+      likes.data?.forEach((row) => likesMap.set(row.item_id, (likesMap.get(row.item_id) || 0) + 1));
+      interests.data?.forEach((row) => interestsMap.set(row.item_id, (interestsMap.get(row.item_id) || 0) + 1));
+      comments.data?.forEach((row) => commentsMap.set(row.item_id, (commentsMap.get(row.item_id) || 0) + 1));
     }
 
     // Transform data to match the Post type

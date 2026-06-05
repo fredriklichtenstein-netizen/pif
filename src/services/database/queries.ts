@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { withRetry, DatabaseError } from "./connection";
-import { batchQueries } from "./batch";
 import { monitorQuery } from "./monitor";
 
 // Optimized query builders with monitoring
@@ -115,27 +114,6 @@ export class OptimizedQueries {
   }
 
   private static async getInteractionCountsFallback(itemIds: number[]) {
-    const batchSize = 5;
-    const batches = [];
-    
-    for (let i = 0; i < itemIds.length; i += batchSize) {
-      batches.push(itemIds.slice(i, i + batchSize));
-    }
-    
-    const results = await Promise.all(
-      batches.map(batch => this.getInteractionCountsForBatch(batch))
-    );
-    
-    // Merge results
-    const finalMap = new Map();
-    results.forEach(map => {
-      map.forEach((value, key) => finalMap.set(key, value));
-    });
-    
-    return finalMap;
-  }
-
-  private static async getInteractionCountsForBatch(itemIds: number[]) {
     const [likes, interests, comments] = await Promise.all([
       supabase.from('likes').select('item_id').in('item_id', itemIds),
       supabase.from('interests').select('item_id').in('item_id', itemIds),
@@ -143,13 +121,29 @@ export class OptimizedQueries {
     ]);
     
     const countsMap = new Map();
+    const likesCounts = new Map<number, number>();
+    const interestsCounts = new Map<number, number>();
+    const commentsCounts = new Map<number, number>();
+
+    likes.data?.forEach((row: any) => {
+      const itemId = Number(row.item_id);
+      likesCounts.set(itemId, (likesCounts.get(itemId) || 0) + 1);
+    });
+    interests.data?.forEach((row: any) => {
+      const itemId = Number(row.item_id);
+      interestsCounts.set(itemId, (interestsCounts.get(itemId) || 0) + 1);
+    });
+    comments.data?.forEach((row: any) => {
+      const itemId = Number(row.item_id);
+      commentsCounts.set(itemId, (commentsCounts.get(itemId) || 0) + 1);
+    });
     
     itemIds.forEach(itemId => {
-      const likesCount = likes.data?.filter(l => l.item_id === itemId).length || 0;
-      const interestsCount = interests.data?.filter(i => i.item_id === itemId).length || 0;
-      const commentsCount = comments.data?.filter(c => c.item_id === itemId).length || 0;
-      
-      countsMap.set(itemId, { likesCount, interestsCount, commentsCount });
+      countsMap.set(itemId, {
+        likesCount: likesCounts.get(itemId) || 0,
+        interestsCount: interestsCounts.get(itemId) || 0,
+        commentsCount: commentsCounts.get(itemId) || 0,
+      });
     });
     
     return countsMap;
