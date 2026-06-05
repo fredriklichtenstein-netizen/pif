@@ -1,5 +1,5 @@
 
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
 import { FeedItemList } from './FeedItemList';
 import { FeedLoadingState } from './FeedLoadingState';
@@ -27,6 +27,8 @@ import { useFeedFiltersStore } from '@/stores/feedFiltersStore';
 import { applyPostFilters } from '@/utils/postFilters';
 import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
 import { useMyLikedIds } from '@/hooks/useMyLikedIds';
+import { useMyInterestStore } from '@/stores/myInterestStore';
+import { useMyLikedStore } from '@/stores/myLikedStore';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
@@ -59,10 +61,9 @@ export function OptimizedFeedContainer() {
   const setItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
   const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
-  const { ids: myInterestedIds } = useMyInterestedIds();
-  // Bulk-prefetch the current user's liked items on mount so heart
-  // buttons across the feed hydrate correctly after a page reload.
-  useMyLikedIds();
+  const { ids: myInterestedIds, isLoaded: interestedIdsLoaded } = useMyInterestedIds();
+  const { ids: myLikedIds, isLoaded: likedIdsLoaded } = useMyLikedIds();
+  const [hydratedInteractionKey, setHydratedInteractionKey] = useState('');
 
   const fullyFilteredPosts = useMemo(
     () =>
@@ -85,6 +86,38 @@ export function OptimizedFeedContainer() {
       myInterestedIds,
     ],
   );
+
+  const visiblePostIdsKey = useMemo(
+    () => fullyFilteredPosts.map((post) => String(post.id)).join(','),
+    [fullyFilteredPosts],
+  );
+
+  useEffect(() => {
+    if (DEMO_MODE || isLoading || !likedIdsLoaded || !interestedIdsLoaded) return;
+
+    const visibleIds = fullyFilteredPosts.map((post) => String(post.id));
+    useMyLikedStore.getState().setMany(
+      visibleIds.map((itemId) => ({ itemId, value: myLikedIds.has(itemId) })),
+    );
+    useMyInterestStore.getState().setMany(
+      visibleIds.map((itemId) => ({ itemId, value: myInterestedIds.has(itemId) })),
+    );
+    setHydratedInteractionKey(visiblePostIdsKey);
+  }, [
+    fullyFilteredPosts,
+    interestedIdsLoaded,
+    isLoading,
+    likedIdsLoaded,
+    myInterestedIds,
+    myLikedIds,
+    visiblePostIdsKey,
+  ]);
+
+  const interactionStateReady =
+    DEMO_MODE ||
+    (likedIdsLoaded &&
+      interestedIdsLoaded &&
+      hydratedInteractionKey === visiblePostIdsKey);
 
   // Single shared refresh action (announce + begin/end + try/finally)
   // — identical to the one used by the map view.
@@ -130,7 +163,7 @@ export function OptimizedFeedContainer() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || !interactionStateReady) {
     return (
       <div
         className="space-y-4"
