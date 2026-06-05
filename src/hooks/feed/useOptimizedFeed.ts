@@ -262,9 +262,9 @@ export function useOptimizedFeed() {
     return () => clearTimeout(timer);
   }, [page]);
 
-  // Realtime: when a new item is created by any user, refresh the first
-  // page so the new post shows up at the top of the feed without
-  // requiring a manual page refresh.
+  // Realtime: when a new item is created by any user — including the
+  // current publisher — refresh the first page so the new post shows up
+  // at the top of the feed without requiring a manual page refresh.
   useEffect(() => {
     if (DEMO_MODE) return;
     const channel = supabase
@@ -274,6 +274,7 @@ export function useOptimizedFeed() {
         { event: 'INSERT', schema: 'public', table: 'items' },
         () => {
           clearPostsCache();
+          setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
           queryClient.invalidateQueries({ queryKey: ['posts', 'optimized', 0] });
         }
       )
