@@ -90,6 +90,11 @@ export const useInterests = (id: string, userId?: string | null) => {
   useEffect(() => {
     if (DEMO_MODE) return;
     if (!authInitialized) return;
+    if (typeof myInterestRealtime === "boolean") {
+      setShowInterest(myInterestRealtime);
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
 
@@ -121,11 +126,12 @@ export const useInterests = (id: string, userId?: string | null) => {
         }
 
         if (cancelled) return;
-        await fetchInterestedUsersInternal(numericId);
+        setLoading(false);
       } catch (error) {
         if (cancelled) return;
         console.error("Error fetching interests:", error);
         maybeRecoverFromAuthError(error, "useInterests initial fetch");
+        setLoading(false);
       }
     };
 
@@ -134,7 +140,7 @@ export const useInterests = (id: string, userId?: string | null) => {
     return () => {
       cancelled = true;
     };
-  }, [id, userId, authInitialized]);
+  }, [id, userId, authInitialized, myInterestRealtime, setMyInterest]);
 
   // Realtime: any change to interests for this item updates "my" interest
   // state in the global store and refetches the interested users list.

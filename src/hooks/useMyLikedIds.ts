@@ -21,6 +21,7 @@ export const useMyLikedIds = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const fetchAll = useCallback(async () => {
+    setIsLoaded(false);
     if (!userId) {
       setIds(new Set());
       setIsLoaded(true);
