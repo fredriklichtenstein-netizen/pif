@@ -15,18 +15,19 @@ export class OptimizedQueries {
     categories?: string[];
     coordinates?: { lat: number; lng: number; radius?: number };
   }) {
-    return monitorQuery('getPosts', () => 
+    return monitorQuery('getPosts', () =>
       withRetry(async () => {
-        // For now, we'll handle all queries the same way since we don't have geospatial RPC
-        // In the future, we can add proper geospatial filtering with PostGIS
+        // Narrow column list — only what feed cards / transform actually read.
+        // Avoid heavy fields like `measurements`, `archived_reason`,
+        // `pickup_*`, etc. Profiles are fetched in a separate parallel query
+        // to keep PostgREST off the embed path (which has been observed to
+        // stall under load and silently fall through on permission edges).
         let query = (supabase
           .from('items') as any)
           .select(`
-            id, title, description, images, location, coordinates, 
-            category, condition, measurements, user_id, pif_status, 
-            item_type,
-            archived_at, archived_reason, created_at,
-            profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)
+            id, title, description, images, location, coordinates,
+            category, condition, user_id, pif_status, item_type,
+            created_at, status
           `)
           .is('archived_at', null)
           .order('created_at', { ascending: false });
@@ -47,18 +48,37 @@ export class OptimizedQueries {
           console.error('🚨 CRITICAL: Database query failed:', error);
           throw new DatabaseError('Failed to fetch posts', error.code, error);
         }
-        
-        if (!data) {
-          console.error('🚨 CRITICAL: Query returned null data');
+
+        if (!data || data.length === 0) {
           return [];
         }
-        if (data?.[0]?.profiles) {
+
+        // Parallel profiles fetch — keyed by user_id. Faster + safer than
+        // PostgREST embedding under the current RLS configuration.
+        const userIds = Array.from(
+          new Set((data as any[]).map((r: any) => r.user_id).filter(Boolean))
+        );
+        let profilesById = new Map<string, any>();
+        if (userIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, username, avatar_url')
+            .in('id', userIds);
+          if (profilesError) {
+            console.warn('Profiles fetch failed (non-fatal):', profilesError);
+          } else if (profiles) {
+            profilesById = new Map(profiles.map((p: any) => [p.id, p]));
+          }
         }
-        
-        return data || [];
+
+        return (data as any[]).map((row: any) => ({
+          ...row,
+          profiles: profilesById.get(row.user_id) || null,
+        }));
       })
     );
   }
+
 
   // Batch get interaction counts for multiple items
   static async getInteractionCounts(itemIds: number[]) {
