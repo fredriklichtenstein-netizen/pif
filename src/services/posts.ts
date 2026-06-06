@@ -25,26 +25,13 @@ export const addPost = async (postData: CreatePostInput) => {
  */
 export const getPosts = async (): Promise<Post[]> => {
   try {
-    // Cache control helpers
-    const cacheKey = 'posts_cache';
-    const cacheExpiry = 5 * 60 * 1000; // 5 minutes in milliseconds
-    
-    // Check for cached data first
+    // Legacy localStorage cache removed — it could hold malformed JSON
+    // (e.g. PostGIS "(lng,lat)" strings written by earlier builds) which
+    // caused "Unexpected token '('" parse errors on every page load.
     if (typeof window !== 'undefined') {
-      const cachedData = localStorage.getItem(cacheKey);
-      if (cachedData) {
-        try {
-          const { data, timestamp } = JSON.parse(cachedData);
-          const isExpired = Date.now() - timestamp > cacheExpiry;
-          
-          if (!isExpired) {
-            return data;
-          }
-        } catch (e) {
-          console.warn("Failed to parse cached data", e);
-        }
-      }
+      try { localStorage.removeItem('posts_cache'); } catch { /* ignore */ }
     }
+
     
     // First, get the base post data
     const { data, error } = await supabase
@@ -156,13 +143,9 @@ export const getPosts = async (): Promise<Post[]> => {
       } as Post;
     });
 
-    // Cache the transformed data
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(cacheKey, JSON.stringify({
-        data: transformedData,
-        timestamp: Date.now()
-      }));
-    }
+    // Legacy write removed alongside the legacy read — the optimized
+    // feed path owns caching now (see src/services/posts/cache.ts).
+
     return transformedData;
   } catch (error) {
     console.error("Error in getPosts:", error);
