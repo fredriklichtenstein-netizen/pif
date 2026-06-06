@@ -143,13 +143,9 @@ export const getPosts = async (): Promise<Post[]> => {
       } as Post;
     });
 
-    // Cache the transformed data
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(cacheKey, JSON.stringify({
-        data: transformedData,
-        timestamp: Date.now()
-      }));
-    }
+    // Legacy write removed alongside the legacy read — the optimized
+    // feed path owns caching now (see src/services/posts/cache.ts).
+
     return transformedData;
   } catch (error) {
     console.error("Error in getPosts:", error);
