@@ -99,10 +99,10 @@ export function useNotifications() {
     // Demo mode: use mock notifications
     if (DEMO_MODE) {
       setNotifications(MOCK_NOTIFICATIONS);
-       => !n.is_read).length);
       setIsLoading(false);
       return;
     }
+
 
     if (!opts?.silent) setIsLoading(true);
     setFetchError(null);
