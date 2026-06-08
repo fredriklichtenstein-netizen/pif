@@ -83,10 +83,15 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<Error | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  // Single source of truth: unread count is always derived from
+  // the notifications array so the nav-tab badge and the All/Unread
+  // filter pills can never drift apart.
+  const unreadCount = notifications.reduce((acc, n) => (n.is_read ? acc : acc + 1), 0);
+
 
   const fetchNotifications = useCallback(async (opts?: { silent?: boolean }) => {
     if (!user?.id) return;
