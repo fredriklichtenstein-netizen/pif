@@ -1,15 +1,13 @@
 
+import { useCallback } from "react";
 import { useItemInteractions } from "./item/useItemInteractions";
 import { useItemActions } from "./item/useItemActions";
-import { useItemRealtime } from "./item/useItemRealtime";
 import { useItemCardComments } from "./item/useItemCardComments";
 import { useItemCardUsers } from "./item/useItemCardUsers";
 import { useItemCardRefresh } from "./item/useItemCardRefresh";
-import { useInteractionCountsRealtime } from "./item/realtime/useInteractionCountsRealtime";
 
 export const useItemCard = (itemId: string) => {
-  // Live counter sync for likes & interests across all users.
-  useInteractionCountsRealtime(itemId);
+  const cleanup = useCallback(() => {}, []);
 
   // Get comments functionality
   const {
@@ -64,13 +62,10 @@ export const useItemCard = (itemId: string) => {
     interestsCount
   );
 
-  // Realtime updates
-  const {
-    isRealtimeSubscribed,
-    realtimeError,
-    refreshItemData,
-    cleanup
-  } = useItemRealtime(itemId, refreshData);
+  // Feed-level realtime handles shared interaction counts. Cards must not
+  // open their own channels, otherwise a refreshed feed creates one channel
+  // per card and can exhaust Supabase Realtime/WebSocket resources.
+  const refreshItemData = refreshData;
 
   return {
     // Comments
@@ -104,8 +99,8 @@ export const useItemCard = (itemId: string) => {
     setComments,
     getInterestedUsers,
     // Realtime
-    isRealtimeSubscribed,
-    realtimeError,
+    isRealtimeSubscribed: false,
+    realtimeError: null,
     refreshItemData,
     cleanup
   };
