@@ -163,20 +163,10 @@ export function NotificationList() {
         </div>
       ) : (
       <div className="divide-y">
-        {sortedGroupKeys.map(groupKey => {
+        {sortedGroupKeys.flatMap(groupKey => {
           const groupNotifications = groupedNotifications[groupKey];
-          const { name: groupName, icon } = groupDisplayInfo[groupKey as keyof typeof groupDisplayInfo] || 
-                                           groupDisplayInfo.other;
-          
-          return (
-            <div key={groupKey} className="bg-background">
-              <div className="px-4 py-2 bg-muted/50 flex items-center gap-2 border-y">
-                {icon}
-                <h3 className="font-medium text-sm">{groupName}</h3>
-                <Badge variant="outline" className="ml-2">{groupNotifications.length}</Badge>
-              </div>
-              
-              {groupNotifications.map((notif) => {
+
+          return groupNotifications.map((notif) => {
                 const isInterestReceived = notif.type === 'interest_received' || notif.type === 'interest';
                 const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
 
@@ -268,11 +258,10 @@ export function NotificationList() {
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          );
+          });
         })}
       </div>
+
       )}
     </div>
   );
