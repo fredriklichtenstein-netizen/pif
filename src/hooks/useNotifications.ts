@@ -99,7 +99,7 @@ export function useNotifications() {
     // Demo mode: use mock notifications
     if (DEMO_MODE) {
       setNotifications(MOCK_NOTIFICATIONS);
-      setUnreadCount(MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length);
+       => !n.is_read).length);
       setIsLoading(false);
       return;
     }
@@ -153,7 +153,7 @@ export function useNotifications() {
     setIsLoading(false);
 
     const unread = transformed.filter((n) => !n.is_read).length;
-    setUnreadCount(unread);
+    
   }, [user?.id, toast]);
 
   // Realtime notifications + recovery on focus/visibility/online + safety poll
@@ -186,7 +186,7 @@ export function useNotifications() {
         if (prev.some((n) => n.id === notif.id)) return prev;
         return [notif, ...prev];
       });
-      if (!notif.is_read) setUnreadCount((c) => c + 1);
+      if (!notif.is_read)  => c + 1);
     };
 
     const channel = supabase
@@ -253,7 +253,7 @@ export function useNotifications() {
       const detail = (e as CustomEvent<NotifSyncDetail>).detail || {};
       if (detail.all) {
         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-        setUnreadCount(0);
+        
         return;
       }
       const ids = new Set(detail.ids || []);
@@ -268,7 +268,7 @@ export function useNotifications() {
           return n;
         })
       );
-      if (cleared > 0) setUnreadCount((c) => Math.max(0, c - cleared));
+      if (cleared > 0)  => Math.max(0, c - cleared));
     };
     const onNew = (e: Event) => {
       const notif = (e as CustomEvent<Notification>).detail;
@@ -313,7 +313,7 @@ export function useNotifications() {
 
     // Optimistic: clear the badge immediately.
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    setUnreadCount(0);
+    
     emitNotifSync({ all: true });
 
     if (DEMO_MODE) return;
@@ -352,7 +352,7 @@ export function useNotifications() {
       })
     );
     if (wasUnread) {
-      setUnreadCount((c) => Math.max(0, c - 1));
+       => Math.max(0, c - 1));
       emitNotifSync({ ids: [notificationId] });
     }
 
