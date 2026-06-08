@@ -186,7 +186,7 @@ export function useNotifications() {
         if (prev.some((n) => n.id === notif.id)) return prev;
         return [notif, ...prev];
       });
-      if (!notif.is_read)  => c + 1);
+      };
     };
 
     const channel = supabase
