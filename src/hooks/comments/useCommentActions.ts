@@ -105,6 +105,13 @@ export const useCommentActions = (
         
         // Update the comments state
         setComments(updatedComments);
+
+        // Decrement the shared counts store immediately so the feed card
+        // counter updates without waiting for the realtime DELETE event.
+        const store = useInitialCountsStore.getState();
+        const prev = store.counts[String(itemId)]?.commentsCount ?? comments.length;
+        const next = Math.max(0, prev - 1);
+        store.setBulkCounts([{ itemId, commentsCount: next }]);
         
         return true;
       }
