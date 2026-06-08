@@ -1,5 +1,5 @@
-
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMessages } from "@/hooks/useMessages";
 import { MessageItem } from "./MessageItem";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,28 @@ import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
 import { ProfilePopup } from "./ProfilePopup";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MoreVertical, Flag, RotateCcw, Archive } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { PifCompletionBanner } from "./PifCompletionBanner";
+import { PifRatingModal } from "./PifRatingModal";
+import { ReportPostDialog } from "@/components/item/ReportPostDialog";
+import { usePifCompletion } from "@/hooks/usePifCompletion";
 
 interface ConversationViewProps {
   conversationId: string;
@@ -21,9 +42,13 @@ interface ConversationViewProps {
 export function ConversationView({ conversationId, onBack }: ConversationViewProps) {
   const { session } = useAuth();
   const currentUserId = session?.user?.id;
+  const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [newMessage, setNewMessage] = useState("");
   const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const { t } = useTranslation();
   const {
     messages,
@@ -42,10 +67,14 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const otherName = resolveDisplayName(otherParticipant?.profile, fallbackName);
   const otherInitial = resolveAvatarInitial(otherParticipant?.profile, fallbackInitial);
 
-  // Role label: piffer = item owner; receiver = the other side.
-  // item.postedBy.id is populated with items.user_id by useConversationDetails.
   const itemOwnerId = item?.postedBy?.id;
   const isCurrentUserPiffer = !!itemOwnerId && itemOwnerId === currentUserId;
+  const role: "piffer" | "receiver" = isCurrentUserPiffer ? "piffer" : "receiver";
+
+  const completion = usePifCompletion(conversationId, item?.id ?? null);
+  const isClosed =
+    completion.pifStatus === "completed" || completion.pifStatus === "archived";
+
   const roleLabel = item
     ? isCurrentUserPiffer
       ? t("messages.role_you_pif", {
@@ -64,6 +93,22 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
   }, [messages]);
 
+  // If piffer just completed both sides via confirm, surface rating modal once.
+  const ratedPromptedRef = useRef(false);
+  useEffect(() => {
+    if (
+      role === "piffer" &&
+      completion.pifferConfirmed &&
+      completion.receiverConfirmed &&
+      completion.pifStatus !== "completed" &&
+      completion.pifStatus !== "archived" &&
+      !ratedPromptedRef.current
+    ) {
+      ratedPromptedRef.current = true;
+      setRatingOpen(true);
+    }
+  }, [role, completion.pifferConfirmed, completion.receiverConfirmed, completion.pifStatus]);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
     try {
@@ -71,6 +116,15 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       setNewMessage("");
     } catch (error) {
       console.error("Failed to send message:", error);
+    }
+  };
+
+  const handleWithdraw = async (action: "reopen" | "archive") => {
+    setWithdrawOpen(false);
+    const res = await completion.withdraw(action);
+    if (res.ok) {
+      if (onBack) onBack();
+      else navigate("/messages");
     }
   };
 
@@ -92,7 +146,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Conversation header — sticky/fixed inside the column */}
+      {/* Conversation header */}
       <div className="border-b p-3 bg-background flex-shrink-0">
         <div className="flex items-center gap-3">
           {onBack && (
@@ -120,12 +174,40 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
               className="h-10 w-10"
             />
           </button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h3 className="font-medium truncate">{otherName}</h3>
             {roleLabel && (
               <p className="text-xs text-muted-foreground truncate">{roleLabel}</p>
             )}
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                aria-label="Mer"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {role === "piffer" && !isClosed && (
+                <>
+                  <DropdownMenuItem onClick={() => setWithdrawOpen(true)}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Ångra val av mottagare
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem onClick={() => setReportOpen(true)}>
+                <Flag className="h-4 w-4 mr-2" />
+                Rapportera problem med detta utbyte
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -177,15 +259,86 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         )}
       </div>
 
-      {/* Fixed message input at the bottom of the column */}
-      <div className="flex-shrink-0">
-        <EnhancedMessageInput
-          value={newMessage}
-          onChange={setNewMessage}
-          onSend={handleSendMessage}
-          placeholder={t("messages.type_message")}
+      {/* Completion banner — only while pif is active */}
+      {!isClosed && !completion.loading && item && (
+        <PifCompletionBanner
+          role={role}
+          pifferConfirmed={completion.pifferConfirmed}
+          receiverConfirmed={completion.receiverConfirmed}
+          onConfirm={() => completion.confirmHandoff(role)}
+          onHardComplete={() => setRatingOpen(true)}
         />
+      )}
+
+      {/* Message input OR read-only status */}
+      <div className="flex-shrink-0">
+        {isClosed ? (
+          <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
+            {completion.pifStatus === "archived"
+              ? "Piffen har arkiverats — konversationen är avslutad."
+              : "Piffen är genomförd — konversationen är avslutad."}
+          </div>
+        ) : (
+          <EnhancedMessageInput
+            value={newMessage}
+            onChange={setNewMessage}
+            onSend={handleSendMessage}
+            placeholder={t("messages.type_message")}
+          />
+        )}
       </div>
+
+      {/* Piffer rating modal */}
+      {role === "piffer" && (
+        <PifRatingModal
+          open={ratingOpen}
+          onOpenChange={setRatingOpen}
+          onSubmit={(rating, comment) =>
+            completion.completeWithRating(rating, comment)
+          }
+          onLowRatingReport={() => setReportOpen(true)}
+        />
+      )}
+
+      {/* Withdraw choice dialog (piffer only) */}
+      <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ångra val av mottagare</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vill du återöppna piffen så att andra kan visa intresse, eller arkivera den helt?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+            <AlertDialogAction
+              onClick={() => handleWithdraw("reopen")}
+              className="w-full"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Återöppna piffen
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => handleWithdraw("archive")}
+              className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              Arkivera piffen
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full mt-0">
+              Avbryt
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Report dialog (both parties) */}
+      {item && (
+        <ReportPostDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          itemId={item.id}
+        />
+      )}
     </div>
   );
 }
