@@ -352,7 +352,7 @@ export function useNotifications() {
       })
     );
     if (wasUnread) {
-       => Math.max(0, c - 1));
+       // unreadCount derives from notifications
       emitNotifSync({ ids: [notificationId] });
     }
 
