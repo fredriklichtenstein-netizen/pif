@@ -5,6 +5,7 @@ import { getOptimizedPosts, prefetchNextPage, clearPostsCache } from '@/services
 import { supabase } from '@/integrations/supabase/client';
 import { DEMO_MODE } from '@/config/demoMode';
 import { MOCK_POSTS } from '@/data/mockPosts';
+import { useInitialCountsStore } from '@/stores/initialCountsStore';
 import type { Post } from '@/types/post';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 
@@ -205,6 +206,11 @@ export function useOptimizedFeed() {
     return posts.filter(p => !removedIds.has(String(p.id)));
   }, [page, queryClient, currentPageData, removedIds]);
 
+  const visiblePostIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    visiblePostIdsRef.current = new Set(allPosts.map((post) => String(post.id)));
+  }, [allPosts]);
+
   // Load more posts. Uses a ref-guarded functional updater so rapid
   // back-to-back intersection events from InfiniteScrollSentinel
   // (which fires again the moment its observer is re-created with a
@@ -262,13 +268,31 @@ export function useOptimizedFeed() {
     return () => clearTimeout(timer);
   }, [page]);
 
-  // Realtime: when a new item is created by any user — including the
-  // current publisher — refresh the first page so the new post shows up
-  // at the top of the feed without requiring a manual page refresh.
+  // Feed-level realtime only: one shared channel for new items and visible
+  // interaction-count changes. Item cards must never open per-card channels.
   useEffect(() => {
     if (DEMO_MODE) return;
+
+    const applyInteractionDelta = (
+      countKey: 'likesCount' | 'interestsCount',
+      payload: { eventType?: string; new?: any; old?: any },
+    ) => {
+      if (payload.eventType !== 'INSERT' && payload.eventType !== 'DELETE') return;
+      const row = payload.new ?? payload.old;
+      const itemId = row?.item_id != null ? String(row.item_id) : '';
+      if (!itemId || !visiblePostIdsRef.current.has(itemId)) return;
+
+      const current = useInitialCountsStore.getState().getCounts(itemId);
+      const currentValue = current?.[countKey] ?? 0;
+      const nextValue = Math.max(
+        0,
+        currentValue + (payload.eventType === 'INSERT' ? 1 : -1),
+      );
+      useInitialCountsStore.getState().setBulkCounts([{ itemId, [countKey]: nextValue }]);
+    };
+
     const channel = supabase
-      .channel('feed-items-inserts')
+      .channel('feed-shared-realtime')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'items' },
@@ -277,6 +301,16 @@ export function useOptimizedFeed() {
           setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
           queryClient.invalidateQueries({ queryKey: ['posts', 'optimized', 0] });
         }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'likes' },
+        (payload) => applyInteractionDelta('likesCount', payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'interests' },
+        (payload) => applyInteractionDelta('interestsCount', payload)
       )
       .subscribe();
     return () => {
