@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "./utils/userUtils";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useMyInterestStore } from "@/stores/myInterestStore";
-import { useItemInterestRealtime } from "./realtime/useItemInterestRealtime";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
 
@@ -141,15 +140,6 @@ export const useInterests = (id: string, userId?: string | null) => {
       cancelled = true;
     };
   }, [id, userId, authInitialized, myInterestRealtime, setMyInterest]);
-
-  // Realtime: any change to interests for this item updates "my" interest
-  // state in the global store and refetches the interested users list.
-  useItemInterestRealtime(id, () => {
-    if (DEMO_MODE) return;
-    if (isAuthRequestCircuitOpen()) return;
-    const numericId = parseInt(id, 10);
-    if (!isNaN(numericId)) fetchInterestedUsersInternal(numericId);
-  });
 
   // Mirror the global "my interest" state into local state so the button
   // colour/state updates live across tabs and devices.
