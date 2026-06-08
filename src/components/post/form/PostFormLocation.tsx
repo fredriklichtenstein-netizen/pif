@@ -43,7 +43,6 @@ export function PostFormLocation({
     setFormData((prev) => ({
       ...prev,
       pickup_preference: prev.pickup_preference === value ? '' : value,
-      pickup_door_code: value === 'leave_at_door' ? (prev.pickup_door_code || '') : '',
     }));
   };
 
@@ -129,19 +128,31 @@ export function PostFormLocation({
                 })}
               </div>
 
-              {selectedPref === 'leave_at_door' && (
-                <div className="space-y-2">
-                  <Label htmlFor="pickup-door-code">{t('post.pickup_door_code')}</Label>
-                  <Input
-                    id="pickup-door-code"
-                    value={formData.pickup_door_code || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, pickup_door_code: e.target.value }))
-                    }
-                    placeholder={t('post.pickup_door_code_placeholder')}
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="pickup-door-code">{t('post.pickup_door_code')}</Label>
+                <Input
+                  id="pickup-door-code"
+                  value={formData.pickup_door_code || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, pickup_door_code: e.target.value }))
+                  }
+                  placeholder={t('post.pickup_door_code_placeholder')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="pickup-floor">{t('post.pickup_floor')}</Label>
+                <Input
+                  id="pickup-floor"
+                  type="number"
+                  inputMode="numeric"
+                  value={formData.pickup_floor || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, pickup_floor: e.target.value }))
+                  }
+                  placeholder={t('post.pickup_floor_placeholder')}
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="pickup-instructions">

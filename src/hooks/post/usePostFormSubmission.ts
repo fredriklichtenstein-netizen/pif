@@ -114,8 +114,9 @@ export function usePostFormSubmission(initialData?: any) {
         images: formData.images,
         measurements: formData.measurements,
         pickup_preference: formData.pickup_preference || null,
-        pickup_door_code: formData.pickup_preference === 'leave_at_door'
-          ? (formData.pickup_door_code?.trim() || null)
+        pickup_door_code: formData.pickup_door_code?.trim() || null,
+        pickup_floor: formData.pickup_floor && formData.pickup_floor.trim() !== ''
+          ? parseInt(formData.pickup_floor, 10)
           : null,
         pickup_instructions: formData.pickup_instructions?.trim() || null,
         preferred_time_window: formData.preferred_time_window?.trim() || null,
