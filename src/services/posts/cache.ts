@@ -103,31 +103,21 @@ export function clearCacheByPrefix(prefix: string): void {
 // ---------- Backwards compatible helpers ----------
 
 export const getPostsFromCache = (): Post[] | null => {
-  // Try the new typed cache first, then fall back to the legacy localStorage key.
+  // Try the new typed cache only. The legacy localStorage bucket has held
+  // malformed PostGIS strings in older builds and can throw `Unexpected token (`
+  // when parsed, so never read it back into the feed path.
   const fresh = getCache<Post[]>("posts:legacy");
   if (fresh) return fresh;
-
-  if (typeof window === "undefined") return null;
-  try {
-    const cached = localStorage.getItem(LEGACY_KEY);
-    if (!cached) return null;
-    const { data, timestamp } = JSON.parse(cached);
-    return Date.now() - timestamp > 5 * 60 * 1000 ? null : (data as Post[]);
-  } catch {
-    return null;
-  }
+  return null;
 };
 
 export const cachePostsData = (data: Post[]) => {
   setCache("posts:legacy", data, 5 * 60 * 1000);
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(
-      LEGACY_KEY,
-      JSON.stringify({ data, timestamp: Date.now() }),
-    );
+    localStorage.removeItem(LEGACY_KEY);
   } catch {
-    // ignore quota errors
+    // ignore storage errors
   }
 };
 
