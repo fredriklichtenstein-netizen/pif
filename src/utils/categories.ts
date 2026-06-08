@@ -75,7 +75,7 @@ export function shouldShowSizeMeasurements(category?: string | null): boolean {
 
 // Detailed measurement fields per category (offer side only).
 export const CATEGORY_MEASUREMENT_FIELDS: Record<string, string[]> = {
-  clothing: ["Chest", "Length", "Shoulders", "Sleeves"],
+  clothing: ["Chest", "Length", "Shoulders", "Sleeves", "Collar"],
   kids_clothing: ["Chest", "Length"],
   kids: ["Age", "Height", "Chest", "Length"],
   furniture: ["Width", "Depth", "Height"],
