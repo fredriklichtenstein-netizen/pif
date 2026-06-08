@@ -30,6 +30,7 @@ export interface PostFormData {
   measurements: Record<string, string>;
   pickup_preference?: 'meetup' | 'leave_at_door' | 'flexible' | '';
   pickup_door_code?: string;
+  pickup_floor?: string;
   pickup_instructions?: string;
   preferred_time_window?: string;
   pickup_address?: string;

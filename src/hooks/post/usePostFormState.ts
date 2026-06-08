@@ -29,6 +29,7 @@ export function usePostFormState(initialData?: any) {
     measurements: initialData?.measurements || {},
     pickup_preference: initialData?.pickup_preference || "",
     pickup_door_code: initialData?.pickup_door_code || "",
+    pickup_floor: initialData?.pickup_floor != null ? String(initialData.pickup_floor) : "",
     pickup_instructions: initialData?.pickup_instructions || "",
     preferred_time_window: initialData?.preferred_time_window || "",
     pickup_address: initialData?.pickup_address || "",
