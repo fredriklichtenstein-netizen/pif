@@ -268,7 +268,7 @@ export function useNotifications() {
           return n;
         })
       );
-      if (cleared > 0)  => Math.max(0, c - cleared));
+      // unreadCount derives from notifications; no separate setter needed
     };
     const onNew = (e: Event) => {
       const notif = (e as CustomEvent<Notification>).detail;
