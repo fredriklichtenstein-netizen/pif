@@ -273,22 +273,56 @@ export function useOptimizedFeed() {
   useEffect(() => {
     if (DEMO_MODE) return;
 
-    const applyInteractionDelta = (
+    // Debounced, authoritative HEAD COUNT refresh per item+table. Using
+    // an absolute count from the DB (instead of a +/-1 delta) keeps the
+    // store correct even when our own optimistic update has already been
+    // applied and the realtime echo arrives moments later — avoiding the
+    // double-decrement that previously left counters showing stale values.
+    const pendingTimers = new Map<string, ReturnType<typeof setTimeout>>();
+    const refreshCount = (
+      itemId: string,
+      table: 'likes' | 'interests',
+      countKey: 'likesCount' | 'interestsCount',
+    ) => {
+      const key = `${table}:${itemId}`;
+      const existing = pendingTimers.get(key);
+      if (existing) clearTimeout(existing);
+      pendingTimers.set(
+        key,
+        setTimeout(async () => {
+          pendingTimers.delete(key);
+          try {
+            const numericId = parseInt(itemId, 10);
+            if (Number.isNaN(numericId)) return;
+            const { count, error } = await supabase
+              .from(table)
+              .select('item_id', { count: 'exact', head: true })
+              .eq('item_id', numericId);
+            if (error || typeof count !== 'number') return;
+            useInitialCountsStore
+              .getState()
+              .setBulkCounts([{ itemId, [countKey]: count }]);
+          } catch {
+            /* best-effort */
+          }
+        }, 250),
+      );
+    };
+
+    const handleInteraction = (
+      table: 'likes' | 'interests',
       countKey: 'likesCount' | 'interestsCount',
       payload: { eventType?: string; new?: any; old?: any },
     ) => {
-      if (payload.eventType !== 'INSERT' && payload.eventType !== 'DELETE') return;
+      if (
+        payload.eventType !== 'INSERT' &&
+        payload.eventType !== 'DELETE'
+      )
+        return;
       const row = payload.new ?? payload.old;
       const itemId = row?.item_id != null ? String(row.item_id) : '';
       if (!itemId || !visiblePostIdsRef.current.has(itemId)) return;
-
-      const current = useInitialCountsStore.getState().getCounts(itemId);
-      const currentValue = current?.[countKey] ?? 0;
-      const nextValue = Math.max(
-        0,
-        currentValue + (payload.eventType === 'INSERT' ? 1 : -1),
-      );
-      useInitialCountsStore.getState().setBulkCounts([{ itemId, [countKey]: nextValue }]);
+      refreshCount(itemId, table, countKey);
     };
 
     const channel = supabase
@@ -305,15 +339,17 @@ export function useOptimizedFeed() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'likes' },
-        (payload) => applyInteractionDelta('likesCount', payload)
+        (payload) => handleInteraction('likes', 'likesCount', payload)
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'interests' },
-        (payload) => applyInteractionDelta('interestsCount', payload)
+        (payload) => handleInteraction('interests', 'interestsCount', payload)
       )
       .subscribe();
     return () => {
+      pendingTimers.forEach((t) => clearTimeout(t));
+      pendingTimers.clear();
       try {
         supabase.removeChannel(channel);
       } catch {

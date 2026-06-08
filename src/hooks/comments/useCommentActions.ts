@@ -8,6 +8,7 @@ import { useCommentInteractions } from "./useCommentInteractions";
 import { useCommentRefresh } from "./useCommentRefresh";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -104,6 +105,13 @@ export const useCommentActions = (
         
         // Update the comments state
         setComments(updatedComments);
+
+        // Decrement the shared counts store immediately so the feed card
+        // counter updates without waiting for the realtime DELETE event.
+        const store = useInitialCountsStore.getState();
+        const prev = store.counts[String(itemId)]?.commentsCount ?? comments.length;
+        const next = Math.max(0, prev - 1);
+        store.setBulkCounts([{ itemId, commentsCount: next }]);
         
         return true;
       }
