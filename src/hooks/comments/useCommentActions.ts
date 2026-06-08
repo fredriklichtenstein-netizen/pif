@@ -8,6 +8,7 @@ import { useCommentInteractions } from "./useCommentInteractions";
 import { useCommentRefresh } from "./useCommentRefresh";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
+import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
