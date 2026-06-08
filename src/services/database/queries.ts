@@ -44,7 +44,17 @@ export class OptimizedQueries {
           query = query.range(options.offset || 0, (options.offset || 0) + options.limit - 1);
         }
 
-        const { data, error } = await query;
+        // Start profiles at the same time as items. This intentionally avoids
+        // PostgREST embeds and avoids waiting for the items response before
+        // beginning the profile request.
+        const profilesQuery = supabase
+          .from('profiles')
+          .select('id, first_name, last_name, username, avatar_url');
+
+        const [{ data, error }, { data: profiles, error: profilesError }] = await Promise.all([
+          query,
+          profilesQuery,
+        ]);
         if (error) {
           console.error('🚨 CRITICAL: Database query failed:', error);
           throw new DatabaseError('Failed to fetch posts', error.code, error);
@@ -54,22 +64,11 @@ export class OptimizedQueries {
           return [];
         }
 
-        // Parallel profiles fetch — keyed by user_id. Faster + safer than
-        // PostgREST embedding under the current RLS configuration.
-        const userIds = Array.from(
-          new Set((data as any[]).map((r: any) => r.user_id).filter(Boolean))
-        );
         let profilesById = new Map<string, any>();
-        if (userIds.length > 0) {
-          const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, first_name, last_name, username, avatar_url')
-            .in('id', userIds);
-          if (profilesError) {
-            console.warn('Profiles fetch failed (non-fatal):', profilesError);
-          } else if (profiles) {
-            profilesById = new Map(profiles.map((p: any) => [p.id, p]));
-          }
+        if (profilesError) {
+          console.warn('Profiles fetch failed (non-fatal):', profilesError);
+        } else if (profiles) {
+          profilesById = new Map(profiles.map((p: any) => [p.id, p]));
         }
 
         return (data as any[]).map((row: any) => ({
