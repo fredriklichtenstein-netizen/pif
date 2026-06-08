@@ -43,26 +43,43 @@ export function NotificationList() {
     [notifications, filter]
   );
 
+  // Categorization: place each notification in one of three buckets
+  // based on its `type` field.
+  //  - selected: current user is the chosen receiver of a pif, or a
+  //              helper has been picked to fulfill their wish
+  //  - interest: someone expressed interest / offered to help
+  //  - other:    everything else (messages, status changes, profile, etc.)
+  const categorize = (type: string): "selected" | "interest" | "other" => {
+    const t = (type || "").toLowerCase();
+    if (
+      t === "receiver_selected" ||
+      t === "selection" ||
+      t === "wish_helper_offered" ||
+      t === "helper_offered" ||
+      t.includes("selected") ||
+      t.includes("helper_offered")
+    ) {
+      return "selected";
+    }
+    if (t === "interest" || t === "interest_received" || t.startsWith("interest")) {
+      return "interest";
+    }
+    return "other";
+  };
+
   const groupedNotifications = useMemo(() => {
-    if (!visibleNotifications || visibleNotifications.length === 0) return {};
-
+    if (!visibleNotifications || visibleNotifications.length === 0) return {} as Record<string, typeof visibleNotifications>;
     return visibleNotifications.reduce((groups, notification) => {
-      const type = notification.type.split('_')[0] || 'other';
-
-      if (!groups[type]) {
-        groups[type] = [];
-      }
-
-      groups[type].push(notification);
+      const key = categorize(notification.type);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(notification);
       return groups;
     }, {} as Record<string, typeof visibleNotifications>);
   }, [visibleNotifications]);
 
   const groupDisplayInfo = {
+    selected: { name: t('interactions.group_selected', 'Du har valts'), icon: <AlertCircle className="h-5 w-5 text-green-600" /> },
     interest: { name: t('interactions.group_interest'), icon: <AlertCircle className="h-5 w-5 text-blue-500" /> },
-    status: { name: t('interactions.group_status'), icon: <Clock className="h-5 w-5 text-green-500" /> },
-    comment: { name: t('interactions.group_comment'), icon: <MessageSquare className="h-5 w-5 text-purple-500" /> },
-    profile: { name: t('interactions.group_profile'), icon: <AlertCircle className="h-5 w-5 text-amber-500" /> },
     other: { name: t('interactions.group_other'), icon: <AlertCircle className="h-5 w-5 text-muted-foreground" /> },
   };
 
@@ -88,7 +105,8 @@ export function NotificationList() {
     );
   }
 
-  const GROUP_PRIORITY: Record<string, number> = { interest: 0, status: 1, comment: 2, profile: 3, other: 4 };
+  const GROUP_PRIORITY: Record<string, number> = { selected: 0, interest: 1, other: 2 };
+
   const sortedGroupKeys = Object.keys(groupedNotifications).sort((a, b) => {
     const pa = GROUP_PRIORITY[a] ?? 99;
     const pb = GROUP_PRIORITY[b] ?? 99;

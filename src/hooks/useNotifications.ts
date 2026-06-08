@@ -83,10 +83,15 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<Error | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  // Single source of truth: unread count is always derived from
+  // the notifications array so the nav-tab badge and the All/Unread
+  // filter pills can never drift apart.
+  const unreadCount = notifications.reduce((acc, n) => (n.is_read ? acc : acc + 1), 0);
+
 
   const fetchNotifications = useCallback(async (opts?: { silent?: boolean }) => {
     if (!user?.id) return;
@@ -94,10 +99,10 @@ export function useNotifications() {
     // Demo mode: use mock notifications
     if (DEMO_MODE) {
       setNotifications(MOCK_NOTIFICATIONS);
-      setUnreadCount(MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length);
       setIsLoading(false);
       return;
     }
+
 
     if (!opts?.silent) setIsLoading(true);
     setFetchError(null);
@@ -148,7 +153,7 @@ export function useNotifications() {
     setIsLoading(false);
 
     const unread = transformed.filter((n) => !n.is_read).length;
-    setUnreadCount(unread);
+    
   }, [user?.id, toast]);
 
   // Realtime notifications + recovery on focus/visibility/online + safety poll
@@ -181,8 +186,8 @@ export function useNotifications() {
         if (prev.some((n) => n.id === notif.id)) return prev;
         return [notif, ...prev];
       });
-      if (!notif.is_read) setUnreadCount((c) => c + 1);
     };
+
 
     const channel = supabase
       .channel(`public:notifications:${user.id}`)
@@ -248,7 +253,7 @@ export function useNotifications() {
       const detail = (e as CustomEvent<NotifSyncDetail>).detail || {};
       if (detail.all) {
         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-        setUnreadCount(0);
+        
         return;
       }
       const ids = new Set(detail.ids || []);
@@ -263,7 +268,7 @@ export function useNotifications() {
           return n;
         })
       );
-      if (cleared > 0) setUnreadCount((c) => Math.max(0, c - cleared));
+      // unreadCount derives from notifications; no separate setter needed
     };
     const onNew = (e: Event) => {
       const notif = (e as CustomEvent<Notification>).detail;
@@ -308,7 +313,7 @@ export function useNotifications() {
 
     // Optimistic: clear the badge immediately.
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    setUnreadCount(0);
+    
     emitNotifSync({ all: true });
 
     if (DEMO_MODE) return;
@@ -347,7 +352,7 @@ export function useNotifications() {
       })
     );
     if (wasUnread) {
-      setUnreadCount((c) => Math.max(0, c - 1));
+       // unreadCount derives from notifications
       emitNotifSync({ ids: [notificationId] });
     }
 

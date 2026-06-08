@@ -326,11 +326,13 @@
     "mark_all_read": "Mark all as read",
     "view_details": "View details",
     "new_badge": "New",
+    "group_selected": "You've been selected",
     "group_interest": "Interest Updates",
     "group_status": "PIF Status Changes",
     "group_comment": "Comments",
     "group_profile": "Profile Interactions",
     "group_other": "Other Notifications",
+
     "rate_user": "Rate {{name}}",
     "rating_very_bad": "Very bad",
     "rating_bad": "Bad",

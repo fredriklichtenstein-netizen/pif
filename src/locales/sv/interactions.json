@@ -326,11 +326,13 @@
     "mark_all_read": "Markera alla som lästa",
     "view_details": "Visa detaljer",
     "new_badge": "Ny",
+    "group_selected": "Du har valts",
     "group_interest": "Intresseuppdateringar",
     "group_status": "PIF-statusändringar",
     "group_comment": "Kommentarer",
     "group_profile": "Profilinteraktioner",
     "group_other": "Övriga aviseringar",
+
     "rate_user": "Betygsätt {{name}}",
     "rating_very_bad": "Mycket dåligt",
     "rating_bad": "Dåligt",
