@@ -27,10 +27,11 @@ export class OptimizedQueries {
           .select(`
             id, title, description, images, location, coordinates,
             category, condition, user_id, pif_status, item_type,
-            created_at, status
+            created_at
           `)
-          .is('archived_at', null)
+          .not('pif_status', 'eq', 'archived')
           .order('created_at', { ascending: false });
+
         if (options.categories?.length) {
           query = query.in('category', options.categories);
         }
