@@ -8,6 +8,7 @@ import { useAuthReady } from "@/hooks/auth/useAuthReady";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_CONVERSATIONS } from "@/data/mockConversations";
 import { useTranslation } from "react-i18next";
+import { debugLog } from "@/utils/authDebug";
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -40,10 +41,14 @@ export function useConversations() {
     }
     
     const fetchConversations = async () => {
+      debugLog("conversations", "fetchConversations called", { isReady, hasUser: !!user?.id });
       if (authLoading || !user) {
         if (!authLoading && !user) {
+          debugLog("conversations", "fetch: ready but no user → must-sign-in error");
           setError(new Error(t('interactions.must_sign_in_conversations')));
           setIsLoading(false);
+        } else {
+          debugLog("conversations", "fetch skipped: auth not ready");
         }
         return;
       }
@@ -52,9 +57,11 @@ export function useConversations() {
         if (!hasLoadedRef.current) setIsLoading(true);
         setError(null);
 
+        debugLog("conversations", "querying get_user_conversation_ids RPC");
         const { data: conversationIds, error: funcError } = await supabase.rpc('get_user_conversation_ids');
         if (funcError) throw funcError;
-        
+        debugLog("conversations", "RPC returned", { count: conversationIds?.length ?? 0 });
+
         if (!conversationIds || conversationIds.length === 0) {
           if (mounted) { setConversations([]); setIsLoading(false); }
           return;
