@@ -8,6 +8,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
+import { ProfileRatingDisplay } from "@/components/rating/ProfileRatingDisplay";
 
 interface Profile {
   id: string;
@@ -189,6 +190,7 @@ export default function PublicProfile() {
               size={96}
               className="mb-3 border"
             />
+            <ProfileRatingDisplay userId={profile.id} className="mb-2" />
             <div className="text-xl font-semibold">{formatPublicName(profile)}</div>
             <div className="text-muted-foreground mb-2 capitalize">{profile.gender || t('common.gender_undisclosed')}</div>
             {coordinates && (

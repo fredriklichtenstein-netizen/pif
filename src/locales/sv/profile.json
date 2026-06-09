@@ -1,5 +1,8 @@
 
 {
+  "rating_not_enough": "Inte tillräckligt med betyg ännu",
+  "rating_reviews_count": "{{count}} recensioner",
+  "rating_aria": "{{avg}} av 5, baserat på {{count}} recensioner",
   "profile": {
     "my_pifs": "Mina piffar",
     "my_interests": "Mina intressen",
