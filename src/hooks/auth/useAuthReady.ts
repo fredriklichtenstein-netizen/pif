@@ -32,16 +32,26 @@ export function useAuthReady() {
       return;
     }
     let cancelled = false;
+    debugLog("auth", "useAuthReady: probe getSession()");
     supabase.auth
       .getSession()
-      .then(() => {
-        if (!cancelled) setSessionProbeDone(true);
+      .then((r) => {
+        if (!cancelled) {
+          debugLog("auth", "useAuthReady: probe resolved", { hasUser: !!r?.data?.session?.user });
+          setSessionProbeDone(true);
+        }
       })
-      .catch(() => {
-        if (!cancelled) setSessionProbeDone(true);
+      .catch((e) => {
+        if (!cancelled) {
+          debugLog("auth", "useAuthReady: probe error", String(e));
+          setSessionProbeDone(true);
+        }
       });
     const cap = window.setTimeout(() => {
-      if (!cancelled) setCapElapsed(true);
+      if (!cancelled) {
+        debugLog("auth", "useAuthReady: 6s cap elapsed (fail-open)");
+        setCapElapsed(true);
+      }
     }, 6000);
     return () => {
       cancelled = true;
@@ -49,16 +59,19 @@ export function useAuthReady() {
     };
   }, []);
 
-  // Ready when: we have a user already, OR the session probe finished, OR
-  // the auth store says it's initialized (and the probe is done too, to avoid
-  // the boot-fuse-flipped-initialized-early race), OR the hard cap elapsed.
   const isReady =
     DEMO_MODE ||
     !!user ||
     !!session?.user ||
     (sessionProbeDone && initialized) ||
-    sessionProbeDone || // probe alone is enough to know session state
+    sessionProbeDone ||
     capElapsed;
+
+  useEffect(() => {
+    debugLog("auth", `useAuthReady: isReady=${isReady}`, {
+      hasUser: !!user, initialized, sessionProbeDone, capElapsed,
+    });
+  }, [isReady, user, initialized, sessionProbeDone, capElapsed]);
 
   return { user, isReady };
 }

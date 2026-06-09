@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_NOTIFICATIONS } from "@/data/mockNotifications";
 import { maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { debugLog } from "@/utils/authDebug";
 
 // Cross-instance sync: when one mounted useNotifications marks read or
 // receives a new notification via realtime, every other instance updates
@@ -102,32 +103,34 @@ export function useNotifications() {
   }, [isReady]);
 
   const fetchNotifications = useCallback(async (opts?: { silent?: boolean }) => {
-    // Auth not yet ready — keep skeleton, do not commit empty state.
-    if (!isReady) return;
+    debugLog("notifications", "fetchNotifications called", { isReady, hasUser: !!user?.id, silent: !!opts?.silent });
+    if (!isReady) {
+      debugLog("notifications", "fetch skipped: auth not ready");
+      return;
+    }
     if (!user?.id) {
+      debugLog("notifications", "fetch: no user → empty state");
       setNotifications([]);
       setIsLoading(false);
       return;
     }
 
-    // Demo mode: use mock notifications
     if (DEMO_MODE) {
       setNotifications(MOCK_NOTIFICATIONS);
       setIsLoading(false);
       return;
     }
 
-
     if (!opts?.silent) setIsLoading(true);
     setFetchError(null);
 
-
-
+    debugLog("notifications", "querying supabase.notifications");
     const { data, error } = await supabase
       .from("notifications")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
+    debugLog("notifications", "query returned", { rows: data?.length ?? 0, error: error?.message });
 
     if (error) {
       // Stale JWT after a deploy (or RLS-evicted session) lands here too —
