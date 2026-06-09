@@ -6,6 +6,8 @@ import {
   recoverFromCorruptedSession,
   isAuthRequestCircuitOpen,
 } from "@/hooks/auth/sessionRecovery";
+import { safeParseJSON } from "@/utils/safeStorage";
+
 
 /**
  * Stale-while-revalidate profile cache.
@@ -61,21 +63,16 @@ const subscribe = (userId: string, cb: (data: any) => void) => {
 const readEntry = (userId: string): CacheEntry | null => {
   const mem = memoryCache.get(userId);
   if (mem) return mem;
-  try {
-    const raw = window.localStorage.getItem(storageKey(userId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    // Backward-compat: older cache stored the bare profile object.
-    const entry: CacheEntry =
-      parsed && typeof parsed === "object" && "data" in parsed && "cachedAt" in parsed
-        ? (parsed as CacheEntry)
-        : { data: parsed, cachedAt: Date.now() };
-    memoryCache.set(userId, entry);
-    return entry;
-  } catch {
-    return null;
-  }
+  const parsed = safeParseJSON<any>(storageKey(userId), null);
+  if (!parsed) return null;
+  const entry: CacheEntry =
+    parsed && typeof parsed === "object" && "data" in parsed && "cachedAt" in parsed
+      ? (parsed as CacheEntry)
+      : { data: parsed, cachedAt: Date.now() };
+  memoryCache.set(userId, entry);
+  return entry;
 };
+
 
 const readCache = (userId: string): any | null => {
   const entry = readEntry(userId);

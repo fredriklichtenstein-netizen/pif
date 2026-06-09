@@ -4,6 +4,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw, Search, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { safeParseJSON, safeStringify } from "@/utils/safeStorage";
+
 
 const NotFound = () => {
   const location = useLocation();
@@ -79,15 +81,18 @@ const NotFound = () => {
     console.error(label, diagnostics);
 
     try {
-      const errorLog = JSON.parse(
-        localStorage.getItem("pif_error_log") || "[]",
+      const errorLog = safeParseJSON<any[]>(
+        "pif_error_log",
+        [],
+        (v): v is any[] => Array.isArray(v),
       );
       errorLog.push(diagnostics);
       while (errorLog.length > 10) errorLog.shift();
-      localStorage.setItem("pif_error_log", JSON.stringify(errorLog));
+      safeStringify("pif_error_log", errorLog);
     } catch (err) {
       console.error("Failed to log error to localStorage:", err);
     }
+
   }, [authError, diagnostics, fullUrl]);
 
   const handleRetryShareLink = () => {
