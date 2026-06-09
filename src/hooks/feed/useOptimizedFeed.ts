@@ -8,6 +8,7 @@ import { MOCK_POSTS } from '@/data/mockPosts';
 import { useInitialCountsStore } from '@/stores/initialCountsStore';
 import type { Post } from '@/types/post';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
+import { isSafeMode } from '@/utils/safeMode';
 
 // Smaller first page = faster cold paint. Subsequent pages use a
 // larger size to reduce round-trips while scrolling.
@@ -272,9 +273,6 @@ export function useOptimizedFeed() {
   // interaction-count changes. Item cards must never open per-card channels.
   useEffect(() => {
     if (DEMO_MODE) return;
-    // Skip realtime in safe mode — keeps boot lean if realtime is misbehaving.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { isSafeMode } = require("@/utils/safeMode");
     if (isSafeMode()) return;
 
     // Debounced, authoritative HEAD COUNT refresh per item+table. Using
