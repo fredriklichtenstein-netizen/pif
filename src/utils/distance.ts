@@ -1,5 +1,7 @@
+import { safeParseJSON } from "@/utils/safeStorage";
 
 /**
+
  * Calculates the distance between two points using the Haversine formula
  * Coordinates should be in [lng, lat] format for consistency with Mapbox
  */
