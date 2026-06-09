@@ -4,6 +4,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw, Search, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { safeParseJSON, safeStringify } from "@/utils/safeStorage";
+
 
 const NotFound = () => {
   const location = useLocation();
