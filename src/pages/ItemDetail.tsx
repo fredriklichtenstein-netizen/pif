@@ -8,8 +8,6 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { safeParseJSON, safeStringify } from '@/utils/safeStorage';
-
 import { AlertCircle } from 'lucide-react';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { MainNav } from '@/components/MainNav';
@@ -55,28 +53,24 @@ export default function ItemDetail() {
     if (fromShare) {
       // Track share link usage analytics
       try {
-        const shareVisits = safeParseJSON<any[]>(
-          'pif_share_visits',
-          [],
-          (v): v is any[] => Array.isArray(v),
-        );
+        // Store in localStorage for analytics
+        const shareVisits = JSON.parse(localStorage.getItem('pif_share_visits') || '[]');
         shareVisits.push({
           id,
           timestamp: new Date().toISOString(),
           shareOriginTimestamp: shareTimestamp,
           success: !redirectTo404 && !error && !!displayItem
         });
-
+        
         // Keep only the last 20 entries
         while (shareVisits.length > 20) shareVisits.shift();
-
-        safeStringify('pif_share_visits', shareVisits);
-
+        
+        localStorage.setItem('pif_share_visits', JSON.stringify(shareVisits));
+        
         // Silent success — UI already shows the loaded item
       } catch (err) {
         console.error('Failed to track share analytics:', err);
       }
-
     }
   }, [fromShare, id, redirectTo404, error, shareTimestamp, displayItem, toast]);
 

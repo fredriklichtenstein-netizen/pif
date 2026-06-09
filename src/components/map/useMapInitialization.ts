@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { safeParseJSON, safeSetItem } from "@/utils/safeStorage";
 
 const MAP_STATE_KEY = 'map_last_state';
 
@@ -15,23 +14,28 @@ const DEFAULT_ZOOM = 14;
 
 // Move getInitialMapState outside the hook so it can be used by other components
 export const getInitialMapState = (): MapState => {
-  const state = safeParseJSON<MapState | null>(
-    MAP_STATE_KEY,
-    null,
-    (v): v is MapState =>
-      !!v && typeof v === 'object' &&
-      Array.isArray((v as any).center) && (v as any).center.length === 2 &&
-      typeof (v as any).zoom === 'number',
-    "session",
-  );
-  return state ?? { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM };
+  try {
+    const stored = sessionStorage.getItem(MAP_STATE_KEY);
+    if (stored) {
+      const state = JSON.parse(stored);
+      if (Array.isArray(state.center) && state.center.length === 2 &&
+          typeof state.zoom === 'number') {
+        return state;
+      }
+    }
+  } catch (error) {
+    console.error('🚨 [Map Init] Error reading stored map state:', error);
+  }
+  return { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM };
 };
 
 export const saveMapState = (center: [number, number], zoom: number) => {
-  safeSetItem(MAP_STATE_KEY, JSON.stringify({ center, zoom }), "session");
+  try {
+    sessionStorage.setItem(MAP_STATE_KEY, JSON.stringify({ center, zoom }));
+  } catch (error) {
+    console.error('🚨 [Map Init] Error saving map state:', error);
+  }
 };
-
-
 
 // Enhanced browser capability checks
 const checkBrowserCapabilities = () => {

@@ -17,8 +17,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "./authStore";
-import { safeParseJSON, safeRemoveItem, safeStringify } from "@/utils/safeStorage";
-
 
 const RECOVERY_GUARD_KEY = "auth.recoveryGuard";
 const AUTH_REQUEST_CIRCUIT_KEY = "auth.requestCircuit";
@@ -37,29 +35,41 @@ interface AuthRequestCircuitState {
 }
 
 const readGuard = (): RecoveryGuardState => {
-  const parsed = safeParseJSON<RecoveryGuardState | null>(
-    RECOVERY_GUARD_KEY,
-    null,
-    (v): v is RecoveryGuardState =>
-      !!v && typeof (v as any).firstAt === "number",
-    "session",
-  );
-  if (!parsed) return { count: 0, firstAt: 0 };
-  if (Date.now() - parsed.firstAt > RECOVERY_WINDOW_MS) return { count: 0, firstAt: 0 };
-  return parsed;
+  try {
+    const raw = window.sessionStorage.getItem(RECOVERY_GUARD_KEY);
+    if (!raw) return { count: 0, firstAt: 0 };
+    const parsed = JSON.parse(raw) as RecoveryGuardState;
+    if (!parsed || typeof parsed.firstAt !== "number") return { count: 0, firstAt: 0 };
+    if (Date.now() - parsed.firstAt > RECOVERY_WINDOW_MS) return { count: 0, firstAt: 0 };
+    return parsed;
+  } catch {
+    return { count: 0, firstAt: 0 };
+  }
 };
 
 const writeGuard = (state: RecoveryGuardState) => {
-  safeStringify(RECOVERY_GUARD_KEY, state, "session");
+  try {
+    window.sessionStorage.setItem(RECOVERY_GUARD_KEY, JSON.stringify(state));
+  } catch {
+    /* ignore */
+  }
 };
 
 export const clearRecoveryGuard = () => {
-  safeRemoveItem(RECOVERY_GUARD_KEY, "session");
-  safeRemoveItem(AUTH_REQUEST_CIRCUIT_KEY, "session");
+  try {
+    window.sessionStorage.removeItem(RECOVERY_GUARD_KEY);
+    window.sessionStorage.removeItem(AUTH_REQUEST_CIRCUIT_KEY);
+  } catch {
+    /* ignore */
+  }
 };
 
 const writeAuthCircuit = (state: AuthRequestCircuitState) => {
-  safeStringify(AUTH_REQUEST_CIRCUIT_KEY, state, "session");
+  try {
+    window.sessionStorage.setItem(AUTH_REQUEST_CIRCUIT_KEY, JSON.stringify(state));
+  } catch {
+    /* ignore */
+  }
 };
 
 export const openAuthRequestCircuit = (reason: string) => {
@@ -67,20 +77,19 @@ export const openAuthRequestCircuit = (reason: string) => {
 };
 
 export const isAuthRequestCircuitOpen = (): boolean => {
-  const state = safeParseJSON<AuthRequestCircuitState | null>(
-    AUTH_REQUEST_CIRCUIT_KEY,
-    null,
-    (v): v is AuthRequestCircuitState =>
-      !!v && typeof (v as any).openUntil === "number",
-    "session",
-  );
-  if (!state?.openUntil || Date.now() >= state.openUntil) {
-    safeRemoveItem(AUTH_REQUEST_CIRCUIT_KEY, "session");
+  try {
+    const raw = window.sessionStorage.getItem(AUTH_REQUEST_CIRCUIT_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw) as AuthRequestCircuitState;
+    if (!state?.openUntil || Date.now() >= state.openUntil) {
+      window.sessionStorage.removeItem(AUTH_REQUEST_CIRCUIT_KEY);
+      return false;
+    }
+    return true;
+  } catch {
     return false;
   }
-  return true;
 };
-
 
 export const isAuthInvalidError = (err: any): boolean => {
   if (!err) return false;

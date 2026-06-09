@@ -7,8 +7,6 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useTranslation } from "react-i18next";
-import { safeParseJSON } from "@/utils/safeStorage";
-
 
 export function useLazyComments(itemId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,13 +49,11 @@ export function useLazyComments(itemId: string) {
   useEffect(() => {
     if (DEMO_MODE) return;
     if (useFallbackMode && user?.id && isInitialized) {
-      const pendingComments = safeParseJSON<any[]>(
-        `pending_comments_${itemId}`,
-        [],
-        (v): v is any[] => Array.isArray(v),
-      );
-      if (pendingComments.length === 0) return;
       try {
+        const pendingCommentsJson = localStorage.getItem(`pending_comments_${itemId}`);
+        if (!pendingCommentsJson) return;
+        const pendingComments = JSON.parse(pendingCommentsJson);
+        if (!Array.isArray(pendingComments) || pendingComments.length === 0) return;
         const existingIds = new Set(comments.map(c => c.id));
         const newPendingComments = pendingComments.filter(pc => !existingIds.has(pc.id));
         if (newPendingComments.length > 0) {
@@ -73,7 +69,6 @@ export function useLazyComments(itemId: string) {
         }
       } catch (err) { console.error("Error processing pending comments:", err); }
     }
-
   }, [useFallbackMode, user, itemId, isInitialized, comments, setComments]);
 
   const loadComments = useCallback(async (forceRefresh = false) => {
