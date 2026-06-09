@@ -24,30 +24,46 @@ const Messages = () => {
   const { unreadCount } = useNotifications();
   const { unreadMessagesCount } = useUnreadMessagesCount();
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
   const markedAsRead = useRef(new Set<string>());
+  // Track which deep-link value we've already consumed so realtime-driven
+  // re-renders of the conversations array don't re-apply a stale URL param
+  // on top of the user's own click.
+  const appliedDeepLinkRef = useRef<string | null>(null);
 
   const isLoading = authLoading || conversationsLoading;
 
   // Deep-link: open the conversation indicated by ?conversation=<id> or,
-  // as a fallback, the conversation tied to ?item=<id> (used by the
-  // receiver-selected notification when no conversation_id is in payload).
+  // as a fallback, the conversation tied to ?item=<id>. Applied exactly
+  // once per unique URL value, then the param is stripped from the URL so
+  // further clicks in the list aren't overwritten.
   useEffect(() => {
     const cid = searchParams.get("conversation");
+    const itemId = searchParams.get("item");
+    const linkKey = cid ? `c:${cid}` : itemId ? `i:${itemId}` : null;
+    if (!linkKey || appliedDeepLinkRef.current === linkKey) return;
+
     if (cid) {
-      if (cid !== activeConversationId) setActiveConversationId(cid);
+      appliedDeepLinkRef.current = linkKey;
+      setActiveConversationId(cid);
       setActiveTab("messages");
+      const next = new URLSearchParams(searchParams);
+      next.delete("conversation");
+      setSearchParams(next, { replace: true });
       return;
     }
-    const itemId = searchParams.get("item");
     if (itemId && conversations.length > 0) {
       const match = conversations.find(
         (c) => String(c.item_id ?? "") === String(itemId)
       );
       if (match) {
-        if (match.id !== activeConversationId) setActiveConversationId(match.id);
+        appliedDeepLinkRef.current = linkKey;
+        setActiveConversationId(match.id);
         setActiveTab("messages");
+        const next = new URLSearchParams(searchParams);
+        next.delete("item");
+        setSearchParams(next, { replace: true });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
