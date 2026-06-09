@@ -7,6 +7,8 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useTranslation } from "react-i18next";
+import { safeParseJSON } from "@/utils/safeStorage";
+
 
 export function useLazyComments(itemId: string) {
   const [isLoading, setIsLoading] = useState(false);
