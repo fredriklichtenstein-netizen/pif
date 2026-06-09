@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { safeParseJSON, safeRemoveItem, safeSetItem } from "@/utils/safeStorage";
+import { safeParseJSON, safeSetItem } from "@/utils/safeStorage";
 
 const MAP_STATE_KEY = 'map_last_state';
 
