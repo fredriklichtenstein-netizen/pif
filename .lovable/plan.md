@@ -1,108 +1,192 @@
-# Six Fixes: Messaging & Profile Rating
+## What I think is happening
 
-## 1. Conversation list opens wrong conversation
+The repeated loading hangs look less like one bad `JSON.parse` now and more like an architectural issue: several parts of the app are allowed to block rendering while waiting for auth/session/profile/feed/conversation side effects. When any one of those gets stuck or misses a state transition, the app keeps showing skeletons even though there may be no console error and no visibly pending request.
 
-**Root cause:** The deep-link `useEffect` in `src/pages/Messages.tsx` depends on `[searchParams, conversations]`. Every time `conversations` changes (and realtime refetches it constantly — clicking a row triggers `mark_conversation_read`, which updates `messages.read_at`, which fires the `messages` postgres_changes subscription, which refetches conversations), the effect re-runs and — if `?conversation=` or `?item=` is still in the URL from an earlier notification deep-link — re-applies that ID, overwriting the user's click. The "most recent" conversation gets re-selected because it was the original deep-link target.
+The biggest risk areas I found:
 
-**Fix:**
-- Track which deep-link value we've already applied in a `useRef` (`appliedDeepLinkRef`). Only apply `?conversation=` / `?item=` once per unique value.
-- Remove `conversations` from the deps; instead, when `?item=` is provided and conversations haven't loaded yet, watch with a separate effect that only runs until match found, then marks the ref consumed.
-- After applying a deep-link, also strip the param from the URL (`setSearchParams({}, { replace: true })`) so subsequent clicks aren't fought.
+1. **Global auth can still hold the app hostage**
+   - `authStore` starts as `isLoading: true` and `initialized: false`.
+   - `PrivateRoute` blocks on `isLoading || !initialized` with no hard timeout.
+   - `initializeAuth()` awaits `supabase.auth.getSession()` with no timeout. If the Supabase auth client stalls while synchronously reading/locking storage or restoring a malformed session, protected routes can spin forever.
 
-## 2. Remaining `JSON.parse("Unexpected token '('")` errors
+2. **Root navigation components fetch user data on every page**
+   - `MainNav` mounts on most pages and immediately runs profile, notification, unread-message hooks.
+   - This means even public pages indirectly start auth-dependent/realtime work during navigation.
+   - Those hooks should never be allowed to affect page readiness.
 
-A grep confirms **no** `JSON.parse` calls wrap Supabase `.data` directly. The error is a legacy `pif_user_location` localStorage value that was at some point written as a PostGIS string `(lng,lat)` instead of a JSON array.
+3. **Some page skeletons wait for secondary “nice-to-have” state**
+   - Feed waits for posts plus liked/interested hydration before showing content.
+   - Messages waits for auth plus conversations.
+   - These should render primary content first and hydrate interaction state later.
 
-**Fix:**
-- In `src/utils/distance.ts` `calculateDistanceFromUser`: detect a non-JSON value (string starting with `(`) before parsing, delete the bad key, return `NaN`.
-- Audit and harden the other `JSON.parse` localStorage readers (`useLocationStorage`, `useMapInitialization`, `useCachedProfile`, `itemCache`, `posts/cache`, `mapFiltersStorage`, `sessionRecovery`, `useLazyComments`, `useCommentCreate`, `NotFound`, `ItemDetail`, `useItemDetailPage`) — each already has a try/catch, but several `console.error` on parse failure. Convert those to silent `localStorage.removeItem(key)` + return null so corrupted entries self-heal instead of spamming the console x5.
-- Confirm no `JSON.parse(data)` exists on any `supabase.*` response (verified via `rg`).
+4. **Suspense fallback can hide import-time failures or slow chunks**
+   - Every route is lazy loaded behind one generic loading fallback.
+   - If a route chunk import stalls, the user sees the same “loading” UI as if data were loading, making diagnosis hard.
 
-## 3. Conversation must move to Historik & become read-only on realtime status change
+5. **Storage is safer than before, but not completely isolated**
+   - More direct `localStorage`/`sessionStorage` calls remain in i18n, version checking, map components, profile/avatar caches, notification filters, and feed distance storage.
+   - Most are wrapped in `try/catch`, but root-level access in `i18n/index.ts` still happens during module import and should be fail-safe.
 
-**Current state:**
-- `ConversationView` already subscribes per-item via `usePifCompletion` and flips to read-only when `pifStatus` is `completed`/`archived`. Good.
-- `ConversationList` derives Active vs Historik from `conversation.item.status`, but `useConversations` only refetches on `messages`/`conversations`/`conversation_participants` changes — **not** on `items.pif_status` updates. So the list doesn't move the row to Historik until a page refresh.
+## Recommended strategy: stop trying to find one magic bad line
 
-**Fix in `src/hooks/useConversations.ts`:**
-- Build a list of `item_id`s from the current `conversations` and add a single `items` postgres_changes UPDATE subscription filtered to those IDs (`id=in.(...)`), inside the same `public:conversations:${user.id}` channel. On any change, call `fetchConversations()`.
-- Alternatively, since the `pif_status` on each conversation's joined item is what changed, do an in-place state update: when an `items` UPDATE event arrives, patch `conversations[i].item.status = payload.new.pif_status` so the list re-categorises instantly without a full refetch.
-- Prefer the in-place patch (lighter, no flicker).
+I would fix this by changing the app’s loading philosophy:
 
-## 4. Rewrite all completion-flow system messages in 2nd person
+> The shell should always render. Auth, profile, feed, notifications, messages, map, and realtime should be optional layers that either resolve, timeout, or degrade independently.
 
-All edits in `src/hooks/usePifCompletion.ts` `postPifSystemMessage` callers. Use the existing `target_user_id` column on `messages` (already filtered by `ConversationView`) so each side sees the correctly-worded variant.
+That makes the app resilient even if the exact underlying stall changes again.
 
-| Trigger | target_user_id | content |
-|---|---|---|
-| Piffer confirms handoff (to piffer) | piffer | "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning." |
-| Piffer confirms handoff (to receiver) | receiver | "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning." |
-| Receiver confirms (to receiver) | receiver | "Du har bekräftat mottagning." |
-| Receiver confirms (to piffer) | piffer | "Mottagaren har bekräftat mottagning." |
-| Both confirmed | null (both) | "Piffen är genomförd! Tack för att ni använde PIF. 🎉" |
-| Piffer hard-complete (to piffer) | piffer | "Du markerade piffen som genomförd." |
-| Piffer hard-complete (to receiver) | receiver | "Piffaren har markerat piffen som genomförd." |
-| Withdraw reopen (to piffer) | piffer | "Du har ångrat valet av mottagare. Piffen är nu öppen igen." |
-| Withdraw reopen (to receiver) | receiver | "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Piffen är nu öppen för andra att visa intresse." |
-| Withdraw archive (to piffer) | piffer | "Du har arkiverat piffen." |
-| Withdraw archive (to receiver) | receiver | "Piffaren har ångrat sig och kan/vill inte längre piffa detta." |
+## Plan
 
-Extend `postPifSystemMessage` to accept an optional `target_user_id` and resolve the other participant's user id (look up via `conversation_participants` — already known to the hook via `conversationId`; cache it once on mount).
+### 1. Add a root-level boot safety fuse
 
-## 5. Rating comment system message — private star, optional comment
+Create a tiny `BootSafetyProvider` or root hook that starts a 4–6 second timer when the app mounts.
 
-In `usePifCompletion.completeWithRating`:
-- **Remove** the existing "Piffaren lämnade följande omdöme: ..." plain wording; **do not** post the rating value anywhere in the thread.
-- If `comment?.trim()` is non-empty, post a single system message visible to both parties: `"Kommentar från piffaren: ${comment.trim()}"` (no `target_user_id`).
-- If no comment, post nothing extra (still post the "Piffen är genomförd!" celebration message).
-- The numeric star rating stays only in the `complete_pif_with_rating` RPC payload → DB → public profile aggregate (fix #6).
+If auth has not initialized by then, it should:
 
-## 6. Average star rating on public profiles
+- mark auth as initialized,
+- set loading to false,
+- keep `user/session` as whatever is currently known,
+- avoid destructive sign-out,
+- allow public routes to render,
+- allow protected routes to redirect or show a recoverable auth state instead of an infinite spinner.
 
-**Data source:** `interests` table, `receiver_rating` column. The "rated user" is the selected receiver (the row with `selected_at IS NOT NULL` and `user_id = <profile owner>`).
+This is the most important fix. It prevents a single auth restore failure from freezing every refresh.
 
-**New helper** in `src/services/ratings.ts`:
-```ts
-export async function fetchUserRatingSummary(userId: string):
-  Promise<{ avg: number; count: number }>
+### 2. Make `initializeAuth()` bounded
+
+Wrap `supabase.auth.getSession()` in a hard timeout, e.g. 4–5 seconds.
+
+On timeout:
+
+- do not keep `isLoading` true,
+- set `initialized` true,
+- set `profileCompleted` to `null`,
+- keep the app usable,
+- let later auth-state events repair the session if they arrive.
+
+Also avoid awaiting heavy profile work inside auth initialization before the shell can render. Profile completion can be fetched after session restoration, but should not block the entire app indefinitely.
+
+### 3. Make `PrivateRoute` fail open to a recoverable route state
+
+Replace the permanent private-route spinner with a bounded state:
+
+- show loading briefly while auth initializes,
+- after timeout, if no user is known, navigate to `/auth` with the intended destination saved,
+- if the user appears later, navigation can continue normally.
+
+This means `/messages`, `/profile`, `/post`, etc. cannot spin forever on refresh.
+
+### 4. Split “app shell” from “data readiness”
+
+The route frame and navigation should render immediately. Expensive or optional data should hydrate after paint.
+
+Specifically:
+
+- `MainNav` should not start notifications/unread/profile realtime work until auth is initialized and user exists.
+- Notification/unread hooks should default to `0` and never block navigation.
+- Cached profile/avatar should use safe storage only and never subscribe/fetch until there is a stable user id.
+
+### 5. Make feed and messages fail-open
+
+For Feed:
+
+- render posts as soon as posts are available,
+- do not block the whole feed on liked/interested hydration,
+- hydrate liked/interested buttons later,
+- if liked/interested fetches do not resolve within 3–5 seconds, proceed with neutral button state.
+
+For Messages:
+
+- keep the existing conversation timeout but move the timeout down into `useConversations()` too,
+- ensure the hook itself sets `isLoading: false` after 5 seconds even if auth/conversation fetch never finishes,
+- do not let realtime subscription setup affect first render.
+
+### 6. Add a “safe mode” escape hatch
+
+Add a URL/query/local flag like:
+
+```text
+?safe=1
 ```
-Implementation:
-```ts
-const { data } = await supabase
-  .from('interests')
-  .select('receiver_rating')
-  .eq('user_id', userId)
-  .not('receiver_rating', 'is', null);
-const ratings = (data ?? []).map(r => r.receiver_rating as number);
-return {
-  count: ratings.length,
-  avg: ratings.length ? ratings.reduce((a,b)=>a+b,0) / ratings.length : 0,
-};
+
+When active, it should disable nonessential boot work:
+
+- realtime subscriptions,
+- version polling reloads,
+- notification/unread counters,
+- profile revalidation,
+- map auto-initialization,
+- feed interaction hydration.
+
+This is an outside-the-box but very practical debugging and recovery tool. If a user is stuck, you can ask them to open `/?safe=1`; if it loads, we know the shell is good and the culprit is one of the disabled side effects.
+
+### 7. Add boot-stage diagnostics without noisy production logs
+
+Since the current failure has no console output, add a tiny in-memory boot timeline that only shows when `?debugBoot=1` is present.
+
+It would record stages like:
+
+```text
+main imported
+app mounted
+i18n initialized
+auth init started
+auth getSession resolved/timed out
+route rendered
+nav mounted
+feed query started/resolved
 ```
-(Demo mode: read from `useDemoRatingsStore` instead.)
 
-**New component** `src/components/rating/ProfileRatingDisplay.tsx`:
-- Props: `userId: string`.
-- Fetches via React Query (no cache outside the session); always refetches on mount as requested.
-- If `count < 10`: render small muted text "Inte tillräckligt med betyg ännu".
-- Else: render 5 SVG stars with **partial fill** using a `linearGradient` per star (or CSS `clip-path: inset(0 X% 0 0)`). For each star index `i` (1..5): fill % = `clamp((avg - (i-1)) * 100, 0, 100)`.
-- Append text: `"{avg.toFixed(1)} ★ ({count} recensioner)"`.
+No regular production `console.log`s. The debug view can be rendered in-page only when explicitly requested.
 
-**Integrate in `src/pages/PublicProfile.tsx`:** render `<ProfileRatingDisplay userId={profile.id} />` directly below the `<AvatarImage>` and above the name, with `mt-2`. Add SV/EN i18n key for `recensioner` / `reviews` and the not-enough-ratings fallback.
+### 8. Finish storage hardening at root/import boundaries
 
-## Files to edit / create
+Apply safe wrappers to the remaining root or route-import storage calls:
 
-- `src/pages/Messages.tsx` — deep-link ref + URL cleanup (#1)
-- `src/utils/distance.ts` + other localStorage readers — self-healing parse (#2)
-- `src/hooks/useConversations.ts` — items UPDATE subscription / in-place status patch (#3)
-- `src/hooks/usePifCompletion.ts` — targeted system messages, private rating, comment-only message (#4, #5)
-- `src/services/ratings.ts` — new `fetchUserRatingSummary` (#6)
-- `src/components/rating/ProfileRatingDisplay.tsx` — **new** (#6)
-- `src/pages/PublicProfile.tsx` — render the rating component (#6)
-- `src/locales/{en,sv}/profile.json` — new strings (#6)
+- `i18n/index.ts`
+- `useVersionCheck.ts`
+- `useMapbox.ts`
+- `useDistanceFiltering.ts`
+- `LanguageSelector.tsx`
+- profile/avatar cache writes/removes
+- notification filter storage
+- map session-state reads/writes
 
-## Out of scope / NOT changed
+Also improve `safeStorage` so it supports raw string values safely, not only JSON.
 
-- No new SQL migrations.
-- No changes to `PifRatingModal.tsx` UI beyond removing the "visas för mottagaren" placeholder (comment is now visible to receiver, which the existing copy already says — keep as is).
-- No changes to feed / map / posts logic.
+### 9. Reduce realtime during initial page load
+
+Realtime subscriptions should start after initial data has rendered, not during first paint.
+
+Examples:
+
+- Feed can load posts first, then subscribe.
+- Messages can load conversations first, then subscribe.
+- Profile cache can fetch first, then subscribe.
+- Nav counters can subscribe after initial auth is stable.
+
+This reduces race conditions and removes realtime as a boot blocker.
+
+### 10. Optional but powerful: build a minimal shell route fallback
+
+If a route stays in Suspense for too long, show a recoverable page instead of the spinner:
+
+- “Sidan tog för lång tid att ladda”
+- buttons for “Försök igen”, “Gå till Pifs”, “Starta i säkert läge”
+
+This prevents route chunk/import issues from appearing as infinite loading.
+
+## Technical implementation order
+
+1. Add safe raw storage helpers and update root/import-time storage calls.
+2. Add bounded auth initialization timeout.
+3. Add `PrivateRoute` timeout fallback.
+4. Move nav/profile/notification fetches behind stable auth readiness.
+5. Make Feed render independently from liked/interested hydration.
+6. Add `useConversations()` internal timeout fallback.
+7. Add `?safe=1` mode to disable nonessential side effects.
+8. Add `?debugBoot=1` boot timeline for future diagnosis.
+
+## Why this should work even if we have not found the exact culprit
+
+The current problem is dangerous because many unrelated async systems can cause the same symptom: a skeleton that never leaves. This plan removes that class of failure. Even if Supabase auth stalls, storage is corrupt, realtime setup misbehaves, a route chunk is slow, or an interaction-count query hangs, the app shell still renders and the affected feature degrades locally instead of freezing the whole app.
