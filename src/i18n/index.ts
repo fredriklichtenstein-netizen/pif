@@ -73,24 +73,26 @@ const resources = {
   }
 };
 
-// Detect browser language with fallback
+// Detect browser language with fallback — never throw at import time.
 const detectLanguage = (): string => {
-  // Check localStorage first
-  const storedLang = localStorage.getItem('language');
-  if (storedLang && ['sv', 'en'].includes(storedLang)) {
-    return storedLang;
+  try {
+    const storedLang =
+      typeof window !== "undefined" ? window.localStorage.getItem('language') : null;
+    if (storedLang && ['sv', 'en'].includes(storedLang)) {
+      return storedLang;
+    }
+  } catch {
+    /* ignore storage errors */
   }
-  
-  // Check browser language
-  const browserLang = navigator.language.toLowerCase();
-  if (browserLang.startsWith('sv')) {
-    return 'sv';
+
+  try {
+    const browserLang = (typeof navigator !== "undefined" ? navigator.language : '').toLowerCase();
+    if (browserLang.startsWith('sv')) return 'sv';
+    if (browserLang.startsWith('en')) return 'en';
+  } catch {
+    /* ignore */
   }
-  if (browserLang.startsWith('en')) {
-    return 'en';
-  }
-  
-  // Default fallback
+
   return 'sv';
 };
 
@@ -111,7 +113,11 @@ i18n
 
 // Listen for language changes and force app refresh
 i18n.on('languageChanged', (lng) => {
-  localStorage.setItem('language', lng);
+  try {
+    if (typeof window !== "undefined") window.localStorage.setItem('language', lng);
+  } catch {
+    /* ignore */
+  }
   // Force a slight delay to ensure all components re-render
   setTimeout(() => {
     window.dispatchEvent(new Event('languageChanged'));

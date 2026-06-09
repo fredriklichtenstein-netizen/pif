@@ -186,7 +186,7 @@ export function useConversations() {
 
     fetchConversations();
 
-    if (user) {
+    if (user && !isSafeMode()) {
       channel = supabase.channel(`public:conversations:${user.id}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
           fetchConversations();

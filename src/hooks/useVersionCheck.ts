@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { safeGetItem, safeSetItem } from "@/utils/safeStorage";
+import { isSafeMode } from "@/utils/safeMode";
 
 /**
  * Detects when a newer build has been deployed by polling /version.json
@@ -18,6 +20,7 @@ export function useVersionCheck() {
 
   useEffect(() => {
     if (import.meta.env.DEV) return;
+    if (isSafeMode()) return;
 
     const currentBuildId =
       typeof __BUILD_ID__ !== "undefined" ? __BUILD_ID__ : null;
@@ -25,10 +28,10 @@ export function useVersionCheck() {
 
     const triggerReload = (remoteId: string) => {
       if (reloading.current) return;
-      const lastReloadedFor = sessionStorage.getItem(RELOAD_FLAG);
+      const lastReloadedFor = safeGetItem(RELOAD_FLAG, "session");
       if (lastReloadedFor === remoteId) return; // already reloaded for this version
       reloading.current = true;
-      sessionStorage.setItem(RELOAD_FLAG, remoteId);
+      safeSetItem(RELOAD_FLAG, remoteId, "session");
       window.location.reload();
     };
 
