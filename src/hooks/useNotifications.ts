@@ -92,9 +92,19 @@ export function useNotifications() {
   // filter pills can never drift apart.
   const unreadCount = notifications.reduce((acc, n) => (n.is_read ? acc : acc + 1), 0);
 
+  // Internal safety: never leave the badge/list stuck on a skeleton if
+  // auth or the fetch never resolves on cold loads.
+  useEffect(() => {
+    const safety = setTimeout(() => setIsLoading(false), 5000);
+    return () => clearTimeout(safety);
+  }, []);
 
   const fetchNotifications = useCallback(async (opts?: { silent?: boolean }) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setNotifications([]);
+      setIsLoading(false);
+      return;
+    }
 
     // Demo mode: use mock notifications
     if (DEMO_MODE) {
@@ -106,6 +116,7 @@ export function useNotifications() {
 
     if (!opts?.silent) setIsLoading(true);
     setFetchError(null);
+
 
 
     const { data, error } = await supabase
