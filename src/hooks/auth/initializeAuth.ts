@@ -74,14 +74,28 @@ export const initializeAuth = async () => {
     // restore path and ensures Supabase's INITIAL_SESSION event cannot be missed.
     subscription = setupAuthListener();
 
-    // Restore session directly from storage. Do NOT race against a short timeout —
-    // getSession() reads from localStorage synchronously in practice, and racing it
-    // can cause refreshed pages to appear signed-out before storage is read.
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
+    // Restore session with a hard timeout. getSession() should be fast (reads
+    // from localStorage), but in rare cases the Supabase client's internal
+    // lock can stall during boot. We never want the UI gated on it forever.
+    const sessionResult = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise<{ timedOut: true }>((resolve) =>
+        setTimeout(() => resolve({ timedOut: true }), 4000),
+      ),
+    ]) as any;
+
+    if (sessionResult?.timedOut) {
+      console.warn('[auth] getSession timed out — continuing with anonymous shell');
+      auth.setLoading(false);
+      auth.setInitialized(true);
+      return;
+    }
+
+    const { data: { session }, error: sessionError } = sessionResult;
+
     if (sessionError) {
       console.error('Error getting session:', sessionError);
-      
+
       if (isNetworkError(sessionError)) {
         auth.setNetworkError(true);
         auth.setError(sessionError);
@@ -89,7 +103,7 @@ export const initializeAuth = async () => {
         auth.setInitialized(true);
         return;
       }
-      
+
       if (isAuthInvalidError(sessionError)) {
         await recoverFromCorruptedSession(`getSession: ${sessionError.message}`);
         return;
