@@ -89,7 +89,11 @@ export const useCommentCreate = (
         setComments([...comments, tempComment]);
 
         try {
-          const pendingComments = JSON.parse(localStorage.getItem(`pending_comments_${itemId}`) || '[]');
+          const pendingComments = safeParseJSON<any[]>(
+            `pending_comments_${itemId}`,
+            [],
+            (v): v is any[] => Array.isArray(v),
+          );
           pendingComments.push({
             id: tempComment.id,
             itemId,
@@ -97,10 +101,11 @@ export const useCommentCreate = (
             userId: currentUser.id,
             createdAt: new Date().toISOString()
           });
-          localStorage.setItem(`pending_comments_${itemId}`, JSON.stringify(pendingComments));
+          safeStringify(`pending_comments_${itemId}`, pendingComments);
         } catch (err) {
           console.error("Failed to store pending comment in localStorage:", err);
         }
+
 
         setIsLoading(false);
         return tempComment;
