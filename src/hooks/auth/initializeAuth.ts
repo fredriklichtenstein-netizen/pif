@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "./authStore";
 import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_USER, DEMO_SESSION } from "@/data/mockUser";
+import { debugLog } from "@/utils/authDebug";
 import {
   clearRecoveryGuard,
   isAuthInvalidError,
@@ -73,18 +74,20 @@ export const initializeAuth = async () => {
     // Register the listener before reading storage. This mirrors the private-route
     // restore path and ensures Supabase's INITIAL_SESSION event cannot be missed.
     subscription = setupAuthListener();
+    debugLog("auth", "listener registered, calling getSession()");
 
     // Restore session with a hard timeout. getSession() should be fast (reads
     // from localStorage), but in rare cases the Supabase client's internal
     // lock can stall during boot. We never want the UI gated on it forever.
     const sessionResult = await Promise.race([
-      supabase.auth.getSession(),
+      supabase.auth.getSession().then((r) => { debugLog("auth", "getSession() resolved", { hasSession: !!r?.data?.session, hasUser: !!r?.data?.session?.user }); return r; }),
       new Promise<{ timedOut: true }>((resolve) =>
         setTimeout(() => resolve({ timedOut: true }), 4000),
       ),
     ]) as any;
 
     if (sessionResult?.timedOut) {
+      debugLog("auth", "getSession() TIMED OUT after 4s — background retry starting");
       console.warn('[auth] getSession timed out — continuing with anonymous shell, retrying in background');
       auth.setLoading(false);
       auth.setInitialized(true);
@@ -95,22 +98,28 @@ export const initializeAuth = async () => {
         const delays = [1000, 2000, 4000, 8000, 15000];
         for (const delay of delays) {
           await new Promise((r) => setTimeout(r, delay));
-          if (useAuthStore.getState().session?.user) return;
+          if (useAuthStore.getState().session?.user) {
+            debugLog("auth", "bg retry: session already hydrated, stopping");
+            return;
+          }
           try {
+            debugLog("auth", `bg retry getSession() after ${delay}ms`);
             const { data, error } = await supabase.auth.getSession();
-            if (error) continue;
+            if (error) { debugLog("auth", "bg retry error", error?.message); continue; }
             const s = data?.session;
             if (s?.user && !useAuthStore.getState().session?.user) {
               const a = useAuthStore.getState();
               a.setSession(s);
               a.setUser(s.user);
               clearRecoveryGuard();
+              debugLog("auth", "bg retry hydrated user", { uid: s.user.id });
               return;
             }
-          } catch {
-            // swallow; next iteration will retry
+          } catch (e) {
+            debugLog("auth", "bg retry threw", String(e));
           }
         }
+        debugLog("auth", "bg retry exhausted");
       })();
       return;
     }

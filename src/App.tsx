@@ -19,7 +19,11 @@ import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessi
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
+import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
+import { debugLog } from "@/utils/authDebug";
 import "./App.css";
+
+debugLog("boot", "module import: App.tsx");
 
 // Kick the boot safety fuse the instant the module is imported, before any
 // React rendering, so even a synchronous freeze in App() can't block it.
@@ -49,7 +53,8 @@ const queryClient = new QueryClient({
 
 function App() {
   useEffect(() => {
-    void initializeAuth();
+    debugLog("auth", "App mounted, calling initializeAuth()");
+    void initializeAuth().then(() => debugLog("auth", "initializeAuth() resolved"));
   }, []);
 
   useVersionCheck();
@@ -73,6 +78,7 @@ function App() {
               <ReceiverConfirmationWatcher />
               <Toaster />
               <Sonner />
+              <AuthHydrationDebugPanel />
             </BrowserRouter>
           </TooltipProvider>
         </I18nextProvider>
