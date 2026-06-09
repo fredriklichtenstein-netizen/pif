@@ -8,6 +8,8 @@ import { formatCommentFromDB } from "@/hooks/item/utils/commentFormatters";
 import { v4 as uuidv4 } from "uuid";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
+import { safeParseJSON, safeStringify } from "@/utils/safeStorage";
+
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 
 export const useCommentCreate = (
