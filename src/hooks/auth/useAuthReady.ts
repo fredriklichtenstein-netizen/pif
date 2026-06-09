@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "./authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_MODE } from "@/config/demoMode";
+import { debugLog } from "@/utils/authDebug";
 
 // Single source of truth for "auth has finished its first restore attempt".
 // Returns `{ user, isReady }`. Consumers should gate data fetches on `isReady`

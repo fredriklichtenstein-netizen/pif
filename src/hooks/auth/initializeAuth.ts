@@ -236,7 +236,7 @@ const setupAuthListener = () => {
 
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      
+      debugLog("auth", `onAuthStateChange: ${event}`, { hasSession: !!session, hasUser: !!session?.user });
 
       const currentAuth = useAuthStore.getState();
       const previousUserId = currentAuth.user?.id ?? null;
