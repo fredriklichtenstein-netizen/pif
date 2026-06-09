@@ -53,24 +53,28 @@ export default function ItemDetail() {
     if (fromShare) {
       // Track share link usage analytics
       try {
-        // Store in localStorage for analytics
-        const shareVisits = JSON.parse(localStorage.getItem('pif_share_visits') || '[]');
+        const shareVisits = safeParseJSON<any[]>(
+          'pif_share_visits',
+          [],
+          (v): v is any[] => Array.isArray(v),
+        );
         shareVisits.push({
           id,
           timestamp: new Date().toISOString(),
           shareOriginTimestamp: shareTimestamp,
           success: !redirectTo404 && !error && !!displayItem
         });
-        
+
         // Keep only the last 20 entries
         while (shareVisits.length > 20) shareVisits.shift();
-        
-        localStorage.setItem('pif_share_visits', JSON.stringify(shareVisits));
-        
+
+        safeStringify('pif_share_visits', shareVisits);
+
         // Silent success — UI already shows the loaded item
       } catch (err) {
         console.error('Failed to track share analytics:', err);
       }
+
     }
   }, [fromShare, id, redirectTo404, error, shareTimestamp, displayItem, toast]);
 
