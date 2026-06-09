@@ -71,7 +71,12 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const isCurrentUserPiffer = !!itemOwnerId && itemOwnerId === currentUserId;
   const role: "piffer" | "receiver" = isCurrentUserPiffer ? "piffer" : "receiver";
 
-  const completion = usePifCompletion(conversationId, item?.id ?? null);
+  const completion = usePifCompletion(
+    conversationId,
+    item?.id ?? null,
+    currentUserId,
+    otherParticipant?.user_id,
+  );
   const isClosed =
     completion.pifStatus === "completed" || completion.pifStatus === "archived";
 
