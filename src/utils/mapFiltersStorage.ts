@@ -21,6 +21,9 @@
  * back so the next read is a fast path.
  */
 
+import { safeParseJSON } from "@/utils/safeStorage";
+
+
 export interface MapFilterData {
   categories: string[];
   conditions: string[];
