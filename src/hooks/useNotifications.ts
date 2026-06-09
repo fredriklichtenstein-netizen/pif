@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useAuthReady } from "@/hooks/auth/useAuthReady";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { DEMO_MODE } from "@/config/demoMode";
@@ -83,7 +83,7 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<Error | null>(null);
-  const { user } = useGlobalAuth();
+  const { user, isReady } = useAuthReady();
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -92,14 +92,18 @@ export function useNotifications() {
   // filter pills can never drift apart.
   const unreadCount = notifications.reduce((acc, n) => (n.is_read ? acc : acc + 1), 0);
 
-  // Internal safety: never leave the badge/list stuck on a skeleton if
-  // auth or the fetch never resolves on cold loads.
+  // Internal safety: only start the 5s skeleton-cap once auth has finished
+  // its first restore attempt. Starting it on mount would race the hard
+  // refresh path and flip empty UI before the session hydrates.
   useEffect(() => {
+    if (!isReady) return;
     const safety = setTimeout(() => setIsLoading(false), 5000);
     return () => clearTimeout(safety);
-  }, []);
+  }, [isReady]);
 
   const fetchNotifications = useCallback(async (opts?: { silent?: boolean }) => {
+    // Auth not yet ready — keep skeleton, do not commit empty state.
+    if (!isReady) return;
     if (!user?.id) {
       setNotifications([]);
       setIsLoading(false);
@@ -165,10 +169,11 @@ export function useNotifications() {
 
     const unread = transformed.filter((n) => !n.is_read).length;
     
-  }, [user?.id, toast]);
+  }, [user?.id, isReady, toast]);
 
   // Realtime notifications + recovery on focus/visibility/online + safety poll
   useEffect(() => {
+    if (!isReady) return;
     fetchNotifications();
     if (!user?.id || DEMO_MODE) return;
 
@@ -316,7 +321,7 @@ export function useNotifications() {
     };
 
 
-  }, [user?.id, fetchNotifications]);
+  }, [user?.id, isReady, fetchNotifications]);
 
 
   const markAllAsRead = async () => {

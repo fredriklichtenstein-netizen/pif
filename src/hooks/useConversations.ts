@@ -4,7 +4,7 @@ import { isSafeMode } from "@/utils/safeMode";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Conversation } from "@/types/messaging";
-import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useAuthReady } from "@/hooks/auth/useAuthReady";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_CONVERSATIONS } from "@/data/mockConversations";
 import { useTranslation } from "react-i18next";
@@ -15,15 +15,18 @@ export function useConversations() {
   const [error, setError] = useState<Error | null>(null);
   const hasLoadedRef = useRef(false);
   const { toast } = useToast();
-  const { user, isLoading: authLoading } = useGlobalAuth();
+  const { user, isReady } = useAuthReady();
+  const authLoading = !isReady;
   const { t } = useTranslation();
 
-  // Internal safety: even if auth or the fetch never resolves, flip
-  // isLoading to false after 5s so the page is never stuck in a skeleton.
+  // Internal safety: only start the 5s skeleton-cap once auth has finished
+  // its first restore attempt. Starting it on mount would race hard refresh
+  // and flip empty UI before the session hydrates.
   useEffect(() => {
+    if (!isReady) return;
     const safety = setTimeout(() => setIsLoading(false), 5000);
     return () => clearTimeout(safety);
-  }, []);
+  }, [isReady]);
 
   useEffect(() => {
     let mounted = true;
