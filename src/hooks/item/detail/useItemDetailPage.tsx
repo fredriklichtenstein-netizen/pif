@@ -6,6 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { parseCoordinatesFromDB } from '@/types/post';
 import { useItemCard } from '@/hooks/useItemCard';
 import { useTranslation } from 'react-i18next';
+import { safeParseJSON, safeStringify } from '@/utils/safeStorage';
+
 
 export function useItemDetailPage() {
   const { id } = useParams();
