@@ -15,24 +15,32 @@ export const useLocationStorage = (): LocationStorage => {
     try {
       const stored = localStorage.getItem(LOCATION_KEY);
       if (!stored) return null;
-      
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length === 2 && 
+
+      // Self-heal: drop legacy non-JSON values (e.g. "(lng,lat)") that
+      // would otherwise throw "Unexpected token (" on every read.
+      const trimmed = stored.trim();
+      if (!trimmed.startsWith('[') && !trimmed.startsWith('{')) {
+        localStorage.removeItem(LOCATION_KEY);
+        return null;
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(trimmed);
+      } catch {
+        localStorage.removeItem(LOCATION_KEY);
+        return null;
+      }
+      if (Array.isArray(parsed) && parsed.length === 2 &&
           typeof parsed[0] === 'number' && typeof parsed[1] === 'number') {
-        // Ensure coordinates are in [lng, lat] format for Mapbox compatibility
         const [lng, lat] = parsed;
-        
-        // Validate coordinate ranges
         if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
           return [lng, lat];
-        } else {
-          console.warn('Invalid coordinate ranges:', { lng, lat });
-          return null;
         }
+        return null;
       }
       return null;
-    } catch (error) {
-      console.error('Error retrieving stored location:', error);
+    } catch {
       return null;
     }
   };
