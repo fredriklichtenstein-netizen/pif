@@ -85,11 +85,36 @@ export const initializeAuth = async () => {
     ]) as any;
 
     if (sessionResult?.timedOut) {
-      console.warn('[auth] getSession timed out — continuing with anonymous shell');
+      console.warn('[auth] getSession timed out — continuing with anonymous shell, retrying in background');
       auth.setLoading(false);
       auth.setInitialized(true);
+      // Background retry: keep trying to read the session so a real signed-in
+      // user eventually populates the store even after the boot fuse fired.
+      // Stops once a session is hydrated (either by us or by onAuthStateChange).
+      void (async () => {
+        const delays = [1000, 2000, 4000, 8000, 15000];
+        for (const delay of delays) {
+          await new Promise((r) => setTimeout(r, delay));
+          if (useAuthStore.getState().session?.user) return;
+          try {
+            const { data, error } = await supabase.auth.getSession();
+            if (error) continue;
+            const s = data?.session;
+            if (s?.user && !useAuthStore.getState().session?.user) {
+              const a = useAuthStore.getState();
+              a.setSession(s);
+              a.setUser(s.user);
+              clearRecoveryGuard();
+              return;
+            }
+          } catch {
+            // swallow; next iteration will retry
+          }
+        }
+      })();
       return;
     }
+
 
     const { data: { session }, error: sessionError } = sessionResult;
 
