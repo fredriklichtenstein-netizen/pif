@@ -1,7 +1,5 @@
-import { safeParseJSON } from "@/utils/safeStorage";
 
 /**
-
  * Calculates the distance between two points using the Haversine formula
  * Coordinates should be in [lng, lat] format for consistency with Mapbox
  */
@@ -62,18 +60,40 @@ export const calculateDistanceFromUser = (
   targetLng: number,
   targetLat: number
 ): number => {
-  const userLocation = safeParseJSON<[number, number] | null>(
-    'pif_user_location',
-    null,
-    (v): v is [number, number] =>
-      Array.isArray(v) && v.length === 2 &&
-      typeof v[0] === 'number' && typeof v[1] === 'number',
-  );
-  if (!userLocation) return NaN;
-  const [userLng, userLat] = userLocation;
-  return calculateDistance(userLng, userLat, targetLng, targetLat);
-};
+  try {
+    const stored = localStorage.getItem('pif_user_location');
+    if (!stored) {
+      return NaN;
+    }
 
+    // Self-heal: older builds occasionally persisted PostGIS-style
+    // "(lng,lat)" strings here. Detect any non-JSON value, drop it,
+    // and bail silently instead of throwing "Unexpected token '('".
+    const trimmed = stored.trim();
+    if (!trimmed.startsWith('[') && !trimmed.startsWith('{')) {
+      try { localStorage.removeItem('pif_user_location'); } catch { /* ignore */ }
+      return NaN;
+    }
+
+    let userLocation: unknown;
+    try {
+      userLocation = JSON.parse(trimmed);
+    } catch {
+      try { localStorage.removeItem('pif_user_location'); } catch { /* ignore */ }
+      return NaN;
+    }
+    if (!Array.isArray(userLocation) || userLocation.length !== 2) {
+      try { localStorage.removeItem('pif_user_location'); } catch { /* ignore */ }
+      return NaN;
+    }
+    
+    const [userLng, userLat] = userLocation;
+    return calculateDistance(userLng, userLat, targetLng, targetLat);
+  } catch (error) {
+    console.error('Error calculating distance from user:', error);
+    return NaN;
+  }
+};
 
 /**
  * Formats a distance in kilometers to a human-readable string
