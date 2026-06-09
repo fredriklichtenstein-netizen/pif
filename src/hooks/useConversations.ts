@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
+import { isSafeMode } from "@/utils/safeMode";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Conversation } from "@/types/messaging";
@@ -16,6 +17,13 @@ export function useConversations() {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useGlobalAuth();
   const { t } = useTranslation();
+
+  // Internal safety: even if auth or the fetch never resolves, flip
+  // isLoading to false after 5s so the page is never stuck in a skeleton.
+  useEffect(() => {
+    const safety = setTimeout(() => setIsLoading(false), 5000);
+    return () => clearTimeout(safety);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -178,7 +186,7 @@ export function useConversations() {
 
     fetchConversations();
 
-    if (user) {
+    if (user && !isSafeMode()) {
       channel = supabase.channel(`public:conversations:${user.id}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
           fetchConversations();

@@ -18,7 +18,12 @@ import { ReceiverConfirmationWatcher } from "@/components/profile/completion/Rec
 import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessionRecovery";
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import "./App.css";
+
+// Kick the boot safety fuse the instant the module is imported, before any
+// React rendering, so even a synchronous freeze in App() can't block it.
+startBootSafetyFuse();
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -113,11 +113,10 @@ export function OptimizedFeedContainer() {
     visiblePostIdsKey,
   ]);
 
-  const interactionStateReady =
-    DEMO_MODE ||
-    (likedIdsLoaded &&
-      interestedIdsLoaded &&
-      hydratedInteractionKey === visiblePostIdsKey);
+  // Interaction state is a nice-to-have — never gate the entire feed on it.
+  // Buttons start neutral and fill in once hydration lands, but posts render
+  // immediately so a stuck likes/interests fetch can't freeze the page.
+  const interactionStateReady = true;
 
   // Single shared refresh action (announce + begin/end + try/finally)
   // — identical to the one used by the map view.
