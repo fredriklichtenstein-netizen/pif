@@ -91,6 +91,10 @@ const Messages = () => {
   const handleTabChange = (value: string) => {
     if (value === "messages" || value === "notifications") {
       setActiveTab(value);
+      const next = new URLSearchParams(searchParams);
+      if (value === "notifications") next.set("tab", "notifications");
+      else next.delete("tab");
+      setSearchParams(next, { replace: true });
     }
   };
 
