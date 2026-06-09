@@ -31,19 +31,8 @@ const Messages = () => {
   // re-renders of the conversations array don't re-apply a stale URL param
   // on top of the user's own click.
   const appliedDeepLinkRef = useRef<string | null>(null);
-  // Safety net: if conversations never resolve (e.g. stuck auth/RPC on cold
-  // load), flip to a rendered empty state after 5s rather than spinning forever.
-  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-  useEffect(() => {
-    if (!conversationsLoading) {
-      setLoadingTimedOut(false);
-      return;
-    }
-    const t = setTimeout(() => setLoadingTimedOut(true), 5000);
-    return () => clearTimeout(t);
-  }, [conversationsLoading]);
 
-  const isLoading = (authLoading || conversationsLoading) && !loadingTimedOut;
+  const isLoading = authLoading || conversationsLoading;
 
   // Deep-link: open the conversation indicated by ?conversation=<id> or,
   // as a fallback, the conversation tied to ?item=<id>. Applied exactly
