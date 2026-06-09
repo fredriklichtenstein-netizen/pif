@@ -66,29 +66,18 @@ export function useItemDetailPage() {
 
   // Check local storage for cached item on component mount
   useEffect(() => {
-    try {
-      const cachedItem = localStorage.getItem(`item_${id}`);
-      if (cachedItem) {
-        const parsedItem = JSON.parse(cachedItem);
-        setLocalItem(parsedItem);
-      }
-    } catch (err) {
-      console.error('Error reading from local storage:', err);
-    } finally {
-      setHasCheckedLocalStorage(true);
-    }
+    const parsedItem = safeParseJSON<any | null>(`item_${id}`, null);
+    if (parsedItem) setLocalItem(parsedItem);
+    setHasCheckedLocalStorage(true);
   }, [id]);
 
   // Cache successful item data in local storage
   useEffect(() => {
     if (item) {
-      try {
-        localStorage.setItem(`item_${id}`, JSON.stringify(item));
-      } catch (err) {
-        console.error('Error writing to local storage:', err);
-      }
+      safeStringify(`item_${id}`, item);
     }
   }, [item, id]);
+
 
   // When using a cached item and the network request completes, show a refreshed message
   useEffect(() => {
