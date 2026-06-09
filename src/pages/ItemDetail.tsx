@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { safeParseJSON, safeStringify } from '@/utils/safeStorage';
+
 import { AlertCircle } from 'lucide-react';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { MainNav } from '@/components/MainNav';
