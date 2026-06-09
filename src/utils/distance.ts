@@ -65,10 +65,25 @@ export const calculateDistanceFromUser = (
     if (!stored) {
       return NaN;
     }
-    
-    const userLocation = JSON.parse(stored);
+
+    // Self-heal: older builds occasionally persisted PostGIS-style
+    // "(lng,lat)" strings here. Detect any non-JSON value, drop it,
+    // and bail silently instead of throwing "Unexpected token '('".
+    const trimmed = stored.trim();
+    if (!trimmed.startsWith('[') && !trimmed.startsWith('{')) {
+      try { localStorage.removeItem('pif_user_location'); } catch { /* ignore */ }
+      return NaN;
+    }
+
+    let userLocation: unknown;
+    try {
+      userLocation = JSON.parse(trimmed);
+    } catch {
+      try { localStorage.removeItem('pif_user_location'); } catch { /* ignore */ }
+      return NaN;
+    }
     if (!Array.isArray(userLocation) || userLocation.length !== 2) {
-      console.error('Invalid stored user location format:', userLocation);
+      try { localStorage.removeItem('pif_user_location'); } catch { /* ignore */ }
       return NaN;
     }
     

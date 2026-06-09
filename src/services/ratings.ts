@@ -79,3 +79,47 @@ export async function submitRating({
   }
   return { ok: true };
 }
+
+export interface UserRatingSummary {
+  avg: number;
+  count: number;
+}
+
+/**
+ * Fetches the aggregate receiver rating for a user: the average of all
+ * `receiver_rating` values in the `interests` table where this user was
+ * the selected receiver. Always hits the network — not cached client-side.
+ */
+export async function fetchUserRatingSummary(
+  userId: string,
+): Promise<UserRatingSummary> {
+  if (!userId) return { avg: 0, count: 0 };
+
+  if (DEMO_MODE) {
+    const records = useDemoRatingsStore
+      .getState()
+      .ratings.filter((r) => r.rateeId === userId && r.outcome === "positive");
+    // Demo store doesn't carry numeric stars; treat each positive rating
+    // as a 5 for the placeholder display.
+    const count = records.length;
+    const avg = count > 0 ? 5 : 0;
+    return { avg, count };
+  }
+
+  const { data, error } = await (supabase.from("interests") as any)
+    .select("receiver_rating")
+    .eq("user_id", userId)
+    .not("receiver_rating", "is", null);
+
+  if (error) {
+    console.error("fetchUserRatingSummary failed", error);
+    return { avg: 0, count: 0 };
+  }
+  const rows = (data ?? []) as Array<{ receiver_rating: number | null }>;
+  const nums = rows
+    .map((r) => Number(r.receiver_rating))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const count = nums.length;
+  const avg = count > 0 ? nums.reduce((a, b) => a + b, 0) / count : 0;
+  return { avg, count };
+}

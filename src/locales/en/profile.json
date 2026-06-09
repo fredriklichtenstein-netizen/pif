@@ -1,5 +1,8 @@
 
 {
+  "rating_not_enough": "Not enough ratings yet",
+  "rating_reviews_count": "{{count}} reviews",
+  "rating_aria": "{{avg}} out of 5, based on {{count}} reviews",
   "profile": {
     "my_pifs": "My pifs",
     "my_interests": "My interests",
