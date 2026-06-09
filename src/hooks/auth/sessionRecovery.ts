@@ -17,6 +17,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "./authStore";
+import { safeParseJSON, safeRemoveItem, safeStringify } from "@/utils/safeStorage";
+
 
 const RECOVERY_GUARD_KEY = "auth.recoveryGuard";
 const AUTH_REQUEST_CIRCUIT_KEY = "auth.requestCircuit";
