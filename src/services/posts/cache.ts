@@ -60,13 +60,25 @@ function readEntry<T>(key: string): Entry<T> | null {
   if (storage) {
     try {
       const raw = storage.getItem(storageKey(key));
-      if (raw) return JSON.parse(raw) as Entry<T>;
+      if (raw) {
+        const trimmed = raw.trim();
+        if (trimmed && (trimmed[0] === "{" || trimmed[0] === "[")) {
+          try {
+            return JSON.parse(trimmed) as Entry<T>;
+          } catch {
+            try { storage.removeItem(storageKey(key)); } catch { /* ignore */ }
+          }
+        } else {
+          try { storage.removeItem(storageKey(key)); } catch { /* ignore */ }
+        }
+      }
     } catch {
-      // ignore parse errors
+      // ignore storage access errors
     }
   }
   return (memoryFallback.get(key) as Entry<T>) ?? null;
 }
+
 
 export function deleteCache(key: string): void {
   const storage = safeStorage();
