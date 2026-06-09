@@ -65,20 +65,66 @@ export function AuthHydrationDebugPanel() {
         </span>
         <span style={{ display: "flex", gap: 6 }}>
           {open && (
-            <button
-              onClick={(e) => { e.stopPropagation(); clearDebug(); }}
-              style={{
-                background: "#334155",
-                color: "#e5e7eb",
-                border: 0,
-                borderRadius: 4,
-                padding: "2px 6px",
-                cursor: "pointer",
-                fontSize: 10,
-              }}
-            >
-              clear
-            </button>
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const lines = [
+                    `PIF Debug Report`,
+                    `Generated: ${new Date().toISOString()}`,
+                    `URL: ${window.location.href}`,
+                    `UA: ${navigator.userAgent}`,
+                    `Entries: ${entries.length}`,
+                    ``,
+                    ...entries.map((e) => {
+                      let dataStr = "";
+                      if (e.data !== undefined && e.data !== null && e.data !== "") {
+                        try {
+                          dataStr = " " + (typeof e.data === "string" ? e.data : JSON.stringify(e.data));
+                        } catch {
+                          dataStr = " " + String(e.data);
+                        }
+                      }
+                      return `[${String(e.t).padStart(6, " ")}ms][${e.scope}] ${e.msg}${dataStr}`;
+                    }),
+                  ];
+                  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `pif-debug-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                style={{
+                  background: "#2563eb",
+                  color: "#fff",
+                  border: 0,
+                  borderRadius: 4,
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                  fontSize: 10,
+                }}
+              >
+                export
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); clearDebug(); }}
+                style={{
+                  background: "#334155",
+                  color: "#e5e7eb",
+                  border: 0,
+                  borderRadius: 4,
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                  fontSize: 10,
+                }}
+              >
+                clear
+              </button>
+            </>
           )}
           <span>{open ? "▾" : "▸"}</span>
         </span>
