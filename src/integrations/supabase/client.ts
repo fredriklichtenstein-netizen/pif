@@ -11,16 +11,18 @@ const SUPABASE_PUBLISHABLE_KEY =
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    // Persist the session to localStorage so refresh keeps users signed in.
     persistSession: true,
-    // Automatically refresh the access token before it expires.
     autoRefreshToken: true,
-    // Detect OAuth / magic-link callbacks in the URL on load.
     detectSessionInUrl: true,
     storage: typeof window !== "undefined" ? window.localStorage : undefined,
-    // Explicit, project-scoped storage key so the persisted session survives reloads
-    // and never collides with another Supabase project on the same origin.
     storageKey: "sb-heurpehcwbhohwklqnir-auth-token",
     flowType: "pkce",
+    // Bypass navigator.locks. On some WebKit / PWA contexts the lock acquired
+    // by the initial getSession() is never released, deadlocking every later
+    // auth call and every authenticated PostgREST query (they call getSession
+    // internally to attach the JWT). Trade-off: cross-tab token refresh races
+    // are possible but harmless — autoRefreshToken still works per tab.
+    lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => fn(),
   },
 });
+

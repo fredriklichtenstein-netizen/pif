@@ -1,44 +1,49 @@
-# Fix: Messages & Notifications empty after hard refresh
+# Fix: Supabase Web Locks deadlock causing hung queries on hard refresh
 
-## Root cause (summary)
-On hard refresh, `useNotifications` and `useConversations` run their fetch logic before Supabase has finished restoring the session from localStorage. They each commit an empty/error UI immediately when `user` is `null`, and an internal 5-second safety timer flips `isLoading=false` regardless of whether auth is still hydrating. Once empty is rendered, the user sees "No messages/No notifications" even though the session restores moments later. Normal navigation works because `user` is already hydrated by then.
+## Root cause
+On hard refresh, `supabase.auth.getSession()` never resolves (timed out at 4s, never returned at 10s+). Every subsequent authenticated query — including `supabase.from('notifications').select(...)` and the `get_user_conversation_ids` RPC — also hangs, because `supabase-js` calls `getSession()` internally on each request to attach the JWT and inherits the same stuck lock.
+
+Meanwhile, `onAuthStateChange: SIGNED_IN { hasSession: true, hasUser: true }` fires at **9ms** — the session is already in localStorage and the listener delivers it synchronously. The listener path is uncontaminated by the lock.
+
+This is the well-documented `@supabase/auth-js` `navigator.locks` deadlock that affects certain Safari / PWA / iOS WebKit contexts.
 
 ## Approach
-Introduce a single source of truth for "the auth session has finished its first restore attempt" (`useAuthReady`) and gate the two hooks on it. Stop committing empty/error state while auth is still hydrating. Keep all existing safety timeouts as a final fallback, but only after `authReady` is true.
+Two complementary fixes:
+
+1. **Replace the lock with a no-op** in the supabase client config so `getSession()` and JWT-attach can never deadlock again. This is the official supported escape hatch (`auth.lock` option). The trade-off — cross-tab token-refresh races — is negligible for this app (`autoRefreshToken` still works; in the rare case two tabs refresh simultaneously the second just gets a fresh token).
+
+2. **Stop awaiting `getSession()` in the boot path**. The listener already delivers the session at 9ms; awaiting `getSession()` is redundant and was the symptom that surfaced the deadlock. After fix #1, `getSession()` works again, but we no longer need to block the UI on it — the listener is the source of truth.
 
 ## Changes
 
-### 1. New hook: `src/hooks/auth/useAuthReady.ts`
-Returns `{ user, isReady }` where `isReady` becomes true once **either**:
-- `useAuthStore.initialized === true` AND the boot fuse hasn't fired prematurely (we check by also waiting for a one-shot `supabase.auth.getSession()` resolution on mount, capped at 6s), OR
-- the internal cap elapses (fail-open, matches existing app-wide fail-open philosophy).
+### 1. `src/integrations/supabase/client.ts`
+- Add `lock: async (_name, _acquireTimeout, fn) => fn()` to the `auth` options. This bypasses `navigator.locks` entirely while preserving every other behavior (persist, autoRefresh, PKCE, detectSessionInUrl).
+- Keep the existing `storageKey` and storage config unchanged.
 
-This hook does NOT add a second listener — it reads from the existing `useAuthStore` and additionally awaits one `getSession()` call to confirm Supabase's own storage read is done before flipping `isReady`.
+### 2. `src/hooks/auth/initializeAuth.ts`
+- Register the `onAuthStateChange` listener first (already done).
+- Still call `supabase.auth.getSession()` with the 4s race, but treat the listener-delivered session as authoritative: if `INITIAL_SESSION` / `SIGNED_IN` populates the store before `getSession()` resolves, mark `initialized: true` and skip the redundant work.
+- Keep the existing background retry as a final safety net.
 
-### 2. `src/hooks/useNotifications.ts`
-- Replace `useGlobalAuth()` with `useAuthReady()`.
-- In `fetchNotifications`, when `!isReady`, **return without setting state** (no empty commit, keep skeleton).
-- When `isReady && !user?.id`, set `[]` + `isLoading=false` (genuine signed-out empty state).
-- Move the 5s internal safety timer so it only starts after `isReady` becomes true, not on mount.
-- Add `isReady` to the effect deps and to `fetchNotifications`'s `useCallback` deps so the fetch re-runs exactly once when auth finishes restoring.
-
-### 3. `src/hooks/useConversations.ts`
-- Same swap to `useAuthReady()`.
-- In the fetch function, gate the "must sign in" error branch behind `isReady` — only set that error when auth has truly finished restoring AND there's no user.
-- Move the 5s internal safety timer to start after `isReady`.
-- Add `isReady` to the effect deps.
-
-### 4. `src/pages/Messages.tsx`
-- Compute `isLoading` from `!authReady || conversationsLoading` (with the existing 5s `loadingTimedOut` fallback unchanged) so the skeleton stays up while auth is hydrating instead of flipping to "No conversations".
+### 3. `src/hooks/auth/useAuthReady.ts`
+- Drop the manual `supabase.auth.getSession()` probe (no longer needed and was multiplying the deadlock).
+- Make `isReady` derive purely from the auth store: `DEMO_MODE || !!user || !!session?.user || initialized || capElapsed`.
+- Keep the 6s fail-open cap as a final safety net.
 
 ### Files NOT changed
-- `initializeAuth.ts` — its background retry already hydrates `user` correctly; the bug is in the consumers, not the producer.
-- Boot safety fuse, PrivateRoute, App.tsx — keep as-is.
-- Realtime subscriptions, BroadcastChannel sync, mark-as-read — untouched.
+- `useNotifications.ts`, `useConversations.ts`, `Messages.tsx`, `App.tsx`, boot fuse, `PrivateRoute` — all already correct; they were starved by the wedged client, not buggy themselves.
+- Existing debug logging — keep, useful for verification.
 
-## Verification
-- Hard refresh `/messages` while signed in → skeleton shows until session restores, then real conversation list (not "No conversations").
-- Hard refresh `/` while signed in → notifications badge populates; opening notifications shows real list.
-- Hard refresh `/messages` while signed out → after auth resolves, "must sign in" error appears (unchanged).
-- Hard refresh with throttled network → skeleton holds for up to ~6s then fails open to empty state (no infinite spinner).
-- Navigation between pages (the path that already worked) continues to work — `isReady` is already true on subsequent mounts.
+## Verification (via the debug panel)
+- Hard refresh `/messages` while signed in:
+  - `onAuthStateChange: SIGNED_IN` at <50ms (same as today).
+  - `getSession() resolved { hasUser: true }` within ~100ms (previously: never).
+  - `[notifications] query returned { rows: N }` within ~500ms (previously: never).
+  - `[conversations] RPC returned { count: N }` within ~500ms (previously: never).
+  - UI shows real lists, not "No conversations / No notifications".
+- Hard refresh `/` while signed in: notifications badge populates within ~500ms.
+- Signed-out hard refresh: PrivateRoute redirects to `/auth` as before.
+- Cross-tab sign-out still propagates (handled by `onAuthStateChange`, not by the lock).
+
+## Technical reference
+- Supabase issue tracker context: `supabase-js` v2 uses `navigator.locks` to serialize token refresh across tabs. In some WebKit contexts a lock acquired during the initial `getSession()` is never released, deadlocking every subsequent auth call. The supported escape hatch is passing a custom `lock` function in `auth` config.
