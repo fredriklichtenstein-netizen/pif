@@ -19,22 +19,15 @@ const listKey = (userId: string, scope: string) =>
   `${LIST_PREFIX}${userId}:${scope}`;
 const itemKey = (id: string | number) => `${ITEM_PREFIX}${String(id)}`;
 
-const safeRead = <T>(key: string): T | null => {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-};
+import { safeParseJSON, safeStringify } from "@/utils/safeStorage";
+
+const safeRead = <T>(key: string): T | null =>
+  safeParseJSON<T | null>(key, null);
 
 const safeWrite = (key: string, value: unknown) => {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* quota — ignore */
-  }
+  safeStringify(key, value);
 };
+
 
 // ---------- Item-level cache ----------
 
