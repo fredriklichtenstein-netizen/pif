@@ -15,21 +15,22 @@ const DEFAULT_ZOOM = 14;
 
 // Move getInitialMapState outside the hook so it can be used by other components
 export const getInitialMapState = (): MapState => {
-  const state = safeParseJSON<MapState | null>(MAP_STATE_KEY, null, (v): v is MapState =>
-    !!v && typeof v === 'object' &&
-    Array.isArray((v as any).center) && (v as any).center.length === 2 &&
-    typeof (v as any).zoom === 'number'
+  const state = safeParseJSON<MapState | null>(
+    MAP_STATE_KEY,
+    null,
+    (v): v is MapState =>
+      !!v && typeof v === 'object' &&
+      Array.isArray((v as any).center) && (v as any).center.length === 2 &&
+      typeof (v as any).zoom === 'number',
+    "session",
   );
   return state ?? { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM };
 };
 
 export const saveMapState = (center: [number, number], zoom: number) => {
-  try {
-    safeSetItem(MAP_STATE_KEY, JSON.stringify({ center, zoom }));
-  } catch {
-    safeRemoveItem(MAP_STATE_KEY);
-  }
+  safeSetItem(MAP_STATE_KEY, JSON.stringify({ center, zoom }), "session");
 };
+
 
 
 // Enhanced browser capability checks
