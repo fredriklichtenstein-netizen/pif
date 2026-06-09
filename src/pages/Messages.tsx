@@ -25,7 +25,9 @@ const Messages = () => {
   const { unreadMessagesCount } = useUnreadMessagesCount();
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"messages" | "notifications">("messages");
+  const [activeTab, setActiveTab] = useState<"messages" | "notifications">(
+    () => (searchParams.get("tab") === "notifications" ? "notifications" : "messages")
+  );
   const markedAsRead = useRef(new Set<string>());
   // Track which deep-link value we've already consumed so realtime-driven
   // re-renders of the conversations array don't re-apply a stale URL param
