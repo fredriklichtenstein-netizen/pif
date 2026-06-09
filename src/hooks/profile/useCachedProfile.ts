@@ -6,6 +6,8 @@ import {
   recoverFromCorruptedSession,
   isAuthRequestCircuitOpen,
 } from "@/hooks/auth/sessionRecovery";
+import { safeParseJSON } from "@/utils/safeStorage";
+
 
 /**
  * Stale-while-revalidate profile cache.
