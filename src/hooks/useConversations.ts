@@ -188,6 +188,26 @@ export function useConversations() {
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_participants' }, () => {
           fetchConversations();
+        })
+        // When an item's pif_status changes (completed/archived/reopened),
+        // patch the matching conversation in-place so the list re-categorises
+        // into Historik immediately without a flicker-y full refetch.
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'items' }, (payload: any) => {
+          const next = payload?.new;
+          if (!next || next.id === undefined || next.id === null) return;
+          const itemId = String(next.id);
+          const newStatus = String(next.pif_status ?? '');
+          setConversations((current) => {
+            let changed = false;
+            const updated = current.map((c) => {
+              if (String(c.item_id ?? '') !== itemId) return c;
+              if (!c.item) return c;
+              if (c.item.status === newStatus) return c;
+              changed = true;
+              return { ...c, item: { ...c.item, status: newStatus } };
+            });
+            return changed ? updated : current;
+          });
         }).subscribe();
     }
 
