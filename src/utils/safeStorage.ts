@@ -1,53 +1,62 @@
 /**
- * Safe localStorage helpers that never throw, even when:
- *   - localStorage is unavailable (SSR, private mode, blocked cookies)
+ * Safe storage helpers that never throw, even when:
+ *   - storage is unavailable (SSR, private mode, blocked cookies)
  *   - the stored value is corrupt / non-JSON (legacy PostGIS strings, etc.)
  *   - JSON.parse hits a quota or syntax error
  *
  * Use these wrappers anywhere a bad cached value could otherwise blow up
  * synchronously during app init and freeze the UI.
+ *
+ * Pass `"session"` as the last arg to operate on sessionStorage instead
+ * of localStorage. Defaults to localStorage.
  */
 
-const hasStorage = (): boolean => {
+type StorageKind = "local" | "session";
+
+const pick = (kind: StorageKind = "local"): Storage | null => {
   try {
-    return typeof window !== "undefined" && !!window.localStorage;
+    if (typeof window === "undefined") return null;
+    return kind === "session" ? window.sessionStorage : window.localStorage;
   } catch {
-    return false;
+    return null;
   }
 };
 
-/** Read a raw string from localStorage. Returns null on any failure. */
-export function safeGetItem(key: string): string | null {
-  if (!hasStorage()) return null;
+/** Read a raw string. Returns null on any failure. */
+export function safeGetItem(key: string, kind: StorageKind = "local"): string | null {
+  const s = pick(kind);
+  if (!s) return null;
   try {
-    return window.localStorage.getItem(key);
+    return s.getItem(key);
   } catch {
     return null;
   }
 }
 
-/** Remove a key from localStorage, swallowing any error. */
-export function safeRemoveItem(key: string): void {
-  if (!hasStorage()) return;
+/** Remove a key, swallowing any error. */
+export function safeRemoveItem(key: string, kind: StorageKind = "local"): void {
+  const s = pick(kind);
+  if (!s) return;
   try {
-    window.localStorage.removeItem(key);
+    s.removeItem(key);
   } catch {
     /* ignore */
   }
 }
 
-/** Write a raw string to localStorage, swallowing any error. */
-export function safeSetItem(key: string, value: string): void {
-  if (!hasStorage()) return;
+/** Write a raw string, swallowing any error. */
+export function safeSetItem(key: string, value: string, kind: StorageKind = "local"): void {
+  const s = pick(kind);
+  if (!s) return;
   try {
-    window.localStorage.setItem(key, value);
+    s.setItem(key, value);
   } catch {
     /* ignore (quota, private mode, etc.) */
   }
 }
 
 /**
- * Read and JSON.parse a localStorage value. Returns `fallback` when:
+ * Read and JSON.parse a stored value. Returns `fallback` when:
  *   - the key is missing
  *   - the value isn't valid JSON (e.g. legacy `(lng,lat)` strings)
  *   - the value doesn't pass the optional `validate` predicate
@@ -59,14 +68,14 @@ export function safeParseJSON<T>(
   key: string,
   fallback: T,
   validate?: (value: unknown) => value is T,
+  kind: StorageKind = "local",
 ): T {
-  const raw = safeGetItem(key);
+  const raw = safeGetItem(key, kind);
   if (raw == null) return fallback;
 
   const trimmed = raw.trim();
   if (!trimmed || (trimmed[0] !== "{" && trimmed[0] !== "[" && trimmed[0] !== '"')) {
-    // Almost certainly a legacy non-JSON value. Drop it.
-    safeRemoveItem(key);
+    safeRemoveItem(key, kind);
     return fallback;
   }
 
@@ -74,12 +83,12 @@ export function safeParseJSON<T>(
   try {
     parsed = JSON.parse(trimmed);
   } catch {
-    safeRemoveItem(key);
+    safeRemoveItem(key, kind);
     return fallback;
   }
 
   if (validate && !validate(parsed)) {
-    safeRemoveItem(key);
+    safeRemoveItem(key, kind);
     return fallback;
   }
 
@@ -87,9 +96,9 @@ export function safeParseJSON<T>(
 }
 
 /** JSON.stringify + safeSetItem. Never throws. */
-export function safeStringify<T>(key: string, value: T): void {
+export function safeStringify<T>(key: string, value: T, kind: StorageKind = "local"): void {
   try {
-    safeSetItem(key, JSON.stringify(value));
+    safeSetItem(key, JSON.stringify(value), kind);
   } catch {
     /* ignore circular / serialization errors */
   }
