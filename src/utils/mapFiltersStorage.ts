@@ -69,24 +69,17 @@ const sanitiseData = (raw: any): MapFilterData => ({
 });
 
 const readRaw = (): { version: number; data: MapFilterData } | null => {
-  try {
-    const current = localStorage.getItem(STORAGE_KEY);
-    if (current) {
-      const parsed = JSON.parse(current);
-      if (parsed && typeof parsed === "object" && typeof parsed.version === "number") {
-        return { version: parsed.version, data: sanitiseData(parsed.data) };
-      }
-    }
-    // Fallback to legacy v1 (un-versioned) payload.
-    const legacy = localStorage.getItem(LEGACY_KEY_V1);
-    if (legacy) {
-      return { version: 1, data: sanitiseData(JSON.parse(legacy)) };
-    }
-  } catch {
-    /* corrupt JSON / no localStorage — fall through to defaults */
+  const current = safeParseJSON<any>(STORAGE_KEY, null);
+  if (current && typeof current === "object" && typeof current.version === "number") {
+    return { version: current.version, data: sanitiseData(current.data) };
+  }
+  const legacy = safeParseJSON<any>(LEGACY_KEY_V1, null);
+  if (legacy) {
+    return { version: 1, data: sanitiseData(legacy) };
   }
   return null;
 };
+
 
 const runMigrations = (from: number, data: MapFilterData): MapFilterData => {
   let current: any = data;
