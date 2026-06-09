@@ -50,16 +50,34 @@ export function ProfileRatingDisplay({ userId, className }: Props) {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<UserRatingSummary | null>(null);
 
+  const [failed, setFailed] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
     setSummary(null);
-    fetchUserRatingSummary(userId).then((s) => {
-      if (!cancelled) setSummary(s);
-    });
+    setFailed(false);
+    // One-shot fetch; on any failure, silently fall back to the
+    // "not enough ratings" placeholder. Never retry.
+    (async () => {
+      try {
+        const s = await fetchUserRatingSummary(userId);
+        if (!cancelled) setSummary(s);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
     return () => {
       cancelled = true;
     };
   }, [userId]);
+
+  if (failed) {
+    return (
+      <div className={`text-xs text-muted-foreground ${className ?? ""}`}>
+        {t("profile.rating_not_enough", "Inte tillräckligt med betyg ännu")}
+      </div>
+    );
+  }
 
   if (!summary) return null;
 
