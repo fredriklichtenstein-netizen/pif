@@ -16,24 +16,34 @@ const numericItemId = (id: string | number | null | undefined): number | null =>
   return Number.isFinite(n) ? n : null;
 };
 
+interface SystemMessageOptions {
+  /** When set, only this user sees the message (filtered in ConversationView). */
+  targetUserId?: string | null;
+}
+
 /**
  * Posts a Swedish system message into the conversation thread. Marked as
- * is_system_message so it is rendered as a neutral note for both parties.
+ * is_system_message so it is rendered as a neutral note. When
+ * `targetUserId` is provided the message is only shown to that user — used
+ * to deliver second-person ("du/dig") variants of completion-flow updates.
  */
 export async function postPifSystemMessage(
   conversationId: string,
   content: string,
+  options: SystemMessageOptions = {},
 ): Promise<void> {
   try {
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData.session?.user.id;
     if (!userId || !conversationId) return;
-    await (supabase.from("messages") as any).insert({
+    const payload: Record<string, unknown> = {
       conversation_id: conversationId,
       sender_id: userId,
       content,
       is_system_message: true,
-    });
+    };
+    if (options.targetUserId) payload.target_user_id = options.targetUserId;
+    await (supabase.from("messages") as any).insert(payload);
   } catch (err) {
     console.error("Failed to post pif system message:", err);
   }
@@ -42,6 +52,10 @@ export async function postPifSystemMessage(
 export function usePifCompletion(
   conversationId: string | null,
   itemId: string | number | null | undefined,
+  /** Current viewer's user id (the piffer or receiver acting on the UI). */
+  currentUserId?: string | null,
+  /** The other participant's user id; used to target second-person messages. */
+  otherUserId?: string | null,
 ) {
   const id = numericItemId(itemId);
   const [state, setState] = useState<PifCompletionState>({
@@ -114,20 +128,40 @@ export function usePifCompletion(
         console.error("confirm_pif_handoff failed:", error);
         return { ok: false, error } as const;
       }
-      // Optimistic local update
       setState((s) => ({
         ...s,
         pifferConfirmed: role === "piffer" ? true : s.pifferConfirmed,
         receiverConfirmed: role === "receiver" ? true : s.receiverConfirmed,
       }));
       if (conversationId) {
-        const msg =
-          role === "piffer"
-            ? "Piffaren har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning."
-            : "Mottagaren har bekräftat mottagning.";
-        await postPifSystemMessage(conversationId, msg);
+        if (role === "piffer") {
+          // Piffer just confirmed handoff: tailored message to each side.
+          await postPifSystemMessage(
+            conversationId,
+            "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+            { targetUserId: currentUserId ?? null },
+          );
+          await postPifSystemMessage(
+            conversationId,
+            "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+            { targetUserId: otherUserId ?? null },
+          );
+        } else {
+          // Receiver just confirmed receipt.
+          await postPifSystemMessage(
+            conversationId,
+            "Du har bekräftat mottagning.",
+            { targetUserId: currentUserId ?? null },
+          );
+          await postPifSystemMessage(
+            conversationId,
+            "Mottagaren har bekräftat mottagning.",
+            { targetUserId: otherUserId ?? null },
+          );
+        }
 
-        // If both sides have now confirmed, post the completion message too.
+        // If both sides have now confirmed, post the celebration message
+        // visible to both parties.
         const both =
           (role === "piffer" && state.receiverConfirmed) ||
           (role === "receiver" && state.pifferConfirmed);
@@ -140,7 +174,7 @@ export function usePifCompletion(
       }
       return { ok: true } as const;
     },
-    [id, conversationId, state.pifferConfirmed, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, state.pifferConfirmed, state.receiverConfirmed],
   );
 
   const completeWithRating = useCallback(
@@ -160,28 +194,36 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       if (conversationId) {
-        // If receiver hadn't already confirmed, this is a hard-complete.
+        // Hard-complete path: receiver hadn't confirmed yet.
         if (!state.receiverConfirmed) {
           await postPifSystemMessage(
             conversationId,
+            "Du markerade piffen som genomförd.",
+            { targetUserId: currentUserId ?? null },
+          );
+          await postPifSystemMessage(
+            conversationId,
             "Piffaren har markerat piffen som genomförd.",
+            { targetUserId: otherUserId ?? null },
           );
         }
         await postPifSystemMessage(
           conversationId,
           "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
         );
+        // The star rating itself stays private. Only post a system message
+        // if the piffer left a written comment — visible to both parties.
         if (comment && comment.trim()) {
           await postPifSystemMessage(
             conversationId,
-            `Piffaren lämnade följande omdöme: ${comment.trim()}`,
+            `Kommentar från piffaren: ${comment.trim()}`,
           );
         }
       }
       setState((s) => ({ ...s, pifStatus: "completed" }));
       return { ok: true } as const;
     },
-    [id, conversationId, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, state.receiverConfirmed],
   );
 
   const withdraw = useCallback(
@@ -196,11 +238,29 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       if (conversationId) {
-        const msg =
-          action === "reopen"
-            ? "Piffaren har ångrat valet av mottagare. Piffen är nu öppen igen."
-            : "Piffaren har arkiverat piffen.";
-        await postPifSystemMessage(conversationId, msg);
+        if (action === "reopen") {
+          await postPifSystemMessage(
+            conversationId,
+            "Du har ångrat valet av mottagare. Piffen är nu öppen igen.",
+            { targetUserId: currentUserId ?? null },
+          );
+          await postPifSystemMessage(
+            conversationId,
+            "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Piffen är nu öppen för andra att visa intresse.",
+            { targetUserId: otherUserId ?? null },
+          );
+        } else {
+          await postPifSystemMessage(
+            conversationId,
+            "Du har arkiverat piffen.",
+            { targetUserId: currentUserId ?? null },
+          );
+          await postPifSystemMessage(
+            conversationId,
+            "Piffaren har ångrat sig och kan/vill inte längre piffa detta.",
+            { targetUserId: otherUserId ?? null },
+          );
+        }
       }
       setState((s) => ({
         ...s,
@@ -208,7 +268,7 @@ export function usePifCompletion(
       }));
       return { ok: true } as const;
     },
-    [id, conversationId],
+    [id, conversationId, currentUserId, otherUserId],
   );
 
   return { ...state, confirmHandoff, completeWithRating, withdraw };
