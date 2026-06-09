@@ -1,40 +1,44 @@
-## What's happening
+# Fix: Messages & Notifications empty after hard refresh
 
-The console errors tell two different stories:
+## Root cause (summary)
+On hard refresh, `useNotifications` and `useConversations` run their fetch logic before Supabase has finished restoring the session from localStorage. They each commit an empty/error UI immediately when `user` is `null`, and an internal 5-second safety timer flips `isLoading=false` regardless of whether auth is still hydrating. Once empty is rendered, the user sees "No messages/No notifications" even though the session restores moments later. Normal navigation works because `user` is already hydrated by then.
 
-1. **`WebSocket ... closed due to suspension`** — Safari/WebKit pauses background-tab WebSockets. This is benign noise from Supabase Realtime; it's not what's breaking the UI.
-2. **`502 trackevents`** — Lovable's analytics pixel. Unrelated to app data.
+## Approach
+Introduce a single source of truth for "the auth session has finished its first restore attempt" (`useAuthReady`) and gate the two hooks on it. Stop committing empty/error state while auth is still hydrating. Keep all existing safety timeouts as a final fallback, but only after `authReady` is true.
 
-The actual bugs are state bugs from the boot-safety changes we added previously:
+## Changes
 
-### Bug A — Notifications stuck in "loading"
-`useNotifications.fetchNotifications` short-circuits when `user?.id` is falsy and **never sets `isLoading` to `false`**. After the boot safety fuse forces `initialized=true` with no user (because `getSession()` raced out in 4s), the notifications hook sits at `isLoading: true` forever.
+### 1. New hook: `src/hooks/auth/useAuthReady.ts`
+Returns `{ user, isReady }` where `isReady` becomes true once **either**:
+- `useAuthStore.initialized === true` AND the boot fuse hasn't fired prematurely (we check by also waiting for a one-shot `supabase.auth.getSession()` resolution on mount, capped at 6s), OR
+- the internal cap elapses (fail-open, matches existing app-wide fail-open philosophy).
 
-### Bug B — Messages shows empty UI on signed-in users
-`initializeAuth` uses `Promise.race(getSession(), 4s timeout)`. When the race times out we mark the store `initialized: true` but never retry, so `user` stays `null` for the rest of the session even though the session exists in localStorage. `useConversations` then takes the `!authLoading && !user` branch ("must sign in") and renders an empty/empty-error state. The 5s safety just flips `isLoading` off on top of that empty state.
+This hook does NOT add a second listener — it reads from the existing `useAuthStore` and additionally awaits one `getSession()` call to confirm Supabase's own storage read is done before flipping `isReady`.
 
-The `onAuthStateChange` `INITIAL_SESSION` event would normally rescue this, but if the underlying GoTrue storage lock is what stalled `getSession`, the listener fires late or not at all and nothing re-attempts the read.
+### 2. `src/hooks/useNotifications.ts`
+- Replace `useGlobalAuth()` with `useAuthReady()`.
+- In `fetchNotifications`, when `!isReady`, **return without setting state** (no empty commit, keep skeleton).
+- When `isReady && !user?.id`, set `[]` + `isLoading=false` (genuine signed-out empty state).
+- Move the 5s internal safety timer so it only starts after `isReady` becomes true, not on mount.
+- Add `isReady` to the effect deps and to `fetchNotifications`'s `useCallback` deps so the fetch re-runs exactly once when auth finishes restoring.
 
-## Fix plan
+### 3. `src/hooks/useConversations.ts`
+- Same swap to `useAuthReady()`.
+- In the fetch function, gate the "must sign in" error branch behind `isReady` — only set that error when auth has truly finished restoring AND there's no user.
+- Move the 5s internal safety timer to start after `isReady`.
+- Add `isReady` to the effect deps.
 
-1. **`src/hooks/auth/initializeAuth.ts`** — when `getSession()` times out, don't give up. Kick off a background, non-racing retry (`supabase.auth.getSession()` + simple 30s polling backoff, stopping as soon as a session or `SIGNED_IN`/`INITIAL_SESSION` event arrives) that hydrates `authStore.user/session` when storage finally responds. UI stays unblocked (fuse already flipped `initialized`), but a real signed-in user will populate within a second or two instead of never.
+### 4. `src/pages/Messages.tsx`
+- Compute `isLoading` from `!authReady || conversationsLoading` (with the existing 5s `loadingTimedOut` fallback unchanged) so the skeleton stays up while auth is hydrating instead of flipping to "No conversations".
 
-2. **`src/hooks/useNotifications.ts`**
-   - In `fetchNotifications`, when `!user?.id`, set `notifications: []` and `isLoading: false` before returning.
-   - Add the same 5s internal safety timeout used in `useConversations` so the badge/list can never sit on a skeleton forever, even on cold loads where auth is still resolving.
-   - Leave the existing realtime/recovery logic untouched.
-
-3. **`src/hooks/useConversations.ts`** — once Fix 1 lands, signed-in users will get `user` populated and the normal fetch path runs. No structural change needed; just confirm the existing 5s safety still renders the empty state cleanly when the user truly is anonymous.
-
-4. **Leave WebSocket suspension + 502 trackevents alone.** They're not the cause; touching realtime config now would just add risk.
+### Files NOT changed
+- `initializeAuth.ts` — its background retry already hydrates `user` correctly; the bug is in the consumers, not the producer.
+- Boot safety fuse, PrivateRoute, App.tsx — keep as-is.
+- Realtime subscriptions, BroadcastChannel sync, mark-as-read — untouched.
 
 ## Verification
-
-- Reload `/` while signed in → notifications badge populates, no perpetual skeleton.
-- Reload `/messages` while signed in → conversation list renders (not "must sign in").
-- Reload `/messages` while signed out → still redirects to `/auth` via `PrivateRoute`.
-- Reload `/notifications` cold with throttled network → list either shows data or empty state within ≤5s, never an infinite skeleton.
-
-## Out of scope
-
-- Changing realtime transport, analytics pixel, or any of the previously approved boot-safety / safeStorage work.
+- Hard refresh `/messages` while signed in → skeleton shows until session restores, then real conversation list (not "No conversations").
+- Hard refresh `/` while signed in → notifications badge populates; opening notifications shows real list.
+- Hard refresh `/messages` while signed out → after auth resolves, "must sign in" error appears (unchanged).
+- Hard refresh with throttled network → skeleton holds for up to ~6s then fails open to empty state (no infinite spinner).
+- Navigation between pages (the path that already worked) continues to work — `isReady` is already true on subsequent mounts.
