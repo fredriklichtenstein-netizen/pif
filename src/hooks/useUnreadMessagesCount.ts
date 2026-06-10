@@ -82,8 +82,14 @@ export function useUnreadMessagesCount() {
       for (const m of (msgs || []) as any[]) {
         const cid = String(m.conversation_id);
         const lastRead = lastReadByConv.get(cid);
-        const lastReadMs = lastRead ? new Date(lastRead).getTime() : 0;
-        const createdMs = new Date(m.created_at).getTime();
+        // null/undefined last_read_at → user has never opened this
+        // conversation; every message from the other party counts as
+        // unread. parseUtcMs treats any timestamp string without an
+        // explicit timezone suffix as UTC so older Postgres rows that
+        // were stored as `timestamp without time zone` don't get
+        // misinterpreted as local time on the client.
+        const lastReadMs = lastRead == null ? 0 : parseUtcMs(lastRead);
+        const createdMs = parseUtcMs(m.created_at);
         if (createdMs > lastReadMs) total += 1;
       }
       setUnreadCount(total);
