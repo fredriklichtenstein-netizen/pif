@@ -148,6 +148,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   useEffect(() => {
     if (!item?.id) return;
     if (completion.loading) return;
+    if (!initialStatusCapturedRef.current && completion.pifStatus === null) return;
     if (!initialStatusCapturedRef.current) {
       initialStatusSeenRef.current =
         completion.pifStatus === "completed" || completion.pifStatus === "archived";
@@ -172,6 +173,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
   }, [
     role,
+    item?.id,
     completion.loading,
     completion.pifStatus,
     hasRated,
