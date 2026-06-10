@@ -114,6 +114,8 @@ export function InterestSelectionList({
       isOwner,
       currentUserId,
     });
+    // This effect intentionally logs only the mount created by the popover key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDemo = useCallback(() => {
