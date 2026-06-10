@@ -103,6 +103,12 @@ export function usePifCompletion(
   const applyRow = useCallback((row: any) => {
     if (!row) return;
     const nextStatus = (row.pif_status as string) || null;
+    console.log("[usePifCompletion] completion row applied", {
+      itemId: id,
+      pifStatus: nextStatus,
+      pifferConfirmed: !!row.piffer_confirmed_handoff,
+      receiverConfirmed: !!row.receiver_confirmed_receipt,
+    });
     setState((prev) => {
       // Notify listeners (e.g. conversation list) the first time we
       // observe a terminal pif_status so Aktiva → Historik moves happen
@@ -207,10 +213,14 @@ export function usePifCompletion(
         console.error("confirm_pif_handoff failed:", error);
         return { ok: false, error } as const;
       }
+      const both =
+        (role === "piffer" && state.receiverConfirmed) ||
+        (role === "receiver" && state.pifferConfirmed);
       setState((s) => ({
         ...s,
         pifferConfirmed: role === "piffer" ? true : s.pifferConfirmed,
         receiverConfirmed: role === "receiver" ? true : s.receiverConfirmed,
+        pifStatus: both ? "completed" : s.pifStatus,
       }));
       if (conversationId) {
         if (role === "piffer") {
@@ -273,9 +283,6 @@ export function usePifCompletion(
         // visible to both parties. The piffer-side rating modal that
         // opens next must NOT post this again (handled in
         // completeWithRating below).
-        const both =
-          (role === "piffer" && state.receiverConfirmed) ||
-          (role === "receiver" && state.pifferConfirmed);
         if (both) {
           await postPifSystemMessage(
             conversationId,
