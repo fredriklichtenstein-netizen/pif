@@ -102,13 +102,35 @@ export function usePifCompletion(
 
   const applyRow = useCallback((row: any) => {
     if (!row) return;
-    setState({
-      pifferConfirmed: !!row.piffer_confirmed_handoff,
-      receiverConfirmed: !!row.receiver_confirmed_receipt,
-      pifStatus: (row.pif_status as string) || null,
-      loading: false,
+    const nextStatus = (row.pif_status as string) || null;
+    setState((prev) => {
+      // Notify listeners (e.g. conversation list) the first time we
+      // observe a terminal pif_status so Aktiva → Historik moves happen
+      // immediately without a refetch or page refresh.
+      if (
+        (nextStatus === "completed" || nextStatus === "archived") &&
+        prev.pifStatus !== nextStatus &&
+        id !== null &&
+        typeof window !== "undefined"
+      ) {
+        try {
+          window.dispatchEvent(
+            new CustomEvent("pif:status-changed", {
+              detail: { itemId: id, pifStatus: nextStatus },
+            }),
+          );
+        } catch {
+          /* noop */
+        }
+      }
+      return {
+        pifferConfirmed: !!row.piffer_confirmed_handoff,
+        receiverConfirmed: !!row.receiver_confirmed_receipt,
+        pifStatus: nextStatus,
+        loading: false,
+      };
     });
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (id === null) {
