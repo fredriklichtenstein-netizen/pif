@@ -5,6 +5,7 @@ import { useItemActions } from "./item/useItemActions";
 import { useItemCardComments } from "./item/useItemCardComments";
 import { useItemCardUsers } from "./item/useItemCardUsers";
 import { useItemCardRefresh } from "./item/useItemCardRefresh";
+import { useInteractionCountsRealtime } from "./item/realtime/useInteractionCountsRealtime";
 
 export const useItemCard = (itemId: string) => {
   const cleanup = useCallback(() => {}, []);
