@@ -112,6 +112,13 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const initialStatusCapturedRef = useRef(false);
 
   useEffect(() => {
+    ratedPromptedRef.current = false;
+    initialStatusSeenRef.current = false;
+    initialStatusCapturedRef.current = false;
+    setRatingOpen(false);
+  }, [conversationId, item?.id]);
+
+  useEffect(() => {
     let cancelled = false;
     const loadHasRated = async () => {
       if (role !== "piffer" || !item?.id) {
@@ -139,6 +146,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   }, [role, item?.id]);
 
   useEffect(() => {
+    if (!item?.id) return;
     if (completion.loading) return;
     if (!initialStatusCapturedRef.current) {
       initialStatusSeenRef.current =
