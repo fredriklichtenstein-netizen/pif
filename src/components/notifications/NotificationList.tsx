@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 type NotificationFilter = "all" | "unread";
 
 const FILTER_STORAGE_KEY = "pif.notifications.filter";
+const GROUP_PRIORITY: Record<string, number> = { selected: 0, interest: 1, other: 2 };
 
 function loadStoredFilter(): NotificationFilter {
   if (typeof window === "undefined") return "all";
@@ -68,26 +69,18 @@ export function NotificationList() {
     return "other";
   };
 
-  const groupedNotifications = useMemo(() => {
-    if (!visibleNotifications || visibleNotifications.length === 0) return {} as Record<string, typeof visibleNotifications>;
-    const groups = visibleNotifications.reduce((acc, notification) => {
-      const key = categorize(notification.type);
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(notification);
-      return acc;
-    }, {} as Record<string, typeof visibleNotifications>);
-    // Within each priority group, surface UNREAD notifications above READ
-    // ones regardless of the active "All"/"Unread" filter. Tiebreak by
-    // newest first.
-    for (const key of Object.keys(groups)) {
-      groups[key] = [...groups[key]].sort((a, b) => {
-        const ar = a.is_read ? 1 : 0;
-        const br = b.is_read ? 1 : 0;
-        if (ar !== br) return ar - br;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-    }
-    return groups;
+  const sortedNotifications = useMemo(() => {
+    return [...visibleNotifications].sort((a, b) => {
+      const readA = a.is_read ? 1 : 0;
+      const readB = b.is_read ? 1 : 0;
+      if (readA !== readB) return readA - readB;
+
+      const priorityA = GROUP_PRIORITY[categorize(a.type)] ?? 99;
+      const priorityB = GROUP_PRIORITY[categorize(b.type)] ?? 99;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   }, [visibleNotifications]);
 
   const groupDisplayInfo = {
@@ -117,17 +110,6 @@ export function NotificationList() {
       </div>
     );
   }
-
-  const GROUP_PRIORITY: Record<string, number> = { selected: 0, interest: 1, other: 2 };
-
-  const sortedGroupKeys = Object.keys(groupedNotifications).sort((a, b) => {
-    const pa = GROUP_PRIORITY[a] ?? 99;
-    const pb = GROUP_PRIORITY[b] ?? 99;
-    if (pa !== pb) return pa - pb;
-    const mostRecentA = groupedNotifications[a][0]?.created_at || '';
-    const mostRecentB = groupedNotifications[b][0]?.created_at || '';
-    return new Date(mostRecentB).getTime() - new Date(mostRecentA).getTime();
-  });
 
   const filterPillClass = (active: boolean) =>
     `px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -176,10 +158,7 @@ export function NotificationList() {
         </div>
       ) : (
       <div className="divide-y">
-        {sortedGroupKeys.flatMap(groupKey => {
-          const groupNotifications = groupedNotifications[groupKey];
-
-          return groupNotifications.map((notif) => {
+        {sortedNotifications.map((notif) => {
                 const isInterestReceived = notif.type === 'interest_received' || notif.type === 'interest';
                 const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
                 const isSelectionMade = notif.type === 'selection_made';
@@ -289,8 +268,7 @@ export function NotificationList() {
                     </div>
                   </div>
                 );
-          });
-        })}
+          })}
       </div>
 
       )}

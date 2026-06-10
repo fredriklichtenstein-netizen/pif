@@ -107,6 +107,17 @@ export function InterestSelectionList({
   const numericItemId =
     typeof itemId === "number" ? itemId : parseInt(itemId as string, 10);
 
+  useEffect(() => {
+    console.log("[InterestSelectionList] mounted; fetching fresh interest rows", {
+      itemId,
+      numericItemId,
+      isOwner,
+      currentUserId,
+    });
+    // This effect intentionally logs only the mount created by the popover key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loadDemo = useCallback(() => {
     const selectedUserId = demoSelections.getSelectedUser(itemId);
     const mockRows: InterestRow[] = MOCK_INTERESTED_USERS.map((u: any, idx: number) => ({
@@ -151,6 +162,12 @@ export function InterestSelectionList({
       inFlightRef.current = true;
       if (initial) setLoading(true);
       else setLoadingMore(true);
+      console.log("[InterestSelectionList] fetch start", {
+        itemId,
+        numericItemId,
+        initial,
+        offset: initial ? 0 : offsetRef.current,
+      });
       try {
         const offset = initial ? 0 : offsetRef.current;
         // Hard timeout so the popup never hangs forever on a stalled request.
@@ -183,6 +200,13 @@ export function InterestSelectionList({
         offsetRef.current = offset + slice.length;
         setHasMore(more);
         setRows((prev) => (initial ? slice : [...prev, ...slice]));
+        console.log("[InterestSelectionList] fetch success", {
+          itemId,
+          numericItemId,
+          initial,
+          rowCount: slice.length,
+          statuses: slice.map((r) => ({ id: r.id, user_id: r.user_id, status: r.status })),
+        });
         setError(null);
       } catch (e) {
         console.error("[InterestSelectionList] load failed", e);
@@ -193,7 +217,7 @@ export function InterestSelectionList({
         inFlightRef.current = false;
       }
     },
-    [hasMore, loadDemo, numericItemId]
+    [hasMore, itemId, loadDemo, numericItemId]
   );
 
   const reload = useCallback(() => {

@@ -33,6 +33,7 @@ import { PifCompletionBanner } from "./PifCompletionBanner";
 import { PifRatingModal } from "./PifRatingModal";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConversationViewProps {
   conversationId: string;
@@ -47,6 +48,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const [newMessage, setNewMessage] = useState("");
   const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const { t } = useTranslation();
@@ -107,33 +109,74 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   // we observe both sides confirmed in this session.
   const ratedPromptedRef = useRef(false);
   const initialStatusSeenRef = useRef(false);
+  const initialStatusCapturedRef = useRef(false);
+
   useEffect(() => {
-    if (completion.loading) return;
-    if (!initialStatusSeenRef.current) {
-      initialStatusSeenRef.current = true;
-      if (
-        completion.pifStatus === "completed" ||
-        completion.pifStatus === "archived"
-      ) {
-        ratedPromptedRef.current = true;
+    ratedPromptedRef.current = false;
+    initialStatusSeenRef.current = false;
+    initialStatusCapturedRef.current = false;
+    setRatingOpen(false);
+  }, [conversationId, item?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadHasRated = async () => {
+      if (role !== "piffer" || !item?.id) {
+        if (!cancelled) setHasRated(false);
+        return;
       }
+      const numericItemId = parseInt(String(item.id), 10);
+      if (!Number.isFinite(numericItemId)) return;
+      const { data, error } = await (supabase.from("interests") as any)
+        .select("receiver_rating")
+        .eq("item_id", numericItemId)
+        .eq("status", "selected")
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        console.warn("[PifRatingModal] hasRated lookup failed", error);
+        return;
+      }
+      setHasRated(data?.receiver_rating != null);
+    };
+    loadHasRated();
+    return () => {
+      cancelled = true;
+    };
+  }, [role, item?.id]);
+
+  useEffect(() => {
+    if (!item?.id) return;
+    if (completion.loading) return;
+    if (!initialStatusCapturedRef.current && completion.pifStatus === null) return;
+    if (!initialStatusCapturedRef.current) {
+      initialStatusSeenRef.current =
+        completion.pifStatus === "completed" || completion.pifStatus === "archived";
+      initialStatusCapturedRef.current = true;
     }
-    if (
-      role === "piffer" &&
-      completion.pifferConfirmed &&
-      completion.receiverConfirmed &&
-      completion.pifStatus !== "archived" &&
-      !ratedPromptedRef.current
-    ) {
+    const isPiffer = role === "piffer";
+    const shouldOpenRating =
+      completion.pifStatus === "completed" &&
+      isPiffer &&
+      !initialStatusSeenRef.current &&
+      !hasRated;
+    console.log("[PifRatingModal] trigger evaluation", {
+      pifStatus: completion.pifStatus,
+      isPiffer,
+      initialStatusSeenRef: initialStatusSeenRef.current,
+      hasRated,
+      shouldOpenRating,
+    });
+    if (shouldOpenRating && !ratedPromptedRef.current) {
       ratedPromptedRef.current = true;
       setRatingOpen(true);
     }
   }, [
     role,
+    item?.id,
     completion.loading,
-    completion.pifferConfirmed,
-    completion.receiverConfirmed,
     completion.pifStatus,
+    hasRated,
   ]);
 
   const handleSendMessage = async () => {
@@ -320,9 +363,11 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         <PifRatingModal
           open={ratingOpen}
           onOpenChange={setRatingOpen}
-          onSubmit={(rating, comment) =>
-            completion.completeWithRating(rating, comment)
-          }
+          onSubmit={async (rating, comment) => {
+            const res = await completion.completeWithRating(rating, comment);
+            if (res.ok) setHasRated(true);
+            return res;
+          }}
           onLowRatingReport={() => setReportOpen(true)}
         />
       )}

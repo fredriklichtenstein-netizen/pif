@@ -71,15 +71,24 @@ export function InteractionButtonWithPopup({
   // CTA in the notifications inbox). Only fires for the interest button on
   // the matching item, and only when the current user owns the item.
   const location = useLocation();
-  useEffect(() => {
-    if (type !== "interest") return;
-    if (!isOwner) return;
-    if (!itemId) return;
+  const shouldAutoOpenSelection = (() => {
+    if (type !== "interest") return false;
+    if (!isOwner) return false;
+    if (!itemId) return false;
     const params = new URLSearchParams(location.search);
-    if (params.get("selectReceiver") !== "true") return;
-    if (!location.pathname.includes(`/item/${itemId}`)) return;
+    if (params.get("selectReceiver") !== "true") return false;
+    const escapedItemId = String(itemId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`/(item|post|pif)/${escapedItemId}(?:/|$)`).test(location.pathname);
+  })();
+  useEffect(() => {
+    if (!shouldAutoOpenSelection) return;
+    console.log("[InteractionButtonWithPopup] auto-opening receiver selection", {
+      itemId,
+      path: location.pathname,
+      search: location.search,
+    });
     setShowPopup(true);
-  }, [type, isOwner, itemId, location.pathname, location.search]);
+  }, [itemId, location.pathname, location.search, shouldAutoOpenSelection]);
 
   const ACTIVE_COLOR = type === "interest" && itemType === "request" ? "#F59E0B" : "#00D1A0";
   const PASSIVE_COLOR = "#333333";
@@ -163,7 +172,8 @@ export function InteractionButtonWithPopup({
   const displayCount = count;
   const useInterestList = type === "interest" && !!itemId;
   const isCounterInteractive =
-    displayCount > 0 && (!!onCounterClick || !!fetchPage || useInterestList);
+    (displayCount > 0 || shouldAutoOpenSelection) &&
+    (!!onCounterClick || !!fetchPage || useInterestList);
 
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
@@ -198,7 +208,7 @@ export function InteractionButtonWithPopup({
         >
           {isActive ? labelActive : labelPassive}
         </span>
-        {displayCount > 0 && (
+        {(displayCount > 0 || shouldAutoOpenSelection) && (
           <CounterButton
             count={displayCount}
             isActive={isActive}
