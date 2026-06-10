@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 type NotificationFilter = "all" | "unread";
 
 const FILTER_STORAGE_KEY = "pif.notifications.filter";
+const GROUP_PRIORITY: Record<string, number> = { selected: 0, interest: 1, other: 2 };
 
 function loadStoredFilter(): NotificationFilter {
   if (typeof window === "undefined") return "all";
@@ -67,8 +68,6 @@ export function NotificationList() {
     }
     return "other";
   };
-
-  const GROUP_PRIORITY: Record<string, number> = { selected: 0, interest: 1, other: 2 };
 
   const sortedNotifications = useMemo(() => {
     return [...visibleNotifications].sort((a, b) => {
