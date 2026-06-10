@@ -1,5 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { debugLog } from "@/utils/authDebug";
+import { toast } from "@/hooks/use-toast";
+
+/**
+ * Verify a hydrated Supabase session exists before invoking auth-sensitive
+ * RPCs. Returns the session if valid; otherwise logs + toasts and returns null.
+ */
+async function ensureSession(label: string) {
+  try {
+    const [{ data: sessData }, { data: userData }] = await Promise.all([
+      supabase.auth.getSession(),
+      supabase.auth.getUser(),
+    ]);
+    const session = sessData?.session ?? null;
+    debugLog("rpc", `pre-RPC auth probe: ${label}`, {
+      hasSession: !!session,
+      hasAccessToken: !!session?.access_token,
+      sessionUserId: session?.user?.id ?? null,
+      getUserId: userData?.user?.id ?? null,
+    });
+    if (!session?.access_token) {
+      console.error(`[rpc] ${label}: no session/access_token; aborting RPC`);
+      toast({
+        title: "Du måste vara inloggad",
+        description: "Sessionen kunde inte verifieras. Logga in igen och försök på nytt.",
+        variant: "destructive",
+      });
+      return null;
+    }
+    return session;
+  } catch (err) {
+    console.error(`[rpc] ${label}: ensureSession threw`, err);
+    return null;
+  }
+}
 
 export type PifRole = "piffer" | "receiver";
 
