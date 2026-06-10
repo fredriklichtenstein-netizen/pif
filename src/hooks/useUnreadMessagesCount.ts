@@ -103,6 +103,16 @@ export function useUnreadMessagesCount() {
       if (msgErr) throw msgErr;
 
       let total = 0;
+      const diagnostics = new Map<
+        string,
+        {
+          rawLastRead: string | null | undefined;
+          parsedLastReadMs: number;
+          rawCreatedAt: string | null | undefined;
+          parsedCreatedAtMs: number;
+          countedAsUnread: boolean;
+        }
+      >();
       for (const m of (msgs || []) as any[]) {
         const cid = String(m.conversation_id);
         const lastRead = lastReadByConv.get(cid);
@@ -114,7 +124,32 @@ export function useUnreadMessagesCount() {
         // misinterpreted as local time on the client.
         const lastReadMs = lastRead == null ? 0 : parseUtcMs(lastRead);
         const createdMs = parseUtcMs(m.created_at);
-        if (createdMs > lastReadMs) total += 1;
+        const countedAsUnread = createdMs > lastReadMs;
+        if (countedAsUnread) total += 1;
+        const prev = diagnostics.get(cid);
+        if (
+          !prev ||
+          (countedAsUnread && !prev.countedAsUnread) ||
+          (countedAsUnread === prev.countedAsUnread && createdMs > prev.parsedCreatedAtMs)
+        ) {
+          diagnostics.set(cid, {
+            rawLastRead: lastRead,
+            parsedLastReadMs: lastReadMs,
+            rawCreatedAt: m.created_at,
+            parsedCreatedAtMs: createdMs,
+            countedAsUnread,
+          });
+        }
+      }
+      for (const [conversationId, entry] of diagnostics.entries()) {
+        console.log("[useUnreadMessagesCount] timestamp comparison", {
+          conversationId,
+          rawLastReadAt: entry.rawLastRead,
+          parsedLastReadAtMs: entry.parsedLastReadMs,
+          rawMostRecentUnreadCreatedAt: entry.rawCreatedAt,
+          parsedMostRecentUnreadCreatedAtMs: entry.parsedCreatedAtMs,
+          countedAsUnread: entry.countedAsUnread,
+        });
       }
       setUnreadCount(total);
     } catch {
