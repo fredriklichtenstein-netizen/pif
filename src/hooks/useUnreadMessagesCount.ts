@@ -6,6 +6,30 @@ import { MOCK_MESSAGES, MOCK_CONVERSATIONS } from "@/data/mockConversations";
 import { DEMO_USER } from "@/data/mockUser";
 
 /**
+ * Parse a Postgres timestamp string to milliseconds since UNIX epoch in UTC.
+ *
+ * Postgres `timestamp with time zone` returns an ISO string with an explicit
+ * offset (e.g. "2024-01-02T03:04:05.678+00:00") which `new Date()` parses
+ * unambiguously. Older or differently-typed rows may come back as
+ * `timestamp without time zone` ("2024-01-02 03:04:05.678") which `new Date()`
+ * interprets in the BROWSER's local timezone, producing unread-count drift on
+ * pre-existing conversations (older rows always look "newer than last_read_at"
+ * for users east of UTC). We force UTC by appending Z when no offset is
+ * present.
+ */
+function parseUtcMs(ts: string | null | undefined): number {
+  if (!ts) return 0;
+  let s = String(ts).trim();
+  // Normalise "YYYY-MM-DD HH:MM:SS..." → "YYYY-MM-DDTHH:MM:SS..."
+  if (s.includes(" ") && !s.includes("T")) s = s.replace(" ", "T");
+  // If no explicit timezone suffix, treat as UTC.
+  const hasTz = /(Z|[+-]\d{2}:?\d{2})$/.test(s);
+  if (!hasTz) s += "Z";
+  const ms = new Date(s).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+/**
  * Counts unread messages addressed to the current user
  * across all conversations they participate in.
  *
