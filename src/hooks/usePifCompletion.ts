@@ -290,7 +290,10 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       if (conversationId) {
-        // Hard-complete path: receiver hadn't confirmed yet.
+        // Hard-complete path: receiver hadn't confirmed yet. Only this
+        // path posts the "Du markerade..." messages AND the celebration
+        // message — when both sides already confirmed, the celebration
+        // was already posted by confirmHandoff and must not be repeated.
         if (!state.receiverConfirmed) {
           await postPifSystemMessage(
             conversationId,
@@ -302,11 +305,11 @@ export function usePifCompletion(
             "Piffaren har markerat piffen som genomförd.",
             { targetUserId: otherUserId ?? null },
           );
+          await postPifSystemMessage(
+            conversationId,
+            "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
+          );
         }
-        await postPifSystemMessage(
-          conversationId,
-          "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
-        );
         // The star rating itself stays private. Only post a system message
         // if the piffer left a written comment — visible to both parties.
         if (comment && comment.trim()) {
