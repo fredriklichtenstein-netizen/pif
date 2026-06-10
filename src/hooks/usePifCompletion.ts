@@ -222,6 +222,11 @@ export function usePifCompletion(
         p_rating: rating,
       };
       if (comment && comment.trim()) args.p_comment = comment.trim();
+      debugLog("rpc", "complete_pif_with_rating args", {
+        p_item_id: id,
+        p_rating: rating,
+        hasComment: !!(comment && comment.trim()),
+      });
       const { error } = await (supabase.rpc as any)(
         "complete_pif_with_rating",
         args,
