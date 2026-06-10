@@ -193,33 +193,65 @@ export function usePifCompletion(
       }));
       if (conversationId) {
         if (role === "piffer") {
-          // Piffer just confirmed handoff: tailored message to each side.
-          await postPifSystemMessage(
-            conversationId,
-            "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
-            { targetUserId: currentUserId ?? null },
-          );
-          await postPifSystemMessage(
-            conversationId,
-            "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
-            { targetUserId: otherUserId ?? null },
-          );
+          const receiverAlreadyConfirmed = state.receiverConfirmed;
+          if (!receiverAlreadyConfirmed) {
+            // Piffer confirms first.
+            await postPifSystemMessage(
+              conversationId,
+              "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              conversationId,
+              "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+              { targetUserId: otherUserId ?? null },
+            );
+          } else {
+            // Piffer confirms second.
+            await postPifSystemMessage(
+              conversationId,
+              "Du har bekräftat överlämning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              conversationId,
+              "Piffaren har bekräftat överlämning.",
+              { targetUserId: otherUserId ?? null },
+            );
+          }
         } else {
-          // Receiver just confirmed receipt.
-          await postPifSystemMessage(
-            conversationId,
-            "Du har bekräftat mottagning.",
-            { targetUserId: currentUserId ?? null },
-          );
-          await postPifSystemMessage(
-            conversationId,
-            "Mottagaren har bekräftat mottagning.",
-            { targetUserId: otherUserId ?? null },
-          );
+          const pifferAlreadyConfirmed = state.pifferConfirmed;
+          if (!pifferAlreadyConfirmed) {
+            // Receiver confirms first.
+            await postPifSystemMessage(
+              conversationId,
+              "Du har bekräftat mottagning. Väntar på att piffaren bekräftar överlämning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              conversationId,
+              "Mottagaren har bekräftat mottagning. Väntar på att du bekräftar överlämning.",
+              { targetUserId: otherUserId ?? null },
+            );
+          } else {
+            // Receiver confirms second.
+            await postPifSystemMessage(
+              conversationId,
+              "Du har bekräftat mottagning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              conversationId,
+              "Mottagaren har bekräftat mottagning.",
+              { targetUserId: otherUserId ?? null },
+            );
+          }
         }
 
         // If both sides have now confirmed, post the celebration message
-        // visible to both parties.
+        // visible to both parties. The piffer-side rating modal that
+        // opens next must NOT post this again (handled in
+        // completeWithRating below).
         const both =
           (role === "piffer" && state.receiverConfirmed) ||
           (role === "receiver" && state.pifferConfirmed);
