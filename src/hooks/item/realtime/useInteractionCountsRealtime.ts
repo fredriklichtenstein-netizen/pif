@@ -63,8 +63,29 @@ export const useInteractionCountsRealtime = (itemId: string) => {
       }
     };
 
-    const offLikes = subscribeItemTable(itemId, "likes", setLikes);
-    const offInterests = subscribeItemTable(itemId, "interests", setInterests);
+    // Debounce both authoritative HEAD COUNT refreshes so a burst of
+    // INSERT/DELETE realtime echoes (e.g. our own optimistic write +
+    // server echo, or rapid toggle) collapses into a single recount
+    // that always writes the absolute DB value back to the store.
+    let likesTimer: ReturnType<typeof setTimeout> | null = null;
+    let interestsTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedSetLikes = () => {
+      if (likesTimer) clearTimeout(likesTimer);
+      likesTimer = setTimeout(() => {
+        likesTimer = null;
+        setLikes();
+      }, 250);
+    };
+    const debouncedSetInterests = () => {
+      if (interestsTimer) clearTimeout(interestsTimer);
+      interestsTimer = setTimeout(() => {
+        interestsTimer = null;
+        setInterests();
+      }, 250);
+    };
+
+    const offLikes = subscribeItemTable(itemId, "likes", debouncedSetLikes);
+    const offInterests = subscribeItemTable(itemId, "interests", debouncedSetInterests);
 
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     const stopPolling = () => {
@@ -92,6 +113,8 @@ export const useInteractionCountsRealtime = (itemId: string) => {
       offInterests();
       offStatus();
       stopPolling();
+      if (likesTimer) clearTimeout(likesTimer);
+      if (interestsTimer) clearTimeout(interestsTimer);
     };
   }, [itemId, authInitialized]);
 };
