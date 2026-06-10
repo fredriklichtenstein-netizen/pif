@@ -70,12 +70,24 @@ export function NotificationList() {
 
   const groupedNotifications = useMemo(() => {
     if (!visibleNotifications || visibleNotifications.length === 0) return {} as Record<string, typeof visibleNotifications>;
-    return visibleNotifications.reduce((groups, notification) => {
+    const groups = visibleNotifications.reduce((acc, notification) => {
       const key = categorize(notification.type);
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(notification);
-      return groups;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(notification);
+      return acc;
     }, {} as Record<string, typeof visibleNotifications>);
+    // Within each priority group, surface UNREAD notifications above READ
+    // ones regardless of the active "All"/"Unread" filter. Tiebreak by
+    // newest first.
+    for (const key of Object.keys(groups)) {
+      groups[key] = [...groups[key]].sort((a, b) => {
+        const ar = a.is_read ? 1 : 0;
+        const br = b.is_read ? 1 : 0;
+        if (ar !== br) return ar - br;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
+    return groups;
   }, [visibleNotifications]);
 
   const groupDisplayInfo = {
