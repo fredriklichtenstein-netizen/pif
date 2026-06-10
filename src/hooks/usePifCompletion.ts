@@ -178,10 +178,31 @@ export function usePifCompletion(
     async (role: PifRole) => {
       if (id === null) return { ok: false } as const;
       if (!(await ensureSession("confirm_pif_handoff"))) return { ok: false } as const;
-      const { error } = await (supabase.rpc as any)("confirm_pif_handoff", {
+      let { error } = await (supabase.rpc as any)("confirm_pif_handoff", {
         p_item_id: id,
         p_role: role,
       });
+      if (error && (error.code === "42501" || /not authorized/i.test(error.message || ""))) {
+        console.warn("[rpc] confirm_pif_handoff 42501; refreshing session and retrying once");
+        await new Promise((r) => setTimeout(r, 500));
+        const { data: refreshed } = await supabase.auth.getSession();
+        debugLog("rpc", "confirm_pif_handoff retry session probe", {
+          hasSession: !!refreshed?.session,
+          hasAccessToken: !!refreshed?.session?.access_token,
+        });
+        if (!refreshed?.session?.access_token) {
+          toast({
+            title: "Du måste vara inloggad",
+            description: "Sessionen kunde inte verifieras. Logga in igen och försök på nytt.",
+            variant: "destructive",
+          });
+          return { ok: false, error } as const;
+        }
+        ({ error } = await (supabase.rpc as any)("confirm_pif_handoff", {
+          p_item_id: id,
+          p_role: role,
+        }));
+      }
       if (error) {
         console.error("confirm_pif_handoff failed:", error);
         return { ok: false, error } as const;
