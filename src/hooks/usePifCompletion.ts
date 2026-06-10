@@ -216,6 +216,7 @@ export function usePifCompletion(
   const completeWithRating = useCallback(
     async (rating: number, comment?: string) => {
       if (id === null) return { ok: false } as const;
+      if (!(await ensureSession("complete_pif_with_rating"))) return { ok: false } as const;
       const args: Record<string, unknown> = {
         p_item_id: id,
         p_rating: rating,
