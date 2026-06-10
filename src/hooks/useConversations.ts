@@ -224,10 +224,33 @@ export function useConversations() {
     };
     window.addEventListener('pif:conversation-read', onConversationRead);
 
+    // When a pif's status transitions to a terminal state (completed /
+    // archived), immediately re-categorize the matching conversation
+    // from Aktiva → Historik without waiting on a refetch. The status
+    // event is dispatched by usePifCompletion on Realtime updates.
+    const onPifStatusChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ itemId?: string | number; pifStatus?: string }>).detail;
+      if (!detail?.itemId || !detail.pifStatus) return;
+      const targetId = String(detail.itemId);
+      setConversations((current) =>
+        current.map((conversation) => {
+          if (String(conversation.item_id ?? '') !== targetId) return conversation;
+          return {
+            ...conversation,
+            item: conversation.item
+              ? { ...conversation.item, status: detail.pifStatus! }
+              : conversation.item,
+          };
+        }),
+      );
+    };
+    window.addEventListener('pif:status-changed', onPifStatusChanged);
+
     return () => {
       mounted = false;
       if (channel) supabase.removeChannel(channel);
       window.removeEventListener('pif:conversation-read', onConversationRead);
+      window.removeEventListener('pif:status-changed', onPifStatusChanged);
     };
   }, [toast, user, authLoading, t]);
 

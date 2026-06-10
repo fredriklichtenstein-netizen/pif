@@ -50,20 +50,48 @@ export function useUnreadMessagesCount() {
         return;
       }
 
-      const { count, error } = await supabase
+      // Fetch this user's last_read_at per conversation FRESH from the
+      // DB on every recount — never from any local cache or in-memory
+      // store that would reset on refresh. mark_conversation_read
+      // updates last_read_at (NOT messages.read_at), so the unread
+      // count must be derived by comparing each message's created_at
+      // against the participant's stored last_read_at.
+      const { data: myParticipantRows, error: partErr } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id, last_read_at")
+        .eq("user_id", user.id)
+        .in("conversation_id", ids as any);
+      if (partErr) throw partErr;
+      const lastReadByConv = new Map<string, string | null>();
+      for (const row of (myParticipantRows || []) as any[]) {
+        lastReadByConv.set(String(row.conversation_id), row.last_read_at ?? null);
+      }
+
+      // Pull all non-system messages in these conversations from other
+      // users. Filter unread client-side per conversation since gt
+      // cannot vary per row in a single query.
+      const { data: msgs, error: msgErr } = await supabase
         .from("messages")
-        .select("id", { count: "exact", head: true })
+        .select("conversation_id, created_at")
         .in("conversation_id", ids as any)
         .neq("sender_id", user.id)
-        .is("read_at", null)
         .eq("is_system_message", false);
+      if (msgErr) throw msgErr;
 
-      if (error) throw error;
-      setUnreadCount(count ?? 0);
+      let total = 0;
+      for (const m of (msgs || []) as any[]) {
+        const cid = String(m.conversation_id);
+        const lastRead = lastReadByConv.get(cid);
+        const lastReadMs = lastRead ? new Date(lastRead).getTime() : 0;
+        const createdMs = new Date(m.created_at).getTime();
+        if (createdMs > lastReadMs) total += 1;
+      }
+      setUnreadCount(total);
     } catch {
       // Fail silently — badge just won't update.
     }
   }, [user?.id]);
+
 
   useEffect(() => {
     compute();
@@ -84,7 +112,6 @@ export function useUnreadMessagesCount() {
           if (
             row &&
             row.sender_id !== user.id &&
-            !row.read_at &&
             !row.is_system_message &&
             conversationIdsRef.current.includes(String(row.conversation_id))
           ) {
