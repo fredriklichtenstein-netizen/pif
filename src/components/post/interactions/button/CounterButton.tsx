@@ -109,6 +109,7 @@ export function CounterButton({
       >
         {useInterestList ? (
           <InterestSelectionList
+            key={showPopup ? "open" : "closed"}
             itemId={itemId!}
             itemOwnerId={itemOwnerId}
             currentUserId={currentUserId}

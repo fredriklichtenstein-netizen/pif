@@ -99,20 +99,42 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   }, [messages]);
 
   // If piffer just completed both sides via confirm, surface rating modal once.
+  // We intentionally do NOT gate on pifStatus !== "completed" here because the
+  // confirm_pif_handoff RPC may auto-flip pif_status to "completed" the same
+  // moment both flags become true (one realtime UPDATE). Instead, if the pif
+  // was ALREADY completed when this view first loaded, we suppress the prompt
+  // (the piffer presumably already rated). Otherwise we prompt the first time
+  // we observe both sides confirmed in this session.
   const ratedPromptedRef = useRef(false);
+  const initialStatusSeenRef = useRef(false);
   useEffect(() => {
+    if (completion.loading) return;
+    if (!initialStatusSeenRef.current) {
+      initialStatusSeenRef.current = true;
+      if (
+        completion.pifStatus === "completed" ||
+        completion.pifStatus === "archived"
+      ) {
+        ratedPromptedRef.current = true;
+      }
+    }
     if (
       role === "piffer" &&
       completion.pifferConfirmed &&
       completion.receiverConfirmed &&
-      completion.pifStatus !== "completed" &&
       completion.pifStatus !== "archived" &&
       !ratedPromptedRef.current
     ) {
       ratedPromptedRef.current = true;
       setRatingOpen(true);
     }
-  }, [role, completion.pifferConfirmed, completion.receiverConfirmed, completion.pifStatus]);
+  }, [
+    role,
+    completion.loading,
+    completion.pifferConfirmed,
+    completion.receiverConfirmed,
+    completion.pifStatus,
+  ]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;

@@ -54,6 +54,7 @@ export function NotificationList() {
     if (
       t === "receiver_selected" ||
       t === "selection" ||
+      t === "selection_made" ||
       t === "wish_helper_offered" ||
       t === "helper_offered" ||
       t.includes("selected") ||
@@ -69,12 +70,24 @@ export function NotificationList() {
 
   const groupedNotifications = useMemo(() => {
     if (!visibleNotifications || visibleNotifications.length === 0) return {} as Record<string, typeof visibleNotifications>;
-    return visibleNotifications.reduce((groups, notification) => {
+    const groups = visibleNotifications.reduce((acc, notification) => {
       const key = categorize(notification.type);
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(notification);
-      return groups;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(notification);
+      return acc;
     }, {} as Record<string, typeof visibleNotifications>);
+    // Within each priority group, surface UNREAD notifications above READ
+    // ones regardless of the active "All"/"Unread" filter. Tiebreak by
+    // newest first.
+    for (const key of Object.keys(groups)) {
+      groups[key] = [...groups[key]].sort((a, b) => {
+        const ar = a.is_read ? 1 : 0;
+        const br = b.is_read ? 1 : 0;
+        if (ar !== br) return ar - br;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
+    return groups;
   }, [visibleNotifications]);
 
   const groupDisplayInfo = {
@@ -169,6 +182,7 @@ export function NotificationList() {
           return groupNotifications.map((notif) => {
                 const isInterestReceived = notif.type === 'interest_received' || notif.type === 'interest';
                 const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
+                const isSelectionMade = notif.type === 'selection_made';
 
                 let displayTitle: React.ReactNode = notif.title;
                 let displayContent: React.ReactNode = notif.content;
@@ -196,7 +210,12 @@ export function NotificationList() {
                     </>
                   );
                   displayContent = t('notifications.review_interest_to_select');
-                  ctaUrl = notif.item_id ? `/item/${notif.item_id}` : ctaUrl;
+                  // Land directly on the post with the receiver-selection
+                  // popup pre-opened, so the piffer doesn't have to hunt for
+                  // it after tapping the notification CTA.
+                  ctaUrl = notif.item_id
+                    ? `/item/${notif.item_id}?selectReceiver=true`
+                    : ctaUrl;
                   ctaLabel = t('notifications.review_interest_cta');
                 } else if (isReceiverSelected) {
                   displayTitle = t('interactions.receiver_selected_notif_title');
@@ -208,6 +227,18 @@ export function NotificationList() {
                     : notif.item_id
                       ? `/messages?item=${notif.item_id}`
                       : '/messages';
+                  ctaLabel = t('interactions.start_conversation');
+                } else if (isSelectionMade) {
+                  const receiver = notif.actor_name || t('someone');
+                  displayTitle = notif.item_title
+                    ? `Du har valt ${receiver} som mottagare för "${notif.item_title}".`
+                    : `Du har valt ${receiver} som mottagare.`;
+                  displayContent = null;
+                  ctaUrl = notif.conversation_id
+                    ? `/messages?conversation=${notif.conversation_id}`
+                    : notif.item_id
+                      ? `/messages?item=${notif.item_id}`
+                      : (notif.action_url ?? '/messages');
                   ctaLabel = t('interactions.start_conversation');
                 }
 

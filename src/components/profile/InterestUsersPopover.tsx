@@ -179,7 +179,15 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
 
   return (
     <>
-      <Popover>
+      <Popover
+        onOpenChange={(open) => {
+          // Refetch the interested-users list every time the popover is
+          // opened so it always matches the live counter on the post —
+          // the standalone local state is otherwise not updated by
+          // realtime events.
+          if (open) fetchInterests();
+        }}
+      >
         <PopoverTrigger asChild>
           <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mt-2">
             <Heart className="h-5 w-5 text-primary fill-primary" />

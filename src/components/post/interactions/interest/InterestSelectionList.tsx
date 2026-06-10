@@ -343,6 +343,44 @@ export function InterestSelectionList({
           };
         })
       );
+
+      // Self-notification for the piffer: confirms the selection in the
+      // notifications inbox and links back to the unlocked conversation.
+      if (currentUserId) {
+        try {
+          const { data: itemRow } = await (supabase
+            .from("items") as any)
+            .select("title")
+            .eq("id", numericItemId)
+            .maybeSingle();
+          const itemTitle: string | null = itemRow?.title ?? null;
+          const receiverName = displayName(row);
+          const titleText = isWish
+            ? `Du har valt ${receiverName} som hjälpare${itemTitle ? ` för "${itemTitle}"` : ""}.`
+            : `Du har valt ${receiverName} som mottagare${itemTitle ? ` för "${itemTitle}"` : ""}.`;
+          const actionUrl = conversationId
+            ? `/messages?conversation=${conversationId}`
+            : `/messages?item=${numericItemId}`;
+          await (supabase.from("notifications") as any).insert({
+            user_id: currentUserId,
+            type: "selection_made",
+            read: false,
+            action_url: actionUrl,
+            reference_id: String(numericItemId),
+            reference_type: "item",
+            payload: {
+              actor_id: row.user_id,
+              actor_name: receiverName,
+              item_id: numericItemId,
+              item_title: itemTitle,
+              conversation_id: conversationId ?? null,
+              title: titleText,
+            },
+          });
+        } catch (notifErr) {
+          console.warn("[InterestSelectionList] self-notification insert failed", notifErr);
+        }
+      }
       // Note: the wish-helper RPC seeds the helper's note as the first
       // message inside the same transaction, guarded so repeated calls
       // never insert duplicates. We intentionally do NOT insert from

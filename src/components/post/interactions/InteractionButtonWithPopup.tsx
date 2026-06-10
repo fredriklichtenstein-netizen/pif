@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
 import { InteractionIcon } from "./button/InteractionIcon";
@@ -64,6 +65,21 @@ export function InteractionButtonWithPopup({
   useEffect(() => {
     setPopupUsers(users);
   }, [users]);
+
+  // Auto-open the receiver-selection popup when the piffer lands on the
+  // item-detail URL with ?selectReceiver=true (set by the "Review interest"
+  // CTA in the notifications inbox). Only fires for the interest button on
+  // the matching item, and only when the current user owns the item.
+  const location = useLocation();
+  useEffect(() => {
+    if (type !== "interest") return;
+    if (!isOwner) return;
+    if (!itemId) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get("selectReceiver") !== "true") return;
+    if (!location.pathname.includes(`/item/${itemId}`)) return;
+    setShowPopup(true);
+  }, [type, isOwner, itemId, location.pathname, location.search]);
 
   const ACTIVE_COLOR = type === "interest" && itemType === "request" ? "#F59E0B" : "#00D1A0";
   const PASSIVE_COLOR = "#333333";
