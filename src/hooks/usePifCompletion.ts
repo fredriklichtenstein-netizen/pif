@@ -266,6 +266,7 @@ export function usePifCompletion(
   const withdraw = useCallback(
     async (action: "reopen" | "archive") => {
       if (id === null) return { ok: false } as const;
+      if (!(await ensureSession("withdraw_pif"))) return { ok: false } as const;
       const { error } = await (supabase.rpc as any)("withdraw_pif", {
         p_item_id: id,
         p_action: action,
