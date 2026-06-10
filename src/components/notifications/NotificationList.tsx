@@ -182,6 +182,7 @@ export function NotificationList() {
           return groupNotifications.map((notif) => {
                 const isInterestReceived = notif.type === 'interest_received' || notif.type === 'interest';
                 const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
+                const isSelectionMade = notif.type === 'selection_made';
 
                 let displayTitle: React.ReactNode = notif.title;
                 let displayContent: React.ReactNode = notif.content;
@@ -209,7 +210,12 @@ export function NotificationList() {
                     </>
                   );
                   displayContent = t('notifications.review_interest_to_select');
-                  ctaUrl = notif.item_id ? `/item/${notif.item_id}` : ctaUrl;
+                  // Land directly on the post with the receiver-selection
+                  // popup pre-opened, so the piffer doesn't have to hunt for
+                  // it after tapping the notification CTA.
+                  ctaUrl = notif.item_id
+                    ? `/item/${notif.item_id}?selectReceiver=true`
+                    : ctaUrl;
                   ctaLabel = t('notifications.review_interest_cta');
                 } else if (isReceiverSelected) {
                   displayTitle = t('interactions.receiver_selected_notif_title');
@@ -221,6 +227,18 @@ export function NotificationList() {
                     : notif.item_id
                       ? `/messages?item=${notif.item_id}`
                       : '/messages';
+                  ctaLabel = t('interactions.start_conversation');
+                } else if (isSelectionMade) {
+                  const receiver = notif.actor_name || t('someone');
+                  displayTitle = notif.item_title
+                    ? `Du har valt ${receiver} som mottagare för "${notif.item_title}".`
+                    : `Du har valt ${receiver} som mottagare.`;
+                  displayContent = null;
+                  ctaUrl = notif.conversation_id
+                    ? `/messages?conversation=${notif.conversation_id}`
+                    : notif.item_id
+                      ? `/messages?item=${notif.item_id}`
+                      : (notif.action_url ?? '/messages');
                   ctaLabel = t('interactions.start_conversation');
                 }
 
