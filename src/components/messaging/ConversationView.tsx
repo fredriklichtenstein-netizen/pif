@@ -99,13 +99,16 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   }, [messages]);
 
   // If piffer just completed both sides via confirm, surface rating modal once.
+  // We intentionally do NOT exclude pifStatus === "completed" here because the
+  // confirm_pif_handoff RPC may auto-flip pif_status to "completed" the moment
+  // both sides confirm, which would prevent the modal from ever opening.
+  // The ratedPromptedRef ensures we only ever prompt once per mount.
   const ratedPromptedRef = useRef(false);
   useEffect(() => {
     if (
       role === "piffer" &&
       completion.pifferConfirmed &&
       completion.receiverConfirmed &&
-      completion.pifStatus !== "completed" &&
       completion.pifStatus !== "archived" &&
       !ratedPromptedRef.current
     ) {
