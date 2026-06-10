@@ -213,18 +213,31 @@ export function usePifCompletion(
         console.error("confirm_pif_handoff failed:", error);
         return { ok: false, error } as const;
       }
+      const { data: latestRow, error: latestErr } = await (supabase.from("items") as any)
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status")
+        .eq("id", id)
+        .maybeSingle();
+      if (latestErr) {
+        console.warn("[usePifCompletion] post-confirm item refetch failed", latestErr);
+      }
+      const nextPifferConfirmed = latestRow
+        ? !!latestRow.piffer_confirmed_handoff
+        : role === "piffer" || state.pifferConfirmed;
+      const nextReceiverConfirmed = latestRow
+        ? !!latestRow.receiver_confirmed_receipt
+        : role === "receiver" || state.receiverConfirmed;
+      const nextStatus = (latestRow?.pif_status as string | undefined) || null;
       const both =
-        (role === "piffer" && state.receiverConfirmed) ||
-        (role === "receiver" && state.pifferConfirmed);
+        nextPifferConfirmed && nextReceiverConfirmed;
       setState((s) => ({
         ...s,
-        pifferConfirmed: role === "piffer" ? true : s.pifferConfirmed,
-        receiverConfirmed: role === "receiver" ? true : s.receiverConfirmed,
-        pifStatus: both ? "completed" : s.pifStatus,
+        pifferConfirmed: nextPifferConfirmed,
+        receiverConfirmed: nextReceiverConfirmed,
+        pifStatus: both ? "completed" : nextStatus ?? s.pifStatus,
       }));
       if (conversationId) {
         if (role === "piffer") {
-          const receiverAlreadyConfirmed = state.receiverConfirmed;
+          const receiverAlreadyConfirmed = nextReceiverConfirmed;
           if (!receiverAlreadyConfirmed) {
             // Piffer confirms first.
             await postPifSystemMessage(
@@ -251,7 +264,7 @@ export function usePifCompletion(
             );
           }
         } else {
-          const pifferAlreadyConfirmed = state.pifferConfirmed;
+          const pifferAlreadyConfirmed = nextPifferConfirmed;
           if (!pifferAlreadyConfirmed) {
             // Receiver confirms first.
             await postPifSystemMessage(
