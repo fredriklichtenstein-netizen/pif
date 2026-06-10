@@ -10,6 +10,14 @@ import { useInteractionCountsRealtime } from "./item/realtime/useInteractionCoun
 export const useItemCard = (itemId: string) => {
   const cleanup = useCallback(() => {}, []);
 
+  // Subscribe to likes/interests realtime for this item so the global
+  // counts store stays in sync on every page (feed, profile, item
+  // detail) — not just the feed where useOptimizedFeed runs. The shared
+  // per-item channel manager dedupes subscriptions across cards.
+  useInteractionCountsRealtime(itemId);
+
+
+
   // Get comments functionality
   const {
     showComments,
