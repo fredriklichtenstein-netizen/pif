@@ -54,6 +54,7 @@ export function NotificationList() {
     if (
       t === "receiver_selected" ||
       t === "selection" ||
+      t === "selection_made" ||
       t === "wish_helper_offered" ||
       t === "helper_offered" ||
       t.includes("selected") ||
