@@ -155,6 +155,7 @@ export function usePifCompletion(
   const confirmHandoff = useCallback(
     async (role: PifRole) => {
       if (id === null) return { ok: false } as const;
+      if (!(await ensureSession("confirm_pif_handoff"))) return { ok: false } as const;
       const { error } = await (supabase.rpc as any)("confirm_pif_handoff", {
         p_item_id: id,
         p_role: role,
