@@ -172,7 +172,8 @@ export function InteractionButtonWithPopup({
   const displayCount = count;
   const useInterestList = type === "interest" && !!itemId;
   const isCounterInteractive =
-    displayCount > 0 && (!!onCounterClick || !!fetchPage || useInterestList);
+    (displayCount > 0 || shouldAutoOpenSelection) &&
+    (!!onCounterClick || !!fetchPage || useInterestList);
 
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
