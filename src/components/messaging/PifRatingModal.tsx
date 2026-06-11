@@ -45,15 +45,24 @@ export function PifRatingModal({
   }, [open]);
 
   const handleSubmit = async () => {
+    console.log("[PifRatingModal] submit clicked", {
+      rating,
+      hasComment: !!comment.trim(),
+    });
     if (rating < 1) return;
     setSubmitting(true);
-    const res = await onSubmit(rating, comment.trim() || undefined);
-    setSubmitting(false);
-    if (!res.ok) return;
-    if (rating <= 2) {
-      setAskReport(true);
-    } else {
-      onOpenChange(false);
+    try {
+      const res = await onSubmit(rating, comment.trim() || undefined);
+      setSubmitting(false);
+      if (!res.ok) return;
+      if (rating <= 2) {
+        setAskReport(true);
+      } else {
+        onOpenChange(false);
+      }
+    } catch (err) {
+      console.error("[PifRatingModal] submit threw", err);
+      setSubmitting(false);
     }
   };
 
