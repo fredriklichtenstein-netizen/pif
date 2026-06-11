@@ -107,12 +107,10 @@ export function useUnreadMessagesCount() {
         const lastRead = lastReadByConv.get(cid);
         // null/undefined last_read_at → user has never opened this
         // conversation; every message from the other party counts as
-        // unread. parseUtcMs treats any timestamp string without an
-        // explicit timezone suffix as UTC so older Postgres rows that
-        // were stored as `timestamp without time zone` don't get
-        // misinterpreted as local time on the client.
-        const lastReadMs = lastRead == null ? 0 : parseUtcMs(lastRead);
-        const createdMs = parseUtcMs(m.created_at);
+        // unread. Otherwise compare via the JS Date constructor on the
+        // ISO strings Supabase returns.
+        const lastReadMs = lastRead == null ? 0 : tsMs(lastRead);
+        const createdMs = tsMs(m.created_at);
         const countedAsUnread = createdMs > lastReadMs;
         if (countedAsUnread) total += 1;
         const prev = diagnostics.get(cid);
