@@ -32,7 +32,7 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   const { supabase } = await import("@/integrations/supabase/client");
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, avatar_url, gender, address, coordinates")
+    .select("id, first_name, last_name, avatar_url, gender, address, location")
     .eq("id", userId)
     .single();
   if (error) {
