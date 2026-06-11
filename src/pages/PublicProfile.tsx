@@ -32,7 +32,7 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   const { supabase } = await import("@/integrations/supabase/client");
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, avatar_url, gender, address, coordinates")
+    .select("id, first_name, last_name, avatar_url, gender, address, location")
     .eq("id", userId)
     .single();
   if (error) {
@@ -156,7 +156,7 @@ export default function PublicProfile() {
     fetchProfile(id).then((p) => {
       setProfile(p);
       setLoading(false);
-      const coord = parseCoordinates(p?.coordinates);
+      const coord = parseCoordinates((p as any)?.location ?? (p as any)?.coordinates);
       if (coord) setCoordinates(coord);
     });
   }, [id]);
