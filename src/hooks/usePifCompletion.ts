@@ -412,5 +412,63 @@ export function usePifCompletion(
     [id, conversationId, currentUserId, otherUserId],
   );
 
-  return { ...state, confirmHandoff, completeWithRating, withdraw };
+  const undoConfirmation = useCallback(
+    async (role: PifRole) => {
+      if (id === null) return { ok: false } as const;
+      if (!(await ensureSession("undo_pif_handoff_confirmation"))) {
+        return { ok: false } as const;
+      }
+      const { data, error } = await (supabase.rpc as any)(
+        "undo_pif_handoff_confirmation",
+        { p_item_id: id, p_role: role },
+      );
+      if (error) {
+        console.error("undo_pif_handoff_confirmation failed:", error);
+        toast({
+          title: "Det gick inte att ångra",
+          description: error.message || "Försök igen.",
+          variant: "destructive",
+        });
+        return { ok: false, error } as const;
+      }
+      // Refetch fresh row so local UI reflects the cleared flags.
+      const { data: latestRow } = await (supabase.from("items") as any)
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status")
+        .eq("id", id)
+        .maybeSingle();
+      if (latestRow) applyRow(latestRow);
+
+      if (conversationId) {
+        if (role === "piffer") {
+          const bothCleared = !!(data && (data as any).receiver_was_confirmed);
+          if (bothCleared) {
+            await postPifSystemMessage(
+              conversationId,
+              "Piffaren har ångrat sin bekräftelse av överlämning. Utbytet är inte slutfört.",
+            );
+          } else {
+            await postPifSystemMessage(
+              conversationId,
+              "Du har ångrat din bekräftelse av överlämning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              conversationId,
+              "Piffaren har ångrat sin bekräftelse av överlämning.",
+              { targetUserId: otherUserId ?? null },
+            );
+          }
+        } else {
+          await postPifSystemMessage(
+            conversationId,
+            "Mottagaren har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+          );
+        }
+      }
+      return { ok: true } as const;
+    },
+    [id, conversationId, currentUserId, otherUserId, applyRow],
+  );
+
+  return { ...state, confirmHandoff, completeWithRating, withdraw, undoConfirmation };
 }
