@@ -80,15 +80,15 @@ export function useUnreadMessagesCount() {
         lastReadByConv.set(String(row.conversation_id), row.last_read_at ?? null);
       }
 
-      // Pull all non-system messages in these conversations from other
-      // users. Filter unread client-side per conversation since gt
-      // cannot vary per row in a single query.
+      // Pull all messages in these conversations and filter client-side.
+      // Targeted logic: regular messages from other users count, plus
+      // system messages targeted at the current user or broadcast
+      // (target_user_id IS NULL). System messages whose target is the
+      // OTHER user (i.e. triggered by current user's action) do NOT count.
       const { data: msgs, error: msgErr } = await supabase
         .from("messages")
-        .select("conversation_id, created_at")
-        .in("conversation_id", ids as any)
-        .neq("sender_id", user.id)
-        .eq("is_system_message", false);
+        .select("conversation_id, created_at, sender_id, is_system_message, target_user_id")
+        .in("conversation_id", ids as any);
       if (msgErr) throw msgErr;
 
       let total = 0;
