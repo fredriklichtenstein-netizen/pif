@@ -17,7 +17,7 @@ interface Profile {
   avatar_url?: string | null;
   gender?: string | null;
   address?: string | null;
-  coordinates?: any;
+  location?: any;
 }
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
@@ -156,7 +156,7 @@ export default function PublicProfile() {
     fetchProfile(id).then((p) => {
       setProfile(p);
       setLoading(false);
-      const coord = parseCoordinates((p as any)?.location ?? (p as any)?.coordinates);
+      const coord = parseCoordinates((p as any)?.location);
       if (coord) setCoordinates(coord);
     });
   }, [id]);

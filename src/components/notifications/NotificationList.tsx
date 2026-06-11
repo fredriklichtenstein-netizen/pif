@@ -13,9 +13,9 @@ const FILTER_STORAGE_KEY = "pif.notifications.filter";
 const GROUP_PRIORITY: Record<string, number> = { selected: 0, interest: 1, other: 2 };
 
 function loadStoredFilter(): NotificationFilter {
-  if (typeof window === "undefined") return "all";
+  if (typeof window === "undefined") return "unread";
   const v = window.localStorage.getItem(FILTER_STORAGE_KEY);
-  return v === "unread" || v === "all" ? v : "all";
+  return v === "unread" || v === "all" ? v : "unread";
 }
 
 export function NotificationList() {
