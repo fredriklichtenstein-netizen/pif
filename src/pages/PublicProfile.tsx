@@ -17,7 +17,7 @@ interface Profile {
   avatar_url?: string | null;
   gender?: string | null;
   address?: string | null;
-  coordinates?: any;
+  location?: any;
 }
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
