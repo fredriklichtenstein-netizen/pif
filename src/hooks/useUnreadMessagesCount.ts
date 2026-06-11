@@ -105,13 +105,14 @@ export function useUnreadMessagesCount() {
       for (const m of (msgs || []) as any[]) {
         const cid = String(m.conversation_id);
         const lastRead = lastReadByConv.get(cid);
-        // null/undefined last_read_at → user has never opened this
-        // conversation; every message from the other party counts as
-        // unread. Otherwise compare via the JS Date constructor on the
-        // ISO strings Supabase returns.
         const lastReadMs = lastRead == null ? 0 : tsMs(lastRead);
         const createdMs = tsMs(m.created_at);
-        const countedAsUnread = createdMs > lastReadMs;
+        const isSystem = !!m.is_system_message;
+        const target = m.target_user_id ?? null;
+        const eligible = isSystem
+          ? target === user.id || target === null
+          : m.sender_id !== user.id;
+        const countedAsUnread = eligible && createdMs > lastReadMs;
         if (countedAsUnread) total += 1;
         const prev = diagnostics.get(cid);
         if (
