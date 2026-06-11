@@ -156,7 +156,7 @@ export default function PublicProfile() {
     fetchProfile(id).then((p) => {
       setProfile(p);
       setLoading(false);
-      const coord = parseCoordinates(p?.coordinates);
+      const coord = parseCoordinates((p as any)?.location ?? (p as any)?.coordinates);
       if (coord) setCoordinates(coord);
     });
   }, [id]);
