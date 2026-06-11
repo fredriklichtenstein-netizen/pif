@@ -9,6 +9,7 @@ interface Props {
   receiverConfirmed: boolean;
   onConfirm: () => Promise<unknown>;
   onHardComplete: () => void; // opens rating modal
+  onUndo?: () => Promise<unknown>;
 }
 
 /**
@@ -21,8 +22,10 @@ export function PifCompletionBanner({
   receiverConfirmed,
   onConfirm,
   onHardComplete,
+  onUndo,
 }: Props) {
   const [busy, setBusy] = useState(false);
+  const [undoing, setUndoing] = useState(false);
   const bothDone = pifferConfirmed && receiverConfirmed;
 
   const handleConfirm = async () => {
@@ -31,6 +34,16 @@ export function PifCompletionBanner({
       await onConfirm();
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!onUndo) return;
+    setUndoing(true);
+    try {
+      await onUndo();
+    } finally {
+      setUndoing(false);
     }
   };
 
@@ -45,6 +58,8 @@ export function PifCompletionBanner({
 
   if (role === "piffer") {
     const confirmed = pifferConfirmed;
+    // Piffer can always undo before completion (handled at RPC level).
+    const canUndo = confirmed && !!onUndo;
     return (
       <div className="border-t bg-muted/40 px-4 py-3 space-y-2">
         <Button
@@ -64,6 +79,18 @@ export function PifCompletionBanner({
             ? "Du har bekräftat överlämning"
             : "Jag har lämnat över piffen ✓"}
         </Button>
+        {canUndo && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={undoing}
+              className="text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+            >
+              {undoing ? "Ångrar…" : "Ångra"}
+            </button>
+          </div>
+        )}
         {confirmed && !receiverConfirmed && (
           <>
             <p className="text-xs text-muted-foreground text-center">
@@ -86,6 +113,8 @@ export function PifCompletionBanner({
 
   // receiver
   const confirmed = receiverConfirmed;
+  // Receiver may only undo BEFORE the piffer has confirmed handoff.
+  const canUndo = confirmed && !pifferConfirmed && !!onUndo;
   return (
     <div className="border-t bg-muted/40 px-4 py-3 space-y-2">
       <Button
@@ -105,6 +134,18 @@ export function PifCompletionBanner({
           ? "Du har bekräftat mottagning"
           : "Jag har tagit emot piffen ✓"}
       </Button>
+      {canUndo && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={undoing}
+            className="text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+          >
+            {undoing ? "Ångrar…" : "Ångra"}
+          </button>
+        </div>
+      )}
       {confirmed && !pifferConfirmed && (
         <p className="text-xs text-muted-foreground text-center">
           Väntar på att piffaren bekräftar överlämning…
