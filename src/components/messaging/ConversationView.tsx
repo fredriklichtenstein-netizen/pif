@@ -337,6 +337,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           receiverConfirmed={completion.receiverConfirmed}
           onConfirm={() => completion.confirmHandoff(role)}
           onHardComplete={() => setRatingOpen(true)}
+          onUndo={() => completion.undoConfirmation(role)}
         />
       )}
 
