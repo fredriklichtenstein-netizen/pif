@@ -83,7 +83,9 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     otherParticipant?.user_id,
   );
   const isClosed =
-    completion.pifStatus === "completed" || completion.pifStatus === "archived";
+    completion.pifStatus === "completed" ||
+    completion.pifStatus === "archived" ||
+    locallyClosed;
 
   const roleLabel = item
     ? isCurrentUserPiffer
