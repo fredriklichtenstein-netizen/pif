@@ -77,6 +77,25 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
 
   useEffect(() => { if (!itemId) return; fetchInterests(); }, [itemId]);
 
+  // Realtime: refetch whenever interests change for THIS item so the
+  // piffer's profile-page list updates immediately after a withdrawal
+  // (which DELETEs the selected interest row) without a page refresh.
+  useEffect(() => {
+    if (DEMO_MODE || !itemId) return;
+    const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+    if (!Number.isFinite(numericId)) return;
+    const channel = supabase
+      .channel(`interest-popover-${numericId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'interests', filter: `item_id=eq.${numericId}` },
+        () => { fetchInterests(); }
+      )
+      .subscribe();
+    return () => { try { supabase.removeChannel(channel); } catch { /* noop */ } };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemId]);
+
   const handleSelectReceiver = async (interestId: number, userId: string, displayName: string) => {
     setConfirmDialogOpen(false);
     if (selectingInterestId !== null) return;
