@@ -186,7 +186,23 @@ export function useConversations() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
           fetchConversations();
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+          const m = payload.new as any;
+          if (m && typeof m.content === 'string' && m.content.trim()) {
+            const cid = String(m.conversation_id);
+            const content = m.content as string;
+            const createdAt = m.created_at as string;
+            setConversations((current) =>
+              current.map((c) =>
+                String(c.id) === cid
+                  ? { ...c, last_message_text: content, updated_at: createdAt || c.updated_at }
+                  : c,
+              ),
+            );
+          }
+          fetchConversations();
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
           fetchConversations();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_participants' }, () => {
