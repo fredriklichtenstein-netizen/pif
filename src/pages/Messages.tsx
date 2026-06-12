@@ -270,6 +270,7 @@ const Messages = () => {
                     conversations={conversations}
                     activeConversationId={activeConversationId}
                     onSelectConversation={(id) => setActiveConversationId(id)}
+                    unreadByConversation={unreadByConversation}
                   />
                 </div>
                 <div
