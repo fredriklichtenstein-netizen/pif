@@ -23,7 +23,8 @@ const FADE_DURATION_MS = 320;
 // Duration of the fade-in animation when an item is undone/restored.
 const RESTORE_FADE_MS = 400;
 
-export function useOptimizedFeed() {
+export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
+  const includeArchived = !!options.includeArchived;
   const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
   // Items currently animating out (still rendered, with fade-out class).
