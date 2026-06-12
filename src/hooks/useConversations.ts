@@ -140,30 +140,9 @@ export function useConversations() {
             return acc;
           }, {} as Record<string, typeof participantsData>);
 
-          // Per-conversation unread count using the same targeted system-
-          // message logic as useUnreadMessagesCount: regular messages from
-          // the other user count; system messages count only when targeted
-          // at the current user or broadcast (target_user_id IS NULL).
-          const unreadByConv = new Map<string, number>();
-          const currentUserId = user.id;
-          for (const m of (recentMessages || []) as any[]) {
-            const cid = String(m.conversation_id);
-            const myParticipant = (participantsByConversation[cid] || []).find(
-              (p: any) => p.user_id === currentUserId,
-            );
-            const lastRead = myParticipant?.last_read_at
-              ? new Date(myParticipant.last_read_at).getTime()
-              : 0;
-            const created = new Date(m.created_at).getTime();
-            const isSystem = !!m.is_system_message;
-            const target = m.target_user_id ?? null;
-            const eligible = isSystem
-              ? target === currentUserId || target === null
-              : m.sender_id !== currentUserId;
-            if (eligible && created > lastRead) {
-              unreadByConv.set(cid, (unreadByConv.get(cid) ?? 0) + 1);
-            }
-          }
+          // Per-conversation unread counts are owned by useUnreadMessagesCount
+          // (single source of truth, fresh DB last_read_at). We no longer
+          // compute unread here to avoid divergence from the nav badge.
 
           const transformedConversations = conversationsData.map(conv => {
             const participants = (participantsByConversation[conv.id] || []).map((p: any) => ({ ...p, id: String(p.id) }));
@@ -174,7 +153,6 @@ export function useConversations() {
               item_id: conv.item_id,
               last_message_text: latest ?? conv.last_message_text,
               participants,
-              unread_count: unreadByConv.get(String(conv.id)) ?? 0,
               item: itemAny ? {
                 id: String(itemAny.id), title: itemAny.title, description: "", category: "",
                 condition: "", measurements: {}, images: itemAny.images || [], location: "",

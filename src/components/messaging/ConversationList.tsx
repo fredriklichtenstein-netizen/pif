@@ -13,6 +13,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeConversationId: string | null;
   onSelectConversation: (id: string) => void;
+  unreadByConversation?: Record<string, number>;
 }
 
 const isHistoricStatus = (status: string | undefined): boolean => {
@@ -24,6 +25,7 @@ export function ConversationList({
   conversations,
   activeConversationId,
   onSelectConversation,
+  unreadByConversation,
 }: ConversationListProps) {
   const { user } = useGlobalAuth();
   const currentUserId = user?.id;
@@ -51,7 +53,7 @@ export function ConversationList({
     const displayName = resolveDisplayName(otherParticipant?.profile, fallbackName);
     const initial = resolveAvatarInitial(otherParticipant?.profile, fallbackInitial);
     const preview = conversation.last_message_text?.trim();
-    const unread = conversation.unread_count ?? 0;
+    const unread = unreadByConversation?.[String(conversation.id)] ?? conversation.unread_count ?? 0;
 
     return (
       <div

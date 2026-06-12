@@ -22,7 +22,7 @@ const Messages = () => {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { conversations, isLoading: conversationsLoading, error } = useConversations();
   const { unreadCount } = useNotifications();
-  const { unreadMessagesCount } = useUnreadMessagesCount();
+  const { unreadMessagesCount, unreadByConversation } = useUnreadMessagesCount();
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<"messages" | "notifications">(
@@ -270,6 +270,7 @@ const Messages = () => {
                     conversations={conversations}
                     activeConversationId={activeConversationId}
                     onSelectConversation={(id) => setActiveConversationId(id)}
+                    unreadByConversation={unreadByConversation}
                   />
                 </div>
                 <div

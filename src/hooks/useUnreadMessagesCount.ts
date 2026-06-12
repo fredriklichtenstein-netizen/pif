@@ -30,41 +30,46 @@ function tsMs(value: string | null | undefined): number {
 export function useUnreadMessagesCount() {
   const { user } = useGlobalAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadByConversation, setUnreadByConversation] = useState<
+    Record<string, number>
+  >({});
   // Gate: the badge must NEVER show a count derived from anything other
   // than a fresh fetch of last_read_at from conversation_participants.
-  // Until the first compute() resolves for the current user we keep the
-  // badge at 0 instead of showing a stale value from any prior render.
   const [hasFreshLastRead, setHasFreshLastRead] = useState(false);
   const conversationIdsRef = useRef<string[]>([]);
   const userIdRef = useRef<string | null>(null);
 
   const compute = useCallback(async () => {
     if (DEMO_MODE) {
-
       let count = 0;
+      const map: Record<string, number> = {};
       for (const conv of MOCK_CONVERSATIONS) {
         const msgs = (MOCK_MESSAGES as any)[conv.id] || [];
-        count += msgs.filter(
+        const n = msgs.filter(
           (m: any) => m.sender_id !== DEMO_USER.id && !m.read_at
         ).length;
+        map[conv.id] = n;
+        count += n;
       }
+      setUnreadByConversation(map);
       setUnreadCount(count);
+      setHasFreshLastRead(true);
       return;
     }
 
     if (!user?.id) {
       setUnreadCount(0);
+      setUnreadByConversation({});
       setHasFreshLastRead(false);
       conversationIdsRef.current = [];
       userIdRef.current = null;
       return;
     }
 
-    // If the auth user changed since last compute, hide any prior count
-    // until the fresh last_read_at fetch for this user completes.
     if (userIdRef.current !== user.id) {
       setHasFreshLastRead(false);
       setUnreadCount(0);
+      setUnreadByConversation({});
       userIdRef.current = user.id;
     }
 
@@ -77,14 +82,12 @@ export function useUnreadMessagesCount() {
       conversationIdsRef.current = ids;
       if (ids.length === 0) {
         setUnreadCount(0);
+        setUnreadByConversation({});
         setHasFreshLastRead(true);
         return;
       }
 
       // STEP 1 — fetch last_read_at FRESH from conversation_participants.
-      // The unread count must NEVER be derived from a cached or empty
-      // last_read_at map. Only after this fetch resolves successfully do
-      // we proceed to count messages and update the badge.
       const { data: myParticipantRows, error: partErr } = await supabase
         .from("conversation_participants")
         .select("conversation_id, last_read_at")
@@ -96,16 +99,15 @@ export function useUnreadMessagesCount() {
         lastReadByConv.set(String(row.conversation_id), row.last_read_at ?? null);
       }
 
-      // STEP 2 — only now fetch messages and compute. If STEP 1 above
-      // threw, we fall through to the catch and leave hasFreshLastRead
-      // = false so the badge stays at 0 rather than showing a stale count.
+      // STEP 2 — fetch messages and compute.
       const { data: msgs, error: msgErr } = await supabase
         .from("messages")
         .select("conversation_id, created_at, sender_id, is_system_message, target_user_id")
         .in("conversation_id", ids as any);
       if (msgErr) throw msgErr;
 
-      const unreadByConv = new Map<string, any[]>();
+      const countsByConv: Record<string, number> = {};
+      for (const id of ids) countsByConv[String(id)] = 0;
       for (const m of (msgs || []) as any[]) {
         const cid = String(m.conversation_id);
         const lastRead = lastReadByConv.get(cid);
@@ -117,56 +119,30 @@ export function useUnreadMessagesCount() {
           ? target === user.id || target === null
           : m.sender_id !== user.id;
         if (eligible && createdMs > lastReadMs) {
-          const list = unreadByConv.get(cid) ?? [];
-          list.push(m);
-          unreadByConv.set(cid, list);
+          countsByConv[cid] = (countsByConv[cid] ?? 0) + 1;
         }
       }
 
       let total = 0;
-      for (const [cid, list] of unreadByConv.entries()) {
-        total += list.length;
-        console.log("[useUnreadMessagesCount] conv unread breakdown", {
-          conversationId: cid,
-          rawLastReadAt: lastReadByConv.get(cid) ?? null,
-          unreadCount: list.length,
-          unreadMessages: list.map((m: any) => ({
-            created_at: m.created_at,
-            sender_id: m.sender_id,
-            is_system_message: !!m.is_system_message,
-            target_user_id: m.target_user_id ?? null,
-          })),
-        });
-      }
-      console.log("[useUnreadMessagesCount] fresh total", { total });
+      for (const cid of Object.keys(countsByConv)) total += countsByConv[cid];
+      setUnreadByConversation(countsByConv);
       setUnreadCount(total);
       setHasFreshLastRead(true);
     } catch (err) {
-      // Leave hasFreshLastRead untouched on failure so the badge does
-      // not transition from 0 → stale on a partial fetch.
       console.error("[useUnreadMessagesCount] compute failed", err);
     }
   }, [user?.id]);
-
-
 
   useEffect(() => {
     compute();
     if (DEMO_MODE || !user?.id) return;
 
-    // Realtime: any change to messages or participants triggers a recount.
-    // We don't filter by conversation_id because the user may be added to
-    // a new conversation at any time (e.g. selected as receiver).
     const channel = supabase
       .channel(`unread-messages:${user.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
-        () => {
-          // Always recompute from scratch — never increment a stored
-          // total here, or counts drift upward across realtime events.
-          compute();
-        }
+        () => compute()
       )
       .on(
         "postgres_changes",
@@ -190,8 +166,6 @@ export function useUnreadMessagesCount() {
     window.addEventListener("pif:conversation-read", onConversationRead);
     document.addEventListener("visibilitychange", onVisibility);
 
-
-    // Safety poll every 60s in case realtime drops.
     const interval = window.setInterval(compute, 60_000);
 
     return () => {
@@ -202,14 +176,12 @@ export function useUnreadMessagesCount() {
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearInterval(interval);
     };
-
   }, [user?.id, compute]);
 
-  // Until the first fresh last_read_at fetch completes for this user,
-  // expose 0 so the badge never flashes a stale value on page load.
   return {
     unreadMessagesCount: hasFreshLastRead ? unreadCount : 0,
+    unreadByConversation: hasFreshLastRead ? unreadByConversation : {},
+    hasFreshLastRead,
     refresh: compute,
   };
-
 }
