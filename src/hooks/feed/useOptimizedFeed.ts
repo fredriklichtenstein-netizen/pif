@@ -206,7 +206,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     }
     if (removedIds.size === 0) return posts;
     return posts.filter(p => !removedIds.has(String(p.id)));
-  }, [page, queryClient, currentPageData, removedIds]);
+  }, [page, queryClient, currentPageData, removedIds, includeArchived]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
