@@ -54,7 +54,7 @@ export const transformPostData = (
       avatar: extractedUser.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
     },
     createdAt: item.created_at || '',
-    status: item.status || '',
+    status: item.pif_status || item.status || '',
     likesCount: interactionCounts.likesCount,
     interestsCount: interactionCounts.interestsCount,
     commentsCount: interactionCounts.commentsCount
