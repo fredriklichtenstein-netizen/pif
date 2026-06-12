@@ -54,8 +54,18 @@ export function useUnreadMessagesCount() {
 
     if (!user?.id) {
       setUnreadCount(0);
+      setHasFreshLastRead(false);
       conversationIdsRef.current = [];
+      userIdRef.current = null;
       return;
+    }
+
+    // If the auth user changed since last compute, hide any prior count
+    // until the fresh last_read_at fetch for this user completes.
+    if (userIdRef.current !== user.id) {
+      setHasFreshLastRead(false);
+      setUnreadCount(0);
+      userIdRef.current = user.id;
     }
 
     try {
@@ -67,15 +77,14 @@ export function useUnreadMessagesCount() {
       conversationIdsRef.current = ids;
       if (ids.length === 0) {
         setUnreadCount(0);
+        setHasFreshLastRead(true);
         return;
       }
 
-      // Fetch this user's last_read_at per conversation FRESH from the
-      // DB on every recount — never from any local cache or in-memory
-      // store that would reset on refresh. mark_conversation_read
-      // updates last_read_at (NOT messages.read_at), so the unread
-      // count must be derived by comparing each message's created_at
-      // against the participant's stored last_read_at.
+      // STEP 1 — fetch last_read_at FRESH from conversation_participants.
+      // The unread count must NEVER be derived from a cached or empty
+      // last_read_at map. Only after this fetch resolves successfully do
+      // we proceed to count messages and update the badge.
       const { data: myParticipantRows, error: partErr } = await supabase
         .from("conversation_participants")
         .select("conversation_id, last_read_at")
@@ -87,20 +96,15 @@ export function useUnreadMessagesCount() {
         lastReadByConv.set(String(row.conversation_id), row.last_read_at ?? null);
       }
 
-      // Pull all messages in these conversations and filter client-side.
-      // Targeted logic: regular messages from other users count, plus
-      // system messages targeted at the current user or broadcast
-      // (target_user_id IS NULL). System messages whose target is the
-      // OTHER user (i.e. triggered by current user's action) do NOT count.
+      // STEP 2 — only now fetch messages and compute. If STEP 1 above
+      // threw, we fall through to the catch and leave hasFreshLastRead
+      // = false so the badge stays at 0 rather than showing a stale count.
       const { data: msgs, error: msgErr } = await supabase
         .from("messages")
         .select("conversation_id, created_at, sender_id, is_system_message, target_user_id")
         .in("conversation_id", ids as any);
       if (msgErr) throw msgErr;
 
-      // Group unread messages per-conversation, then SUM to derive the
-      // total. The total is always recomputed from scratch — never
-      // incremented from a prior value — so it can never drift upward.
       const unreadByConv = new Map<string, any[]>();
       for (const m of (msgs || []) as any[]) {
         const cid = String(m.conversation_id);
@@ -136,10 +140,14 @@ export function useUnreadMessagesCount() {
       }
       console.log("[useUnreadMessagesCount] fresh total", { total });
       setUnreadCount(total);
-    } catch {
-      // Fail silently — badge just won't update.
+      setHasFreshLastRead(true);
+    } catch (err) {
+      // Leave hasFreshLastRead untouched on failure so the badge does
+      // not transition from 0 → stale on a partial fetch.
+      console.error("[useUnreadMessagesCount] compute failed", err);
     }
   }, [user?.id]);
+
 
 
   useEffect(() => {
