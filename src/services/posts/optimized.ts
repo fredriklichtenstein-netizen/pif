@@ -31,10 +31,12 @@ export const getOptimizedPosts = async (
   limit = 20,
   offset = 0,
   _retryAfterRecovery = false,
+  options: { includeArchived?: boolean } = {},
 ): Promise<Post[]> => {
+  const includeArchived = !!options.includeArchived;
   const start = performance.now();
-  const cacheKey = `posts-v2-${limit}-${offset}`;
-  const persistentKey = FEED_CACHE_KEYS.optimizedPage(limit, offset);
+  const cacheKey = `posts-v2-${limit}-${offset}-${includeArchived ? 'all' : 'active'}`;
+  const persistentKey = `${FEED_CACHE_KEYS.optimizedPage(limit, offset)}:${includeArchived ? 'all' : 'active'}`;
 
   // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
