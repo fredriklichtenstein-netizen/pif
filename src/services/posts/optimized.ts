@@ -202,13 +202,18 @@ export const getOptimizedPosts = async (
 };
 
 // Prefetch next page with optimized queries
-export const prefetchNextPage = (currentLimit: number, currentOffset: number) => {
+export const prefetchNextPage = (
+  currentLimit: number,
+  currentOffset: number,
+  includeArchived = false,
+) => {
   const nextOffset = currentOffset + currentLimit;
-  const prefetchKey = `posts-${currentLimit}-${nextOffset}`;
-  
+  const archivedSuffix = includeArchived ? '-arch' : '';
+  const prefetchKey = `posts-${currentLimit}-${nextOffset}${archivedSuffix}`;
+
   // Only prefetch if not already cached
   if (!DatabaseCache.has(prefetchKey)) {
-    getOptimizedPosts(currentLimit, nextOffset).catch(() => {
+    getOptimizedPosts(currentLimit, nextOffset, false, includeArchived).catch(() => {
       // Ignore prefetch errors
     });
   }
@@ -223,11 +228,12 @@ export const clearPostsCache = () => {
 };
 
 // Background revalidation used by the stale-while-revalidate path.
-function revalidateInBackground(limit: number, offset: number) {
+function revalidateInBackground(limit: number, offset: number, includeArchived = false) {
+  const archivedSuffix = includeArchived ? '-arch' : '';
   // Drop the in-memory entry so the next call performs the real fetch,
   // then trigger it without awaiting the result.
-  DatabaseCache.delete(`posts-v2-${limit}-${offset}`);
-  getOptimizedPosts(limit, offset, true).catch(() => {
+  DatabaseCache.delete(`posts-v2-${limit}-${offset}${archivedSuffix}`);
+  getOptimizedPosts(limit, offset, true, includeArchived).catch(() => {
     // ignore — we already returned stale data to the caller
   });
 }
