@@ -223,11 +223,9 @@ export const clearPostsCache = () => {
 };
 
 // Background revalidation used by the stale-while-revalidate path.
-function revalidateInBackground(limit: number, offset: number) {
-  // Drop the in-memory entry so the next call performs the real fetch,
-  // then trigger it without awaiting the result.
-  DatabaseCache.delete(`posts-v2-${limit}-${offset}`);
-  getOptimizedPosts(limit, offset, true).catch(() => {
+function revalidateInBackground(limit: number, offset: number, includeArchived: boolean) {
+  DatabaseCache.delete(`posts-v2-${limit}-${offset}-${includeArchived ? 'all' : 'active'}`);
+  getOptimizedPosts(limit, offset, true, { includeArchived }).catch(() => {
     // ignore — we already returned stale data to the caller
   });
 }
