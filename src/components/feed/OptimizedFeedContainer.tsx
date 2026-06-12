@@ -222,6 +222,23 @@ export function OptimizedFeedContainer() {
           variant="feed"
         />
 
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowArchived(!showArchived)}
+            aria-pressed={showArchived}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              showArchived
+                ? 'bg-amber-100 border-amber-300 text-amber-800'
+                : 'bg-background border-border text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            {showArchived
+              ? t('interactions.hide_archived', { defaultValue: 'Dölj arkiverade' })
+              : t('interactions.show_archived', { defaultValue: 'Visa arkiverade' })}
+          </button>
+        </div>
+
         <section role="feed" aria-label={t('interactions.community_posts')}>
           {isRefreshing ? (
             <FeedSkeleton count={Math.min(3, Math.max(1, fullyFilteredPosts.length))} />
