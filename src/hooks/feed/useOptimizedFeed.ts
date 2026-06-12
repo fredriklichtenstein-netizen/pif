@@ -264,11 +264,11 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   useEffect(() => {
     if (DEMO_MODE) return;
     const timer = setTimeout(() => {
-      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1));
+      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1), includeArchived);
     }, 1000);
-    
+
     return () => clearTimeout(timer);
-  }, [page]);
+  }, [page, includeArchived]);
 
   // Feed-level realtime only: one shared channel for new items and visible
   // interaction-count changes. Item cards must never open per-card channels.
