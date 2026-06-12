@@ -14,23 +14,23 @@ export class OptimizedQueries {
     userId?: string;
     categories?: string[];
     coordinates?: { lat: number; lng: number; radius?: number };
+    includeArchived?: boolean;
   }) {
     return monitorQuery('getPosts', () =>
       withRetry(async () => {
-        // Narrow column list — only what feed cards / transform actually read.
-        // Avoid heavy fields like `measurements`, `archived_reason`,
-        // `pickup_*`, etc. Profiles are fetched in a separate parallel query
-        // to keep PostgREST off the embed path (which has been observed to
-        // stall under load and silently fall through on permission edges).
         let query = (supabase
           .from('items') as any)
           .select(`
             id, title, description, images, location, coordinates,
             category, condition, user_id, pif_status, item_type,
+            archived_at, archived_reason,
             created_at
           `)
-          .not('pif_status', 'eq', 'archived')
           .order('created_at', { ascending: false });
+
+        if (!options.includeArchived) {
+          query = query.not('pif_status', 'eq', 'archived');
+        }
 
         if (options.categories?.length) {
           query = query.in('category', options.categories);

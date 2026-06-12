@@ -56,13 +56,13 @@ export const getOptimizedPosts = async (
   if (persisted && persisted.isStale && !_retryAfterRecovery) {
     // Stale-while-revalidate: hand back stale data immediately, refresh in bg.
     DatabaseCache.set(cacheKey, persisted.data, CACHE_TTL);
-    void revalidateInBackground(limit, offset);
+    void revalidateInBackground(limit, offset, includeArchived);
     return persisted.data;
   }
   try {
     // ---- Stage 1: items + profiles join ----
     const itemsStart = performance.now();
-    const data = await OptimizedQueries.getPosts({ limit, offset });
+    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived });
     const itemsMs = performance.now() - itemsStart;
     performanceMetrics.recordStage('items-query', itemsMs, {
       count: String(Array.isArray(data) ? data.length : 0),
@@ -191,7 +191,7 @@ export const getOptimizedPosts = async (
       // Give the recovery a tick to wipe tokens before retrying.
       await new Promise((r) => setTimeout(r, 50));
       try {
-        return await getOptimizedPosts(limit, offset, true);
+        return await getOptimizedPosts(limit, offset, true, { includeArchived });
       } catch {
         return [];
       }
