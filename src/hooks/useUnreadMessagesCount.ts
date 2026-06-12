@@ -30,10 +30,17 @@ function tsMs(value: string | null | undefined): number {
 export function useUnreadMessagesCount() {
   const { user } = useGlobalAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  // Gate: the badge must NEVER show a count derived from anything other
+  // than a fresh fetch of last_read_at from conversation_participants.
+  // Until the first compute() resolves for the current user we keep the
+  // badge at 0 instead of showing a stale value from any prior render.
+  const [hasFreshLastRead, setHasFreshLastRead] = useState(false);
   const conversationIdsRef = useRef<string[]>([]);
+  const userIdRef = useRef<string | null>(null);
 
   const compute = useCallback(async () => {
     if (DEMO_MODE) {
+
       let count = 0;
       for (const conv of MOCK_CONVERSATIONS) {
         const msgs = (MOCK_MESSAGES as any)[conv.id] || [];
