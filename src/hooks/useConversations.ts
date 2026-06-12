@@ -119,14 +119,16 @@ export function useConversations() {
         // (last_message_text on conversations is not always kept in sync).
         const { data: recentMessages } = await supabase
           .from('messages')
-          .select('conversation_id, content, created_at, sender_id, deleted_at, is_system_message')
+          .select('conversation_id, content, created_at, sender_id, deleted_at, is_system_message, target_user_id')
           .in('conversation_id', conversationIds)
           .order('created_at', { ascending: false });
+        // Preview: most recent message regardless of system/user origin.
+        // "Inga meddelanden än" should only appear when zero messages exist.
         const lastByConv = new Map<string, string>();
         for (const m of (recentMessages || []) as any[]) {
-          if (m.is_system_message) continue;
           const cid = String(m.conversation_id);
-          if (!lastByConv.has(cid) && typeof m.content === 'string' && m.content.trim()) {
+          if (lastByConv.has(cid)) continue;
+          if (typeof m.content === 'string' && m.content.trim()) {
             lastByConv.set(cid, m.content);
           }
         }
@@ -138,14 +140,14 @@ export function useConversations() {
             return acc;
           }, {} as Record<string, typeof participantsData>);
 
-          // Per-conversation unread count: messages from the other user
-          // created strictly after the current user's last_read_at.
+          // Per-conversation unread count using the same targeted system-
+          // message logic as useUnreadMessagesCount: regular messages from
+          // the other user count; system messages count only when targeted
+          // at the current user or broadcast (target_user_id IS NULL).
           const unreadByConv = new Map<string, number>();
           const currentUserId = user.id;
           for (const m of (recentMessages || []) as any[]) {
-            if (m.is_system_message) continue;
             const cid = String(m.conversation_id);
-            if (m.sender_id === currentUserId) continue;
             const myParticipant = (participantsByConversation[cid] || []).find(
               (p: any) => p.user_id === currentUserId,
             );
@@ -153,7 +155,12 @@ export function useConversations() {
               ? new Date(myParticipant.last_read_at).getTime()
               : 0;
             const created = new Date(m.created_at).getTime();
-            if (created > lastRead) {
+            const isSystem = !!m.is_system_message;
+            const target = m.target_user_id ?? null;
+            const eligible = isSystem
+              ? target === currentUserId || target === null
+              : m.sender_id !== currentUserId;
+            if (eligible && created > lastRead) {
               unreadByConv.set(cid, (unreadByConv.get(cid) ?? 0) + 1);
             }
           }
