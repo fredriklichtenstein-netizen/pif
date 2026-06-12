@@ -336,26 +336,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         () => {
           clearPostsCache();
           setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
-          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'items' },
-        (payload) => {
-          // Status transitions (e.g. selected → active after a receiver
-          // withdraws, or archived → active on restore) must invalidate
-          // the feed cache so every viewer sees the pif re-appear without
-          // a manual refresh.
-          const oldStatus = (payload.old as any)?.pif_status ?? null;
-          const newStatus = (payload.new as any)?.pif_status ?? null;
-          const archChanged =
-            (payload.old as any)?.archived_at !== (payload.new as any)?.archived_at;
-          if (oldStatus !== newStatus || archChanged) {
-            clearPostsCache();
-            setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
-            queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
-          }
+          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized', 0] });
         }
       )
       .on(

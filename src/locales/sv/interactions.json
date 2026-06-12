@@ -1,3 +1,4 @@
+
 {
   "interactions": {
     "like": "Gilla",
@@ -331,6 +332,7 @@
     "group_comment": "Kommentarer",
     "group_profile": "Profilinteraktioner",
     "group_other": "Övriga aviseringar",
+
     "rate_user": "Betygsätt {{name}}",
     "rating_very_bad": "Mycket dåligt",
     "rating_bad": "Dåligt",
@@ -524,6 +526,7 @@
     "last_seen": "Senast aktiv {{time}}",
     "completed_badge": "Avslutad"
   },
+
   "map": {
     "error_initializing": "Fel vid initiering av karta",
     "initializing": "Initierar karta...",
@@ -656,7 +659,5 @@
     "review_interest_cta": "Granska intresse",
     "selected_for_item": "Du har valts som mottagare för \"{{title}}\". Öppna konversationen för att samordna hämtning."
   },
-  "someone": "Någon",
-  "show_archived": "Visa arkiverade",
-  "hide_archived": "Dölj arkiverade"
+  "someone": "Någon"
 }

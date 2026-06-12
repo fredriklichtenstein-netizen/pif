@@ -496,30 +496,15 @@ export function usePifCompletion(
       // Mark this conversation as closed locally so listeners (conversation
       // list, ConversationView) can flip to read-only / Historik immediately,
       // mirroring the pif:status-changed pattern already in place.
-      if (typeof window !== "undefined") {
-        if (conversationId) {
-          try {
-            window.dispatchEvent(
-              new CustomEvent("pif:status-changed", {
-                detail: {
-                  itemId: id,
-                  pifStatus: "archived", // closure flag for the per-conversation row only
-                  conversationId,
-                },
-              }),
-            );
-          } catch {
-            /* noop */
-          }
-        }
-        // The pif is now republished as 'active' for everyone. Force the
-        // shared feed cache to refresh so the card re-appears immediately
-        // for the acting user (other viewers get it via the items UPDATE
-        // realtime listener in useOptimizedFeed).
+      if (typeof window !== "undefined" && conversationId) {
         try {
-          document.dispatchEvent(
-            new CustomEvent("item-operation-success", {
-              detail: { itemId: id, operationType: "restore" },
+          window.dispatchEvent(
+            new CustomEvent("pif:status-changed", {
+              detail: {
+                itemId: id,
+                pifStatus: "archived", // closure flag for the per-conversation row only
+                conversationId,
+              },
             }),
           );
         } catch {
