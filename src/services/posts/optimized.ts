@@ -31,10 +31,12 @@ export const getOptimizedPosts = async (
   limit = 20,
   offset = 0,
   _retryAfterRecovery = false,
+  includeArchived = false,
 ): Promise<Post[]> => {
   const start = performance.now();
-  const cacheKey = `posts-v2-${limit}-${offset}`;
-  const persistentKey = FEED_CACHE_KEYS.optimizedPage(limit, offset);
+  const archivedSuffix = includeArchived ? '-arch' : '';
+  const cacheKey = `posts-v2-${limit}-${offset}${archivedSuffix}`;
+  const persistentKey = `${FEED_CACHE_KEYS.optimizedPage(limit, offset)}${archivedSuffix}`;
 
   // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
@@ -54,13 +56,13 @@ export const getOptimizedPosts = async (
   if (persisted && persisted.isStale && !_retryAfterRecovery) {
     // Stale-while-revalidate: hand back stale data immediately, refresh in bg.
     DatabaseCache.set(cacheKey, persisted.data, CACHE_TTL);
-    void revalidateInBackground(limit, offset);
+    void revalidateInBackground(limit, offset, includeArchived);
     return persisted.data;
   }
   try {
     // ---- Stage 1: items + profiles join ----
     const itemsStart = performance.now();
-    const data = await OptimizedQueries.getPosts({ limit, offset });
+    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived });
     const itemsMs = performance.now() - itemsStart;
     performanceMetrics.recordStage('items-query', itemsMs, {
       count: String(Array.isArray(data) ? data.length : 0),
