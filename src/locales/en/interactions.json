@@ -1,9 +1,8 @@
-
 {
   "interactions": {
     "like": "Like",
     "liked": "Liked",
-    "comment": "Comment", 
+    "comment": "Comment",
     "commented": "Commented",
     "share": "Share",
     "shared": "Shared",
@@ -332,7 +331,6 @@
     "group_comment": "Comments",
     "group_profile": "Profile Interactions",
     "group_other": "Other Notifications",
-
     "rate_user": "Rate {{name}}",
     "rating_very_bad": "Very bad",
     "rating_bad": "Bad",
@@ -526,7 +524,6 @@
     "last_seen": "Last seen {{time}}",
     "completed_badge": "Completed"
   },
-
   "map": {
     "error_initializing": "Error initializing map",
     "initializing": "Initializing map...",
@@ -659,5 +656,7 @@
     "review_interest_cta": "Review interest",
     "selected_for_item": "You've been selected as the receiver for \"{{title}}\". Open the conversation to coordinate pickup."
   },
-  "someone": "Someone"
+  "someone": "Someone",
+  "show_archived": "Show archived",
+  "hide_archived": "Hide archived"
 }

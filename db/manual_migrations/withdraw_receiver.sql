@@ -117,7 +117,13 @@ BEGIN
         'receiver_withdrew',
         jsonb_build_object(
           'item_id', p_item_id,
+          'item_title', (SELECT title FROM public.items WHERE id = p_item_id),
           'receiver_id', v_caller,
+          'actor_id', v_caller,
+          'actor_name', (
+            SELECT COALESCE(NULLIF(btrim(coalesce(first_name, '') || ' ' || coalesce(last_name, '')), ''), username)
+              FROM public.profiles WHERE id = v_caller
+          ),
           'conversation_id', v_conversation,
           'comment', v_clean_comment
         )
