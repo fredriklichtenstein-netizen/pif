@@ -277,6 +277,15 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
                   <DropdownMenuSeparator />
                 </>
               )}
+              {role === "receiver" && !isClosed && (
+                <>
+                  <DropdownMenuItem onClick={() => setReceiverWithdrawOpen(true)}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Ångra mottagning
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem onClick={() => setReportOpen(true)}>
                 <Flag className="h-4 w-4 mr-2" />
                 Rapportera problem med detta utbyte
