@@ -232,7 +232,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       }, 100);
       return nextPage;
     });
-  }, []);
+  }, [includeArchived]);
 
   // Release the in-flight guard once the new page has finished loading
   // so the next intersection can trigger the page after it.
