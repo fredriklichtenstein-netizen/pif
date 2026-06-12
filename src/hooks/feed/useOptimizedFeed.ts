@@ -228,7 +228,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     setPage((prev) => {
       const nextPage = prev + 1;
       setTimeout(() => {
-        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1));
+        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1), includeArchived);
       }, 100);
       return nextPage;
     });
