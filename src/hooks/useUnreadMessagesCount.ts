@@ -91,17 +91,10 @@ export function useUnreadMessagesCount() {
         .in("conversation_id", ids as any);
       if (msgErr) throw msgErr;
 
-      let total = 0;
-      const diagnostics = new Map<
-        string,
-        {
-          rawLastRead: string | null | undefined;
-          parsedLastReadMs: number;
-          rawCreatedAt: string | null | undefined;
-          parsedCreatedAtMs: number;
-          countedAsUnread: boolean;
-        }
-      >();
+      // Group unread messages per-conversation, then SUM to derive the
+      // total. The total is always recomputed from scratch — never
+      // incremented from a prior value — so it can never drift upward.
+      const unreadByConv = new Map<string, any[]>();
       for (const m of (msgs || []) as any[]) {
         const cid = String(m.conversation_id);
         const lastRead = lastReadByConv.get(cid);
@@ -112,33 +105,29 @@ export function useUnreadMessagesCount() {
         const eligible = isSystem
           ? target === user.id || target === null
           : m.sender_id !== user.id;
-        const countedAsUnread = eligible && createdMs > lastReadMs;
-        if (countedAsUnread) total += 1;
-        const prev = diagnostics.get(cid);
-        if (
-          !prev ||
-          (countedAsUnread && !prev.countedAsUnread) ||
-          (countedAsUnread === prev.countedAsUnread && createdMs > prev.parsedCreatedAtMs)
-        ) {
-          diagnostics.set(cid, {
-            rawLastRead: lastRead,
-            parsedLastReadMs: lastReadMs,
-            rawCreatedAt: m.created_at,
-            parsedCreatedAtMs: createdMs,
-            countedAsUnread,
-          });
+        if (eligible && createdMs > lastReadMs) {
+          const list = unreadByConv.get(cid) ?? [];
+          list.push(m);
+          unreadByConv.set(cid, list);
         }
       }
-      for (const [conversationId, entry] of diagnostics.entries()) {
-        console.log("[useUnreadMessagesCount] timestamp comparison", {
-          conversationId,
-          rawLastReadAt: entry.rawLastRead,
-          parsedLastReadAtMs: entry.parsedLastReadMs,
-          rawMostRecentUnreadCreatedAt: entry.rawCreatedAt,
-          parsedMostRecentUnreadCreatedAtMs: entry.parsedCreatedAtMs,
-          countedAsUnread: entry.countedAsUnread,
+
+      let total = 0;
+      for (const [cid, list] of unreadByConv.entries()) {
+        total += list.length;
+        console.log("[useUnreadMessagesCount] conv unread breakdown", {
+          conversationId: cid,
+          rawLastReadAt: lastReadByConv.get(cid) ?? null,
+          unreadCount: list.length,
+          unreadMessages: list.map((m: any) => ({
+            created_at: m.created_at,
+            sender_id: m.sender_id,
+            is_system_message: !!m.is_system_message,
+            target_user_id: m.target_user_id ?? null,
+          })),
         });
       }
+      console.log("[useUnreadMessagesCount] fresh total", { total });
       setUnreadCount(total);
     } catch {
       // Fail silently — badge just won't update.
@@ -158,18 +147,9 @@ export function useUnreadMessagesCount() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
-        (payload) => {
-          const row: any = payload.new;
-          // Fast path: bump count immediately for known conversations
-          // so the badge updates without waiting for the recount roundtrip.
-          if (
-            row &&
-            row.sender_id !== user.id &&
-            !row.is_system_message &&
-            conversationIdsRef.current.includes(String(row.conversation_id))
-          ) {
-            setUnreadCount((c) => c + 1);
-          }
+        () => {
+          // Always recompute from scratch — never increment a stored
+          // total here, or counts drift upward across realtime events.
           compute();
         }
       )
