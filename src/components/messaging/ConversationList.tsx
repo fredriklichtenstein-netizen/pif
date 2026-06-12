@@ -53,7 +53,7 @@ export function ConversationList({
     const displayName = resolveDisplayName(otherParticipant?.profile, fallbackName);
     const initial = resolveAvatarInitial(otherParticipant?.profile, fallbackInitial);
     const preview = conversation.last_message_text?.trim();
-    const unread = conversation.unread_count ?? 0;
+    const unread = unreadByConversation?.[String(conversation.id)] ?? conversation.unread_count ?? 0;
 
     return (
       <div
