@@ -51,6 +51,9 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const [hasRated, setHasRated] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [receiverWithdrawOpen, setReceiverWithdrawOpen] = useState(false);
+  const [receiverWithdrawComment, setReceiverWithdrawComment] = useState("");
+  const [locallyClosed, setLocallyClosed] = useState(false);
   const { t } = useTranslation();
   const {
     messages,
