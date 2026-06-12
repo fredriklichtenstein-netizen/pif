@@ -13,6 +13,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeConversationId: string | null;
   onSelectConversation: (id: string) => void;
+  unreadByConversation?: Record<string, number>;
 }
 
 const isHistoricStatus = (status: string | undefined): boolean => {
