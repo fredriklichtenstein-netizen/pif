@@ -1,128 +1,57 @@
-# Fix: complete_pif_with_rating "No selected receiver found" (P0002)
+## Root cause found
 
-## Findings from code investigation
+The unread badges are using two separate systems:
 
-The `item_id` resolution path is clean and should be correct:
+1. **Nav badge / Meddelanden tab counter — working**
+   - Source: `useUnreadMessagesCount`
+   - Flow: fetches the current user's conversation IDs, then fetches fresh `conversation_participants.last_read_at` directly from the DB, then counts unread messages.
+   - This explains why it correctly shows `{ total: 0 }` after conversations are opened.
 
-1. `ConversationView` loads via `useConversationDetails(conversationId)`, which `SELECT`s `conversations` joined to `items` via the FK (`item:items(*)`). The conversation's own `item_id` column drives the join — there is no chance of joining the "wrong" item.
-2. `useConversationDetails` sets `item.id = String(data.item.id)` directly from that joined row.
-3. `ConversationView` passes `item?.id ?? null` into `usePifCompletion`, which converts back to `number` via `numericItemId()` (safe — `items.id` is a bigint well under 2^53 in this app).
-4. `PifRatingModal.onSubmit` calls `completion.completeWithRating(rating, comment)` — a fresh closure on every render, so `id` is the latest item id, not stale.
-5. The session is already verified by the new `ensureSession("complete_pif_with_rating")` probe; `hasSession`/`hasAccessToken` are both true.
+2. **Conversation-list per-conversation badges — broken**
+   - Source: `ConversationList` reads `conversation.unread_count`.
+   - `conversation.unread_count` is computed inside `useConversations`.
+   - `useConversations` fetches participants via `get_conversation_participants`.
+   - The existing RPC only returns `conversation_id` and `user_id`, not `last_read_at`.
+   - Therefore `myParticipant.last_read_at` is missing on page load, the code falls back to `0`, and old messages are counted as unread again.
+   - Opening a conversation only clears that badge locally via `pif:conversation-read`, so the bad count returns after refresh.
 
-So the client is **passing the right `p_item_id`**. There is no item-id mismatch, no stale closure, and no missing JWT.
+## Fix plan
 
-## Root cause (server-side)
+1. **Make `useUnreadMessagesCount` the single source of truth**
+   - Extend it to return both:
+     - `unreadMessagesCount` for the nav/tab total
+     - `unreadByConversation` for per-conversation badges
+   - Keep the current DB-first sequence that is already working:
+     1. fetch conversation IDs
+     2. fetch fresh `last_read_at` from `conversation_participants`
+     3. fetch messages
+     4. calculate unread counts
 
-The banner's "Markera som klar ändå" button is only shown **after** the piffer has already called `confirm_pif_handoff('piffer')` (see `PifCompletionBanner.tsx` lines 67–82 — the button is gated on `confirmed && !receiverConfirmed`).
+2. **Stop per-conversation unread calculation in `useConversations`**
+   - Remove the duplicate unread calculation from `useConversations`.
+   - Keep `useConversations` focused on conversation metadata, participants, item status, and preview text.
+   - Do not rely on `get_conversation_participants` for unread state.
 
-That means by the time `complete_pif_with_rating` runs, `confirm_pif_handoff` has already mutated the row state. The `complete_pif_with_rating` RPC currently looks up the receiver with:
+3. **Wire the fresh unread map into the UI**
+   - In `Messages.tsx`, read `unreadByConversation` from `useUnreadMessagesCount`.
+   - Pass it to `ConversationList`.
+   - In `ConversationList`, display `unreadByConversation[conversation.id] ?? 0` instead of `conversation.unread_count`.
 
-```sql
-SELECT id FROM public.interests
-WHERE item_id = p_item_id AND status = 'selected';
-```
+4. **Keep realtime updates unified**
+   - Existing realtime events in `useUnreadMessagesCount` already recompute from scratch on message and participant changes.
+   - Since all badges will read from the same hook, the nav badge and per-conversation badges will update together and cannot diverge.
 
-…but `confirm_pif_handoff` (and/or the piffer-side "Mark as piffed" path in `PostModal.tsx`, which sets `pif_status='piffed'`) transitions the chosen interest's `status` away from `'selected'` once the handoff has been recorded. The selected receiver therefore can't be located by `status='selected'` anymore, and the RPC raises `P0002 'No selected receiver found'`.
+5. **Remove temporary debug noise**
+   - Remove the temporary `console.log` unread breakdown logs from production code.
+   - Keep only `console.error` for failed DB/RPC operations, consistent with the project logging rule.
 
-This matches the symptom exactly: two-sided confirm works (it never needs to re-look-up the receiver — both confirmations are stored on `items` columns), but the one-sided hard-complete fails because it is the only path that depends on the now-stale `status='selected'` lookup.
+## Files to change
 
-The user reports rows exist "for the relevant items" — but the row's current `status` is no longer `'selected'`, which is what's breaking the WHERE clause.
+- `src/hooks/useUnreadMessagesCount.ts`
+- `src/hooks/useConversations.ts`
+- `src/pages/Messages.tsx`
+- `src/components/messaging/ConversationList.tsx`
 
-## Fix
+## Expected result
 
-Change `public.complete_pif_with_rating` so it resolves the receiver from the **conversation participants** (the durable source of truth), falling back to any non-piffer interest if the conversation row is unavailable. This makes the lookup independent of the interest-status state machine.
-
-### New RPC body (replace existing function)
-
-Add a new manual migration `db/manual_migrations/complete_pif_with_rating_receiver_lookup.sql`:
-
-```sql
-CREATE OR REPLACE FUNCTION public.complete_pif_with_rating(
-  p_item_id  bigint,
-  p_rating   int,
-  p_comment  text DEFAULT NULL
-)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_piffer    uuid;
-  v_receiver  uuid;
-BEGIN
-  SELECT user_id INTO v_piffer FROM public.items WHERE id = p_item_id FOR UPDATE;
-  IF v_piffer IS NULL THEN
-    RAISE EXCEPTION 'Item not found' USING ERRCODE = 'P0002';
-  END IF;
-  IF v_piffer <> auth.uid() THEN
-    RAISE EXCEPTION 'Not authorized' USING ERRCODE = '42501';
-  END IF;
-
-  -- Primary: the receiver is the other participant of the pif's conversation.
-  SELECT CASE WHEN participant_a = v_piffer THEN participant_b ELSE participant_a END
-    INTO v_receiver
-  FROM public.conversations
-  WHERE item_id = p_item_id
-  ORDER BY created_at ASC
-  LIMIT 1;
-
-  -- Fallback: any interest row for this item that isn't the piffer (covers
-  -- legacy data where status was transitioned away from 'selected').
-  IF v_receiver IS NULL THEN
-    SELECT user_id INTO v_receiver
-    FROM public.interests
-    WHERE item_id = p_item_id AND user_id <> v_piffer
-    ORDER BY (status = 'selected') DESC, selected_at DESC NULLS LAST, created_at DESC
-    LIMIT 1;
-  END IF;
-
-  IF v_receiver IS NULL THEN
-    RAISE EXCEPTION 'No selected receiver found' USING ERRCODE = 'P0002';
-  END IF;
-
-  -- Persist rating (private), mark item completed, clear pending confirmations.
-  INSERT INTO public.ratings (item_id, rater_id, ratee_id, rating, comment, created_at)
-  VALUES (p_item_id, v_piffer, v_receiver, p_rating, NULLIF(btrim(p_comment), ''), now())
-  ON CONFLICT (item_id, rater_id, ratee_id) DO UPDATE
-    SET rating = EXCLUDED.rating, comment = EXCLUDED.comment, created_at = now();
-
-  UPDATE public.items
-     SET pif_status = 'completed',
-         piffer_confirmed_handoff = true,
-         receiver_confirmed_receipt = true,
-         completed_at = now()
-   WHERE id = p_item_id;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.complete_pif_with_rating(bigint, int, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.complete_pif_with_rating(bigint, int, text) TO authenticated;
-```
-
-The exact `ratings` column names / `items` completion columns will be reconciled with the live schema before writing the migration; the structural change — receiver lookup via `conversations` instead of `interests.status='selected'` — is what fixes the bug.
-
-### Client-side: temporary diagnostic log (kept behind `?debug=1`)
-
-In `src/hooks/usePifCompletion.ts`, just before the `complete_pif_with_rating` RPC, add:
-
-```ts
-debugLog("rpc", "complete_pif_with_rating args", { p_item_id: id, p_rating: rating, hasComment: !!comment });
-```
-
-So the AuthHydrationDebugPanel / Export Debug Report captures the exact `p_item_id` used at call time. (No behavior change; helps confirm the fix and rule out future ambiguity.)
-
-## Verification
-
-1. Apply the new migration in Supabase.
-2. On a pif where the piffer has already tapped "Jag har lämnat över piffen" but the receiver has not confirmed, tap "Markera som klar ändå", rate, submit.
-3. Expect: RPC returns success, banner flips to "Piffen är genomförd! 🎉", `items.pif_status = 'completed'`.
-4. Debug panel shows `complete_pif_with_rating args { p_item_id: <correct id> }` then no error.
-
-## Out of scope
-
-- Refactoring `confirm_pif_handoff` (it works correctly).
-- Changing the two-sided completion path.
-- Touching the wish/helper rating flow (`submit_helper_rating`).
-- Removing the `ensureSession` probe (still useful guardrail).
+After refresh, if the DB has current `last_read_at` values and the total unread count is `0`, all per-conversation badges will also stay cleared because they will use the same fresh DB-backed calculation as the working nav badge.
