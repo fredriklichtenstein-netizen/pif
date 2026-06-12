@@ -31,10 +31,12 @@ export const getOptimizedPosts = async (
   limit = 20,
   offset = 0,
   _retryAfterRecovery = false,
+  options: { includeArchived?: boolean } = {},
 ): Promise<Post[]> => {
+  const includeArchived = !!options.includeArchived;
   const start = performance.now();
-  const cacheKey = `posts-v2-${limit}-${offset}`;
-  const persistentKey = FEED_CACHE_KEYS.optimizedPage(limit, offset);
+  const cacheKey = `posts-v2-${limit}-${offset}-${includeArchived ? 'all' : 'active'}`;
+  const persistentKey = `${FEED_CACHE_KEYS.optimizedPage(limit, offset)}:${includeArchived ? 'all' : 'active'}`;
 
   // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
@@ -54,13 +56,13 @@ export const getOptimizedPosts = async (
   if (persisted && persisted.isStale && !_retryAfterRecovery) {
     // Stale-while-revalidate: hand back stale data immediately, refresh in bg.
     DatabaseCache.set(cacheKey, persisted.data, CACHE_TTL);
-    void revalidateInBackground(limit, offset);
+    void revalidateInBackground(limit, offset, includeArchived);
     return persisted.data;
   }
   try {
     // ---- Stage 1: items + profiles join ----
     const itemsStart = performance.now();
-    const data = await OptimizedQueries.getPosts({ limit, offset });
+    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived });
     const itemsMs = performance.now() - itemsStart;
     performanceMetrics.recordStage('items-query', itemsMs, {
       count: String(Array.isArray(data) ? data.length : 0),
@@ -189,7 +191,7 @@ export const getOptimizedPosts = async (
       // Give the recovery a tick to wipe tokens before retrying.
       await new Promise((r) => setTimeout(r, 50));
       try {
-        return await getOptimizedPosts(limit, offset, true);
+        return await getOptimizedPosts(limit, offset, true, { includeArchived });
       } catch {
         return [];
       }
@@ -221,11 +223,9 @@ export const clearPostsCache = () => {
 };
 
 // Background revalidation used by the stale-while-revalidate path.
-function revalidateInBackground(limit: number, offset: number) {
-  // Drop the in-memory entry so the next call performs the real fetch,
-  // then trigger it without awaiting the result.
-  DatabaseCache.delete(`posts-v2-${limit}-${offset}`);
-  getOptimizedPosts(limit, offset, true).catch(() => {
+function revalidateInBackground(limit: number, offset: number, includeArchived: boolean) {
+  DatabaseCache.delete(`posts-v2-${limit}-${offset}-${includeArchived ? 'all' : 'active'}`);
+  getOptimizedPosts(limit, offset, true, { includeArchived }).catch(() => {
     // ignore — we already returned stale data to the caller
   });
 }
