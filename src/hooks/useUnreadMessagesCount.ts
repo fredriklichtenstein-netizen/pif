@@ -205,5 +205,11 @@ export function useUnreadMessagesCount() {
 
   }, [user?.id, compute]);
 
-  return { unreadMessagesCount: unreadCount, refresh: compute };
+  // Until the first fresh last_read_at fetch completes for this user,
+  // expose 0 so the badge never flashes a stale value on page load.
+  return {
+    unreadMessagesCount: hasFreshLastRead ? unreadCount : 0,
+    refresh: compute,
+  };
+
 }
