@@ -34,7 +34,19 @@ import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
 
 export function OptimizedFeedContainer() {
-  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
+  // Shared filter state with the /map view.
+  const selectedCategories = useFeedFiltersStore((s) => s.categories);
+  const selectedConditions = useFeedFiltersStore((s) => s.conditions);
+  const selectedItemTypes = useFeedFiltersStore((s) => s.itemTypes);
+  const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
+  const showArchived = useFeedFiltersStore((s) => s.showArchived);
+  const setCategories = useFeedFiltersStore((s) => s.setCategories);
+  const setItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
+  const setShowArchived = useFeedFiltersStore((s) => s.setShowArchived);
+  const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
+
+  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
+    useOptimizedFeed({ includeArchived: showArchived });
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
@@ -51,15 +63,6 @@ export function OptimizedFeedContainer() {
 
   const { filteredPosts, selectedDistance, setSelectedDistance } =
     useDistanceFiltering({ posts: memoizedPosts as Post[], userLocation });
-
-  // Shared filter state with the /map view.
-  const selectedCategories = useFeedFiltersStore((s) => s.categories);
-  const selectedConditions = useFeedFiltersStore((s) => s.conditions);
-  const selectedItemTypes = useFeedFiltersStore((s) => s.itemTypes);
-  const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
-  const setCategories = useFeedFiltersStore((s) => s.setCategories);
-  const setItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
-  const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { ids: myInterestedIds, isLoaded: interestedIdsLoaded } = useMyInterestedIds();
   const { ids: myLikedIds, isLoaded: likedIdsLoaded } = useMyLikedIds();
