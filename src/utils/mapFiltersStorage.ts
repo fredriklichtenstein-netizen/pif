@@ -29,6 +29,8 @@ export interface MapFilterData {
   conditions: string[];
   itemTypes: string[];
   onlyInterested: boolean;
+  /** Feed-only: include archived pifs in results (off by default). */
+  showArchived: boolean;
 }
 
 interface VersionedFilterPayload {
@@ -36,7 +38,7 @@ interface VersionedFilterPayload {
   data: MapFilterData;
 }
 
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 const STORAGE_KEY = "map_filters";
 const LEGACY_KEY_V1 = "map_filters_v1";
 
@@ -45,20 +47,13 @@ const EMPTY: MapFilterData = {
   conditions: [],
   itemTypes: [],
   onlyInterested: false,
+  showArchived: false,
 };
 
-/**
- * Sequential migrations. Each entry takes the data shape produced by
- * the *previous* version and returns the next version's shape. To add
- * a new version, append `{ to: N, run: prev => next }`.
- */
 const MIGRATIONS: Array<{ to: number; run: (prev: any) => any }> = [
-  // v1 -> v2: keep the same shape but stamp the version envelope.
-  // Future migrations (e.g. renaming "kids" -> "children") would live
-  // here and run in order.
   { to: 2, run: (prev) => prev },
-  // v2 -> v3: introduce `onlyInterested` toggle (default off).
   { to: 3, run: (prev) => ({ ...prev, onlyInterested: false }) },
+  { to: 4, run: (prev) => ({ ...prev, showArchived: false }) },
 ];
 
 const asStringArray = (v: unknown): string[] =>
@@ -69,6 +64,7 @@ const sanitiseData = (raw: any): MapFilterData => ({
   conditions: asStringArray(raw?.conditions),
   itemTypes: asStringArray(raw?.itemTypes),
   onlyInterested: typeof raw?.onlyInterested === "boolean" ? raw.onlyInterested : false,
+  showArchived: typeof raw?.showArchived === "boolean" ? raw.showArchived : false,
 });
 
 const readRaw = (): { version: number; data: MapFilterData } | null => {
@@ -109,6 +105,7 @@ const dropUnknown = (data: MapFilterData, allowed: AllowedValues): MapFilterData
     ? data.itemTypes.filter((c) => allowed.itemTypes!.includes(c))
     : data.itemTypes,
   onlyInterested: data.onlyInterested,
+  showArchived: data.showArchived,
 });
 
 /**

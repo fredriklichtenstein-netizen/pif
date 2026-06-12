@@ -10,17 +10,14 @@ import {
  * two stay perfectly in sync. Persistence is delegated to the existing
  * versioned `mapFiltersStorage` helper (same localStorage key) so saved
  * selections carry over seamlessly.
- *
- * Cross-tab sync: a `storage` listener rehydrates the store whenever
- * another tab writes to the same key.
  */
 interface FeedFiltersState extends MapFilterData {
   setCategories: (categories: string[]) => void;
   setConditions: (conditions: string[]) => void;
   setItemTypes: (itemTypes: string[]) => void;
   setOnlyInterested: (value: boolean) => void;
+  setShowArchived: (value: boolean) => void;
   clearAll: () => void;
-  /** Re-read the persisted payload (used by the cross-tab listener). */
   hydrate: () => void;
 }
 
@@ -31,6 +28,7 @@ export const useFeedFiltersStore = create<FeedFiltersState>((set, get) => ({
   conditions: initial.conditions,
   itemTypes: initial.itemTypes,
   onlyInterested: initial.onlyInterested,
+  showArchived: initial.showArchived,
 
   setCategories: (categories) => {
     set({ categories });
@@ -48,12 +46,17 @@ export const useFeedFiltersStore = create<FeedFiltersState>((set, get) => ({
     set({ onlyInterested });
     persist(get());
   },
+  setShowArchived: (showArchived) => {
+    set({ showArchived });
+    persist(get());
+  },
   clearAll: () => {
     const cleared: MapFilterData = {
       categories: [],
       conditions: [],
       itemTypes: [],
       onlyInterested: false,
+      showArchived: false,
     };
     set(cleared);
     persist(get());
@@ -65,6 +68,7 @@ export const useFeedFiltersStore = create<FeedFiltersState>((set, get) => ({
       conditions: fresh.conditions,
       itemTypes: fresh.itemTypes,
       onlyInterested: fresh.onlyInterested,
+      showArchived: fresh.showArchived,
     });
   },
 }));
@@ -75,6 +79,7 @@ function persist(state: FeedFiltersState) {
     conditions: state.conditions,
     itemTypes: state.itemTypes,
     onlyInterested: state.onlyInterested,
+    showArchived: state.showArchived,
   });
 }
 
