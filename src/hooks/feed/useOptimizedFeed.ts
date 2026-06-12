@@ -23,7 +23,8 @@ const FADE_DURATION_MS = 320;
 // Duration of the fade-in animation when an item is undone/restored.
 const RESTORE_FADE_MS = 400;
 
-export function useOptimizedFeed() {
+export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
+  const includeArchived = !!options.includeArchived;
   const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
   // Items currently animating out (still rendered, with fade-out class).
@@ -184,8 +185,8 @@ export function useOptimizedFeed() {
     error,
     refetch
   } = useQuery({
-    queryKey: ['posts', 'optimized', page],
-    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page)),
+    queryKey: ['posts', 'optimized', page, includeArchived],
+    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -198,14 +199,14 @@ export function useOptimizedFeed() {
     if (DEMO_MODE) return [];
     const posts: Post[] = [];
     for (let i = 0; i <= page; i++) {
-      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i]);
+      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeArchived]);
       if (pageData) {
         posts.push(...pageData);
       }
     }
     if (removedIds.size === 0) return posts;
     return posts.filter(p => !removedIds.has(String(p.id)));
-  }, [page, queryClient, currentPageData, removedIds]);
+  }, [page, queryClient, currentPageData, removedIds, includeArchived]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -227,11 +228,11 @@ export function useOptimizedFeed() {
     setPage((prev) => {
       const nextPage = prev + 1;
       setTimeout(() => {
-        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1));
+        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1), includeArchived);
       }, 100);
       return nextPage;
     });
-  }, []);
+  }, [includeArchived]);
 
   // Release the in-flight guard once the new page has finished loading
   // so the next intersection can trigger the page after it.
@@ -263,11 +264,11 @@ export function useOptimizedFeed() {
   useEffect(() => {
     if (DEMO_MODE) return;
     const timer = setTimeout(() => {
-      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1));
+      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1), includeArchived);
     }, 1000);
-    
+
     return () => clearTimeout(timer);
-  }, [page]);
+  }, [page, includeArchived]);
 
   // Feed-level realtime only: one shared channel for new items and visible
   // interaction-count changes. Item cards must never open per-card channels.

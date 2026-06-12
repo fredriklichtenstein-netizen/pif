@@ -34,7 +34,8 @@ import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
 
 export function OptimizedFeedContainer() {
-  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed();
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed({ includeArchived });
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
@@ -218,6 +219,30 @@ export function OptimizedFeedContainer() {
           onClearCategories={() => setCategories([])}
           variant="feed"
         />
+
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setIncludeArchived((v) => !v)}
+            aria-pressed={includeArchived}
+            className={
+              includeArchived
+                ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-muted text-foreground border-border hover:bg-muted/80 transition-colors"
+                : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-background text-muted-foreground border-border hover:bg-muted/40 transition-colors"
+            }
+          >
+            <span
+              aria-hidden="true"
+              className={
+                includeArchived
+                  ? "h-2 w-2 rounded-full bg-foreground/60"
+                  : "h-2 w-2 rounded-full bg-muted-foreground/40"
+              }
+            />
+            {t('feed.show_archived', 'Visa arkiverade')}
+          </button>
+        </div>
+
 
         <section role="feed" aria-label={t('interactions.community_posts')}>
           {isRefreshing ? (

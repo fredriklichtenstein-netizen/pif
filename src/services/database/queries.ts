@@ -14,6 +14,7 @@ export class OptimizedQueries {
     userId?: string;
     categories?: string[];
     coordinates?: { lat: number; lng: number; radius?: number };
+    includeArchived?: boolean;
   }) {
     return monitorQuery('getPosts', () =>
       withRetry(async () => {
@@ -29,8 +30,11 @@ export class OptimizedQueries {
             category, condition, user_id, pif_status, item_type,
             created_at
           `)
-          .not('pif_status', 'eq', 'archived')
           .order('created_at', { ascending: false });
+
+        if (!options.includeArchived) {
+          query = query.not('pif_status', 'eq', 'archived');
+        }
 
         if (options.categories?.length) {
           query = query.in('category', options.categories);
