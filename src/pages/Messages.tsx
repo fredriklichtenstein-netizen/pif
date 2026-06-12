@@ -99,41 +99,70 @@ const Messages = () => {
   };
 
   const markConversationReadOnce = useCallback(async (conversationId: string) => {
-    if (DEMO_MODE || !conversationId || markedAsRead.current.has(conversationId)) return;
+    if (DEMO_MODE || !conversationId) return;
 
+    // Dedupe only against concurrent in-flight calls for the SAME
+    // conversation, not for the entire session. The previous persistent
+    // Set guard meant that once a conversation was opened it could never
+    // be re-marked as read again, so new messages arriving while the
+    // user was on another tab would leave last_read_at stuck at the
+    // first-open timestamp even after re-opening the conversation.
+    if (markedAsRead.current.has(conversationId)) {
+      console.debug('[messages] mark_conversation_read skipped (in-flight)', conversationId);
+      return;
+    }
     markedAsRead.current.add(conversationId);
 
     try {
-      const { error: rpcError } = await (supabase.rpc as any)('mark_conversation_read', {
-        p_conversation_id: conversationId,
-      });
+      console.debug('[messages] mark_conversation_read →', conversationId);
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+        'mark_conversation_read',
+        { p_conversation_id: conversationId },
+      );
 
       if (rpcError) {
-        console.warn('[messages] mark_conversation_read RPC failed, falling back:', rpcError);
+        console.error(
+          '[messages] mark_conversation_read RPC failed, falling back:',
+          { conversationId, error: rpcError },
+        );
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData.session?.user.id;
-        if (!userId) return;
+        if (!userId) {
+          console.error('[messages] mark_conversation_read fallback aborted: no session');
+          return;
+        }
 
-        await supabase
+        const { error: updErr } = await supabase
           .from('conversation_participants')
           .update({ last_read_at: new Date().toISOString() })
           .eq('conversation_id', conversationId)
           .eq('user_id', userId);
+        if (updErr) {
+          console.error('[messages] fallback participant update failed:', updErr);
+        } else {
+          console.debug('[messages] fallback participant update OK', { conversationId });
+        }
 
-        await supabase
+        const { error: msgErr } = await supabase
           .from('messages')
           .update({ read_at: new Date().toISOString() })
           .eq('conversation_id', conversationId)
           .neq('sender_id', userId)
           .is('read_at', null);
+        if (msgErr) console.error('[messages] fallback messages update failed:', msgErr);
+      } else {
+        console.debug('[messages] mark_conversation_read OK', { conversationId, rpcData });
       }
 
       window.dispatchEvent(
         new CustomEvent('pif:conversation-read', { detail: { conversationId } }),
       );
     } catch (err) {
+      console.error('[messages] Error marking conversation as read:', { conversationId, err });
+    } finally {
+      // Release the in-flight lock so future opens (after new messages
+      // arrive on the same conversation) can re-mark it as read.
       markedAsRead.current.delete(conversationId);
-      console.error('Error marking conversation as read:', err);
     }
   }, []);
 
@@ -141,6 +170,30 @@ const Messages = () => {
     if (activeConversationId) {
       void markConversationReadOnce(activeConversationId);
     }
+  }, [activeConversationId, markConversationReadOnce]);
+
+  // When new messages arrive while a conversation is open, re-mark it as
+  // read so last_read_at advances past those messages too.
+  useEffect(() => {
+    if (DEMO_MODE || !activeConversationId) return;
+    const channel = supabase
+      .channel(`messages-read-tracker:${activeConversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${activeConversationId}`,
+        },
+        () => {
+          void markConversationReadOnce(activeConversationId);
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [activeConversationId, markConversationReadOnce]);
 
   // Clicking the already-active "Messages" tab collapses the expanded
