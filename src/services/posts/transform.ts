@@ -54,12 +54,9 @@ export const transformPostData = (
       avatar: extractedUser.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
     },
     createdAt: item.created_at || '',
-    status: (item.pif_status as string) || item.status || '',
-    pif_status: (item.pif_status as string) || null,
-    archived_at: item.archived_at || null,
-    archived_reason: item.archived_reason || null,
+    status: item.status || '',
     likesCount: interactionCounts.likesCount,
     interestsCount: interactionCounts.interestsCount,
     commentsCount: interactionCounts.commentsCount
-  } as Post;
+  };
 };

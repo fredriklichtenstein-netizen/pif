@@ -67,7 +67,7 @@ export function useConversations() {
           return;
         }
         const { data: conversationsData, error: conversationsError } = await supabase
-          .from('conversations').select(`*, closed_at, item:items(id, title, images, pif_status)`)
+          .from('conversations').select(`*, item:items(id, title, images, pif_status)`)
           .in('id', conversationIds).order('updated_at', { ascending: false });
         if (conversationsError) throw conversationsError;
 
@@ -152,7 +152,6 @@ export function useConversations() {
               id: conv.id, created_at: conv.created_at, updated_at: conv.updated_at,
               item_id: conv.item_id,
               last_message_text: latest ?? conv.last_message_text,
-              closed_at: (conv as any).closed_at ?? null,
               participants,
               item: itemAny ? {
                 id: String(itemAny.id), title: itemAny.title, description: "", category: "",
@@ -161,7 +160,7 @@ export function useConversations() {
                 createdAt: "", status: itemAny.pif_status || "",
                 likesCount: 0, interestsCount: 0, commentsCount: 0
               } : undefined
-            } as any;
+            };
           });
           setConversations(transformedConversations as Conversation[]);
         }
