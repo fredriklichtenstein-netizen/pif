@@ -25,6 +25,7 @@ export function ConversationList({
   conversations,
   activeConversationId,
   onSelectConversation,
+  unreadByConversation,
 }: ConversationListProps) {
   const { user } = useGlobalAuth();
   const currentUserId = user?.id;
