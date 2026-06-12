@@ -418,6 +418,46 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Receiver withdraw dialog */}
+      <AlertDialog open={receiverWithdrawOpen} onOpenChange={setReceiverWithdrawOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ångra mottagning</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vill du meddela piffaren något? (valfritt)
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <textarea
+            value={receiverWithdrawComment}
+            onChange={(e) => setReceiverWithdrawComment(e.target.value)}
+            placeholder="Skriv ett kort meddelande till piffaren..."
+            rows={3}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+            <AlertDialogAction
+              onClick={async () => {
+                setReceiverWithdrawOpen(false);
+                const res = await completion.withdrawReceiver(
+                  receiverWithdrawComment.trim() || undefined,
+                );
+                if (res.ok) {
+                  setReceiverWithdrawComment("");
+                  setLocallyClosed(true);
+                  if (onBack) onBack();
+                  else navigate("/messages");
+                }
+              }}
+              className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Bekräfta ångra
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full mt-0">Avbryt</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Report dialog (both parties) */}
       {item && (
         <ReportPostDialog

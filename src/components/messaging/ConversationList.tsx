@@ -21,6 +21,9 @@ const isHistoricStatus = (status: string | undefined): boolean => {
   return s === "completed" || s === "archived";
 };
 
+const isClosed = (c: Conversation): boolean =>
+  isHistoricStatus(c.item?.status) || !!(c as any).closed_at;
+
 export function ConversationList({
   conversations,
   activeConversationId,
@@ -40,7 +43,7 @@ export function ConversationList({
     const a: Conversation[] = [];
     const h: Conversation[] = [];
     for (const c of conversations) {
-      if (isHistoricStatus(c.item?.status)) h.push(c);
+      if (isClosed(c)) h.push(c);
       else a.push(c);
     }
     return { active: a, history: h };
