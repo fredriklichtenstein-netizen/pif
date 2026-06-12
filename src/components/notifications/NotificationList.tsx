@@ -162,6 +162,7 @@ export function NotificationList() {
                 const isInterestReceived = notif.type === 'interest_received' || notif.type === 'interest';
                 const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
                 const isSelectionMade = notif.type === 'selection_made';
+                const isReceiverWithdrew = notif.type === 'receiver_withdrew';
 
                 let displayTitle: React.ReactNode = notif.title;
                 let displayContent: React.ReactNode = notif.content;
@@ -219,6 +220,15 @@ export function NotificationList() {
                       ? `/messages?item=${notif.item_id}`
                       : (notif.action_url ?? '/messages');
                   ctaLabel = t('interactions.start_conversation');
+                } else if (isReceiverWithdrew) {
+                  const receiver = notif.actor_name || 'Mottagaren';
+                  const title = notif.item_title ? `"${notif.item_title}"` : 'piffen';
+                  displayTitle = `${receiver} har ångrat mottagningen av ${title}. Piffen är nu öppen igen.`;
+                  displayContent = null;
+                  ctaUrl = notif.item_id
+                    ? `/item/${notif.item_id}`
+                    : (notif.action_url ?? undefined);
+                  ctaLabel = 'Visa pif';
                 }
 
                 return (
