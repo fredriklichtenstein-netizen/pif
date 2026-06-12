@@ -199,7 +199,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     if (DEMO_MODE) return [];
     const posts: Post[] = [];
     for (let i = 0; i <= page; i++) {
-      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i]);
+      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeArchived]);
       if (pageData) {
         posts.push(...pageData);
       }
