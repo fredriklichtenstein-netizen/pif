@@ -26,6 +26,11 @@ const normalizeItemType = (itemType: string): 'offer' | 'request' => {
   return 'offer';
 };
 
+const isArchivedRow = (post: any) => post?.status === 'archived' || post?.pif_status === 'archived' || !!post?.archived_at;
+
+const applyArchiveBoundary = (posts: any[], includeArchived: boolean) =>
+  includeArchived ? posts.filter(isArchivedRow) : posts.filter((post) => !isArchivedRow(post));
+
 // Transform mock posts to the expected format
 const transformMockPosts = () => {
   return MOCK_POSTS.map(post => ({
@@ -51,7 +56,8 @@ export function useFetchPosts(options = { includeArchived: false }) {
   // Seed from the persistent cache so switching feed↔map or refreshing
   // shows content immediately without waiting on the network.
   const seeded = !DEMO_MODE ? readCache<any[]>(cacheKey) : null;
-  const [posts, setPosts] = useState<any[]>(seeded?.data ?? []);
+  const seededPosts = seeded?.data ? applyArchiveBoundary(seeded.data, options.includeArchived) : [];
+  const [posts, setPosts] = useState<any[]>(seededPosts);
   const [isLoading, setIsLoading] = useState(!seeded);
   const [error, setError] = useState<Error | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -86,7 +92,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
     // serve it immediately and refresh in the background.
     const cached = readCache<any[]>(cacheKey);
     if (cached && !cached.isStale) {
-      setPosts(cached.data);
+      setPosts(applyArchiveBoundary(cached.data, options.includeArchived));
       setIsLoading(false);
       return;
     }
@@ -96,7 +102,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
     setIsFetching(true);
     // If we have stale data, keep showing it instead of flipping to a loader.
     if (cached?.data?.length) {
-      setPosts(cached.data);
+      setPosts(applyArchiveBoundary(cached.data, options.includeArchived));
       setIsLoading(false);
     } else {
       setIsLoading(true);
@@ -128,7 +134,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
 
       if (error) throw error;
 
-      const transformedData = data?.map(item => {
+      const transformedData = applyArchiveBoundary(data?.map(item => {
         const user = extractUserFromProfile(item.profiles, item.user_id);
         return {
           id: item.id,
@@ -148,7 +154,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
           user_name: user.name,
           user_avatar: user.avatar || ''
         };
-      }) || [];
+      }) || [], options.includeArchived);
 
       setPosts(transformedData);
       setCache(cacheKey, transformedData, FULL_LIST_TTL);
