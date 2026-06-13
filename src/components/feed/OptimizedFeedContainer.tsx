@@ -207,47 +207,25 @@ export function OptimizedFeedContainer() {
         aria-busy={isRefreshing}
         {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
       >
-        <FeedDistanceFilter
+        <FeedFiltersPanel
+          posts={filteredPosts}
           selectedDistance={selectedDistance}
           onDistanceChange={setSelectedDistance}
           userLocation={userLocation}
           onUserLocationChange={setUserLocation}
-        />
-
-        <PostTypeAndCategoryFilters
-          posts={filteredPosts}
-          selectedCategories={selectedCategories}
           selectedItemTypes={selectedItemTypes}
-          onCategoryChange={setCategories}
           onItemTypeChange={setItemTypes}
-          onClearCategories={() => setCategories([])}
-          variant="feed"
+          selectedCategories={selectedCategories}
+          onCategoryChange={setCategories}
+          includeArchived={includeArchived}
+          onIncludeArchivedChange={setIncludeArchived}
+          onResetAll={() => {
+            handleClearAll();
+            setUserLocation(null);
+            setIncludeArchived(false);
+          }}
         />
 
-        {isLoggedIn && (
-          <div className="flex items-center justify-end">
-            <button
-              type="button"
-              onClick={() => setIncludeArchived((v) => !v)}
-              aria-pressed={includeArchived}
-              className={
-                includeArchived
-                  ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-muted text-foreground border-border hover:bg-muted/80 transition-colors"
-                  : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-background text-muted-foreground border-border hover:bg-muted/40 transition-colors"
-              }
-            >
-              <span
-                aria-hidden="true"
-                className={
-                  includeArchived
-                    ? "h-2 w-2 rounded-full bg-foreground/60"
-                    : "h-2 w-2 rounded-full bg-muted-foreground/40"
-                }
-              />
-              {t('feed.show_archived', 'Visa arkiverade')}
-            </button>
-          </div>
-        )}
 
 
         <section role="feed" aria-label={t('interactions.community_posts')}>
