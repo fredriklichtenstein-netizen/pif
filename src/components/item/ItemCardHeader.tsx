@@ -63,8 +63,46 @@ export function ItemCardHeader({
   const { t } = useTranslation();
   const { session } = useGlobalAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const { handleShare: shareItem } = useItemSharing(String(itemId));
   const isAuthenticated = !!session?.user;
+  const queryClient = useQueryClient();
+
+  const handleRestoreClick = async () => {
+    if (isRestoring) return;
+    setIsRestoring(true);
+    try {
+      const numericId = typeof itemId === 'number' ? itemId : parseInt(String(itemId), 10);
+      const { error: rpcError } = await (supabase as any).rpc('restore_item', { p_item_id: numericId });
+      if (rpcError) {
+        const { error: updateError } = await (supabase
+          .from('items')
+          .update({ pif_status: 'active', archived_at: null, archived_reason: null } as any) as any)
+          .eq('id', numericId);
+        if (updateError) throw updateError;
+      }
+      try {
+        clearPostsCache();
+        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      } catch (e) { console.error('feed cache invalidation failed', e); }
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', {
+          detail: { itemId: numericId, operationType: 'restore' },
+        }));
+        document.dispatchEvent(new CustomEvent('item-operation-undone', {
+          detail: { itemId: numericId, operationType: 'archive' },
+        }));
+      } catch (e) { console.error('dispatch restore failed', e); }
+      toast({ title: t('ui.republished') });
+      onDeleteSuccess?.();
+    } catch (err: any) {
+      console.error('Restore failed', err);
+      toast({ title: t('ui.republish_failed'), description: err?.message, variant: 'destructive' });
+    } finally {
+      setIsRestoring(false);
+    }
+  };
   
   const handleBookmarkClick = async () => {
     // Check authentication
