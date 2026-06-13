@@ -26,7 +26,7 @@ const staticEntries: SitemapEntry[] = [
 
 async function fetchActiveItems(): Promise<SitemapEntry[]> {
   try {
-    const url = `${SUPABASE_URL}/rest/v1/items?select=id,updated_at,created_at&archived_at=is.null&or=(pif_status.is.null,pif_status.neq.archived)&limit=10000`;
+    const url = `${SUPABASE_URL}/rest/v1/items?select=id,created_at&archived_at=is.null&or=(pif_status.is.null,pif_status.neq.archived)&limit=10000`;
     const res = await fetch(url, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -34,13 +34,13 @@ async function fetchActiveItems(): Promise<SitemapEntry[]> {
       },
     });
     if (!res.ok) {
-      console.warn(`[sitemap] items fetch failed: ${res.status}`);
+      console.warn(`[sitemap] items fetch failed: ${res.status} ${await res.text()}`);
       return [];
     }
-    const rows = (await res.json()) as Array<{ id: number | string; updated_at?: string; created_at?: string }>;
+    const rows = (await res.json()) as Array<{ id: number | string; created_at?: string }>;
     return rows.map((r) => ({
       path: `/item/${r.id}`,
-      lastmod: (r.updated_at || r.created_at || "").slice(0, 10) || undefined,
+      lastmod: (r.created_at || "").slice(0, 10) || undefined,
       changefreq: "daily",
       priority: "0.7",
     }));
