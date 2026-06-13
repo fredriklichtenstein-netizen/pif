@@ -20,6 +20,8 @@ import {
 import { ArchiveRestore, Loader2, Trash2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearPostsCache } from "@/services/posts/optimized";
 
 const FADE_DURATION_MS = 320;
 
@@ -35,6 +37,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const isOwner = user && user.id === userId;
 
   const fadeAndRemove = (itemId: number | string) => {
@@ -187,6 +190,16 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         title: t('interactions.item_restored'),
         description: t('interactions.item_restored_description'),
       });
+
+      // Invalidate feed caches directly — the Feed page may not be mounted
+      // right now, so its event listener can't clear the sessionStorage cache
+      // for us. Without this, navigating back to the feed serves a stale page
+      // that still excludes the just-restored item.
+      try {
+        clearPostsCache();
+        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      } catch (e) { console.error('feed cache invalidation failed', e); }
 
       // Notify other lists (feed, MyPifs, map) to re-add this item.
       try {
