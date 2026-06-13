@@ -354,6 +354,22 @@ export function InterestSelectionList({
         rpcArgs,
       );
       if (rpcError) throw rpcError;
+
+      // Fan-out notifications to the chosen user AND every other
+      // interested/offering user so they know the slot was filled.
+      try {
+        const { error: notifyErr } = await (supabase.rpc as any)(
+          "notify_item_interest_event",
+          {
+            p_item_id: numericItemId,
+            p_event: isWish ? "helper_selected" : "receiver_selected",
+            p_selected_user_id: row.user_id,
+          },
+        );
+        if (notifyErr) console.warn("notify_item_interest_event failed", notifyErr);
+      } catch (notifyErr) {
+        console.warn("notify_item_interest_event threw", notifyErr);
+      }
       // Optimistically update UI: pifs are single-receiver, wishes can
       // have many helpers, so for wishes we only flip the picked row.
       setRows((prev) =>
