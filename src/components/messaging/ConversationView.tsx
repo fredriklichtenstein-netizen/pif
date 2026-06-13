@@ -45,6 +45,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const currentUserId = session?.user?.id;
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const hasInitiallyScrolledRef = useRef(false);
   const [newMessage, setNewMessage] = useState("");
   const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
@@ -94,11 +96,23 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         })
     : null;
 
+  // Reset initial-scroll flag when switching conversations
   useEffect(() => {
-    if (messagesEndRef.current) {
+    hasInitiallyScrolledRef.current = false;
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (messagesLoading) return;
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    if (!hasInitiallyScrolledRef.current) {
+      // Jump instantly to bottom on first render of this conversation
+      container.scrollTop = container.scrollHeight;
+      hasInitiallyScrolledRef.current = true;
+    } else if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, messagesLoading]);
 
   // If piffer just completed both sides via confirm, surface rating modal once.
   // We intentionally do NOT gate on pifStatus !== "completed" here because the
@@ -291,7 +305,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       />
 
       {/* Scrollable message list */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
         {messagesLoading ? (
           <div className="flex justify-center items-center h-32">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>

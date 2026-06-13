@@ -116,6 +116,11 @@ export function ConversationList({
             <p className={`text-sm truncate mt-1 ${unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
               {preview || t("interactions.no_messages_yet_short")}
             </p>
+            {conversation.item?.title && (
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {t("messages.regarding", { defaultValue: "Om:" })} {conversation.item.title}
+              </p>
+            )}
           </div>
         </div>
       </div>
