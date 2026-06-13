@@ -345,23 +345,25 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         (payload: any) => {
           const newStatus = payload?.new?.pif_status;
           const oldStatus = payload?.old?.pif_status;
-          // Only react to archive/restore transitions that affect feed visibility.
-          if (newStatus === oldStatus) return;
+          // React to any archive/restore-related transition. `old` may be
+          // missing if REPLICA IDENTITY isn't FULL, so we also treat a
+          // present `pif_status` of 'archived'/'active' as actionable.
           const archivedChanged =
-            newStatus === 'archived' || oldStatus === 'archived';
+            (oldStatus !== undefined && newStatus !== oldStatus &&
+              (newStatus === 'archived' || oldStatus === 'archived')) ||
+            (oldStatus === undefined &&
+              (newStatus === 'archived' || newStatus === 'active'));
           if (!archivedChanged) return;
           clearPostsCache();
           const itemId = payload?.new?.id ?? payload?.old?.id;
           if (itemId != null) {
             const idStr = String(itemId);
-            // If newly archived, drop from active-feed caches immediately.
             if (newStatus === 'archived') {
               queryClient.setQueriesData<Post[]>({ queryKey: ['posts', 'optimized'] }, (oldData) => {
                 if (!oldData || !Array.isArray(oldData)) return oldData;
                 return oldData.filter((p) => String(p.id) !== idStr);
               });
             } else {
-              // Restored: clear any optimistic removal so it can reappear.
               setRemovedIds((prev) => {
                 if (!prev.has(idStr)) return prev;
                 const next = new Set(prev);
