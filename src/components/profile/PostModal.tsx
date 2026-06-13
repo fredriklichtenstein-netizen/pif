@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
+import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -50,16 +51,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       avatar: data.profiles?.avatar_url || "",
     },
     image: data.images?.[0] || "",
-    coordinates: data.coordinates
-      ? {
-          lat: typeof data.coordinates === 'object' && data.coordinates !== null
-            ? (data.coordinates as any).y
-            : null,
-          lng: typeof data.coordinates === 'object' && data.coordinates !== null
-            ? (data.coordinates as any).x
-            : null,
-        }
-      : undefined,
+    coordinates: extractCoordinates(data.coordinates),
   });
 
   useEffect(() => {
