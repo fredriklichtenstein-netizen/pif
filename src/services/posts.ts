@@ -94,16 +94,12 @@ export const getPosts = async (): Promise<Post[]> => {
 
     // Transform data to match the Post type
     const transformedData = data.map(item => {
-      // Parse coordinates if they exist
+      // Parse PostGIS "(lng,lat)" text into the app's coordinate object shape.
       let parsedCoordinates = null;
       if (item.coordinates) {
         try {
-          // Convert point to string and then parse
           const coordsStr = String(item.coordinates);
-          const coords = parseCoordinatesFromDB(coordsStr);
-          if (coords) {
-            parsedCoordinates = JSON.stringify(coords);
-          }
+          parsedCoordinates = parseCoordinatesFromDB(coordsStr);
         } catch (err) {
           console.error("Error parsing coordinates:", err, item.coordinates);
         }
