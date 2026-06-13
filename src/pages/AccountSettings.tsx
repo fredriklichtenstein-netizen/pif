@@ -91,6 +91,20 @@ export default function AccountSettings() {
                   <SignOutButton />
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('auth.privacy_policy_link')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Link
+                    to="/privacy"
+                    className="text-primary hover:underline text-sm"
+                  >
+                    {t('auth.privacy_policy_link')} →
+                  </Link>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">
