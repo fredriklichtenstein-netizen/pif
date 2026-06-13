@@ -13,6 +13,7 @@ import { safeParseJSON, safeStringify } from '@/utils/safeStorage';
 import { AlertCircle } from 'lucide-react';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { MainNav } from '@/components/MainNav';
+import { ItemDetailHead } from '@/components/item/detail/ItemDetailHead';
 
 export default function ItemDetail() {
   const { id } = useParams();
@@ -137,6 +138,15 @@ export default function ItemDetail() {
   }
   return (
     <>
+      {displayItem && (
+        <ItemDetailHead
+          id={displayItem.id ?? id ?? ''}
+          title={displayItem.title}
+          description={displayItem.description}
+          images={displayItem.images}
+          itemType={displayItem.item_type}
+        />
+      )}
       <ItemDetailContainer 
         displayItem={displayItem}
         postedBy={postedBy}
