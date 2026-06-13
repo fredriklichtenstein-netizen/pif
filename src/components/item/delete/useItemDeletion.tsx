@@ -68,6 +68,25 @@ export function useItemDeletion(
         if (error) throw error;
         success = Boolean(result);
         if (!success) throw new Error('Failed to archive item');
+
+        // Notify ALL interested users that this pif/wish was archived.
+        try {
+          const { data: itemRow } = await (supabase.from('items') as any)
+            .select('item_type')
+            .eq('id', numericId)
+            .maybeSingle();
+          const isRequest =
+            String(itemRow?.item_type || 'offer').toLowerCase() === 'request';
+          await (supabase.rpc as any)('notify_item_interest_event', {
+            p_item_id: numericId,
+            p_event: isRequest ? 'wish_archived' : 'pif_archived',
+            p_selected_user_id: null,
+          });
+        } catch (e) {
+          console.warn('notify_item_interest_event (archive) failed', e);
+        }
+
+
         
         // Sonner toast with an "Undo" action that restores the item.
         sonnerToast.success(t('interactions.item_archived'), {
