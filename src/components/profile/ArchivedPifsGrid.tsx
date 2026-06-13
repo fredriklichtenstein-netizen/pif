@@ -191,6 +191,16 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         description: t('interactions.item_restored_description'),
       });
 
+      // Invalidate feed caches directly — the Feed page may not be mounted
+      // right now, so its event listener can't clear the sessionStorage cache
+      // for us. Without this, navigating back to the feed serves a stale page
+      // that still excludes the just-restored item.
+      try {
+        clearPostsCache();
+        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      } catch (e) { console.error('feed cache invalidation failed', e); }
+
       // Notify other lists (feed, MyPifs, map) to re-add this item.
       try {
         document.dispatchEvent(new CustomEvent('item-operation-success', {
