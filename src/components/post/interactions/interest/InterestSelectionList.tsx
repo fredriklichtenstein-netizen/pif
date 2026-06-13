@@ -232,12 +232,26 @@ export function InterestSelectionList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Realtime: refresh on any change to interests for this item.
+  // Realtime: refresh on any change to interests for this item. DELETE
+  // events (e.g. when withdraw_pif removes the selected interest row)
+  // are also applied optimistically so the chosen-receiver row
+  // disappears immediately — the debounced reload then reconciles
+  // statuses for the remaining interested users.
   useEffect(() => {
     if (DEMO_MODE) return;
     if (!itemId) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const unsubscribe = subscribeItemTable(itemId, "interests", () => {
+    const unsubscribe = subscribeItemTable(itemId, "interests", (payload) => {
+      if (payload?.eventType === "DELETE" && payload?.old?.id != null) {
+        const deletedId = payload.old.id;
+        setRows((prev) =>
+          prev
+            .filter((r) => r.id !== deletedId)
+            .map((r) =>
+              r.status === "not_selected" ? { ...r, status: "pending" } : r,
+            ),
+        );
+      }
       if (timer) clearTimeout(timer);
       timer = setTimeout(reload, 350);
     });
@@ -505,6 +519,7 @@ export function InterestSelectionList({
     [itemOwnerId, navigate, numericItemId, setShowPopup]
   );
   const handleWithdraw = async () => {
+    const targetId = withdrawId;
     setWithdrawId(null);
     if (DEMO_MODE) {
       demoSelections.unselectUser(itemId);
@@ -516,10 +531,22 @@ export function InterestSelectionList({
       return;
     }
     try {
-      await supabase
-        .from("interests")
-        .update({ status: "pending", selected_at: null } as any)
-        .eq("item_id", numericItemId);
+      // withdraw_pif removes the selected interest row from the DB and
+      // reopens the pif for everyone else. Use the RPC (instead of a
+      // direct update) so the server-side rules + notifications run.
+      const { error } = await (supabase.rpc as any)("withdraw_pif", {
+        p_item_id: numericItemId,
+        p_action: "reopen",
+      });
+      if (error) throw error;
+      // Optimistically remove the withdrawn row and reset siblings back
+      // to pending so the popup reflects the new state immediately,
+      // without waiting for the realtime DELETE event to arrive.
+      setRows((prev) =>
+        prev
+          .filter((r) => (targetId != null ? r.id !== targetId : r.status !== "selected"))
+          .map((r) => ({ ...r, status: "pending" })),
+      );
       reload();
       toast({
         title: t("interactions.selection_withdrawn"),
