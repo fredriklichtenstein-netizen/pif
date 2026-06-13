@@ -29,13 +29,16 @@ export class OptimizedQueries {
             id, title, description, images, location, coordinates,
             category, condition, user_id, pif_status, item_type,
             created_at, archived_at, archived_reason
-          `)
-          .order('created_at', { ascending: false });
+          `);
 
         if (options.includeArchived) {
-          query = query.eq('pif_status', 'archived');
+          query = query
+            .eq('pif_status', 'archived')
+            .order('archived_at', { ascending: false, nullsFirst: false });
         } else {
-          query = query.not('pif_status', 'eq', 'archived');
+          query = query
+            .not('pif_status', 'eq', 'archived')
+            .order('created_at', { ascending: false });
         }
 
         if (options.categories?.length) {

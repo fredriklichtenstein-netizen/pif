@@ -213,7 +213,7 @@ export function FeedItemList({
         {validPosts?.map((post, index) => {
           const isFading = fadingIds?.has(String(post.id));
           const isRestoring = restoringIds?.has(String(post.id));
-          const isArchived = post?.status === 'archived';
+          const isArchived = post?.status === 'archived' || !!post?.archived_at;
           const animationClass = isFading
             ? 'animate-fade-out-collapse pointer-events-none'
             : isRestoring
@@ -234,17 +234,10 @@ export function FeedItemList({
               id={`post-${post.id}`}
               className={[
                 animationClass,
-                isArchived ? 'relative opacity-60 grayscale-[20%]' : '',
+                isArchived ? 'opacity-75' : '',
               ].filter(Boolean).join(' ') || undefined}
               aria-hidden={isFading || undefined}
             >
-              {isArchived && (
-                <div className="pointer-events-none absolute top-2 left-2 z-10">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-muted text-muted-foreground border border-border shadow-sm">
-                    Arkiverad
-                  </span>
-                </div>
-              )}
               {index < 3 ? card : <LazyMount>{card}</LazyMount>}
             </div>
           );

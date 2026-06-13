@@ -88,7 +88,7 @@ export const getOptimizedPosts = async (
     let imageCount = 0;
     const transformedPosts = (data as any[]).map((item: any) => {
       imageCount += Array.isArray(item.images) ? item.images.length : 0;
-      const cacheKey = `transform-v2-${item.id}-${item.created_at}`;
+      const cacheKey = `transform-v2-${item.id}-${item.created_at}-${item.pif_status || ''}-${item.archived_at || ''}`;
       const cached = transformCache.get(cacheKey);
       if (cached) {
         return cached;

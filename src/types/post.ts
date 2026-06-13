@@ -62,6 +62,8 @@ export interface Post {
   };
   createdAt: string;
   status: string;
+  archived_at?: string | null;
+  archived_reason?: string | null;
   likesCount: number;
   interestsCount: number;
   commentsCount: number;
