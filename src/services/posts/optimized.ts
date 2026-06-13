@@ -18,14 +18,17 @@ import {
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 // Create a memoized cache for transformed posts
 const transformCache = memoryOptimizer.createMemoCache<Post>(50);
+let postsCacheGeneration = 0;
 
 export const getOptimizedPosts = async (
   limit = 20,
   offset = 0,
   _retryAfterRecovery = false,
   includeArchived = false,
+  signal?: AbortSignal,
 ): Promise<Post[]> => {
   const start = performance.now();
+  const generationAtStart = postsCacheGeneration;
   const archivedSuffix = includeArchived ? '-arch' : '';
   const cacheKey = `posts-v2-${limit}-${offset}${archivedSuffix}`;
 
@@ -38,7 +41,7 @@ export const getOptimizedPosts = async (
   try {
     // ---- Stage 1: items + profiles join ----
     const itemsStart = performance.now();
-    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived });
+    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived, signal });
     const itemsMs = performance.now() - itemsStart;
     performanceMetrics.recordStage('items-query', itemsMs, {
       count: String(Array.isArray(data) ? data.length : 0),
@@ -104,6 +107,11 @@ export const getOptimizedPosts = async (
       // Non-fatal — counts will still load lazily.
     }
 
+    if (generationAtStart !== postsCacheGeneration) {
+      DatabaseCache.delete(cacheKey);
+      return getOptimizedPosts(limit, offset, true, includeArchived, signal);
+    }
+
     // ---- Stage 4: cache writes (in-memory only) ----
     const cacheStart = performance.now();
     DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
@@ -166,7 +174,7 @@ export const getOptimizedPosts = async (
       // Give the recovery a tick to wipe tokens before retrying.
       await new Promise((r) => setTimeout(r, 50));
       try {
-        return await getOptimizedPosts(limit, offset, true);
+        return await getOptimizedPosts(limit, offset, true, includeArchived, signal);
       } catch {
         return [];
       }
