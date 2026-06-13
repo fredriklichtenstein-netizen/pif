@@ -23,6 +23,21 @@ const FADE_DURATION_MS = 320;
 // Duration of the fade-in animation when an item is undone/restored.
 const RESTORE_FADE_MS = 400;
 
+const removePostFromActiveCache = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  itemId: string,
+) => {
+  queryClient.setQueriesData<Post[]>(
+    {
+      predicate: (query) =>
+        query.queryKey[0] === 'posts' &&
+        query.queryKey[1] === 'optimized' &&
+        query.queryKey[3] === false,
+    },
+    (old) => old?.filter((post) => String(post.id) !== itemId) ?? old,
+  );
+};
+
 export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const includeArchived = !!options.includeArchived;
   const [page, setPage] = useState(0);
@@ -80,6 +95,9 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
 
         // Also wipe the secondary in-memory/session DatabaseCache used by getOptimizedPosts.
         clearPostsCache();
+        if (detail.operationType === 'archive' && !includeArchived) {
+          removePostFromActiveCache(queryClient, idStr);
+        }
         // Remove stale React Query pages for both active/archived modes so
         // the item moves between views immediately instead of being hidden by
         // an optimistic removed-id or resurrected from stale page data.
@@ -222,6 +240,9 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     return posts.filter((p) => {
       const id = String(p.id);
       if (removedIds.has(id)) return false;
+      const isArchivedPost = p.status === 'archived' || !!p.archived_at;
+      if (includeArchived) return isArchivedPost;
+      if (isArchivedPost) return false;
       if (!includeArchived && activeArchivedIds.has(id)) return false;
       return true;
     });
@@ -385,6 +406,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
           if (itemId != null) {
             const idStr = String(itemId);
             if (newStatus === 'archived') {
+              removePostFromActiveCache(queryClient, idStr);
               if (!includeArchived) {
                 setActiveArchivedIds((prev) => {
                   if (prev.has(idStr)) return prev;
