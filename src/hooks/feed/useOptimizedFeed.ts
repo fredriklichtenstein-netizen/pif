@@ -83,6 +83,9 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         });
         // Also wipe the secondary in-memory DatabaseCache used by getOptimizedPosts.
         clearPostsCache();
+        // Force the archived-view cache to refetch so the just-archived
+        // item appears immediately when "Visa arkiverade" is toggled on.
+        queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
       }
 
       if (detail.operationType === 'restore') {
