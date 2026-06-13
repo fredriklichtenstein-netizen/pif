@@ -15,6 +15,7 @@ export class OptimizedQueries {
     categories?: string[];
     coordinates?: { lat: number; lng: number; radius?: number };
     includeArchived?: boolean;
+    signal?: AbortSignal;
   }) {
     return monitorQuery('getPosts', () =>
       withRetry(async () => {
@@ -30,6 +31,10 @@ export class OptimizedQueries {
             category, condition, user_id, pif_status, item_type,
             created_at, archived_at, archived_reason
           `);
+
+        if (options.signal) {
+          query = query.abortSignal(options.signal);
+        }
 
         if (options.includeArchived) {
           query = query
