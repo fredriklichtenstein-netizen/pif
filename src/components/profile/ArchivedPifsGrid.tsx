@@ -37,6 +37,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
   const { user } = useGlobalAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const isOwner = user && user.id === userId;
 
   const fadeAndRemove = (itemId: number | string) => {
