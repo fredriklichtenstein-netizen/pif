@@ -61,14 +61,10 @@ export function useItemDeletion(
       let success = false;
       
       if (isSoftDelete) {
-        console.log('Attempting archive, item ID:', numericId, 'type:', typeof numericId);
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Session user:', session?.user?.id);
         const { data: result, error } = await supabase.rpc('archive_item', {
           p_item_id: numericId,
           p_reason: reason || null
         });
-        console.log('Archive result:', result, 'Error:', error);
         if (error) throw error;
         success = Boolean(result);
         if (!success) throw new Error('Failed to archive item');
