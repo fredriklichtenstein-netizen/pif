@@ -38,6 +38,30 @@ const removePostFromActiveCache = (
   );
 };
 
+const removePostFromArchivedCache = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  itemId: string,
+) => {
+  queryClient.setQueriesData<Post[]>(
+    {
+      predicate: (query) =>
+        query.queryKey[0] === 'posts' &&
+        query.queryKey[1] === 'optimized' &&
+        query.queryKey[3] === true,
+    },
+    (old) => old?.filter((post) => String(post.id) !== itemId) ?? old,
+  );
+};
+
+const invalidateOptimizedFeedQueries = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) => {
+  queryClient.invalidateQueries({
+    predicate: (query) =>
+      query.queryKey[0] === 'posts' && query.queryKey[1] === 'optimized',
+  });
+};
+
 export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const includeArchived = !!options.includeArchived;
   const [page, setPage] = useState(0);
