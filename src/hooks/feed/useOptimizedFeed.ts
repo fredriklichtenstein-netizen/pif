@@ -23,6 +23,16 @@ const FADE_DURATION_MS = 320;
 // Duration of the fade-in animation when an item is undone/restored.
 const RESTORE_FADE_MS = 400;
 
+const removePostFromOptimizedCache = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  itemId: string,
+) => {
+  queryClient.setQueriesData<Post[]>(
+    { queryKey: ['posts', 'optimized'] },
+    (old) => old?.filter((post) => String(post.id) !== itemId) ?? old,
+  );
+};
+
 export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const includeArchived = !!options.includeArchived;
   const [page, setPage] = useState(0);
@@ -80,6 +90,9 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
 
         // Also wipe the secondary in-memory/session DatabaseCache used by getOptimizedPosts.
         clearPostsCache();
+        if (detail.operationType === 'archive' && !includeArchived) {
+          removePostFromOptimizedCache(queryClient, idStr);
+        }
         // Remove stale React Query pages for both active/archived modes so
         // the item moves between views immediately instead of being hidden by
         // an optimistic removed-id or resurrected from stale page data.
@@ -385,6 +398,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
           if (itemId != null) {
             const idStr = String(itemId);
             if (newStatus === 'archived') {
+              removePostFromOptimizedCache(queryClient, idStr);
               if (!includeArchived) {
                 setActiveArchivedIds((prev) => {
                   if (prev.has(idStr)) return prev;
