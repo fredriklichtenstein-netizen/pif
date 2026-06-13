@@ -29,13 +29,17 @@ import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
 import { useMyLikedIds } from '@/hooks/useMyLikedIds';
 import { useMyInterestStore } from '@/stores/myInterestStore';
 import { useMyLikedStore } from '@/stores/myLikedStore';
+import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
 
 export function OptimizedFeedContainer() {
+  const { user } = useGlobalAuth();
+  const isLoggedIn = !!user;
   const [includeArchived, setIncludeArchived] = useState(false);
-  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed({ includeArchived });
+  const effectiveIncludeArchived = isLoggedIn && includeArchived;
+  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
@@ -220,28 +224,30 @@ export function OptimizedFeedContainer() {
           variant="feed"
         />
 
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            onClick={() => setIncludeArchived((v) => !v)}
-            aria-pressed={includeArchived}
-            className={
-              includeArchived
-                ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-muted text-foreground border-border hover:bg-muted/80 transition-colors"
-                : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-background text-muted-foreground border-border hover:bg-muted/40 transition-colors"
-            }
-          >
-            <span
-              aria-hidden="true"
+        {isLoggedIn && (
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => setIncludeArchived((v) => !v)}
+              aria-pressed={includeArchived}
               className={
                 includeArchived
-                  ? "h-2 w-2 rounded-full bg-foreground/60"
-                  : "h-2 w-2 rounded-full bg-muted-foreground/40"
+                  ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-muted text-foreground border-border hover:bg-muted/80 transition-colors"
+                  : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-background text-muted-foreground border-border hover:bg-muted/40 transition-colors"
               }
-            />
-            {t('feed.show_archived', 'Visa arkiverade')}
-          </button>
-        </div>
+            >
+              <span
+                aria-hidden="true"
+                className={
+                  includeArchived
+                    ? "h-2 w-2 rounded-full bg-foreground/60"
+                    : "h-2 w-2 rounded-full bg-muted-foreground/40"
+                }
+              />
+              {t('feed.show_archived', 'Visa arkiverade')}
+            </button>
+          </div>
+        )}
 
 
         <section role="feed" aria-label={t('interactions.community_posts')}>
@@ -256,7 +262,18 @@ export function OptimizedFeedContainer() {
               clearFilters={handleClearAll}
               viewMode="all"
               isLoading={false}
-              onItemOperationSuccess={handleRefresh}
+              onItemOperationSuccess={(_id, op) => {
+                // Archive/delete/restore are already handled by the global
+                // 'item-operation-success' listener in useOptimizedFeed
+                // (optimistic removal + realtime UPDATE invalidation).
+                // Triggering a full refresh here causes the archiving
+                // user's own feed to keep showing the archived card
+                // because the FeedSkeleton remounts before optimistic
+                // state is reapplied. For everything else, fall back to
+                // the shared refresh so non-feed operations still update.
+                if (op === 'archive' || op === 'delete' || op === 'restore') return;
+                handleRefresh();
+              }}
             />
           )}
         </section>

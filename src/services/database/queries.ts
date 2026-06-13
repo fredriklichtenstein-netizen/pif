@@ -28,7 +28,7 @@ export class OptimizedQueries {
           .select(`
             id, title, description, images, location, coordinates,
             category, condition, user_id, pif_status, item_type,
-            created_at
+            created_at, archived_at, archived_reason
           `)
           .order('created_at', { ascending: false });
 
