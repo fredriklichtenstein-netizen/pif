@@ -20,6 +20,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const transformCache = memoryOptimizer.createMemoCache<Post>(50);
 let postsCacheGeneration = 0;
 
+const isArchivedPost = (post: Post) =>
+  post.status === 'archived' || post.pif_status === 'archived' || !!post.archived_at;
+
+const applyArchiveBoundary = (posts: Post[], includeArchived: boolean) =>
+  includeArchived
+    ? posts.filter(isArchivedPost)
+    : posts.filter((post) => !isArchivedPost(post));
+
 export const getOptimizedPosts = async (
   limit = 20,
   offset = 0,
@@ -34,7 +42,7 @@ export const getOptimizedPosts = async (
   // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
   if (cached) {
-    return cached;
+    return applyArchiveBoundary(cached, includeArchived);
   }
 
   try {
@@ -64,7 +72,7 @@ export const getOptimizedPosts = async (
     // is where any media URL signing would land). ----
     const transformStart = performance.now();
     let imageCount = 0;
-    const transformedPosts = (data as any[]).map((item: any) => {
+    const transformedPosts = applyArchiveBoundary((data as any[]).map((item: any) => {
       imageCount += Array.isArray(item.images) ? item.images.length : 0;
       const cacheKey = `transform-v2-${item.id}-${item.created_at}-${item.pif_status || ''}-${item.archived_at || ''}`;
       const cached = transformCache.get(cacheKey);
@@ -80,7 +88,7 @@ export const getOptimizedPosts = async (
 
       transformCache.set(cacheKey, transformed);
       return transformed;
-    });
+    }), includeArchived);
     const transformMs = performance.now() - transformStart;
     performanceMetrics.recordStage('transform', transformMs, {
       posts: String(transformedPosts.length),
