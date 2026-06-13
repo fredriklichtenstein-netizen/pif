@@ -98,6 +98,15 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
       });
       if (error) throw error;
 
+      // Notify all interested users (selected + the rest) of the choice.
+      await (supabase.rpc as any)('notify_item_interest_event', {
+        p_item_id: numericItemId,
+        p_event: 'receiver_selected',
+        p_selected_user_id: userId,
+      }).then(({ error: nErr }: any) => {
+        if (nErr) console.warn('notify_item_interest_event failed', nErr);
+      });
+
       // Optimistically update local interest status so the UI reflects the choice immediately.
       setUsers((prev) =>
         prev.map((u) => ({
