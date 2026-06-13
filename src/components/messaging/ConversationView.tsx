@@ -305,7 +305,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       />
 
       {/* Scrollable message list */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
         {messagesLoading ? (
           <div className="flex justify-center items-center h-32">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
