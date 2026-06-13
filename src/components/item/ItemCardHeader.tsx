@@ -183,22 +183,33 @@ export function ItemCardHeader({
                   <Pencil className="mr-2 h-4 w-4" />
                   {t('ui.edit')}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleLocalDeleteClick}
-                  className={isArchived ? "text-primary" : "text-destructive"}
-                >
-                  {isArchived ? (
-                    <>
+                {isArchived ? (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleRestoreClick}
+                      disabled={isRestoring}
+                      className="text-primary"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      <span>{t('ui.republish')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleLocalDeleteClick}
+                      className="text-destructive"
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       <span>{t('ui.delete_archived_item')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Archive className="mr-2 h-4 w-4" />
-                      <span>{t('ui.archive')}</span>
-                    </>
-                  )}
-                </DropdownMenuItem>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={handleLocalDeleteClick}
+                    className="text-destructive"
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
+                    <span>{t('ui.archive')}</span>
+                  </DropdownMenuItem>
+                )}
               </>
             ) : (
               <>
