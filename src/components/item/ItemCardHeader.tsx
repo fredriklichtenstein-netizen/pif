@@ -9,9 +9,12 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
-import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil } from "lucide-react";
+import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil, RotateCcw } from "lucide-react";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearPostsCache } from "@/services/posts/optimized";
 
 interface ItemCardHeaderProps {
   postedBy: {
