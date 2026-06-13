@@ -8,6 +8,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const parseJsonObject = (value: unknown): Record<string, unknown> | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]?.trim() ?? trimmed;
+  if (!fenced || (fenced[0] !== '{' && fenced[0] !== '[')) return null;
+  try {
+    const parsed = JSON.parse(fenced);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : null;
+  } catch {
+    return null;
+  }
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -129,14 +144,8 @@ serve(async (req) => {
     console.log("Analysis completed successfully");
     
     const content = String(data.choices[0].message.content ?? '').trim();
-    let parsedContent;
-    try {
-      if (!content.startsWith('{')) {
-        throw new Error("AI response was not JSON");
-      }
-      parsedContent = JSON.parse(content);
-    } catch (e) {
-      console.error("Error parsing AI response:", e);
+    let parsedContent = parseJsonObject(content);
+    if (!parsedContent) {
       // If parsing fails, try to extract information using a more lenient approach
       parsedContent = {
         title: content.match(/title["']?\s*:?\s*["']([^"']+)["']/)?.[1] || "",

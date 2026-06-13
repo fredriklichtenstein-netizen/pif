@@ -38,6 +38,30 @@ const removePostFromActiveCache = (
   );
 };
 
+const removePostFromArchivedCache = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  itemId: string,
+) => {
+  queryClient.setQueriesData<Post[]>(
+    {
+      predicate: (query) =>
+        query.queryKey[0] === 'posts' &&
+        query.queryKey[1] === 'optimized' &&
+        query.queryKey[3] === true,
+    },
+    (old) => old?.filter((post) => String(post.id) !== itemId) ?? old,
+  );
+};
+
+const invalidateOptimizedFeedQueries = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) => {
+  queryClient.invalidateQueries({
+    predicate: (query) =>
+      query.queryKey[0] === 'posts' && query.queryKey[1] === 'optimized',
+  });
+};
+
 export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const includeArchived = !!options.includeArchived;
   const [page, setPage] = useState(0);
@@ -98,12 +122,8 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         if (detail.operationType === 'archive' && !includeArchived) {
           removePostFromActiveCache(queryClient, idStr);
         }
-        // Remove stale React Query pages for both active/archived modes so
-        // the item moves between views immediately instead of being hidden by
-        // an optimistic removed-id or resurrected from stale page data.
-        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
         setPage(0);
-        queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
+        invalidateOptimizedFeedQueries(queryClient);
       }
 
       if (detail.operationType === 'restore') {
@@ -122,12 +142,9 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         });
         // Clear the secondary cache so a fresh fetch can return the restored item.
         clearPostsCache();
-        // Drop all cached pages and reset to page 0 so the restored item can
-        // re-enter the feed even if it wasn't part of any cached page.
-        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
         setPage(0);
         // Trigger a fresh fetch.
-        queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
+        invalidateOptimizedFeedQueries(queryClient);
       }
     };
     document.addEventListener('item-operation-success', handler as EventListener);
@@ -219,7 +236,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     refetch
   } = useQuery({
     queryKey: ['posts', 'optimized', page, includeArchived],
-    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived),
+    queryFn: ({ signal }) => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived, signal),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -286,7 +303,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const refresh = useCallback(async () => {
     if (DEMO_MODE) return;
     // Clear all cached queries
-    queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+    clearPostsCache();
     setPage(0);
     await refetch();
     // Server is now authoritative; drop optimistic removals & in-flight fades.
@@ -378,8 +395,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
           clearPostsCache();
           setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
           setActiveArchivedIds((prev) => (prev.size === 0 ? prev : new Set()));
-          queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
-          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
+          invalidateOptimizedFeedQueries(queryClient);
         }
       )
       .on(
@@ -416,6 +432,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
                 });
               }
             } else {
+              removePostFromArchivedCache(queryClient, idStr);
               setRemovedIds((prev) => {
                 if (!prev.has(idStr)) return prev;
                 const next = new Set(prev);
@@ -430,9 +447,8 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
               });
             }
           }
-          queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
           setPage(0);
-          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
+          invalidateOptimizedFeedQueries(queryClient);
         }
       )
       .on(
