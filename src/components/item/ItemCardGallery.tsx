@@ -99,7 +99,7 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
           {item_type === 'request' ? (
             <>
               <Star className="h-3.5 w-3.5" />
-              {t('common.wish', 'Önskning')}
+              {t('common.wish', 'Önskan')}
             </>
           ) : (
             <>
