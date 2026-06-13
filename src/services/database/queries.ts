@@ -37,7 +37,8 @@ export class OptimizedQueries {
             .order('archived_at', { ascending: false, nullsFirst: false });
         } else {
           query = query
-            .not('pif_status', 'eq', 'archived')
+            .or('pif_status.is.null,pif_status.neq.archived')
+            .is('archived_at', null)
             .order('created_at', { ascending: false });
         }
 

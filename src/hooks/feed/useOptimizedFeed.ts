@@ -29,8 +29,10 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const queryClient = useQueryClient();
   // Items currently animating out (still rendered, with fade-out class).
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
-  // Items fully removed (no longer rendered).
+  // Items fully removed everywhere (hard delete).
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  // Items archived during this session and hidden only from the active feed.
+  const [activeArchivedIds, setActiveArchivedIds] = useState<Set<string>>(new Set());
   // Items animating back in after undo/restore.
   const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
   // Pending fade timers, keyed by item id, so undo can cancel them.
@@ -45,7 +47,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       if (!detail || !detail.itemId) return;
       const idStr = String(detail.itemId);
 
-      if (detail.operationType === 'delete' || detail.operationType === 'archive') {
+      if (detail.operationType === 'delete' || (detail.operationType === 'archive' && !includeArchived)) {
         // Mark as fading so the card animates out, then promote to removed.
         setFadingIds(prev => {
           if (prev.has(idStr)) return prev;
@@ -59,7 +61,8 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         if (existing) clearTimeout(existing);
 
         const timer = setTimeout(() => {
-          setRemovedIds(prev => {
+          const setHiddenIds = detail.operationType === 'delete' ? setRemovedIds : setActiveArchivedIds;
+          setHiddenIds(prev => {
             const next = new Set(prev);
             next.add(idStr);
             return next;
@@ -75,22 +78,25 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
 
         fadeTimersRef.current.set(idStr, timer);
 
-        // Prune the item out of every cached optimized-feed page so a
-        // background refetch (or a remount) cannot resurrect it.
-        queryClient.setQueriesData<Post[]>({ queryKey: ['posts', 'optimized'] }, (oldData) => {
-          if (!oldData || !Array.isArray(oldData)) return oldData;
-          return oldData.filter((p) => String(p.id) !== idStr);
-        });
-        // Also wipe the secondary in-memory DatabaseCache used by getOptimizedPosts.
+        // Also wipe the secondary in-memory/session DatabaseCache used by getOptimizedPosts.
         clearPostsCache();
-        // Force the archived-view cache to refetch so the just-archived
-        // item appears immediately when "Visa arkiverade" is toggled on.
+        // Remove stale React Query pages for both active/archived modes so
+        // the item moves between views immediately instead of being hidden by
+        // an optimistic removed-id or resurrected from stale page data.
+        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+        setPage(0);
         queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
       }
 
       if (detail.operationType === 'restore') {
         // Server-side restore — bring it back into view if it was optimistically removed.
         setRemovedIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
+        setActiveArchivedIds(prev => {
           if (!prev.has(idStr)) return prev;
           const next = new Set(prev);
           next.delete(idStr);
@@ -110,7 +116,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
 
     // Undo handler — cancel any in-flight fade and re-show fully-removed items.
     const undoHandler = (event: Event) => {
-      const detail = (event as CustomEvent<{ itemId: string | number }>).detail;
+      const detail = (event as CustomEvent<{ itemId: string | number; operationType?: OperationType }>).detail;
       if (!detail || !detail.itemId) return;
       const idStr = String(detail.itemId);
 
@@ -127,6 +133,12 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         return next;
       });
       setRemovedIds(prev => {
+        if (!prev.has(idStr)) return prev;
+        const next = new Set(prev);
+        next.delete(idStr);
+        return next;
+      });
+      setActiveArchivedIds(prev => {
         if (!prev.has(idStr)) return prev;
         const next = new Set(prev);
         next.delete(idStr);
@@ -163,7 +175,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       restoreTimersRef.current.forEach(t => clearTimeout(t));
       restoreTimersRef.current.clear();
     };
-  }, [queryClient]);
+  }, [queryClient, includeArchived]);
 
   // In demo mode, return mock data immediately
   const demoData = useMemo(() => {
@@ -207,9 +219,13 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         posts.push(...pageData);
       }
     }
-    if (removedIds.size === 0) return posts;
-    return posts.filter(p => !removedIds.has(String(p.id)));
-  }, [page, queryClient, currentPageData, removedIds, includeArchived]);
+    return posts.filter((p) => {
+      const id = String(p.id);
+      if (removedIds.has(id)) return false;
+      if (!includeArchived && activeArchivedIds.has(id)) return false;
+      return true;
+    });
+  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeArchived]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -254,6 +270,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     await refetch();
     // Server is now authoritative; drop optimistic removals & in-flight fades.
     setRemovedIds(new Set());
+    setActiveArchivedIds(new Set());
     setFadingIds(new Set());
     setRestoringIds(new Set());
     fadeTimersRef.current.forEach(t => clearTimeout(t));
@@ -339,6 +356,8 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         () => {
           clearPostsCache();
           setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
+          setActiveArchivedIds((prev) => (prev.size === 0 ? prev : new Set()));
+          queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
           queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
         }
       )
@@ -348,6 +367,10 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         (payload: any) => {
           const newStatus = payload?.new?.pif_status;
           const oldStatus = payload?.old?.pif_status;
+          console.log('[feed realtime] items UPDATE', {
+            old_pif_status: oldStatus,
+            new_pif_status: newStatus,
+          });
           // React to any archive/restore-related transition. `old` may be
           // missing if REPLICA IDENTITY isn't FULL, so we also treat a
           // present `pif_status` of 'archived'/'active' as actionable.
@@ -362,10 +385,14 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
           if (itemId != null) {
             const idStr = String(itemId);
             if (newStatus === 'archived') {
-              queryClient.setQueriesData<Post[]>({ queryKey: ['posts', 'optimized'] }, (oldData) => {
-                if (!oldData || !Array.isArray(oldData)) return oldData;
-                return oldData.filter((p) => String(p.id) !== idStr);
-              });
+              if (!includeArchived) {
+                setActiveArchivedIds((prev) => {
+                  if (prev.has(idStr)) return prev;
+                  const next = new Set(prev);
+                  next.add(idStr);
+                  return next;
+                });
+              }
             } else {
               setRemovedIds((prev) => {
                 if (!prev.has(idStr)) return prev;
@@ -373,8 +400,16 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
                 next.delete(idStr);
                 return next;
               });
+              setActiveArchivedIds((prev) => {
+                if (!prev.has(idStr)) return prev;
+                const next = new Set(prev);
+                next.delete(idStr);
+                return next;
+              });
             }
           }
+          queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+          setPage(0);
           queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
         }
       )
@@ -398,7 +433,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         /* noop */
       }
     };
-  }, [queryClient]);
+  }, [queryClient, includeArchived]);
 
   // Return demo data if in demo mode
   if (demoData) {
