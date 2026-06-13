@@ -59,27 +59,7 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
       }
     }
     
-    // Method 4: Try JSON parsing if it's an object that can be stringified
-    if (typeof coordinates === "object" && coordinates !== null) {
-      try {
-        const jsonStr = JSON.stringify(coordinates);
-        const parsed = JSON.parse(jsonStr);
-        
-        if (parsed && typeof parsed === 'object') {
-          const jsonLng = parsed.lng || parsed.x;
-          const jsonLat = parsed.lat || parsed.y;
-          
-          if (typeof jsonLng === 'number' && typeof jsonLat === 'number' && 
-              !isNaN(jsonLng) && !isNaN(jsonLat)) {
-            return { lng: jsonLng, lat: jsonLat };
-          }
-        }
-      } catch (e) {
-        // JSON parsing failed, continue to next method
-      }
-    }
-    
-    // Method 5: Try string parsing for PostGIS formats
+    // Method 4: Try string parsing for PostGIS formats
     const coordStr = String(coordinates);
     if (coordStr && coordStr !== '[object Object]') {
       const result = parseCoordinatesFromString(coordStr);
@@ -88,7 +68,7 @@ export function extractCoordinates(coordinates: any): CoordinateResult | null {
       }
     }
     
-    // Method 6: Try extracting from toString() output that might contain coordinate values
+    // Method 5: Try extracting from toString() output that might contain coordinate values
     try {
       const str = coordinates.toString();
       const numberMatches = str.match(/([-\d.]+)/g);
