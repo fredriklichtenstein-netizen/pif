@@ -29,8 +29,10 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const queryClient = useQueryClient();
   // Items currently animating out (still rendered, with fade-out class).
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
-  // Items fully removed from the active feed (no longer rendered there).
+  // Items fully removed everywhere (hard delete).
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  // Items archived during this session and hidden only from the active feed.
+  const [activeArchivedIds, setActiveArchivedIds] = useState<Set<string>>(new Set());
   // Items animating back in after undo/restore.
   const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
   // Pending fade timers, keyed by item id, so undo can cancel them.
@@ -45,7 +47,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       if (!detail || !detail.itemId) return;
       const idStr = String(detail.itemId);
 
-        if (detail.operationType === 'delete' || (detail.operationType === 'archive' && !includeArchived)) {
+      if (detail.operationType === 'delete' || (detail.operationType === 'archive' && !includeArchived)) {
         // Mark as fading so the card animates out, then promote to removed.
         setFadingIds(prev => {
           if (prev.has(idStr)) return prev;
@@ -59,7 +61,8 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         if (existing) clearTimeout(existing);
 
         const timer = setTimeout(() => {
-          setRemovedIds(prev => {
+          const setHiddenIds = detail.operationType === 'delete' ? setRemovedIds : setActiveArchivedIds;
+          setHiddenIds(prev => {
             const next = new Set(prev);
             next.add(idStr);
             return next;
@@ -93,6 +96,12 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
           next.delete(idStr);
           return next;
         });
+        setActiveArchivedIds(prev => {
+          if (!prev.has(idStr)) return prev;
+          const next = new Set(prev);
+          next.delete(idStr);
+          return next;
+        });
         // Clear the secondary cache so a fresh fetch can return the restored item.
         clearPostsCache();
         // Drop all cached pages and reset to page 0 so the restored item can
@@ -107,7 +116,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
 
     // Undo handler — cancel any in-flight fade and re-show fully-removed items.
     const undoHandler = (event: Event) => {
-      const detail = (event as CustomEvent<{ itemId: string | number }>).detail;
+      const detail = (event as CustomEvent<{ itemId: string | number; operationType?: OperationType }>).detail;
       if (!detail || !detail.itemId) return;
       const idStr = String(detail.itemId);
 
@@ -124,6 +133,12 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         return next;
       });
       setRemovedIds(prev => {
+        if (!prev.has(idStr)) return prev;
+        const next = new Set(prev);
+        next.delete(idStr);
+        return next;
+      });
+      setActiveArchivedIds(prev => {
         if (!prev.has(idStr)) return prev;
         const next = new Set(prev);
         next.delete(idStr);
