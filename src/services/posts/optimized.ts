@@ -116,7 +116,7 @@ export const getOptimizedPosts = async (
 
     if (generationAtStart !== postsCacheGeneration) {
       DatabaseCache.delete(cacheKey);
-      return getOptimizedPosts(limit, offset, true, includeArchived);
+      return transformedPosts;
     }
 
     // ---- Stage 4: cache writes (in-memory only) ----
