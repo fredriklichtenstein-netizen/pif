@@ -1,7 +1,7 @@
 {
-  "name": "PIF — Pay It Forward",
+  "name": "PIF \u2014 Pay It Forward",
   "short_name": "PIF",
-  "description": "Dela det du inte behöver. Hjälp någon i närheten.",
+  "description": "Dela det du inte beh\u00f6ver. Hj\u00e4lp n\u00e5gon i n\u00e4rheten.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
