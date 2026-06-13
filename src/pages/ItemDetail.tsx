@@ -138,6 +138,15 @@ export default function ItemDetail() {
   }
   return (
     <>
+      {displayItem && (
+        <ItemDetailHead
+          id={displayItem.id ?? id ?? ''}
+          title={displayItem.title}
+          description={displayItem.description}
+          images={displayItem.images}
+          itemType={displayItem.item_type}
+        />
+      )}
       <ItemDetailContainer 
         displayItem={displayItem}
         postedBy={postedBy}
