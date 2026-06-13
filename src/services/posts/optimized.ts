@@ -204,6 +204,7 @@ export const prefetchNextPage = (
 
 // Clear cache when needed
 export const clearPostsCache = () => {
+  postsCacheGeneration += 1;
   // Clear all posts-related cache entries
   DatabaseCache.clear();
   transformCache.clear();
