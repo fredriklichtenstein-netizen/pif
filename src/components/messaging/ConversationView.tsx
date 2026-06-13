@@ -96,11 +96,23 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         })
     : null;
 
+  // Reset initial-scroll flag when switching conversations
   useEffect(() => {
-    if (messagesEndRef.current) {
+    hasInitiallyScrolledRef.current = false;
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (messagesLoading) return;
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    if (!hasInitiallyScrolledRef.current) {
+      // Jump instantly to bottom on first render of this conversation
+      container.scrollTop = container.scrollHeight;
+      hasInitiallyScrolledRef.current = true;
+    } else if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, messagesLoading]);
 
   // If piffer just completed both sides via confirm, surface rating modal once.
   // We intentionally do NOT gate on pifStatus !== "completed" here because the
