@@ -410,10 +410,6 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         (payload: any) => {
           const newStatus = payload?.new?.pif_status;
           const oldStatus = payload?.old?.pif_status;
-          console.log('[feed realtime] items UPDATE', {
-            old_pif_status: oldStatus,
-            new_pif_status: newStatus,
-          });
           // React to any archive/restore-related transition. `old` may be
           // missing if REPLICA IDENTITY isn't FULL, so we also treat a
           // present `pif_status` of 'archived'/'active' as actionable.
