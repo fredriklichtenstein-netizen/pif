@@ -55,6 +55,8 @@ export const transformPostData = (
     },
     createdAt: item.created_at || '',
     status: item.pif_status || item.status || '',
+    archived_at: item.archived_at ?? null,
+    archived_reason: item.archived_reason ?? null,
     likesCount: interactionCounts.likesCount,
     interestsCount: interactionCounts.interestsCount,
     commentsCount: interactionCounts.commentsCount
