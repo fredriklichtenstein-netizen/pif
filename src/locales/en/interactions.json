@@ -418,6 +418,8 @@
     "withdraw_interest_confirm": "Withdraw interest",
     "add_pif_button": "Add pif",
     "add_wish_button": "Add wish",
+    "add_pif_short": "Pif",
+    "add_wish_short": "Wish",
     "remove_from_saved": "Remove from saved",
     "failed_load_component": "Failed to load component",
     "try_again": "Try Again",

@@ -1,7 +1,5 @@
-
 import { House, Map, MessageSquare, User as UserIcon, LogIn } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { useTranslation } from 'react-i18next';
@@ -13,7 +11,6 @@ import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 export function MainNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, initialized } = useGlobalAuth();
   const { t } = useTranslation();
   const { profile: cachedProfile } = useCachedProfile(user?.id);
@@ -24,10 +21,11 @@ export function MainNav() {
 
   const isActive = (path: string) => location.pathname === path;
   const isProfileActive = isActive("/profile") || isActive("/account-settings");
+  const isPostActive = isActive("/post");
 
   const currentFullPath = `${location.pathname}${location.search}${location.hash}`;
 
-  const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+  const handleAuthRequiredClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!user) {
       e.preventDefault();
       navigate("/auth", { state: { from: currentFullPath } });
@@ -36,120 +34,104 @@ export function MainNav() {
 
   const getUserInitials = () => {
     if (!user) return "";
-    
     const firstName = user.user_metadata?.first_name || "";
     const lastName = user.user_metadata?.last_name || "";
-    
-    if (firstName && lastName) {
-      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-    }
-    
-    if (firstName) {
-      return firstName.charAt(0).toUpperCase();
-    }
-    
+    if (firstName && lastName) return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    if (firstName) return firstName.charAt(0).toUpperCase();
     if (user.email) {
       const parts = user.email.split('@');
       if (parts[0]) {
         const nameParts = parts[0].split(/[._-]/);
-        if (nameParts.length > 1) {
-          return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
-        }
+        if (nameParts.length > 1) return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
         return parts[0].slice(0, 2).toUpperCase();
       }
     }
-    
     return "?";
   };
 
+  const itemBase = "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 py-1";
+  const activeColor = "text-primary";
+  const inactiveColor = "text-muted-foreground";
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2 z-50">
-      <div className="container max-w-md mx-auto px-4">
-        <div className="grid grid-cols-5 items-center">
-          <Link
-            to="/feed"
-            className={`flex flex-col items-center ${
-              isActive("/feed") ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <House size={24} />
-            <span className="text-xs mt-1">{t('nav.pifs')}</span>
-          </Link>
-          
-          <Link
-            to="/map"
-            className={`flex flex-col items-center ${
-              isActive("/map") ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <Map size={24} />
-            <span className="text-xs mt-1">{t('nav.map')}</span>
-          </Link>
-          
-          <div className="flex justify-center">
-            <Link
-              to="/post"
-              className="flex items-center pif-nav-icon-container"
-              onClick={(e) => handleAuthRequiredClick(e as any, "/post")}
-            >
-              <div className="pif-nav-icon">
-                <img 
-                  src="/lovable-uploads/53620c2b-b959-4ef7-9b15-68f286e62757.png" 
-                  alt="Pay it Forward" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </Link>
-          </div>
-          
-          <Link
-            to="/messages"
-            className={`flex flex-col items-center ${
-              isActive("/messages") ? "text-primary" : "text-muted-foreground"
-            }`}
-            onClick={(e) => handleAuthRequiredClick(e as any, "/messages")}
-          >
-            <div className="relative">
-              <MessageSquare size={24} />
-              {combinedUnread > 0 && (
-                <span className="absolute -top-1 -right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 min-w-[18px] text-center leading-none">
-                  {combinedUnread > 99 ? "99+" : combinedUnread}
-                </span>
-              )}
-            </div>
-            <span className="text-xs mt-1">{t('nav.messages')}</span>
-          </Link>
-          
-          <Link
-            to={initialized && !user ? "/auth" : "/profile"}
-            state={initialized && !user ? { from: currentFullPath } : undefined}
-            className={`flex flex-col items-center min-w-0 ${
-              isProfileActive ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            {avatarUrl ? (
-              <div className="w-6 h-6 rounded-full overflow-hidden">
-                <AvatarImage
-                  src={avatarUrl}
-                  alt={t('nav.profile')}
-                  className="w-full h-full object-cover"
-                  size={24}
-                />
-              </div>
-            ) : user ? (
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-[10px] font-medium text-primary">{getUserInitials()}</span>
-              </div>
-            ) : (
-              // Default for both !initialized and unauthenticated: show LogIn icon.
-              // If auth resolves to a logged-in user, the avatar/initials replace it.
-              <LogIn size={24} />
+    <nav
+      className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-md"
+      aria-label={t('nav.explore_more', 'Navigation')}
+    >
+      <div className="bg-background/95 backdrop-blur border border-border rounded-full shadow-lg px-2 py-1.5 flex items-center">
+        <Link
+          to="/feed"
+          className={`${itemBase} ${isActive("/feed") ? activeColor : inactiveColor}`}
+        >
+          <House size={22} />
+          <span className="text-[10px] leading-none">{t('nav.pifs')}</span>
+        </Link>
+
+        <Link
+          to="/map"
+          className={`${itemBase} ${isActive("/map") ? activeColor : inactiveColor}`}
+        >
+          <Map size={22} />
+          <span className="text-[10px] leading-none">{t('nav.map')}</span>
+        </Link>
+
+        <Link
+          to="/post"
+          onClick={handleAuthRequiredClick}
+          className={`${itemBase} ${isPostActive ? activeColor : inactiveColor}`}
+        >
+          <span className="w-[22px] h-[22px] rounded-full overflow-hidden flex items-center justify-center bg-background">
+            <img
+              src="/lovable-uploads/53620c2b-b959-4ef7-9b15-68f286e62757.png"
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover"
+            />
+          </span>
+          <span className="text-[10px] leading-none">{t('nav.post')}</span>
+        </Link>
+
+        <Link
+          to="/messages"
+          onClick={handleAuthRequiredClick}
+          className={`${itemBase} ${isActive("/messages") ? activeColor : inactiveColor}`}
+        >
+          <span className="relative">
+            <MessageSquare size={22} />
+            {combinedUnread > 0 && (
+              <span className="absolute -top-1 -right-2 rounded-full bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+                {combinedUnread > 99 ? "99+" : combinedUnread}
+              </span>
             )}
-            <span className="text-xs mt-1 truncate max-w-full">
-              {user ? t('nav.profile') : t('nav.sign_in', 'Sign in')}
-            </span>
-          </Link>
-        </div>
+          </span>
+          <span className="text-[10px] leading-none">{t('nav.messages')}</span>
+        </Link>
+
+        <Link
+          to={initialized && !user ? "/auth" : "/profile"}
+          state={initialized && !user ? { from: currentFullPath } : undefined}
+          className={`${itemBase} ${isProfileActive ? activeColor : inactiveColor}`}
+        >
+          {avatarUrl ? (
+            <div className="w-[22px] h-[22px] rounded-full overflow-hidden">
+              <AvatarImage
+                src={avatarUrl}
+                alt={t('nav.profile')}
+                className="w-full h-full object-cover"
+                size={22}
+              />
+            </div>
+          ) : user ? (
+            <div className="w-[22px] h-[22px] rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-[9px] font-medium text-primary">{getUserInitials()}</span>
+            </div>
+          ) : (
+            <LogIn size={22} />
+          )}
+          <span className="text-[10px] leading-none truncate max-w-full">
+            {user ? t('nav.profile') : t('nav.sign_in', 'Sign in')}
+          </span>
+        </Link>
       </div>
     </nav>
   );

@@ -1,10 +1,6 @@
-
 import { OptimizedFeedContainer } from "@/components/feed/OptimizedFeedContainer";
-import { MainHeader } from "@/components/layout/MainHeader";
-import { Separator } from "@/components/ui/separator";
 import { MainNav } from "@/components/MainNav";
 import { Button } from "@/components/ui/button";
-import { Gift, Star, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useEffect } from "react";
@@ -24,55 +20,48 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainHeader />
-      <Separator />
+      {/* Slim logo header */}
+      <header className="w-full flex justify-center pt-3 pb-2 px-2">
+        <img
+          src="/pif-logo-long.png"
+          alt="Pay it Forward"
+          className="h-10 w-auto object-contain"
+        />
+      </header>
 
-      <main className="container mx-auto px-4 py-6" role="main" aria-label={t('feed.announcement')}>
+      <main
+        className="px-2 sm:px-3 pb-28"
+        role="main"
+        aria-label={t('feed.announcement')}
+      >
         <div className="max-w-2xl mx-auto">
-          <FadeIn>
-            <header className="mb-4">
-              <SlideIn direction="down">
-                <h1 className="text-2xl font-bold text-foreground mb-2">{t('feed.title')}</h1>
-              </SlideIn>
-              <SlideIn direction="down" delay={100}>
-                <p className="text-muted-foreground">{t('feed.subtitle')}</p>
-              </SlideIn>
-            </header>
-          </FadeIn>
-
-          {/* Sticky action bar — keeps "Add pif" / "Add wish" one tap away while scrolling. */}
-          <SlideIn direction="down" delay={150}>
-            <div className="sticky top-0 z-30 -mx-4 px-4 py-3 mb-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40">
+          {/* Sticky compact action bar */}
+          <SlideIn direction="down" delay={100}>
+            <div className="sticky top-0 z-30 -mx-2 sm:-mx-3 px-2 sm:px-3 py-2 mb-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40">
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={() => navigate("/post?type=offer")}
-                  className="border-pif-offer text-pif-offer hover:bg-pif-offer hover:text-pif-offer-foreground bg-background"
+                  className="bg-pif-offer text-pif-offer-foreground hover:bg-pif-offer/90 h-9 px-2 text-sm font-medium"
                   aria-label={t('interactions.add_pif_button')}
                 >
-                  <Gift className="h-4 w-4 mr-1" aria-hidden="true" />
-                  <Plus className="h-3 w-3 mr-1" aria-hidden="true" />
-                  {t('interactions.add_pif_button')}
+                  + {t('interactions.add_pif_short')} 🎁
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={() => navigate("/post?type=request")}
-                  className="border-pif-wish text-pif-wish hover:bg-pif-wish hover:text-pif-wish-foreground bg-background"
+                  className="bg-pif-wish text-pif-wish-foreground hover:bg-pif-wish/90 h-9 px-2 text-sm font-medium"
                   aria-label={t('interactions.add_wish_button')}
                 >
-                  <Star className="h-4 w-4 mr-1" aria-hidden="true" />
-                  <Plus className="h-3 w-3 mr-1" aria-hidden="true" />
-                  {t('interactions.add_wish_button')}
+                  + {t('interactions.add_wish_short')} ✨
                 </Button>
               </div>
             </div>
           </SlideIn>
 
-          <SlideIn direction="up" delay={200}>
+          <FadeIn>
             <OptimizedFeedContainer />
-          </SlideIn>
+          </FadeIn>
         </div>
       </main>
       <MainNav />

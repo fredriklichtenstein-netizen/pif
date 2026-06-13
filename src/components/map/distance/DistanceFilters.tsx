@@ -114,16 +114,18 @@ export const DistanceFilters = ({ selectedDistance, onDistanceChange, userLocati
         <span className="text-xs">{t('interactions.current_location_short', 'Current')}</span>
         {!userLocation && <ChevronRight className="h-3 w-3 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />}
       </button>
-      <button
-        onClick={handleUsePifAddress}
-        disabled={pifLoading}
-        className={`flex items-center gap-1.5 px-2 py-0.5 rounded border cursor-pointer transition-colors disabled:opacity-50 ${activeMode === 'pif' ? activeClasses : inactiveClasses}`}
-        type="button"
-        aria-pressed={activeMode === 'pif'}
-      >
-        <Home className="h-3 w-3 shrink-0" />
-        <span className="text-xs">{t('interactions.use_pif_address_short')}</span>
-      </button>
+      {user && (
+        <button
+          onClick={handleUsePifAddress}
+          disabled={pifLoading}
+          className={`flex items-center gap-1.5 px-2 py-0.5 rounded border cursor-pointer transition-colors disabled:opacity-50 ${activeMode === 'pif' ? activeClasses : inactiveClasses}`}
+          type="button"
+          aria-pressed={activeMode === 'pif'}
+        >
+          <Home className="h-3 w-3 shrink-0" />
+          <span className="text-xs">{t('interactions.use_pif_address_short')}</span>
+        </button>
+      )}
     </div>
   );
 

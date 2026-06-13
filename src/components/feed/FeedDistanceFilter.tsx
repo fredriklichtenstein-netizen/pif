@@ -64,7 +64,7 @@ export function FeedDistanceFilter({
   );
 
   return (
-    <div className="bg-background border rounded-lg p-2 mb-4 shadow-sm">
+    <div className="mb-2">
       <DistanceFilters
         selectedDistance={selectedDistance}
         onDistanceChange={onDistanceChange}
