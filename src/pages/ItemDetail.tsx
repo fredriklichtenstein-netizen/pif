@@ -13,6 +13,7 @@ import { safeParseJSON, safeStringify } from '@/utils/safeStorage';
 import { AlertCircle } from 'lucide-react';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { MainNav } from '@/components/MainNav';
+import { ItemDetailHead } from '@/components/item/detail/ItemDetailHead';
 
 export default function ItemDetail() {
   const { id } = useParams();
