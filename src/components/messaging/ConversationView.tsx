@@ -45,6 +45,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const currentUserId = session?.user?.id;
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const hasInitiallyScrolledRef = useRef(false);
   const [newMessage, setNewMessage] = useState("");
   const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
