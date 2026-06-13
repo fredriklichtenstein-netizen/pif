@@ -33,7 +33,7 @@ export class OptimizedQueries {
 
         if (options.includeArchived) {
           query = query
-            .or('pif_status.eq.archived,archived_at.not.is.null')
+            .eq('pif_status', 'archived')
             .order('archived_at', { ascending: false, nullsFirst: false });
         } else {
           query = query
