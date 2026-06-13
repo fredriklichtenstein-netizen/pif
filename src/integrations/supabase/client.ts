@@ -5,6 +5,34 @@ import type { Database } from "./types";
 const SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldXJwZWhjd2Job2h3a2xxbmlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1Mjg1OTAsImV4cCI6MjA4OTEwNDU5MH0.53GF3SNG4gmwUGKNdaZx5i8PVy4f73FN7x53jna_l9w";
+const SUPABASE_STORAGE_KEY = "sb-heurpehcwbhohwklqnir-auth-token";
+
+const authStorage = typeof window !== "undefined"
+  ? {
+      getItem: (key: string) => {
+        try {
+          const value = window.localStorage.getItem(key);
+          if (key !== SUPABASE_STORAGE_KEY || value == null) return value;
+          const trimmed = value.trim();
+          if (!trimmed || (trimmed[0] !== "{" && trimmed[0] !== "[")) {
+            window.localStorage.removeItem(key);
+            return null;
+          }
+          try {
+            JSON.parse(trimmed);
+            return value;
+          } catch {
+            window.localStorage.removeItem(key);
+            return null;
+          }
+        } catch {
+          return null;
+        }
+      },
+      setItem: (key: string, value: string) => window.localStorage.setItem(key, value),
+      removeItem: (key: string) => window.localStorage.removeItem(key),
+    }
+  : undefined;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -14,8 +42,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storage: typeof window !== "undefined" ? window.localStorage : undefined,
-    storageKey: "sb-heurpehcwbhohwklqnir-auth-token",
+    storage: authStorage,
+    storageKey: SUPABASE_STORAGE_KEY,
     flowType: "pkce",
     // Bypass navigator.locks. On some WebKit / PWA contexts the lock acquired
     // by the initial getSession() is never released, deadlocking every later
