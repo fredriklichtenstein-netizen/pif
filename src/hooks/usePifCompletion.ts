@@ -421,6 +421,26 @@ export function usePifCompletion(
           );
         }
       }
+      // Notify ALL interested users (selected + the rest) of the change.
+      try {
+        const { data: itemRow } = await (supabase.from("items") as any)
+          .select("item_type")
+          .eq("id", id)
+          .maybeSingle();
+        const isRequest =
+          String(itemRow?.item_type || "offer").toLowerCase() === "request";
+        const event =
+          action === "reopen"
+            ? isRequest ? "wish_reopened" : "pif_reopened"
+            : isRequest ? "wish_archived" : "pif_archived";
+        await (supabase.rpc as any)("notify_item_interest_event", {
+          p_item_id: id,
+          p_event: event,
+          p_selected_user_id: otherUserId ?? null,
+        });
+      } catch (e) {
+        console.warn("notify_item_interest_event (withdraw) failed", e);
+      }
       setState((s) => ({
         ...s,
         pifStatus: action === "archive" ? "archived" : s.pifStatus,
