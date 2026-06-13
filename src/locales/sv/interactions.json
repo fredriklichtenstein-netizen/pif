@@ -418,6 +418,8 @@
     "withdraw_interest_confirm": "Dra tillbaka intresse",
     "add_pif_button": "Lägg till pif",
     "add_wish_button": "Lägg till önskning",
+    "add_pif_short": "Pif",
+    "add_wish_short": "Önskning",
     "remove_from_saved": "Ta bort från sparade",
     "failed_load_component": "Kunde inte ladda komponenten",
     "try_again": "Försök igen",
