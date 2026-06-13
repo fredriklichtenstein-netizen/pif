@@ -82,6 +82,8 @@ export const FeedItemCard = memo(FeedItemCardComponent, (prevProps, nextProps) =
     prevProps.post.id === nextProps.post.id &&
     prevProps.post.created_at === nextProps.post.created_at &&
     prevProps.post.__deleted === nextProps.post.__deleted &&
-    prevProps.post.__modified === nextProps.post.__modified
+    prevProps.post.__modified === nextProps.post.__modified &&
+    prevProps.post.archived_at === nextProps.post.archived_at &&
+    prevProps.post.status === nextProps.post.status
   );
 });
