@@ -336,7 +336,41 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         () => {
           clearPostsCache();
           setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
-          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized', 0] });
+          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'items' },
+        (payload: any) => {
+          const newStatus = payload?.new?.pif_status;
+          const oldStatus = payload?.old?.pif_status;
+          // Only react to archive/restore transitions that affect feed visibility.
+          if (newStatus === oldStatus) return;
+          const archivedChanged =
+            newStatus === 'archived' || oldStatus === 'archived';
+          if (!archivedChanged) return;
+          clearPostsCache();
+          const itemId = payload?.new?.id ?? payload?.old?.id;
+          if (itemId != null) {
+            const idStr = String(itemId);
+            // If newly archived, drop from active-feed caches immediately.
+            if (newStatus === 'archived') {
+              queryClient.setQueriesData<Post[]>({ queryKey: ['posts', 'optimized'] }, (oldData) => {
+                if (!oldData || !Array.isArray(oldData)) return oldData;
+                return oldData.filter((p) => String(p.id) !== idStr);
+              });
+            } else {
+              // Restored: clear any optimistic removal so it can reappear.
+              setRemovedIds((prev) => {
+                if (!prev.has(idStr)) return prev;
+                const next = new Set(prev);
+                next.delete(idStr);
+                return next;
+              });
+            }
+          }
+          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
         }
       )
       .on(
