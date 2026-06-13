@@ -120,8 +120,8 @@ export function SimpleDeleteDialog({
 
         {showInterestInfo && interestedCount > 0 && (
           <div className="text-amber-600 text-sm font-medium">
-            <p>Warning: {interestedCount} {interestedCount === 1 ? 'person is' : 'people are'} interested in this item.</p>
-            <p className="text-muted-foreground font-normal">They will be notified if you proceed.</p>
+            <p>{t(interestedCount === 1 ? 'interactions.delete_dialog_warning_interested_one' : 'interactions.delete_dialog_warning_interested_other', { count: interestedCount })}</p>
+            <p className="text-muted-foreground font-normal">{t('interactions.delete_dialog_will_be_notified')}</p>
           </div>
         )}
 
@@ -180,7 +180,7 @@ export function SimpleDeleteDialog({
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" />...</>
             ) : isArchived
               ? (isSoftDelete ? t('interactions.restore') : t('interactions.delete_permanently'))
-              : (archiveOnly || isSoftDelete ? t('interactions.status_archived') : t('interactions.delete_permanently'))}
+              : (archiveOnly || isSoftDelete ? t('interactions.delete_dialog_archive') : t('interactions.delete_permanently'))}
           </Button>
         </DialogFooter>
       </DialogContent>
