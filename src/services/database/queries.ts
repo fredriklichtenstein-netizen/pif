@@ -32,7 +32,9 @@ export class OptimizedQueries {
           `)
           .order('created_at', { ascending: false });
 
-        if (!options.includeArchived) {
+        if (options.includeArchived) {
+          query = query.eq('pif_status', 'archived');
+        } else {
           query = query.not('pif_status', 'eq', 'archived');
         }
 
