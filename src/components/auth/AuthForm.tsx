@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
+import { Link } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 import { FormFields } from "./FormFields";
 import { validateAuthForm } from "./FormValidation";
@@ -38,6 +40,7 @@ export function AuthForm({
   const [resetError, setResetError] = useState<string | null>(null);
   const [requestTimeout, setRequestTimeout] = useState<NodeJS.Timeout | null>(null);
   const [timeoutWarning, setTimeoutWarning] = useState<string | null>(null);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
@@ -48,6 +51,7 @@ export function AuthForm({
     setSubmitError("");
     setSubmitting(false);
     setTimeoutWarning(null);
+    setPrivacyConsent(false);
     // Clear any existing timeouts
     if (requestTimeout) {
       clearTimeout(requestTimeout);
@@ -191,13 +195,46 @@ export function AuthForm({
           </div>
         )}
 
+        {isSignUp && (
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="privacy-consent"
+              checked={privacyConsent}
+              onCheckedChange={(v) => setPrivacyConsent(v === true)}
+              disabled={isLoading}
+              className="mt-0.5"
+            />
+            <label htmlFor="privacy-consent" className="text-sm text-gray-700 leading-snug cursor-pointer">
+              {t('auth.privacy_consent_prefix')}
+              <Link
+                to="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-600 hover:text-green-700 underline"
+              >
+                {t('auth.privacy_consent_link')}
+              </Link>
+              {t('auth.privacy_consent_suffix')}
+            </label>
+          </div>
+        )}
+
         <AuthButtonFooter 
           isSignUp={isSignUp}
           isLoading={isLoading}
           onToggleMode={onToggleMode}
-          disabled={isLoading}
+          disabled={isLoading || (isSignUp && !privacyConsent)}
         />
       </form>
+
+      <div className="mt-4 text-center">
+        <Link
+          to="/privacy"
+          className="text-xs text-gray-500 hover:text-gray-700 underline"
+        >
+          {t('auth.privacy_policy_link')}
+        </Link>
+      </div>
 
       {onPasswordReset && (
         <ForgotPasswordDialog
