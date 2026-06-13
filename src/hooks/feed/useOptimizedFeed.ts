@@ -336,7 +336,43 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         () => {
           clearPostsCache();
           setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
-          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized', 0] });
+          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'items' },
+        (payload: any) => {
+          const newStatus = payload?.new?.pif_status;
+          const oldStatus = payload?.old?.pif_status;
+          // React to any archive/restore-related transition. `old` may be
+          // missing if REPLICA IDENTITY isn't FULL, so we also treat a
+          // present `pif_status` of 'archived'/'active' as actionable.
+          const archivedChanged =
+            (oldStatus !== undefined && newStatus !== oldStatus &&
+              (newStatus === 'archived' || oldStatus === 'archived')) ||
+            (oldStatus === undefined &&
+              (newStatus === 'archived' || newStatus === 'active'));
+          if (!archivedChanged) return;
+          clearPostsCache();
+          const itemId = payload?.new?.id ?? payload?.old?.id;
+          if (itemId != null) {
+            const idStr = String(itemId);
+            if (newStatus === 'archived') {
+              queryClient.setQueriesData<Post[]>({ queryKey: ['posts', 'optimized'] }, (oldData) => {
+                if (!oldData || !Array.isArray(oldData)) return oldData;
+                return oldData.filter((p) => String(p.id) !== idStr);
+              });
+            } else {
+              setRemovedIds((prev) => {
+                if (!prev.has(idStr)) return prev;
+                const next = new Set(prev);
+                next.delete(idStr);
+                return next;
+              });
+            }
+          }
+          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
         }
       )
       .on(

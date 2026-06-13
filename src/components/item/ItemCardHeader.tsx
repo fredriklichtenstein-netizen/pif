@@ -9,9 +9,12 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
-import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil } from "lucide-react";
+import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil, RotateCcw } from "lucide-react";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearPostsCache } from "@/services/posts/optimized";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -60,8 +63,46 @@ export function ItemCardHeader({
   const { t } = useTranslation();
   const { session } = useGlobalAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const { handleShare: shareItem } = useItemSharing(String(itemId));
   const isAuthenticated = !!session?.user;
+  const queryClient = useQueryClient();
+
+  const handleRestoreClick = async () => {
+    if (isRestoring) return;
+    setIsRestoring(true);
+    try {
+      const numericId = typeof itemId === 'number' ? itemId : parseInt(String(itemId), 10);
+      const { error: rpcError } = await (supabase as any).rpc('restore_item', { p_item_id: numericId });
+      if (rpcError) {
+        const { error: updateError } = await (supabase
+          .from('items')
+          .update({ pif_status: 'active', archived_at: null, archived_reason: null } as any) as any)
+          .eq('id', numericId);
+        if (updateError) throw updateError;
+      }
+      try {
+        clearPostsCache();
+        queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      } catch (e) { console.error('feed cache invalidation failed', e); }
+      try {
+        document.dispatchEvent(new CustomEvent('item-operation-success', {
+          detail: { itemId: numericId, operationType: 'restore' },
+        }));
+        document.dispatchEvent(new CustomEvent('item-operation-undone', {
+          detail: { itemId: numericId, operationType: 'archive' },
+        }));
+      } catch (e) { console.error('dispatch restore failed', e); }
+      toast({ title: t('ui.republished') });
+      onDeleteSuccess?.();
+    } catch (err: any) {
+      console.error('Restore failed', err);
+      toast({ title: t('ui.republish_failed'), description: err?.message, variant: 'destructive' });
+    } finally {
+      setIsRestoring(false);
+    }
+  };
   
   const handleBookmarkClick = async () => {
     // Check authentication
@@ -142,22 +183,33 @@ export function ItemCardHeader({
                   <Pencil className="mr-2 h-4 w-4" />
                   {t('ui.edit')}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleLocalDeleteClick}
-                  className={isArchived ? "text-primary" : "text-destructive"}
-                >
-                  {isArchived ? (
-                    <>
+                {isArchived ? (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleRestoreClick}
+                      disabled={isRestoring}
+                      className="text-primary"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      <span>{t('ui.republish')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleLocalDeleteClick}
+                      className="text-destructive"
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       <span>{t('ui.delete_archived_item')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Archive className="mr-2 h-4 w-4" />
-                      <span>{t('ui.archive')}</span>
-                    </>
-                  )}
-                </DropdownMenuItem>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={handleLocalDeleteClick}
+                    className="text-destructive"
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
+                    <span>{t('ui.archive')}</span>
+                  </DropdownMenuItem>
+                )}
               </>
             ) : (
               <>
