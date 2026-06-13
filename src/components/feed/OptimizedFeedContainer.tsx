@@ -262,7 +262,18 @@ export function OptimizedFeedContainer() {
               clearFilters={handleClearAll}
               viewMode="all"
               isLoading={false}
-              onItemOperationSuccess={handleRefresh}
+              onItemOperationSuccess={(_id, op) => {
+                // Archive/delete/restore are already handled by the global
+                // 'item-operation-success' listener in useOptimizedFeed
+                // (optimistic removal + realtime UPDATE invalidation).
+                // Triggering a full refresh here causes the archiving
+                // user's own feed to keep showing the archived card
+                // because the FeedSkeleton remounts before optimistic
+                // state is reapplied. For everything else, fall back to
+                // the shared refresh so non-feed operations still update.
+                if (op === 'archive' || op === 'delete' || op === 'restore') return;
+                handleRefresh();
+              }}
             />
           )}
         </section>
