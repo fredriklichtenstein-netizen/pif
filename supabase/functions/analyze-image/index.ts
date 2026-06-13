@@ -128,13 +128,16 @@ serve(async (req) => {
 
     console.log("Analysis completed successfully");
     
+    const content = String(data.choices[0].message.content ?? '').trim();
     let parsedContent;
     try {
-      parsedContent = JSON.parse(data.choices[0].message.content);
+      if (!content.startsWith('{')) {
+        throw new Error("AI response was not JSON");
+      }
+      parsedContent = JSON.parse(content);
     } catch (e) {
       console.error("Error parsing AI response:", e);
       // If parsing fails, try to extract information using a more lenient approach
-      const content = data.choices[0].message.content;
       parsedContent = {
         title: content.match(/title["']?\s*:?\s*["']([^"']+)["']/)?.[1] || "",
         description: content.match(/description["']?\s*:?\s*["']([^"']+)["']/)?.[1] || "",
