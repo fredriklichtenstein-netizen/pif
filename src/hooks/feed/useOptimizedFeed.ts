@@ -65,6 +65,10 @@ const invalidateOptimizedFeedQueries = (
 export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const includeArchived = !!options.includeArchived;
   const [page, setPage] = useState(0);
+  // Bumped for every archive/restore realtime event. This makes React Query
+  // create a fresh feed query instead of relying on invalidating an older key,
+  // which could be left stale across repeated archive/restore cycles.
+  const [feedVersion, setFeedVersion] = useState(0);
   const queryClient = useQueryClient();
   // Items currently animating out (still rendered, with fade-out class).
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
@@ -123,6 +127,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
           removePostFromActiveCache(queryClient, idStr);
         }
         setPage(0);
+        setFeedVersion((version) => version + 1);
         invalidateOptimizedFeedQueries(queryClient);
       }
 
@@ -143,6 +148,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         // Clear the secondary cache so a fresh fetch can return the restored item.
         clearPostsCache();
         setPage(0);
+        setFeedVersion((version) => version + 1);
         // Trigger a fresh fetch.
         invalidateOptimizedFeedQueries(queryClient);
       }
@@ -235,7 +241,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     error,
     refetch
   } = useQuery({
-    queryKey: ['posts', 'optimized', page, includeArchived],
+    queryKey: ['posts', 'optimized', page, includeArchived, feedVersion],
     queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -249,7 +255,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     if (DEMO_MODE) return [];
     const posts: Post[] = [];
     for (let i = 0; i <= page; i++) {
-      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeArchived]);
+      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeArchived, feedVersion]);
       if (pageData) {
         posts.push(...pageData);
       }
@@ -263,7 +269,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       if (!includeArchived && activeArchivedIds.has(id)) return false;
       return true;
     });
-  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeArchived]);
+  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeArchived, feedVersion]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -404,10 +410,6 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         (payload: any) => {
           const newStatus = payload?.new?.pif_status;
           const oldStatus = payload?.old?.pif_status;
-          console.log('[feed realtime] items UPDATE', {
-            old_pif_status: oldStatus,
-            new_pif_status: newStatus,
-          });
           // React to any archive/restore-related transition. `old` may be
           // missing if REPLICA IDENTITY isn't FULL, so we also treat a
           // present `pif_status` of 'archived'/'active' as actionable.
@@ -448,6 +450,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
             }
           }
           setPage(0);
+          setFeedVersion((version) => version + 1);
           invalidateOptimizedFeedQueries(queryClient);
         }
       )
