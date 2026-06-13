@@ -235,6 +235,9 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     return posts.filter((p) => {
       const id = String(p.id);
       if (removedIds.has(id)) return false;
+      const isArchivedPost = p.status === 'archived' || !!p.archived_at;
+      if (includeArchived) return isArchivedPost;
+      if (isArchivedPost) return false;
       if (!includeArchived && activeArchivedIds.has(id)) return false;
       return true;
     });
