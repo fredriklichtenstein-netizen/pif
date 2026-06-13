@@ -26,7 +26,7 @@ const staticEntries: SitemapEntry[] = [
 
 async function fetchActiveItems(): Promise<SitemapEntry[]> {
   try {
-    const url = `${SUPABASE_URL}/rest/v1/items?select=id,created_at&archived_at=is.null&or=(pif_status.is.null,pif_status.neq.archived)&limit=10000`;
+    const url = `${SUPABASE_URL}/rest/v1/items?select=id,created_at,pif_status,archived_at&archived_at=is.null&limit=10000`;
     const res = await fetch(url, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -37,13 +37,15 @@ async function fetchActiveItems(): Promise<SitemapEntry[]> {
       console.warn(`[sitemap] items fetch failed: ${res.status} ${await res.text()}`);
       return [];
     }
-    const rows = (await res.json()) as Array<{ id: number | string; created_at?: string }>;
-    return rows.map((r) => ({
-      path: `/item/${r.id}`,
-      lastmod: (r.created_at || "").slice(0, 10) || undefined,
-      changefreq: "daily",
-      priority: "0.7",
-    }));
+    const rows = (await res.json()) as Array<{ id: number | string; created_at?: string; pif_status?: string | null }>;
+    return rows
+      .filter((r) => r.pif_status == null || r.pif_status !== "archived")
+      .map((r) => ({
+        path: `/item/${r.id}`,
+        lastmod: (r.created_at || "").slice(0, 10) || undefined,
+        changefreq: "daily" as const,
+        priority: "0.7",
+      }));
   } catch (err) {
     console.warn("[sitemap] items fetch error:", err);
     return [];
