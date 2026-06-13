@@ -20,6 +20,8 @@ import {
 import { ArchiveRestore, Loader2, Trash2 } from "lucide-react";
 import { ItemCard } from "@/components/item/ItemCard";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearPostsCache } from "@/services/posts/optimized";
 
 const FADE_DURATION_MS = 320;
 
