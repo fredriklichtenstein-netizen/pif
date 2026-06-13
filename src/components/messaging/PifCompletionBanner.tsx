@@ -51,7 +51,7 @@ export function PifCompletionBanner({
     return (
       <div className="border-t bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-800 flex items-center justify-center gap-2">
         <PartyPopper className="h-4 w-4" />
-        Piffen är genomförd! 🎉
+        Pifen är genomförd! 🎉
       </div>
     );
   }
@@ -77,7 +77,7 @@ export function PifCompletionBanner({
           )}
           {confirmed
             ? "Du har bekräftat överlämning"
-            : "Jag har lämnat över piffen ✓"}
+            : "Jag har lämnat över pifen ✓"}
         </Button>
         {canUndo && (
           <div className="flex justify-center">
@@ -132,7 +132,7 @@ export function PifCompletionBanner({
         )}
         {confirmed
           ? "Du har bekräftat mottagning"
-          : "Jag har tagit emot piffen ✓"}
+          : "Jag har tagit emot pifen ✓"}
       </Button>
       {canUndo && (
         <div className="flex justify-center">
