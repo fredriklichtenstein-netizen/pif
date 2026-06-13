@@ -113,11 +113,17 @@ export function useFetchPosts(options = { includeArchived: false }) {
       let query = supabase
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
-        .order('created_at', { ascending: false })
         .abortSignal(signal);
       
-      if (!options.includeArchived) {
-        query = query.is('archived_at', null);
+      if (options.includeArchived) {
+        query = query
+          .eq('pif_status', 'archived')
+          .order('archived_at', { ascending: false, nullsFirst: false });
+      } else {
+        query = query
+          .or('pif_status.is.null,pif_status.neq.archived')
+          .is('archived_at', null)
+          .order('created_at', { ascending: false });
       }
 
       const { data, error } = await query;
