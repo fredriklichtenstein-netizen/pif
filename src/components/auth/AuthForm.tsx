@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
+import { Link } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 import { FormFields } from "./FormFields";
 import { validateAuthForm } from "./FormValidation";
@@ -38,6 +40,7 @@ export function AuthForm({
   const [resetError, setResetError] = useState<string | null>(null);
   const [requestTimeout, setRequestTimeout] = useState<NodeJS.Timeout | null>(null);
   const [timeoutWarning, setTimeoutWarning] = useState<string | null>(null);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   // Clear form fields when toggling between signup and signin modes
   useEffect(() => {
@@ -48,6 +51,7 @@ export function AuthForm({
     setSubmitError("");
     setSubmitting(false);
     setTimeoutWarning(null);
+    setPrivacyConsent(false);
     // Clear any existing timeouts
     if (requestTimeout) {
       clearTimeout(requestTimeout);
