@@ -46,6 +46,21 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         return false;
       }
       toast({ title: t('interactions.item_archived'), description: t('interactions.item_archived_description') });
+      // Notify ALL interested users that this pif/wish was archived.
+      try {
+        const { data: itemRow } = await (supabase.from('items') as any)
+          .select('item_type')
+          .eq('id', numericId)
+          .maybeSingle();
+        const isRequest = String(itemRow?.item_type || 'offer').toLowerCase() === 'request';
+        await (supabase.rpc as any)('notify_item_interest_event', {
+          p_item_id: numericId,
+          p_event: isRequest ? 'wish_archived' : 'pif_archived',
+          p_selected_user_id: null,
+        });
+      } catch (e) {
+        console.warn('notify_item_interest_event (archive) failed', e);
+      }
       try {
         document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'archive' } }));
       } catch (e) { console.error('Failed to dispatch archive event:', e); }

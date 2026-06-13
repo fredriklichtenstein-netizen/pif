@@ -360,6 +360,24 @@ export function usePifCompletion(
           );
         }
       }
+      // Fan-out completion notifications to the receiver + piffer.
+      try {
+        const { data: itemRow } = await (supabase.from("items") as any)
+          .select("item_type")
+          .eq("id", id)
+          .maybeSingle();
+        const event =
+          String(itemRow?.item_type || "offer").toLowerCase() === "request"
+            ? "wish_completed"
+            : "pif_completed";
+        await (supabase.rpc as any)("notify_item_interest_event", {
+          p_item_id: id,
+          p_event: event,
+          p_selected_user_id: otherUserId ?? null,
+        });
+      } catch (e) {
+        console.warn("notify_item_interest_event (complete) failed", e);
+      }
       setState((s) => ({ ...s, pifStatus: "completed" }));
       return { ok: true } as const;
     },
@@ -402,6 +420,26 @@ export function usePifCompletion(
             { targetUserId: otherUserId ?? null },
           );
         }
+      }
+      // Notify ALL interested users (selected + the rest) of the change.
+      try {
+        const { data: itemRow } = await (supabase.from("items") as any)
+          .select("item_type")
+          .eq("id", id)
+          .maybeSingle();
+        const isRequest =
+          String(itemRow?.item_type || "offer").toLowerCase() === "request";
+        const event =
+          action === "reopen"
+            ? isRequest ? "wish_reopened" : "pif_reopened"
+            : isRequest ? "wish_archived" : "pif_archived";
+        await (supabase.rpc as any)("notify_item_interest_event", {
+          p_item_id: id,
+          p_event: event,
+          p_selected_user_id: otherUserId ?? null,
+        });
+      } catch (e) {
+        console.warn("notify_item_interest_event (withdraw) failed", e);
       }
       setState((s) => ({
         ...s,
