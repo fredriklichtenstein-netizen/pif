@@ -236,7 +236,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     refetch
   } = useQuery({
     queryKey: ['posts', 'optimized', page, includeArchived],
-    queryFn: ({ signal }) => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived, signal),
+    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

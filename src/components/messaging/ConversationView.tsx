@@ -346,8 +346,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         {isClosed ? (
           <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
             {completion.pifStatus === "archived"
-              ? "Piffen har arkiverats — konversationen är avslutad."
-              : "Piffen är genomförd — konversationen är avslutad."}
+              ? "Pifen har arkiverats — konversationen är avslutad."
+              : "Pifen är genomförd — konversationen är avslutad."}
           </div>
         ) : (
           <EnhancedMessageInput
@@ -379,7 +379,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           <AlertDialogHeader>
             <AlertDialogTitle>Ångra val av mottagare</AlertDialogTitle>
             <AlertDialogDescription>
-              Vill du återöppna piffen så att andra kan visa intresse, eller arkivera den helt?
+              Vill du återöppna pifen så att andra kan visa intresse, eller arkivera den helt?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
@@ -388,14 +388,14 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
               className="w-full"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Återöppna piffen
+              Återöppna pifen
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => handleWithdraw("archive")}
               className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               <Archive className="h-4 w-4 mr-2" />
-              Arkivera piffen
+              Arkivera pifen
             </AlertDialogAction>
             <AlertDialogCancel className="w-full mt-0">
               Avbryt

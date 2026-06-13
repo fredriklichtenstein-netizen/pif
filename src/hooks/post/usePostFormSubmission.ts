@@ -94,8 +94,6 @@ export function usePostFormSubmission(initialData?: any) {
     setIsSubmitting(true);
 
     try {
-      console.log('Submitting item with coordinates:', formData.coordinates);
-      console.log('item_type:', formData.item_type);
       let coordinatesForDB = null;
       if (formData.coordinates && formData.coordinates.lat !== null && formData.coordinates.lng !== null) {
         coordinatesForDB = `(${formData.coordinates.lng},${formData.coordinates.lat})`;

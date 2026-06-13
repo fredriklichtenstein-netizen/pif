@@ -299,7 +299,7 @@ export function usePifCompletion(
         if (both) {
           await postPifSystemMessage(
             conversationId,
-            "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
+            "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
           );
         }
       }
@@ -338,17 +338,17 @@ export function usePifCompletion(
         if (!state.receiverConfirmed) {
           await postPifSystemMessage(
             conversationId,
-            "Du markerade piffen som genomförd.",
+            "Du markerade pifen som genomförd.",
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har markerat piffen som genomförd.",
+            "Piffaren har markerat pifen som genomförd.",
             { targetUserId: otherUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
+            "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
           );
         }
         // The star rating itself stays private. Only post a system message
@@ -382,18 +382,18 @@ export function usePifCompletion(
         if (action === "reopen") {
           await postPifSystemMessage(
             conversationId,
-            "Du har ångrat valet av mottagare. Piffen är nu öppen igen.",
+            "Du har ångrat valet av mottagare. Pifen är nu öppen igen.",
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Piffen är nu öppen för andra att visa intresse.",
+            "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Pifen är nu öppen för andra att visa intresse.",
             { targetUserId: otherUserId ?? null },
           );
         } else {
           await postPifSystemMessage(
             conversationId,
-            "Du har arkiverat piffen.",
+            "Du har arkiverat pifen.",
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(

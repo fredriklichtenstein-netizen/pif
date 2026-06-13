@@ -37,6 +37,8 @@ export const getPosts = async (): Promise<Post[]> => {
     const { data, error } = await supabase
       .from('items')
       .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
+      .or('pif_status.is.null,pif_status.neq.archived')
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
       .limit(20) as any;
 
@@ -94,16 +96,12 @@ export const getPosts = async (): Promise<Post[]> => {
 
     // Transform data to match the Post type
     const transformedData = data.map(item => {
-      // Parse coordinates if they exist
+      // Parse PostGIS "(lng,lat)" text into the app's coordinate object shape.
       let parsedCoordinates = null;
       if (item.coordinates) {
         try {
-          // Convert point to string and then parse
           const coordsStr = String(item.coordinates);
-          const coords = parseCoordinatesFromDB(coordsStr);
-          if (coords) {
-            parsedCoordinates = JSON.stringify(coords);
-          }
+          parsedCoordinates = parseCoordinatesFromDB(coordsStr);
         } catch (err) {
           console.error("Error parsing coordinates:", err, item.coordinates);
         }

@@ -6,7 +6,7 @@ import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
-import { parseCoordinatesFromDB } from "@/types/post";
+import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useAuthStore } from "@/hooks/auth/authStore";
 import {
@@ -25,6 +25,11 @@ const normalizeItemType = (itemType: string): 'offer' | 'request' => {
   }
   return 'offer';
 };
+
+const isArchivedRow = (post: any) => post?.status === 'archived' || post?.pif_status === 'archived' || !!post?.archived_at;
+
+const applyArchiveBoundary = (posts: any[], includeArchived: boolean) =>
+  includeArchived ? posts.filter(isArchivedRow) : posts.filter((post) => !isArchivedRow(post));
 
 // Transform mock posts to the expected format
 const transformMockPosts = () => {
@@ -51,11 +56,12 @@ export function useFetchPosts(options = { includeArchived: false }) {
   // Seed from the persistent cache so switching feed↔map or refreshing
   // shows content immediately without waiting on the network.
   const seeded = !DEMO_MODE ? readCache<any[]>(cacheKey) : null;
-  const [posts, setPosts] = useState<any[]>(seeded?.data ?? []);
+  const seededPosts = seeded?.data ? applyArchiveBoundary(seeded.data, options.includeArchived) : [];
+  const [posts, setPosts] = useState<any[]>(seededPosts);
   const [isLoading, setIsLoading] = useState(!seeded);
   const [error, setError] = useState<Error | null>(null);
   const [isFetching, setIsFetching] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const fetchSeqRef = useRef(0);
   const countsFetchKeyRef = useRef<string | null>(null);
   const authInitialized = useAuthStore((s) => s.initialized);
   const { toast } = useToast();
@@ -86,22 +92,17 @@ export function useFetchPosts(options = { includeArchived: false }) {
     // serve it immediately and refresh in the background.
     const cached = readCache<any[]>(cacheKey);
     if (cached && !cached.isStale) {
-      setPosts(cached.data);
+      setPosts(applyArchiveBoundary(cached.data, options.includeArchived));
       setIsLoading(false);
       return;
     }
 
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
+    const fetchSeq = ++fetchSeqRef.current;
 
     setIsFetching(true);
     // If we have stale data, keep showing it instead of flipping to a loader.
     if (cached?.data?.length) {
-      setPosts(cached.data);
+      setPosts(applyArchiveBoundary(cached.data, options.includeArchived));
       setIsLoading(false);
     } else {
       setIsLoading(true);
@@ -112,8 +113,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
     try {
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
-        .abortSignal(signal);
+        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)');
       
       if (options.includeArchived) {
         query = query
@@ -128,13 +128,13 @@ export function useFetchPosts(options = { includeArchived: false }) {
 
       const { data, error } = await query;
 
-      if (signal.aborted) {
+      if (fetchSeq !== fetchSeqRef.current) {
         return;
       }
 
       if (error) throw error;
 
-      const transformedData = data?.map(item => {
+      const transformedData = applyArchiveBoundary(data?.map(item => {
         const user = extractUserFromProfile(item.profiles, item.user_id);
         return {
           id: item.id,
@@ -142,7 +142,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
           description: item.description,
           images: item.images,
           location: item.location,
-          coordinates: parseCoordinatesFromDB(item.coordinates as any),
+          coordinates: extractCoordinates(item.coordinates),
           category: item.category,
           condition: item.condition,
           measurements: item.measurements,
@@ -154,13 +154,13 @@ export function useFetchPosts(options = { includeArchived: false }) {
           user_name: user.name,
           user_avatar: user.avatar || ''
         };
-      }) || [];
+      }) || [], options.includeArchived);
 
       setPosts(transformedData);
       setCache(cacheKey, transformedData, FULL_LIST_TTL);
       void FULL_LIST_STALE_TTL;
     } catch (err: any) {
-      if (err.name !== 'AbortError' && !signal.aborted) {
+      if (fetchSeq === fetchSeqRef.current) {
         console.error('Error fetching posts:', err);
 
         // Stale JWT? Clear it silently — the auth-recovery flow will
@@ -239,20 +239,14 @@ export function useFetchPosts(options = { includeArchived: false }) {
   }, [posts, authInitialized, cacheKey]);
 
   const cleanup = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
+    fetchSeqRef.current += 1;
   }, []);
 
   // Auto-abort any in-flight fetch on unmount so nothing lingers across
   // login/reload cycles.
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        try { abortControllerRef.current.abort(); } catch { /* noop */ }
-        abortControllerRef.current = null;
-      }
+      fetchSeqRef.current += 1;
       countsFetchKeyRef.current = null;
     };
   }, []);

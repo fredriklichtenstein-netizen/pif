@@ -5,7 +5,7 @@ export interface CreatePostInput {
   category: string;
   condition: string;
   item_type: 'offer' | 'request';
-  pif_status?: 'active' | 'completed' | 'cancelled';
+  pif_status?: 'active' | 'completed' | 'cancelled' | 'archived';
   coordinates: {
     lat: number;
     lng: number;
@@ -50,7 +50,7 @@ export interface Post {
   category: string;
   condition: string;
   item_type?: 'offer' | 'request';
-  pif_status?: 'active' | 'completed' | 'cancelled';
+  pif_status?: 'active' | 'completed' | 'cancelled' | 'archived';
   measurements: Record<string, string>;
   images: string[];
   location: string;
