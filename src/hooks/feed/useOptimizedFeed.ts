@@ -219,9 +219,13 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         posts.push(...pageData);
       }
     }
-    if (includeArchived || removedIds.size === 0) return posts;
-    return posts.filter(p => !removedIds.has(String(p.id)));
-  }, [page, queryClient, currentPageData, removedIds, includeArchived]);
+    return posts.filter((p) => {
+      const id = String(p.id);
+      if (removedIds.has(id)) return false;
+      if (!includeArchived && activeArchivedIds.has(id)) return false;
+      return true;
+    });
+  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeArchived]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -266,6 +270,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     await refetch();
     // Server is now authoritative; drop optimistic removals & in-flight fades.
     setRemovedIds(new Set());
+    setActiveArchivedIds(new Set());
     setFadingIds(new Set());
     setRestoringIds(new Set());
     fadeTimersRef.current.forEach(t => clearTimeout(t));
@@ -351,8 +356,9 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         () => {
           clearPostsCache();
           setRemovedIds((prev) => (prev.size === 0 ? prev : new Set()));
-            queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
-            queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
+          setActiveArchivedIds((prev) => (prev.size === 0 ? prev : new Set()));
+          queryClient.removeQueries({ queryKey: ['posts', 'optimized'] });
+          queryClient.invalidateQueries({ queryKey: ['posts', 'optimized'] });
         }
       )
       .on(
@@ -380,7 +386,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
             const idStr = String(itemId);
             if (newStatus === 'archived') {
               if (!includeArchived) {
-                setRemovedIds((prev) => {
+                setActiveArchivedIds((prev) => {
                   if (prev.has(idStr)) return prev;
                   const next = new Set(prev);
                   next.add(idStr);
@@ -389,6 +395,12 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
               }
             } else {
               setRemovedIds((prev) => {
+                if (!prev.has(idStr)) return prev;
+                const next = new Set(prev);
+                next.delete(idStr);
+                return next;
+              });
+              setActiveArchivedIds((prev) => {
                 if (!prev.has(idStr)) return prev;
                 const next = new Set(prev);
                 next.delete(idStr);
