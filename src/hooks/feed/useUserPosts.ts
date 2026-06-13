@@ -3,6 +3,7 @@ import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { extractUserFromProfile } from '@/hooks/item/utils/userUtils';
 import { useGlobalAuth } from '../useGlobalAuth';
+import { extractCoordinates } from '@/utils/coordinates/coordinateExtractor';
 
 interface UseUserPostsOptions {
   includeArchived?: boolean;
@@ -15,6 +16,27 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
   const [error, setError] = useState<Error | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { user } = useGlobalAuth();
+
+  const transformItem = useCallback((item: any) => {
+    const itemUser = extractUserFromProfile(item.profiles, item.user_id);
+    return {
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      images: item.images,
+      location: item.location,
+      coordinates: extractCoordinates(item.coordinates),
+      category: item.category,
+      condition: item.condition,
+      measurements: item.measurements,
+      user_id: item.user_id,
+      status: item.pif_status,
+      archived_at: item.archived_at,
+      archived_reason: item.archived_reason,
+      user_name: itemUser.name,
+      user_avatar: itemUser.avatar || '',
+    };
+  }, []);
 
   // Cancel any in-progress requests
   const cancelPendingRequests = useCallback(() => {
@@ -69,9 +91,9 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
 
       // Apply archive filter if specified
       if (options.onlyArchived) {
-        query = query.not('archived_at', 'is', null);
+        query = query.eq('pif_status', 'archived');
       } else if (!options.includeArchived) {
-        query = query.is('archived_at', null);
+        query = query.or('pif_status.is.null,pif_status.neq.archived').is('archived_at', null);
       }
 
       const { data: items, error: itemsError } = await query;
@@ -79,23 +101,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       if (signal.aborted) return;
       if (itemsError) throw itemsError;
 
-      const transformedItems = items.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        images: item.images,
-        location: item.location,
-        coordinates: item.coordinates,
-        category: item.category,
-        condition: item.condition,
-        measurements: item.measurements,
-        user_id: item.user_id,
-        status: item.pif_status,
-        archived_at: item.archived_at,
-        archived_reason: item.archived_reason,
-        user_name: extractUserFromProfile(item.profiles, item.user_id).name,
-        user_avatar: extractUserFromProfile(item.profiles, item.user_id).avatar || '',
-      }));
+      const transformedItems = items.map(transformItem);
 
       setPosts(transformedItems);
       
@@ -109,7 +115,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
         setIsLoading(false);
       }
     }
-  }, [user, options.includeArchived, options.onlyArchived, createAbortController]);
+  }, [user, options.includeArchived, options.onlyArchived, createAbortController, transformItem]);
 
   // Load my posts
   const loadMyPosts = useCallback(async (currentUser = user) => {
