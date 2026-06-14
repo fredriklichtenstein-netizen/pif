@@ -1,0 +1,104 @@
+import { useEffect, useState } from "react";
+import { X, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { ProfileRatingDisplay } from "@/components/rating/ProfileRatingDisplay";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  useUserFilterProfileStore,
+  type UserFilterStub,
+} from "@/stores/userFilterProfileStore";
+
+interface Props {
+  userId: string;
+  onClear: () => void;
+}
+
+function extractCity(address?: string | null): string | undefined {
+  if (!address) return undefined;
+  // Take the last comma-separated segment and strip postal code digits.
+  const parts = address.split(",").map((s) => s.trim()).filter(Boolean);
+  if (!parts.length) return undefined;
+  const last = parts[parts.length - 1];
+  return last.replace(/\b\d{3}\s?\d{2}\b/g, "").trim() || undefined;
+}
+
+export function FeedProfileHeader({ userId, onClear }: Props) {
+  const { t } = useTranslation();
+  const stub = useUserFilterProfileStore((s) => s.profiles[userId]);
+  const setProfile = useUserFilterProfileStore((s) => s.setProfile);
+  const [enriched, setEnriched] = useState<UserFilterStub | null>(stub ?? null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, avatar_url, address")
+          .eq("id", userId)
+          .single();
+        if (error || !data || cancelled) return;
+        const name =
+          [data.first_name, data.last_name?.[0] ? `${data.last_name[0]}.` : ""]
+            .filter(Boolean)
+            .join(" ") || stub?.name || "";
+        const next: UserFilterStub = {
+          id: userId,
+          name,
+          avatar: data.avatar_url ?? stub?.avatar,
+          location: extractCity(data.address) ?? stub?.location,
+        };
+        setProfile(next);
+        setEnriched(next);
+      } catch {
+        /* silent — fall back to stub */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, setProfile, stub?.avatar, stub?.name]);
+
+  const display = enriched ?? stub ?? { id: userId, name: "" };
+
+  return (
+    <div className="bg-card border-b border-border px-3 py-3">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-14 w-14">
+          <AvatarImage src={display.avatar} alt={display.name} />
+          <AvatarFallback>{display.name?.[0] ?? "?"}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="text-base font-semibold truncate">
+            {display.name || t("interactions.user", "Användare")}
+          </div>
+          {display.location && (
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              {display.location}
+            </div>
+          )}
+          <ProfileRatingDisplay userId={userId} className="mt-1" />
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2 rounded-md bg-muted/60 px-3 py-2">
+        <span className="text-sm">
+          {t("feed.viewing_user_filter", "Visar piffar från {{name}}", {
+            name: display.name || t("interactions.user", "användare"),
+          })}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClear}
+          className="h-7 px-2"
+          aria-label={t("feed.clear_user_filter", "Rensa användarfilter")}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
