@@ -1,5 +1,7 @@
 
 import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { FeedProfileHeader } from './FeedProfileHeader';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
 import { FeedItemList } from './FeedItemList';
 import { FeedLoadingState } from './FeedLoadingState';
@@ -37,9 +39,22 @@ import type { Post } from '@/types/post';
 export function OptimizedFeedContainer() {
   const { user } = useGlobalAuth();
   const isLoggedIn = !!user;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filteredUserId = searchParams.get('user');
+  const isOwnFilter = !!filteredUserId && filteredUserId === user?.id;
+  const viewingOtherUser = !!filteredUserId && !isOwnFilter;
+
   const [includeArchived, setIncludeArchived] = useState(false);
-  const effectiveIncludeArchived = isLoggedIn && includeArchived;
+  // Archived view only makes sense on own feed (own or no user filter).
+  const effectiveIncludeArchived = isLoggedIn && includeArchived && !viewingOtherUser;
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
+
+  const clearUserFilter = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('user');
+    setSearchParams(next, { replace: false });
+  }, [searchParams, setSearchParams]);
+
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
@@ -70,27 +85,31 @@ export function OptimizedFeedContainer() {
   const { ids: myLikedIds, isLoaded: likedIdsLoaded } = useMyLikedIds();
   const [hydratedInteractionKey, setHydratedInteractionKey] = useState('');
 
-  const fullyFilteredPosts = useMemo(
-    () =>
-      applyPostFilters(
-        filteredPosts,
-        {
-          categories: selectedCategories,
-          conditions: selectedConditions,
-          itemTypes: selectedItemTypes,
-          onlyInterested,
-        },
-        myInterestedIds,
-      ),
-    [
+  const fullyFilteredPosts = useMemo(() => {
+    const base = applyPostFilters(
       filteredPosts,
-      selectedCategories,
-      selectedConditions,
-      selectedItemTypes,
-      onlyInterested,
+      {
+        categories: selectedCategories,
+        conditions: selectedConditions,
+        itemTypes: selectedItemTypes,
+        onlyInterested: viewingOtherUser ? false : onlyInterested,
+      },
       myInterestedIds,
-    ],
-  );
+    );
+    return filteredUserId
+      ? base.filter((p) => p.postedBy?.id === filteredUserId)
+      : base;
+  }, [
+    filteredPosts,
+    selectedCategories,
+    selectedConditions,
+    selectedItemTypes,
+    onlyInterested,
+    myInterestedIds,
+    filteredUserId,
+    viewingOtherUser,
+  ]);
+
 
   const visiblePostIdsKey = useMemo(
     () => fullyFilteredPosts.map((post) => String(post.id)).join(','),
@@ -167,6 +186,10 @@ export function OptimizedFeedContainer() {
     );
   }
 
+  const profileHeader = filteredUserId ? (
+    <FeedProfileHeader userId={filteredUserId} onClear={clearUserFilter} />
+  ) : null;
+
   const filtersPanel = (
     <FeedFiltersPanel
       posts={filteredPosts}
@@ -180,19 +203,24 @@ export function OptimizedFeedContainer() {
       onCategoryChange={setCategories}
       includeArchived={includeArchived}
       onIncludeArchivedChange={setIncludeArchived}
+      viewingOtherUser={viewingOtherUser}
+      userFilterActive={!!filteredUserId}
       onResetAll={() => {
         handleClearAll();
         setUserLocation(null);
         setIncludeArchived(false);
+        clearUserFilter();
       }}
     />
   );
+
 
   // Initial cold-load skeleton — only when we have literally nothing to show
   // AND no panel state worth preserving yet (panel hasn't been used).
   if (isLoading && posts.length === 0) {
     return (
       <div className="space-y-4" role="status" aria-label={t('interactions.loading_feed')} aria-busy="true">
+        {profileHeader}
         {filtersPanel}
         <FeedSkeleton count={4} />
       </div>
@@ -202,6 +230,7 @@ export function OptimizedFeedContainer() {
   if (error) {
     return (
       <div className="space-y-4">
+        {profileHeader}
         {filtersPanel}
         <FeedErrorState
           errorMessage={error.message || t('interactions.error_label')}
@@ -214,6 +243,7 @@ export function OptimizedFeedContainer() {
   if (posts.length === 0) {
     return (
       <div className="space-y-4">
+        {profileHeader}
         {filtersPanel}
         <FeedEmptyState viewMode="all" selectedCategories={[]} clearFilters={() => {}} />
       </div>
@@ -228,6 +258,7 @@ export function OptimizedFeedContainer() {
         aria-busy={isRefreshing}
         {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
       >
+        {profileHeader}
         {filtersPanel}
 
 

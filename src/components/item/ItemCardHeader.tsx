@@ -3,7 +3,7 @@ import { MapPin, MoreVertical } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { useUserFilterProfileStore } from "@/stores/userFilterProfileStore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
@@ -143,13 +143,24 @@ export function ItemCardHeader({
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {postedBy.id ? (
-            <Link to={`/user/${postedBy.id}`} className="flex items-center">
+            <button
+              type="button"
+              onClick={() => {
+                useUserFilterProfileStore.getState().setProfile({
+                  id: postedBy.id!,
+                  name: postedBy.name,
+                  avatar: postedBy.avatar,
+                });
+                navigate(`/feed?user=${postedBy.id}`);
+              }}
+              className="flex items-center text-left"
+            >
               <Avatar className="h-8 w-8 mr-2">
                 <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
                 <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
               </Avatar>
               <div className="text-sm font-medium">{postedBy.name}</div>
-            </Link>
+            </button>
           ) : (
             <div className="flex items-center">
               <Avatar className="h-8 w-8 mr-2">

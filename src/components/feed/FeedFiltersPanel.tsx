@@ -30,6 +30,10 @@ interface Props {
   includeArchived: boolean;
   onIncludeArchivedChange: (v: boolean) => void;
   onResetAll: () => void;
+  /** When true, hide private filters (archived) — viewing another user. */
+  viewingOtherUser?: boolean;
+  /** When true, increment the active filter badge by one. */
+  userFilterActive?: boolean;
 }
 
 const DEFAULT_DISTANCE = 3;
@@ -47,6 +51,8 @@ export function FeedFiltersPanel({
   includeArchived,
   onIncludeArchivedChange,
   onResetAll,
+  viewingOtherUser = false,
+  userFilterActive = false,
 }: Props) {
   const { t } = useTranslation();
   const { user } = useGlobalAuth();
@@ -70,7 +76,8 @@ export function FeedFiltersPanel({
     (selectedItemTypes.length > 0 && selectedItemTypes.length < 2 ? 1 : 0) +
     (userLocation ? 1 : 0) +
     (!distanceIsDefault ? 1 : 0) +
-    (includeArchived ? 1 : 0);
+    (includeArchived ? 1 : 0) +
+    (userFilterActive ? 1 : 0);
 
   const hasNonDefault = activeCount > 0;
 
@@ -203,8 +210,8 @@ export function FeedFiltersPanel({
             </DropdownMenu>
           </section>
 
-          {/* Archived toggle (authenticated only) */}
-          {user && (
+          {/* Archived toggle (authenticated, own-feed only) */}
+          {user && !viewingOtherUser && (
             <section className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">
                 {t("feed.show_archived", "Visa endast arkiverade")}
