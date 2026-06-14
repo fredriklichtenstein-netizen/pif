@@ -167,17 +167,33 @@ export function OptimizedFeedContainer() {
     );
   }
 
-  // Only show full skeleton on initial load — keep filter panel mounted
-  // during subsequent reloads (e.g. when toggling "Visa arkiverade") so
-  // the Sheet doesn't unmount and close itself.
+  const filtersPanel = (
+    <FeedFiltersPanel
+      posts={filteredPosts}
+      selectedDistance={selectedDistance}
+      onDistanceChange={setSelectedDistance}
+      userLocation={userLocation}
+      onUserLocationChange={setUserLocation}
+      selectedItemTypes={selectedItemTypes}
+      onItemTypeChange={setItemTypes}
+      selectedCategories={selectedCategories}
+      onCategoryChange={setCategories}
+      includeArchived={includeArchived}
+      onIncludeArchivedChange={setIncludeArchived}
+      onResetAll={() => {
+        handleClearAll();
+        setUserLocation(null);
+        setIncludeArchived(false);
+      }}
+    />
+  );
+
+  // Initial cold-load skeleton — only when we have literally nothing to show
+  // AND no panel state worth preserving yet (panel hasn't been used).
   if (isLoading && posts.length === 0) {
     return (
-      <div
-        className="space-y-4"
-        role="status"
-        aria-label={t('interactions.loading_feed')}
-        aria-busy="true"
-      >
+      <div className="space-y-4" role="status" aria-label={t('interactions.loading_feed')} aria-busy="true">
+        {filtersPanel}
         <FeedSkeleton count={4} />
       </div>
     );
@@ -185,20 +201,22 @@ export function OptimizedFeedContainer() {
 
   if (error) {
     return (
-      <FeedErrorState
-        errorMessage={error.message || t('interactions.error_label')}
-        onRetry={handleRefresh}
-      />
+      <div className="space-y-4">
+        {filtersPanel}
+        <FeedErrorState
+          errorMessage={error.message || t('interactions.error_label')}
+          onRetry={handleRefresh}
+        />
+      </div>
     );
   }
 
   if (posts.length === 0) {
     return (
-      <FeedEmptyState
-        viewMode="all"
-        selectedCategories={[]}
-        clearFilters={() => {}}
-      />
+      <div className="space-y-4">
+        {filtersPanel}
+        <FeedEmptyState viewMode="all" selectedCategories={[]} clearFilters={() => {}} />
+      </div>
     );
   }
 
@@ -210,24 +228,7 @@ export function OptimizedFeedContainer() {
         aria-busy={isRefreshing}
         {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
       >
-        <FeedFiltersPanel
-          posts={filteredPosts}
-          selectedDistance={selectedDistance}
-          onDistanceChange={setSelectedDistance}
-          userLocation={userLocation}
-          onUserLocationChange={setUserLocation}
-          selectedItemTypes={selectedItemTypes}
-          onItemTypeChange={setItemTypes}
-          selectedCategories={selectedCategories}
-          onCategoryChange={setCategories}
-          includeArchived={includeArchived}
-          onIncludeArchivedChange={setIncludeArchived}
-          onResetAll={() => {
-            handleClearAll();
-            setUserLocation(null);
-            setIncludeArchived(false);
-          }}
-        />
+        {filtersPanel}
 
 
 
@@ -244,14 +245,6 @@ export function OptimizedFeedContainer() {
               viewMode="all"
               isLoading={false}
               onItemOperationSuccess={(_id, op) => {
-                // Archive/delete/restore are already handled by the global
-                // 'item-operation-success' listener in useOptimizedFeed
-                // (optimistic removal + realtime UPDATE invalidation).
-                // Triggering a full refresh here causes the archiving
-                // user's own feed to keep showing the archived card
-                // because the FeedSkeleton remounts before optimistic
-                // state is reapplied. For everything else, fall back to
-                // the shared refresh so non-feed operations still update.
                 if (op === 'archive' || op === 'delete' || op === 'restore') return;
                 handleRefresh();
               }}
