@@ -494,6 +494,8 @@
     "enable_location_filters": "Enable location for distance filters",
     "use_pif_address": "📍 Use my PIF address",
     "use_pif_address_short": "📍 My PIF address",
+    "current_location_short": "Current",
+    "active_location_mode": "Active location mode",
     "pif_address_not_found_title": "PIF address missing",
     "pif_address_not_found_description": "You don't have a PIF address saved. Add one under Edit profile.",
     "pif_address_login_required": "Sign in to use your saved PIF address.",

@@ -159,19 +159,16 @@ export function PullToRefresh({
 
   return (
     <div className={cn("relative", className)}>
-      {/* Pull indicator */}
+      {/* Pull indicator — fixed at top of viewport, above sticky header */}
       <div
         aria-hidden={!refreshing && pull === 0}
-        className="pointer-events-none absolute inset-x-0 top-0 flex justify-center overflow-hidden"
+        className="pointer-events-none fixed top-1 left-1/2 -translate-x-1/2 z-[100] flex justify-center"
         style={{
-          height: refreshing ? threshold : pull,
-          transition: refreshing || pull === 0 ? "height 200ms ease" : "none",
+          opacity: refreshing ? 1 : Math.min(1, pull / threshold),
+          transition: refreshing || pull === 0 ? "opacity 200ms ease" : "none",
         }}
       >
-        <div
-          className="mt-2 flex items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm border border-border"
-          style={{ opacity: refreshing ? 1 : indicatorOpacity }}
-        >
+        <div className="flex items-center gap-2 rounded-full bg-background/95 px-3 py-1.5 text-xs text-muted-foreground shadow-md border border-border">
           <RefreshCw
             className={cn(
               "h-4 w-4 transition-transform",

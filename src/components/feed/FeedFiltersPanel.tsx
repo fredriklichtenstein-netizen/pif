@@ -205,7 +205,7 @@ export function FeedFiltersPanel({
 
           {/* Archived toggle (authenticated only) */}
           {user && (
-            <section className="flex items-center justify-between">
+            <section className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">
                 {t("feed.show_archived", "Visa arkiverade")}
               </h3>
@@ -213,15 +213,13 @@ export function FeedFiltersPanel({
                 type="button"
                 onClick={() => onIncludeArchivedChange(!includeArchived)}
                 aria-pressed={includeArchived}
-                className={
-                  includeArchived
-                    ? "relative w-11 h-6 rounded-full bg-primary transition-colors"
-                    : "relative w-11 h-6 rounded-full bg-muted transition-colors"
-                }
+                className={`relative inline-flex shrink-0 h-6 w-11 rounded-full transition-colors ${
+                  includeArchived ? "bg-primary" : "bg-muted"
+                }`}
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
-                    includeArchived ? "translate-x-5" : "translate-x-0.5"
+                  className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
+                    includeArchived ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
               </button>

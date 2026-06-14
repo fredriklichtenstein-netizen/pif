@@ -167,7 +167,10 @@ export function OptimizedFeedContainer() {
     );
   }
 
-  if (isLoading || !interactionStateReady) {
+  // Only show full skeleton on initial load — keep filter panel mounted
+  // during subsequent reloads (e.g. when toggling "Visa arkiverade") so
+  // the Sheet doesn't unmount and close itself.
+  if (isLoading && posts.length === 0) {
     return (
       <div
         className="space-y-4"
