@@ -34,7 +34,7 @@ export default function Feed() {
         role="main"
         aria-label={t('feed.announcement')}
       >
-        <div className="max-w-2xl mx-auto pt-1">
+        <div className="w-full pt-1">
           {/* Compact action bar */}
           <div className="grid grid-cols-2 gap-2 mb-3 px-2">
             <Button
