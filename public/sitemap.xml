@@ -33,12 +33,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/4</loc>
-    <lastmod>2026-04-13</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://app.pif.community/item/1</loc>
     <lastmod>2026-04-02</lastmod>
     <changefreq>daily</changefreq>
@@ -53,6 +47,12 @@
   <url>
     <loc>https://app.pif.community/item/5</loc>
     <lastmod>2026-04-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.pif.community/item/4</loc>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
