@@ -220,6 +220,7 @@ export function OptimizedFeedContainer() {
   if (isLoading && posts.length === 0) {
     return (
       <div className="space-y-4" role="status" aria-label={t('interactions.loading_feed')} aria-busy="true">
+        {profileHeader}
         {filtersPanel}
         <FeedSkeleton count={4} />
       </div>
@@ -229,6 +230,7 @@ export function OptimizedFeedContainer() {
   if (error) {
     return (
       <div className="space-y-4">
+        {profileHeader}
         {filtersPanel}
         <FeedErrorState
           errorMessage={error.message || t('interactions.error_label')}
@@ -241,6 +243,7 @@ export function OptimizedFeedContainer() {
   if (posts.length === 0) {
     return (
       <div className="space-y-4">
+        {profileHeader}
         {filtersPanel}
         <FeedEmptyState viewMode="all" selectedCategories={[]} clearFilters={() => {}} />
       </div>
@@ -255,6 +258,7 @@ export function OptimizedFeedContainer() {
         aria-busy={isRefreshing}
         {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
       >
+        {profileHeader}
         {filtersPanel}
 
 
