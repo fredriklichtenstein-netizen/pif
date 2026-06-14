@@ -40,7 +40,6 @@ export function OptimizedFeedContainer() {
   const { user } = useGlobalAuth();
   const isLoggedIn = !!user;
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const filteredUserId = searchParams.get('user');
   const isOwnFilter = !!filteredUserId && filteredUserId === user?.id;
   const viewingOtherUser = !!filteredUserId && !isOwnFilter;
