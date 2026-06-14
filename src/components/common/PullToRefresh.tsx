@@ -191,15 +191,10 @@ export function PullToRefresh({
         </div>
       </div>
 
-      <div
-        style={{
-          transform: `translateY(${refreshing ? threshold : pull}px)`,
-          transition: refreshing || pull === 0 ? "transform 200ms ease" : "none",
-          willChange: "transform",
-        }}
-      >
+      <div>
         {children}
       </div>
+
     </div>
   );
 }

@@ -207,7 +207,7 @@ export function FeedFiltersPanel({
           {user && (
             <section className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">
-                {t("feed.show_archived", "Visa arkiverade")}
+                {t("feed.show_archived", "Visa endast arkiverade")}
               </h3>
               <button
                 type="button"
