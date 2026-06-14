@@ -17,6 +17,8 @@
     "filter": "Filter",
     "select_all": "Välj alla",
     "show_archived": "Visa endast arkiverade",
+    "viewing_user_filter": "Visar piffar från {{name}}",
+    "clear_user_filter": "Rensa användarfilter",
     "announcement": "Flödessidan laddad, visar gemenskapens inlägg"
   }
 }
