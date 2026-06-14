@@ -25,10 +25,6 @@ export default function Feed() {
           src="/pif-logo-long.png"
           alt="Pay it Forward"
           className="h-10 w-auto object-contain pointer-events-auto"
-          style={{
-            filter:
-              "drop-shadow(0 0 8px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,255,255,0.85)) drop-shadow(0 0 24px rgba(255,255,255,0.6))",
-          }}
         />
       </header>
 
