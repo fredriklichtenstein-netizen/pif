@@ -85,27 +85,31 @@ export function OptimizedFeedContainer() {
   const { ids: myLikedIds, isLoaded: likedIdsLoaded } = useMyLikedIds();
   const [hydratedInteractionKey, setHydratedInteractionKey] = useState('');
 
-  const fullyFilteredPosts = useMemo(
-    () =>
-      applyPostFilters(
-        filteredPosts,
-        {
-          categories: selectedCategories,
-          conditions: selectedConditions,
-          itemTypes: selectedItemTypes,
-          onlyInterested,
-        },
-        myInterestedIds,
-      ),
-    [
+  const fullyFilteredPosts = useMemo(() => {
+    const base = applyPostFilters(
       filteredPosts,
-      selectedCategories,
-      selectedConditions,
-      selectedItemTypes,
-      onlyInterested,
+      {
+        categories: selectedCategories,
+        conditions: selectedConditions,
+        itemTypes: selectedItemTypes,
+        onlyInterested: viewingOtherUser ? false : onlyInterested,
+      },
       myInterestedIds,
-    ],
-  );
+    );
+    return filteredUserId
+      ? base.filter((p) => p.postedBy?.id === filteredUserId)
+      : base;
+  }, [
+    filteredPosts,
+    selectedCategories,
+    selectedConditions,
+    selectedItemTypes,
+    onlyInterested,
+    myInterestedIds,
+    filteredUserId,
+    viewingOtherUser,
+  ]);
+
 
   const visiblePostIdsKey = useMemo(
     () => fullyFilteredPosts.map((post) => String(post.id)).join(','),
