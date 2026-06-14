@@ -38,7 +38,7 @@ export function ItemCardLayout({
     : "border-l-4 border-l-pif-offer";
   
   return (
-    <Card id={`item-card-${id}`} className={`overflow-hidden transition-shadow hover:shadow-md rounded-xl ${borderClass}`}>
+    <Card id={`item-card-${id}`} className={`overflow-hidden transition-shadow hover:shadow-md rounded-none border-x-0 ${borderClass}`}>
       {isRealtimeError && (
         <div className="p-2 bg-gray-50 py-0">
           <NetworkStatus onRetry={refreshItemData} />
