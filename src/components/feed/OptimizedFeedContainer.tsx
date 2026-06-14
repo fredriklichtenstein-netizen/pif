@@ -39,9 +39,23 @@ import type { Post } from '@/types/post';
 export function OptimizedFeedContainer() {
   const { user } = useGlobalAuth();
   const isLoggedIn = !!user;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const filteredUserId = searchParams.get('user');
+  const isOwnFilter = !!filteredUserId && filteredUserId === user?.id;
+  const viewingOtherUser = !!filteredUserId && !isOwnFilter;
+
   const [includeArchived, setIncludeArchived] = useState(false);
-  const effectiveIncludeArchived = isLoggedIn && includeArchived;
+  // Archived view only makes sense on own feed (own or no user filter).
+  const effectiveIncludeArchived = isLoggedIn && includeArchived && !viewingOtherUser;
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
+
+  const clearUserFilter = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('user');
+    setSearchParams(next, { replace: false });
+  }, [searchParams, setSearchParams]);
+
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
   const { vibrate } = useVibration();
