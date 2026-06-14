@@ -19,18 +19,16 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky logo header — white gradient fade so logo pops on any background */}
-      <header
-        className="sticky top-0 z-40 w-full flex justify-center pt-2 pb-3 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(255,255,255,0.95) 60%, rgba(255,255,255,0))",
-        }}
-      >
+      {/* Sticky logo header — white halo follows the logo's own shape */}
+      <header className="sticky top-0 z-40 w-full flex justify-center pt-2 pb-2 pointer-events-none bg-transparent">
         <img
           src="/pif-logo-long.png"
           alt="Pay it Forward"
           className="h-10 w-auto object-contain pointer-events-auto"
+          style={{
+            filter:
+              "drop-shadow(0 0 8px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,255,255,0.85)) drop-shadow(0 0 24px rgba(255,255,255,0.6))",
+          }}
         />
       </header>
 
