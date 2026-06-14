@@ -3,7 +3,6 @@ import { MapPin, MoreVertical } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../ui/dropdown-menu";
-import { Link } from "react-router-dom";
 import { useUserFilterProfileStore } from "@/stores/userFilterProfileStore";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
