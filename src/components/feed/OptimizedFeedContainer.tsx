@@ -186,6 +186,10 @@ export function OptimizedFeedContainer() {
     );
   }
 
+  const profileHeader = filteredUserId ? (
+    <FeedProfileHeader userId={filteredUserId} onClear={clearUserFilter} />
+  ) : null;
+
   const filtersPanel = (
     <FeedFiltersPanel
       posts={filteredPosts}
@@ -199,13 +203,17 @@ export function OptimizedFeedContainer() {
       onCategoryChange={setCategories}
       includeArchived={includeArchived}
       onIncludeArchivedChange={setIncludeArchived}
+      viewingOtherUser={viewingOtherUser}
+      userFilterActive={!!filteredUserId}
       onResetAll={() => {
         handleClearAll();
         setUserLocation(null);
         setIncludeArchived(false);
+        clearUserFilter();
       }}
     />
   );
+
 
   // Initial cold-load skeleton — only when we have literally nothing to show
   // AND no panel state worth preserving yet (panel hasn't been used).
