@@ -94,6 +94,21 @@ export default function CreateProfile() {
       // Geocode address to get coordinates
       const location = await geocodeAddress(formData.address);
 
+      // Reverse-geocode coordinates to a city/neighborhood label
+      let city: string | null = null;
+      if (location) {
+        const match = location.match(/\(([^,]+),([^)]+)\)/);
+        if (match) {
+          const lng = parseFloat(match[1]);
+          const lat = parseFloat(match[2]);
+          if (Number.isFinite(lng) && Number.isFinite(lat)) {
+            const { reverseGeocodeCity } = await import("@/utils/location/reverseGeocodeCity");
+            const resolved = await reverseGeocodeCity(lng, lat);
+            city = resolved || null;
+          }
+        }
+      }
+
       // Prepare profile data with proper date formatting
       const profileData: any = {
         id: user.id,
@@ -107,6 +122,7 @@ export default function CreateProfile() {
         date_of_birth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : null,
         onboarding_completed: true,
         location: location,
+        city: city,
       };
 
       const { data: createdProfile, error: updateError } = await supabase

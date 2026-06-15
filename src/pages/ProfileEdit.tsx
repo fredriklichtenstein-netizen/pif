@@ -142,6 +142,16 @@ function ProfileEdit() {
 // Only update location if geocoding succeeded
 if (location) {
   updateData.location = location;
+  const match = location.match(/\(([^,]+),([^)]+)\)/);
+  if (match) {
+    const lng = parseFloat(match[1]);
+    const lat = parseFloat(match[2]);
+    if (Number.isFinite(lng) && Number.isFinite(lat)) {
+      const { reverseGeocodeCity } = await import("@/utils/location/reverseGeocodeCity");
+      const city = await reverseGeocodeCity(lng, lat);
+      updateData.city = city || null;
+    }
+  }
 }
 
       if (avatarUrl) {
