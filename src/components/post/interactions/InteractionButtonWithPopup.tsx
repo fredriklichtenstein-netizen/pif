@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { InteractionIcon } from "./button/InteractionIcon";
 import { CounterButton } from "./button/CounterButton";
 import { GrantWishDialog } from "./GrantWishDialog";
+import { useItemSelectedReceiver } from "@/hooks/item/useItemSelectedReceiver";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
@@ -93,7 +94,48 @@ export function InteractionButtonWithPopup({
   const ACTIVE_COLOR = type === "interest" && itemType === "request" ? "#F59E0B" : "#00D1A0";
   const PASSIVE_COLOR = "#333333";
 
-  const isToggleDisabled = isOwner && (type === "like" || type === "interest");
+  // Look up the current selection state for this item so we can render
+  // the correct receiver/fulfiller perspective on the interest button.
+  const { hasSelection, isCurrentSelected } = useItemSelectedReceiver(
+    type === "interest" ? itemId : undefined,
+    currentUserId,
+  );
+
+  const isWishType = itemType === "request";
+  const isInterestType = type === "interest";
+
+  // Perspective-based overrides for the interest button.
+  // - Pif (offer): exactly one receiver. If current user is selected -> "Du är vald".
+  //   If someone else is selected -> greyed out for everyone else.
+  // - Wish (request): multiple fulfillers. If current user is selected -> short
+  //   "Uppfyller önskan" label. Other non-selected users still see the normal CTA.
+  let perspectiveLabel: string | null = null;
+  let perspectiveDisabled = false;
+  let perspectiveDim = false;
+  let perspectiveActiveColor: string | null = null;
+  if (isInterestType && !isOwner) {
+    if (isWishType) {
+      if (isCurrentSelected) {
+        perspectiveLabel = t("interactions.fulfilling_wish", "Uppfyller önskan");
+        perspectiveDisabled = true;
+        perspectiveActiveColor = "#F59E0B";
+      }
+    } else {
+      if (isCurrentSelected) {
+        perspectiveLabel = t("interactions.you_are_selected", "Du är vald");
+        perspectiveDisabled = true;
+        perspectiveActiveColor = "#00D1A0";
+      } else if (hasSelection) {
+        // Another user is the chosen receiver — lock the button until the
+        // pif is completed (or selection is withdrawn).
+        perspectiveDisabled = true;
+        perspectiveDim = true;
+      }
+    }
+  }
+
+  const isToggleDisabled =
+    (isOwner && (type === "like" || type === "interest")) || perspectiveDisabled;
 
   // The Grant Wish flow only kicks in when a non-owner is *activating*
   // interest on a wish. Withdrawing (or any pif interaction) keeps the
@@ -102,7 +144,8 @@ export function InteractionButtonWithPopup({
     type === "interest" &&
     itemType === "request" &&
     !isOwner &&
-    !isActive;
+    !isActive &&
+    !perspectiveDisabled;
   const [grantOpen, setGrantOpen] = useState(false);
   const [granting, setGranting] = useState(false);
 
@@ -175,23 +218,30 @@ export function InteractionButtonWithPopup({
     (displayCount > 0 || shouldAutoOpenSelection) &&
     (!!onCounterClick || !!fetchPage || useInterestList);
 
+  const visualActive =
+    isActive || (isInterestType && isCurrentSelected);
+  const effectiveActiveColor = perspectiveActiveColor ?? ACTIVE_COLOR;
+  const labelText = perspectiveLabel ?? (isActive ? labelActive : labelPassive);
+  const dimClass = perspectiveDim ? "opacity-40" : "";
+  const disabledClass = isToggleDisabled
+    ? "opacity-60 cursor-not-allowed"
+    : "cursor-pointer";
+
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
       {/* Icon toggle */}
       <div
         role="button"
         aria-disabled={isToggleDisabled}
-        aria-label={isActive ? labelActive : labelPassive}
+        aria-label={labelText}
         tabIndex={isToggleDisabled ? -1 : 0}
         onClick={handleToggleClick}
         onKeyDown={handleKeyDown}
-        className={`flex items-center justify-center h-7 rounded group select-none
-          ${isToggleDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
-        `}
+        className={`flex items-center justify-center h-7 rounded group select-none ${disabledClass} ${dimClass}`}
       >
         <InteractionIcon
-          type={isActive ? iconActive : iconPassive}
-          isActive={isActive}
+          type={visualActive ? iconActive : iconPassive}
+          isActive={visualActive}
         />
       </div>
 
@@ -203,10 +253,10 @@ export function InteractionButtonWithPopup({
           tabIndex={isToggleDisabled ? -1 : 0}
           onClick={handleToggleClick}
           onKeyDown={handleKeyDown}
-          style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
-          className={`text-xs font-medium select-none ${isToggleDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+          style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
+          className={`text-xs font-medium select-none ${disabledClass} ${dimClass}`}
         >
-          {isActive ? labelActive : labelPassive}
+          {labelText}
         </span>
         {(displayCount > 0 || shouldAutoOpenSelection) && (
           <CounterButton
