@@ -39,10 +39,21 @@ import type { Post } from '@/types/post';
 export function OptimizedFeedContainer() {
   const { user } = useGlobalAuth();
   const isLoggedIn = !!user;
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const filteredUserId = searchParams.get('user');
+  const filteredUserId = isLoggedIn ? searchParams.get('user') : null;
   const isOwnFilter = !!filteredUserId && filteredUserId === user?.id;
   const viewingOtherUser = !!filteredUserId && !isOwnFilter;
+
+  // Unauthenticated visitors cannot view per-user filtered feeds.
+  useEffect(() => {
+    if (!isLoggedIn && searchParams.get('user')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('user');
+      setSearchParams(next, { replace: true });
+      navigate('/auth', { state: { from: '/feed' } });
+    }
+  }, [isLoggedIn, searchParams, setSearchParams, navigate]);
 
   const [includeArchived, setIncludeArchived] = useState(false);
   // Archived view only makes sense on own feed (own or no user filter).
