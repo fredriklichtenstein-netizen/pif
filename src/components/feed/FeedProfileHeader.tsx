@@ -3,8 +3,11 @@ import { X, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProfileRatingDisplay } from "@/components/rating/ProfileRatingDisplay";
+import { ProfileLocationMap } from "@/components/profile/map/ProfileLocationMap";
 import { supabase } from "@/integrations/supabase/client";
+import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import {
   useUserFilterProfileStore,
   type UserFilterStub,
@@ -15,9 +18,8 @@ interface Props {
   onClear: () => void;
 }
 
-function extractCity(address?: string | null): string | undefined {
+function extractArea(address?: string | null): string | undefined {
   if (!address) return undefined;
-  // Take the last comma-separated segment and strip postal code digits.
   const parts = address.split(",").map((s) => s.trim()).filter(Boolean);
   if (!parts.length) return undefined;
   const last = parts[parts.length - 1];
@@ -29,6 +31,8 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
   const stub = useUserFilterProfileStore((s) => s.profiles[userId]);
   const setProfile = useUserFilterProfileStore((s) => s.setProfile);
   const [enriched, setEnriched] = useState<UserFilterStub | null>(stub ?? null);
+  const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,7 +40,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, avatar_url, address")
+          .select("id, first_name, last_name, avatar_url, address, location")
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;
@@ -48,10 +52,12 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           id: userId,
           name,
           avatar: data.avatar_url ?? stub?.avatar,
-          location: extractCity(data.address) ?? stub?.location,
+          location: extractArea((data as any).address) ?? stub?.location,
         };
         setProfile(next);
         setEnriched(next);
+        const coords = parseCoordinates((data as any).location);
+        if (coords) setCoordinates({ lng: coords.lng, lat: coords.lat });
       } catch {
         /* silent — fall back to stub */
       }
@@ -75,10 +81,17 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
             {display.name || t("interactions.user", "Användare")}
           </div>
           {display.location && (
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => coordinates && setMapOpen(true)}
+              disabled={!coordinates}
+              className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground disabled:cursor-default disabled:hover:text-muted-foreground"
+            >
               <MapPin className="h-3 w-3" />
-              {display.location}
-            </div>
+              <span className={coordinates ? "underline-offset-2 hover:underline" : ""}>
+                {display.location}
+              </span>
+            </button>
           )}
           <ProfileRatingDisplay userId={userId} className="mt-1" />
         </div>
@@ -99,6 +112,21 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           <X className="h-4 w-4" />
         </Button>
       </div>
+
+      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{display.location ?? t("common.location", "Plats")}</DialogTitle>
+          </DialogHeader>
+          {coordinates && <ProfileLocationMap coordinates={coordinates} />}
+          <p className="text-xs text-muted-foreground text-center">
+            {t(
+              "profile.approximate_location_note",
+              "Ungefärlig plats – exakt adress visas aldrig."
+            )}
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
