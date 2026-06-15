@@ -40,7 +40,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, avatar_url, address, location")
+          .select("id, first_name, last_name, avatar_url, city, location")
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;
@@ -48,11 +48,12 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           [data.first_name, data.last_name?.[0] ? `${data.last_name[0]}.` : ""]
             .filter(Boolean)
             .join(" ") || stub?.name || "";
+        const city = (data as any).city;
         const next: UserFilterStub = {
           id: userId,
           name,
           avatar: data.avatar_url ?? stub?.avatar,
-          location: extractArea((data as any).address) ?? stub?.location,
+          location: city && String(city).trim() ? String(city).trim() : undefined,
         };
         setProfile(next);
         setEnriched(next);
