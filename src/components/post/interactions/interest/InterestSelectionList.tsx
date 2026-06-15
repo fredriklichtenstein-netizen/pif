@@ -562,6 +562,94 @@ export function InterestSelectionList({
     }
   };
 
+  // Fulfiller perspective (non-owner who has offered to fulfil a wish):
+  // collapse the popup to ONLY their own offering with a single "Ångra"
+  // (withdraw) button. Owner-only management controls (Vald,
+  // Markera som uppfylld, Meddelande, trust indicators) must never be
+  // shown to non-owners.
+  const isFulfillerView =
+    !isOwner && isWish && !!currentUserId &&
+    rows.some((r) => r.user_id === currentUserId);
+
+  const handleWithdrawOwnOffer = async () => {
+    if (!currentUserId) return;
+    try {
+      if (DEMO_MODE) {
+        setRows((prev) => prev.filter((r) => r.user_id !== currentUserId));
+      } else {
+        const { error } = await supabase
+          .from("interests")
+          .delete()
+          .eq("item_id", numericItemId)
+          .eq("user_id", currentUserId);
+        if (error) throw error;
+      }
+      toast({
+        title: t("interactions.selection_withdrawn"),
+      });
+      setShowPopup(false);
+    } catch (e) {
+      console.error("[InterestSelectionList] withdraw own offer failed", e);
+      toast({
+        variant: "destructive",
+        title: t("interactions.error_title"),
+        description: t("interactions.error_withdraw_selection"),
+      });
+    }
+  };
+
+  if (isFulfillerView) {
+    const own = rows.find((r) => r.user_id === currentUserId)!;
+    return (
+      <div className="max-h-[340px] overflow-y-auto">
+        <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
+          <h3 className="font-semibold text-sm">
+            {t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan")}
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowPopup(false)}
+            className="h-6 w-6 p-0"
+          >
+            ×
+          </Button>
+        </div>
+        <div className="flex flex-col gap-1 p-2 rounded">
+          <div className="flex items-center gap-2">
+            <AvatarImage
+              src={own.profile?.avatar_url || ""}
+              size={28}
+              alt={displayName(own)}
+            />
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-medium truncate">
+                {displayName(own)}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {format(new Date(own.created_at), "d MMM HH:mm", { locale: dateLocale })}
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
+              onClick={handleWithdrawOwnOffer}
+            >
+              <UserMinus className="h-3 w-3 mr-1" />
+              {t("interactions.withdraw_offer_btn", "Ångra")}
+            </Button>
+          </div>
+          {own.note && (
+            <div className="ml-9 text-xs text-muted-foreground bg-amber-50 border border-amber-100 rounded px-2 py-1 italic">
+              “{own.note}”
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-h-[340px] overflow-y-auto">
       <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
@@ -583,6 +671,7 @@ export function InterestSelectionList({
           ×
         </Button>
       </div>
+
 
       {loading ? (
         <div className="p-4 text-center">
