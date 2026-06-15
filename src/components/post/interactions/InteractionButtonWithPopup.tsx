@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { InteractionIcon } from "./button/InteractionIcon";
 import { CounterButton } from "./button/CounterButton";
 import { GrantWishDialog } from "./GrantWishDialog";
+import { useItemSelectedReceiver } from "@/hooks/item/useItemSelectedReceiver";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
