@@ -152,6 +152,9 @@ export function ItemCardHeader({
                   avatar: postedBy.avatar,
                 });
                 navigate(`/feed?user=${postedBy.id}`);
+                requestAnimationFrame(() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
               }}
               className="flex items-center text-left"
             >
