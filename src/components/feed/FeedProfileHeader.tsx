@@ -81,19 +81,17 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           <div className="text-base font-semibold truncate">
             {display.name || t("interactions.user", "Användare")}
           </div>
-          {display.location && (
-            <button
-              type="button"
-              onClick={() => coordinates && setMapOpen(true)}
-              disabled={!coordinates}
-              className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground disabled:cursor-default disabled:hover:text-muted-foreground"
-            >
-              <MapPin className="h-3 w-3" />
-              <span className={coordinates ? "underline-offset-2 hover:underline" : ""}>
-                {display.location}
-              </span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => coordinates && setMapOpen(true)}
+            disabled={!coordinates}
+            className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground disabled:cursor-default disabled:hover:text-muted-foreground"
+          >
+            <MapPin className="h-3 w-3" />
+            <span className={coordinates ? "underline-offset-2 hover:underline" : ""}>
+              {display.location || t("common.location", "Plats")}
+            </span>
+          </button>
           <ProfileRatingDisplay userId={userId} className="mt-1" />
         </div>
       </div>
