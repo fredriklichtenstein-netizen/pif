@@ -94,7 +94,49 @@ export function InteractionButtonWithPopup({
   const ACTIVE_COLOR = type === "interest" && itemType === "request" ? "#F59E0B" : "#00D1A0";
   const PASSIVE_COLOR = "#333333";
 
-  const isToggleDisabled = isOwner && (type === "like" || type === "interest");
+  // Look up the current selection state for this item so we can render
+  // the correct receiver/fulfiller perspective on the interest button.
+  const { hasSelection, isCurrentSelected, refetch: refetchSelection } =
+    useItemSelectedReceiver(
+      type === "interest" ? itemId : undefined,
+      currentUserId,
+    );
+
+  const isWishType = itemType === "request";
+  const isInterestType = type === "interest";
+
+  // Perspective-based overrides for the interest button.
+  // - Pif (offer): exactly one receiver. If current user is selected -> "Du är vald".
+  //   If someone else is selected -> greyed out for everyone else.
+  // - Wish (request): multiple fulfillers. If current user is selected -> short
+  //   "Uppfyller önskan" label. Other non-selected users still see the normal CTA.
+  let perspectiveLabel: string | null = null;
+  let perspectiveDisabled = false;
+  let perspectiveDim = false;
+  let perspectiveActiveColor: string | null = null;
+  if (isInterestType && !isOwner) {
+    if (isWishType) {
+      if (isCurrentSelected) {
+        perspectiveLabel = t("interactions.fulfilling_wish", "Uppfyller önskan");
+        perspectiveDisabled = true;
+        perspectiveActiveColor = "#F59E0B";
+      }
+    } else {
+      if (isCurrentSelected) {
+        perspectiveLabel = t("interactions.you_are_selected", "Du är vald");
+        perspectiveDisabled = true;
+        perspectiveActiveColor = "#00D1A0";
+      } else if (hasSelection) {
+        // Another user is the chosen receiver — lock the button until the
+        // pif is completed (or selection is withdrawn).
+        perspectiveDisabled = true;
+        perspectiveDim = true;
+      }
+    }
+  }
+
+  const isToggleDisabled =
+    (isOwner && (type === "like" || type === "interest")) || perspectiveDisabled;
 
   // The Grant Wish flow only kicks in when a non-owner is *activating*
   // interest on a wish. Withdrawing (or any pif interaction) keeps the
@@ -103,7 +145,8 @@ export function InteractionButtonWithPopup({
     type === "interest" &&
     itemType === "request" &&
     !isOwner &&
-    !isActive;
+    !isActive &&
+    !perspectiveDisabled;
   const [grantOpen, setGrantOpen] = useState(false);
   const [granting, setGranting] = useState(false);
 
