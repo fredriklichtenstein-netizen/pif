@@ -219,23 +219,30 @@ export function InteractionButtonWithPopup({
     (displayCount > 0 || shouldAutoOpenSelection) &&
     (!!onCounterClick || !!fetchPage || useInterestList);
 
+  const visualActive =
+    isActive || (isInterestType && isCurrentSelected);
+  const effectiveActiveColor = perspectiveActiveColor ?? ACTIVE_COLOR;
+  const labelText = perspectiveLabel ?? (isActive ? labelActive : labelPassive);
+  const dimClass = perspectiveDim ? "opacity-40" : "";
+  const disabledClass = isToggleDisabled
+    ? "opacity-60 cursor-not-allowed"
+    : "cursor-pointer";
+
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
       {/* Icon toggle */}
       <div
         role="button"
         aria-disabled={isToggleDisabled}
-        aria-label={isActive ? labelActive : labelPassive}
+        aria-label={labelText}
         tabIndex={isToggleDisabled ? -1 : 0}
         onClick={handleToggleClick}
         onKeyDown={handleKeyDown}
-        className={`flex items-center justify-center h-7 rounded group select-none
-          ${isToggleDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
-        `}
+        className={`flex items-center justify-center h-7 rounded group select-none ${disabledClass} ${dimClass}`}
       >
         <InteractionIcon
-          type={isActive ? iconActive : iconPassive}
-          isActive={isActive}
+          type={visualActive ? iconActive : iconPassive}
+          isActive={visualActive}
         />
       </div>
 
@@ -247,10 +254,10 @@ export function InteractionButtonWithPopup({
           tabIndex={isToggleDisabled ? -1 : 0}
           onClick={handleToggleClick}
           onKeyDown={handleKeyDown}
-          style={{ color: isActive ? ACTIVE_COLOR : PASSIVE_COLOR }}
-          className={`text-xs font-medium select-none ${isToggleDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+          style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
+          className={`text-xs font-medium select-none ${disabledClass} ${dimClass}`}
         >
-          {isActive ? labelActive : labelPassive}
+          {labelText}
         </span>
         {(displayCount > 0 || shouldAutoOpenSelection) && (
           <CounterButton
