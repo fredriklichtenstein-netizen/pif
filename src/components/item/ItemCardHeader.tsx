@@ -146,6 +146,10 @@ export function ItemCardHeader({
             <button
               type="button"
               onClick={() => {
+                if (!isAuthenticated) {
+                  navigate('/auth', { state: { from: '/feed' } });
+                  return;
+                }
                 useUserFilterProfileStore.getState().setProfile({
                   id: postedBy.id!,
                   name: postedBy.name,
