@@ -96,11 +96,10 @@ export function InteractionButtonWithPopup({
 
   // Look up the current selection state for this item so we can render
   // the correct receiver/fulfiller perspective on the interest button.
-  const { hasSelection, isCurrentSelected, refetch: refetchSelection } =
-    useItemSelectedReceiver(
-      type === "interest" ? itemId : undefined,
-      currentUserId,
-    );
+  const { hasSelection, isCurrentSelected } = useItemSelectedReceiver(
+    type === "interest" ? itemId : undefined,
+    currentUserId,
+  );
 
   const isWishType = itemType === "request";
   const isInterestType = type === "interest";
