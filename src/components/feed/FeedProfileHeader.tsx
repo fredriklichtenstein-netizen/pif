@@ -40,7 +40,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, avatar_url, address, location")
+          .select("id, first_name, last_name, avatar_url, city, location")
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;
@@ -48,11 +48,12 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           [data.first_name, data.last_name?.[0] ? `${data.last_name[0]}.` : ""]
             .filter(Boolean)
             .join(" ") || stub?.name || "";
+        const city = (data as any).city;
         const next: UserFilterStub = {
           id: userId,
           name,
           avatar: data.avatar_url ?? stub?.avatar,
-          location: extractArea((data as any).address) ?? stub?.location,
+          location: city && String(city).trim() ? String(city).trim() : undefined,
         };
         setProfile(next);
         setEnriched(next);
@@ -80,19 +81,17 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           <div className="text-base font-semibold truncate">
             {display.name || t("interactions.user", "Användare")}
           </div>
-          {display.location && (
-            <button
-              type="button"
-              onClick={() => coordinates && setMapOpen(true)}
-              disabled={!coordinates}
-              className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground disabled:cursor-default disabled:hover:text-muted-foreground"
-            >
-              <MapPin className="h-3 w-3" />
-              <span className={coordinates ? "underline-offset-2 hover:underline" : ""}>
-                {display.location}
-              </span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => coordinates && setMapOpen(true)}
+            disabled={!coordinates}
+            className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground disabled:cursor-default disabled:hover:text-muted-foreground"
+          >
+            <MapPin className="h-3 w-3" />
+            <span className={coordinates ? "underline-offset-2 hover:underline" : ""}>
+              {display.location || t("common.location", "Plats")}
+            </span>
+          </button>
           <ProfileRatingDisplay userId={userId} className="mt-1" />
         </div>
       </div>

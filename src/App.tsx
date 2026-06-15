@@ -18,6 +18,7 @@ import { ReceiverConfirmationWatcher } from "@/components/profile/completion/Rec
 import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessionRecovery";
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { useCityBackfill } from "@/hooks/profile/useCityBackfill";
 import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
 import { debugLog } from "@/utils/authDebug";
@@ -58,6 +59,7 @@ function App() {
   }, []);
 
   useVersionCheck();
+  useCityBackfill();
 
 
 
