@@ -1,9 +1,8 @@
-
 {
   "interactions": {
     "like": "Like",
     "liked": "Liked",
-    "comment": "Comment", 
+    "comment": "Comment",
     "commented": "Commented",
     "share": "Share",
     "shared": "Shared",
@@ -336,7 +335,6 @@
     "group_comment": "Comments",
     "group_profile": "Profile Interactions",
     "group_other": "Other Notifications",
-
     "rate_user": "Rate {{name}}",
     "rating_very_bad": "Very bad",
     "rating_bad": "Bad",
@@ -513,7 +511,19 @@
     "following_label": "Following",
     "write_comment": "Write a comment...",
     "no_comments_yet": "No comments yet. Be the first to comment!",
-    "fallback_comments_notice": "Showing community conversation. You can still join the discussion!"
+    "fallback_comments_notice": "Showing community conversation. You can still join the discussion!",
+    "rate_receiver_title": "How did it go with {{name}}?",
+    "rate_receiver_description": "Your rating helps neighbors trust each other. It stays private and only shapes a gentle reliability hint.",
+    "rate_positive_label": "Went well",
+    "rate_positive_hint": "They showed up and the handover was good.",
+    "rate_no_show_label": "No-show",
+    "rate_no_show_hint": "They didn't show up or cancelled at the last moment.",
+    "rate_skip": "Skip for now",
+    "rating_thanks_title": "Thanks for the feedback",
+    "rating_thanks_positive": "Recorded as a positive handover.",
+    "rating_thanks_no_show": "Recorded as a no-show.",
+    "rating_failed_title": "Couldn't save your rating",
+    "rating_failed_description": "Please try again in a moment."
   },
   "comments": {
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."
@@ -539,7 +549,6 @@
     "last_seen": "Last seen {{time}}",
     "completed_badge": "Completed"
   },
-
   "map": {
     "error_initializing": "Error initializing map",
     "initializing": "Initializing map...",
@@ -652,19 +661,7 @@
     "signed_out": "Signed out successfully",
     "signed_out_description": "You have been signed out of your account",
     "error_signing_out": "Error signing out",
-    "signing_out": "Signing out...",
-    "rate_receiver_title": "How did it go with {{name}}?",
-    "rate_receiver_description": "Your rating helps neighbors trust each other. It stays private and only shapes a gentle reliability hint.",
-    "rate_positive_label": "Went well",
-    "rate_positive_hint": "They showed up and the handover was good.",
-    "rate_no_show_label": "No-show",
-    "rate_no_show_hint": "They didn't show up or cancelled at the last moment.",
-    "rate_skip": "Skip for now",
-    "rating_thanks_title": "Thanks for the feedback",
-    "rating_thanks_positive": "Recorded as a positive handover.",
-    "rating_thanks_no_show": "Recorded as a no-show.",
-    "rating_failed_title": "Couldn't save your rating",
-    "rating_failed_description": "Please try again in a moment."
+    "signing_out": "Signing out..."
   },
   "notifications": {
     "is_interested_in_your_pif": "is interested in your pif",

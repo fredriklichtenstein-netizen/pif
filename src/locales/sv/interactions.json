@@ -1,4 +1,3 @@
-
 {
   "interactions": {
     "like": "Gilla",
@@ -336,7 +335,6 @@
     "group_comment": "Kommentarer",
     "group_profile": "Profilinteraktioner",
     "group_other": "Övriga aviseringar",
-
     "rate_user": "Betygsätt {{name}}",
     "rating_very_bad": "Mycket dåligt",
     "rating_bad": "Dåligt",
@@ -513,7 +511,19 @@
     "following_label": "Följer",
     "write_comment": "Skriv en kommentar...",
     "no_comments_yet": "Inga kommentarer än. Bli den första att kommentera!",
-    "fallback_comments_notice": "Visar communitykonversation. Du kan fortfarande delta i diskussionen!"
+    "fallback_comments_notice": "Visar communitykonversation. Du kan fortfarande delta i diskussionen!",
+    "rate_receiver_title": "Hur gick det med {{name}}?",
+    "rate_receiver_description": "Din återkoppling hjälper grannar att lita på varandra. Den hålls privat och påverkar bara en mjuk pålitlighetsindikation.",
+    "rate_positive_label": "Gick bra",
+    "rate_positive_hint": "Personen kom och överlämningen fungerade fint.",
+    "rate_no_show_label": "Dök inte upp",
+    "rate_no_show_hint": "Personen kom inte eller avbokade i sista stund.",
+    "rate_skip": "Hoppa över",
+    "rating_thanks_title": "Tack för återkopplingen",
+    "rating_thanks_positive": "Sparat som en lyckad överlämning.",
+    "rating_thanks_no_show": "Sparat som en utebliven träff.",
+    "rating_failed_title": "Kunde inte spara ditt omdöme",
+    "rating_failed_description": "Försök igen om en stund."
   },
   "comments": {
     "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."
@@ -539,7 +549,6 @@
     "last_seen": "Senast aktiv {{time}}",
     "completed_badge": "Avslutad"
   },
-
   "map": {
     "error_initializing": "Fel vid initiering av karta",
     "initializing": "Initierar karta...",
@@ -652,19 +661,7 @@
     "signed_out": "Utloggad",
     "signed_out_description": "Du har loggats ut från ditt konto",
     "error_signing_out": "Fel vid utloggning",
-    "signing_out": "Loggar ut...",
-    "rate_receiver_title": "Hur gick det med {{name}}?",
-    "rate_receiver_description": "Din återkoppling hjälper grannar att lita på varandra. Den hålls privat och påverkar bara en mjuk pålitlighetsindikation.",
-    "rate_positive_label": "Gick bra",
-    "rate_positive_hint": "Personen kom och överlämningen fungerade fint.",
-    "rate_no_show_label": "Dök inte upp",
-    "rate_no_show_hint": "Personen kom inte eller avbokade i sista stund.",
-    "rate_skip": "Hoppa över",
-    "rating_thanks_title": "Tack för återkopplingen",
-    "rating_thanks_positive": "Sparat som en lyckad överlämning.",
-    "rating_thanks_no_show": "Sparat som en utebliven träff.",
-    "rating_failed_title": "Kunde inte spara ditt omdöme",
-    "rating_failed_description": "Försök igen om en stund."
+    "signing_out": "Loggar ut..."
   },
   "notifications": {
     "is_interested_in_your_pif": "är intresserad av din pif",
