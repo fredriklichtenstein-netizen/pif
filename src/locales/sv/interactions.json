@@ -523,7 +523,16 @@
     "rating_thanks_positive": "Sparat som en lyckad överlämning.",
     "rating_thanks_no_show": "Sparat som en utebliven träff.",
     "rating_failed_title": "Kunde inte spara ditt omdöme",
-    "rating_failed_description": "Försök igen om en stund."
+    "rating_failed_description": "Försök igen om en stund.",
+    "close": "Stäng",
+    "expand_image": "Förstora bild",
+    "filter_all": "Alla",
+    "filter_unread": "Olästa",
+    "go_to_image": "Gå till bild {{n}}",
+    "image_viewer": "Bildvisare",
+    "interest_error": "Kunde inte uppdatera intresse. Försök igen.",
+    "no_unread_notifications": "Inga olästa aviseringar.",
+    "user": "Användare"
   },
   "comments": {
     "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."

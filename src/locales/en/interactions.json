@@ -523,7 +523,16 @@
     "rating_thanks_positive": "Recorded as a positive handover.",
     "rating_thanks_no_show": "Recorded as a no-show.",
     "rating_failed_title": "Couldn't save your rating",
-    "rating_failed_description": "Please try again in a moment."
+    "rating_failed_description": "Please try again in a moment.",
+    "close": "Close",
+    "expand_image": "Expand image",
+    "filter_all": "All",
+    "filter_unread": "Unread",
+    "go_to_image": "Go to image {{n}}",
+    "image_viewer": "Image viewer",
+    "interest_error": "Could not update interest. Please try again.",
+    "no_unread_notifications": "No unread notifications.",
+    "user": "User"
   },
   "comments": {
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."
