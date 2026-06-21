@@ -53,20 +53,11 @@ export async function submitRating({
   const itemIdNum =
     typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
 
-  if (helperId) {
-    const { error } = await (supabase as any).rpc("submit_helper_rating", {
-      p_item_id: itemIdNum,
-      p_helper_id: helperId,
-      p_outcome: outcome,
-      p_note: note ?? null,
-    });
-    if (error) {
-      console.error("submit_helper_rating failed", error);
-      return { ok: false, error: error.message };
-    }
-    return { ok: true };
-  }
-
+  // Note: submit_helper_rating does not exist in the database.
+  // Both pif and wish ratings go through submit_rating, which resolves
+  // the ratee via the interests table. helperId is accepted for API
+  // compatibility but not forwarded — the RPC infers the ratee.
+  void helperId;
   const { error } = await (supabase as any).rpc("submit_rating", {
     p_item_id: itemIdNum,
     p_outcome: outcome,
