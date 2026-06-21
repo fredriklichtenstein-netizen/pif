@@ -304,13 +304,13 @@ export function InterestSelectionList({
     try {
       const { data, error: rerr } = await (supabase
         .from("ratings") as any)
-        .select("rated_user_id")
+        .select("ratee_id")
         .eq("item_id", numericItemId)
         .eq("rater_id", currentUserId);
       if (rerr) throw rerr;
       const set = new Set<string>();
-      for (const row of (data || []) as Array<{ rated_user_id: string }>) {
-        set.add(row.rated_user_id);
+      for (const row of (data || []) as Array<{ ratee_id: string }>) {
+        set.add(row.ratee_id);
       }
       setRatedHelperIds(set);
     } catch (e) {
