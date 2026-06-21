@@ -15,6 +15,7 @@ import { PifferRatingDialog } from "@/components/profile/completion/PifferRating
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
+import { usePifCompletion } from "@/hooks/usePifCompletion";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -34,12 +35,30 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     demoRateeId?: string;
   } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  // Receiver + conversation are resolved lazily once the post is loaded so we
+  // can route "Markera som uppfylld" through the shared confirm_pif_handoff
+  // flow used by the messaging UI (single source of truth).
+  const [receiverId, setReceiverId] = useState<string | null>(null);
+  const [receiverName, setReceiverName] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  // Tracks that the current user just clicked "Markera som uppfylld" so we
+  // know to open the rating dialog the moment pif_status flips to
+  // 'completed' (either synchronously, when the receiver had already
+  // confirmed, or via realtime when they confirm afterwards).
+  const [awaitingCompletion, setAwaitingCompletion] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user } = useGlobalAuth();
 
   const { markAsPiffed: demoMarkAsPiffed, getStatus } = useDemoCompletionStore();
   const { getSelectedUser } = useDemoSelectionsStore();
+
+  const completion = usePifCompletion(
+    conversationId,
+    post?.id ?? null,
+    user?.id ?? null,
+    receiverId,
+  );
 
   const formatFromRow = (data: any) => ({
     ...data,
@@ -104,11 +123,62 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       });
   }, [open, postId]);
 
+  // Resolve the selected receiver + conversation for this item so we can
+  // hook into the messaging-side completion flow. Real-mode only.
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (!open || !post?.id || !user?.id) return;
+    if (post.user_id && post.user_id !== user.id) return; // viewer is not the piffer
+    let cancelled = false;
+    (async () => {
+      const { data: selectedInterest } = await (supabase
+        .from("interests") as any)
+        .select("user_id, profiles:user_id(first_name)")
+        .eq("item_id", post.id)
+        .eq("status", "selected")
+        .maybeSingle();
+      if (cancelled) return;
+      const selUserId: string | null = selectedInterest?.user_id ?? null;
+      const selName: string | null =
+        (selectedInterest as any)?.profiles?.first_name ?? null;
+      setReceiverId(selUserId);
+      setReceiverName(selName);
+      if (!selUserId) {
+        setConversationId(null);
+        return;
+      }
+      const { data: conv } = await (supabase
+        .from("conversations") as any)
+        .select("id")
+        .eq("item_id", post.id)
+        .or(
+          `and(user1_id.eq.${user.id},user2_id.eq.${selUserId}),and(user1_id.eq.${selUserId},user2_id.eq.${user.id})`
+        )
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      setConversationId(conv?.id ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [open, post?.id, post?.user_id, user?.id]);
+
+  // Once both parties have confirmed (pif_status === 'completed'), open the
+  // rating dialog — but only for the click that just initiated this flow.
+  useEffect(() => {
+    if (!awaitingCompletion) return;
+    if (completion.pifStatus !== "completed") return;
+    setAwaitingCompletion(false);
+    setRatingContext({ receiverName: receiverName || t('common.user') });
+    setRatingOpen(true);
+    setPost((prev: any) => (prev ? { ...prev, status: "completed" } : prev));
+    if (onStatusChange) onStatusChange();
+  }, [awaitingCompletion, completion.pifStatus, receiverName, onStatusChange, t]);
+
   const handleMarkAsPiffed = async () => {
     if (!post) return;
-    
+
     setIsUpdating(true);
-    
+
     try {
       if (DEMO_MODE) {
         const selectedReceiverId = getSelectedUser(post.id);
@@ -135,72 +205,36 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
         }
         return;
       }
-      
-      const { error } = await supabase
-        .from("items")
-        .update({ pif_status: "piffed" })
-        .eq("id", post.id);
-        
-      if (error) throw error;
-      
-      const { data: interests } = await supabase
-        .from("interests")
-        .select("user_id, status")
-        .eq("item_id", post.id)
-        .neq("status", "selected");
-        
-      if (interests && interests.length > 0) {
-        const { data: selectedInterest } = await supabase
-          .from("interests")
-          .select("profiles:user_id(first_name)")
-          .eq("item_id", post.id)
-          .eq("status", "selected")
-          .single();
-          
-        const sel: any = selectedInterest?.profiles;
-        const receiverName = sel?.first_name || (Array.isArray(sel) ? sel?.[0]?.first_name : undefined) || t('common.user');
-        
-        for (const interest of interests) {
-          await supabase.rpc("create_notification", {
-            p_user_id: interest.user_id,
-            p_type: "pif_status",
-            p_payload: {
-              title: t('ui.pif_given_away'),
-              content: t('ui.pif_given_to', { title: post.title, name: receiverName }),
-              reference_id: post.id.toString(),
-              reference_type: "item",
-              action_url: `/feed?post=${post.id}`
-            }
-          });
-        }
+
+      // Real mode — reuse the same handoff RPC the messaging banner uses.
+      const result = await completion.confirmHandoff("piffer");
+      if (!result.ok) {
+        toast({
+          title: t('common.error'),
+          description: t('ui.failed_mark_piffed'),
+          variant: "destructive",
+        });
+        return;
       }
-      
-      toast({
-        title: t('ui.done'),
-        description: t('ui.pif_marked_piffed'),
-      });
 
-      setPost({ ...post, status: "piffed" });
-
+      setPost((prev: any) => (prev ? { ...prev, status: "piffed" } : prev));
       if (onStatusChange) onStatusChange();
-
       setMarkAsPiffedOpen(false);
 
-      // Prompt the piffer to rate the selected receiver. The RPC infers the
-      // ratee from the 'selected' interest on this item, so no ids needed.
-      const { data: selected } = await supabase
-        .from("interests")
-        .select("profiles:user_id(first_name)")
-        .eq("item_id", post.id)
-        .eq("status", "selected")
-        .maybeSingle();
-      if (selected) {
-        setRatingContext({
-          receiverName: (selected as any)?.profiles?.first_name || t('common.user'),
+      // If the receiver had already confirmed receipt, the RPC will have
+      // flipped pif_status to 'completed' synchronously and the effect
+      // above will open the rating dialog. Otherwise, surface a "waiting"
+      // toast that mirrors the messaging-side system message.
+      if (completion.receiverConfirmed) {
+        setAwaitingCompletion(true);
+      } else {
+        setAwaitingCompletion(true);
+        toast({
+          title: t('ui.done'),
+          description:
+            "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
         });
-        setRatingOpen(true);
       }
-
     } catch (error) {
       console.error("Error marking post as piffed:", error);
       toast({
@@ -212,6 +246,20 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       setIsUpdating(false);
     }
   };
+
+  // In real mode, only the piffer who has not yet confirmed should see the
+  // CTA — the messaging banner takes over once they have, and the rating
+  // dialog opens automatically when the receiver also confirms.
+  const showMarkAsPiffedCta = (() => {
+    if (DEMO_MODE) {
+      return post && post.status !== "piffed" && post.status !== "completed" && post.status !== "archived";
+    }
+    if (!post) return false;
+    if (post.user_id && user?.id && post.user_id !== user.id) return false;
+    if (post.status === "completed" || post.status === "archived") return false;
+    if (completion.pifferConfirmed) return false;
+    return true;
+  })();
 
   return (
     <>
@@ -234,7 +282,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               category={post.category}
               condition={post.condition}
               postedBy={post.postedBy}
-              markAsPiffedAction={post.status !== "piffed" && post.status !== "completed" && post.status !== "archived" ? () => setMarkAsPiffedOpen(true) : undefined}
+              markAsPiffedAction={showMarkAsPiffedCta ? () => setMarkAsPiffedOpen(true) : undefined}
             />
           ) : (
             <div className="p-8 text-center">{t('ui.post_not_found')}</div>
