@@ -310,6 +310,10 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     <AwaitingConfirmationPopover
       itemType={itemTypeForSlot}
       receiverConfirmed={completion.receiverConfirmed}
+      onHardComplete={() => {
+        setRatingContext({ receiverName: receiverName || t('common.user') });
+        setRatingOpen(true);
+      }}
       onUndo={async () => {
         const res = await completion.undoConfirmation("piffer");
         if (!res.ok) {
