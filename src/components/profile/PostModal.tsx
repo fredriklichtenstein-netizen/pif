@@ -16,6 +16,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
+import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -288,6 +289,40 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     return true;
   })();
 
+  // STATE 2 — awaiting: piffer has confirmed handoff but the receiver
+  // hasn't. The card replaces its CTA with an AwaitingConfirmationPopover
+  // so the owner sees the same progress the messaging banner shows.
+  const showAwaitingSlot =
+    !DEMO_MODE &&
+    !!post &&
+    !showMarkAsPiffedCta &&
+    completion.pifferConfirmed &&
+    completion.pifStatus !== "completed" &&
+    completion.pifStatus !== "archived" &&
+    (!post.user_id || !user?.id || post.user_id === user.id);
+
+  const itemTypeForSlot: "offer" | "request" =
+    String(post?.item_type || "offer").toLowerCase() === "request"
+      ? "request"
+      : "offer";
+
+  const awaitingSlot = showAwaitingSlot ? (
+    <AwaitingConfirmationPopover
+      itemType={itemTypeForSlot}
+      receiverConfirmed={completion.receiverConfirmed}
+      onUndo={async () => {
+        const res = await completion.undoConfirmation("piffer");
+        if (!res.ok) {
+          toast({
+            title: t("common.error"),
+            description: t("ui.failed_mark_piffed"),
+            variant: "destructive",
+          });
+        }
+      }}
+    />
+  ) : undefined;
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -299,7 +334,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           {loading ? (
             <div className="p-8 text-center">{t('ui.loading_info')}</div>
           ) : post ? (
-            <ItemCard 
+            <ItemCard
               id={post.id}
               title={post.title}
               description={post.description}
@@ -310,6 +345,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               condition={post.condition}
               postedBy={post.postedBy}
               markAsPiffedAction={showMarkAsPiffedCta ? () => setMarkAsPiffedOpen(true) : undefined}
+              awaitingConfirmationSlot={awaitingSlot}
             />
           ) : (
             <div className="p-8 text-center">{t('ui.post_not_found')}</div>

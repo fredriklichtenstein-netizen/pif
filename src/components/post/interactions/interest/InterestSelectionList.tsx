@@ -28,6 +28,7 @@ import {
 import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
 import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
+import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -868,22 +869,41 @@ export function InterestSelectionList({
                         </span>
                       )}
                       {isOwner && isWish && !ratedHelperIds.has(r.user_id) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={wishGrantingHelperId !== null}
-                          className="text-xs py-1 px-2 h-auto whitespace-nowrap text-amber-700 border-amber-200 hover:bg-amber-50"
-                          onClick={() => handleMarkWishGranted(r)}
-                          aria-label={t(
-                            "interactions.mark_wish_granted_btn",
-                            "Mark as granted"
-                          )}
-                        >
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          {wishGrantingHelperId === r.user_id
-                            ? t("interactions.loading")
-                            : t("interactions.mark_wish_granted_btn", "Mark as granted")}
-                        </Button>
+                        completion.pifferConfirmed &&
+                        completion.pifStatus !== "completed" &&
+                        completion.pifStatus !== "archived" ? (
+                          <AwaitingConfirmationPopover
+                            itemType="request"
+                            receiverConfirmed={completion.receiverConfirmed}
+                            onUndo={async () => {
+                              const res = await completion.undoConfirmation("piffer");
+                              if (!res.ok) {
+                                toast({
+                                  variant: "destructive",
+                                  title: t("interactions.error_title"),
+                                  description: t("ui.failed_mark_piffed"),
+                                });
+                              }
+                            }}
+                          />
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={wishGrantingHelperId !== null}
+                            className="text-xs py-1 px-2 h-auto whitespace-nowrap text-amber-700 border-amber-200 hover:bg-amber-50"
+                            onClick={() => handleMarkWishGranted(r)}
+                            aria-label={t(
+                              "interactions.mark_wish_granted_btn",
+                              "Mark as granted"
+                            )}
+                          >
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {wishGrantingHelperId === r.user_id
+                              ? t("interactions.loading")
+                              : t("interactions.mark_wish_granted_btn", "Mark as granted")}
+                          </Button>
+                        )
                       )}
                       {isOwner && isWish && (
                         <Button
