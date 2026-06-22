@@ -26,7 +26,14 @@ const normalizeItemType = (itemType: string): 'offer' | 'request' => {
   return 'offer';
 };
 
-const isArchivedRow = (post: any) => post?.status === 'archived' || post?.pif_status === 'archived' || !!post?.archived_at;
+// Treat both `archived` and `completed` as "off the active feed". Completed
+// items live in the Archived/Completed tab; they should never appear in the
+// main neighborhood feed once the handoff is confirmed.
+const isArchivedOrCompletedStatus = (s: any) => s === 'archived' || s === 'completed';
+const isArchivedRow = (post: any) =>
+  isArchivedOrCompletedStatus(post?.status) ||
+  isArchivedOrCompletedStatus(post?.pif_status) ||
+  !!post?.archived_at;
 
 const applyArchiveBoundary = (posts: any[], includeArchived: boolean) =>
   includeArchived ? posts.filter(isArchivedRow) : posts.filter((post) => !isArchivedRow(post));
