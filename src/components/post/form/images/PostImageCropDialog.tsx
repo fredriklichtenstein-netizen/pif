@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -59,6 +59,12 @@ export function PostImageCropDialog({
               </span>
             )}
           </DialogTitle>
+          <DialogDescription>
+            {t("post.crop_image_description", {
+              defaultValue:
+                "Dra bilden för att justera positionen och använd reglaget för att zooma in eller ut.",
+            })}
+          </DialogDescription>
         </DialogHeader>
 
         {image && (

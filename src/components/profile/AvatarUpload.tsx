@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Upload, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
 import { getCroppedImg, normalizeImageOrientation } from "@/utils/image";
@@ -95,6 +95,17 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t('interactions.edit_profile_picture')}</DialogTitle>
+            <DialogDescription>
+              {tempImage
+                ? t('interactions.edit_profile_picture_description', {
+                    defaultValue:
+                      'Dra bilden för att justera positionen och använd reglaget för att zooma in eller ut.',
+                  })
+                : t('interactions.upload_profile_picture_description', {
+                    defaultValue:
+                      'Välj en bild från enheten, ta en ny med kameran, eller redigera din nuvarande profilbild.',
+                  })}
+            </DialogDescription>
           </DialogHeader>
           
           {tempImage ? (
@@ -119,6 +130,12 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t('interactions.profile_picture_options')}</DialogTitle>
+            <DialogDescription>
+              {t('interactions.profile_picture_options_description', {
+                defaultValue:
+                  'Välj en bild från enheten, ta en ny med kameran, eller redigera din nuvarande profilbild.',
+              })}
+            </DialogDescription>
           </DialogHeader>
           <UploadOptions
             onFileSelect={() => {
