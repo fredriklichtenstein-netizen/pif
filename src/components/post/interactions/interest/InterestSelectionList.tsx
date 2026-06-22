@@ -555,18 +555,28 @@ export function InterestSelectionList({
       }
       setWishGrantingHelperId(row.user_id);
       try {
-        console.log("[InterestSelectionList] Markera som uppfylld clicked; calling confirmHandoff", {
+        // Resolve the per-helper conversation BEFORE the RPC so the
+        // system-message fan-out lands in the right thread (the shared
+        // hook was instantiated with conversationId=null because the
+        // wish flow targets one of many possible helpers).
+        const convId = await resolveConversationId(row.user_id);
+        console.log("[InterestSelectionList] Markera som uppfylld clicked; calling confirm_pif_handoff", {
           itemId,
           numericItemId,
           currentUserId: currentUserId ?? null,
           itemOwnerId: itemOwnerId ?? null,
           helperId: row.user_id,
+          conversationId: convId,
           pifferConfirmed: completion.pifferConfirmed,
           receiverConfirmed: completion.receiverConfirmed,
           pifStatus: completion.pifStatus,
         });
-        const result = await completion.confirmHandoff("piffer");
-        if (!result.ok) {
+        const { error: rpcError } = await (supabase.rpc as any)(
+          "confirm_pif_handoff",
+          { p_item_id: numericItemId, p_role: "piffer" },
+        );
+        if (rpcError) {
+          console.error("[InterestSelectionList] confirm_pif_handoff failed", rpcError);
           toast({
             variant: "destructive",
             title: t("interactions.error_title"),
@@ -574,17 +584,56 @@ export function InterestSelectionList({
           });
           return;
         }
+        // Re-read item state to decide which system messages to post.
+        const { data: latestRow } = await (supabase
+          .from("items") as any)
+          .select("receiver_confirmed_receipt")
+          .eq("id", numericItemId)
+          .maybeSingle();
+        const receiverAlreadyConfirmed = !!latestRow?.receiver_confirmed_receipt;
+        if (convId) {
+          if (!receiverAlreadyConfirmed) {
+            await postPifSystemMessage(
+              convId,
+              "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              convId,
+              "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+              { targetUserId: row.user_id },
+            );
+          } else {
+            await postPifSystemMessage(
+              convId,
+              "Du har bekräftat överlämning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              convId,
+              "Piffaren har bekräftat överlämning.",
+              { targetUserId: row.user_id },
+            );
+            await postPifSystemMessage(
+              convId,
+              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+            );
+          }
+        }
         setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
       } finally {
         setWishGrantingHelperId(null);
       }
     },
     [
-      completion,
+      completion.pifferConfirmed,
+      completion.receiverConfirmed,
+      completion.pifStatus,
       currentUserId,
       itemId,
       itemOwnerId,
       numericItemId,
+      resolveConversationId,
       t,
       toast,
     ],
