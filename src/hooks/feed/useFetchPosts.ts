@@ -142,7 +142,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
           description: item.description,
           images: item.images,
           location: item.location,
-          coordinates: extractCoordinates(item.coordinates),
+          coordinates: extractCoordinates((item as any).coordinates_json),
           category: item.category,
           condition: item.condition,
           measurements: item.measurements,

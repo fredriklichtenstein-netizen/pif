@@ -94,10 +94,8 @@ export function usePostFormSubmission(initialData?: any) {
     setIsSubmitting(true);
 
     try {
-      let coordinatesForDB: string | null = null;
       let coordinatesJsonForDB: { lng: number; lat: number } | null = null;
       if (formData.coordinates && formData.coordinates.lat !== null && formData.coordinates.lng !== null) {
-        coordinatesForDB = `(${formData.coordinates.lng},${formData.coordinates.lat})`;
         coordinatesJsonForDB = {
           lng: formData.coordinates.lng,
           lat: formData.coordinates.lat,
@@ -112,7 +110,6 @@ export function usePostFormSubmission(initialData?: any) {
         item_type: formData.item_type,
         pif_status: 'active',
         user_id: user.id,
-        coordinates: coordinatesForDB,
         coordinates_json: coordinatesJsonForDB,
         location: formData.location,
         images: formData.images,

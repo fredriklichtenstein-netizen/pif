@@ -109,15 +109,11 @@ export function useConversationDetails(conversationId: string | null) {
               images: data.item.images || [],
               location: data.item.location || "",
               coordinates: (() => {
-                if (!data.item.coordinates) return null;
-                try {
-                  return typeof data.item.coordinates === 'string' ? 
-                    parseCoordinatesFromDB(data.item.coordinates) : 
-                    (data.item.coordinates && typeof data.item.coordinates === 'object' && 'lat' in data.item.coordinates && 'lng' in data.item.coordinates) ?
-                    data.item.coordinates as { lat: number; lng: number } : null;
-                } catch {
-                  return null;
+                const cj: any = (data.item as any).coordinates_json;
+                if (cj && typeof cj === 'object' && 'lat' in cj && 'lng' in cj) {
+                  return { lat: Number(cj.lat), lng: Number(cj.lng) };
                 }
+                return null;
               })(),
               postedBy: {
                 id: data.item.user_id,
@@ -162,15 +158,11 @@ export function useConversationDetails(conversationId: string | null) {
               images: data.item.images || [],
               location: data.item.location || "",
               coordinates: (() => {
-                if (!data.item.coordinates) return null;
-                try {
-                  return typeof data.item.coordinates === 'string' ? 
-                    parseCoordinatesFromDB(data.item.coordinates) : 
-                    (data.item.coordinates && typeof data.item.coordinates === 'object' && 'lat' in data.item.coordinates && 'lng' in data.item.coordinates) ?
-                    data.item.coordinates as { lat: number; lng: number } : null;
-                } catch {
-                  return null;
+                const cj: any = (data.item as any).coordinates_json;
+                if (cj && typeof cj === 'object' && 'lat' in cj && 'lng' in cj) {
+                  return { lat: Number(cj.lat), lng: Number(cj.lng) };
                 }
+                return null;
               })(),
               postedBy: {
                 id: data.item.user_id,

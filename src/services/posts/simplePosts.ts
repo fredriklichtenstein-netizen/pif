@@ -24,8 +24,9 @@ export const getPosts = async (): Promise<Post[]> => {
     }
     // Transform data to Post format
     const transformedData: Post[] = data.map(item => {
-      // Parse coordinates using simple parser
-      const coordinates = parseCoordinates(item.coordinates);
+      // Coordinates come from the jsonb {lng,lat} column.
+      const coordinates = parseCoordinates((item as any).coordinates_json);
+      
       
       // Safely convert measurements to Record<string, string>
       let measurements: Record<string, string> = {};

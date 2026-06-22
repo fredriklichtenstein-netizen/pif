@@ -96,15 +96,11 @@ export const getPosts = async (): Promise<Post[]> => {
 
     // Transform data to match the Post type
     const transformedData = data.map(item => {
-      // Parse PostGIS "(lng,lat)" text into the app's coordinate object shape.
+      // Coordinates live in the jsonb {lng,lat} column.
       let parsedCoordinates = null;
-      if (item.coordinates) {
-        try {
-          const coordsStr = String(item.coordinates);
-          parsedCoordinates = parseCoordinatesFromDB(coordsStr);
-        } catch (err) {
-          console.error("Error parsing coordinates:", err, item.coordinates);
-        }
+      const cj = (item as any).coordinates_json;
+      if (cj && typeof cj === 'object' && 'lng' in cj && 'lat' in cj) {
+        parsedCoordinates = { lng: Number(cj.lng), lat: Number(cj.lat) };
       }
 
       // Get counts either from interactions table or individual counts

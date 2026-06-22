@@ -30,7 +30,7 @@ export const usePifAddress = () => {
     try {
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("address, location, location_json")
+        .select("address, location_json")
         .eq("id", user.id)
         .single();
 
@@ -39,9 +39,7 @@ export const usePifAddress = () => {
         return { address: null, coordinates: null };
       }
 
-      const locSource =
-        (profile as any)?.location_json ?? (profile as any)?.location;
-      const coords = parseCoordinates(locSource);
+      const coords = parseCoordinates((profile as any)?.location_json);
       const result: PifAddressData = {
         address: profile?.address || null,
         coordinates: coords,

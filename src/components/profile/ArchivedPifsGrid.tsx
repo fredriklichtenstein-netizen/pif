@@ -78,9 +78,9 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
       const transformedData = data?.map((item) => {
         let coordinates;
-        if (item.coordinates) {
-          try { coordinates = parseCoordinatesFromDB(String(item.coordinates)); }
-          catch (err) { console.error("Failed to parse coordinates:", err); }
+        const cj: any = (item as any).coordinates_json;
+        if (cj && typeof cj === 'object' && 'lat' in cj && 'lng' in cj) {
+          coordinates = { lat: Number(cj.lat), lng: Number(cj.lng) };
         }
         return {
           id: item.id,
