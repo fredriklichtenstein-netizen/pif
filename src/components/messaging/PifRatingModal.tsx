@@ -64,7 +64,7 @@ export function PifRatingModal({
       const res = await onSubmit(rating, comment.trim() || undefined);
       setSubmitting(false);
       if (!res.ok) return;
-      if (rating <= 2) {
+      if (rating <= 2 && onLowRatingReport) {
         setAskReport(true);
       } else {
         onOpenChange(false);
