@@ -27,6 +27,7 @@ import {
 } from "@/stores/demoSelectionsStore";
 import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
+import { PifRatingModal } from "@/components/messaging/PifRatingModal";
 import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
 import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
 
