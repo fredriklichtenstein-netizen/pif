@@ -13,6 +13,7 @@ import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { LanguageSelector } from "@/components/common/LanguageSelector";
+import { sanitizeFilename } from "@/utils/sanitizeFilename";
 
 export default function CreateProfile() {
   const { t } = useTranslation();
