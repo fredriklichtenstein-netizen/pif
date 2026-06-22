@@ -1,4 +1,4 @@
-
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Check } from "lucide-react";
 import { useTranslation } from 'react-i18next';
@@ -9,13 +9,22 @@ interface OwnerActionsProps {
   handleDelete: () => void;
   isDeleting: boolean;
   markAsPiffedAction?: () => void;
+  /**
+   * Sibling slot occupying the same trailing position as the
+   * "Markera som uppfylld" CTA. Used to render the
+   * AwaitingConfirmationPopover once the owner has already confirmed
+   * handoff so the card itself reflects the progress that the
+   * messaging UI already shows. The owner sees EITHER the CTA OR the
+   * slot — never both.
+   */
+  awaitingConfirmationSlot?: ReactNode;
 }
 
-export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, markAsPiffedAction }: OwnerActionsProps) {
+export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, markAsPiffedAction, awaitingConfirmationSlot }: OwnerActionsProps) {
   const { t } = useTranslation();
-  
+
   if (!isOwner) return null;
-  
+
   return (
     <div className="mt-4 flex gap-2">
       <Button
@@ -37,7 +46,7 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
         <Trash2 className="h-4 w-4" />
         {isDeleting ? t('profile.deleting') : t('profile.delete')}
       </Button>
-      {markAsPiffedAction && (
+      {markAsPiffedAction ? (
         <Button
           variant="outline"
           size="sm"
@@ -47,7 +56,9 @@ export function OwnerActions({ isOwner, handleEdit, handleDelete, isDeleting, ma
           <Check className="h-4 w-4" />
           {t('profile.mark_as_piffed')}
         </Button>
-      )}
+      ) : awaitingConfirmationSlot ? (
+        <div className="ml-auto">{awaitingConfirmationSlot}</div>
+      ) : null}
     </div>
   );
 }
