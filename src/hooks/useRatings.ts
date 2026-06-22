@@ -47,10 +47,10 @@ export function useRatings(userId?: string) {
         .from as any)('ratings')
         .insert({
           rater_id: user.id,
-          rated_user_id: ratedUserId,
+          ratee_id: ratedUserId,
           item_id: itemId,
           rating,
-          comment,
+          private_note: comment,
         });
       
       if (error) throw error;
