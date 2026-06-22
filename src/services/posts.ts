@@ -37,7 +37,7 @@ export const getPosts = async (): Promise<Post[]> => {
     const { data, error } = await supabase
       .from('items')
       .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
-      .or('pif_status.is.null,pif_status.neq.archived')
+      .or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)')
       .is('archived_at', null)
       .order('created_at', { ascending: false })
       .limit(20) as any;
