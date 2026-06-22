@@ -153,7 +153,7 @@ export function PifRatingModal({
                 variant="destructive"
                 onClick={() => {
                   onOpenChange(false);
-                  onLowRatingReport();
+                  onLowRatingReport?.();
                 }}
               >
                 Ja, rapportera
