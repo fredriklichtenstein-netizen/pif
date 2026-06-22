@@ -96,6 +96,11 @@ export function InterestSelectionList({
     helperId: string;
     helperName: string;
   } | null>(null);
+  /** Helper being force-completed via the "Markera som klar ändå" override. */
+  const [forceHelperRating, setForceHelperRating] = useState<{
+    helperId: string;
+    helperName: string;
+  } | null>(null);
   /** Helper user_ids the wisher has already rated for this item. */
   const [ratedHelperIds, setRatedHelperIds] = useState<Set<string>>(new Set());
   const [wishGrantingHelperId, setWishGrantingHelperId] = useState<string | null>(null);
