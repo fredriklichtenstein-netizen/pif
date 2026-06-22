@@ -882,7 +882,13 @@ export function InterestSelectionList({
                             itemType="request"
                             receiverConfirmed={completion.receiverConfirmed}
                             onHardComplete={() => {
-                              setRatingHelper({ helperId: r.user_id, helperName: displayName(r) });
+                              // Force-complete: use complete_pif_with_rating
+                              // (same as messaging banner). submit_rating
+                              // can't run here — pif_status is still 'active'.
+                              setForceHelperRating({
+                                helperId: r.user_id,
+                                helperName: displayName(r),
+                              });
                             }}
                             onUndo={async () => {
                               const res = await completion.undoConfirmation("piffer");
