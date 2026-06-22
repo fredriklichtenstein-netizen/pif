@@ -57,7 +57,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
         };
         setProfile(next);
         setEnriched(next);
-        const coords = parseCoordinates((data as any).location);
+        const coords = parseCoordinates((data as any).location_json);
         if (coords) setCoordinates({ lng: coords.lng, lat: coords.lat });
       } catch {
         /* silent — fall back to stub */
