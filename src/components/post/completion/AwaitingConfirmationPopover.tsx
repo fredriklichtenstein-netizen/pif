@@ -106,21 +106,23 @@ export function AwaitingConfirmationPopover({
           <p className="text-xs text-muted-foreground">{subline}</p>
         </div>
         <div className="flex flex-col gap-2">
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => {
-              setOpen(false);
-              onHardComplete();
-            }}
-          >
-            {receiverConfirmed
-              ? t("interactions.awaiting_finish_btn", "Slutför och betygsätt")
-              : t(
-                  "interactions.awaiting_hard_complete_btn",
-                  "Markera som klar ändå",
-                )}
-          </Button>
+          {onHardComplete && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setOpen(false);
+                onHardComplete();
+              }}
+            >
+              {receiverConfirmed
+                ? t("interactions.awaiting_finish_btn", "Slutför och betygsätt")
+                : t(
+                    "interactions.awaiting_hard_complete_btn",
+                    "Markera som klar ändå",
+                  )}
+            </Button>
+          )}
           {onUndo && (
             <Button
               type="button"
