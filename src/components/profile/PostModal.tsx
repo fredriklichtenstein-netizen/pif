@@ -12,6 +12,7 @@ import { useDemoCompletionStore } from "@/stores/demoCompletionStore";
 import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
 import { useTranslation } from "react-i18next";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
+import { PifRatingModal } from "@/components/messaging/PifRatingModal";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
