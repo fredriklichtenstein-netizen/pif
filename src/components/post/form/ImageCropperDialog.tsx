@@ -1,7 +1,14 @@
 import React from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { ImageCropper } from "@/components/profile/ImageCropper";
 import { getCroppedImg } from "@/utils/image";
+import { useTranslation } from "react-i18next";
 
 interface ImageCropperDialogProps {
   cropImage: string | null;
@@ -10,15 +17,17 @@ interface ImageCropperDialogProps {
   onCancel: () => void;
 }
 
-export function ImageCropperDialog({ 
+export function ImageCropperDialog({
   cropImage,
   selectedImageIndex,
   onCropComplete,
-  onCancel
+  onCancel,
 }: ImageCropperDialogProps) {
+  const { t } = useTranslation();
+
   const handleCropComplete = async (croppedAreaPixels: any) => {
     if (!cropImage) return;
-    
+
     const croppedImageFile = await getCroppedImg(cropImage, croppedAreaPixels, 'rect');
     if (!croppedImageFile) return;
 
@@ -29,6 +38,17 @@ export function ImageCropperDialog({
   return (
     <Dialog open={!!cropImage} onOpenChange={() => onCancel()}>
       <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>
+            {t("post.crop_image", { defaultValue: "Beskär bild" })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("post.crop_image_description", {
+              defaultValue:
+                "Dra bilden för att justera positionen och använd reglaget för att zooma in eller ut.",
+            })}
+          </DialogDescription>
+        </DialogHeader>
         {cropImage && (
           <ImageCropper
             image={cropImage}
