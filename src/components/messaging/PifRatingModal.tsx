@@ -117,13 +117,15 @@ export function PifRatingModal({
             />
 
             <DialogFooter className="gap-2 sm:gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-                disabled={submitting}
-              >
-                Hoppa över
-              </Button>
+              {allowSkip && (
+                <Button
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                  disabled={submitting}
+                >
+                  Hoppa över
+                </Button>
+              )}
               <Button
                 onClick={handleSubmit}
                 disabled={rating < 1 || submitting}
