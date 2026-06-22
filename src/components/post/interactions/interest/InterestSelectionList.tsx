@@ -527,6 +527,50 @@ export function InterestSelectionList({
     },
     [itemOwnerId, navigate, numericItemId, setShowPopup]
   );
+
+  const handleMarkWishGranted = useCallback(
+    async (row: InterestRow) => {
+      if (DEMO_MODE) {
+        setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
+        return;
+      }
+      setWishGrantingHelperId(row.user_id);
+      try {
+        console.log("[InterestSelectionList] Markera som uppfylld clicked; calling confirmHandoff", {
+          itemId,
+          numericItemId,
+          currentUserId: currentUserId ?? null,
+          itemOwnerId: itemOwnerId ?? null,
+          helperId: row.user_id,
+          pifferConfirmed: completion.pifferConfirmed,
+          receiverConfirmed: completion.receiverConfirmed,
+          pifStatus: completion.pifStatus,
+        });
+        const result = await completion.confirmHandoff("piffer");
+        if (!result.ok) {
+          toast({
+            variant: "destructive",
+            title: t("interactions.error_title"),
+            description: t("ui.failed_mark_piffed"),
+          });
+          return;
+        }
+        setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
+      } finally {
+        setWishGrantingHelperId(null);
+      }
+    },
+    [
+      completion,
+      currentUserId,
+      itemId,
+      itemOwnerId,
+      numericItemId,
+      t,
+      toast,
+    ],
+  );
+
   const handleWithdraw = async () => {
     const targetId = withdrawId;
     setWithdrawId(null);
