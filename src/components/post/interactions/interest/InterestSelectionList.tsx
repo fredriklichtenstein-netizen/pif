@@ -27,7 +27,7 @@ import {
 } from "@/stores/demoSelectionsStore";
 import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
-import { usePifCompletion } from "@/hooks/usePifCompletion";
+import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
 
 interface InterestSelectionListProps {
   itemId: string | number;
