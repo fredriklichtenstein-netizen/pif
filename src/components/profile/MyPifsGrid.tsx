@@ -26,7 +26,12 @@ export function MyPifsGrid({ userId }: { userId: string }) {
           .from("items")
           .select("*") as any)
           .eq("user_id", uid)
-          .not("pif_status", "in", "(archived,completed)")
+          // Use the same predicate shape as the rest of the Group A query
+          // sites. The earlier `.not("pif_status","in","(archived,completed)")`
+          // form is the odd one out and has a NULL-handling quirk in
+          // PostgREST (`NULL NOT IN (...)` → NULL, not true) that can let
+          // rows slip through. The OR form below is the verified pattern.
+          .or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)')
           .order("created_at", { ascending: false });
         return { data: res.data, error: res.error };
       },
