@@ -124,11 +124,11 @@ export function useFetchPosts(options = { includeArchived: false }) {
       
       if (options.includeArchived) {
         query = query
-          .eq('pif_status', 'archived')
+          .in('pif_status', ['archived', 'completed'])
           .order('archived_at', { ascending: false, nullsFirst: false });
       } else {
         query = query
-          .or('pif_status.is.null,pif_status.neq.archived')
+          .or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)')
           .is('archived_at', null)
           .order('created_at', { ascending: false });
       }
