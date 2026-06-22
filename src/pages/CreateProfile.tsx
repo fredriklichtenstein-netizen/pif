@@ -123,7 +123,6 @@ export default function CreateProfile() {
         avatar_url: avatarPath,
         date_of_birth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : null,
         onboarding_completed: true,
-        location: location,
         location_json: locationJson,
         city: city,
       };

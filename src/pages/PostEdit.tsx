@@ -46,25 +46,12 @@ function PostEdit() {
           throw new Error("You don't have permission to edit this item");
         }
 
-        // Prefer the new jsonb {lng,lat} column; fall back to the legacy
-        // `coordinates` column (jsonb-string "(lng,lat)" or PostGIS object).
+        // Coordinates live in the jsonb {lng,lat} column.
         // usePostFormState expects { x: lng, y: lat }.
         let normalizedCoordinates: { x: number; y: number } | null = null;
         const rawJson = (data as any).coordinates_json;
-        const rawCoords = (data as any).coordinates;
         if (rawJson && typeof rawJson === "object" && "lng" in rawJson && "lat" in rawJson) {
           normalizedCoordinates = { x: Number(rawJson.lng), y: Number(rawJson.lat) };
-        } else if (typeof rawCoords === "string") {
-          const match = rawCoords.match(/^\(?\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)?$/);
-          if (match) {
-            normalizedCoordinates = { x: parseFloat(match[1]), y: parseFloat(match[2]) };
-          }
-        } else if (rawCoords && typeof rawCoords === "object") {
-          if ("x" in rawCoords && "y" in rawCoords) {
-            normalizedCoordinates = { x: Number(rawCoords.x), y: Number(rawCoords.y) };
-          } else if ("lng" in rawCoords && "lat" in rawCoords) {
-            normalizedCoordinates = { x: Number(rawCoords.lng), y: Number(rawCoords.lat) };
-          }
         }
 
         setItem({ ...data, coordinates: normalizedCoordinates });

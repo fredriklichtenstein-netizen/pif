@@ -116,8 +116,11 @@ export function useItemDetailPage() {
       avatar: profileData?.avatar_url || ""
     };
 
-    // Parse coordinates from the database format to the expected format
-    coordinates = displayItem.coordinates ? parseCoordinatesFromDB(String(displayItem.coordinates)) : undefined;
+    // Coordinates live in the jsonb {lng,lat} column.
+    const cj: any = (displayItem as any).coordinates_json;
+    coordinates = (cj && typeof cj === 'object' && 'lat' in cj && 'lng' in cj)
+      ? { lat: Number(cj.lat), lng: Number(cj.lng) }
+      : undefined;
 
     // Convert measurements from Json type to Record<string, string>
     if (displayItem.measurements && typeof displayItem.measurements === 'object' && displayItem.measurements !== null) {
