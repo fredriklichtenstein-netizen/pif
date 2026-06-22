@@ -15,7 +15,15 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (rating: number, comment?: string) => Promise<{ ok: boolean }>;
-  onLowRatingReport: () => void;
+  /** Optional. When omitted, low-rating values close the modal silently. */
+  onLowRatingReport?: () => void;
+  /**
+   * When false, hides "Hoppa över". The force-complete override path
+   * (Markera som klar ändå) requires a rating because
+   * complete_pif_with_rating has no skip variant — skipping there would
+   * leave the item active with no completion.
+   */
+  allowSkip?: boolean;
 }
 
 /**
@@ -27,6 +35,7 @@ export function PifRatingModal({
   onOpenChange,
   onSubmit,
   onLowRatingReport,
+  allowSkip = true,
 }: Props) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
