@@ -34,8 +34,8 @@ const Profile = () => {
 
   const coordinates = (() => {
     if (DEMO_MODE) return { lng: 18.0686, lat: 59.3293 };
-    if (profileData?.location) {
-      const c = parseCoordinates(profileData.location);
+    if ((profileData as any)?.location_json) {
+      const c = parseCoordinates((profileData as any).location_json);
       if (c) return c;
     }
     if (profileData?.address) return { lat: 59.3293, lng: 18.0686 };
