@@ -71,7 +71,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         .from("items")
         .select("*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)") as any)
         .eq("user_id", userId)
-        .eq("pif_status", "archived")
+        .in("pif_status", ["archived", "completed"])
         .order("archived_at", { ascending: false });
 
       if (error) throw error;
