@@ -803,20 +803,18 @@ export function InterestSelectionList({
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={wishGrantingHelperId !== null}
                           className="text-xs py-1 px-2 h-auto whitespace-nowrap text-amber-700 border-amber-200 hover:bg-amber-50"
-                          onClick={() =>
-                            setRatingHelper({
-                              helperId: r.user_id,
-                              helperName: displayName(r),
-                            })
-                          }
+                          onClick={() => handleMarkWishGranted(r)}
                           aria-label={t(
                             "interactions.mark_wish_granted_btn",
                             "Mark as granted"
                           )}
                         >
                           <Sparkles className="h-3 w-3 mr-1" />
-                          {t("interactions.mark_wish_granted_btn", "Mark as granted")}
+                          {wishGrantingHelperId === r.user_id
+                            ? t("interactions.loading")
+                            : t("interactions.mark_wish_granted_btn", "Mark as granted")}
                         </Button>
                       )}
                       {isOwner && isWish && (
