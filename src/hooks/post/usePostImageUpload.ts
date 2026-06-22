@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { compressImage } from "@/utils/image/compress";
 import { normalizeImageOrientation } from "@/utils/image/orientation";
+import { sanitizeFilename } from "@/utils/sanitizeFilename";
 
 /**
  * Hook for handling image uploads for posts
