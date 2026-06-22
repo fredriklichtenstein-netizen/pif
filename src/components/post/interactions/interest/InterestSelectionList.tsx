@@ -498,6 +498,40 @@ export function InterestSelectionList({
     }
   };
 
+  /**
+   * Resolve the conversation linked to (this item, this helper). The
+   * `conversations` table has no user1_id/user2_id columns — participants
+   * live in `conversation_participants` — so we list conversations on the
+   * item (RLS scopes to the caller) and disambiguate via the
+   * get_conversation_participants RPC when more than one exists.
+   */
+  const resolveConversationId = useCallback(
+    async (helperUserId: string): Promise<string | null> => {
+      if (DEMO_MODE) return null;
+      try {
+        const { data: convs } = await (supabase
+          .from("conversations") as any)
+          .select("id")
+          .eq("item_id", numericItemId);
+        const convIds: string[] = (convs || []).map((c: any) => c.id);
+        if (convIds.length === 0) return null;
+        if (convIds.length === 1) return convIds[0];
+        const { data: parts } = await (supabase.rpc as any)(
+          "get_conversation_participants",
+          { p_conversation_ids: convIds },
+        );
+        const match = (parts || []).find(
+          (p: any) => p.user_id === helperUserId,
+        );
+        return match?.conversation_id ?? convIds[0];
+      } catch (e) {
+        console.warn("[InterestSelectionList] resolveConversationId failed", e);
+        return null;
+      }
+    },
+    [numericItemId],
+  );
+
   const openConversationWith = useCallback(
     async (helperUserId: string) => {
       if (DEMO_MODE) {
@@ -505,27 +539,12 @@ export function InterestSelectionList({
         navigate(`/messages`);
         return;
       }
-      try {
-        const { data, error: convErr } = await (supabase
-          .from("conversations") as any)
-          .select("id")
-          .eq("item_id", numericItemId)
-          .or(
-            `and(user1_id.eq.${itemOwnerId},user2_id.eq.${helperUserId}),and(user1_id.eq.${helperUserId},user2_id.eq.${itemOwnerId})`
-          )
-          .limit(1)
-          .maybeSingle();
-        if (convErr) throw convErr;
-        setShowPopup(false);
-        if (data?.id) navigate(`/messages?conversation=${data.id}`);
-        else navigate(`/messages`);
-      } catch (e) {
-        console.warn("[InterestSelectionList] open conversation failed", e);
-        setShowPopup(false);
-        navigate(`/messages`);
-      }
+      const convId = await resolveConversationId(helperUserId);
+      setShowPopup(false);
+      if (convId) navigate(`/messages?conversation=${convId}`);
+      else navigate(`/messages`);
     },
-    [itemOwnerId, navigate, numericItemId, setShowPopup]
+    [navigate, resolveConversationId, setShowPopup]
   );
 
   const handleMarkWishGranted = useCallback(
