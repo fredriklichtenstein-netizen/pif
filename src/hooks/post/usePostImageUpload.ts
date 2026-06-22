@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { compressImage } from "@/utils/image/compress";
 import { normalizeImageOrientation } from "@/utils/image/orientation";
+import { sanitizeFilename } from "@/utils/sanitizeFilename";
 
 /**
  * Hook for handling image uploads for posts
@@ -37,7 +38,8 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
           const oriented = await normalizeImageOrientation(rawFile);
           const file = await compressImage(oriented, { maxDimension: 1600, quality: 0.82 });
           const timestamp = new Date().getTime();
-          const filePath = `images/${user?.id}/${timestamp}-${file.name}`;
+          const safeName = sanitizeFilename(file.name);
+          const filePath = `images/${user?.id}/${timestamp}-${safeName}`;
 
           const { error, data } = await supabase.storage
             .from("post-images")
