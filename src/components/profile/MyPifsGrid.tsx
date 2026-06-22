@@ -26,7 +26,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
           .from("items")
           .select("*") as any)
           .eq("user_id", uid)
-          .neq("pif_status", "archived")
+          .not("pif_status", "in", "(archived,completed)")
           .order("created_at", { ascending: false });
         return { data: res.data, error: res.error };
       },
