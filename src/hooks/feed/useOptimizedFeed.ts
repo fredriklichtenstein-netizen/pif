@@ -260,10 +260,18 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         posts.push(...pageData);
       }
     }
+    const isTerminal = (s: any) => s === 'archived' || s === 'completed';
     return posts.filter((p) => {
       const id = String(p.id);
       if (removedIds.has(id)) return false;
-      const isArchivedPost = p.status === 'archived' || !!p.archived_at;
+      // Both 'archived' and 'completed' are terminal for feed visibility —
+      // completed handoffs live in the Archived/Completed tab. Mirror the
+      // helper used by services/posts/optimized.ts so a stale cached page
+      // can't leak a completed row back into the active feed.
+      const isArchivedPost =
+        isTerminal((p as any).status) ||
+        isTerminal((p as any).pif_status) ||
+        !!p.archived_at;
       if (includeArchived) return isArchivedPost;
       if (isArchivedPost) return false;
       if (!includeArchived && activeArchivedIds.has(id)) return false;
