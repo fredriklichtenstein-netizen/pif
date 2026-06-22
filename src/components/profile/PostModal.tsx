@@ -314,8 +314,10 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       itemType={itemTypeForSlot}
       receiverConfirmed={completion.receiverConfirmed}
       onHardComplete={() => {
-        setRatingContext({ receiverName: receiverName || t('common.user') });
-        setRatingOpen(true);
+        // Force-complete path: open the rating modal that calls
+        // complete_pif_with_rating (same RPC the messaging banner uses).
+        // submit_rating cannot run here — pif_status is still 'active'.
+        setForceRatingOpen(true);
       }}
       onUndo={async () => {
         const res = await completion.undoConfirmation("piffer");
