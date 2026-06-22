@@ -18,11 +18,7 @@ interface PifferRatingDialogProps {
   onOpenChange: (open: boolean) => void;
   itemId: string | number;
   receiverName: string;
-  /**
-   * When provided, this is a wish-helper rating: the dialog rates a
-   * specific helper and routes to submit_helper_rating instead of the
-   * single-receiver submit_rating RPC.
-   */
+  /** When provided, this is a wish-helper rating for UI/Demo context. */
   helperId?: string;
   /** Demo Mode only */
   demoRaterId?: string;

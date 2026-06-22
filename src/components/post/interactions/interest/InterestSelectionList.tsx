@@ -27,6 +27,7 @@ import {
 } from "@/stores/demoSelectionsStore";
 import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
+import { usePifCompletion } from "@/hooks/usePifCompletion";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -95,6 +96,7 @@ export function InterestSelectionList({
   } | null>(null);
   /** Helper user_ids the wisher has already rated for this item. */
   const [ratedHelperIds, setRatedHelperIds] = useState<Set<string>>(new Set());
+  const [wishGrantingHelperId, setWishGrantingHelperId] = useState<string | null>(null);
 
   const demoRatings = useDemoRatingsStore();
 
@@ -106,6 +108,13 @@ export function InterestSelectionList({
 
   const numericItemId =
     typeof itemId === "number" ? itemId : parseInt(itemId as string, 10);
+
+  const completion = usePifCompletion(
+    null,
+    itemId,
+    currentUserId ?? null,
+    undefined,
+  );
 
   useEffect(() => {
     console.log("[InterestSelectionList] mounted; fetching fresh interest rows", {
@@ -518,6 +527,50 @@ export function InterestSelectionList({
     },
     [itemOwnerId, navigate, numericItemId, setShowPopup]
   );
+
+  const handleMarkWishGranted = useCallback(
+    async (row: InterestRow) => {
+      if (DEMO_MODE) {
+        setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
+        return;
+      }
+      setWishGrantingHelperId(row.user_id);
+      try {
+        console.log("[InterestSelectionList] Markera som uppfylld clicked; calling confirmHandoff", {
+          itemId,
+          numericItemId,
+          currentUserId: currentUserId ?? null,
+          itemOwnerId: itemOwnerId ?? null,
+          helperId: row.user_id,
+          pifferConfirmed: completion.pifferConfirmed,
+          receiverConfirmed: completion.receiverConfirmed,
+          pifStatus: completion.pifStatus,
+        });
+        const result = await completion.confirmHandoff("piffer");
+        if (!result.ok) {
+          toast({
+            variant: "destructive",
+            title: t("interactions.error_title"),
+            description: t("ui.failed_mark_piffed"),
+          });
+          return;
+        }
+        setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
+      } finally {
+        setWishGrantingHelperId(null);
+      }
+    },
+    [
+      completion,
+      currentUserId,
+      itemId,
+      itemOwnerId,
+      numericItemId,
+      t,
+      toast,
+    ],
+  );
+
   const handleWithdraw = async () => {
     const targetId = withdrawId;
     setWithdrawId(null);
@@ -750,20 +803,18 @@ export function InterestSelectionList({
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={wishGrantingHelperId !== null}
                           className="text-xs py-1 px-2 h-auto whitespace-nowrap text-amber-700 border-amber-200 hover:bg-amber-50"
-                          onClick={() =>
-                            setRatingHelper({
-                              helperId: r.user_id,
-                              helperName: displayName(r),
-                            })
-                          }
+                          onClick={() => handleMarkWishGranted(r)}
                           aria-label={t(
                             "interactions.mark_wish_granted_btn",
                             "Mark as granted"
                           )}
                         >
                           <Sparkles className="h-3 w-3 mr-1" />
-                          {t("interactions.mark_wish_granted_btn", "Mark as granted")}
+                          {wishGrantingHelperId === r.user_id
+                            ? t("interactions.loading")
+                            : t("interactions.mark_wish_granted_btn", "Mark as granted")}
                         </Button>
                       )}
                       {isOwner && isWish && (

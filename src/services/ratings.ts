@@ -9,10 +9,8 @@ interface SubmitRatingArgs {
   outcome: RatingOutcome;
   note?: string;
   /**
-   * Optional explicit ratee. Required when rating a wish helper —
-   * wishes can have many selected helpers so the standard
-   * submit_rating RPC (which infers the single selected receiver)
-   * is ambiguous. When provided, we route to submit_helper_rating.
+   * Optional explicit ratee used by Demo Mode. In real mode this is not
+   * forwarded: submit_rating resolves the selected counter-party server-side.
    */
   helperId?: string;
   /**
