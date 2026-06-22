@@ -182,7 +182,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
         .eq('user_id', currentUser.id)
-        .eq('pif_status', 'archived')
+        .in('pif_status', ['archived', 'completed'])
         .order('archived_at', { ascending: false, nullsFirst: false })
         .abortSignal(signal);
       
