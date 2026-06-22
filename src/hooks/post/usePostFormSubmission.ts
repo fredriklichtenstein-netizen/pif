@@ -114,7 +114,15 @@ export function usePostFormSubmission(initialData?: any) {
         location: formData.location,
         images: formData.images,
         measurements: formData.measurements,
-        pickup_preference: formData.pickup_preference || null,
+        // Defensive guard: only forward values the DB check constraint accepts
+        // (meetup | leave_at_door | flexible). Anything else — including legacy
+        // in-flight form state — is coerced to NULL so the insert/update never
+        // fails on items_pickup_preference_check.
+        pickup_preference: (['meetup', 'leave_at_door', 'flexible'] as const).includes(
+          formData.pickup_preference as any,
+        )
+          ? formData.pickup_preference
+          : null,
         pickup_door_code: formData.pickup_door_code?.trim() || null,
         pickup_floor: formData.pickup_floor && formData.pickup_floor.trim() !== ''
           ? parseInt(formData.pickup_floor, 10)
