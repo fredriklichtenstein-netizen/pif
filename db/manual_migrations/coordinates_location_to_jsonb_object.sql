@@ -48,8 +48,12 @@ UPDATE public.items
  WHERE coordinates IS NOT NULL
    AND coordinates_json IS NULL;
 
+-- profiles.location is plain `text` (typname=text, oid=25), not jsonb.
+-- It stores the bare unquoted point literal directly (e.g.
+-- "(18.00826,59.332322)") with no JSON-string-quote wrapping, so we pass
+-- it straight to the parser without `#>> '{}'`.
 UPDATE public.profiles
-   SET location_json = public._point_text_to_jsonb(location #>> '{}')
+   SET location_json = public._point_text_to_jsonb(location)
  WHERE location IS NOT NULL
    AND location_json IS NULL;
 
