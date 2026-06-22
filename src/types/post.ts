@@ -72,10 +72,10 @@ export interface Post {
 export interface Rating {
   id: string;
   rater_id: string;
-  rated_user_id: string;
+  ratee_id: string;
   item_id: number;
   rating: number;
-  comment?: string;
+  private_note?: string;
   created_at: string;
 }
 
