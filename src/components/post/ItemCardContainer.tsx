@@ -1,4 +1,5 @@
 
+import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { ItemImage } from "./ItemImage";
 import { ItemCardBody } from "./card/ItemCardBody";
@@ -21,9 +22,10 @@ interface ItemCardProps {
   postedBy: {
     id: string;
     name: string;
-    avatar?: string; // Make avatar optional to match our updated types
+    avatar?: string;
   };
   markAsPiffedAction?: () => void;
+  awaitingConfirmationSlot?: ReactNode;
   images?: string[];
 }
 
@@ -39,11 +41,12 @@ export function ItemCardContainer({
   condition,
   measurements,
   postedBy,
-  markAsPiffedAction
+  markAsPiffedAction,
+  awaitingConfirmationSlot,
 }: ItemCardProps) {
   const { session } = useAuth();
   const isOwner = session?.user?.id === postedBy.id;
-  
+
   const {
     isDeleting,
     isLiked,
@@ -66,7 +69,7 @@ export function ItemCardContainer({
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
       <ItemImage image={image} title={title} />
-      
+
       <ItemCardBody
         category={category}
         condition={condition}
@@ -81,8 +84,9 @@ export function ItemCardContainer({
         handleEdit={handleEdit}
         handleDelete={handleDelete}
         markAsPiffedAction={markAsPiffedAction}
+        awaitingConfirmationSlot={awaitingConfirmationSlot}
       />
-      
+
       <ItemCardFooter
         id={id.toString()}
         isLiked={isLiked}
@@ -103,4 +107,5 @@ export function ItemCardContainer({
     </div>
   );
 }
+
 
