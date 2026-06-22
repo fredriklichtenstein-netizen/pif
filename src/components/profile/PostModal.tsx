@@ -393,6 +393,28 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           demoRateeId={ratingContext.demoRateeId}
         />
       )}
+
+      {post && !DEMO_MODE && (
+        <PifRatingModal
+          open={forceRatingOpen}
+          onOpenChange={setForceRatingOpen}
+          allowSkip={false}
+          onSubmit={async (rating, comment) => {
+            const res = await completion.completeWithRating(rating, comment);
+            if (res.ok) {
+              setPost((prev: any) => (prev ? { ...prev, status: "completed" } : prev));
+              if (onStatusChange) onStatusChange();
+            } else {
+              toast({
+                title: t("common.error"),
+                description: t("ui.failed_mark_piffed"),
+                variant: "destructive",
+              });
+            }
+            return { ok: res.ok };
+          }}
+        />
+      )}
     </>
   );
 }
