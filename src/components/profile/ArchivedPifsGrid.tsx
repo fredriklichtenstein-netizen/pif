@@ -71,7 +71,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         .from("items")
         .select("*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)") as any)
         .eq("user_id", userId)
-        .eq("pif_status", "archived")
+        .in("pif_status", ["archived", "completed"])
         .order("archived_at", { ascending: false });
 
       if (error) throw error;
@@ -92,6 +92,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
           category: item.category,
           condition: item.condition,
           measurements: item.measurements || {},
+          pif_status: item.pif_status,
           archived_at: item.archived_at,
           archived_reason: item.archived_reason,
           postedBy: {
@@ -283,6 +284,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
         {visibleItems.map((item) => {
           const isFading = fadingIds.has(String(item.id));
           const isBusy = restoring === item.id || deleting === item.id;
+          const isCompleted = item.pif_status === 'completed';
           return (
             <div
               key={item.id}
@@ -300,20 +302,24 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
 
               {isOwner && (
                 <div className="absolute top-3 right-3 z-10 flex items-center gap-2 pointer-events-auto">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="shadow-lg flex items-center gap-1 font-medium"
-                    onClick={() => handleRestore(item.id)}
-                    disabled={isBusy}
-                  >
-                    {restoring === item.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ArchiveRestore className="h-4 w-4" />
-                    )}
-                    {t('interactions.restore')}
-                  </Button>
+                  {/* Completed (genuinely finished) handoffs are terminal — no Restore.
+                      Archived/withdrawn items can still be restored. */}
+                  {!isCompleted && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="shadow-lg flex items-center gap-1 font-medium"
+                      onClick={() => handleRestore(item.id)}
+                      disabled={isBusy}
+                    >
+                      {restoring === item.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ArchiveRestore className="h-4 w-4" />
+                      )}
+                      {t('interactions.restore')}
+                    </Button>
+                  )}
                   <Button
                     variant="destructive"
                     size="sm"

@@ -91,9 +91,9 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
 
       // Apply archive filter if specified
       if (options.onlyArchived) {
-        query = query.eq('pif_status', 'archived');
+        query = query.in('pif_status', ['archived', 'completed']);
       } else if (!options.includeArchived) {
-        query = query.or('pif_status.is.null,pif_status.neq.archived').is('archived_at', null);
+        query = query.or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)').is('archived_at', null);
       }
 
       const { data: items, error: itemsError } = await query;
@@ -139,9 +139,9 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
 
       // Apply archive filter if specified
       if (options.onlyArchived) {
-        query = query.eq('pif_status', 'archived');
+        query = query.in('pif_status', ['archived', 'completed']);
       } else if (!options.includeArchived) {
-        query = query.or('pif_status.is.null,pif_status.neq.archived').is('archived_at', null);
+        query = query.or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)').is('archived_at', null);
       }
 
       const { data: items, error: itemsError } = await query;
@@ -182,7 +182,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
         .from('items')
         .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
         .eq('user_id', currentUser.id)
-        .eq('pif_status', 'archived')
+        .in('pif_status', ['archived', 'completed'])
         .order('archived_at', { ascending: false, nullsFirst: false })
         .abortSignal(signal);
       
@@ -245,9 +245,9 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
 
       // Apply archive filter if specified
       if (options.onlyArchived) {
-        query = query.eq('pif_status', 'archived');
+        query = query.in('pif_status', ['archived', 'completed']);
       } else if (!options.includeArchived) {
-        query = query.or('pif_status.is.null,pif_status.neq.archived').is('archived_at', null);
+        query = query.or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)').is('archived_at', null);
       }
 
       const { data: items, error: itemsError } = await query;

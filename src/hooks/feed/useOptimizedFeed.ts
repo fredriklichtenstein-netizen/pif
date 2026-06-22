@@ -410,20 +410,23 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         (payload: any) => {
           const newStatus = payload?.new?.pif_status;
           const oldStatus = payload?.old?.pif_status;
-          // React to any archive/restore-related transition. `old` may be
-          // missing if REPLICA IDENTITY isn't FULL, so we also treat a
-          // present `pif_status` of 'archived'/'active' as actionable.
+          // React to any transition that moves an item off (or back onto) the
+          // active feed. Both 'archived' and 'completed' are terminal for feed
+          // visibility — completed items live in the Archived/Completed tab.
+          // `old` may be missing if REPLICA IDENTITY isn't FULL, so we also
+          // treat a present 'archived'/'completed'/'active' status as actionable.
+          const isTerminal = (s: any) => s === 'archived' || s === 'completed';
           const archivedChanged =
             (oldStatus !== undefined && newStatus !== oldStatus &&
-              (newStatus === 'archived' || oldStatus === 'archived')) ||
+              (isTerminal(newStatus) || isTerminal(oldStatus))) ||
             (oldStatus === undefined &&
-              (newStatus === 'archived' || newStatus === 'active'));
+              (isTerminal(newStatus) || newStatus === 'active'));
           if (!archivedChanged) return;
           clearPostsCache();
           const itemId = payload?.new?.id ?? payload?.old?.id;
           if (itemId != null) {
             const idStr = String(itemId);
-            if (newStatus === 'archived') {
+            if (isTerminal(newStatus)) {
               removePostFromActiveCache(queryClient, idStr);
               if (!includeArchived) {
                 setActiveArchivedIds((prev) => {

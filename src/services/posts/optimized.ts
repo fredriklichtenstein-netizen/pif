@@ -20,8 +20,9 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const transformCache = memoryOptimizer.createMemoCache<Post>(50);
 let postsCacheGeneration = 0;
 
+const isTerminalStatus = (s: any) => s === 'archived' || s === 'completed';
 const isArchivedPost = (post: Post) =>
-  post.status === 'archived' || post.pif_status === 'archived' || !!post.archived_at;
+  isTerminalStatus((post as any).status) || isTerminalStatus((post as any).pif_status) || !!post.archived_at;
 
 const applyArchiveBoundary = (posts: Post[], includeArchived: boolean) =>
   includeArchived
