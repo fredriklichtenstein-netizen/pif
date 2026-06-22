@@ -1,4 +1,5 @@
 
+import type { ReactNode } from "react";
 import { ItemCardContainer } from "./ItemCardContainer";
 
 interface ItemCardProps {
@@ -17,9 +18,10 @@ interface ItemCardProps {
   postedBy: {
     id: string;
     name: string;
-    avatar?: string; // Changed from required to optional
+    avatar?: string;
   };
   markAsPiffedAction?: () => void;
+  awaitingConfirmationSlot?: ReactNode;
   images?: string[];
 }
 
