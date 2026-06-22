@@ -10,21 +10,24 @@ export const transformPostData = (
   interactionCounts: InteractionCounts
 ): Post => {
   let parsedCoordinates = null;
-  if (item.coordinates) {
+  // Prefer the new jsonb {lng,lat} column. Fall back to the legacy `coordinates`
+  // jsonb-string column for any row not yet migrated by the writer.
+  const coordSource = item.coordinates_json ?? item.coordinates;
+  if (coordSource) {
     try {
-      // First try the robust coordinate extractor
-      parsedCoordinates = extractCoordinates(item.coordinates);
-      
-      // Fallback to string parsing if needed
+      // First try the robust coordinate extractor (handles {lng,lat} objects)
+      parsedCoordinates = extractCoordinates(coordSource);
+
+      // Fallback to string parsing if needed (legacy "(lng,lat)" text)
       if (!parsedCoordinates) {
-        const coordsStr = String(item.coordinates);
+        const coordsStr = String(coordSource);
         parsedCoordinates = parseCoordinatesFromDB(coordsStr);
       }
     } catch (err) {
-      console.error("Error parsing coordinates:", err, item.coordinates);
+      console.error("Error parsing coordinates:", err, coordSource);
     }
-  } else {
   }
+  
   
   // Process measurements to ensure they are correctly formatted
   const measurements = (typeof item.measurements === 'object' && item.measurements !== null) 
