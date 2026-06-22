@@ -12,6 +12,7 @@ import { useDemoCompletionStore } from "@/stores/demoCompletionStore";
 import { useDemoSelectionsStore } from "@/stores/demoSelectionsStore";
 import { useTranslation } from "react-i18next";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
+import { PifRatingModal } from "@/components/messaging/PifRatingModal";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
@@ -35,6 +36,8 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     demoRaterId?: string;
     demoRateeId?: string;
   } | null>(null);
+  /** Force-complete (Markera som klar ändå) rating dialog state. */
+  const [forceRatingOpen, setForceRatingOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   // Receiver + conversation are resolved lazily once the post is loaded so we
   // can route "Markera som uppfylld" through the shared confirm_pif_handoff
@@ -311,8 +314,10 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       itemType={itemTypeForSlot}
       receiverConfirmed={completion.receiverConfirmed}
       onHardComplete={() => {
-        setRatingContext({ receiverName: receiverName || t('common.user') });
-        setRatingOpen(true);
+        // Force-complete path: open the rating modal that calls
+        // complete_pif_with_rating (same RPC the messaging banner uses).
+        // submit_rating cannot run here — pif_status is still 'active'.
+        setForceRatingOpen(true);
       }}
       onUndo={async () => {
         const res = await completion.undoConfirmation("piffer");
@@ -386,6 +391,28 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
           receiverName={ratingContext.receiverName}
           demoRaterId={ratingContext.demoRaterId}
           demoRateeId={ratingContext.demoRateeId}
+        />
+      )}
+
+      {post && !DEMO_MODE && (
+        <PifRatingModal
+          open={forceRatingOpen}
+          onOpenChange={setForceRatingOpen}
+          allowSkip={false}
+          onSubmit={async (rating, comment) => {
+            const res = await completion.completeWithRating(rating, comment);
+            if (res.ok) {
+              setPost((prev: any) => (prev ? { ...prev, status: "completed" } : prev));
+              if (onStatusChange) onStatusChange();
+            } else {
+              toast({
+                title: t("common.error"),
+                description: t("ui.failed_mark_piffed"),
+                variant: "destructive",
+              });
+            }
+            return { ok: res.ok };
+          }}
         />
       )}
     </>

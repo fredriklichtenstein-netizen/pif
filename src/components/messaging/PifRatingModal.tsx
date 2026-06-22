@@ -15,7 +15,15 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (rating: number, comment?: string) => Promise<{ ok: boolean }>;
-  onLowRatingReport: () => void;
+  /** Optional. When omitted, low-rating values close the modal silently. */
+  onLowRatingReport?: () => void;
+  /**
+   * When false, hides "Hoppa över". The force-complete override path
+   * (Markera som klar ändå) requires a rating because
+   * complete_pif_with_rating has no skip variant — skipping there would
+   * leave the item active with no completion.
+   */
+  allowSkip?: boolean;
 }
 
 /**
@@ -27,6 +35,7 @@ export function PifRatingModal({
   onOpenChange,
   onSubmit,
   onLowRatingReport,
+  allowSkip = true,
 }: Props) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
@@ -55,7 +64,7 @@ export function PifRatingModal({
       const res = await onSubmit(rating, comment.trim() || undefined);
       setSubmitting(false);
       if (!res.ok) return;
-      if (rating <= 2) {
+      if (rating <= 2 && onLowRatingReport) {
         setAskReport(true);
       } else {
         onOpenChange(false);
@@ -108,13 +117,15 @@ export function PifRatingModal({
             />
 
             <DialogFooter className="gap-2 sm:gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-                disabled={submitting}
-              >
-                Hoppa över
-              </Button>
+              {allowSkip && (
+                <Button
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                  disabled={submitting}
+                >
+                  Hoppa över
+                </Button>
+              )}
               <Button
                 onClick={handleSubmit}
                 disabled={rating < 1 || submitting}
@@ -142,7 +153,7 @@ export function PifRatingModal({
                 variant="destructive"
                 onClick={() => {
                   onOpenChange(false);
-                  onLowRatingReport();
+                  onLowRatingReport?.();
                 }}
               >
                 Ja, rapportera

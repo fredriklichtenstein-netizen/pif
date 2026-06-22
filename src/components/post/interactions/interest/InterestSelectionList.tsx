@@ -27,6 +27,7 @@ import {
 } from "@/stores/demoSelectionsStore";
 import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
+import { PifRatingModal } from "@/components/messaging/PifRatingModal";
 import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
 import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
 
@@ -92,6 +93,11 @@ export function InterestSelectionList({
   const [withdrawId, setWithdrawId] = useState<number | null>(null);
   /** Helper currently being rated via the per-helper "Mark as granted" flow. */
   const [ratingHelper, setRatingHelper] = useState<{
+    helperId: string;
+    helperName: string;
+  } | null>(null);
+  /** Helper being force-completed via the "Markera som klar ändå" override. */
+  const [forceHelperRating, setForceHelperRating] = useState<{
     helperId: string;
     helperName: string;
   } | null>(null);
@@ -876,7 +882,13 @@ export function InterestSelectionList({
                             itemType="request"
                             receiverConfirmed={completion.receiverConfirmed}
                             onHardComplete={() => {
-                              setRatingHelper({ helperId: r.user_id, helperName: displayName(r) });
+                              // Force-complete: use complete_pif_with_rating
+                              // (same as messaging banner). submit_rating
+                              // can't run here — pif_status is still 'active'.
+                              setForceHelperRating({
+                                helperId: r.user_id,
+                                helperName: displayName(r),
+                              });
                             }}
                             onUndo={async () => {
                               const res = await completion.undoConfirmation("piffer");
@@ -1075,6 +1087,28 @@ export function InterestSelectionList({
           onSubmitted={() => {
             setRatingHelper(null);
             reloadRatedHelpers();
+          }}
+        />
+      )}
+
+      {forceHelperRating && !DEMO_MODE && (
+        <PifRatingModal
+          open={!!forceHelperRating}
+          onOpenChange={(o) => !o && setForceHelperRating(null)}
+          allowSkip={false}
+          onSubmit={async (rating, comment) => {
+            const res = await completion.completeWithRating(rating, comment);
+            if (res.ok) {
+              setForceHelperRating(null);
+              reloadRatedHelpers();
+            } else {
+              toast({
+                variant: "destructive",
+                title: t("interactions.error_title"),
+                description: t("ui.failed_mark_piffed"),
+              });
+            }
+            return { ok: res.ok };
           }}
         />
       )}
