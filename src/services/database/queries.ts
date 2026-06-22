@@ -26,7 +26,7 @@ export class OptimizedQueries {
         let query = (supabase
           .from('items') as any)
           .select(`
-            id, title, description, images, location, coordinates,
+            id, title, description, images, location, coordinates_json,
             category, condition, user_id, pif_status, item_type,
             created_at, archived_at, archived_reason
           `);

@@ -40,7 +40,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, avatar_url, city, location")
+          .select("id, first_name, last_name, avatar_url, city, location_json")
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;
@@ -57,7 +57,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
         };
         setProfile(next);
         setEnriched(next);
-        const coords = parseCoordinates((data as any).location);
+        const coords = parseCoordinates((data as any).location_json);
         if (coords) setCoordinates({ lng: coords.lng, lat: coords.lat });
       } catch {
         /* silent — fall back to stub */
