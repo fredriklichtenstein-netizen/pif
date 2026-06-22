@@ -174,6 +174,10 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
         chosenConvId = match?.conversation_id ?? convIds[0];
       }
       setConversationId(chosenConvId);
+    })();
+    return () => { cancelled = true; };
+  }, [open, post?.id, post?.user_id, user?.id]);
+
 
   // Once both parties have confirmed (pif_status === 'completed'), open the
   // rating dialog — but only for the click that just initiated this flow.
