@@ -1,4 +1,4 @@
-
+import type { ReactNode } from "react";
 import { ItemHeader } from "../ItemHeader";
 import { OwnerActions } from "./OwnerActions";
 
@@ -16,13 +16,14 @@ interface ItemCardBodyProps {
   postedBy: {
     id: string;
     name: string;
-    avatar?: string; // Changed from required to optional
+    avatar?: string;
   };
   isOwner: boolean;
   isDeleting: boolean;
   handleEdit: () => void;
   handleDelete: () => void;
   markAsPiffedAction?: () => void;
+  awaitingConfirmationSlot?: ReactNode;
 }
 
 export function ItemCardBody({
@@ -38,7 +39,8 @@ export function ItemCardBody({
   isDeleting,
   handleEdit,
   handleDelete,
-  markAsPiffedAction
+  markAsPiffedAction,
+  awaitingConfirmationSlot,
 }: ItemCardBodyProps) {
   return (
     <div className="p-4">
@@ -52,13 +54,14 @@ export function ItemCardBody({
         postedBy={postedBy}
         measurements={measurements}
       />
-      
-      <OwnerActions 
+
+      <OwnerActions
         isOwner={isOwner}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
         isDeleting={isDeleting}
         markAsPiffedAction={markAsPiffedAction}
+        awaitingConfirmationSlot={awaitingConfirmationSlot}
       />
     </div>
   );
