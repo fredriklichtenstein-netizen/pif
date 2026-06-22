@@ -27,6 +27,7 @@ import {
 } from "@/stores/demoSelectionsStore";
 import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
+import { usePifCompletion } from "@/hooks/usePifCompletion";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -95,6 +96,7 @@ export function InterestSelectionList({
   } | null>(null);
   /** Helper user_ids the wisher has already rated for this item. */
   const [ratedHelperIds, setRatedHelperIds] = useState<Set<string>>(new Set());
+  const [wishGrantingHelperId, setWishGrantingHelperId] = useState<string | null>(null);
 
   const demoRatings = useDemoRatingsStore();
 
@@ -106,6 +108,13 @@ export function InterestSelectionList({
 
   const numericItemId =
     typeof itemId === "number" ? itemId : parseInt(itemId as string, 10);
+
+  const completion = usePifCompletion(
+    null,
+    itemId,
+    currentUserId ?? null,
+    undefined,
+  );
 
   useEffect(() => {
     console.log("[InterestSelectionList] mounted; fetching fresh interest rows", {
