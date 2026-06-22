@@ -1090,6 +1090,28 @@ export function InterestSelectionList({
           }}
         />
       )}
+
+      {forceHelperRating && !DEMO_MODE && (
+        <PifRatingModal
+          open={!!forceHelperRating}
+          onOpenChange={(o) => !o && setForceHelperRating(null)}
+          allowSkip={false}
+          onSubmit={async (rating, comment) => {
+            const res = await completion.completeWithRating(rating, comment);
+            if (res.ok) {
+              setForceHelperRating(null);
+              reloadRatedHelpers();
+            } else {
+              toast({
+                variant: "destructive",
+                title: t("interactions.error_title"),
+                description: t("ui.failed_mark_piffed"),
+              });
+            }
+            return { ok: res.ok };
+          }}
+        />
+      )}
     </div>
   );
 }
