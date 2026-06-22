@@ -36,6 +36,8 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     demoRaterId?: string;
     demoRateeId?: string;
   } | null>(null);
+  /** Force-complete (Markera som klar ändå) rating dialog state. */
+  const [forceRatingOpen, setForceRatingOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   // Receiver + conversation are resolved lazily once the post is loaded so we
   // can route "Markera som uppfylld" through the shared confirm_pif_handoff
