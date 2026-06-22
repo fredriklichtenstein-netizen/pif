@@ -147,20 +147,37 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
         setConversationId(null);
         return;
       }
-      const { data: conv } = await (supabase
+      // Resolve the conversation for this item. The `conversations` table
+      // does NOT have user1_id/user2_id columns — participants live in
+      // `conversation_participants`. RLS restricts the SELECT here to
+      // conversations the current user is part of, so for a piffer this
+      // is exactly the threads they have on this item. If multiple exist
+      // (wishes can have many helpers), pick the one whose participants
+      // include the selected receiver.
+      const { data: convs } = await (supabase
         .from("conversations") as any)
         .select("id")
-        .eq("item_id", post.id)
-        .or(
-          `and(user1_id.eq.${user.id},user2_id.eq.${selUserId}),and(user1_id.eq.${selUserId},user2_id.eq.${user.id})`
-        )
-        .limit(1)
-        .maybeSingle();
+        .eq("item_id", post.id);
       if (cancelled) return;
-      setConversationId(conv?.id ?? null);
+      const convIds: string[] = (convs || []).map((c: any) => c.id);
+      let chosenConvId: string | null = null;
+      if (convIds.length === 1) {
+        chosenConvId = convIds[0];
+      } else if (convIds.length > 1) {
+        const { data: parts } = await (supabase.rpc as any)(
+          "get_conversation_participants",
+          { p_conversation_ids: convIds },
+        );
+        const match = (parts || []).find(
+          (p: any) => p.user_id === selUserId,
+        );
+        chosenConvId = match?.conversation_id ?? convIds[0];
+      }
+      setConversationId(chosenConvId);
     })();
     return () => { cancelled = true; };
   }, [open, post?.id, post?.user_id, user?.id]);
+
 
   // Once both parties have confirmed (pif_status === 'completed'), open the
   // rating dialog — but only for the click that just initiated this flow.

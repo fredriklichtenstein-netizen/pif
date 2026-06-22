@@ -85,8 +85,11 @@ export async function reverseGeocodeCity(
 
     const token = await getMapboxToken();
     if (!token) return "";
-    const types = "neighborhood,locality,place";
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&types=${types}&limit=5&language=sv`;
+    // Mapbox requires `limit=1` whenever multiple `types` are passed to a
+    // reverse-geocode request; combining several types with `limit>1` (or
+    // `limit=5`) returns HTTP 422. We instead omit `types`, take the
+    // default feature set, and pick the most specific match client-side.
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&language=sv`;
     const res = await fetch(url);
     if (!res.ok) return "";
     const json = await res.json();

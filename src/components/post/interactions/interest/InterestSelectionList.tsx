@@ -27,7 +27,7 @@ import {
 } from "@/stores/demoSelectionsStore";
 import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
 import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
-import { usePifCompletion } from "@/hooks/usePifCompletion";
+import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -498,6 +498,40 @@ export function InterestSelectionList({
     }
   };
 
+  /**
+   * Resolve the conversation linked to (this item, this helper). The
+   * `conversations` table has no user1_id/user2_id columns — participants
+   * live in `conversation_participants` — so we list conversations on the
+   * item (RLS scopes to the caller) and disambiguate via the
+   * get_conversation_participants RPC when more than one exists.
+   */
+  const resolveConversationId = useCallback(
+    async (helperUserId: string): Promise<string | null> => {
+      if (DEMO_MODE) return null;
+      try {
+        const { data: convs } = await (supabase
+          .from("conversations") as any)
+          .select("id")
+          .eq("item_id", numericItemId);
+        const convIds: string[] = (convs || []).map((c: any) => c.id);
+        if (convIds.length === 0) return null;
+        if (convIds.length === 1) return convIds[0];
+        const { data: parts } = await (supabase.rpc as any)(
+          "get_conversation_participants",
+          { p_conversation_ids: convIds },
+        );
+        const match = (parts || []).find(
+          (p: any) => p.user_id === helperUserId,
+        );
+        return match?.conversation_id ?? convIds[0];
+      } catch (e) {
+        console.warn("[InterestSelectionList] resolveConversationId failed", e);
+        return null;
+      }
+    },
+    [numericItemId],
+  );
+
   const openConversationWith = useCallback(
     async (helperUserId: string) => {
       if (DEMO_MODE) {
@@ -505,27 +539,12 @@ export function InterestSelectionList({
         navigate(`/messages`);
         return;
       }
-      try {
-        const { data, error: convErr } = await (supabase
-          .from("conversations") as any)
-          .select("id")
-          .eq("item_id", numericItemId)
-          .or(
-            `and(user1_id.eq.${itemOwnerId},user2_id.eq.${helperUserId}),and(user1_id.eq.${helperUserId},user2_id.eq.${itemOwnerId})`
-          )
-          .limit(1)
-          .maybeSingle();
-        if (convErr) throw convErr;
-        setShowPopup(false);
-        if (data?.id) navigate(`/messages?conversation=${data.id}`);
-        else navigate(`/messages`);
-      } catch (e) {
-        console.warn("[InterestSelectionList] open conversation failed", e);
-        setShowPopup(false);
-        navigate(`/messages`);
-      }
+      const convId = await resolveConversationId(helperUserId);
+      setShowPopup(false);
+      if (convId) navigate(`/messages?conversation=${convId}`);
+      else navigate(`/messages`);
     },
-    [itemOwnerId, navigate, numericItemId, setShowPopup]
+    [navigate, resolveConversationId, setShowPopup]
   );
 
   const handleMarkWishGranted = useCallback(
@@ -536,18 +555,28 @@ export function InterestSelectionList({
       }
       setWishGrantingHelperId(row.user_id);
       try {
-        console.log("[InterestSelectionList] Markera som uppfylld clicked; calling confirmHandoff", {
+        // Resolve the per-helper conversation BEFORE the RPC so the
+        // system-message fan-out lands in the right thread (the shared
+        // hook was instantiated with conversationId=null because the
+        // wish flow targets one of many possible helpers).
+        const convId = await resolveConversationId(row.user_id);
+        console.log("[InterestSelectionList] Markera som uppfylld clicked; calling confirm_pif_handoff", {
           itemId,
           numericItemId,
           currentUserId: currentUserId ?? null,
           itemOwnerId: itemOwnerId ?? null,
           helperId: row.user_id,
+          conversationId: convId,
           pifferConfirmed: completion.pifferConfirmed,
           receiverConfirmed: completion.receiverConfirmed,
           pifStatus: completion.pifStatus,
         });
-        const result = await completion.confirmHandoff("piffer");
-        if (!result.ok) {
+        const { error: rpcError } = await (supabase.rpc as any)(
+          "confirm_pif_handoff",
+          { p_item_id: numericItemId, p_role: "piffer" },
+        );
+        if (rpcError) {
+          console.error("[InterestSelectionList] confirm_pif_handoff failed", rpcError);
           toast({
             variant: "destructive",
             title: t("interactions.error_title"),
@@ -555,17 +584,56 @@ export function InterestSelectionList({
           });
           return;
         }
+        // Re-read item state to decide which system messages to post.
+        const { data: latestRow } = await (supabase
+          .from("items") as any)
+          .select("receiver_confirmed_receipt")
+          .eq("id", numericItemId)
+          .maybeSingle();
+        const receiverAlreadyConfirmed = !!latestRow?.receiver_confirmed_receipt;
+        if (convId) {
+          if (!receiverAlreadyConfirmed) {
+            await postPifSystemMessage(
+              convId,
+              "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              convId,
+              "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+              { targetUserId: row.user_id },
+            );
+          } else {
+            await postPifSystemMessage(
+              convId,
+              "Du har bekräftat överlämning.",
+              { targetUserId: currentUserId ?? null },
+            );
+            await postPifSystemMessage(
+              convId,
+              "Piffaren har bekräftat överlämning.",
+              { targetUserId: row.user_id },
+            );
+            await postPifSystemMessage(
+              convId,
+              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+            );
+          }
+        }
         setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
       } finally {
         setWishGrantingHelperId(null);
       }
     },
     [
-      completion,
+      completion.pifferConfirmed,
+      completion.receiverConfirmed,
+      completion.pifStatus,
       currentUserId,
       itemId,
       itemOwnerId,
       numericItemId,
+      resolveConversationId,
       t,
       toast,
     ],
