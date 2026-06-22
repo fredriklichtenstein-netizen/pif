@@ -71,7 +71,8 @@ export const useProfileAvatar = () => {
       if (userError) throw userError;
       if (!user) throw new Error("No user found");
 
-      const fileExt = file.name.split('.').pop();
+      const safeName = sanitizeFilename(file.name);
+      const fileExt = safeName.includes('.') ? safeName.split('.').pop() : 'jpg';
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profile-photos')
