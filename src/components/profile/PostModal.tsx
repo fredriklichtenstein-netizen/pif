@@ -207,6 +207,16 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       }
 
       // Real mode — reuse the same handoff RPC the messaging banner uses.
+      console.log("[PostModal] Markera som uppfylld confirmed; calling confirmHandoff", {
+        itemId: post.id,
+        currentUserId: user?.id ?? null,
+        itemOwnerId: post.user_id ?? post.postedBy?.id ?? null,
+        receiverId,
+        conversationId,
+        pifferConfirmed: completion.pifferConfirmed,
+        receiverConfirmed: completion.receiverConfirmed,
+        pifStatus: completion.pifStatus,
+      });
       const result = await completion.confirmHandoff("piffer");
       if (!result.ok) {
         toast({

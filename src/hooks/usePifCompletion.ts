@@ -182,8 +182,23 @@ export function usePifCompletion(
 
   const confirmHandoff = useCallback(
     async (role: PifRole) => {
-      if (id === null) return { ok: false } as const;
+      if (id === null) {
+        console.log("[usePifCompletion] confirmHandoff aborted before RPC: missing item id", {
+          role,
+          conversationId,
+          currentUserId: currentUserId ?? null,
+          otherUserId: otherUserId ?? null,
+        });
+        return { ok: false } as const;
+      }
       if (!(await ensureSession("confirm_pif_handoff"))) return { ok: false } as const;
+      console.log("[usePifCompletion] calling confirm_pif_handoff RPC", {
+        p_item_id: id,
+        p_role: role,
+        conversationId,
+        currentUserId: currentUserId ?? null,
+        otherUserId: otherUserId ?? null,
+      });
       let { error } = await (supabase.rpc as any)("confirm_pif_handoff", {
         p_item_id: id,
         p_role: role,
