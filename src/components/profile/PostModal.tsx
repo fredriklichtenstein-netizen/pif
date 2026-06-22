@@ -16,6 +16,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
+import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
 
 type PostModalProps = {
   postId: number | string | null;
