@@ -875,6 +875,9 @@ export function InterestSelectionList({
                           <AwaitingConfirmationPopover
                             itemType="request"
                             receiverConfirmed={completion.receiverConfirmed}
+                            onHardComplete={() => {
+                              setRatingHelper({ helperId: r.user_id, helperName: displayName(r) });
+                            }}
                             onUndo={async () => {
                               const res = await completion.undoConfirmation("piffer");
                               if (!res.ok) {

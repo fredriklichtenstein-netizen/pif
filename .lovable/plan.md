@@ -1,28 +1,46 @@
-## Confirmation: no Realtime dependency on `profiles.location`
+Force-complete override is missing from STATE 1's popover — only Undo is wired. Adding it before verification.
 
-Only two subscriptions exist on the `profiles` table:
+## What's missing
 
-1. **`src/hooks/profile/useProfileAvatar.ts`** — reads `payload.new.avatar_url` only.
-2. **`src/hooks/profile/useCachedProfile.ts`** — generic diff/merge of changed fields into the local profile cache. It iterates whatever keys arrive in `payload.new`; if `location` is absent the cache simply isn't updated for that field via Realtime, and the next REST fetch (`refresh()` / TTL revalidation) repopulates it.
+`AwaitingConfirmationPopover` already supports `onHardComplete` and renders "Markera som klar ändå" when it's set. But neither call site (`PostModal.tsx`, `InterestSelectionList.tsx`) passes the prop, so the override button never appears.
 
-No code path reads `profiles.location` from a Realtime payload to drive map pins, profile maps, geocoding, or anything else. Profile location consumers (`FeedProfileHeader`, `ProfileBasicInfo` → `ProfileLocationMap`, `useProfileFetch`, `useCityBackfill`) all fetch via REST `select`. So excluding `location` from the realtime publication is safe.
+## Mechanism to reuse
 
-## Plan
+The piffer's existing rating-then-complete path is already invoked from `ConversationView.tsx:405` via `completion.completeWithRating(rating, comment)` — the same RPC the messaging banner uses, which completes the pif server-side even if the receiver hasn't confirmed. The shared dialog that collects rating+comment and calls that RPC is `PifferRatingDialog` (already imported and used by both call sites for the auto-open path).
 
-Create a new migration that mirrors `items_realtime_exclude_coordinates.sql` for the `profiles` table:
+So "force-complete" doesn't need a new RPC — it just needs to open `PifferRatingDialog` from the popover.
 
-**File:** `db/manual_migrations/profiles_realtime_exclude_location.sql`
+## Changes
 
-Steps inside the migration:
-1. `ALTER TABLE public.profiles REPLICA IDENTITY DEFAULT;` — so UPDATE.old contains only the primary key, never the raw `location` point.
-2. Build a comma-separated column list of every `public.profiles` column **except `location`**, ordered by `ordinal_position`, via `information_schema.columns`.
-3. If `public.profiles` is already a member of the `supabase_realtime` publication, `ALTER PUBLICATION supabase_realtime DROP TABLE public.profiles`.
-4. `ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles (<column-list>)` so future broadcasts never include `location`.
+### 1. `src/components/profile/PostModal.tsx`
+Pass `onHardComplete` to the awaiting popover that opens the existing `PifferRatingDialog` with the existing `ratingContext` shape:
 
-No application code changes are required. The user will apply the migration manually in the Supabase SQL editor, as with the items one.
+```tsx
+onHardComplete={() => {
+  setRatingContext({ receiverName: receiverName || t('common.user') });
+  setRatingOpen(true);
+}}
+```
 
-### Expected outcome
-- Realtime UPDATE payloads for `profiles` no longer carry the unparseable `(lng,lat)` point string.
-- The "Unexpected token '('" JSON parse error disappears.
-- `useCachedProfile` keeps working — it merges whatever fields arrive; `location` updates flow through normal REST refresh.
-- `useProfileAvatar` is unaffected (it only reads `avatar_url`).
+No new state, no new RPC wiring — `PifferRatingDialog` already calls `completeWithRating` internally and the existing realtime/cache plumbing handles the rest (item leaves feed → archived view, verified earlier).
+
+### 2. `src/components/post/interactions/interest/InterestSelectionList.tsx`
+Same pattern — pass `onHardComplete` that opens the already-mounted `PifferRatingDialog` for the selected helper row. Reuses the same shared `usePifCompletion` instance.
+
+### 3. i18n (already present)
+Keys `interactions.awaiting_hard_complete_btn` ("Markera som klar ändå") and `interactions.awaiting_finish_btn` ("Slutför och betygsätt") already exist in both `sv` and `en` from the previous turn — no locale changes needed.
+
+## Out of scope
+
+- No RPC changes (`confirm_pif_handoff` / `complete_pif_with_rating` stay untouched, per the standing rule from earlier this session).
+- No feed/archive filter changes (Group A verified clean).
+- No new states — STATE 1 popover gains the override button; STATE 2 (Sparkles "Genomför pifen") already routes to the same dialog via `awaiting_finish_btn`.
+
+## Verification after implementation
+
+1. Owner clicks "Markera som uppfylld" → amber pill appears
+2. Open popover → see BOTH "Markera som klar ändå" (primary) AND "Ångra bekräftelse" (ghost)
+3. Click "Markera som klar ändå" → `PifferRatingDialog` opens immediately (no waiting for the other party)
+4. Submit rating → item completes, leaves feed, lands in `ArchivedPifsGrid`
+5. Repeat for a wish via `InterestSelectionList`
+6. Separately confirm the unforced path still works: receiver confirms in messaging → Sparkles state → rating dialog auto-opens
