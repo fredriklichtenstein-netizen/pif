@@ -14,7 +14,7 @@ interface AwaitingConfirmationPopoverProps {
   /** Whether the counter-party has confirmed receipt (drives the headline). */
   receiverConfirmed: boolean;
   /** Hard-complete: opens the rating dialog without waiting for the receiver. */
-  onHardComplete: () => void;
+  onHardComplete?: () => void;
   /** Optional undo of the owner's own handoff confirmation. */
   onUndo?: () => Promise<unknown> | unknown;
 }
