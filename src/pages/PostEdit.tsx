@@ -46,12 +46,15 @@ function PostEdit() {
           throw new Error("You don't have permission to edit this item");
         }
 
-        // PostGIS returns coordinates as a string like "(lng,lat)".
-        // usePostFormState expects an object with .x (lng) and .y (lat),
-        // so normalize here so the edit form pre-fills correctly.
+        // Prefer the new jsonb {lng,lat} column; fall back to the legacy
+        // `coordinates` column (jsonb-string "(lng,lat)" or PostGIS object).
+        // usePostFormState expects { x: lng, y: lat }.
         let normalizedCoordinates: { x: number; y: number } | null = null;
+        const rawJson = (data as any).coordinates_json;
         const rawCoords = (data as any).coordinates;
-        if (typeof rawCoords === "string") {
+        if (rawJson && typeof rawJson === "object" && "lng" in rawJson && "lat" in rawJson) {
+          normalizedCoordinates = { x: Number(rawJson.lng), y: Number(rawJson.lat) };
+        } else if (typeof rawCoords === "string") {
           const match = rawCoords.match(/^\(?\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)?$/);
           if (match) {
             normalizedCoordinates = { x: parseFloat(match[1]), y: parseFloat(match[2]) };

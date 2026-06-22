@@ -24,13 +24,14 @@ export function useCityBackfill() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("location, city")
+          .select("location, location_json, city")
           .eq("id", userId)
           .maybeSingle();
         if (error || !data) return;
         const existing = (data as any).city;
         if (existing && String(existing).trim()) return;
-        const coords = parseCoordinates((data as any).location);
+        const locSource = (data as any).location_json ?? (data as any).location;
+        const coords = parseCoordinates(locSource);
         if (!coords) return;
         const city = await reverseGeocodeCity(coords.lng, coords.lat);
         if (!city) return;

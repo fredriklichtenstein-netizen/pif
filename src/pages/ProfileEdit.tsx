@@ -147,6 +147,7 @@ if (location) {
     const lng = parseFloat(match[1]);
     const lat = parseFloat(match[2]);
     if (Number.isFinite(lng) && Number.isFinite(lat)) {
+      updateData.location_json = { lng, lat };
       const { reverseGeocodeCity } = await import("@/utils/location/reverseGeocodeCity");
       const city = await reverseGeocodeCity(lng, lat);
       updateData.city = city || null;
