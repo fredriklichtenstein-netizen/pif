@@ -73,7 +73,8 @@ export default function CreateProfile() {
 
       let avatarPath = null;
       if (avatar) {
-        const fileExt = avatar.name.split('.').pop();
+        const safeName = sanitizeFilename(avatar.name);
+        const fileExt = safeName.includes('.') ? safeName.split('.').pop() : 'jpg';
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
         const { error: uploadError, data: uploadData } = await supabase.storage
           .from('profile-photos')
