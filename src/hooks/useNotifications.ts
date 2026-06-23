@@ -163,8 +163,8 @@ export function useNotifications() {
         item_title: p.item_title ?? null,
         conversation_id: p.conversation_id ?? null,
         reference_id: n.reference_id ?? p.conversation_id ?? p.item_id ?? undefined,
-        reference_type: n.reference_type,
-        action_url: n.action_url,
+        reference_type: n.reference_type ?? p.reference_type,
+        action_url: n.action_url ?? p.action_url,
       };
     });
     setNotifications(transformed);
@@ -195,8 +195,8 @@ export function useNotifications() {
         item_title: p.item_title ?? null,
         conversation_id: p.conversation_id ?? null,
         reference_id: n.reference_id ?? p.conversation_id ?? p.item_id ?? undefined,
-        reference_type: n.reference_type,
-        action_url: n.action_url,
+        reference_type: n.reference_type ?? p.reference_type,
+        action_url: n.action_url ?? p.action_url,
       };
     };
 

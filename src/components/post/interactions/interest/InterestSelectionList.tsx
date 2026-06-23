@@ -431,20 +431,19 @@ export function InterestSelectionList({
           const actionUrl = conversationId
             ? `/messages?conversation=${conversationId}`
             : `/messages?item=${numericItemId}`;
-          await (supabase.from("notifications") as any).insert({
-            user_id: currentUserId,
-            type: "selection_made",
-            read: false,
-            action_url: actionUrl,
-            reference_id: String(numericItemId),
-            reference_type: "item",
-            payload: {
+          await (supabase.rpc as any)("create_notification", {
+            p_user_id: currentUserId,
+            p_type: "selection_made",
+            p_payload: {
+              title: titleText,
               actor_id: row.user_id,
               actor_name: receiverName,
               item_id: numericItemId,
               item_title: itemTitle,
               conversation_id: conversationId ?? null,
-              title: titleText,
+              action_url: actionUrl,
+              reference_id: String(numericItemId),
+              reference_type: "item",
             },
           });
         } catch (notifErr) {
