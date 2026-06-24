@@ -80,6 +80,82 @@ export interface Notification {
   conversation_id?: string | null;
 }
 
+// Refcounted shared realtime channel for `notifications`, keyed by userId.
+// Supabase realtime-js dedupes channels by topic, so multiple mounted
+// useNotifications instances (MainNav + Messages + NotificationList) would
+// all receive the SAME channel object — the second `.on()` after the first
+// `.subscribe()` throws:
+//   "cannot add `postgres_changes` callbacks for
+//    realtime:public:notifications:{userId} after `subscribe()`"
+// We bind+subscribe exactly once per userId on first mount, fan events out
+// to every registered listener, and tear down on last unmount.
+type NotificationListener = {
+  onInsert: (row: any) => void;
+  onChange: () => void;
+};
+type NotificationChannelRef = {
+  channel: ReturnType<typeof supabase.channel>;
+  count: number;
+  listeners: Set<NotificationListener>;
+};
+const notificationChannels = new Map<string, NotificationChannelRef>();
+
+const ensureNotificationChannel = (
+  userId: string,
+  listener: NotificationListener,
+) => {
+  const existing = notificationChannels.get(userId);
+  if (existing) {
+    existing.count += 1;
+    existing.listeners.add(listener);
+    return existing.channel;
+  }
+  const listeners = new Set<NotificationListener>([listener]);
+  const channel = supabase
+    .channel(`public:notifications:${userId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        if (payload.eventType === "INSERT") {
+          listeners.forEach((l) => {
+            try { l.onInsert(payload.new); } catch (e) { console.warn("[notifications] onInsert", e); }
+          });
+          return;
+        }
+        listeners.forEach((l) => {
+          try { l.onChange(); } catch (e) { console.warn("[notifications] onChange", e); }
+        });
+      },
+    )
+    .subscribe((status, err) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        maybeRecoverFromAuthError(err, `notifications channel: ${status}`);
+      }
+    });
+  notificationChannels.set(userId, { channel, count: 1, listeners });
+  return channel;
+};
+
+const releaseNotificationChannel = (
+  userId: string,
+  listener: NotificationListener,
+) => {
+  const entry = notificationChannels.get(userId);
+  if (!entry) return;
+  entry.listeners.delete(listener);
+  entry.count -= 1;
+  if (entry.count <= 0) {
+    notificationChannels.delete(userId);
+    try { supabase.removeChannel(entry.channel); } catch { /* ignore */ }
+  }
+};
+
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
