@@ -15,6 +15,7 @@ export function useConversations() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const hasLoadedRef = useRef(false);
+  const fetchRef = useRef<(() => void) | null>(null);
   const { toast } = useToast();
   const { user, isReady } = useAuthReady();
   const authLoading = !isReady;
