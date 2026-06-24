@@ -224,7 +224,7 @@ export function NotificationList() {
                   const fallback = notif.item_title
                     ? `Du har valt ${receiver} som mottagare för "${notif.item_title}".`
                     : `Du har valt ${receiver} som mottagare.`;
-                  displayTitle = notif.title || fallback;
+                  displayTitle = safeTitle ?? fallback;
                   displayContent = null;
                   ctaUrl = notif.conversation_id
                     ? `/messages?conversation=${notif.conversation_id}`
