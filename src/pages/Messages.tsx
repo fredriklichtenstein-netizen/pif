@@ -96,7 +96,7 @@ const Messages = () => {
     } else {
       console.debug('[messages] deep-link branch: nothing-to-apply');
     }
-  }, [searchParams, conversations, activeConversationId, activeTab, setSearchParams]);
+  }, [searchParams, conversations, activeConversationId, activeTab, setSearchParams, refreshConversations]);
 
 
   useEffect(() => {
