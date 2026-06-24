@@ -825,7 +825,7 @@ export function InterestSelectionList({
               key={r.id}
               className="flex flex-col gap-1 p-2 rounded hover:bg-muted/50"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Link
                   to={`/user/${r.user_id}`}
                   target="_blank"
@@ -858,7 +858,7 @@ export function InterestSelectionList({
                   />
                 )}
 
-                <div className="ml-auto flex items-center gap-1">
+                <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
                   {r.status === "selected" && (
                     <>
                       {isWish && ratedHelperIds.has(r.user_id) ? (
