@@ -50,13 +50,17 @@ export function usePostFormState(initialData?: any) {
       try {
         const { data } = await supabase
           .from('profiles')
-          .select('pickup_preference, address, pickup_address')
+          .select('pickup_preference, address, pickup_address, pickup_door_code, pickup_floor, pickup_instructions')
           .eq('id', authUser.id)
           .single();
         if (cancelled || !data) return;
-        const pref = (data as any)?.pickup_preference;
-        const primary = (data as any)?.address || "";
-        const savedPickup = (data as any)?.pickup_address || "";
+        const d = data as any;
+        const pref = d?.pickup_preference;
+        const primary = d?.address || "";
+        const savedPickup = d?.pickup_address || "";
+        const doorCode = d?.pickup_door_code || "";
+        const floor = d?.pickup_floor != null ? String(d.pickup_floor) : "";
+        const instructions = d?.pickup_instructions || "";
         setFormData((prev) => {
           const next = { ...prev };
           if (pref && !prev.pickup_preference) next.pickup_preference = pref;
@@ -66,6 +70,9 @@ export function usePostFormState(initialData?: any) {
             next.pickup_address = savedPickup || primary;
             next.pickup_address_mode = savedPickup && savedPickup !== primary ? 'custom' : 'primary';
           }
+          if (!prev.pickup_door_code && doorCode) next.pickup_door_code = doorCode;
+          if (!prev.pickup_floor && floor) next.pickup_floor = floor;
+          if (!prev.pickup_instructions && instructions) next.pickup_instructions = instructions;
           return next;
         });
       } catch {

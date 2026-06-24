@@ -40,6 +40,9 @@ export const useProfileSubmit = (
         ? formData.dateOfBirth.toISOString().split('T')[0] 
         : null;
 
+      const floorParsed = formData.pickupFloor && formData.pickupFloor.trim() !== ''
+        ? parseInt(formData.pickupFloor, 10)
+        : null;
       const patch = {
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -47,8 +50,15 @@ export const useProfileSubmit = (
         phone: formattedPhone,
         address: formData.address,
         date_of_birth: formattedDateOfBirth,
+        pickup_preference: formData.pickupPreference || null,
+        pickup_address: formData.pickupAddressMode === 'custom'
+          ? (formData.pickupAddress || null)
+          : (formData.address || null),
+        pickup_door_code: formData.pickupDoorCode || null,
+        pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
+        pickup_instructions: formData.pickupInstructions || null,
         updated_at: new Date().toISOString(),
-      };
+      } as any;
 
       // Optimistically update the cached profile so name/avatar appear instantly
       const { updateCachedProfile } = await import("@/hooks/profile/useCachedProfile");

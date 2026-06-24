@@ -5,6 +5,8 @@ import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "@/components/forms/fields/NameFields";
 import { GenderSelector } from "@/components/forms/fields/GenderSelector";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Map } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -20,6 +22,9 @@ interface ProfileFormData {
   pickupPreference?: 'meetup' | 'leave_at_door' | '';
   pickupAddress?: string;
   pickupAddressMode?: 'primary' | 'custom';
+  pickupDoorCode?: string;
+  pickupFloor?: string;
+  pickupInstructions?: string;
 }
 
 interface ProfileFormProps {
@@ -116,6 +121,39 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
                 }
               />
             )}
+
+            <div className="space-y-2 pt-2">
+              <Label htmlFor="profile-pickup-door-code">{t('post.pickup_door_code')}</Label>
+              <Input
+                id="profile-pickup-door-code"
+                value={formData.pickupDoorCode || ''}
+                onChange={(e) => handleChange({ pickupDoorCode: e.target.value })}
+                placeholder={t('post.pickup_door_code_placeholder')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="profile-pickup-floor">{t('post.pickup_floor')}</Label>
+              <Input
+                id="profile-pickup-floor"
+                type="number"
+                inputMode="numeric"
+                value={formData.pickupFloor || ''}
+                onChange={(e) => handleChange({ pickupFloor: e.target.value })}
+                placeholder={t('post.pickup_floor_placeholder')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="profile-pickup-instructions">{t('post.pickup_instructions')}</Label>
+              <Textarea
+                id="profile-pickup-instructions"
+                value={formData.pickupInstructions || ''}
+                onChange={(e) => handleChange({ pickupInstructions: e.target.value })}
+                placeholder={t('post.pickup_instructions_placeholder')}
+                className="min-h-[80px]"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

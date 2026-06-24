@@ -10,4 +10,7 @@ export interface ProfileFormData {
   pickupPreference?: 'meetup' | 'leave_at_door' | '';
   pickupAddress?: string;
   pickupAddressMode?: 'primary' | 'custom';
+  pickupDoorCode?: string;
+  pickupFloor?: string;
+  pickupInstructions?: string;
 }
