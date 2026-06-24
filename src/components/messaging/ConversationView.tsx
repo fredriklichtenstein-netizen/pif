@@ -81,17 +81,32 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     currentUserId,
     otherParticipant?.user_id,
   );
+  // Drive every wish-vs-pif copy switch from the hook's authoritative
+  // item_type read. Temporary sanity log so silent "always false"
+  // derivations are caught early instead of surfacing as a copy bug.
+  const isRequest = !!completion.isRequest;
+  useEffect(() => {
+    if (item?.id != null && !completion.loading) {
+      console.log("[copy-audit] ConversationView isRequest", {
+        itemId: item.id,
+        itemTitle: item.title,
+        isRequest,
+        role,
+      });
+    }
+  }, [item?.id, item?.title, completion.loading, isRequest, role]);
+
   const isClosed =
     completion.pifStatus === "completed" || completion.pifStatus === "archived";
 
   const roleLabel = item
     ? isCurrentUserPiffer
-      ? t("messages.role_you_pif", {
-          defaultValue: "Du piffar: {{title}}",
+      ? t(isRequest ? "messages.role_you_wish" : "messages.role_you_pif", {
+          defaultValue: isRequest ? "Du önskar: {{title}}" : "Du piffar: {{title}}",
           title: item.title,
         })
-      : t("messages.role_you_receive", {
-          defaultValue: "Du tar emot: {{title}}",
+      : t(isRequest ? "messages.role_you_fulfill_wish" : "messages.role_you_receive", {
+          defaultValue: isRequest ? "Du uppfyller: {{title}}" : "Du tar emot: {{title}}",
           title: item.title,
         })
     : null;
@@ -304,7 +319,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
                 <>
                   <DropdownMenuItem onClick={() => setWithdrawOpen(true)}>
                     <RotateCcw className="h-4 w-4 mr-2" />
-                    Ångra val av mottagare
+                    {isRequest ? "Ångra val av uppfyllare" : "Ångra val av mottagare"}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
@@ -375,6 +390,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           onConfirm={() => completion.confirmHandoff(role)}
           onHardComplete={() => setRatingOpen(true)}
           onUndo={() => completion.undoConfirmation(role)}
+          isRequest={isRequest}
         />
       )}
 
@@ -383,8 +399,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         {isClosed ? (
           <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
             {completion.pifStatus === "archived"
-              ? "Pifen har arkiverats — konversationen är avslutad."
-              : "Pifen är genomförd — konversationen är avslutad."}
+              ? (isRequest ? "Önskan har arkiverats — konversationen är avslutad." : "Pifen har arkiverats — konversationen är avslutad.")
+              : (isRequest ? "Önskan är uppfylld — konversationen är avslutad." : "Pifen är genomförd — konversationen är avslutad.")}
           </div>
         ) : (
           <EnhancedMessageInput
@@ -407,6 +423,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
             return res;
           }}
           onLowRatingReport={() => setReportOpen(true)}
+          isRequest={isRequest}
         />
       )}
 
@@ -414,9 +431,11 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ångra val av mottagare</AlertDialogTitle>
+            <AlertDialogTitle>{isRequest ? "Ångra val av uppfyllare" : "Ångra val av mottagare"}</AlertDialogTitle>
             <AlertDialogDescription>
-              Vill du återöppna pifen så att andra kan visa intresse, eller arkivera den helt?
+              {isRequest
+                ? "Vill du återöppna önskan så att andra kan erbjuda sig att uppfylla den, eller arkivera den helt?"
+                : "Vill du återöppna pifen så att andra kan visa intresse, eller arkivera den helt?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
@@ -425,14 +444,14 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
               className="w-full"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Återöppna pifen
+              {isRequest ? "Återöppna önskan" : "Återöppna pifen"}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => handleWithdraw("archive")}
               className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               <Archive className="h-4 w-4 mr-2" />
-              Arkivera pifen
+              {isRequest ? "Arkivera önskan" : "Arkivera pifen"}
             </AlertDialogAction>
             <AlertDialogCancel className="w-full mt-0">
               Avbryt

@@ -24,6 +24,8 @@ interface Props {
    * leave the item active with no completion.
    */
   allowSkip?: boolean;
+  /** When true the underlying item is a wish (item_type='request'). */
+  isRequest?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ export function PifRatingModal({
   onSubmit,
   onLowRatingReport,
   allowSkip = true,
+  isRequest = false,
 }: Props) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
@@ -81,7 +84,7 @@ export function PifRatingModal({
         {!askReport ? (
           <>
             <DialogHeader>
-              <DialogTitle>Betygsätt mottagaren</DialogTitle>
+              <DialogTitle>{isRequest ? "Betygsätt den som uppfyllde önskan" : "Betygsätt mottagaren"}</DialogTitle>
               <DialogDescription>
                 Ditt omdöme hjälper grannar att lita på varandra.
               </DialogDescription>
@@ -111,7 +114,7 @@ export function PifRatingModal({
 
             <Textarea
               rows={3}
-              placeholder="Lämna en kommentar (visas för mottagaren)"
+              placeholder={isRequest ? "Lämna en kommentar (visas för den som uppfyllde önskan)" : "Lämna en kommentar (visas för mottagaren)"}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />

@@ -99,6 +99,10 @@ export function usePifCompletion(
     pifStatus: null,
     loading: true,
   });
+  // Whether the underlying item is a wish (item_type='request'). Drives
+  // wish-vs-pif copy in every system message posted from this hook. Fetched
+  // once with the initial items row; item_type does not change after creation.
+  const [isRequest, setIsRequest] = useState(false);
 
   const applyRow = useCallback((row: any) => {
     if (!row) return;
@@ -148,7 +152,7 @@ export function usePifCompletion(
     (async () => {
       const { data, error } = await (supabase
         .from("items") as any)
-        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status")
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, item_type")
         .eq("id", id)
         .maybeSingle();
       if (cancelled) return;
@@ -157,6 +161,14 @@ export function usePifCompletion(
         setState((s) => ({ ...s, loading: false }));
         return;
       }
+      const nextIsRequest =
+        String((data as any)?.item_type || "offer").toLowerCase() === "request";
+      setIsRequest(nextIsRequest);
+      console.log("[copy-audit] usePifCompletion isRequest derived", {
+        itemId: id,
+        rawItemType: (data as any)?.item_type ?? null,
+        isRequest: nextIsRequest,
+      });
       applyRow(data);
     })();
 
@@ -251,30 +263,43 @@ export function usePifCompletion(
         pifStatus: both ? "completed" : nextStatus ?? s.pifStatus,
       }));
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         if (role === "piffer") {
           const receiverAlreadyConfirmed = nextReceiverConfirmed;
           if (!receiverAlreadyConfirmed) {
             // Piffer confirms first.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+              pick(
+                "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+                "Du har bekräftat att önskan är uppfylld. Väntar på att den som uppfyllde önskan också bekräftar.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+              pick(
+                "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+                "Önskaren har bekräftat att önskan är uppfylld. Väntar på att du också bekräftar.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           } else {
             // Piffer confirms second.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat överlämning.",
+              pick(
+                "Du har bekräftat överlämning.",
+                "Du har bekräftat att önskan är uppfylld.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har bekräftat överlämning.",
+              pick(
+                "Piffaren har bekräftat överlämning.",
+                "Önskaren har bekräftat att önskan är uppfylld.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           }
@@ -284,24 +309,36 @@ export function usePifCompletion(
             // Receiver confirms first.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat mottagning. Väntar på att piffaren bekräftar överlämning.",
+              pick(
+                "Du har bekräftat mottagning. Väntar på att piffaren bekräftar överlämning.",
+                "Du har bekräftat att önskan är uppfylld. Väntar på att önskaren också bekräftar.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Mottagaren har bekräftat mottagning. Väntar på att du bekräftar överlämning.",
+              pick(
+                "Mottagaren har bekräftat mottagning. Väntar på att du bekräftar överlämning.",
+                "Den som uppfyllde önskan har bekräftat. Väntar på att du också bekräftar.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           } else {
             // Receiver confirms second.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat mottagning.",
+              pick(
+                "Du har bekräftat mottagning.",
+                "Du har bekräftat att önskan är uppfylld.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Mottagaren har bekräftat mottagning.",
+              pick(
+                "Mottagaren har bekräftat mottagning.",
+                "Den som uppfyllde önskan har bekräftat.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           }
@@ -314,13 +351,16 @@ export function usePifCompletion(
         if (both) {
           await postPifSystemMessage(
             conversationId,
-            "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+            pick(
+              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+              "Önskan är uppfylld! Tack för att ni använde PIF. 🎉",
+            ),
           );
         }
       }
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, state.pifferConfirmed, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, isRequest, state.pifferConfirmed, state.receiverConfirmed],
   );
 
   const completeWithRating = useCallback(
@@ -346,6 +386,7 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         // Hard-complete path: receiver hadn't confirmed yet. Only this
         // path posts the "Du markerade..." messages AND the celebration
         // message — when both sides already confirmed, the celebration
@@ -353,17 +394,26 @@ export function usePifCompletion(
         if (!state.receiverConfirmed) {
           await postPifSystemMessage(
             conversationId,
-            "Du markerade pifen som genomförd.",
+            pick(
+              "Du markerade pifen som genomförd.",
+              "Du markerade önskan som uppfylld.",
+            ),
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har markerat pifen som genomförd.",
+            pick(
+              "Piffaren har markerat pifen som genomförd.",
+              "Önskaren har markerat önskan som uppfylld.",
+            ),
             { targetUserId: otherUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+            pick(
+              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+              "Önskan är uppfylld! Tack för att ni använde PIF. 🎉",
+            ),
           );
         }
         // The star rating itself stays private. Only post a system message
@@ -371,20 +421,16 @@ export function usePifCompletion(
         if (comment && comment.trim()) {
           await postPifSystemMessage(
             conversationId,
-            `Kommentar från piffaren: ${comment.trim()}`,
+            pick(
+              `Kommentar från piffaren: ${comment.trim()}`,
+              `Kommentar från önskaren: ${comment.trim()}`,
+            ),
           );
         }
       }
       // Fan-out completion notifications to the receiver + piffer.
       try {
-        const { data: itemRow } = await (supabase.from("items") as any)
-          .select("item_type")
-          .eq("id", id)
-          .maybeSingle();
-        const event =
-          String(itemRow?.item_type || "offer").toLowerCase() === "request"
-            ? "wish_completed"
-            : "pif_completed";
+        const event = isRequest ? "wish_completed" : "pif_completed";
         await (supabase.rpc as any)("notify_item_interest_event", {
           p_item_id: id,
           p_event: event,
@@ -396,7 +442,7 @@ export function usePifCompletion(
       setState((s) => ({ ...s, pifStatus: "completed" }));
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, isRequest, state.receiverConfirmed],
   );
 
   const withdraw = useCallback(
@@ -412,38 +458,49 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         if (action === "reopen") {
+          // Note: for wishes the "is now open again" framing is intentionally
+          // dropped because withdraw_pif's current behaviour for wishes does
+          // not necessarily map to a closed→open transition (see plan.md
+          // entry on withdraw_pif multi-fulfiller bug).
           await postPifSystemMessage(
             conversationId,
-            "Du har ångrat valet av mottagare. Pifen är nu öppen igen.",
+            pick(
+              "Du har ångrat valet av mottagare. Pifen är nu öppen igen.",
+              "Du har ångrat valet av den som skulle uppfylla önskan.",
+            ),
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Pifen är nu öppen för andra att visa intresse.",
+            pick(
+              "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Pifen är nu öppen för andra att visa intresse.",
+              "Önskaren har ångrat sitt val. Du har inte längre uppdraget att uppfylla denna önskan.",
+            ),
             { targetUserId: otherUserId ?? null },
           );
         } else {
           await postPifSystemMessage(
             conversationId,
-            "Du har arkiverat pifen.",
+            pick(
+              "Du har arkiverat pifen.",
+              "Du har arkiverat önskan.",
+            ),
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har ångrat sig och kan/vill inte längre piffa detta.",
+            pick(
+              "Piffaren har ångrat sig och kan/vill inte längre piffa detta.",
+              "Önskaren har ångrat sig och vill inte längre att önskan uppfylls.",
+            ),
             { targetUserId: otherUserId ?? null },
           );
         }
       }
       // Notify ALL interested users (selected + the rest) of the change.
       try {
-        const { data: itemRow } = await (supabase.from("items") as any)
-          .select("item_type")
-          .eq("id", id)
-          .maybeSingle();
-        const isRequest =
-          String(itemRow?.item_type || "offer").toLowerCase() === "request";
         const event =
           action === "reopen"
             ? isRequest ? "wish_reopened" : "pif_reopened"
@@ -462,7 +519,7 @@ export function usePifCompletion(
       }));
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId],
+    [id, conversationId, currentUserId, otherUserId, isRequest],
   );
 
   const undoConfirmation = useCallback(
@@ -492,36 +549,49 @@ export function usePifCompletion(
       if (latestRow) applyRow(latestRow);
 
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         if (role === "piffer") {
           const bothCleared = !!(data && (data as any).receiver_was_confirmed);
           if (bothCleared) {
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har ångrat sin bekräftelse av överlämning. Utbytet är inte slutfört.",
+              pick(
+                "Piffaren har ångrat sin bekräftelse av överlämning. Utbytet är inte slutfört.",
+                "Önskaren har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+              ),
             );
           } else {
             await postPifSystemMessage(
               conversationId,
-              "Du har ångrat din bekräftelse av överlämning.",
+              pick(
+                "Du har ångrat din bekräftelse av överlämning.",
+                "Du har ångrat din bekräftelse.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har ångrat sin bekräftelse av överlämning.",
+              pick(
+                "Piffaren har ångrat sin bekräftelse av överlämning.",
+                "Önskaren har ångrat sin bekräftelse.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           }
         } else {
           await postPifSystemMessage(
             conversationId,
-            "Mottagaren har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+            pick(
+              "Mottagaren har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+              "Den som uppfyller önskan har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+            ),
           );
         }
       }
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, applyRow],
+    [id, conversationId, currentUserId, otherUserId, isRequest, applyRow],
   );
 
-  return { ...state, confirmHandoff, completeWithRating, withdraw, undoConfirmation };
+  return { ...state, isRequest, confirmHandoff, completeWithRating, withdraw, undoConfirmation };
 }

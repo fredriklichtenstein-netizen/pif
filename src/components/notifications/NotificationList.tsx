@@ -209,9 +209,14 @@ export function NotificationList() {
                   ctaLabel = t('interactions.start_conversation');
                 } else if (isSelectionMade) {
                   const receiver = notif.actor_name || t('someone');
-                  displayTitle = notif.item_title
+                  // Prefer the insert-time payload title — InterestSelectionList
+                  // already branches it correctly on item_type (wish vs pif).
+                  // Fall back to a pif-shaped reconstruction only if the payload
+                  // title is missing (legacy rows).
+                  const fallback = notif.item_title
                     ? `Du har valt ${receiver} som mottagare för "${notif.item_title}".`
                     : `Du har valt ${receiver} som mottagare.`;
+                  displayTitle = notif.title || fallback;
                   displayContent = null;
                   ctaUrl = notif.conversation_id
                     ? `/messages?conversation=${notif.conversation_id}`

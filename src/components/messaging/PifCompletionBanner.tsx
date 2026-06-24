@@ -10,6 +10,8 @@ interface Props {
   onConfirm: () => Promise<unknown>;
   onHardComplete: () => void; // opens rating modal
   onUndo?: () => Promise<unknown>;
+  /** When true the underlying item is a wish (item_type='request'). */
+  isRequest?: boolean;
 }
 
 /**
@@ -23,10 +25,12 @@ export function PifCompletionBanner({
   onConfirm,
   onHardComplete,
   onUndo,
+  isRequest = false,
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [undoing, setUndoing] = useState(false);
   const bothDone = pifferConfirmed && receiverConfirmed;
+  const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
 
   const handleConfirm = async () => {
     setBusy(true);
@@ -51,7 +55,7 @@ export function PifCompletionBanner({
     return (
       <div className="border-t bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-800 flex items-center justify-center gap-2">
         <PartyPopper className="h-4 w-4" />
-        Pifen är genomförd! 🎉
+        {pick("Pifen är genomförd! 🎉", "Önskan är uppfylld! 🎉")}
       </div>
     );
   }
@@ -76,8 +80,14 @@ export function PifCompletionBanner({
             <Check className="h-4 w-4" />
           )}
           {confirmed
-            ? "Du har bekräftat överlämning"
-            : "Jag har lämnat över pifen ✓"}
+            ? pick(
+                "Du har bekräftat överlämning",
+                "Du har bekräftat att önskan är uppfylld",
+              )
+            : pick(
+                "Jag har lämnat över pifen ✓",
+                "Jag har tagit emot ✓",
+              )}
         </Button>
         {canUndo && (
           <div className="flex justify-center">
@@ -94,7 +104,10 @@ export function PifCompletionBanner({
         {confirmed && !receiverConfirmed && (
           <>
             <p className="text-xs text-muted-foreground text-center">
-              Väntar på att mottagaren bekräftar mottagning…
+              {pick(
+                "Väntar på att mottagaren bekräftar mottagning…",
+                "Väntar på att den som uppfyllde önskan också bekräftar…",
+              )}
             </p>
             <Button
               type="button"
@@ -131,8 +144,14 @@ export function PifCompletionBanner({
           <Check className="h-4 w-4" />
         )}
         {confirmed
-          ? "Du har bekräftat mottagning"
-          : "Jag har tagit emot pifen ✓"}
+          ? pick(
+              "Du har bekräftat mottagning",
+              "Du har bekräftat att önskan är uppfylld",
+            )
+          : pick(
+              "Jag har tagit emot pifen ✓",
+              "Jag har uppfyllt önskan ✓",
+            )}
       </Button>
       {canUndo && (
         <div className="flex justify-center">
@@ -148,7 +167,10 @@ export function PifCompletionBanner({
       )}
       {confirmed && !pifferConfirmed && (
         <p className="text-xs text-muted-foreground text-center">
-          Väntar på att piffaren bekräftar överlämning…
+          {pick(
+            "Väntar på att piffaren bekräftar överlämning…",
+            "Väntar på att önskaren också bekräftar…",
+          )}
         </p>
       )}
     </div>
