@@ -79,25 +79,23 @@ export function AddressInputContainer({
       )}
 
       {hideSearch && (
-        <>
-          <div className="flex gap-2">
-            <Input
-              value={value}
-              onChange={(e) => handleAddressInput(e.target.value)}
-              placeholder={t('interactions.enter_address')}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleMapButtonClick}
-            >
-              {mapButtonLabel}
-            </Button>
-          </div>
-          <UsePifAddressButton onSelect={handlePifAddressSelect} />
-        </>
+        <div className="flex gap-2">
+          <Input
+            value={value}
+            onChange={(e) => handleAddressInput(e.target.value)}
+            placeholder={t('interactions.enter_address')}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleMapButtonClick}
+          >
+            {mapButtonLabel}
+          </Button>
+        </div>
       )}
+
 
       {suggestions.length > 0 && !isLoadingSuggestions && (
         <AddressSuggestions
