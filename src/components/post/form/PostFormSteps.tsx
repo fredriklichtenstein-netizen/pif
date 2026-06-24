@@ -5,13 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Search } from "lucide-react";
 import { useTranslation } from 'react-i18next';
+import { PostFieldError } from "./PostFieldError";
 
 interface PostFormStepsProps {
   formData: any;
   setFormData: (data: any) => void;
+  fieldErrors?: Partial<Record<string, string>>;
 }
 
-export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
+export function PostFormSteps({ formData, setFormData, fieldErrors = {} }: PostFormStepsProps) {
   const { t } = useTranslation();
   
   const handleItemTypeChange = (value: 'offer' | 'request') => {
@@ -57,6 +59,7 @@ export function PostFormSteps({ formData, setFormData }: PostFormStepsProps) {
               </Label>
             </div>
           </RadioGroup>
+          <PostFieldError message={fieldErrors.item_type} />
         </CardContent>
       </Card>
     </div>
