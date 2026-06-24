@@ -200,3 +200,67 @@ export function PostFormLocation({
     </div>
   );
 }
+
+interface PostPickupAddressSectionProps {
+  primaryAddress: string;
+  mode: 'primary' | 'custom';
+  customAddress: string;
+  onModeChange: (mode: 'primary' | 'custom') => void;
+  onCustomAddressChange: (address: string) => void;
+}
+
+function PostPickupAddressSection({
+  primaryAddress,
+  mode,
+  customAddress,
+  onModeChange,
+  onCustomAddressChange,
+}: PostPickupAddressSectionProps) {
+  const { t } = useTranslation();
+  const resolved = mode === 'primary' ? primaryAddress : customAddress;
+
+  return (
+    <div className="space-y-3">
+      <Label>{t('profile.pickup_address')}</Label>
+      <RadioGroup
+        value={mode}
+        onValueChange={(v) => onModeChange(v as 'primary' | 'custom')}
+        className="flex flex-col gap-2"
+      >
+        <div className="flex items-center gap-2">
+          <RadioGroupItem value="primary" id="post-pa-primary" />
+          <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
+            {t('profile.pickup_use_primary')}
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <RadioGroupItem value="custom" id="post-pa-custom" />
+          <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
+            {t('profile.pickup_use_other')}
+          </Label>
+        </div>
+      </RadioGroup>
+
+      {mode === 'primary' ? (
+        <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+          {primaryAddress || t('profile.pickup_no_primary')}
+        </div>
+      ) : (
+        <AddressInput
+          value={customAddress}
+          onChange={(addr) => onCustomAddressChange(addr)}
+          mapButtonLabel={<Map className="w-4 h-4" />}
+          hideSearch
+        />
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        {t('profile.pickup_address_in_use')}:{' '}
+        <span className="font-medium text-foreground">
+          {resolved || t('profile.pickup_no_address_set')}
+        </span>
+      </p>
+    </div>
+  );
+}
+
