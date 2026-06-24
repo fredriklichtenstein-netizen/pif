@@ -59,9 +59,10 @@ export function PostFormLocation({
         <p className="text-sm text-muted-foreground">
           {isRequest
             ? t('post.search_area_placeholder')
-            : t('post.location_placeholder')
+            : t('post.location_question')
           }
         </p>
+
       </div>
 
       <div className="space-y-4">
@@ -112,7 +113,12 @@ export function PostFormLocation({
               <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent className="p-4 pt-0 space-y-5">
+              <div className="text-sm bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-lg">
+                <p className="font-medium">{t('post.pickup_share_notice_title')}</p>
+                <p className="mt-1">{t('post.pickup_share_notice_body')}</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+
                 {pickupOptions.map(({ value, label, icon: Icon }) => {
                   const active = selectedPref === value;
                   return (
