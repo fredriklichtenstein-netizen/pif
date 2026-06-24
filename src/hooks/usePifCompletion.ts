@@ -99,6 +99,10 @@ export function usePifCompletion(
     pifStatus: null,
     loading: true,
   });
+  // Whether the underlying item is a wish (item_type='request'). Drives
+  // wish-vs-pif copy in every system message posted from this hook. Fetched
+  // once with the initial items row; item_type does not change after creation.
+  const [isRequest, setIsRequest] = useState(false);
 
   const applyRow = useCallback((row: any) => {
     if (!row) return;
