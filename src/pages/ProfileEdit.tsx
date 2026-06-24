@@ -81,6 +81,9 @@ function ProfileEdit() {
           pickupPreference: (data as any).pickup_preference || "",
           pickupAddress: mode === 'primary' ? primaryAddr : savedPickup,
           pickupAddressMode: mode,
+          pickupDoorCode: (data as any).pickup_door_code || "",
+          pickupFloor: (data as any).pickup_floor != null ? String((data as any).pickup_floor) : "",
+          pickupInstructions: (data as any).pickup_instructions || "",
         });
         if (data.avatar_url) {
           setAvatarUrl(data.avatar_url);
