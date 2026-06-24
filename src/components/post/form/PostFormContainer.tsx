@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PostFormSteps } from "./PostFormSteps";
 import { PostFormHeader } from "./PostFormHeader";
 import { PostFormImages } from "./PostFormImages";
@@ -54,11 +54,16 @@ export function PostFormContainer({
 }: PostFormContainerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const isRequest = formData.item_type === 'request';
+  // When the user deep-links from the feed buttons with ?type=offer|request,
+  // skip the type-picker step entirely so they land directly on images.
+  const deepLinkedType = searchParams.get('type');
+  const skipTypeStep = deepLinkedType === 'offer' || deepLinkedType === 'request';
 
   const steps = [
-    { title: t('post.step_type'), component: "steps" },
+    ...(skipTypeStep ? [] : [{ title: t('post.step_type'), component: "steps" }]),
     { title: isRequest ? t('post.step_reference_image') : t('post.step_images'), component: "images" },
     { title: t('post.step_information'), component: "information" },
     { title: isRequest ? t('post.step_search_area') : t('post.step_location'), component: "location" },
