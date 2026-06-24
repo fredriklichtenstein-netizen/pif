@@ -152,7 +152,7 @@ export function usePifCompletion(
     (async () => {
       const { data, error } = await (supabase
         .from("items") as any)
-        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status")
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, item_type")
         .eq("id", id)
         .maybeSingle();
       if (cancelled) return;
@@ -161,6 +161,14 @@ export function usePifCompletion(
         setState((s) => ({ ...s, loading: false }));
         return;
       }
+      const nextIsRequest =
+        String((data as any)?.item_type || "offer").toLowerCase() === "request";
+      setIsRequest(nextIsRequest);
+      console.log("[copy-audit] usePifCompletion isRequest derived", {
+        itemId: id,
+        rawItemType: (data as any)?.item_type ?? null,
+        isRequest: nextIsRequest,
+      });
       applyRow(data);
     })();
 
