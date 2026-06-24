@@ -30,6 +30,9 @@ function ProfileEdit() {
     pickupPreference: "",
     pickupAddress: "",
     pickupAddressMode: "primary",
+    pickupDoorCode: "",
+    pickupFloor: "",
+    pickupInstructions: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
