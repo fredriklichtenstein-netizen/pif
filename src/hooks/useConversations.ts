@@ -189,6 +189,7 @@ export function useConversations() {
       }
     };
 
+    fetchRef.current = fetchConversations;
     fetchConversations();
 
     if (user && !isSafeMode()) {
