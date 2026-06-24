@@ -24,6 +24,8 @@ interface Props {
    * leave the item active with no completion.
    */
   allowSkip?: boolean;
+  /** When true the underlying item is a wish (item_type='request'). */
+  isRequest?: boolean;
 }
 
 /**
