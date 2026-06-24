@@ -162,6 +162,15 @@ export function useConversations() {
               } : undefined
             };
           });
+          console.debug('[useConversations] setConversations', {
+            idsFromRpc: conversationIds,
+            idsFromSelect: conversationsData?.map((c: any) => c.id),
+            finalIds: transformedConversations.map((c: any) => ({
+              id: c.id,
+              item_id: c.item_id,
+              item_status: c.item?.status ?? null,
+            })),
+          });
           setConversations(transformedConversations as Conversation[]);
         }
 

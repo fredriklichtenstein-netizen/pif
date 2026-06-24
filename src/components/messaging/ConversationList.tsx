@@ -43,6 +43,10 @@ export function ConversationList({
       if (isHistoricStatus(c.item?.status)) h.push(c);
       else a.push(c);
     }
+    console.debug('[ConversationList] bucket split', {
+      activeIds: a.map((c) => c.id),
+      historyIds: h.map((c) => c.id),
+    });
     return { active: a, history: h };
   }, [conversations]);
 
