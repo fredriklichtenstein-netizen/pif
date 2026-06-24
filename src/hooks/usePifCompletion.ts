@@ -549,36 +549,49 @@ export function usePifCompletion(
       if (latestRow) applyRow(latestRow);
 
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         if (role === "piffer") {
           const bothCleared = !!(data && (data as any).receiver_was_confirmed);
           if (bothCleared) {
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har ångrat sin bekräftelse av överlämning. Utbytet är inte slutfört.",
+              pick(
+                "Piffaren har ångrat sin bekräftelse av överlämning. Utbytet är inte slutfört.",
+                "Önskaren har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+              ),
             );
           } else {
             await postPifSystemMessage(
               conversationId,
-              "Du har ångrat din bekräftelse av överlämning.",
+              pick(
+                "Du har ångrat din bekräftelse av överlämning.",
+                "Du har ångrat din bekräftelse.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har ångrat sin bekräftelse av överlämning.",
+              pick(
+                "Piffaren har ångrat sin bekräftelse av överlämning.",
+                "Önskaren har ångrat sin bekräftelse.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           }
         } else {
           await postPifSystemMessage(
             conversationId,
-            "Mottagaren har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+            pick(
+              "Mottagaren har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+              "Den som uppfyller önskan har ångrat sin bekräftelse. Utbytet är inte slutfört.",
+            ),
           );
         }
       }
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, applyRow],
+    [id, conversationId, currentUserId, otherUserId, isRequest, applyRow],
   );
 
-  return { ...state, confirmHandoff, completeWithRating, withdraw, undoConfirmation };
+  return { ...state, isRequest, confirmHandoff, completeWithRating, withdraw, undoConfirmation };
 }
