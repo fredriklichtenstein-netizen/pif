@@ -81,17 +81,32 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     currentUserId,
     otherParticipant?.user_id,
   );
+  // Drive every wish-vs-pif copy switch from the hook's authoritative
+  // item_type read. Temporary sanity log so silent "always false"
+  // derivations are caught early instead of surfacing as a copy bug.
+  const isRequest = !!completion.isRequest;
+  useEffect(() => {
+    if (item?.id != null && !completion.loading) {
+      console.log("[copy-audit] ConversationView isRequest", {
+        itemId: item.id,
+        itemTitle: item.title,
+        isRequest,
+        role,
+      });
+    }
+  }, [item?.id, item?.title, completion.loading, isRequest, role]);
+
   const isClosed =
     completion.pifStatus === "completed" || completion.pifStatus === "archived";
 
   const roleLabel = item
     ? isCurrentUserPiffer
-      ? t("messages.role_you_pif", {
-          defaultValue: "Du piffar: {{title}}",
+      ? t(isRequest ? "messages.role_you_wish" : "messages.role_you_pif", {
+          defaultValue: isRequest ? "Du önskar: {{title}}" : "Du piffar: {{title}}",
           title: item.title,
         })
-      : t("messages.role_you_receive", {
-          defaultValue: "Du tar emot: {{title}}",
+      : t(isRequest ? "messages.role_you_fulfill_wish" : "messages.role_you_receive", {
+          defaultValue: isRequest ? "Du uppfyller: {{title}}" : "Du tar emot: {{title}}",
           title: item.title,
         })
     : null;
