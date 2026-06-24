@@ -68,6 +68,9 @@ const HIDE_SIZE_MEASUREMENTS = new Set<string>([
   "household",
   "kitchen",
   "hobby",
+  "samlarobjekt",
+  "skonhet_parfym",
+  "smycken_accessoarer",
   "other",
 ]);
 
