@@ -19,6 +19,72 @@ function tsMs(value: string | null | undefined): number {
 }
 
 /**
+ * Refcounted shared realtime channel for unread-message updates.
+ *
+ * Supabase realtime-js dedupes channels by topic, so two components
+ * calling `supabase.channel(`unread-messages:${userId}`).on(...).subscribe()`
+ * independently would throw:
+ *   "cannot add `postgres_changes` callbacks ... after `subscribe()`"
+ *
+ * We bind the three postgres_changes listeners ONCE per userId, then fan
+ * events out to every registered listener. The channel is removed when
+ * the last listener unregisters.
+ */
+type UnreadMessagesListener = { onChange: () => void };
+
+const unreadMessagesChannels = new Map<
+  string,
+  { channel: ReturnType<typeof supabase.channel>; listeners: Set<UnreadMessagesListener> }
+>();
+
+function ensureUnreadMessagesChannel(userId: string, listener: UnreadMessagesListener) {
+  let entry = unreadMessagesChannels.get(userId);
+  if (!entry) {
+    const listeners = new Set<UnreadMessagesListener>();
+    const fanOut = () => {
+      for (const l of listeners) {
+        try {
+          l.onChange();
+        } catch (err) {
+          console.error("[useUnreadMessagesCount] listener error", err);
+        }
+      }
+    };
+    const channel = supabase
+      .channel(`unread-messages:${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        fanOut
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages" },
+        fanOut
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversation_participants" },
+        fanOut
+      )
+      .subscribe();
+    entry = { channel, listeners };
+    unreadMessagesChannels.set(userId, entry);
+  }
+  entry.listeners.add(listener);
+}
+
+function releaseUnreadMessagesChannel(userId: string, listener: UnreadMessagesListener) {
+  const entry = unreadMessagesChannels.get(userId);
+  if (!entry) return;
+  entry.listeners.delete(listener);
+  if (entry.listeners.size === 0) {
+    supabase.removeChannel(entry.channel);
+    unreadMessagesChannels.delete(userId);
+  }
+}
+
+/**
  * Counts unread messages addressed to the current user
  * across all conversations they participate in.
  *
