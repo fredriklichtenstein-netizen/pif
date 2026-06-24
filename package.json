@@ -110,16 +110,16 @@
   },
   "overrides": {
     "@xmldom/xmldom": "^0.9.10",
-    "glob": "^12.0.0",
+    "glob": "^13.0.6",
     "minimatch": "^10.0.1",
     "brace-expansion": "^2.0.2",
     "rimraf": {
-      "glob": "^12.0.0"
+      "glob": "$glob"
     }
   },
   "resolutions": {
     "@xmldom/xmldom": "^0.9.10",
-    "glob": "^12.0.0",
+    "glob": "^13.0.6",
     "minimatch": "^10.0.1",
     "brace-expansion": "^2.0.2"
   }
