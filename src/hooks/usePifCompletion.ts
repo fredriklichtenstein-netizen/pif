@@ -386,6 +386,7 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         // Hard-complete path: receiver hadn't confirmed yet. Only this
         // path posts the "Du markerade..." messages AND the celebration
         // message — when both sides already confirmed, the celebration
@@ -393,17 +394,26 @@ export function usePifCompletion(
         if (!state.receiverConfirmed) {
           await postPifSystemMessage(
             conversationId,
-            "Du markerade pifen som genomförd.",
+            pick(
+              "Du markerade pifen som genomförd.",
+              "Du markerade önskan som uppfylld.",
+            ),
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har markerat pifen som genomförd.",
+            pick(
+              "Piffaren har markerat pifen som genomförd.",
+              "Önskaren har markerat önskan som uppfylld.",
+            ),
             { targetUserId: otherUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+            pick(
+              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+              "Önskan är uppfylld! Tack för att ni använde PIF. 🎉",
+            ),
           );
         }
         // The star rating itself stays private. Only post a system message
@@ -411,20 +421,16 @@ export function usePifCompletion(
         if (comment && comment.trim()) {
           await postPifSystemMessage(
             conversationId,
-            `Kommentar från piffaren: ${comment.trim()}`,
+            pick(
+              `Kommentar från piffaren: ${comment.trim()}`,
+              `Kommentar från önskaren: ${comment.trim()}`,
+            ),
           );
         }
       }
       // Fan-out completion notifications to the receiver + piffer.
       try {
-        const { data: itemRow } = await (supabase.from("items") as any)
-          .select("item_type")
-          .eq("id", id)
-          .maybeSingle();
-        const event =
-          String(itemRow?.item_type || "offer").toLowerCase() === "request"
-            ? "wish_completed"
-            : "pif_completed";
+        const event = isRequest ? "wish_completed" : "pif_completed";
         await (supabase.rpc as any)("notify_item_interest_event", {
           p_item_id: id,
           p_event: event,
@@ -436,7 +442,7 @@ export function usePifCompletion(
       setState((s) => ({ ...s, pifStatus: "completed" }));
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, isRequest, state.receiverConfirmed],
   );
 
   const withdraw = useCallback(
