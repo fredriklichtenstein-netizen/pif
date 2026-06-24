@@ -20,7 +20,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 const Messages = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const { conversations, isLoading: conversationsLoading, error } = useConversations();
+  const { conversations, isLoading: conversationsLoading, error, refreshConversations } = useConversations();
   const { unreadCount } = useNotifications();
   const { unreadMessagesCount, unreadByConversation } = useUnreadMessagesCount();
   const { t } = useTranslation();
