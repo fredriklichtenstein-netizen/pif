@@ -285,50 +285,21 @@ export const useCachedProfile = (
   // existing cached profile instead of replacing the whole object so the
   // UI doesn't flicker (avatar reload, layout reflow) when only one field
   // — e.g. `last_seen_at` or `phone` — actually changed.
+  //
+  // IMPORTANT: supabase-js / realtime-js dedupes channels by topic, so
+  // multiple components calling useCachedProfile(sameUserId) would all
+  // receive the SAME channel instance. The second `.on()` after the first
+  // `.subscribe()` throws "cannot add postgres_changes callbacks ... after
+  // subscribe()". We refcount a single shared channel per userId and only
+  // bind/subscribe on the first mount, tear down on the last unmount.
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase
-      .channel(`profile-cache-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "profiles",
-          filter: `id=eq.${userId}`,
-        },
-        (payload) => {
-          const next = payload.new as Record<string, any> | null;
-          if (!next) return;
-
-          const current = (readCache(userId) ?? {}) as Record<string, any>;
-
-          // Compute a minimal diff of fields whose values actually changed.
-          const diff: Record<string, any> = {};
-          for (const key of Object.keys(next)) {
-            // Ignore noisy timestamp-only updates that don't reflect a
-            // user-visible change.
-            if (key === "updated_at") continue;
-            if (next[key] !== current[key]) diff[key] = next[key];
-          }
-
-          if (Object.keys(diff).length === 0) {
-            // Nothing meaningful changed — keep current object reference so
-            // React subtree doesn't re-render and images don't reload.
-            return;
-          }
-
-          const merged = { ...current, ...diff, updated_at: next.updated_at };
-          writeCache(userId, merged);
-          setProfile(merged);
-        },
-      )
-      .subscribe();
-
+    const ref = ensureProfileChannel(userId);
     return () => {
-      supabase.removeChannel(channel);
+      releaseProfileChannel(userId);
     };
   }, [userId]);
+
 
   // Subscribe to optimistic cache writes from anywhere in the app
   useEffect(() => {
