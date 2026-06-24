@@ -86,3 +86,25 @@ Recommended verification recipe after the migration runs:
 
 - `src/hooks/useNotifications.ts` — fix title/content mapping in both transform sites; extend `Notification` interface if needed.
 - `src/components/notifications/NotificationList.tsx` — add `helper_selected` to receiver-selected branch; harden `selection_made` and default-case title fallback against raw type strings.
+
+---
+
+## Follow-up round (2026-06-24)
+
+Three additional bugs surfaced from real wish-selection testing:
+
+### #1 — Conversation list preview shows same text for both sides
+`useConversations.ts` ignored `target_user_id` when building list previews. `_insert_pif_system_messages` writes two per-recipient system messages — both sides ended up with whichever inserted last. Fixed: skip messages targeted at OTHER users in both the initial fetch (`lastByConv`) and the realtime INSERT preview-overwrite.
+
+### #2 — Fulfiller notification used pif language
+Two layers fixed:
+- DB migration `db/manual_migrations/wish_aware_helper_selected_notification.sql` rewrites the `helper_selected` branch of `notify_item_interest_event` to wish-aware, multi-fulfiller-neutral copy. All other branches preserved byte-for-byte.
+- `NotificationList.tsx` `isReceiverSelected` branch now respects `safeTitle` (payload title) when `type === 'helper_selected'`, so the server copy actually renders.
+
+### #3 — Wisher's self-notification wording
+`InterestSelectionList.tsx` line 428-430: wish wording changed from "som ska uppfylla" to "till att uppfylla" to match the multi-fulfiller-neutral standard. Name already included.
+
+## Backlog (priority — DO NOT fix wording before logic)
+
+`notify_item_interest_event` still has `wish_reopened`, `wish_archived`, and `wish_completed` branches that frame the wish as a single-fulfiller state machine (e.g. "Önskningen är nu öppen igen" implies the wish was closed by one fulfiller's selection — wrong for multi-fulfiller wishes). These mirror the same withdraw_pif multi-fulfiller-scoping bug already flagged elsewhere. **Do not re-word these branches until the underlying state-transition logic is corrected** — rewording first would mask the real bug.
+
