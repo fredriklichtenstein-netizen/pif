@@ -86,7 +86,7 @@ export function PifCompletionBanner({
               )
             : pick(
                 "Jag har lämnat över pifen ✓",
-                "Jag har tagit emot ✓",
+                "Min önskan är uppfylld ✓",
               )}
         </Button>
         {canUndo && (

@@ -34,21 +34,44 @@ The pif branch may keep its current single-receiver behavior. Treat this as a pr
 
 Schedule this migration as a follow-up to the `withdraw_pif` fix so wording and behaviour land consistently.
 
-## Wish conversation visibility (low priority, root cause unconfirmed)
+## Wish conversation visibility — REOPENED (active)
 
-Observed once on a heavily-retested wish conversation (`ebc1d925-…`, item 5) that went through an unusual sequence: multiple completion attempts, rating-modal tests, force-complete experiments, and the participant/RLS/categorization investigation itself.
+Reproduced on a fresh wish (item 32, conv `3aa088dd-31da-415a-88aa-5301d1d2c2ed`) opened via notification deep-link. The conversation was missing from the first `[ConversationList] bucket split` log (pre-deep-link mount), but the user confirmed via direct DB inspection that the server-side path is clean:
 
-- Not reproducible on fresh wishes or fresh pifs — full end-to-end flows work cleanly for both.
-- DB-level checks all came back consistent: RLS policy on `conversations` is type-agnostic, `get_user_conversation_ids` returns the id, and the PostgREST select with item embed returns the row with `pif_status='active'`, `item_type='request'`, owner resolved.
-- Per `ConversationList.tsx`'s strict binary split on `isHistoricStatus(item.status)`, a conv with `status='active'` should land in Aktiva — yet it was reported invisible in both buckets, which implies the row never reached the `conversations` prop. Upstream cause not confirmed.
+- `get_user_conversation_ids` (run under the affected user's JWT) DOES return `3aa088dd…`.
+- RLS on `conversations` is type-agnostic and correct.
+- `select_wish_helper` and `select_receiver` both insert into `conversation_participants` directly (no schema drift between participant columns — the earlier migration-file theory was based on stale `db/manual_migrations/*` content and is RETRACTED).
 
-Five `console.debug` lines intentionally left in place for future diagnosis if it recurs:
+Current working theory: client-side race. `useConversations` mounted before Realtime delivered the just-created `conversation_participants` insert (or the event was dropped), and there was no retry trigger to reconcile after.
+
+Mitigations landed in this pass (`src/hooks/useConversations.ts`):
+- refetch on `window` focus and `document` visibilitychange,
+- refetch on `pif:conversation-read` (fires immediately after notification deep-link opens the target conversation),
+- refetch on `pif:conversations-refresh` custom event,
+- expose `refreshConversations()` callback,
+- `Messages.tsx` deep-link effect now calls `refreshConversations()` when the deep-linked item id has no match in the current list (instead of silently doing nothing).
+
+If recurrence is still observed after these mitigations, the next suspect is a missed `conversation_participants` Realtime INSERT event on the channel itself (not a UI bug). Diagnostic logs left in place:
 - `src/components/notifications/NotificationList.tsx` — `[notif-render]`, `[notif-cta]`
-- `src/pages/Messages.tsx` — `[messages] *` (deep-link effect + tab handlers)
+- `src/pages/Messages.tsx` — `[messages] *`
 - `src/hooks/useConversations.ts` — `[useConversations] setConversations` with `idsFromRpc` / `idsFromSelect` / `finalIds`
-- `src/components/messaging/ConversationList.tsx` — `[ConversationList] bucket split` with `activeIds` / `historyIds`
+- `src/components/messaging/ConversationList.tsx` — `[ConversationList] bucket split`
 
-If it recurs, the transcript of those four log groups should pinpoint the stage where the row is dropped.
+## Follow-up — wish-aware `_insert_pif_system_messages` migration (pending review)
+
+Live function body confirmed (pulled from `pg_proc`). It hardcodes pif-only Swedish strings (`Du har valts som mottagare för…`, `Du har valt en mottagare för…`, plus pickup detail lines referencing "Piffaren") for both pifs and wishes. Migration to be drafted that:
+- adds `item_type` to the existing `SELECT FROM items`,
+- branches `v_receiver_msg` / `v_piffer_msg` on item_type,
+- skips the pickup/handover detail block entirely for wishes (no analogous concept on the request side),
+- preserves current pif behaviour byte-for-byte.
+
+Will be posted for review before running.
+
+## Follow-up — `notify_item_interest_event` actor-exclusion (pending live source)
+
+Earlier round reported the actor receiving a `helper_selected` notification intended for the other party. Suspected root cause: the RPC's fan-out lacks an actor-exclusion clause. Needs the LIVE function definition pulled from `pg_proc` before writing a fix.
+
+
 
 ## PIF notification deep-link (resolved)
 

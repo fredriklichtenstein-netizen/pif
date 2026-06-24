@@ -15,6 +15,7 @@ export function useConversations() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const hasLoadedRef = useRef(false);
+  const fetchRef = useRef<(() => void) | null>(null);
   const { toast } = useToast();
   const { user, isReady } = useAuthReady();
   const authLoading = !isReady;
@@ -188,6 +189,7 @@ export function useConversations() {
       }
     };
 
+    fetchRef.current = fetchConversations;
     fetchConversations();
 
     if (user && !isSafeMode()) {
@@ -231,6 +233,12 @@ export function useConversations() {
           ),
         );
       }
+      // Also opportunistically refetch: if the conversation that was
+      // just marked read isn't yet in our list (e.g. a just-created
+      // wish conversation reached via notification deep-link before
+      // Realtime delivered the participant insert), this is exactly
+      // the moment to reconcile it in.
+      fetchRef.current?.();
     };
     window.addEventListener('pif:conversation-read', onConversationRead);
 
@@ -256,14 +264,34 @@ export function useConversations() {
     };
     window.addEventListener('pif:status-changed', onPifStatusChanged);
 
+    // Conservative refetch on focus/visibility — recovers from missed
+    // Realtime events (e.g. a wish conversation created seconds before
+    // /messages mounted, racing the participants insert).
+    const onFocus = () => fetchRef.current?.();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') fetchRef.current?.();
+    };
+    const onManualRefresh = () => fetchRef.current?.();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pif:conversations-refresh', onManualRefresh);
+
     return () => {
       mounted = false;
       if (channel) supabase.removeChannel(channel);
       window.removeEventListener('pif:conversation-read', onConversationRead);
       window.removeEventListener('pif:status-changed', onPifStatusChanged);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pif:conversations-refresh', onManualRefresh);
+      fetchRef.current = null;
     };
   }, [toast, user, authLoading, t]);
 
 
-  return { conversations, isLoading, error };
+  const refreshConversations = () => {
+    fetchRef.current?.();
+  };
+
+  return { conversations, isLoading, error, refreshConversations };
 }

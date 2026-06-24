@@ -20,7 +20,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 const Messages = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const { conversations, isLoading: conversationsLoading, error } = useConversations();
+  const { conversations, isLoading: conversationsLoading, error, refreshConversations } = useConversations();
   const { unreadCount } = useNotifications();
   const { unreadMessagesCount, unreadByConversation } = useUnreadMessagesCount();
   const { t } = useTranslation();
@@ -90,12 +90,13 @@ const Messages = () => {
         next.delete("item");
         setSearchParams(next, { replace: true });
       } else {
-        console.debug('[messages] deep-link branch: item-no-match', { itemId, knownItemIds: conversations.map(c => c.item_id) });
+        console.debug('[messages] deep-link branch: item-no-match → refresh', { itemId, knownItemIds: conversations.map(c => c.item_id) });
+        refreshConversations();
       }
     } else {
       console.debug('[messages] deep-link branch: nothing-to-apply');
     }
-  }, [searchParams, conversations, activeConversationId, activeTab, setSearchParams]);
+  }, [searchParams, conversations, activeConversationId, activeTab, setSearchParams, refreshConversations]);
 
 
   useEffect(() => {
