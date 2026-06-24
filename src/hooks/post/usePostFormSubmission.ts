@@ -129,7 +129,7 @@ export function usePostFormSubmission(initialData?: any) {
           : null,
         pickup_instructions: formData.pickup_instructions?.trim() || null,
         preferred_time_window: formData.preferred_time_window?.trim() || null,
-        pickup_address: null,
+        pickup_address: formData.pickup_address?.trim() || null,
       } as any;
       let result;
       if (initialData?.id) {
