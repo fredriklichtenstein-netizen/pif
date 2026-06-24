@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { PostFormData } from "@/types/post";
 import { supabase } from "@/integrations/supabase/client";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
 export function usePostFormState(initialData?: any) {
   const [searchParams] = useSearchParams();
@@ -37,18 +38,20 @@ export function usePostFormState(initialData?: any) {
     primary_address: initialData?.primary_address || "",
   });
 
-  // Prefill pickup_preference from user's profile default (only for new posts)
+  // Prefill pickup_preference (and pickup address) from the user's profile
+  // default — only for new posts. Re-runs once auth is ready so we don't
+  // race a not-yet-hydrated session on hard refresh.
+  const { user: authUser } = useGlobalAuth();
   useEffect(() => {
     if (initialData?.id) return;
+    if (!authUser?.id) return;
     let cancelled = false;
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || cancelled) return;
         const { data } = await supabase
           .from('profiles')
           .select('pickup_preference, address, pickup_address')
-          .eq('id', user.id)
+          .eq('id', authUser.id)
           .single();
         if (cancelled || !data) return;
         const pref = (data as any)?.pickup_preference;
@@ -70,7 +73,8 @@ export function usePostFormState(initialData?: any) {
       }
     })();
     return () => { cancelled = true; };
-  }, [initialData?.id]);
+  }, [initialData?.id, authUser?.id]);
+
 
   const handleImagesChange = (images: string[]) => {
     setFormData((prevFormData) => ({

@@ -9,29 +9,32 @@ export const MIXED_CATEGORY_KEYS = ["mixed", "mixed_kids"];
 
 // Remaining categories, sorted alphabetically by Swedish display name.
 export const REST_CATEGORY_KEYS = [
-  "kids",          // Barnartiklar
-  "kids_clothing", // Barnkläder
-  "books",         // Böcker
-  "bicycle",       // Cykel
-  "electronics",   // Elektronik
-  "vehicles",      // Fordon
-  "hobby",         // Hobby
-  "home_garden",   // Hem & Trädgård
-  "pets",          // Husdjur
-  "household",     // Husgeråd
-  "health",        // Hälsa & skönhet
-  "art",           // Konst & hantverk
-  "clothing",      // Kläder
-  "kitchen",       // Kök
-  "toys",          // Leksaker
-  "food",          // Mat & dryck
-  "music",         // Musik & instrument
-  "furniture",     // Möbler
-  "games",         // Spel
-  "sports",        // Sport
-  "garden",        // Trädgård
-  "tools",         // Verktyg
-  "other",         // Övrigt
+  "kids",                  // Barnartiklar
+  "kids_clothing",         // Barnkläder
+  "books",                 // Böcker
+  "bicycle",               // Cykel
+  "electronics",           // Elektronik
+  "vehicles",              // Fordon
+  "hobby",                 // Hobby
+  "home_garden",           // Hem & Trädgård
+  "pets",                  // Husdjur
+  "household",             // Husgeråd
+  "health",                // Hälsa
+  "art",                   // Konst & hantverk
+  "clothing",              // Kläder
+  "kitchen",               // Kök
+  "toys",                  // Leksaker
+  "food",                  // Mat & dryck
+  "music",                 // Musik & instrument
+  "furniture",             // Möbler
+  "samlarobjekt",          // Samlarobjekt
+  "skonhet_parfym",        // Skönhet & parfym
+  "smycken_accessoarer",   // Smycken & accessoarer
+  "games",                 // Spel
+  "sports",                // Sport
+  "garden",                // Trädgård
+  "tools",                 // Verktyg
+  "other",                 // Övrigt
 ];
 
 // Full flat ordered list: Blandat group first, then the rest.
@@ -65,6 +68,9 @@ const HIDE_SIZE_MEASUREMENTS = new Set<string>([
   "household",
   "kitchen",
   "hobby",
+  "samlarobjekt",
+  "skonhet_parfym",
+  "smycken_accessoarer",
   "other",
 ]);
 

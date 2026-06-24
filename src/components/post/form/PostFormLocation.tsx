@@ -14,11 +14,13 @@ import { ChevronDown, Handshake, DoorOpen, Sparkles } from "lucide-react";
 import type { PostFormData } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
+import { PostFieldError } from "./PostFieldError";
 
 interface PostFormLocationProps {
   formData: PostFormData;
   setFormData: (formData: PostFormData | ((prev: PostFormData) => PostFormData)) => void;
   onAddressSelect?: (address: string, coordinates: { lat: number; lng: number }) => void;
+  fieldErrors?: Partial<Record<string, string>>;
 }
 
 type PickupOption = 'meetup' | 'leave_at_door' | 'flexible';
@@ -27,6 +29,7 @@ export function PostFormLocation({
   formData,
   setFormData,
   onAddressSelect,
+  fieldErrors = {},
 }: PostFormLocationProps) {
   const { t } = useTranslation();
   const isRequest = formData.item_type === 'request';
@@ -78,6 +81,7 @@ export function PostFormLocation({
               }
             }}
           />
+          <PostFieldError message={fieldErrors.location} />
         </div>
 
         {isRequest ? (
@@ -101,7 +105,7 @@ export function PostFormLocation({
         )}
 
         {!isRequest && (
-          <Collapsible className="border rounded-lg">
+          <Collapsible defaultOpen={!!formData.pickup_preference} className="border rounded-lg">
             <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
               <span>{t('post.pickup_details_optional')}</span>
               <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />

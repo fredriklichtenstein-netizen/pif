@@ -33,7 +33,8 @@ export function ItemCardWrapper({
   postedBy,
   archived_at,
   archived_reason,
-  onOperationSuccess
+  onOperationSuccess,
+  showOwnerTint = false,
 }: ItemCardProps) {
   const {
     isReportDialogOpen,
@@ -131,6 +132,7 @@ export function ItemCardWrapper({
         measurements={measurements}
         postedBy={postedBy}
         isOwner={isOwner}
+        showOwnerTint={showOwnerTint}
         isItemArchived={isItemArchived}
         archived_at={archived_at}
         archived_reason={archived_reason}

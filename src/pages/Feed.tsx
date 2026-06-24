@@ -15,6 +15,7 @@ export default function Feed() {
 
   useEffect(() => {
     announce(t('feed.announcement'));
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [announce, t]);
 
   return (

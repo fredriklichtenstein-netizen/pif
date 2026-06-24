@@ -28,6 +28,8 @@ export interface ItemCardProps {
   likesCount?: number;
   commentsCount?: number;
   interestsCount?: number;
+  /** When true, applies a subtle background tint if the current user owns the post. Feed-only. */
+  showOwnerTint?: boolean;
 }
 
 export interface ItemInteractionsProps {

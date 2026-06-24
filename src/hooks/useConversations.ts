@@ -299,5 +299,50 @@ export function useConversations() {
     fetchRef.current?.();
   };
 
-  return { conversations, isLoading, error, refreshConversations };
+  const markAllConversationsAsRead = async () => {
+    if (DEMO_MODE) {
+      setConversations((prev) => prev.map((c) => ({ ...c, unread_count: 0 })));
+      window.dispatchEvent(new CustomEvent('pif:messages:read-sync', { detail: { all: true } }));
+      return;
+    }
+    if (!user) return;
+    const ids = conversations.map((c) => String(c.id));
+    if (ids.length === 0) return;
+
+    // Optimistic local clear so the badge updates immediately.
+    setConversations((prev) => prev.map((c) => ({ ...c, unread_count: 0 })));
+    window.dispatchEvent(new CustomEvent('pif:messages:read-sync', { detail: { all: true } }));
+
+    try {
+      const nowIso = new Date().toISOString();
+      // Best-effort: advance last_read_at for the caller on every conversation,
+      // and null out unread messages directed at the caller.
+      await supabase
+        .from('conversation_participants')
+        .update({ last_read_at: nowIso })
+        .in('conversation_id', ids)
+        .eq('user_id', user.id);
+
+      await supabase
+        .from('messages')
+        .update({ read_at: nowIso })
+        .in('conversation_id', ids)
+        .neq('sender_id', user.id)
+        .is('read_at', null);
+
+      // Let other parts of the app (badge counters, lists) reconcile.
+      for (const cid of ids) {
+        window.dispatchEvent(
+          new CustomEvent('pif:conversation-read', { detail: { conversationId: cid } }),
+        );
+      }
+    } catch (err) {
+      console.error('[useConversations] markAllConversationsAsRead failed:', err);
+      // Refresh to reconcile any partial state.
+      fetchRef.current?.();
+    }
+  };
+
+  return { conversations, isLoading, error, refreshConversations, markAllConversationsAsRead };
 }
+

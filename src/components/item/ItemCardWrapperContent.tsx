@@ -20,6 +20,7 @@ export function ItemCardWrapperContent({
   measurements,
   postedBy,
   isOwner,
+  showOwnerTint,
   isItemArchived,
   archived_at,
   archived_reason,
@@ -65,6 +66,8 @@ export function ItemCardWrapperContent({
     <ItemCardLayout
       id={id}
       item_type={item_type}
+      isOwner={!!isOwner}
+      showOwnerTint={!!showOwnerTint}
       isRealtimeError={!!realtimeError}
       refreshItemData={handleRefresh}
       statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} archivedAt={archived_at} /> : undefined}
