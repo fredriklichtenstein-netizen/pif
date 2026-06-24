@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PostFormSteps } from "./PostFormSteps";
 import { PostFormHeader } from "./PostFormHeader";
@@ -102,18 +102,56 @@ export function PostFormContainer({
     }
   };
 
+  // Inline validation surface: only show errors after the user attempts to
+  // advance/submit. Cleared whenever the active step changes.
+  const [showErrors, setShowErrors] = useState(false);
+  useEffect(() => { setShowErrors(false); }, [finalCurrentStep]);
+
+  const stepErrors = validation.currentStepErrors();
+  const fieldErrors: Partial<Record<string, string>> = {};
+  for (const err of stepErrors) {
+    fieldErrors[err.field] = t(err.messageKey);
+  }
+
+  const scrollToFirstError = () => {
+    if (typeof window === 'undefined') return;
+    requestAnimationFrame(() => {
+      const el = document.querySelector('[data-post-error="true"]') as HTMLElement | null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const focusable = el.querySelector('input, textarea, select, button') as HTMLElement | null;
+        focusable?.focus();
+      }
+    });
+  };
+
+  const attemptNext = () => {
+    if (validation.canProceed()) {
+      setShowErrors(false);
+      finalNextStep();
+    } else {
+      setShowErrors(true);
+      scrollToFirstError();
+    }
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (finalCurrentStep === steps.length - 1) {
-      onFormSubmit(e);
-    } else {
+    if (finalCurrentStep !== steps.length - 1) return;
+    if (!isFormValid || !validation.canProceed()) {
+      setShowErrors(true);
+      scrollToFirstError();
+      return;
     }
+    onFormSubmit(e);
   };
 
   const handleConfirmCancel = () => {
     setCancelDialogOpen(false);
     navigate("/feed");
   };
+
+  const errorsForStep = showErrors ? fieldErrors : {};
 
   const renderCurrentStep = () => {
     switch (steps[finalCurrentStep].component) {
@@ -122,6 +160,7 @@ export function PostFormContainer({
           <PostFormSteps
             formData={formData}
             setFormData={setFormData}
+            fieldErrors={errorsForStep}
           />
         );
       case "images":
@@ -132,6 +171,7 @@ export function PostFormContainer({
             onImageUpload={handleImageUpload}
             onImagesChange={onImagesChange}
             itemType={formData.item_type}
+            fieldErrors={errorsForStep}
           />
         );
       case "information":
@@ -140,6 +180,7 @@ export function PostFormContainer({
             formData={formData}
             setFormData={setFormData}
             onMeasurementChange={onMeasurementChange}
+            fieldErrors={errorsForStep}
           />
         );
       case "location":
@@ -148,6 +189,7 @@ export function PostFormContainer({
             formData={formData}
             setFormData={setFormData}
             onAddressSelect={onAddressSelect}
+            fieldErrors={errorsForStep}
           />
         );
       default:
@@ -155,7 +197,9 @@ export function PostFormContainer({
     }
   };
 
-  const canProceedNow = validation.canProceed();
+  // Keep Next/Submit buttons enabled; the click handler surfaces inline errors.
+  const canProceedNow = true;
+
 
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
@@ -192,12 +236,12 @@ export function PostFormContainer({
           currentStep={finalCurrentStep}
           isOnFinalStep={finalIsOnFinalStep}
           canProceedNow={canProceedNow}
-          isFormValid={isFormValid}
+          isFormValid={true /* surfacing happens via inline errors */}
           isSubmitting={isSubmitting}
           isRequest={isRequest}
           isEditMode={isEditMode}
           onPrevStep={finalPrevStep}
-          onNextStep={finalNextStep}
+          onNextStep={attemptNext}
           onCancel={() => setCancelDialogOpen(true)}
         />
       </form>
