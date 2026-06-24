@@ -8,6 +8,7 @@ import { useImageDragAndDrop } from "./images/useImageDragAndDrop";
 import { useImageCropQueue } from "./images/useImageCropQueue";
 import { PostImageCropDialog } from "./images/PostImageCropDialog";
 import { useTranslation } from 'react-i18next';
+import { PostFieldError } from "./PostFieldError";
 
 interface PostFormImagesProps {
   images: string[];
@@ -15,6 +16,7 @@ interface PostFormImagesProps {
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImagesChange: (images: string[]) => void;
   itemType?: 'offer' | 'request';
+  fieldErrors?: Partial<Record<string, string>>;
 }
 
 export function PostFormImages({
@@ -23,6 +25,7 @@ export function PostFormImages({
   onImageUpload,
   onImagesChange,
   itemType = 'offer',
+  fieldErrors = {},
 }: PostFormImagesProps) {
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
