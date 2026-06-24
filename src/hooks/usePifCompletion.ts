@@ -458,38 +458,49 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         if (action === "reopen") {
+          // Note: for wishes the "is now open again" framing is intentionally
+          // dropped because withdraw_pif's current behaviour for wishes does
+          // not necessarily map to a closed→open transition (see plan.md
+          // entry on withdraw_pif multi-fulfiller bug).
           await postPifSystemMessage(
             conversationId,
-            "Du har ångrat valet av mottagare. Pifen är nu öppen igen.",
+            pick(
+              "Du har ångrat valet av mottagare. Pifen är nu öppen igen.",
+              "Du har ångrat valet av den som skulle uppfylla önskan.",
+            ),
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Pifen är nu öppen för andra att visa intresse.",
+            pick(
+              "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Pifen är nu öppen för andra att visa intresse.",
+              "Önskaren har ångrat sitt val. Du har inte längre uppdraget att uppfylla denna önskan.",
+            ),
             { targetUserId: otherUserId ?? null },
           );
         } else {
           await postPifSystemMessage(
             conversationId,
-            "Du har arkiverat pifen.",
+            pick(
+              "Du har arkiverat pifen.",
+              "Du har arkiverat önskan.",
+            ),
             { targetUserId: currentUserId ?? null },
           );
           await postPifSystemMessage(
             conversationId,
-            "Piffaren har ångrat sig och kan/vill inte längre piffa detta.",
+            pick(
+              "Piffaren har ångrat sig och kan/vill inte längre piffa detta.",
+              "Önskaren har ångrat sig och vill inte längre att önskan uppfylls.",
+            ),
             { targetUserId: otherUserId ?? null },
           );
         }
       }
       // Notify ALL interested users (selected + the rest) of the change.
       try {
-        const { data: itemRow } = await (supabase.from("items") as any)
-          .select("item_type")
-          .eq("id", id)
-          .maybeSingle();
-        const isRequest =
-          String(itemRow?.item_type || "offer").toLowerCase() === "request";
         const event =
           action === "reopen"
             ? isRequest ? "wish_reopened" : "pif_reopened"
@@ -508,7 +519,7 @@ export function usePifCompletion(
       }));
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId],
+    [id, conversationId, currentUserId, otherUserId, isRequest],
   );
 
   const undoConfirmation = useCallback(
