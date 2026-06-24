@@ -160,10 +160,18 @@ export function NotificationList() {
       <div className="divide-y">
         {sortedNotifications.map((notif) => {
                 const isInterestReceived = notif.type === 'interest_received' || notif.type === 'interest';
-                const isReceiverSelected = notif.type === 'receiver_selected' || notif.type === 'selection';
+                const isReceiverSelected =
+                  notif.type === 'receiver_selected' ||
+                  notif.type === 'selection' ||
+                  notif.type === 'helper_selected';
                 const isSelectionMade = notif.type === 'selection_made';
 
-                let displayTitle: React.ReactNode = notif.title;
+                // Guard against transform layer that falls back title to raw
+                // notification type when payload.title is missing.
+                const safeTitle =
+                  notif.title && notif.title !== notif.type ? notif.title : null;
+
+                let displayTitle: React.ReactNode = safeTitle ?? t('interactions.notification_generic', 'Ny avisering');
                 let displayContent: React.ReactNode = notif.content;
                 let ctaUrl = notif.action_url;
                 let ctaLabel: string | null = null;
