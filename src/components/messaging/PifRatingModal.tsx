@@ -38,6 +38,7 @@ export function PifRatingModal({
   onSubmit,
   onLowRatingReport,
   allowSkip = true,
+  isRequest = false,
 }: Props) {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
