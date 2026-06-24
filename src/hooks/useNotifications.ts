@@ -286,35 +286,19 @@ export function useNotifications() {
     };
 
 
-    const channel = supabase
-      .channel(`public:notifications:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            const notif = transformRow(payload.new);
-            // Optimistically merge into this instance and broadcast to siblings
-            // so every mounted hook (nav badge + notifications list) updates
-            // instantly without waiting on its own realtime/refetch roundtrip.
-            applyNew(notif);
-            emitNotifNew(notif);
-            return;
-          }
-          // UPDATE/DELETE: silent background refresh (no loading flash).
-          fetchNotifications({ silent: true });
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          maybeRecoverFromAuthError(err, `notifications channel: ${status}`);
-        }
-      });
+    const listener: NotificationListener = {
+      onInsert: (row) => {
+        const notif = transformRow(row);
+        // Optimistically merge into this instance and broadcast to siblings
+        // so every mounted hook (nav badge + notifications list) updates
+        // instantly without waiting on its own realtime/refetch roundtrip.
+        applyNew(notif);
+        emitNotifNew(notif);
+      },
+      // UPDATE/DELETE: silent background refresh (no loading flash).
+      onChange: () => fetchNotifications({ silent: true }),
+    };
+    ensureNotificationChannel(user.id, listener);
 
     // Coalesce wake-up refreshes: focus + visibilitychange + pageshow can
     // all fire in the same tick when returning to the tab. We dedupe to a
