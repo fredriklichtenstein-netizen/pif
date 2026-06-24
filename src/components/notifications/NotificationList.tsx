@@ -205,10 +205,21 @@ export function NotificationList() {
                     : ctaUrl;
                   ctaLabel = t('notifications.review_interest_cta');
                 } else if (isReceiverSelected) {
-                  displayTitle = t('interactions.receiver_selected_notif_title');
-                  displayContent = notif.item_title
-                    ? t('notifications.selected_for_item', { title: notif.item_title })
-                    : t('interactions.receiver_selected_notif_body');
+                  const isWishHelper = notif.type === 'helper_selected';
+                  // For wishes, prefer the payload title written server-side
+                  // by notify_item_interest_event (multi-fulfiller-neutral
+                  // copy). Fall back to a neutral wish line only if missing.
+                  if (isWishHelper) {
+                    displayTitle = safeTitle ?? (notif.item_title
+                      ? `Önskaren vill gärna att du uppfyller önskan "${notif.item_title}".`
+                      : t('interactions.notification_generic', 'Ny avisering'));
+                    displayContent = notif.content ?? null;
+                  } else {
+                    displayTitle = safeTitle ?? t('interactions.receiver_selected_notif_title');
+                    displayContent = notif.item_title
+                      ? t('notifications.selected_for_item', { title: notif.item_title })
+                      : t('interactions.receiver_selected_notif_body');
+                  }
                   ctaUrl = notif.conversation_id
                     ? `/messages?conversation=${notif.conversation_id}`
                     : notif.item_id
