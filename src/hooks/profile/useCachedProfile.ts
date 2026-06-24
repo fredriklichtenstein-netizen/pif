@@ -156,6 +156,67 @@ export const clearAllCachedProfiles = () => {
   new Set(ids).forEach((id) => notify(id, null));
 };
 
+// Refcounted shared realtime channels keyed by userId. Only one channel
+// per userId exists at a time, regardless of how many hook instances
+// mount with that userId. This avoids the realtime-js error
+// "cannot add postgres_changes callbacks ... after subscribe()" that
+// fires when multiple consumers attempt to bind listeners on the same
+// shared topic.
+type ProfileChannelRef = { channel: ReturnType<typeof supabase.channel>; count: number };
+const profileChannels = new Map<string, ProfileChannelRef>();
+
+const handleProfileChange = (userId: string, payload: any) => {
+  const next = payload?.new as Record<string, any> | null;
+  if (!next) return;
+  const current = (readCache(userId) ?? {}) as Record<string, any>;
+  const diff: Record<string, any> = {};
+  for (const key of Object.keys(next)) {
+    if (key === "updated_at") continue;
+    if (next[key] !== current[key]) diff[key] = next[key];
+  }
+  if (Object.keys(diff).length === 0) return;
+  const merged = { ...current, ...diff, updated_at: next.updated_at };
+  writeCache(userId, merged);
+};
+
+export const ensureProfileChannel = (userId: string) => {
+  const existing = profileChannels.get(userId);
+  if (existing) {
+    existing.count += 1;
+    return existing.channel;
+  }
+  const channel = supabase
+    .channel(`profile-cache-${userId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter: `id=eq.${userId}`,
+      },
+      (payload) => handleProfileChange(userId, payload),
+    )
+    .subscribe();
+  profileChannels.set(userId, { channel, count: 1 });
+  return channel;
+};
+
+export const releaseProfileChannel = (userId: string) => {
+  const entry = profileChannels.get(userId);
+  if (!entry) return;
+  entry.count -= 1;
+  if (entry.count <= 0) {
+    profileChannels.delete(userId);
+    try {
+      supabase.removeChannel(entry.channel);
+    } catch {
+      /* ignore */
+    }
+  }
+};
+
+
 const fetchProfileOnce = (userId: string): Promise<any | null> => {
   const existing = inFlight.get(userId);
   if (existing) return existing;
@@ -285,50 +346,21 @@ export const useCachedProfile = (
   // existing cached profile instead of replacing the whole object so the
   // UI doesn't flicker (avatar reload, layout reflow) when only one field
   // — e.g. `last_seen_at` or `phone` — actually changed.
+  //
+  // IMPORTANT: supabase-js / realtime-js dedupes channels by topic, so
+  // multiple components calling useCachedProfile(sameUserId) would all
+  // receive the SAME channel instance. The second `.on()` after the first
+  // `.subscribe()` throws "cannot add postgres_changes callbacks ... after
+  // subscribe()". We refcount a single shared channel per userId and only
+  // bind/subscribe on the first mount, tear down on the last unmount.
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase
-      .channel(`profile-cache-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "profiles",
-          filter: `id=eq.${userId}`,
-        },
-        (payload) => {
-          const next = payload.new as Record<string, any> | null;
-          if (!next) return;
-
-          const current = (readCache(userId) ?? {}) as Record<string, any>;
-
-          // Compute a minimal diff of fields whose values actually changed.
-          const diff: Record<string, any> = {};
-          for (const key of Object.keys(next)) {
-            // Ignore noisy timestamp-only updates that don't reflect a
-            // user-visible change.
-            if (key === "updated_at") continue;
-            if (next[key] !== current[key]) diff[key] = next[key];
-          }
-
-          if (Object.keys(diff).length === 0) {
-            // Nothing meaningful changed — keep current object reference so
-            // React subtree doesn't re-render and images don't reload.
-            return;
-          }
-
-          const merged = { ...current, ...diff, updated_at: next.updated_at };
-          writeCache(userId, merged);
-          setProfile(merged);
-        },
-      )
-      .subscribe();
-
+    const ref = ensureProfileChannel(userId);
     return () => {
-      supabase.removeChannel(channel);
+      releaseProfileChannel(userId);
     };
   }, [userId]);
+
 
   // Subscribe to optimistic cache writes from anywhere in the app
   useEffect(() => {
