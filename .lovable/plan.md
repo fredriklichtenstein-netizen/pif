@@ -108,3 +108,9 @@ Two layers fixed:
 
 `notify_item_interest_event` still has `wish_reopened`, `wish_archived`, and `wish_completed` branches that frame the wish as a single-fulfiller state machine (e.g. "Önskningen är nu öppen igen" implies the wish was closed by one fulfiller's selection — wrong for multi-fulfiller wishes). These mirror the same withdraw_pif multi-fulfiller-scoping bug already flagged elsewhere. **Do not re-word these branches until the underlying state-transition logic is corrected** — rewording first would mask the real bug.
 
+## Pickup-address follow-ups (flagged, deferred)
+
+- **ProfileEdit duplication smell** — `src/pages/ProfileEdit.tsx` maintains its own inline `handleSubmit` / `fetchProfileData` / local type definition instead of using `useProfileSubmit` / `useProfileFetch`. This caused the door-code/floor/instructions save bug (two parallel implementations, only one updated). Refactor ProfileEdit to consume the shared hooks so the next pickup-field addition only needs one edit site.
+- **Edit-mode pickup_address_mode display gap** — `usePostFormState`'s profile-prefill `useEffect` early-returns when `initialData?.id` is set (edit mode), so `primary_address` is never loaded during edit. The pickup-address toggle then defaults to "primary" with an empty primary address displayed. Fix: fetch the profile's `address` even in edit mode (kept separate from the "don't overwrite existing values" prefill logic for the other fields). Best done in the same pass as the ProfileEdit refactor above.
+
+
