@@ -118,17 +118,21 @@ export function useConversations() {
 
         // Fetch the latest message per conversation as authoritative preview
         // (last_message_text on conversations is not always kept in sync).
+        // System messages can be per-recipient via `target_user_id` (e.g.
+        // selection system messages written by _insert_pif_system_messages):
+        // skip messages targeted at OTHER users so each side sees their own
+        // variant. NULL target_user_id = broadcast/normal message.
         const { data: recentMessages } = await supabase
           .from('messages')
           .select('conversation_id, content, created_at, sender_id, deleted_at, is_system_message, target_user_id')
           .in('conversation_id', conversationIds)
           .order('created_at', { ascending: false });
-        // Preview: most recent message regardless of system/user origin.
-        // "Inga meddelanden än" should only appear when zero messages exist.
+        const currentUserId = user?.id ?? null;
         const lastByConv = new Map<string, string>();
         for (const m of (recentMessages || []) as any[]) {
           const cid = String(m.conversation_id);
           if (lastByConv.has(cid)) continue;
+          if (m.target_user_id && m.target_user_id !== currentUserId) continue;
           if (typeof m.content === 'string' && m.content.trim()) {
             lastByConv.set(cid, m.content);
           }
@@ -199,7 +203,9 @@ export function useConversations() {
         })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
           const m = payload.new as any;
-          if (m && typeof m.content === 'string' && m.content.trim()) {
+          const visibleToMe =
+            !m?.target_user_id || m.target_user_id === user?.id;
+          if (visibleToMe && m && typeof m.content === 'string' && m.content.trim()) {
             const cid = String(m.conversation_id);
             const content = m.content as string;
             const createdAt = m.created_at as string;
