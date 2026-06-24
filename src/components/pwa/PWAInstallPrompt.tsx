@@ -38,7 +38,7 @@ export function PWAInstallPrompt() {
   if (!showInstallPrompt) return null;
 
   return (
-    <Card className="fixed bottom-4 right-4 p-4 shadow-lg z-40 max-w-sm">
+    <Card className="fixed bottom-24 right-4 p-4 shadow-lg z-[60] max-w-sm">
       <div className="flex items-start gap-3">
         <Download className="h-5 w-5 text-primary mt-1" />
         <div className="flex-1">
