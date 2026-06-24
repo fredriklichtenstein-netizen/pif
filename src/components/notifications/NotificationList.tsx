@@ -219,6 +219,15 @@ export function NotificationList() {
                       ? `/messages?item=${notif.item_id}`
                       : (notif.action_url ?? '/messages');
                   ctaLabel = t('interactions.start_conversation');
+                  console.debug('[notif-render]', {
+                    notifId: notif.id,
+                    type: notif.type,
+                    conversation_id: notif.conversation_id,
+                    item_id: notif.item_id,
+                    action_url: notif.action_url,
+                    computed_ctaUrl: ctaUrl,
+                    ctaLabel,
+                  });
                 }
 
                 return (
@@ -244,7 +253,10 @@ export function NotificationList() {
                       {ctaUrl && ctaLabel && (
                         <Link
                           to={ctaUrl}
-                          onClick={() => markAsRead(notif.id)}
+                          onClick={() => {
+                            console.debug('[notif-cta] click →', ctaUrl);
+                            markAsRead(notif.id);
+                          }}
                           className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline"
                         >
                           {ctaLabel}

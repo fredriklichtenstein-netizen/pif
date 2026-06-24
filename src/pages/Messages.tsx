@@ -53,11 +53,21 @@ const Messages = () => {
   useEffect(() => {
     const cid = searchParams.get("conversation");
     const itemId = searchParams.get("item");
+    console.debug('[messages] deep-link effect', {
+      rawSearch: searchParams.toString(),
+      cid,
+      itemId,
+      activeConversationId,
+      activeTab,
+    });
 
     if (cid) {
       if (activeConversationId !== cid || activeTab !== "messages") {
+        console.debug('[messages] deep-link branch: cid-apply', { cid });
         setActiveConversationId(cid);
         setActiveTab("messages");
+      } else {
+        console.debug('[messages] deep-link branch: cid-noop (already active)', { cid });
       }
       const next = new URLSearchParams(searchParams);
       next.delete("conversation");
@@ -70,13 +80,20 @@ const Messages = () => {
       );
       if (match) {
         if (activeConversationId !== match.id || activeTab !== "messages") {
+          console.debug('[messages] deep-link branch: item-match-apply', { itemId, matchedConvId: match.id });
           setActiveConversationId(match.id);
           setActiveTab("messages");
+        } else {
+          console.debug('[messages] deep-link branch: item-match-noop', { itemId, matchedConvId: match.id });
         }
         const next = new URLSearchParams(searchParams);
         next.delete("item");
         setSearchParams(next, { replace: true });
+      } else {
+        console.debug('[messages] deep-link branch: item-no-match', { itemId, knownItemIds: conversations.map(c => c.item_id) });
       }
+    } else {
+      console.debug('[messages] deep-link branch: nothing-to-apply');
     }
   }, [searchParams, conversations, activeConversationId, activeTab, setSearchParams]);
 
@@ -88,6 +105,7 @@ const Messages = () => {
 
   const handleTabChange = (value: string) => {
     if (value === "messages" || value === "notifications") {
+      console.debug('[messages] tab →', value);
       setActiveTab(value);
       const next = new URLSearchParams(searchParams);
       if (value === "notifications") next.set("tab", "notifications");
@@ -197,6 +215,7 @@ const Messages = () => {
   // Clicking the already-active "Messages" tab collapses the expanded
   // conversation so the overview is fully visible again.
   const handleMessagesTabClick = () => {
+    console.debug('[messages] messages-tab click; collapsing?', !!activeConversationId);
     if (activeTab === "messages" && activeConversationId) {
       setActiveConversationId(null);
     }
