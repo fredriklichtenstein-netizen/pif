@@ -1,7 +1,15 @@
 
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import debounce from "lodash/debounce";
+function debounce<T extends (...args: any[]) => any>(fn: T, wait: number) {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
+  };
+  (debounced as any).cancel = () => { if (timer) clearTimeout(timer); };
+  return debounced as T & { cancel: () => void };
+}
 import { useTranslation } from "react-i18next";
 
 export const useAddress = (
