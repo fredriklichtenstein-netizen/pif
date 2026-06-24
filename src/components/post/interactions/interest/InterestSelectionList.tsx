@@ -948,10 +948,7 @@ export function InterestSelectionList({
                           size="sm"
                           variant="outline"
                           className="text-xs py-1 px-2 h-auto whitespace-nowrap"
-                          onClick={() => {
-                            setShowPopup(false);
-                            navigate(`/messages`);
-                          }}
+                          onClick={() => openConversationWith(r.user_id)}
                         >
                           <MessageCircle className="h-3 w-3 mr-1" />
                           {t("interactions.message_btn")}
