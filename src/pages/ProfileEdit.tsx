@@ -131,6 +131,9 @@ function ProfileEdit() {
       // Geocode address to get coordinates
       const location = await geocodeAddress(formData.address);
       
+      const floorParsed = formData.pickupFloor && formData.pickupFloor.trim() !== ''
+        ? parseInt(formData.pickupFloor, 10)
+        : null;
       const updateData: any = {
   first_name: formData.firstName,
   last_name: formData.lastName,
@@ -143,6 +146,9 @@ function ProfileEdit() {
         ? (formData.pickupAddress || null)
         : (formData.address || null))
     : null,
+  pickup_door_code: formData.pickupDoorCode || null,
+  pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
+  pickup_instructions: formData.pickupInstructions || null,
 };
 
 // Only update location if geocoding succeeded
