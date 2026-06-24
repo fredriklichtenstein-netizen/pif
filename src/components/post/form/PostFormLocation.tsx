@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { AddressInput } from "@/components/profile/address/AddressInput";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Handshake, DoorOpen, Sparkles } from "lucide-react";
+import { ChevronDown, Handshake, DoorOpen, Sparkles, Map } from "lucide-react";
 import type { PostFormData } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
