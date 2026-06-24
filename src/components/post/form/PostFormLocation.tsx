@@ -101,7 +101,7 @@ export function PostFormLocation({
         )}
 
         {!isRequest && (
-          <Collapsible className="border rounded-lg">
+          <Collapsible defaultOpen={!!formData.pickup_preference} className="border rounded-lg">
             <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
               <span>{t('post.pickup_details_optional')}</span>
               <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
