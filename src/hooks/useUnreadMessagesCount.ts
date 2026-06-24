@@ -137,24 +137,8 @@ export function useUnreadMessagesCount() {
     compute();
     if (DEMO_MODE || !user?.id) return;
 
-    const channel = supabase
-      .channel(`unread-messages:${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        () => compute()
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages" },
-        () => compute()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "conversation_participants" },
-        () => compute()
-      )
-      .subscribe();
+    const listener: UnreadMessagesListener = { onChange: () => compute() };
+    ensureUnreadMessagesChannel(user.id, listener);
 
     const onFocus = () => compute();
     const onVisibility = () => {
@@ -169,7 +153,7 @@ export function useUnreadMessagesCount() {
     const interval = window.setInterval(compute, 60_000);
 
     return () => {
-      supabase.removeChannel(channel);
+      releaseUnreadMessagesChannel(user.id, listener);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onFocus);
       window.removeEventListener("pif:conversation-read", onConversationRead);
