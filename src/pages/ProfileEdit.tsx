@@ -30,6 +30,9 @@ function ProfileEdit() {
     pickupPreference: "",
     pickupAddress: "",
     pickupAddressMode: "primary",
+    pickupDoorCode: "",
+    pickupFloor: "",
+    pickupInstructions: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -78,6 +81,9 @@ function ProfileEdit() {
           pickupPreference: (data as any).pickup_preference || "",
           pickupAddress: mode === 'primary' ? primaryAddr : savedPickup,
           pickupAddressMode: mode,
+          pickupDoorCode: (data as any).pickup_door_code || "",
+          pickupFloor: (data as any).pickup_floor != null ? String((data as any).pickup_floor) : "",
+          pickupInstructions: (data as any).pickup_instructions || "",
         });
         if (data.avatar_url) {
           setAvatarUrl(data.avatar_url);
@@ -125,6 +131,9 @@ function ProfileEdit() {
       // Geocode address to get coordinates
       const location = await geocodeAddress(formData.address);
       
+      const floorParsed = formData.pickupFloor && formData.pickupFloor.trim() !== ''
+        ? parseInt(formData.pickupFloor, 10)
+        : null;
       const updateData: any = {
   first_name: formData.firstName,
   last_name: formData.lastName,
@@ -137,6 +146,9 @@ function ProfileEdit() {
         ? (formData.pickupAddress || null)
         : (formData.address || null))
     : null,
+  pickup_door_code: formData.pickupDoorCode || null,
+  pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
+  pickup_instructions: formData.pickupInstructions || null,
 };
 
 // Only update location if geocoding succeeded
