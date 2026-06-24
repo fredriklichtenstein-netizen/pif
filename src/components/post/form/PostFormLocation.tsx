@@ -81,6 +81,7 @@ export function PostFormLocation({
               }
             }}
           />
+          <PostFieldError message={fieldErrors.location} />
         </div>
 
         {isRequest ? (
