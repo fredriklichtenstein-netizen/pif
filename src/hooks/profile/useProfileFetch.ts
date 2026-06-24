@@ -81,10 +81,19 @@ export const useProfileFetch = () => {
           dateOfBirth = new Date(profile.date_of_birth);
           if (isNaN(dateOfBirth.getTime())) dateOfBirth = undefined;
         }
-        const newFormData = {
-          firstName: profile.first_name || "", lastName: profile.last_name || "",
-          gender: profile.gender || "", phone: profile.phone || "",
-          address: profile.address || "", countryCode: "+46", dateOfBirth,
+        const p = profile as any;
+        const primary = p.address || "";
+        const savedPickupAddr = p.pickup_address || "";
+        const newFormData: ProfileFormData = {
+          firstName: p.first_name || "", lastName: p.last_name || "",
+          gender: p.gender || "", phone: p.phone || "",
+          address: primary, countryCode: "+46", dateOfBirth,
+          pickupPreference: p.pickup_preference || "",
+          pickupAddress: savedPickupAddr,
+          pickupAddressMode: savedPickupAddr && savedPickupAddr !== primary ? 'custom' : 'primary',
+          pickupDoorCode: p.pickup_door_code || "",
+          pickupFloor: p.pickup_floor != null ? String(p.pickup_floor) : "",
+          pickupInstructions: p.pickup_instructions || "",
         };
         profileCache.set(user.id, { data: newFormData, timestamp: now, avatarUrl: profile.avatar_url });
         setFormData(newFormData);
