@@ -68,6 +68,7 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           likesCount={post.likesCount}
           commentsCount={post.commentsCount}
           interestsCount={post.interestsCount}
+          showOwnerTint
           onOperationSuccess={onItemOperationSuccess}
         />
       </div>
