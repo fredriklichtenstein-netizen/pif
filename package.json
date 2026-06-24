@@ -108,5 +108,17 @@
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
     "vitest": "^4.1.5"
+  },
+  "overrides": {
+    "@xmldom/xmldom": "^0.9.10",
+    "glob": "^10.4.5",
+    "minimatch": "^10.0.1",
+    "brace-expansion": "^2.0.2"
+  },
+  "resolutions": {
+    "@xmldom/xmldom": "^0.9.10",
+    "glob": "^10.4.5",
+    "minimatch": "^10.0.1",
+    "brace-expansion": "^2.0.2"
   }
 }
