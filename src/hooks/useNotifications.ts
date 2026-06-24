@@ -373,7 +373,7 @@ export function useNotifications() {
     bc?.addEventListener("message", onBcMessage);
 
     return () => {
-      supabase.removeChannel(channel);
+      releaseNotificationChannel(user.id, listener);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onFocus);
       window.removeEventListener("pageshow", onPageShow);
