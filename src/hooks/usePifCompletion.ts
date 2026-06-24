@@ -263,30 +263,43 @@ export function usePifCompletion(
         pifStatus: both ? "completed" : nextStatus ?? s.pifStatus,
       }));
       if (conversationId) {
+        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         if (role === "piffer") {
           const receiverAlreadyConfirmed = nextReceiverConfirmed;
           if (!receiverAlreadyConfirmed) {
             // Piffer confirms first.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+              pick(
+                "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+                "Du har bekräftat att önskan är uppfylld. Väntar på att den som uppfyllde önskan också bekräftar.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+              pick(
+                "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+                "Önskaren har bekräftat att önskan är uppfylld. Väntar på att du också bekräftar.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           } else {
             // Piffer confirms second.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat överlämning.",
+              pick(
+                "Du har bekräftat överlämning.",
+                "Du har bekräftat att önskan är uppfylld.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Piffaren har bekräftat överlämning.",
+              pick(
+                "Piffaren har bekräftat överlämning.",
+                "Önskaren har bekräftat att önskan är uppfylld.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           }
@@ -296,24 +309,36 @@ export function usePifCompletion(
             // Receiver confirms first.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat mottagning. Väntar på att piffaren bekräftar överlämning.",
+              pick(
+                "Du har bekräftat mottagning. Väntar på att piffaren bekräftar överlämning.",
+                "Du har bekräftat att önskan är uppfylld. Väntar på att önskaren också bekräftar.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Mottagaren har bekräftat mottagning. Väntar på att du bekräftar överlämning.",
+              pick(
+                "Mottagaren har bekräftat mottagning. Väntar på att du bekräftar överlämning.",
+                "Den som uppfyllde önskan har bekräftat. Väntar på att du också bekräftar.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           } else {
             // Receiver confirms second.
             await postPifSystemMessage(
               conversationId,
-              "Du har bekräftat mottagning.",
+              pick(
+                "Du har bekräftat mottagning.",
+                "Du har bekräftat att önskan är uppfylld.",
+              ),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               conversationId,
-              "Mottagaren har bekräftat mottagning.",
+              pick(
+                "Mottagaren har bekräftat mottagning.",
+                "Den som uppfyllde önskan har bekräftat.",
+              ),
               { targetUserId: otherUserId ?? null },
             );
           }
@@ -326,13 +351,16 @@ export function usePifCompletion(
         if (both) {
           await postPifSystemMessage(
             conversationId,
-            "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+            pick(
+              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+              "Önskan är uppfylld! Tack för att ni använde PIF. 🎉",
+            ),
           );
         }
       }
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, state.pifferConfirmed, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, isRequest, state.pifferConfirmed, state.receiverConfirmed],
   );
 
   const completeWithRating = useCallback(
