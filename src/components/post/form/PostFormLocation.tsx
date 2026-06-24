@@ -14,11 +14,13 @@ import { ChevronDown, Handshake, DoorOpen, Sparkles } from "lucide-react";
 import type { PostFormData } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
+import { PostFieldError } from "./PostFieldError";
 
 interface PostFormLocationProps {
   formData: PostFormData;
   setFormData: (formData: PostFormData | ((prev: PostFormData) => PostFormData)) => void;
   onAddressSelect?: (address: string, coordinates: { lat: number; lng: number }) => void;
+  fieldErrors?: Partial<Record<string, string>>;
 }
 
 type PickupOption = 'meetup' | 'leave_at_door' | 'flexible';
@@ -27,6 +29,7 @@ export function PostFormLocation({
   formData,
   setFormData,
   onAddressSelect,
+  fieldErrors = {},
 }: PostFormLocationProps) {
   const { t } = useTranslation();
   const isRequest = formData.item_type === 'request';

@@ -98,6 +98,7 @@ export function PostFormInformation({
               placeholder={isRequest ? t('post.title_request_placeholder') : t('post.title_placeholder')}
               required
             />
+            <PostFieldError message={fieldErrors.title} />
           </div>
 
           {/* Kategori */}
@@ -129,6 +130,7 @@ export function PostFormInformation({
                 </SelectGroup>
               </SelectContent>
             </Select>
+            <PostFieldError message={fieldErrors.category} />
           </div>
 
           {/* Skick */}
@@ -151,6 +153,7 @@ export function PostFormInformation({
                 ))}
               </SelectContent>
             </Select>
+            <PostFieldError message={fieldErrors.condition} />
           </div>
         </div>
 
