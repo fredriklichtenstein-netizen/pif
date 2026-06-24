@@ -29,10 +29,6 @@ const Messages = () => {
     () => (searchParams.get("tab") === "notifications" ? "notifications" : "messages")
   );
   const markedAsRead = useRef(new Set<string>());
-  // Track which deep-link value we've already consumed so realtime-driven
-  // re-renders of the conversations array don't re-apply a stale URL param
-  // on top of the user's own click.
-  const appliedDeepLinkRef = useRef<string | null>(null);
   // Safety net: if auth or conversations never resolve on cold load, flip
   // to a rendered empty state after 5s rather than spinning forever.
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
@@ -49,19 +45,20 @@ const Messages = () => {
 
 
   // Deep-link: open the conversation indicated by ?conversation=<id> or,
-  // as a fallback, the conversation tied to ?item=<id>. Applied exactly
-  // once per unique URL value, then the param is stripped from the URL so
-  // further clicks in the list aren't overwritten.
+  // as a fallback, the conversation tied to ?item=<id>. We key the apply
+  // decision on actual UI state (activeConversationId / activeTab), not on
+  // the raw URL value — otherwise re-clicking a notification for the
+  // conversation the user just auto-landed on is a no-op (the dead-link
+  // bug for the piffer's "Du har valt…" notification).
   useEffect(() => {
     const cid = searchParams.get("conversation");
     const itemId = searchParams.get("item");
-    const linkKey = cid ? `c:${cid}` : itemId ? `i:${itemId}` : null;
-    if (!linkKey || appliedDeepLinkRef.current === linkKey) return;
 
     if (cid) {
-      appliedDeepLinkRef.current = linkKey;
-      setActiveConversationId(cid);
-      setActiveTab("messages");
+      if (activeConversationId !== cid || activeTab !== "messages") {
+        setActiveConversationId(cid);
+        setActiveTab("messages");
+      }
       const next = new URLSearchParams(searchParams);
       next.delete("conversation");
       setSearchParams(next, { replace: true });
@@ -72,16 +69,17 @@ const Messages = () => {
         (c) => String(c.item_id ?? "") === String(itemId)
       );
       if (match) {
-        appliedDeepLinkRef.current = linkKey;
-        setActiveConversationId(match.id);
-        setActiveTab("messages");
+        if (activeConversationId !== match.id || activeTab !== "messages") {
+          setActiveConversationId(match.id);
+          setActiveTab("messages");
+        }
         const next = new URLSearchParams(searchParams);
         next.delete("item");
         setSearchParams(next, { replace: true });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, conversations]);
+  }, [searchParams, conversations, activeConversationId, activeTab, setSearchParams]);
+
 
   useEffect(() => {
     if (!authLoading && !user) {
