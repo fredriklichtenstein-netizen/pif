@@ -14,7 +14,10 @@
 --   3. Skip the pickup/handover detail block entirely for wishes — there is
 --      no analogous "piffer leaves at door / meetup" concept on the request
 --      side; coordination happens free-form in the chat.
---   4. Preserve existing pif behaviour byte-for-byte.
+--   4. Wish wording is deliberately multi-fulfiller-neutral: multiple
+--      fulfillers may be selected for the same wish, so neither message
+--      implies a single chosen fulfiller.
+--   5. Preserve existing pif behaviour byte-for-byte.
 --
 -- Run in the Supabase SQL editor.
 
