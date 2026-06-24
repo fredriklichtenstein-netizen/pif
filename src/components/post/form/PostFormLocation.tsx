@@ -133,6 +133,26 @@ export function PostFormLocation({
                 })}
               </div>
 
+              <PostPickupAddressSection
+                primaryAddress={formData.primary_address || ''}
+                mode={(formData.pickup_address_mode as 'primary' | 'custom') || 'primary'}
+                customAddress={formData.pickup_address || ''}
+                onModeChange={(mode) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    pickup_address_mode: mode,
+                    pickup_address:
+                      mode === 'primary'
+                        ? prev.primary_address || ''
+                        : prev.pickup_address || '',
+                  }))
+                }
+                onCustomAddressChange={(addr) =>
+                  setFormData((prev) => ({ ...prev, pickup_address: addr }))
+                }
+              />
+
+
               <div className="space-y-2">
                 <Label htmlFor="pickup-door-code">{t('post.pickup_door_code')}</Label>
                 <Input
