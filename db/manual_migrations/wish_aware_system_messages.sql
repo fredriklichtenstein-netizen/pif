@@ -78,18 +78,23 @@ begin
 
   if v_is_wish then
     -- Wishes have no piffer-side pickup metadata; coordinate in chat.
-    -- p_owner_id = the wisher (request poster).
-    -- p_receiver_id = the user who offered to fulfil the wish.
+    -- Multiple fulfillers may be selected for the same wish, so wording
+    -- avoids implying a single chosen fulfiller.
+    -- p_owner_id    = the wisher (request poster).
+    -- p_receiver_id = a user the wisher has selected to fulfil the wish.
 
     v_receiver_msg :=
-      'Du har valts som den som ska uppfylla önskan "' || v_title || '".'
+      'Önskaren vill gärna att du uppfyller önskan "' || v_title || '".'
       || case when btrim(coalesce(v_desc,'')) <> ''
               then E'\n\nBeskrivning: ' || v_desc
               else '' end
       || E'\n\nSkriv här till önskaren för att bekräfta detaljer.';
 
     v_piffer_msg :=
-      'Du har valt vem som ska uppfylla önskan "' || v_title || '".'
+      'Du har valt någon till att uppfylla önskan "' || v_title || '".'
+      || case when btrim(coalesce(v_desc,'')) <> ''
+              then E'\n\nBeskrivning: ' || v_desc
+              else '' end
       || E'\n\nSkriv här för att bekräfta tid och plats.';
 
   else
