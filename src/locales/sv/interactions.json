@@ -1,12 +1,12 @@
 {
   "interactions": {
     "like": "Gilla",
-    "liked": "Gillad",
+    "liked": "Gillar",
     "comment": "Kommentera",
     "commented": "Kommenterat",
     "share": "Dela",
     "shared": "Delad",
-    "interest": "Intresse",
+    "interest": "Visa intresse",
     "interested": "Intresserad",
     "you_are_selected": "Du är vald",
     "fulfilling_wish": "Uppfyller önskan",
