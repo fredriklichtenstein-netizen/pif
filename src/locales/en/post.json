@@ -131,6 +131,15 @@
     "preferred_time_window_placeholder": "E.g. Weekdays after 5pm",
     "crop_image": "Crop image",
     "apply_crop": "Crop",
-    "reset_crop": "Reset"
+    "reset_crop": "Reset",
+    "validation": {
+      "item_type_required": "Choose whether to pif or wish.",
+      "images_required": "Add at least one image.",
+      "title_required": "Enter a title.",
+      "category_required": "Pick a category.",
+      "condition_required": "Pick a condition.",
+      "location_required": "Pick an address from the suggestions."
+    }
   }
 }
+
