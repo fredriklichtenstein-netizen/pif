@@ -1,23 +1,25 @@
-## Scope
+# Backlog
 
-Lightweight bookkeeping only — no behavioural changes.
+## Wish conversation visibility (low priority, root cause unconfirmed)
 
-## Steps
+Observed once on a heavily-retested wish conversation (`ebc1d925-…`, item 5) that went through an unusual sequence tonight: multiple completion attempts, rating-modal tests, force-complete experiments, and the participant/RLS/categorization investigation itself.
 
-1. **Keep all five debug logs in place.** No edits to:
-   - `src/components/notifications/NotificationList.tsx` (`[notif-render]`, `[notif-cta]`)
-   - `src/pages/Messages.tsx` (`[messages] *`)
-   - `src/hooks/useConversations.ts` (`[useConversations] setConversations`)
-   - `src/components/messaging/ConversationList.tsx` (`[ConversationList] bucket split`)
+- Not reproducible on fresh wishes or fresh pifs — full end-to-end flows work cleanly for both.
+- DB-level checks all came back consistent: RLS policy on `conversations` is type-agnostic, `get_user_conversation_ids` returns the id, and the PostgREST select with item embed returns the row with `pif_status='active'`, `item_type='request'`, owner resolved.
+- Per `ConversationList.tsx`'s strict binary split on `isHistoricStatus(item.status)`, a conv with `status='active'` should land in Aktiva — yet it was reported invisible in both buckets, which implies the row never reached the `conversations` prop. Upstream cause not confirmed.
 
-2. **Update `.lovable/plan.md` backlog** with two entries:
-   - **Wish conversation visibility (low priority, unconfirmed root cause)** — observed once on heavily-retested wish `ebc1d925-…` (item 5). Fresh wishes + fresh pifs both work end-to-end. Five `console.debug` lines intentionally left in place across `NotificationList`, `Messages`, `useConversations`, `ConversationList` for future diagnosis if it recurs. PIF notification dedupe-ref fix is confirmed resolved.
-   - **WebSocket disconnect on Anne-Fred login (non-blocking)** — consistently observed at login for that account, no user-facing impact reported. Investigate when convenient; likely Supabase Realtime channel/auth race.
+Five `console.debug` lines intentionally left in place for future diagnosis if it recurs:
+- `src/components/notifications/NotificationList.tsx` — `[notif-render]`, `[notif-cta]`
+- `src/pages/Messages.tsx` — `[messages] *` (deep-link effect + tab handlers)
+- `src/hooks/useConversations.ts` — `[useConversations] setConversations` with `idsFromRpc` / `idsFromSelect` / `finalIds`
+- `src/components/messaging/ConversationList.tsx` — `[ConversationList] bucket split` with `activeIds` / `historyIds`
 
-3. **No code, schema, or query changes.** No cleanup of logs. No further investigation this turn.
+If it recurs, the transcript of those four log groups should pinpoint the stage where the row is dropped.
 
-## Out of scope
+## PIF notification deep-link (resolved)
 
-- Removing the debug logs (explicitly deferred).
-- Any fix attempt for the wish visibility symptom (no confirmed root cause; not reproducible on fresh items).
-- Anne-Fred WebSocket investigation (logged for later).
+Dedupe-ref logic fix confirmed working end-to-end on fresh pifs. No further action.
+
+## WebSocket disconnect on Anne-Fred login (non-blocking)
+
+Consistently observed at login for Anne-Fred's account. No user-facing impact reported so far. Likely a Supabase Realtime channel/auth race; investigate when convenient.
