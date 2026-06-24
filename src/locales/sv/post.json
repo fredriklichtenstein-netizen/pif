@@ -131,6 +131,15 @@
     "preferred_time_window_placeholder": "T.ex. Vardagar efter 17:00",
     "crop_image": "Beskär bild",
     "apply_crop": "Beskär",
-    "reset_crop": "Återställ"
+    "reset_crop": "Återställ",
+    "validation": {
+      "item_type_required": "Välj om du vill piffa eller önska.",
+      "images_required": "Lägg till minst en bild.",
+      "title_required": "Ange en titel.",
+      "category_required": "Välj en kategori.",
+      "condition_required": "Välj ett skick.",
+      "location_required": "Välj en plats från sökresultaten."
+    }
   }
 }
+
