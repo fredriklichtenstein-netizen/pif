@@ -114,7 +114,7 @@
     "minimatch": "^10.0.1",
     "brace-expansion": "^2.0.2",
     "rimraf": {
-      "glob": "$glob"
+      "glob": "^13.0.6"
     }
   },
   "resolutions": {
