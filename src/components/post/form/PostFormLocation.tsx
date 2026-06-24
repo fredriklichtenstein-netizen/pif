@@ -59,9 +59,10 @@ export function PostFormLocation({
         <p className="text-sm text-muted-foreground">
           {isRequest
             ? t('post.search_area_placeholder')
-            : t('post.location_placeholder')
+            : t('post.location_question')
           }
         </p>
+
       </div>
 
       <div className="space-y-4">
