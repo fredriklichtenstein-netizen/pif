@@ -20,7 +20,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 const Messages = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const { conversations, isLoading: conversationsLoading, error, refreshConversations } = useConversations();
+  const { conversations, isLoading: conversationsLoading, error, refreshConversations, markAllConversationsAsRead } = useConversations();
   const { unreadCount } = useNotifications();
   const { unreadMessagesCount, unreadByConversation } = useUnreadMessagesCount();
   const { t } = useTranslation();
@@ -252,6 +252,17 @@ const Messages = () => {
           </TabsList>
 
           <TabsContent value="messages" className="border rounded-lg bg-background">
+            {!isLoading && !error && conversations.length > 0 && unreadMessagesCount > 0 && (
+              <div className="flex items-center justify-end gap-2 p-3 border-b bg-background">
+                <button
+                  type="button"
+                  onClick={() => void markAllConversationsAsRead()}
+                  className="text-xs font-medium px-3 py-1 rounded-md border border-input bg-background hover:bg-muted"
+                >
+                  {t('interactions.mark_all_read')}
+                </button>
+              </div>
+            )}
             {isLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-12 w-full rounded-lg" />
