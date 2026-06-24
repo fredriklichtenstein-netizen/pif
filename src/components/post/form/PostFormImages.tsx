@@ -97,6 +97,7 @@ export function PostFormImages({
         onImageUpload={wrappedOnImageUpload}
         fileInputRef={fileInputRef}
       />
+      <PostFieldError message={fieldErrors.images} />
 
       <ImagePreviewList
         images={images}

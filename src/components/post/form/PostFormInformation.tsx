@@ -8,6 +8,7 @@ import { PostFormSizeSelector } from "./PostFormSizeSelector";
 import { Weight } from "lucide-react";
 import type { CreatePostInput } from "@/types/post";
 import { useTranslation } from 'react-i18next';
+import { PostFieldError } from "./PostFieldError";
 import {
   MIXED_CATEGORY_KEYS,
   REST_CATEGORY_KEYS,
@@ -20,6 +21,7 @@ interface PostFormInformationProps {
   formData: CreatePostInput;
   setFormData: (formData: CreatePostInput | ((prev: CreatePostInput) => CreatePostInput)) => void;
   onMeasurementChange: (field: string, value: string) => void;
+  fieldErrors?: Partial<Record<string, string>>;
 }
 
 const CONDITIONS = [
@@ -41,6 +43,7 @@ export function PostFormInformation({
   formData,
   setFormData,
   onMeasurementChange,
+  fieldErrors = {},
 }: PostFormInformationProps) {
   const { t } = useTranslation();
   const isRequest = formData.item_type === 'request';
