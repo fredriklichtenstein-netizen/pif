@@ -114,3 +114,20 @@ Two layers fixed:
 - **Edit-mode pickup_address_mode display gap** — `usePostFormState`'s profile-prefill `useEffect` early-returns when `initialData?.id` is set (edit mode), so `primary_address` is never loaded during edit. The pickup-address toggle then defaults to "primary" with an empty primary address displayed. Fix: fetch the profile's `address` even in edit mode (kept separate from the "don't overwrite existing values" prefill logic for the other fields). Best done in the same pass as the ProfileEdit refactor above.
 
 
+## Realtime channel-dedupe audit (2026-06-24)
+
+After three crashes in one session (`useCachedProfile`, `useNotifications`, `useUnreadMessagesCount`) all hitting `cannot add postgres_changes callbacks ... after subscribe()`, all three hooks were refactored to a refcounted shared-channel pattern (module-level `Map<scopeKey, { channel, listeners }>` + `ensureXChannel` / `releaseXChannel`).
+
+### Methodology rule going forward
+
+When introducing any `supabase.channel(`...${scope}`)` in a hook or component, evaluate co-mount risk by asking:
+1. Does MainNav (globally mounted on every authenticated page) call this hook? If yes AND any page/component in the same tree also calls it → multi-mount-risky.
+2. Can two components rendered simultaneously (page + its modal/drawer/panel, or two siblings) both call it with the same scope key? If yes → multi-mount-risky.
+
+Counting call sites in the codebase is NOT sufficient — that's what missed `useUnreadMessagesCount`. Any hook matching (1) or (2) must use the refcounted-channel pattern.
+
+### Latent risks (no action until a second simultaneous mount actually happens)
+
+- **`usePifCompletion`** (`pif-completion:${id}`) — called from `ConversationView`, `PostModal`, and `InterestSelectionList`. Currently safe because these don't render together with the same `id`, but if any two ever co-mount for the same item, it crashes. Refactor to refcounted pattern at that point.
+- **`useProfileAvatar`** (`profile-avatar-changes` — note: FIXED topic, no scope suffix) — only called from `ProfileEdit` today, so single-mount. But the fixed topic means any future second consumer crashes instantly on first co-mount. Refactor to refcounted pattern when adding a second consumer.
+
