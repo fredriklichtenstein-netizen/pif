@@ -90,7 +90,8 @@ const Messages = () => {
         next.delete("item");
         setSearchParams(next, { replace: true });
       } else {
-        console.debug('[messages] deep-link branch: item-no-match', { itemId, knownItemIds: conversations.map(c => c.item_id) });
+        console.debug('[messages] deep-link branch: item-no-match → refresh', { itemId, knownItemIds: conversations.map(c => c.item_id) });
+        refreshConversations();
       }
     } else {
       console.debug('[messages] deep-link branch: nothing-to-apply');
