@@ -47,7 +47,7 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
     }
   }, [map]);
 
-  const addLayers = useCallback((geojson: GeoJSON.Feature) => {
+  const addLayers = useCallback((geojson: Feature) => {
     if (!map) return;
     try {
       if (addedRef.current) {
@@ -102,7 +102,7 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
     prevRingsKey.current = key;
 
     const circle = createCircle(center, radiusKm);
-    const geojson: GeoJSON.Feature = {
+    const geojson: Feature = {
       type: 'Feature',
       geometry: circle,
       properties: { distance: radiusKm }
