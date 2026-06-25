@@ -173,16 +173,20 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   useEffect(() => {
     let cancelled = false;
     const loadHasRated = async () => {
-      if (role !== "piffer" || !item?.id) {
+      const otherUserId = otherParticipant?.user_id;
+      if (role !== "piffer" || !item?.id || !otherUserId) {
         if (!cancelled) setHasRated(false);
         return;
       }
       const numericItemId = parseInt(String(item.id), 10);
       if (!Number.isFinite(numericItemId)) return;
+      // Scope by the conversation's other participant so this lookup is
+      // safe on wishes (which can have multiple selected helpers).
       const { data, error } = await (supabase.from("interests") as any)
         .select("receiver_rating")
         .eq("item_id", numericItemId)
         .eq("status", "selected")
+        .eq("user_id", otherUserId)
         .maybeSingle();
       if (cancelled) return;
       if (error) {
@@ -195,7 +199,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     return () => {
       cancelled = true;
     };
-  }, [role, item?.id]);
+  }, [role, item?.id, otherParticipant?.user_id]);
 
   useEffect(() => {
     if (!item?.id) return;
