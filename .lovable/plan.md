@@ -1,133 +1,76 @@
-# Fix raw notification headlines + clarify wish system-message verification
+## Background
 
-## Issue 1: Raw type strings shown as notification headlines
+Three follow-ups after the multi-fulfiller `withdraw_pif` fix on item 38:
 
-**Root cause (confirmed by reading `src/hooks/useNotifications.ts`):**
+1. The "Ångra val" confirmation dialog in `ConversationView.tsx` still offers a "Återöppna / Arkivera önskan" choice that implies the wish was closed by selecting one fulfiller (it wasn't).
+2. After picking "Återöppna önskan", the page goes dead until refresh — classic Radix overlay stuck on body during a close → navigate race.
+3. After withdrawal, the conversation still shows as open (input bar visible, three-dot still offers "Ångra val") even though `conversations.closed_at` is set in the DB — the frontend never reads `closed_at`, only `items.pif_status`, which is intentionally untouched for wishes.
 
-Both transform functions (initial fetch at line 151-169 and realtime row transform at line 183-201) build the in-memory `Notification` object with:
+(2) and (3) are not the same bug but they compound: a refetch alone fixes (3) and would also paper over part of (2), but the dead-UI is the dialog close → `navigate()` race, which needs its own small fix.
 
-```ts
-type: n.type,
-title: n.type,   // ← bug: raw type string assigned as title
-```
+## Changes
 
-They never consult `payload.title`, even though every insert site (e.g. `InterestSelectionList.tsx` line 438 for `selection_made`, and the server-side `notify_item_interest_event` RPC for `helper_selected`/`receiver_selected`) populates `payload.title` with a properly worded Swedish sentence.
+### 1. `src/components/messaging/ConversationView.tsx` — withdraw dialog copy + flow (wish branch only)
 
-Then `NotificationList.tsx`:
-- For `interest_received`, `receiver_selected`, `selection_made` → branches and overrides `displayTitle` with custom copy, so the bug is masked.
-- For **`helper_selected`** (wish equivalent of `receiver_selected`) → no branch exists; it falls through to `displayTitle = notif.title`, which is the raw type string.
-- For `selection_made` → the branch does `displayTitle = notif.title || fallback`. Because `notif.title` is the non-empty raw type string `"selection_made"`, the `||` short-circuits and the raw string wins over the fallback.
+Replace the current wish branch of the withdraw `AlertDialog` (lines 435–465) with a single-action confirmation. Keep the pif branch (`!isRequest`) byte-identical — reopen/archive choice still applies to offers because for a pif there is only ever one selected receiver and the item itself transitions back to open or to archived.
 
-This is exactly the "helper_selected vs selection_made inconsistency" previously flagged — same underlying bug, two symptoms.
+For wishes, render instead:
 
-### Fix
+- Title: `Ångra val av {otherName} som uppfyllare`
+- Description: `{otherName} är inte längre vald att uppfylla din önskan. Andra valda uppfyllare påverkas inte, och din önskan ligger kvar som den är.`
+- Single primary action: `Ångra valet` → `handleWithdraw("reopen")` (server-side, "reopen" and "archive" do the same thing on a wish — delete the one interest and close the one conversation — but the `wish_reopened` notification fan-out is the right semantic vs `wish_archived`, and matches the system messages `usePifCompletion` already posts for the `reopen` branch on wishes).
+- Cancel button unchanged.
 
-**A. `src/hooks/useNotifications.ts`** — in both `transformed` map (line 151-169) and `transformRow` (line 183-201), prefer the payload title and add `content` mapping:
+No icon for the destructive variant — `Ångra valet` uses the default `AlertDialogAction` styling, not `bg-destructive`, since for wishes this isn't archiving anything.
 
-```ts
-title: p.title ?? n.title ?? n.type,
-content: p.content ?? p.body ?? n.content ?? null,
-```
+### 2. `src/components/messaging/ConversationView.tsx` — `handleWithdraw` dead-UI fix
 
-Add `content?: string | null` to the `Notification` interface (line 68-80) if not already present.
+Current code (lines 248–255) closes the dialog synchronously and then awaits the RPC + posts system messages + dispatches notifications, then calls `onBack()` or `navigate("/messages")` immediately. On the wish path the dialog is still mid-unmount when navigation happens, and Radix's body `pointer-events: none` lock occasionally never gets cleared.
 
-**B. `src/components/notifications/NotificationList.tsx`**:
+Fix:
 
-1. Extend the `isReceiverSelected` branch to also match `helper_selected` (wish-side counterpart):
-   ```ts
-   const isReceiverSelected =
-     notif.type === 'receiver_selected' ||
-     notif.type === 'selection' ||
-     notif.type === 'helper_selected';
-   ```
-   So a chosen wish helper sees the same rendered structure (CTA to conversation) as a chosen pif receiver.
+- Move `setWithdrawOpen(false)` to AFTER the await, not before, so Radix unmount happens against a stable tree.
+- Defer the post-success `onBack()` / `navigate()` by one tick (`setTimeout(..., 0)` or `requestAnimationFrame`) so the dialog's close transition + body-style cleanup runs first.
+- If `res.ok` is true but the user is staying on the same conversation (wish case where the conversation is now closed but still useful to view as history), do NOT navigate away — just close the dialog and let the now-closed state render in place. For pifs, keep the existing navigate (the conversation closing is the end of that thread). Drive this by `isRequest`.
 
-2. In the `isSelectionMade` branch (line 164), replace `notif.title || fallback` with a guard that rejects the raw type string:
-   ```ts
-   const safeTitle = notif.title && notif.title !== notif.type ? notif.title : null;
-   displayTitle = safeTitle ?? fallback;
-   ```
-   Apply the same `safeTitle` pattern anywhere else a branch falls back to `notif.title`.
+### 3. Treat conversation-level `closed_at` as authoritative for "is this thread closed"
 
-3. Default case (no branch matched): when rendering `displayTitle = notif.title`, fall back to a generic readable label when `notif.title === notif.type`, e.g. `t('interactions.notification_generic', 'Ny avisering')`. This protects against any future type we forget to branch.
+Today `ConversationView`'s `isClosed` reads only `completion.pifStatus`. For wishes that's wrong after withdrawal: the item stays active, only the conversation closes.
 
-## Issue 2: Wish system-message re-verification
+- `src/types/messaging.ts`: add `closed_at?: string | null` to `Conversation`.
+- `src/hooks/useConversationDetails.ts`: include `closed_at` in both transformed objects (the `Conversation` and the local copy used to derive `otherParticipant`). It's already selected by `select('*')` — just thread it through.
+- `src/components/messaging/ConversationView.tsx`: derive
 
-**Answer: the early-return guard exists.**
+  ```ts
+  const isClosed =
+    !!conversation?.closed_at ||
+    completion.pifStatus === "completed" ||
+    completion.pifStatus === "archived";
+  ```
 
-In the live `_insert_pif_system_messages` (and in the drafted migration `db/manual_migrations/wish_aware_system_messages.sql`, preserved byte-for-byte from the original):
+  (Will need `useConversationDetails` to return `conversation` too; today it already does — just consume it.) This single change hides the message input, switches to the read-only footer, and removes "Ångra val" from the three-dot menu the moment `closed_at` is set, fixing #3.
 
-```sql
-select count(*) into v_existing
-  from public.messages
- where conversation_id = p_conversation_id
-   and is_system_message = true;
-if v_existing > 0 then
-  return;
-end if;
-```
+### 4. Refetch conversation details after withdraw (closes #3 end-to-end)
 
-Re-triggering selection on an existing wish/conversation that already contains system messages is a **no-op** — the function returns immediately and no new rows are inserted. The text the user saw is the original pre-fix copy still sitting in `messages`, not output from the new wish branch.
+Even with `closed_at` wired up, the frontend has stale `conversation` state right after `withdraw`. Two options; going with (a):
 
-**No code change needed for #2.** Once the migration is applied, verification must use a **brand-new wish** (newly posted request → first-ever helper selection on it → conversation created from scratch). Re-selection on an existing wish conversation cannot test the new wording.
+- (a) **Event-driven**: `usePifCompletion.withdraw` already dispatches nothing on success. Have it dispatch `pif:conversation-refetch` with `{ conversationId }` after the RPC succeeds. In `useConversationDetails`, listen for the event and re-run the fetch when the id matches. This matches the existing `pif:conversations-refresh` / `pif:conversation-read` pattern used by `useConversations`, no architectural change.
 
-Recommended verification recipe after the migration runs:
-1. Post a new request as account A.
-2. As account B, mark interest.
-3. As account A, open the interest list and select B.
-4. Open the new conversation — both system messages should show the new multi-fulfiller-neutral wording and include the description.
+This also implicitly helps issue #2: once the read-only footer renders in place, we don't navigate away on wishes at all, so there's no close → navigate race left.
 
-## Out of scope
+### 5. No DB / migration changes
 
-- No DB migration changes in this round. The `wish_aware_system_messages.sql` migration is already approved and unchanged.
-- WebSocket disconnects (previously deprioritized) — untouched.
+`withdraw_pif` itself is correct. No new SQL.
 
-## Files to edit
+## Out of scope / explicitly NOT touching
 
-- `src/hooks/useNotifications.ts` — fix title/content mapping in both transform sites; extend `Notification` interface if needed.
-- `src/components/notifications/NotificationList.tsx` — add `helper_selected` to receiver-selected branch; harden `selection_made` and default-case title fallback against raw type strings.
+- Pif (offer) withdrawal dialog — unchanged, reopen/archive choice still applies.
+- `withdraw_pif` SQL function — verified correct in last round.
+- `wish_reopened` / `wish_archived` notification copy — already on the backlog, separate pass.
+- The "page-wide dead UI" symptom on the pif (offer) path — not reported in this round; only the wish "Återöppna" path was observed dead. The deferred-navigate fix in §2 still benefits pifs as a defensive improvement, but no behavior change to pif copy or routing.
 
----
+## Verification (post-build mode)
 
-## Follow-up round (2026-06-24)
-
-Three additional bugs surfaced from real wish-selection testing:
-
-### #1 — Conversation list preview shows same text for both sides
-`useConversations.ts` ignored `target_user_id` when building list previews. `_insert_pif_system_messages` writes two per-recipient system messages — both sides ended up with whichever inserted last. Fixed: skip messages targeted at OTHER users in both the initial fetch (`lastByConv`) and the realtime INSERT preview-overwrite.
-
-### #2 — Fulfiller notification used pif language
-Two layers fixed:
-- DB migration `db/manual_migrations/wish_aware_helper_selected_notification.sql` rewrites the `helper_selected` branch of `notify_item_interest_event` to wish-aware, multi-fulfiller-neutral copy. All other branches preserved byte-for-byte.
-- `NotificationList.tsx` `isReceiverSelected` branch now respects `safeTitle` (payload title) when `type === 'helper_selected'`, so the server copy actually renders.
-
-### #3 — Wisher's self-notification wording
-`InterestSelectionList.tsx` line 428-430: wish wording changed from "som ska uppfylla" to "till att uppfylla" to match the multi-fulfiller-neutral standard. Name already included.
-
-## Backlog (priority — DO NOT fix wording before logic)
-
-`notify_item_interest_event` still has `wish_reopened`, `wish_archived`, and `wish_completed` branches that frame the wish as a single-fulfiller state machine (e.g. "Önskningen är nu öppen igen" implies the wish was closed by one fulfiller's selection — wrong for multi-fulfiller wishes). These mirror the same withdraw_pif multi-fulfiller-scoping bug already flagged elsewhere. **Do not re-word these branches until the underlying state-transition logic is corrected** — rewording first would mask the real bug.
-
-## Pickup-address follow-ups (flagged, deferred)
-
-- **ProfileEdit duplication smell** — `src/pages/ProfileEdit.tsx` maintains its own inline `handleSubmit` / `fetchProfileData` / local type definition instead of using `useProfileSubmit` / `useProfileFetch`. This caused the door-code/floor/instructions save bug (two parallel implementations, only one updated). Refactor ProfileEdit to consume the shared hooks so the next pickup-field addition only needs one edit site.
-- **Edit-mode pickup_address_mode display gap** — `usePostFormState`'s profile-prefill `useEffect` early-returns when `initialData?.id` is set (edit mode), so `primary_address` is never loaded during edit. The pickup-address toggle then defaults to "primary" with an empty primary address displayed. Fix: fetch the profile's `address` even in edit mode (kept separate from the "don't overwrite existing values" prefill logic for the other fields). Best done in the same pass as the ProfileEdit refactor above.
-
-
-## Realtime channel-dedupe audit (2026-06-24)
-
-After three crashes in one session (`useCachedProfile`, `useNotifications`, `useUnreadMessagesCount`) all hitting `cannot add postgres_changes callbacks ... after subscribe()`, all three hooks were refactored to a refcounted shared-channel pattern (module-level `Map<scopeKey, { channel, listeners }>` + `ensureXChannel` / `releaseXChannel`).
-
-### Methodology rule going forward
-
-When introducing any `supabase.channel(`...${scope}`)` in a hook or component, evaluate co-mount risk by asking:
-1. Does MainNav (globally mounted on every authenticated page) call this hook? If yes AND any page/component in the same tree also calls it → multi-mount-risky.
-2. Can two components rendered simultaneously (page + its modal/drawer/panel, or two siblings) both call it with the same scope key? If yes → multi-mount-risky.
-
-Counting call sites in the codebase is NOT sufficient — that's what missed `useUnreadMessagesCount`. Any hook matching (1) or (2) must use the refcounted-channel pattern.
-
-### Latent risks (no action until a second simultaneous mount actually happens)
-
-- **`usePifCompletion`** (`pif-completion:${id}`) — called from `ConversationView`, `PostModal`, and `InterestSelectionList`. Currently safe because these don't render together with the same `id`, but if any two ever co-mount for the same item, it crashes. Refactor to refcounted pattern at that point.
-- **`useProfileAvatar`** (`profile-avatar-changes` — note: FIXED topic, no scope suffix) — only called from `ProfileEdit` today, so single-mount. But the fixed topic means any future second consumer crashes instantly on first co-mount. Refactor to refcounted pattern when adding a second consumer.
-
+1. Wish with 2 fulfillers: open piffer's conversation with fulfiller A, three-dot → new single-action dialog → confirm. Conversation immediately shows read-only footer, input gone, three-dot no longer offers "Ångra val". No navigation away. Page remains interactive (no dead UI). Fulfiller B's conversation untouched.
+2. Pif: dialog still shows reopen/archive choice, both still navigate back to `/messages`, page stays interactive.
+3. Re-open the now-closed wish conversation from `/messages` history bucket — `closed_at` keeps it in read-only mode on re-mount.
