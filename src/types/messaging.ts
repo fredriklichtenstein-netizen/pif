@@ -29,6 +29,9 @@ export interface Conversation {
   item?: Post;
   /** Unread message count for the current user. Computed client-side. */
   unread_count?: number;
+  /** Set when the conversation has been closed (e.g. fulfiller withdrawn,
+   *  pif completed/archived). Authoritative "thread is closed" signal. */
+  closed_at?: string | null;
 }
 
 export interface Message {
