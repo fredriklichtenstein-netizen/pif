@@ -135,16 +135,23 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     if (post.user_id && post.user_id !== user.id) return; // viewer is not the piffer
     let cancelled = false;
     (async () => {
-      const { data: selectedInterest } = await (supabase
+      // Wishes can have multiple selected helpers, so do NOT use
+      // .maybeSingle() here — it would 406 the moment there's more than
+      // one row. Fetch all selected rows and pick deterministically: the
+      // earliest selected_at (the "primary" fulfiller for this view).
+      // For pifs the DB still enforces single-selected, so this returns
+      // exactly one row.
+      const { data: selectedInterests } = await (supabase
         .from("interests") as any)
-        .select("user_id, profiles:user_id(first_name)")
+        .select("user_id, selected_at, profiles:user_id(first_name)")
         .eq("item_id", post.id)
         .eq("status", "selected")
-        .maybeSingle();
+        .order("selected_at", { ascending: true, nullsFirst: false });
       if (cancelled) return;
-      const selUserId: string | null = selectedInterest?.user_id ?? null;
+      const primary = (selectedInterests || [])[0] || null;
+      const selUserId: string | null = primary?.user_id ?? null;
       const selName: string | null =
-        (selectedInterest as any)?.profiles?.first_name ?? null;
+        (primary as any)?.profiles?.first_name ?? null;
       setReceiverId(selUserId);
       setReceiverName(selName);
       if (!selUserId) {
