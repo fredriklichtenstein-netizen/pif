@@ -61,6 +61,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     deleteMessage,
   } = useMessages(conversationId);
   const {
+    conversation,
     otherParticipant,
     item,
     isLoading: detailsLoading,
