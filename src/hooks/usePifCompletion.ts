@@ -452,6 +452,10 @@ export function usePifCompletion(
       const { error } = await (supabase.rpc as any)("withdraw_pif", {
         p_item_id: id,
         p_action: action,
+        // Wishes (item_type='request') must scope withdrawal to the specific
+        // fulfiller in this conversation; otherwise the RPC raises 22023.
+        // Pifs (offers) ignore this argument server-side.
+        p_fulfiller_id: isRequest ? (otherUserId ?? null) : null,
       });
       if (error) {
         console.error("withdraw_pif failed:", error);
