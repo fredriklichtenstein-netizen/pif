@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
+import type { Feature, Polygon } from 'geojson';
 
 interface DistanceRingsProps {
   map: mapboxgl.Map;
@@ -17,7 +18,7 @@ export const DistanceRings = ({ map, center, visible, rings = [1, 5, 10] }: Dist
   const addedRef = useRef(false);
   const prevRingsKey = useRef('');
 
-  const createCircle = useCallback((center: [number, number], radiusKm: number): GeoJSON.Polygon => {
+  const createCircle = useCallback((center: [number, number], radiusKm: number): Polygon => {
     const points = 64;
     const coords: number[][] = [];
     

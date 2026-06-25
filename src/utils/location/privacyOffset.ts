@@ -1,4 +1,5 @@
 
+import type mapboxgl from "mapbox-gl";
 import { isUrbanArea } from "./urbanDetection";
 import { isWaterLocation } from "./waterDetection";
 
