@@ -249,12 +249,24 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   };
 
   const handleWithdraw = async (action: "reopen" | "archive") => {
-    setWithdrawOpen(false);
     const res = await completion.withdraw(action);
-    if (res.ok) {
+    // Close the dialog AFTER the await so Radix unmounts against a stable
+    // tree (closing pre-await + navigating sync occasionally leaves
+    // `pointer-events: none` stuck on <body>, deadening the whole page).
+    setWithdrawOpen(false);
+    if (!res.ok) return;
+    if (isRequest) {
+      // Wish: the item itself stays active, only this single conversation
+      // closes. Stay on the thread; the read-only footer + refreshed
+      // closed_at flip the UI in place via the dispatched refetch event.
+      return;
+    }
+    // Pif: thread is over — leave it. Defer one tick so the dialog's
+    // close transition + body-style cleanup runs before navigation.
+    setTimeout(() => {
       if (onBack) onBack();
       else navigate("/messages");
-    }
+    }, 0);
   };
 
   if (detailsLoading) {
