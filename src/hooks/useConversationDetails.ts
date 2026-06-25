@@ -194,6 +194,20 @@ export function useConversationDetails(conversationId: string | null) {
     };
 
     fetchConversationDetails();
+
+    // Allow external actions (e.g. usePifCompletion.withdraw) to request a
+    // refetch so freshly-changed fields like conversations.closed_at land in
+    // the UI without a full page reload.
+    const onRefetch = (event: Event) => {
+      const detail = (event as CustomEvent<{ conversationId?: string }>).detail;
+      if (!detail?.conversationId || detail.conversationId === conversationId) {
+        fetchConversationDetails();
+      }
+    };
+    window.addEventListener('pif:conversation-refetch', onRefetch);
+    return () => {
+      window.removeEventListener('pif:conversation-refetch', onRefetch);
+    };
   }, [conversationId, currentUserId, toast]);
 
   return { conversation, otherParticipant, item, isLoading, error };
