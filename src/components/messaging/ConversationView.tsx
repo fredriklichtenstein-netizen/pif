@@ -419,7 +419,9 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
             {completion.pifStatus === "archived"
               ? (isRequest ? "Önskan har arkiverats — konversationen är avslutad." : "Pifen har arkiverats — konversationen är avslutad.")
-              : (isRequest ? "Önskan är uppfylld — konversationen är avslutad." : "Pifen är genomförd — konversationen är avslutad.")}
+              : completion.pifStatus === "completed"
+                ? (isRequest ? "Önskan är uppfylld — konversationen är avslutad." : "Pifen är genomförd — konversationen är avslutad.")
+                : "Den här konversationen är avslutad."}
           </div>
         ) : (
           <EnhancedMessageInput
@@ -448,7 +450,17 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
 
       {/* Withdraw choice dialog (piffer only) */}
       <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            // Defensive cleanup for the Radix body `pointer-events: none`
+            // leak that occasionally survives when the parent tree
+            // re-renders (isClosed flip, footer/input swap) during close.
+            e.preventDefault();
+            if (typeof document !== "undefined") {
+              document.body.style.pointerEvents = "";
+            }
+          }}
+        >
           {isRequest ? (
             <>
               <AlertDialogHeader>
