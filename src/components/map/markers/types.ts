@@ -1,3 +1,4 @@
+import type { Feature, Point } from "geojson";
 import type { Post } from "@/types/post";
 
 export interface EnhancedPost {
@@ -6,7 +7,4 @@ export interface EnhancedPost {
   privacyCoordinates: { lng: number; lat: number };
 }
 
-export type PointFeature = GeoJSON.Feature<
-  GeoJSON.Point,
-  { postIndex: number }
->;
+export type PointFeature = Feature<Point, { postIndex: number }>;
