@@ -449,33 +449,55 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       {/* Withdraw choice dialog (piffer only) */}
       <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{isRequest ? "Ångra val av uppfyllare" : "Ångra val av mottagare"}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {isRequest
-                ? "Vill du återöppna önskan så att andra kan erbjuda sig att uppfylla den, eller arkivera den helt?"
-                : "Vill du återöppna pifen så att andra kan visa intresse, eller arkivera den helt?"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
-            <AlertDialogAction
-              onClick={() => handleWithdraw("reopen")}
-              className="w-full"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {isRequest ? "Återöppna önskan" : "Återöppna pifen"}
-            </AlertDialogAction>
-            <AlertDialogAction
-              onClick={() => handleWithdraw("archive")}
-              className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              <Archive className="h-4 w-4 mr-2" />
-              {isRequest ? "Arkivera önskan" : "Arkivera pifen"}
-            </AlertDialogAction>
-            <AlertDialogCancel className="w-full mt-0">
-              Avbryt
-            </AlertDialogCancel>
-          </AlertDialogFooter>
+          {isRequest ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{`Ångra val av ${otherName} som uppfyllare`}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {`${otherName} är inte längre vald att uppfylla din önskan. Andra valda uppfyllare påverkas inte, och din önskan ligger kvar som den är.`}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+                <AlertDialogAction
+                  onClick={() => handleWithdraw("reopen")}
+                  className="w-full"
+                >
+                  Ångra valet
+                </AlertDialogAction>
+                <AlertDialogCancel className="w-full mt-0">
+                  Avbryt
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Ångra val av mottagare</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Vill du återöppna pifen så att andra kan visa intresse, eller arkivera den helt?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+                <AlertDialogAction
+                  onClick={() => handleWithdraw("reopen")}
+                  className="w-full"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Återöppna pifen
+                </AlertDialogAction>
+                <AlertDialogAction
+                  onClick={() => handleWithdraw("archive")}
+                  className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Arkivera pifen
+                </AlertDialogAction>
+                <AlertDialogCancel className="w-full mt-0">
+                  Avbryt
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
 
