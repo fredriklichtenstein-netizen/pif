@@ -521,6 +521,18 @@ export function usePifCompletion(
         ...s,
         pifStatus: action === "archive" ? "archived" : s.pifStatus,
       }));
+      // Ask consumers (useConversationDetails, useConversations) to refetch
+      // so freshly-set conversations.closed_at is reflected without reload.
+      try {
+        window.dispatchEvent(
+          new CustomEvent('pif:conversation-refetch', {
+            detail: { conversationId },
+          }),
+        );
+        window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
+      } catch {
+        /* no-op in non-DOM environments */
+      }
       return { ok: true } as const;
     },
     [id, conversationId, currentUserId, otherUserId, isRequest],
