@@ -29,7 +29,9 @@ interface ItemCardProps {
   markAsPiffedAction?: () => void;
   awaitingConfirmationSlot?: ReactNode;
   images?: string[];
+  item_type?: ItemType;
 }
+
 
 export function ItemCardContainer({
   id,
