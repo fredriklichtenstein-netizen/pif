@@ -443,7 +443,9 @@ export function InterestSelectionList({
           const itemTitle: string | null = itemRow?.title ?? null;
           const receiverName = displayName(row);
           const titleText = isWish
-            ? `Du har valt ${receiverName} till att uppfylla önskan${itemTitle ? ` "${itemTitle}"` : ""}.`
+            ? wasReselection
+              ? `Du har valt ${receiverName} på nytt att uppfylla önskan${itemTitle ? ` "${itemTitle}"` : ""}.`
+              : `Du har valt ${receiverName} till att uppfylla önskan${itemTitle ? ` "${itemTitle}"` : ""}.`
             : `Du har valt ${receiverName} som mottagare${itemTitle ? ` för "${itemTitle}"` : ""}.`;
           const actionUrl = conversationId
             ? `/messages?conversation=${conversationId}`
