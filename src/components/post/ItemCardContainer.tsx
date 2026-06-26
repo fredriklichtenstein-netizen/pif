@@ -109,6 +109,9 @@ export function ItemCardContainer({
         onLikeToggle={handleLike}
         onCommentToggle={handleCommentToggle}
         onShowInterest={handleShowInterest}
+        itemType={item_type}
+        itemTitle={title}
+
       />
     </div>
   );
