@@ -5,6 +5,8 @@ import { InteractionsLoading } from "./interactions/InteractionsLoading";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { User } from "@/hooks/item/useItemInteractions";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
+import type { ItemType } from "@/components/item/types";
+
 
 interface ItemInteractionsProps {
   id: string;
