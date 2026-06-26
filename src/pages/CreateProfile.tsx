@@ -25,7 +25,6 @@ export default function CreateProfile() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    gender: "",
     phone: "",
     countryCode: "+46", // Default to Sweden
     address: "",
@@ -119,7 +118,6 @@ export default function CreateProfile() {
         username: username,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        gender: formData.gender,
         phone: formData.countryCode + formData.phone,
         address: formData.address,
         avatar_url: avatarPath,
