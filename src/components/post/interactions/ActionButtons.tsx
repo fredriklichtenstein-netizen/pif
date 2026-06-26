@@ -119,6 +119,9 @@ export function ActionButtons({
         itemId={itemId}
         itemOwnerId={itemOwnerId}
         currentUserId={effectiveCurrentUserId}
+        itemType={itemType}
+        itemTitle={itemTitle}
+
       />
       
       <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
