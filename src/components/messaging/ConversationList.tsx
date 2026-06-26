@@ -51,6 +51,12 @@ export function ConversationList({
     console.debug('[ConversationList] bucket split', {
       activeIds: a.map((c) => c.id),
       historyIds: h.map((c) => c.id),
+      decisions: conversations.map((c) => ({
+        id: c.id,
+        closed_at: c.closed_at ?? null,
+        item_status: c.item?.status ?? null,
+        isHistoric: !!c.closed_at || isHistoricStatus(c.item?.status),
+      })),
     });
     return { active: a, history: h };
   }, [conversations]);
