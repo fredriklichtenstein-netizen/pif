@@ -2,6 +2,7 @@
 import { ItemCardActions } from "../ItemCardActions";
 import { CommentSection } from "../CommentSection";
 import { User } from "@/hooks/item/useItemInteractions";
+import type { ItemType } from "@/components/item/types";
 
 interface ItemCardFooterProps {
   id: string;
@@ -19,7 +20,10 @@ interface ItemCardFooterProps {
   onLikeToggle: () => void;
   onCommentToggle: () => void;
   onShowInterest: () => void;
+  itemType?: ItemType;
+  itemTitle?: string;
 }
+
 
 export function ItemCardFooter({
   id,
