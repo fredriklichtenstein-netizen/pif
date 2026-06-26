@@ -56,6 +56,9 @@ export function ItemCardActions({
   showComments,
   isBookmarked,
   showInterest,
+  itemType,
+  itemTitle,
+
   commentsCount,
   likesCount,
   interestsCount,
