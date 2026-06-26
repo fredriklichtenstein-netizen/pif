@@ -15,7 +15,6 @@ interface Profile {
   first_name?: string;
   last_name?: string;
   avatar_url?: string | null;
-  gender?: string | null;
   address?: string | null;
   location?: any;
 }
@@ -32,7 +31,7 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   const { supabase } = await import("@/integrations/supabase/client");
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, avatar_url, gender, address, location_json")
+    .select("id, first_name, last_name, avatar_url, address, location_json")
     .eq("id", userId)
     .single();
   if (error) {
@@ -191,8 +190,7 @@ export default function PublicProfile() {
               className="mb-3 border"
             />
             <ProfileRatingDisplay userId={profile.id} className="mb-2" />
-            <div className="text-xl font-semibold">{formatPublicName(profile)}</div>
-            <div className="text-muted-foreground mb-2 capitalize">{profile.gender || t('common.gender_undisclosed')}</div>
+            <div className="text-xl font-semibold mb-2">{formatPublicName(profile)}</div>
             {coordinates && (
               <div className="w-full">
                 <ProfileMap coordinates={coordinates} />

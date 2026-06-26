@@ -9,14 +9,11 @@ import { useTranslation } from "react-i18next";
 interface ProfileBasicInfoProps {
   avatarUrl: string | null;
   displayName: string;
-  gender: string | null;
   coordinates: { lng: number; lat: number } | null;
 }
 
-export function ProfileBasicInfo({ avatarUrl, displayName, gender, coordinates }: ProfileBasicInfoProps) {
+export function ProfileBasicInfo({ avatarUrl, displayName, coordinates }: ProfileBasicInfoProps) {
   const { t } = useTranslation();
-
-  const genderLabel = gender ? t(`profile.gender_${gender}`) : t('common.gender_undisclosed');
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -27,10 +24,7 @@ export function ProfileBasicInfo({ avatarUrl, displayName, gender, coordinates }
         className="mb-3 border"
       />
       <div className="text-2xl font-semibold mb-1">{displayName || t('common.user')}</div>
-      <div className="text-muted-foreground capitalize mb-4">
-        {genderLabel}
-      </div>
-      
+
       {coordinates && (
         <div className="w-full max-w-md mb-6">
           <ProfileLocationMap coordinates={coordinates} />

@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AddressInput } from "./address/AddressInput";
 import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "@/components/forms/fields/NameFields";
-import { GenderSelector } from "@/components/forms/fields/GenderSelector";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +13,6 @@ import { useTranslation } from "react-i18next";
 interface ProfileFormData {
   firstName: string;
   lastName: string;
-  gender: string;
   phone: string;
   address: string;
   dateOfBirth?: Date;
@@ -51,12 +49,6 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               lastName={formData.lastName}
               onFirstNameChange={(firstName) => handleChange({ firstName })}
               onLastNameChange={(lastName) => handleChange({ lastName })}
-            />
-
-            <GenderSelector
-              value={formData.gender}
-              onChange={(gender) => handleChange({ gender })}
-              required
             />
 
             <div className="space-y-2">

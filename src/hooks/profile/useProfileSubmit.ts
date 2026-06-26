@@ -46,7 +46,6 @@ export const useProfileSubmit = (
       const patch = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        gender: formData.gender,
         phone: formattedPhone,
         address: formData.address,
         date_of_birth: formattedDateOfBirth,

@@ -7,7 +7,7 @@ export const DEMO_PROFILE = {
   first_name: "Demo",
   last_name: "User",
   avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
-  gender: null,
+  
   address: "Stockholm, Sweden",
   location: { lng: 18.0686, lat: 59.3293 },
   neighborhood: "Södermalm",

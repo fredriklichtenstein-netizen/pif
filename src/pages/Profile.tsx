@@ -79,7 +79,6 @@ const Profile = () => {
             <ProfileBasicInfo
               avatarUrl={currentAvatarUrl}
               displayName={displayName}
-              gender={profileData?.gender}
               coordinates={coordinates}
             />
           </Card>

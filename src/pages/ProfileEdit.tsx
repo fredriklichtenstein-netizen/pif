@@ -23,7 +23,6 @@ function ProfileEdit() {
   const [formData, setFormData] = useState<ProfileFormData>({
     firstName: "",
     lastName: "",
-    gender: "",
     phone: "",
     address: "",
     countryCode: "+46",
@@ -74,7 +73,6 @@ function ProfileEdit() {
         setFormData({
           firstName: data.first_name || "",
           lastName: data.last_name || "",
-          gender: data.gender || "",
           phone: data.phone || "",
           address: primaryAddr,
           countryCode: "+46",
@@ -137,7 +135,6 @@ function ProfileEdit() {
       const updateData: any = {
   first_name: formData.firstName,
   last_name: formData.lastName,
-  gender: formData.gender || null,
   phone: formData.phone || null,
   address: formData.address || null,
   pickup_preference: formData.pickupPreference || null,

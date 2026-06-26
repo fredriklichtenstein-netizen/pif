@@ -21,7 +21,7 @@ export const useProfileFetch = () => {
   const [loading, setLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProfileFormData>({
-    firstName: "", lastName: "", gender: "", phone: "", address: "", countryCode: "+46",
+    firstName: "", lastName: "", phone: "", address: "", countryCode: "+46",
   });
   const [initialFormData, setInitialFormData] = useState({ ...formData });
   const [error, setError] = useState<Error | null>(null);
@@ -86,7 +86,7 @@ export const useProfileFetch = () => {
         const savedPickupAddr = p.pickup_address || "";
         const newFormData: ProfileFormData = {
           firstName: p.first_name || "", lastName: p.last_name || "",
-          gender: p.gender || "", phone: p.phone || "",
+          phone: p.phone || "",
           address: primary, countryCode: "+46", dateOfBirth,
           pickupPreference: p.pickup_preference || "",
           pickupAddress: savedPickupAddr,
