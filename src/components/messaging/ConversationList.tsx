@@ -40,7 +40,12 @@ export function ConversationList({
     const a: Conversation[] = [];
     const h: Conversation[] = [];
     for (const c of conversations) {
-      if (isHistoricStatus(c.item?.status)) h.push(c);
+      // A conversation is "historic" if EITHER it has been closed at the
+      // conversation level (closed_at set — e.g. a specific wish fulfiller
+      // was withdrawn while the wish itself remains active for others) OR
+      // the underlying item has reached a terminal pif_status.
+      const isHistoric = !!c.closed_at || isHistoricStatus(c.item?.status);
+      if (isHistoric) h.push(c);
       else a.push(c);
     }
     console.debug('[ConversationList] bucket split', {
