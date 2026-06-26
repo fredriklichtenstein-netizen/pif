@@ -53,6 +53,9 @@ export function ItemInteractions({
   isBookmarked,
   showInterest,
   isOwner = false,
+  itemType,
+  itemTitle,
+
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
