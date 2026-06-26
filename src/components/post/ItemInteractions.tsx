@@ -110,6 +110,9 @@ export function ItemInteractions({
         showComments={showComments}
         showInterest={showInterest}
         isOwner={isOwner}
+        itemType={itemType}
+        itemTitle={itemTitle}
+
         isRealtimeSubscribed={isRealtimeSubscribed}
         itemId={id}
         itemOwnerId={postedBy?.id}
