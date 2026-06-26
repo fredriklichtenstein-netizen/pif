@@ -5,6 +5,8 @@ import { InteractionsLoading } from "./interactions/InteractionsLoading";
 import { LazyCommentsSection } from "../comments/LazyCommentsSection";
 import type { User } from "@/hooks/item/useItemInteractions";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
+import type { ItemType } from "@/components/item/types";
+
 
 interface ItemInteractionsProps {
   id: string;
@@ -18,6 +20,9 @@ interface ItemInteractionsProps {
   isBookmarked: boolean;
   showInterest: boolean;
   isOwner?: boolean;
+  itemType?: ItemType;
+  itemTitle?: string;
+
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
@@ -48,6 +53,9 @@ export function ItemInteractions({
   isBookmarked,
   showInterest,
   isOwner = false,
+  itemType,
+  itemTitle,
+
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
@@ -102,6 +110,9 @@ export function ItemInteractions({
         showComments={showComments}
         showInterest={showInterest}
         isOwner={isOwner}
+        itemType={itemType}
+        itemTitle={itemTitle}
+
         isRealtimeSubscribed={isRealtimeSubscribed}
         itemId={id}
         itemOwnerId={postedBy?.id}

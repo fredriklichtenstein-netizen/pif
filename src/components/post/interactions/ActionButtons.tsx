@@ -18,6 +18,9 @@ interface ActionButtonsProps {
   itemId: string;
   itemOwnerId?: string;
   currentUserId?: string;
+  /** Required for the interest popup to scope withdraw_pif by fulfiller on wishes. */
+  itemType?: 'offer' | 'request';
+  itemTitle?: string;
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
@@ -33,6 +36,7 @@ interface ActionButtonsProps {
   fetchCommenters?: () => Promise<User[]>;
 }
 
+
 export function ActionButtons({
   isLiked,
   showComments,
@@ -42,6 +46,9 @@ export function ActionButtons({
   itemId,
   itemOwnerId,
   currentUserId,
+  itemType,
+  itemTitle,
+
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
@@ -112,6 +119,9 @@ export function ActionButtons({
         itemId={itemId}
         itemOwnerId={itemOwnerId}
         currentUserId={effectiveCurrentUserId}
+        itemType={itemType}
+        itemTitle={itemTitle}
+
       />
       
       <div className="relative flex flex-col items-center flex-1 min-w-[60px]">

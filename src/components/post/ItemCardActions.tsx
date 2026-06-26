@@ -3,6 +3,8 @@ import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "@/components/post/CommentSection";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import type { User } from "@/hooks/item/useItemInteractions";
+import type { ItemType } from "@/components/item/types";
+
 
 interface ItemCardActionsProps {
   id: string | number;
@@ -16,6 +18,10 @@ interface ItemCardActionsProps {
   showComments: boolean;
   isBookmarked: boolean;
   showInterest: boolean;
+  /** Required for the interest popup to know whether to scope withdraw_pif by fulfiller (wishes). */
+  itemType?: ItemType;
+  itemTitle?: string;
+
   commentsCount: number;
   likesCount: number;
   interestsCount: number;
@@ -50,6 +56,9 @@ export function ItemCardActions({
   showComments,
   isBookmarked,
   showInterest,
+  itemType,
+  itemTitle,
+
   commentsCount,
   likesCount,
   interestsCount,
@@ -88,6 +97,9 @@ export function ItemCardActions({
         isBookmarked={isBookmarked}
         showInterest={showInterest}
         isOwner={isOwner}
+        itemType={itemType}
+        itemTitle={itemTitle}
+
         commentsCount={commentsCount}
         likesCount={likesCount}
         interestsCount={interestsCount}

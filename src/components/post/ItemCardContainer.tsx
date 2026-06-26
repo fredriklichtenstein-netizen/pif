@@ -5,6 +5,8 @@ import { ItemImage } from "./ItemImage";
 import { ItemCardBody } from "./card/ItemCardBody";
 import { ItemCardFooter } from "./card/ItemCardFooter";
 import { useItemCardContainer } from "./card/useItemCardContainer";
+import type { ItemType } from "@/components/item/types";
+
 
 interface ItemCardProps {
   id: number;
@@ -27,7 +29,9 @@ interface ItemCardProps {
   markAsPiffedAction?: () => void;
   awaitingConfirmationSlot?: ReactNode;
   images?: string[];
+  item_type?: ItemType;
 }
+
 
 export function ItemCardContainer({
   id,
@@ -43,6 +47,8 @@ export function ItemCardContainer({
   postedBy,
   markAsPiffedAction,
   awaitingConfirmationSlot,
+  item_type,
+
 }: ItemCardProps) {
   const { session } = useAuth();
   const isOwner = session?.user?.id === postedBy.id;
@@ -103,6 +109,9 @@ export function ItemCardContainer({
         onLikeToggle={handleLike}
         onCommentToggle={handleCommentToggle}
         onShowInterest={handleShowInterest}
+        itemType={item_type}
+        itemTitle={title}
+
       />
     </div>
   );
