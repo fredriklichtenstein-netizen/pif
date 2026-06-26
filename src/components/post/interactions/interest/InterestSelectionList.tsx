@@ -379,11 +379,27 @@ export function InterestSelectionList({
             p_note: row.note ?? null,
           }
         : { p_item_id: numericItemId, p_receiver_id: row.user_id };
-      const { data: conversationId, error: rpcError } = await (supabase.rpc as any)(
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
         rpcName,
         rpcArgs,
       );
       if (rpcError) throw rpcError;
+
+      // select_wish_helper now returns jsonb { conversation_id, was_reselection };
+      // select_receiver still returns a bare uuid.
+      let conversationId: string | null = null;
+      let wasReselection = false;
+      if (isWish) {
+        if (rpcData && typeof rpcData === "object") {
+          conversationId = (rpcData as any).conversation_id ?? null;
+          wasReselection = !!(rpcData as any).was_reselection;
+        } else if (typeof rpcData === "string") {
+          // Defensive: pre-migration shape.
+          conversationId = rpcData;
+        }
+      } else {
+        conversationId = typeof rpcData === "string" ? rpcData : (rpcData ?? null);
+      }
 
       // Fan-out notifications to the chosen user AND every other
       // interested/offering user so they know the slot was filled.
@@ -394,6 +410,7 @@ export function InterestSelectionList({
             p_item_id: numericItemId,
             p_event: isWish ? "helper_selected" : "receiver_selected",
             p_selected_user_id: row.user_id,
+            p_is_reselection: isWish ? wasReselection : false,
           },
         );
         if (notifyErr) console.warn("notify_item_interest_event failed", notifyErr);
