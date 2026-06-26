@@ -68,7 +68,7 @@ export function useConversations() {
           return;
         }
         const { data: conversationsData, error: conversationsError } = await supabase
-          .from('conversations').select(`*, item:items(id, title, images, pif_status)`)
+          .from('conversations').select(`*, closed_at, item:items(id, title, images, pif_status)`)
           .in('id', conversationIds).order('updated_at', { ascending: false });
         if (conversationsError) throw conversationsError;
 
@@ -156,6 +156,7 @@ export function useConversations() {
             return {
               id: conv.id, created_at: conv.created_at, updated_at: conv.updated_at,
               item_id: conv.item_id,
+              closed_at: (conv as any).closed_at ?? null,
               last_message_text: latest ?? conv.last_message_text,
               participants,
               item: itemAny ? {
