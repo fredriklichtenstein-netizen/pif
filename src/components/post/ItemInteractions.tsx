@@ -20,6 +20,9 @@ interface ItemInteractionsProps {
   isBookmarked: boolean;
   showInterest: boolean;
   isOwner?: boolean;
+  itemType?: ItemType;
+  itemTitle?: string;
+
   commentsCount?: number;
   likesCount?: number;
   interestsCount?: number;
