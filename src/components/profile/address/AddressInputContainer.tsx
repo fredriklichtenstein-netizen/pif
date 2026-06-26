@@ -33,6 +33,7 @@ export function AddressInputContainer({
     coordinates,
     isLoadingSuggestions,
     setSuggestions,
+    setShowMap,
     handleAddressChange,
     handleUseCurrentLocation,
     handleShowMap,
