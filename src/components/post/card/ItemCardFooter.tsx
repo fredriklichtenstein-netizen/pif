@@ -40,7 +40,10 @@ export function ItemCardFooter({
   setComments,
   onLikeToggle,
   onCommentToggle,
-  onShowInterest
+  onShowInterest,
+  itemType,
+  itemTitle
+
 }: ItemCardFooterProps) {
   return (
     <>
