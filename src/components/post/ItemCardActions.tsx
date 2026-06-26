@@ -3,6 +3,8 @@ import { ItemInteractions } from "./ItemInteractions";
 import { CommentSection } from "@/components/post/CommentSection";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import type { User } from "@/hooks/item/useItemInteractions";
+import type { ItemType } from "@/components/item/types";
+
 
 interface ItemCardActionsProps {
   id: string | number;
