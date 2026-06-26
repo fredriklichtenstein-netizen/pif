@@ -1,53 +1,40 @@
-## Issue 1 — Second `withdraw_pif` call site missing `p_fulfiller_id`
+## Root cause (confirmed by reading the live function)
 
-File: `src/components/post/interactions/interest/InterestSelectionList.tsx`, in `handleWithdraw` (around line 648–690).
+The reselection-message guard `if v_was_closed and v_existing_messages > 0` never fires for the troubled conversation because `v_existing_messages` is computed with `coalesce(is_system_message, false) = false` — it counts only human messages. The troubled conversation contains exclusively system messages (initial selection notice + withdrawal notices), so the count is 0 and the reselection INSERT is skipped.
 
-Currently:
-```ts
-const { error } = await (supabase.rpc as any)("withdraw_pif", {
-  p_item_id: numericItemId,
-  p_action: "reopen",
-});
+The intent of the guard is "has anything happened here before" (to distinguish a fresh insert from a reuse where we'd otherwise double-post initial-selection messages via `_insert_pif_system_messages`). System messages absolutely count for that purpose.
+
+## Fix
+
+Replace the broken `db/manual_migrations/select_wish_helper_reuse_logging.sql` with a corrected migration based on the **live** `pg_proc` body (joins through `conversation_participants`, calls `_insert_pif_system_messages`, uses `FOUND` for `v_was_closed`). The new migration applies two changes:
+
+1. **Real fix:** Drop the `is_system_message` filter from the `v_existing_messages` count. Count all messages so the reuse+was-closed branch correctly identifies a previously-used conversation and posts the "valt på nytt" pair.
+2. **Diagnostic logging:** Add `[swh-reuse-diag]` `RAISE NOTICE` lines at the same checkpoints planned before — lookup result, reuse-branch reopen (`v_was_closed`), message count, guard evaluation, and post-insert confirmation. Keep these in for one clean test pass; a follow-up cleanup migration strips them.
+
+Everything else in the function body is preserved verbatim from the live `pg_proc` output.
+
+## DROP + CREATE discipline
+
+Per the rule established after the `withdraw_pif` overload incident:
+
+```sql
+drop function if exists public.select_wish_helper(bigint, uuid);
+drop function if exists public.select_wish_helper(bigint, uuid, text);
+create function public.select_wish_helper(...) ...
 ```
 
-This is invoked from the owner's feed-card popup "Avmarkera" button (`onClick={() => setWithdrawId(r.id)}` at line 939). For wishes this hits the RPC's wish branch which now requires `p_fulfiller_id` (errcode 22023) and, when called without it, also risks affecting other fulfillers.
+Then re-grant execute to `authenticated`.
 
-Fix:
-1. Resolve the withdrawn row's `user_id` from `rows` using the existing `targetId` (which is `r.id`):
-   ```ts
-   const targetRow = rows.find((r) => r.id === targetId);
-   const fulfillerId = targetRow?.user_id ?? null;
-   ```
-2. Pass `p_fulfiller_id` on the wish path only, mirroring `usePifCompletion`:
-   ```ts
-   const { error } = await (supabase.rpc as any)("withdraw_pif", {
-     p_item_id: numericItemId,
-     p_action: "reopen",
-     p_fulfiller_id: isWish ? fulfillerId : null,
-   });
-   ```
-3. Leave pif behaviour unchanged (offers ignore `p_fulfiller_id` server-side).
-4. No copy or UI changes; the optimistic `setRows` block already handles the local update correctly.
+## Side effect to call out
 
-## Issue 2 — Temporary diagnostic logging in `select_wish_helper`'s reuse branch
-
-Create a new manual migration `db/manual_migrations/select_wish_helper_reuse_logging.sql` that re-declares the function (same signature/body as `select_wish_helper_resets_closed_at.sql`) with `RAISE NOTICE` statements added inside the reuse branch. We DROP+CREATE rather than CREATE OR REPLACE to avoid creating overload duplicates (per the rule established after the prior incident).
-
-Logging points:
-- After the conversation lookup: `RAISE NOTICE` with `v_conversation_id`, whether `v_conversation_id IS NULL` (insert path vs reuse path), `p_item_id`, `p_helper_id`, `v_owner_id`.
-- Inside the `else` (reuse) branch, AFTER the `closed_at = null` UPDATE: log `v_reopen_count` and the resulting `v_was_closed`.
-- After the message-count query: log `v_existing_messages` and `v_seed IS NOT NULL`.
-- Right before the reselection-message `INSERT` block: log whether the guard `v_was_closed AND v_existing_messages > 0` evaluated true (i.e. whether the INSERTs are about to run).
-- A final `RAISE NOTICE` after the INSERT block confirming "reselection messages posted" when it ran.
-
-Tag every notice with a stable prefix like `[swh-reuse-diag]` so logs are greppable in Supabase logs.
-
-Logging is temporary: a follow-up cleanup migration will strip the `RAISE NOTICE` lines once the next clean test sequence (withdraw → confirm closed in DB → reselect → verify) has been captured.
-
-## Out of scope this round
-- No further changes to `_insert_pif_system_messages` (its early-return guard is bypassed by `select_wish_helper`'s own targeted INSERTs, so it's not the source of the missing reselection messages).
-- No changes to `ConversationView`'s `closed_at` handling — the DB/UI mismatch will be re-evaluated after the clean test pass.
+With the count fix, the very next re-selection on the troubled conversation **will** post the reselection pair. That's the desired behavior. No other call sites or UI need to change — `ConversationView`'s `closed_at` handling already updates via the `pif:conversation-refetch` event after the RPC returns, and the new system messages flow through the existing realtime channel.
 
 ## Files touched
-1. `src/components/post/interactions/interest/InterestSelectionList.tsx` — fix `handleWithdraw` (frontend only).
-2. `db/manual_migrations/select_wish_helper_reuse_logging.sql` — new file with `DROP FUNCTION` + `CREATE FUNCTION` carrying the diagnostic `RAISE NOTICE` lines; user runs it manually in Supabase SQL editor.
+
+1. `db/manual_migrations/select_wish_helper_reuse_logging.sql` — **overwrite** with the live-body-based version containing the count fix + diagnostic `RAISE NOTICE` lines.
+2. No frontend changes this round. (Issue 1 — the missing `p_fulfiller_id` in `InterestSelectionList.handleWithdraw` — is already shipped in the previous turn.)
+
+## Out of scope
+
+- `_insert_pif_system_messages` stays untouched (its early-return guard prevents duplicate initial-selection notices on reuse, which is what we want now that the reselection branch in `select_wish_helper` does its own targeted INSERTs).
+- No `ConversationView` changes.
