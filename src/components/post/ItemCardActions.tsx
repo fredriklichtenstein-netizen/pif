@@ -97,6 +97,9 @@ export function ItemCardActions({
         isBookmarked={isBookmarked}
         showInterest={showInterest}
         isOwner={isOwner}
+        itemType={itemType}
+        itemTitle={itemTitle}
+
         commentsCount={commentsCount}
         likesCount={likesCount}
         interestsCount={interestsCount}
