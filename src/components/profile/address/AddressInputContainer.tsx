@@ -50,6 +50,10 @@ export function AddressInputContainer({
   };
 
   const handleMapButtonClick = async () => {
+    if (showMap) {
+      setShowMap(false);
+      return;
+    }
     if (value) {
       const coords = await handleShowMap(value);
       onChange(value, coords);
