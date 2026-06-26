@@ -46,6 +46,9 @@ export function ActionButtons({
   itemId,
   itemOwnerId,
   currentUserId,
+  itemType,
+  itemTitle,
+
   commentsCount = 0,
   likesCount = 0,
   interestsCount = 0,
