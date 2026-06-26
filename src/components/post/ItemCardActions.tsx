@@ -18,6 +18,10 @@ interface ItemCardActionsProps {
   showComments: boolean;
   isBookmarked: boolean;
   showInterest: boolean;
+  /** Required for the interest popup to know whether to scope withdraw_pif by fulfiller (wishes). */
+  itemType?: ItemType;
+  itemTitle?: string;
+
   commentsCount: number;
   likesCount: number;
   interestsCount: number;
