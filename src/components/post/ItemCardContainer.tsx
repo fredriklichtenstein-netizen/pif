@@ -47,6 +47,8 @@ export function ItemCardContainer({
   postedBy,
   markAsPiffedAction,
   awaitingConfirmationSlot,
+  item_type,
+
 }: ItemCardProps) {
   const { session } = useAuth();
   const isOwner = session?.user?.id === postedBy.id;
