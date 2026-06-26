@@ -658,12 +658,19 @@ export function InterestSelectionList({
       return;
     }
     try {
+      // Resolve the fulfiller (helper) user_id for the row being withdrawn.
+      // The wish branch of withdraw_pif requires p_fulfiller_id so that
+      // only this specific fulfiller's interest + conversation are
+      // affected. Pifs (offers) ignore p_fulfiller_id server-side.
+      const targetRow = rows.find((r) => r.id === targetId);
+      const fulfillerId = targetRow?.user_id ?? null;
       // withdraw_pif removes the selected interest row from the DB and
       // reopens the pif for everyone else. Use the RPC (instead of a
       // direct update) so the server-side rules + notifications run.
       const { error } = await (supabase.rpc as any)("withdraw_pif", {
         p_item_id: numericItemId,
         p_action: "reopen",
+        p_fulfiller_id: isWish ? fulfillerId : null,
       });
       if (error) throw error;
       // Optimistically remove the withdrawn row and reset siblings back

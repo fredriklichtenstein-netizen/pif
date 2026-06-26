@@ -1,58 +1,53 @@
-## Fixes
+## Issue 1 — Second `withdraw_pif` call site missing `p_fulfiller_id`
 
-### 1. DB: `select_wish_helper` — reset `closed_at` on reuse + drop dead overload
+File: `src/components/post/interactions/interest/InterestSelectionList.tsx`, in `handleWithdraw` (around line 648–690).
 
-Call-site audit: `src/components/post/interactions/interest/InterestSelectionList.tsx:370` is the ONLY caller. It always passes the 3-arg form `(p_item_id, p_helper_id, p_note)` — `p_note` is sent as `null` when no note exists, so PostgREST always resolves to the 3-arg overload. The 2-arg `select_wish_helper(bigint, uuid)` overload is dead.
-
-New manual migration `db/manual_migrations/select_wish_helper_resets_closed_at.sql`:
-
-1. `DROP FUNCTION IF EXISTS public.select_wish_helper(bigint, uuid);` — kill the dead overload so it can't be invoked by future code with the stale, no-reset-on-reuse behaviour.
-2. `DROP FUNCTION IF EXISTS public.select_wish_helper(bigint, uuid, text);` then `CREATE OR REPLACE` the 3-arg version, identical to live except:
-   - After the `select … into v_conversation_id` lookup, when the row exists, run `UPDATE public.conversations SET closed_at = NULL WHERE id = v_conversation_id AND closed_at IS NOT NULL` capturing into a `v_was_closed boolean` via `GET DIAGNOSTICS` / `FOUND`.
-   - If `v_was_closed` AND existing messages count > 0 (i.e. seed-message branch will NOT post anything), insert ONE pair of system messages so the timeline isn't `selected → withdrawn → [silence]`:
-     - To helper: `"Önskaren har valt dig på nytt att uppfylla önskan."`
-     - To owner: `"Du har valt {helper_name} på nytt att uppfylla önskan."` — `helper_name` from `coalesce(nullif(profiles.first_name, ''), 'den här personen')`.
-   - Everything else (item lock, owner check, interests upsert, unique-violation recovery, seed-message guard) stays verbatim.
-3. `revoke all on function public.select_wish_helper(bigint, uuid, text) from public;` + `grant execute … to authenticated;` re-asserted.
-
-No frontend call-site changes — signature unchanged.
-
-### 2. Frontend: footer copy branches on actual close reason
-
-`src/components/messaging/ConversationView.tsx` read-only footer — replace the single ternary with:
-
-- `pifStatus === 'archived'` → existing archived copy (pif vs wish).
-- `pifStatus === 'completed'` → existing completed copy (pif vs wish).
-- Else (only `conversation.closed_at` is set, e.g. fulfiller withdrawn): neutral `"Den här konversationen är avslutad."` for both pif and wish.
-
-### 3. Frontend: dead-UI freeze after "Ångra valet"
-
-Root cause is the Radix `AlertDialog` body `pointer-events: none` leak — closing the dialog AFTER the await while the parent re-renders into a different subtree (`isClosed` flips, footer/input swap) makes Radix miss the inline-style cleanup. The wish branch never navigates, so the deferred-nav workaround never fires.
-
-In `ConversationView.tsx`, rewrite `handleWithdraw` to close first, then await on the next frame:
-
+Currently:
 ```ts
-const handleWithdraw = (action: "reopen" | "archive") => {
-  setWithdrawOpen(false);
-  requestAnimationFrame(async () => {
-    const res = await completion.withdraw(action);
-    if (!res.ok) return;
-    if (isRequest) return; // wish: thread stays, UI flips via refetch
-    if (onBack) onBack();
-    else navigate("/messages");
-  });
-};
+const { error } = await (supabase.rpc as any)("withdraw_pif", {
+  p_item_id: numericItemId,
+  p_action: "reopen",
+});
 ```
 
-Defensive cleanup on the dialog content: `onCloseAutoFocus={(e) => { e.preventDefault(); document.body.style.pointerEvents = ''; }}` on `<AlertDialogContent>` to scrub any leaked inline style if a future race re-introduces it.
+This is invoked from the owner's feed-card popup "Avmarkera" button (`onClick={() => setWithdrawId(r.id)}` at line 939). For wishes this hits the RPC's wish branch which now requires `p_fulfiller_id` (errcode 22023) and, when called without it, also risks affecting other fulfillers.
 
-### 4. Copy: plural headline
+Fix:
+1. Resolve the withdrawn row's `user_id` from `rows` using the existing `targetId` (which is `r.id`):
+   ```ts
+   const targetRow = rows.find((r) => r.id === targetId);
+   const fulfillerId = targetRow?.user_id ?? null;
+   ```
+2. Pass `p_fulfiller_id` on the wish path only, mirroring `usePifCompletion`:
+   ```ts
+   const { error } = await (supabase.rpc as any)("withdraw_pif", {
+     p_item_id: numericItemId,
+     p_action: "reopen",
+     p_fulfiller_id: isWish ? fulfillerId : null,
+   });
+   ```
+3. Leave pif behaviour unchanged (offers ignore `p_fulfiller_id` server-side).
+4. No copy or UI changes; the optimistic `setRows` block already handles the local update correctly.
 
-`src/locales/sv/interactions.json:44` → `"choose_helpers": "Välj vilka som uppfyller önskan"`.
+## Issue 2 — Temporary diagnostic logging in `select_wish_helper`'s reuse branch
 
-## Verification
+Create a new manual migration `db/manual_migrations/select_wish_helper_reuse_logging.sql` that re-declares the function (same signature/body as `select_wish_helper_resets_closed_at.sql`) with `RAISE NOTICE` statements added inside the reuse branch. We DROP+CREATE rather than CREATE OR REPLACE to avoid creating overload duplicates (per the rule established after the prior incident).
 
-- Re-select a previously-withdrawn fulfiller: footer no longer reads "Önskan är uppfylld", new "valt dig på nytt" pair appears in the thread.
-- Withdraw a fulfiller: footer reads neutral "Den här konversationen är avslutad."; page stays interactive (no refresh); other fulfillers unaffected.
-- Selection popup header reads "Välj vilka som uppfyller önskan".
-- `\df public.select_wish_helper` shows exactly one overload remaining.
+Logging points:
+- After the conversation lookup: `RAISE NOTICE` with `v_conversation_id`, whether `v_conversation_id IS NULL` (insert path vs reuse path), `p_item_id`, `p_helper_id`, `v_owner_id`.
+- Inside the `else` (reuse) branch, AFTER the `closed_at = null` UPDATE: log `v_reopen_count` and the resulting `v_was_closed`.
+- After the message-count query: log `v_existing_messages` and `v_seed IS NOT NULL`.
+- Right before the reselection-message `INSERT` block: log whether the guard `v_was_closed AND v_existing_messages > 0` evaluated true (i.e. whether the INSERTs are about to run).
+- A final `RAISE NOTICE` after the INSERT block confirming "reselection messages posted" when it ran.
+
+Tag every notice with a stable prefix like `[swh-reuse-diag]` so logs are greppable in Supabase logs.
+
+Logging is temporary: a follow-up cleanup migration will strip the `RAISE NOTICE` lines once the next clean test sequence (withdraw → confirm closed in DB → reselect → verify) has been captured.
+
+## Out of scope this round
+- No further changes to `_insert_pif_system_messages` (its early-return guard is bypassed by `select_wish_helper`'s own targeted INSERTs, so it's not the source of the missing reselection messages).
+- No changes to `ConversationView`'s `closed_at` handling — the DB/UI mismatch will be re-evaluated after the clean test pass.
+
+## Files touched
+1. `src/components/post/interactions/interest/InterestSelectionList.tsx` — fix `handleWithdraw` (frontend only).
+2. `db/manual_migrations/select_wish_helper_reuse_logging.sql` — new file with `DROP FUNCTION` + `CREATE FUNCTION` carrying the diagnostic `RAISE NOTICE` lines; user runs it manually in Supabase SQL editor.
