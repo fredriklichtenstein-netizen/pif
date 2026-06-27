@@ -363,7 +363,10 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               item_type={post.item_type === 'wish' ? 'request' : post.item_type === 'pif' ? 'offer' : post.item_type}
               markAsPiffedAction={showMarkAsPiffedCta ? () => setMarkAsPiffedOpen(true) : undefined}
               awaitingConfirmationSlot={awaitingSlot}
-
+              onDeleted={() => {
+                onOpenChange(false);
+                if (onStatusChange) onStatusChange();
+              }}
             />
           ) : (
             <div className="p-8 text-center">{t('ui.post_not_found')}</div>

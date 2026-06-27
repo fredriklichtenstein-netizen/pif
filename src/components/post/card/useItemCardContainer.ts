@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useItemCard } from "@/hooks/useItemCard";
-import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
 import { useWithdrawInterestConfirm } from "@/hooks/item/useWithdrawInterestConfirm";
 import type { ItemType } from "@/components/item/types";
 
@@ -11,7 +10,7 @@ interface UseItemCardContainerProps {
   postedBy: {
     id: string;
     name: string;
-    avatar?: string; // Make avatar optional to match our updated types
+    avatar?: string;
   };
   item_type?: ItemType;
 }
@@ -19,11 +18,11 @@ interface UseItemCardContainerProps {
 export const useItemCardContainer = ({ id, postedBy, item_type }: UseItemCardContainerProps) => {
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
-  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   // Get user interactions data from the hook
   const itemCardData = useItemCard(id.toString());
-  
-  // Extract only what we need from itemCardData
+
   const {
     isLiked,
     likesCount,
@@ -47,46 +46,24 @@ export const useItemCardContainer = ({ id, postedBy, item_type }: UseItemCardCon
     setComments,
   } = itemCardData;
 
-  // Create a wrapper function that adapts the signature
   const handleMessage = (e: React.MouseEvent) => {
     if (postedBy.id) {
       itemCardHandleMessage(e, id.toString(), postedBy.id);
     }
   };
 
+  // Open the local SimpleDeleteDialog (same pattern as feed cards via
+  // ItemCardHeader). The previous global-dialog/CustomEvent route was a
+  // silent no-op outside the feed tree.
   const handleDelete = () => {
-    // Open the global archive/delete dialog so the user can choose to archive
-    // (soft delete) or permanently delete — same flow as the feed cards.
-    const dialogManager = getDeleteDialogManager();
-
-    if (dialogManager) {
-      dialogManager.openDeleteDialog({
-        id,
-        onSuccess: () => {
-          setIsDeleting(false);
-        },
-      });
-      return;
-    }
-
-    // Fallback: dispatch the global event listened to by GlobalDeleteDialog.
-    document.dispatchEvent(
-      new CustomEvent("global-delete-dialog-open", {
-        detail: {
-          itemId: id,
-          onSuccess: () => setIsDeleting(false),
-        },
-        bubbles: true,
-        cancelable: true,
-      })
-    );
+    setIsDeleting(true);
+    setDeleteDialogOpen(true);
   };
 
   const handleEdit = () => {
     navigate(`/post/edit/${id}`);
   };
 
-  // Shared confirm-wrap: withdrawing requires AlertDialog; adding stays one-tap.
   const {
     withdrawConfirmOpen,
     setWithdrawConfirmOpen,
@@ -102,6 +79,9 @@ export const useItemCardContainer = ({ id, postedBy, item_type }: UseItemCardCon
   return {
     // State
     isDeleting,
+    setIsDeleting,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
     isLiked,
     likesCount,
     showComments,
@@ -132,4 +112,3 @@ export const useItemCardContainer = ({ id, postedBy, item_type }: UseItemCardCon
     withdrawCopy,
   };
 };
-
