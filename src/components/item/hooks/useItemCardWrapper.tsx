@@ -6,6 +6,8 @@ import { useCoordinatesParser } from "../content/useCoordinatesParser";
 import { useItemRefresh } from "../status/ItemRefresh";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
+import { useWithdrawInterestConfirm } from "@/hooks/item/useWithdrawInterestConfirm";
+import type { ItemType } from "@/components/item/types";
 
 export function useItemCardWrapper({
   id,
@@ -13,7 +15,16 @@ export function useItemCardWrapper({
   archived_at,
   archived_reason,
   onOperationSuccess,
-  coordinates
+  coordinates,
+  item_type,
+}: {
+  id: string | number;
+  postedBy: { id?: string } | undefined;
+  archived_at?: string;
+  archived_reason?: string;
+  onOperationSuccess?: () => void;
+  coordinates?: unknown;
+  item_type?: ItemType;
 }) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemArchived, setIsItemArchived] = useState(!!archived_at);
@@ -111,25 +122,19 @@ export function useItemCardWrapper({
     setIsReportDialogOpen(true);
   }, []);
 
-  // Wrap handleShowInterest to require confirmation when the user is
-  // about to *withdraw* an existing interest. Adding interest stays one-tap.
-  const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
-
-  const handleShowInterestWithConfirm = useCallback(
-    (note?: string) => {
-      if (showInterest) {
-        setWithdrawConfirmOpen(true);
-        return;
-      }
-      (handleShowInterest as (n?: string) => void)(note);
-    },
-    [showInterest, handleShowInterest]
-  );
-
-  const confirmWithdrawInterest = useCallback(() => {
-    setWithdrawConfirmOpen(false);
-    (handleShowInterest as (n?: string) => void)();
-  }, [handleShowInterest]);
+  // Shared confirm-wrap: withdraw-on-active requires AlertDialog confirmation,
+  // adding interest stays one-tap. Copy branches on item_type.
+  const {
+    withdrawConfirmOpen,
+    setWithdrawConfirmOpen,
+    handleShowInterestWithConfirm,
+    confirmWithdrawInterest,
+    withdrawCopy,
+  } = useWithdrawInterestConfirm({
+    showInterest,
+    handleShowInterest: handleShowInterest as (n?: string) => void,
+    itemType: item_type,
+  });
 
   return {
     isReportDialogOpen,
@@ -181,5 +186,6 @@ export function useItemCardWrapper({
     withdrawConfirmOpen,
     setWithdrawConfirmOpen,
     confirmWithdrawInterest,
+    withdrawCopy,
   };
 }

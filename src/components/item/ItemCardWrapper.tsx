@@ -1,20 +1,10 @@
 
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { useItemCardWrapper } from "./hooks/useItemCardWrapper";
 import { ItemCardWrapperContent } from "./ItemCardWrapperContent";
 import { ItemCardError } from "./ItemCardError";
 import { ReportPostDialog } from "./ReportPostDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { WithdrawInterestDialog } from "./WithdrawInterestDialog";
 import type { ItemCardProps } from "./types";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
@@ -83,15 +73,16 @@ export function ItemCardWrapper({
     withdrawConfirmOpen,
     setWithdrawConfirmOpen,
     confirmWithdrawInterest,
+    withdrawCopy,
   } = useItemCardWrapper({
     id,
     postedBy,
     archived_at,
     archived_reason,
     onOperationSuccess,
-    coordinates
+    coordinates,
+    item_type,
   });
-  const { t } = useTranslation();
 
   // Cleanup effect to ensure realtime connections are removed
   useEffect(() => {
@@ -170,26 +161,12 @@ export function ItemCardWrapper({
         isRealtimeSubscribed={isRealtimeSubscribed}
       />
 
-      <AlertDialog open={withdrawConfirmOpen} onOpenChange={setWithdrawConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('interactions.withdraw_interest_title')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('interactions.withdraw_interest_description')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {t('interactions.withdraw_interest_cancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmWithdrawInterest}>
-              {t('interactions.withdraw_interest_confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <WithdrawInterestDialog
+        open={withdrawConfirmOpen}
+        onOpenChange={setWithdrawConfirmOpen}
+        onConfirm={confirmWithdrawInterest}
+        copy={withdrawCopy}
+      />
 
       <ReportPostDialog
         open={isReportDialogOpen}
