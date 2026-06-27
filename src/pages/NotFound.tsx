@@ -158,6 +158,12 @@ const NotFound = () => {
             <Search className="h-4 w-4" />
             <span>{t("not_found.browse_map")}</span>
           </Button>
+          <Button
+            onClick={() => navigate("/")}
+            variant="outline"
+          >
+            {t("not_found.return_to_home")}
+          </Button>
         </div>
       );
     }
