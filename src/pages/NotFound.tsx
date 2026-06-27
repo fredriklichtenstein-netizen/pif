@@ -187,6 +187,12 @@ const NotFound = () => {
             >
               {t("not_found.return_to_sign_in")}
             </Button>
+            <Button
+              onClick={() => navigate("/")}
+              variant="outline"
+            >
+              {t("not_found.return_to_home")}
+            </Button>
           </>
         ) : (
           <>
