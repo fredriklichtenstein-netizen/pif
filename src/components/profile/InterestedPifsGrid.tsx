@@ -15,6 +15,7 @@ import { CompletionStatusBadge } from "./completion/CompletionStatusBadge";
 import { Check } from "lucide-react";
 import { DEMO_USER } from "@/data/mockProfiles";
 import { useTranslation } from "react-i18next";
+import { ItemTypeBadge } from "@/components/item/ItemTypeBadge";
 
 export function InterestedPifsGrid({ userId }: { userId: string }) {
   const [interests, setInterests] = useState<any[]>([]);
@@ -213,6 +214,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
                   onClick={() => handlePostClick(itemId)}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
                 />
+                <ItemTypeBadge item_type={item.item_type} size="sm" />
                 {interest.status === "selected" && itemStatus === "active" && (
                   <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded">
                     {t('interactions.selected')}

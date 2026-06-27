@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,8 +10,11 @@ import { MOCK_POSTS } from "@/data/mockPosts";
 import { DEMO_USER } from "@/data/mockUser";
 import { useEffect } from "react";
 import { useMyItemsCache } from "@/hooks/cache/useMyItemsCache";
+import { ItemTypeBadge } from "@/components/item/ItemTypeBadge";
+import { useTranslation } from "react-i18next";
 
 export function MyPifsGrid({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [selectedPostId, setSelectedPostId] = useState<number | string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const demoUserPosts = useDemoPostsStore((state) => state.getUserPosts);
@@ -84,14 +86,14 @@ export function MyPifsGrid({ userId }: { userId: string }) {
   };
 
   if (showLoader) {
-    return <div className="py-12 text-center text-gray-400">Laddar dina piffar...</div>;
+    return <div className="py-12 text-center text-gray-400">{t('profile.loading_items')}</div>;
   }
 
   if (displayedItems.length === 0) {
     return (
       <Card className="flex flex-col items-center p-8 gap-2">
-        <div className="text-lg font-semibold">Inga piffar än</div>
-        <div className="text-sm text-gray-500">Du har inte piffat något än.</div>
+        <div className="text-lg font-semibold">{t('profile.no_items_title')}</div>
+        <div className="text-sm text-gray-500">{t('profile.no_items_description')}</div>
       </Card>
     );
   }
@@ -114,9 +116,12 @@ export function MyPifsGrid({ userId }: { userId: string }) {
                       "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder";
                   }}
                 />
+                <ItemTypeBadge item_type={item.item_type} size="sm" />
                 {item.status === "piffed" && (
                   <div className="absolute top-0 right-0 bg-green-500 text-white px-2 py-1 text-xs">
-                    Piffad
+                    {item.item_type === 'request'
+                      ? t('profile.status_handed_over_wish')
+                      : t('profile.status_handed_over_pif')}
                   </div>
                 )}
                 <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
