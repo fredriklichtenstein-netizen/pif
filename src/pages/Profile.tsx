@@ -84,10 +84,10 @@ const Profile = () => {
           </Card>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="my-pifs">{t('profile.my_pifs_tab')}</TabsTrigger>
-              <TabsTrigger value="interested">{t('profile.interested_tab')}</TabsTrigger>
-              <TabsTrigger value="archived">{t('profile.archived_tab')}</TabsTrigger>
+            <TabsList className="grid grid-cols-3 mb-4 w-full h-auto">
+              <TabsTrigger value="my-pifs" className="min-w-0 whitespace-normal text-xs leading-tight text-center h-auto py-2">{t('profile.my_pifs_tab')}</TabsTrigger>
+              <TabsTrigger value="interested" className="min-w-0 whitespace-normal text-xs leading-tight text-center h-auto py-2">{t('profile.interested_tab')}</TabsTrigger>
+              <TabsTrigger value="archived" className="min-w-0 whitespace-normal text-xs leading-tight text-center h-auto py-2">{t('profile.archived_tab')}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="my-pifs" className="mt-0">
