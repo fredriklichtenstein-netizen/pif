@@ -73,15 +73,16 @@ export function ItemCardWrapper({
     withdrawConfirmOpen,
     setWithdrawConfirmOpen,
     confirmWithdrawInterest,
+    withdrawCopy,
   } = useItemCardWrapper({
     id,
     postedBy,
     archived_at,
     archived_reason,
     onOperationSuccess,
-    coordinates
+    coordinates,
+    item_type,
   });
-  const { t } = useTranslation();
 
   // Cleanup effect to ensure realtime connections are removed
   useEffect(() => {
