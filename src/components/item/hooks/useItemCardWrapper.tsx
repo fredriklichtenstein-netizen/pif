@@ -122,25 +122,19 @@ export function useItemCardWrapper({
     setIsReportDialogOpen(true);
   }, []);
 
-  // Wrap handleShowInterest to require confirmation when the user is
-  // about to *withdraw* an existing interest. Adding interest stays one-tap.
-  const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
-
-  const handleShowInterestWithConfirm = useCallback(
-    (note?: string) => {
-      if (showInterest) {
-        setWithdrawConfirmOpen(true);
-        return;
-      }
-      (handleShowInterest as (n?: string) => void)(note);
-    },
-    [showInterest, handleShowInterest]
-  );
-
-  const confirmWithdrawInterest = useCallback(() => {
-    setWithdrawConfirmOpen(false);
-    (handleShowInterest as (n?: string) => void)();
-  }, [handleShowInterest]);
+  // Shared confirm-wrap: withdraw-on-active requires AlertDialog confirmation,
+  // adding interest stays one-tap. Copy branches on item_type.
+  const {
+    withdrawConfirmOpen,
+    setWithdrawConfirmOpen,
+    handleShowInterestWithConfirm,
+    confirmWithdrawInterest,
+    withdrawCopy,
+  } = useWithdrawInterestConfirm({
+    showInterest,
+    handleShowInterest: handleShowInterest as (n?: string) => void,
+    itemType: item_type,
+  });
 
   return {
     isReportDialogOpen,
@@ -192,5 +186,6 @@ export function useItemCardWrapper({
     withdrawConfirmOpen,
     setWithdrawConfirmOpen,
     confirmWithdrawInterest,
+    withdrawCopy,
   };
 }
