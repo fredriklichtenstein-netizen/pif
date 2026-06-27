@@ -138,10 +138,14 @@ export function InteractionButtonWithPopup({
   // CTAs become entry points to the corresponding user list popover
   // (who liked / who's interested) instead of inert disabled toggles.
   // Wishes are intentionally not included in this pass.
+  // Wish owners get the same entry point on the interest button only;
+  // the like button on wishes is intentionally left as-is in this pass.
   const ownerViewMode =
     isOwner &&
-    (type === "like" || type === "interest") &&
-    itemType !== "request";
+    (
+      (itemType !== "request" && (type === "like" || type === "interest")) ||
+      (itemType === "request" && type === "interest")
+    );
 
   const isToggleDisabled =
     !ownerViewMode &&
