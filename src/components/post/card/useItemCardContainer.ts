@@ -86,6 +86,19 @@ export const useItemCardContainer = ({ id, postedBy, item_type }: UseItemCardCon
     navigate(`/post/edit/${id}`);
   };
 
+  // Shared confirm-wrap: withdrawing requires AlertDialog; adding stays one-tap.
+  const {
+    withdrawConfirmOpen,
+    setWithdrawConfirmOpen,
+    handleShowInterestWithConfirm,
+    confirmWithdrawInterest,
+    withdrawCopy,
+  } = useWithdrawInterestConfirm({
+    showInterest,
+    handleShowInterest: handleShowInterest as (n?: string) => void,
+    itemType: item_type,
+  });
+
   return {
     // State
     isDeleting,
@@ -109,9 +122,14 @@ export const useItemCardContainer = ({ id, postedBy, item_type }: UseItemCardCon
     handleLike,
     handleCommentToggle,
     handleBookmark,
-    handleShowInterest,
+    handleShowInterest: handleShowInterestWithConfirm,
     handleShare,
     handleReport,
+    // Withdraw confirm
+    withdrawConfirmOpen,
+    setWithdrawConfirmOpen,
+    confirmWithdrawInterest,
+    withdrawCopy,
   };
 };
 
