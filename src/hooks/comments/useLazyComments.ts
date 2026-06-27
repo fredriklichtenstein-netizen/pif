@@ -56,12 +56,12 @@ export function useLazyComments(itemId: string) {
         const existingIds = new Set(comments.map(c => c.id));
         const newPendingComments = pendingComments.filter(pc => !existingIds.has(pc.id));
         if (newPendingComments.length > 0) {
-          const displayName = formatUserName(
-            user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-          );
+          const emailPrefix = user.email ? user.email.split('@')[0] : 'User';
+          const displayName = resolveDisplayName(cachedProfile, emailPrefix);
+          const avatarUrl = cachedProfile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
           const formattedComments = newPendingComments.map((pc: any) => ({
             id: pc.id, text: pc.content,
-            author: { id: user.id, name: displayName, avatar: user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random` },
+            author: { id: user.id, name: displayName, avatar: avatarUrl },
             createdAt: new Date(pc.createdAt), likes: 0, isLiked: false, replies: [], isOwn: true, isPending: true
           }));
           setComments([...comments, ...formattedComments]);
