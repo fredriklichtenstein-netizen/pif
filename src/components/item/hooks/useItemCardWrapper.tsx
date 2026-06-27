@@ -6,6 +6,8 @@ import { useCoordinatesParser } from "../content/useCoordinatesParser";
 import { useItemRefresh } from "../status/ItemRefresh";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useItemCardActions } from "@/hooks/item/useItemCardActions";
+import { useWithdrawInterestConfirm } from "@/hooks/item/useWithdrawInterestConfirm";
+import type { ItemType } from "@/components/item/types";
 
 export function useItemCardWrapper({
   id,
@@ -13,7 +15,16 @@ export function useItemCardWrapper({
   archived_at,
   archived_reason,
   onOperationSuccess,
-  coordinates
+  coordinates,
+  item_type,
+}: {
+  id: string | number;
+  postedBy: { id?: string } | undefined;
+  archived_at?: string;
+  archived_reason?: string;
+  onOperationSuccess?: () => void;
+  coordinates?: unknown;
+  item_type?: ItemType;
 }) {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isItemArchived, setIsItemArchived] = useState(!!archived_at);
