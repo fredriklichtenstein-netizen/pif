@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useItemCard } from "@/hooks/useItemCard";
 import { getDeleteDialogManager } from "@/hooks/item/useItemDeleteDialog";
+import { useWithdrawInterestConfirm } from "@/hooks/item/useWithdrawInterestConfirm";
+import type { ItemType } from "@/components/item/types";
 
 interface UseItemCardContainerProps {
   id: number;
@@ -11,9 +13,10 @@ interface UseItemCardContainerProps {
     name: string;
     avatar?: string; // Make avatar optional to match our updated types
   };
+  item_type?: ItemType;
 }
 
-export const useItemCardContainer = ({ id, postedBy }: UseItemCardContainerProps) => {
+export const useItemCardContainer = ({ id, postedBy, item_type }: UseItemCardContainerProps) => {
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
   
