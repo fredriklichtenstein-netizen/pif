@@ -161,26 +161,12 @@ export function ItemCardWrapper({
         isRealtimeSubscribed={isRealtimeSubscribed}
       />
 
-      <AlertDialog open={withdrawConfirmOpen} onOpenChange={setWithdrawConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('interactions.withdraw_interest_title')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('interactions.withdraw_interest_description')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {t('interactions.withdraw_interest_cancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmWithdrawInterest}>
-              {t('interactions.withdraw_interest_confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <WithdrawInterestDialog
+        open={withdrawConfirmOpen}
+        onOpenChange={setWithdrawConfirmOpen}
+        onConfirm={confirmWithdrawInterest}
+        copy={withdrawCopy}
+      />
 
       <ReportPostDialog
         open={isReportDialogOpen}
