@@ -91,6 +91,7 @@ export function ArchivedPifsGrid({ userId }: { userId: string }) {
           coordinates,
           category: item.category,
           condition: item.condition,
+          item_type: item.item_type,
           measurements: item.measurements || {},
           pif_status: item.pif_status,
           archived_at: item.archived_at,
