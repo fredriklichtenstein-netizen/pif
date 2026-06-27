@@ -71,7 +71,11 @@ export function ItemCardContainer({
     handleCommentToggle,
     handleShowInterest,
     setComments,
-  } = useItemCardContainer({ id, postedBy });
+    withdrawConfirmOpen,
+    setWithdrawConfirmOpen,
+    confirmWithdrawInterest,
+    withdrawCopy,
+  } = useItemCardContainer({ id, postedBy, item_type });
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
@@ -114,8 +118,16 @@ export function ItemCardContainer({
         itemTitle={title}
 
       />
+
+      <WithdrawInterestDialog
+        open={withdrawConfirmOpen}
+        onOpenChange={setWithdrawConfirmOpen}
+        onConfirm={confirmWithdrawInterest}
+        copy={withdrawCopy}
+      />
     </div>
   );
 }
+
 
 
