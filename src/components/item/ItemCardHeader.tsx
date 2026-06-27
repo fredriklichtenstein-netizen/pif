@@ -118,11 +118,9 @@ export function ItemCardHeader({
   };
   
   const handleLocalDeleteClick = () => {
-    // Always use the local SimpleDeleteDialog. The legacy `handleDeleteClick`
-    // path routes to a GlobalDeleteDialog that isn't mounted in the active
-    // feed/profile tree, which would silently break archive/delete UX.
     setShowDeleteDialog(true);
   };
+
   
   const handleEditClick = () => {
     if (handleEdit) {
