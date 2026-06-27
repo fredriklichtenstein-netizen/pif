@@ -4,10 +4,13 @@ import { Comment } from '@/types/comment';
 import { useComments } from '@/hooks/item/useComments';
 import { useToast } from '@/hooks/use-toast';
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
+import { resolveDisplayName } from "@/utils/displayName";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
 import { useTranslation } from "react-i18next";
 import { safeParseJSON } from "@/utils/safeStorage";
+
 
 
 export function useLazyComments(itemId: string) {
@@ -20,19 +23,11 @@ export function useLazyComments(itemId: string) {
   const [useFallbackMode, setUseFallbackMode] = useState(false);
   const { toast } = useToast();
   const { user } = useGlobalAuth();
+  const { profile: cachedProfile } = useCachedProfile(user?.id);
   const { t } = useTranslation();
-  
+
   const { fetchComments, useFallbackMode: fetchFallbackMode } = useComments(itemId);
   const getComments = useDemoInteractionsStore(state => state.getComments);
-
-  const formatUserName = (fullName: string): string => {
-    if (!fullName) return 'User';
-    const parts = fullName.split(' ');
-    if (parts.length > 1) {
-      return `${parts[0]} ${parts[parts.length - 1].charAt(0)}`;
-    }
-    return fullName;
-  };
 
   useEffect(() => {
     if (fetchFallbackMode) {

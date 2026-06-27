@@ -7,6 +7,7 @@ import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
 import { useCachedAvatarSrc } from "@/hooks/profile/useCachedAvatarSrc";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
+import { resolveAvatarInitial } from "@/utils/displayName";
 
 export function MainNav() {
   const location = useLocation();
@@ -34,19 +35,8 @@ export function MainNav() {
 
   const getUserInitials = () => {
     if (!user) return "";
-    const firstName = user.user_metadata?.first_name || "";
-    const lastName = user.user_metadata?.last_name || "";
-    if (firstName && lastName) return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-    if (firstName) return firstName.charAt(0).toUpperCase();
-    if (user.email) {
-      const parts = user.email.split('@');
-      if (parts[0]) {
-        const nameParts = parts[0].split(/[._-]/);
-        if (nameParts.length > 1) return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
-        return parts[0].slice(0, 2).toUpperCase();
-      }
-    }
-    return "?";
+    const emailPrefix = user.email ? user.email.split('@')[0] : "?";
+    return resolveAvatarInitial(cachedProfile, emailPrefix);
   };
 
   const itemBase = "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 py-1";
