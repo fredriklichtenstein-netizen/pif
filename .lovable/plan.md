@@ -1,45 +1,78 @@
-## Scope
+## Surface coverage (confirmed)
 
-Single file: `src/components/post/interactions/InteractionButtonWithPopup.tsx`. No changes to `CounterButton`, `InterestSelectionList`, `PrimaryActions`, data hooks, RPCs, strings, or non-owner paths. No changes to pif behavior. No changes to wish like-button behavior.
+Traced every mount of `PrimaryActions` / `InteractionButtonWithPopup` back to the hook that owns `handleShowInterest`. There are exactly two render paths, and only two:
 
-## Change
+```text
+Feed (FeedItemCard) ─┐
+ArchivedPifsGrid     ├─► item/ItemCard ─► ItemCardWrapper ─► useItemCardWrapper  (already wraps w/ confirm — pif only)
+ItemDetail page      ─┘                                       └─► useItemCard
 
-Relax `ownerViewMode` so wish owners get the same clickable-icon/label + count=0 popover anchor that pif owners already have, but only for the interest button — not likes.
-
-Current (line ~144):
-```ts
-const ownerViewMode =
-  isOwner &&
-  (type === "like" || type === "interest") &&
-  itemType !== "request";
+Profile PostModal ──────► post/ItemCard ─► ItemCardContainer ─► useItemCardContainer  (NOT wrapped — one-tap bug here)
+                                                                 └─► useItemCard
 ```
 
-New:
-```ts
-const ownerViewMode =
-  isOwner &&
-  (
-    (itemType !== "request" && (type === "like" || type === "interest")) ||
-    (itemType === "request" && type === "interest")
-  );
-```
+No third surface mounts these buttons for an active interest/offer. `ItemDetailContainer` renders `ItemCardWrapper` internally, so it inherits the wrapped path. Nothing else consumes `handleShowInterest` from `useItemCard` / `useItemDetailPage` and pipes it into `PrimaryActions`.
 
-Everything else in the component already does the right thing for wishes once `ownerViewMode` flips true:
+So full coverage = make both `useItemCardWrapper` and `useItemCardContainer` go through the shared hook.
 
-- `handleToggleClick` opens the popover; the `type === "like"` prefetch branch is skipped for wish-interest (no prefetch needed — `InterestSelectionList` self-loads).
-- The `CounterButton` render gate already includes `ownerViewMode`, so the popover anchor mounts at count=0.
-- `CounterButton` already routes `type === "interest" && itemId` to `InterestSelectionList` with `itemType` passed through, so wish-mode (multi-fulfiller) rendering is automatic.
-- Icon stays `sparkles` and active color stays amber (`#F59E0B`) via the existing `itemType === "request"` branches — wish visuals unchanged.
+## Plan
 
-## Out of scope (flagged, not implemented)
+### 1. New shared hook: `src/hooks/item/useWithdrawInterestConfirm.ts`
 
-- Wish-owner like button has the same gap. Not included per your instruction. Easy follow-up if you want it: drop the `itemType !== "request"` guard on the like branch too.
-- Non-owner wish "Uppfyller önskan" flow: untouched.
+Single source of truth for the confirm-wrap and the dialog state.
 
-## Verification
+Inputs:
+- `showInterest: boolean` — current state (true = user has an active interest/offer)
+- `handleShowInterest: (note?: string) => void` — raw toggle from `useItemCard`
+- `itemType?: 'offer' | 'request'` — drives copy
 
-- Wish owner, 0 offers: clicking the sparkles icon or "Visa intresse" label opens the popover with `InterestSelectionList`'s empty state. Counter remains hidden (no "0").
-- Wish owner, N>0 offers: clicking icon/label opens the same multi-fulfiller selection UI the counter opens today. Existing select/withdraw flows unchanged.
-- Wish owner like button: still inert/disabled exactly as today.
-- Non-owner wish (any state): Grant Wish dialog, "Uppfyller önskan" perspective label, amber active state — all unchanged.
-- Pif owner and non-owner: byte-identical to current behavior.
+Returns:
+- `handleShowInterestWithConfirm(note?)` — call site replacement
+- `withdrawConfirmOpen`, `setWithdrawConfirmOpen`
+- `confirmWithdrawInterest()`
+- `withdrawCopy: { title, description, cancel, confirm }` — resolved i18n strings, item-type aware
+
+Behavior: if `showInterest` is true, intercept and open the dialog. Otherwise pass through (adding interest stays one-tap). On confirm, call raw toggle and close.
+
+### 2. Shared confirm dialog component: `src/components/item/WithdrawInterestDialog.tsx`
+
+Thin `AlertDialog` that takes `open`, `onOpenChange`, `onConfirm`, and the `withdrawCopy` object. Both wrappers render it — no inline duplication of dialog markup either.
+
+### 3. Wire into both surfaces
+
+- `src/components/item/hooks/useItemCardWrapper.tsx`: delete the inline `withdrawConfirmOpen`/`handleShowInterestWithConfirm`/`confirmWithdrawInterest` block. Replace with the shared hook. Pass `item_type` through (already available on props — thread it in via the hook's props).
+- `src/components/item/ItemCardWrapper.tsx`: pass `item_type` into `useItemCardWrapper`; replace inline `AlertDialog` JSX with `<WithdrawInterestDialog ... />`.
+- `src/components/post/card/useItemCardContainer.ts`: accept `item_type` prop, wrap `handleShowInterest` via the shared hook, expose the same dialog state + copy.
+- `src/components/post/ItemCardContainer.tsx`: pass `item_type` into the hook and render `<WithdrawInterestDialog ... />` alongside the existing card.
+
+### 4. Item-type-aware copy (sv + en)
+
+Add to `interactions.json`. Keep existing pif keys; add wish variants.
+
+- `withdraw_interest_title` / `withdraw_interest_description` / `withdraw_interest_cancel` / `withdraw_interest_confirm` — unchanged (pif/offer path).
+- New for `item_type === 'request'`:
+  - `withdraw_offer_title`: "Är du säker på att du vill dra tillbaka ditt erbjudande?"
+  - `withdraw_offer_description`: "Önskaren kommer inte längre se ditt erbjudande att uppfylla önskan."
+  - `withdraw_offer_cancel`: "Avbryt"
+  - `withdraw_offer_confirm`: "Dra tillbaka erbjudandet"
+  - English equivalents.
+
+The shared hook resolves the key set based on `itemType`.
+
+### 5. Out of scope (per your call)
+
+- Counter → `InterestSelectionList` → "Ångra" path keeps its single-click behavior. No second AlertDialog added there.
+- Owner-side / selection / withdraw-fulfiller flows untouched.
+
+### Technical notes
+
+- Shared hook keeps the existing semantics exactly: `showInterest === true` ⇒ dialog; `false` ⇒ immediate toggle. No behavior change on the pif feed surface; only PostModal/ItemCardContainer gains parity, and wish surfaces gain item-type-correct copy.
+- `WithdrawInterestDialog` is presentational only; no business logic, no data fetching.
+- Translation lookup: prefer a single `t(itemType === 'request' ? 'interactions.withdraw_offer_*' : 'interactions.withdraw_interest_*')` resolution inside the hook so both surfaces render identical strings.
+
+### Verification
+
+- Trigger withdraw on a pif from Feed → dialog opens, confirm withdraws. (regression check)
+- Trigger withdraw on a pif from PostModal → dialog now opens (previously one-tap). 
+- Trigger withdraw on a wish from Feed and PostModal → dialog opens with offer-specific copy.
+- Add interest/offer (first tap) → no dialog, stays one-tap on both surfaces.
