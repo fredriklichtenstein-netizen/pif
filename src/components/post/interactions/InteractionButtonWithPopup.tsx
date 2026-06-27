@@ -134,8 +134,19 @@ export function InteractionButtonWithPopup({
     }
   }
 
+  // Owner-view mode: on the owner's own pif card, the like/interest
+  // CTAs become entry points to the corresponding user list popover
+  // (who liked / who's interested) instead of inert disabled toggles.
+  // Wishes are intentionally not included in this pass.
+  const ownerViewMode =
+    isOwner &&
+    (type === "like" || type === "interest") &&
+    itemType !== "request";
+
   const isToggleDisabled =
-    (isOwner && (type === "like" || type === "interest")) || perspectiveDisabled;
+    !ownerViewMode &&
+    ((isOwner && (type === "like" || type === "interest")) ||
+      perspectiveDisabled);
 
   // The Grant Wish flow only kicks in when a non-owner is *activating*
   // interest on a wish. Withdrawing (or any pif interaction) keeps the
@@ -152,6 +163,15 @@ export function InteractionButtonWithPopup({
   const handleToggleClick = async (e: React.MouseEvent | React.KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (ownerViewMode) {
+      setShowPopup(true);
+      // Likes use a prefetch; interest popover (InterestSelectionList)
+      // loads its own data, so no prefetch needed there.
+      if (type === "like" && onCounterClick) {
+        void handleCounterClick();
+      }
+      return;
+    }
     if (isToggleDisabled) return;
     if (useWishGrantFlow) {
       setGrantOpen(true);
@@ -215,7 +235,7 @@ export function InteractionButtonWithPopup({
   const displayCount = count;
   const useInterestList = type === "interest" && !!itemId;
   const isCounterInteractive =
-    (displayCount > 0 || shouldAutoOpenSelection) &&
+    (displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) &&
     (!!onCounterClick || !!fetchPage || useInterestList);
 
   const visualActive =
@@ -258,7 +278,7 @@ export function InteractionButtonWithPopup({
         >
           {labelText}
         </span>
-        {(displayCount > 0 || shouldAutoOpenSelection) && (
+        {(displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) && (
           <CounterButton
             count={displayCount}
             isActive={isActive}
@@ -279,6 +299,7 @@ export function InteractionButtonWithPopup({
           />
         )}
       </div>
+
 
       {useWishGrantFlow && (
         <GrantWishDialog

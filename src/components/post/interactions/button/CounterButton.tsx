@@ -73,6 +73,7 @@ export function CounterButton({
   }
   
   const useInterestList = type === "interest" && !!itemId;
+  const showNumber = count > 0;
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -91,16 +92,25 @@ export function CounterButton({
       <PopoverTrigger asChild>
         <button
           onClick={handleClick}
-          className="text-xs font-semibold underline underline-offset-4 bg-transparent border-none p-0 focus:outline-none transition-colors"
-          style={{
-            color: isActive ? activeColor : passiveColor,
-            cursor: "pointer",
-            background: "none"
-          }}
+          className={
+            showNumber
+              ? "text-xs font-semibold underline underline-offset-4 bg-transparent border-none p-0 focus:outline-none transition-colors"
+              : "sr-only"
+          }
+          style={
+            showNumber
+              ? {
+                  color: isActive ? activeColor : passiveColor,
+                  cursor: "pointer",
+                  background: "none",
+                }
+              : undefined
+          }
           aria-label={`${count} ${t(labelKey(type))}`}
           type="button"
+          tabIndex={showNumber ? 0 : -1}
         >
-          {count}
+          {showNumber ? count : ""}
         </button>
       </PopoverTrigger>
       <PopoverContent
