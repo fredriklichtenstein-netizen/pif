@@ -5,6 +5,7 @@ import { ItemImage } from "./ItemImage";
 import { ItemCardBody } from "./card/ItemCardBody";
 import { ItemCardFooter } from "./card/ItemCardFooter";
 import { useItemCardContainer } from "./card/useItemCardContainer";
+import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
 import type { ItemType } from "@/components/item/types";
 
 
