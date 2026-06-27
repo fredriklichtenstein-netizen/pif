@@ -235,7 +235,7 @@ export function InteractionButtonWithPopup({
   const displayCount = count;
   const useInterestList = type === "interest" && !!itemId;
   const isCounterInteractive =
-    (displayCount > 0 || shouldAutoOpenSelection) &&
+    (displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) &&
     (!!onCounterClick || !!fetchPage || useInterestList);
 
   const visualActive =
@@ -278,7 +278,7 @@ export function InteractionButtonWithPopup({
         >
           {labelText}
         </span>
-        {(displayCount > 0 || shouldAutoOpenSelection) && (
+        {(displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) && (
           <CounterButton
             count={displayCount}
             isActive={isActive}
@@ -299,6 +299,7 @@ export function InteractionButtonWithPopup({
           />
         )}
       </div>
+
 
       {useWishGrantFlow && (
         <GrantWishDialog
