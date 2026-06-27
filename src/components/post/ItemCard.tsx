@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { ItemCardContainer } from "./ItemCardContainer";
 import type { ItemType } from "@/components/item/types";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 
 interface ItemCardProps {
   id: number;
@@ -25,11 +26,9 @@ interface ItemCardProps {
   awaitingConfirmationSlot?: ReactNode;
   images?: string[];
   item_type?: ItemType;
+  onDeleted?: (operationType?: OperationType) => void;
 }
 
-
-// This component is now just a simple wrapper around ItemCardContainer
-// to maintain backward compatibility
 export function ItemCard(props: ItemCardProps) {
   return <ItemCardContainer {...props} />;
 }

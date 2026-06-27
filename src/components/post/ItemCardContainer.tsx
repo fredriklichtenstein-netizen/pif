@@ -6,6 +6,8 @@ import { ItemCardBody } from "./card/ItemCardBody";
 import { ItemCardFooter } from "./card/ItemCardFooter";
 import { useItemCardContainer } from "./card/useItemCardContainer";
 import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
+import { SimpleDeleteDialog } from "@/components/item/delete/SimpleDeleteDialog";
+import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 import type { ItemType } from "@/components/item/types";
 
 
@@ -31,6 +33,8 @@ interface ItemCardProps {
   awaitingConfirmationSlot?: ReactNode;
   images?: string[];
   item_type?: ItemType;
+  /** Called after a successful archive/delete so containers (e.g. PostModal) can close. */
+  onDeleted?: (operationType?: OperationType) => void;
 }
 
 
@@ -49,13 +53,16 @@ export function ItemCardContainer({
   markAsPiffedAction,
   awaitingConfirmationSlot,
   item_type,
-
+  onDeleted,
 }: ItemCardProps) {
   const { session } = useAuth();
   const isOwner = session?.user?.id === postedBy.id;
 
   const {
     isDeleting,
+    setIsDeleting,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
     isLiked,
     likesCount,
     showComments,
@@ -116,7 +123,6 @@ export function ItemCardContainer({
         onShowInterest={handleShowInterest}
         itemType={item_type}
         itemTitle={title}
-
       />
 
       <WithdrawInterestDialog
@@ -125,9 +131,26 @@ export function ItemCardContainer({
         onConfirm={confirmWithdrawInterest}
         copy={withdrawCopy}
       />
+
+      <SimpleDeleteDialog
+        itemId={id}
+        itemTitle={title}
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setIsDeleting(false);
+        }}
+        onSuccess={(operationType) => {
+          setIsDeleting(false);
+          if (operationType === "archive" || operationType === "delete") {
+            onDeleted?.(operationType);
+          }
+        }}
+      />
     </div>
   );
 }
+
 
 
 
