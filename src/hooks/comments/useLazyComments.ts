@@ -58,7 +58,7 @@ export function useLazyComments(itemId: string) {
         if (newPendingComments.length > 0) {
           const emailPrefix = user.email ? user.email.split('@')[0] : 'User';
           const displayName = resolveDisplayName(cachedProfile, emailPrefix);
-          const avatarUrl = cachedProfile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+          const avatarUrl = cachedProfile?.avatar_url || undefined;
           const formattedComments = newPendingComments.map((pc: any) => ({
             id: pc.id, text: pc.content,
             author: { id: user.id, name: displayName, avatar: avatarUrl },

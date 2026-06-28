@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/optimized-image";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import type { User } from "@/hooks/item/useItemInteractions";
@@ -170,12 +170,9 @@ export function PaginatedUserList({
               onClick={() => setShowPopup(false)}
               className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
             >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback>
-                  {user.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
+                <AvatarImage src={user.avatar} alt={user.name} size={32} className="w-full h-full object-cover" />
+              </div>
               <span className="text-sm font-medium">{user.name}</span>
             </Link>
           ))}

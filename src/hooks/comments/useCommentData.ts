@@ -92,7 +92,7 @@ export function useCommentData(itemId: string) {
             author: {
               id: comment.user_id,
               name: fullName,
-              avatar: profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+              avatar: profile?.avatar_url || undefined
             },
             likes: 0,
             isLiked: false,
@@ -146,14 +146,14 @@ export function useCommentData(itemId: string) {
     return resolveDisplayName(profileData as any, metadataFallback);
   };
   
-  // Extract user information with better fallbacks
+  // Extract user information; avatar is undefined when no real avatar exists
+  // so downstream renderers fall back to the shared animal-photo placeholder.
   const currentUser = {
     name: getFullName(),
-    avatar: profileData?.avatar_url || 
-           session?.user?.user_metadata?.avatar_url || 
-           (session?.user?.id ? `https://ui-avatars.com/api/?name=${
-             encodeURIComponent(getFullName())
-           }&background=random` : "https://ui-avatars.com/api/?name=U&background=random"),
+    avatar:
+      profileData?.avatar_url ||
+      session?.user?.user_metadata?.avatar_url ||
+      undefined,
     id: session?.user?.id
   };
 

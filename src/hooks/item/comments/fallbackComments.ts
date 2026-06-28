@@ -7,7 +7,7 @@ export const getFallbackComments = (): Comment[] => [
     text: i18n.t('interactions:comments.welcome_message'),
     author: {
       name: "PiF Team",
-      avatar: "https://ui-avatars.com/api/?name=PiF&background=random",
+      avatar: undefined,
       id: "fallback-author-1"
     },
     likes: 5,

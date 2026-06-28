@@ -173,7 +173,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       const users = profilesData.map(profile => ({
         id: profile.id,
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
-        avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`
+        avatar: profile.avatar_url || undefined,
       }));
       
       if (!cancelled()) setLikers(users);

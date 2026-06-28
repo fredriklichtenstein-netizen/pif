@@ -11,7 +11,6 @@ interface ProfilePopupProps {
   profile?: Profile | null;
   userId?: string;
   displayName: string;
-  initial: string;
 }
 
 export function ProfilePopup({
@@ -20,7 +19,6 @@ export function ProfilePopup({
   profile,
   userId,
   displayName,
-  initial,
 }: ProfilePopupProps) {
   const { t } = useTranslation();
 
@@ -34,8 +32,8 @@ export function ProfilePopup({
           <UserAvatar
             src={profile?.avatar_url}
             name={displayName}
-            initial={initial}
-            className="h-20 w-20 text-2xl"
+            size={80}
+            className="h-20 w-20"
           />
           <h3 className="text-lg font-semibold">{displayName}</h3>
           {profile?.bio?.trim() ? (

@@ -33,7 +33,7 @@ export const useFetchInterestedUsers = () => {
         users.push({
           id: profile.id,
           name,
-          avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.first_name || 'U')}&background=random`,
+          avatar: profile.avatar_url || undefined,
         });
       }
 

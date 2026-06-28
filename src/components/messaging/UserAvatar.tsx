@@ -1,51 +1,39 @@
-import { useEffect, useState } from "react";
+import { AvatarImage } from "@/components/ui/optimized-image";
 import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
   src?: string | null;
   name: string;
-  initial: string;
   className?: string;
-  imgClassName?: string;
+  /** Pixel size used for image optimization. Defaults to 40. */
+  size?: number;
 }
 
 /**
- * Avatar that gracefully falls back to user initials when no image is
- * available or when the image fails to load. Prevents broken "U" placeholders.
+ * Round avatar that always falls back to the shared hashed-animal photo
+ * from `AvatarImage` when `src` is missing or fails to load. No text
+ * initials are ever rendered as a fallback anywhere in the app.
  */
 export function UserAvatar({
   src,
   name,
-  initial,
   className,
-  imgClassName,
+  size = 40,
 }: UserAvatarProps) {
-  const [errored, setErrored] = useState(false);
-
-  useEffect(() => {
-    setErrored(false);
-  }, [src]);
-
-  const showImage = !!src && !errored;
-
   return (
     <div
       className={cn(
-        "rounded-full bg-muted flex-shrink-0 overflow-hidden flex items-center justify-center text-muted-foreground font-medium",
+        "rounded-full flex-shrink-0 overflow-hidden",
         className
       )}
       aria-label={name}
     >
-      {showImage ? (
-        <img
-          src={src!}
-          alt={name}
-          className={cn("h-full w-full object-cover", imgClassName)}
-          onError={() => setErrored(true)}
-        />
-      ) : (
-        <span aria-hidden="true">{initial}</span>
-      )}
+      <AvatarImage
+        src={src ?? undefined}
+        alt={name}
+        size={size}
+        className="w-full h-full object-cover"
+      />
     </div>
   );
 }

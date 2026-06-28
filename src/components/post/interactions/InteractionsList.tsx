@@ -1,5 +1,5 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/optimized-image";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,10 +61,9 @@ export function InteractionsList({
           to={`/user/${user.id}`}
           className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors"
         >
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
+            <AvatarImage src={user.avatar} alt={user.name} size={32} className="w-full h-full object-cover" />
+          </div>
           <div>
             <p className="text-sm font-medium leading-none">{user.name}</p>
           </div>

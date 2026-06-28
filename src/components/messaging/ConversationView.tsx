@@ -7,7 +7,7 @@ import { useConversationDetails } from "@/hooks/useConversationDetails";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EnhancedMessageInput } from "./EnhancedMessageInput";
 import { useTranslation } from "react-i18next";
-import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
+import { resolveDisplayName } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
 import { ProfilePopup } from "./ProfilePopup";
 import { Button } from "@/components/ui/button";
@@ -68,9 +68,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   } = useConversationDetails(conversationId);
 
   const fallbackName = t("messages.unknown_user");
-  const fallbackInitial = fallbackName.charAt(0).toUpperCase();
   const otherName = resolveDisplayName(otherParticipant?.profile, fallbackName);
-  const otherInitial = resolveAvatarInitial(otherParticipant?.profile, fallbackInitial);
 
   const itemOwnerId = item?.postedBy?.id;
   const isCurrentUserPiffer = !!itemOwnerId && itemOwnerId === currentUserId;
@@ -311,7 +309,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
             <UserAvatar
               src={otherParticipant?.profile?.avatar_url}
               name={otherName}
-              initial={otherInitial}
+              size={40}
               className="h-10 w-10"
             />
           </button>
@@ -358,7 +356,6 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         profile={otherParticipant?.profile}
         userId={otherParticipant?.user_id}
         displayName={otherName}
-        initial={otherInitial}
       />
 
       {/* Scrollable message list */}
@@ -390,7 +387,6 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
                   otherProfile={otherParticipant?.profile}
                   otherUserId={otherParticipant?.user_id}
                   otherDisplayName={otherName}
-                  otherInitial={otherInitial}
                   itemId={item?.id}
                   onDelete={deleteMessage}
                 />

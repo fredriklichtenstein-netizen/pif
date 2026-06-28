@@ -20,7 +20,7 @@ export const extractUserFromProfile = (
     return {
       id: fallbackId,
       name: "Anonymous",
-      avatar: `https://ui-avatars.com/api/?name=Anonymous&background=random`
+      avatar: undefined,
     };
   }
 
@@ -58,8 +58,8 @@ export const extractUserFromProfile = (
   const id = "id" in userProfile ? userProfile.id as string : fallbackId;
 
   const avatarUrl = "avatar_url" in userProfile
-    ? userProfile.avatar_url as string
-    : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+    ? (userProfile.avatar_url as string) || undefined
+    : undefined;
 
   return {
     id,

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/optimized-image";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -65,7 +65,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
     "";
   const avatarUrl =
     (profile as any)?.avatar_url || (profile as any)?.profile_picture_url || undefined;
-  const initial = (displayName || "?").trim().charAt(0).toUpperCase();
+  
 
   const canSubmit =
     !!reason && (reason !== "other" || reasonText.trim().length > 0) && !submitting;
@@ -125,10 +125,9 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
         <div className="px-5 pb-5 space-y-5 max-h-[80vh] overflow-y-auto">
           {/* Reporter identity */}
           <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-            <Avatar className="h-10 w-10">
-              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
-              <AvatarFallback>{initial}</AvatarFallback>
-            </Avatar>
+            <div className="h-10 w-10 rounded-full overflow-hidden flex-shrink-0">
+              <AvatarImage src={avatarUrl} alt={displayName} size={40} className="w-full h-full object-cover" />
+            </div>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{displayName}</p>
               <p className="text-xs text-muted-foreground">

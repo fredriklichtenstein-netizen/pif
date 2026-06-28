@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { X, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProfileRatingDisplay } from "@/components/rating/ProfileRatingDisplay";
@@ -73,10 +73,9 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
   return (
     <div className="bg-card border-b border-border px-3 py-3">
       <div className="flex items-center gap-3">
-        <Avatar className="h-14 w-14">
-          <AvatarImage src={display.avatar} alt={display.name} />
-          <AvatarFallback>{display.name?.[0] ?? "?"}</AvatarFallback>
-        </Avatar>
+        <div className="h-14 w-14 rounded-full overflow-hidden flex-shrink-0">
+          <AvatarImage src={display.avatar} alt={display.name} size={56} className="w-full h-full object-cover" />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="text-base font-semibold truncate">
             {display.name || t("interactions.user", "Användare")}

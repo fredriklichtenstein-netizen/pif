@@ -64,7 +64,7 @@ export function LazyCommentsSection({
   const currentUser = user ? {
     id: user.id,
     name: displayName,
-    avatar: cachedProfile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
+    avatar: cachedProfile?.avatar_url || undefined,
   } : undefined;
 
   const { isSubscribed, error: realtimeError } = useCommentRealtime(itemId, comments, setComments, refreshComments);

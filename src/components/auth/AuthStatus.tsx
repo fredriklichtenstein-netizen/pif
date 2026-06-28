@@ -2,11 +2,10 @@
 import { useNavigate } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { LogIn, UserRound } from "lucide-react";
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
-import { resolveAvatarInitial, resolveDisplayName } from "@/utils/displayName";
+import { resolveDisplayName } from "@/utils/displayName";
 
 interface AuthStatusProps {
   showAvatar?: boolean;
@@ -27,7 +26,6 @@ export function AuthStatus({
 
   const emailPrefix = user?.email ? user.email.split('@')[0] : "User";
   const displayName = user ? resolveDisplayName(cachedProfile, emailPrefix) : "Guest";
-  const userInitials = user ? resolveAvatarInitial(cachedProfile, emailPrefix) : "?";
   const avatarUrl = cachedProfile?.avatar_url ?? null;
 
   return (
@@ -35,12 +33,14 @@ export function AuthStatus({
       {user ? (
         <>
           {showAvatar && (
-            <Avatar className="h-8 w-8 border border-primary">
-              <AvatarImage src={avatarUrl} alt={displayName} size={32} />
-              <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                {userInitials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-8 w-8 rounded-full overflow-hidden border border-primary">
+              <AvatarImage
+                src={avatarUrl ?? undefined}
+                alt={displayName}
+                size={32}
+                className="w-full h-full object-cover"
+              />
+            </div>
           )}
 
           {showName && (
@@ -64,11 +64,14 @@ export function AuthStatus({
       ) : (
         <>
           {showAvatar && (
-            <Avatar className="h-8 w-8 border border-gray-200">
-              <AvatarFallback className="text-xs bg-gray-100 text-gray-400">
-                ?
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-8 w-8 rounded-full overflow-hidden border border-gray-200">
+              <AvatarImage
+                src={undefined}
+                alt="Guest"
+                size={32}
+                className="w-full h-full object-cover"
+              />
+            </div>
           )}
 
           {showName && (
