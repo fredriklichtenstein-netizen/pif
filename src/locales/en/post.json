@@ -133,6 +133,7 @@
     "preferred_time_window": "Preferred time for pickup",
     "preferred_time_window_placeholder": "E.g. Weekdays after 5pm",
     "crop_image": "Crop image",
+    "crop_image_description": "Drag the image to adjust position and use the slider to zoom in or out.",
     "apply_crop": "Crop",
     "reset_crop": "Reset",
     "validation": {
