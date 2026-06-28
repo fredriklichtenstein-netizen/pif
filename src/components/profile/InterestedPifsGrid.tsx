@@ -24,6 +24,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [regretDialogOpen, setRegretDialogOpen] = useState(false);
   const [selectedInterestId, setSelectedInterestId] = useState<string | null>(null);
+  const [regretItemType, setRegretItemType] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [confirmationItem, setConfirmationItem] = useState<any | null>(null);
   const { toast } = useToast();
@@ -120,9 +121,10 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     setModalOpen(true);
   };
 
-  const handleRegretClick = (interestId: string, itemId: string, e: React.MouseEvent) => {
+  const handleRegretClick = (interestId: string, itemId: string, itemType: string | undefined, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedInterestId(DEMO_MODE ? itemId : interestId);
+    setRegretItemType(itemType ?? null);
     setRegretDialogOpen(true);
   };
 
