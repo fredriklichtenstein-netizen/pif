@@ -255,7 +255,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
                       variant="outline" 
                       size="sm" 
                       className="w-full text-red-500 border-red-200 hover:bg-red-50"
-                      onClick={(e) => handleRegretClick(interest.id, item.id, e)}
+                      onClick={(e) => handleRegretClick(interest.id, item.id, item.item_type, e)}
                     >
                       {t('interactions.regret_interest')}
                     </Button>
