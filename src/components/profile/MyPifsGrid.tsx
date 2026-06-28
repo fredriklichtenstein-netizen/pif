@@ -130,7 +130,7 @@ export function MyPifsGrid({ userId }: { userId: string }) {
               </div>
               <div className="p-3">
                 <h3 className="font-medium truncate mb-2">{item.title}</h3>
-                {!DEMO_MODE && <InterestUsersPopover itemId={item.id} itemOwnerId={userId} />}
+                {!DEMO_MODE && <InterestUsersPopover itemId={item.id} itemOwnerId={userId} itemType={item.item_type} />}
               </div>
             </Card>
           );
