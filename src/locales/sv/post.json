@@ -133,6 +133,7 @@
     "preferred_time_window": "Önskad tid för upphämtning",
     "preferred_time_window_placeholder": "T.ex. Vardagar efter 17:00",
     "crop_image": "Beskär bild",
+    "crop_image_description": "Dra bilden för att justera positionen och använd reglaget för att zooma in eller ut.",
     "apply_crop": "Beskär",
     "reset_crop": "Återställ",
     "validation": {

@@ -111,7 +111,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <DialogTitle className="text-lg font-semibold">{t("interactions.report_post_title")}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{commentId != null ? t("interactions.report_comment_title") : t("interactions.report_post_title")}</DialogTitle>
           <button
             type="button"
             onClick={() => onOpenChange(false)}

@@ -23,9 +23,10 @@ import { useTranslation } from "react-i18next";
 interface InterestUsersPopoverProps {
   itemId: number | string;
   itemOwnerId: string;
+  itemType?: string;
 }
 
-export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopoverProps) {
+export function InterestUsersPopover({ itemId, itemOwnerId, itemType }: InterestUsersPopoverProps) {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
@@ -205,7 +206,11 @@ export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopov
         </PopoverTrigger>
         <PopoverContent className="w-80 p-2" align="start">
           <div className="font-bold text-sm mb-2">
-            {isOwner ? t('interactions.choose_receiver') : t('interactions.interested_users')}
+            {isOwner
+              ? (String(itemType || '').toLowerCase() === 'request'
+                  ? t('interactions.choose_receiver_request')
+                  : t('interactions.choose_receiver_offer'))
+              : t('interactions.interested_neighbors_title')}
           </div>
           <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
             {users.map((u) => (

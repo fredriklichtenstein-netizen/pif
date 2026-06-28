@@ -24,7 +24,7 @@ export function UserPopoverContent({
     type === "like"
       ? "interactions.liked"
       : type === "interest"
-      ? "common.interested_users"
+      ? "interactions.interested_neighbors_title"
       : "interactions.commented";
 
   const emptyKey =

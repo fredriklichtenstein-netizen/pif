@@ -24,6 +24,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [regretDialogOpen, setRegretDialogOpen] = useState(false);
   const [selectedInterestId, setSelectedInterestId] = useState<string | null>(null);
+  const [regretItemType, setRegretItemType] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [confirmationItem, setConfirmationItem] = useState<any | null>(null);
   const { toast } = useToast();
@@ -120,9 +121,10 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
     setModalOpen(true);
   };
 
-  const handleRegretClick = (interestId: string, itemId: string, e: React.MouseEvent) => {
+  const handleRegretClick = (interestId: string, itemId: string, itemType: string | undefined, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedInterestId(DEMO_MODE ? itemId : interestId);
+    setRegretItemType(itemType ?? null);
     setRegretDialogOpen(true);
   };
 
@@ -253,7 +255,7 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
                       variant="outline" 
                       size="sm" 
                       className="w-full text-red-500 border-red-200 hover:bg-red-50"
-                      onClick={(e) => handleRegretClick(interest.id, item.id, e)}
+                      onClick={(e) => handleRegretClick(interest.id, item.id, item.item_type, e)}
                     >
                       {t('interactions.regret_interest')}
                     </Button>
@@ -274,15 +276,21 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
       <AlertDialog open={regretDialogOpen} onOpenChange={setRegretDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('interactions.remove_interest_title')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {regretItemType === 'request'
+                ? t('interactions.remove_interest_request_title')
+                : t('interactions.remove_interest_offer_title')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('interactions.remove_interest_confirm')}
+              {regretItemType === 'request'
+                ? t('interactions.remove_interest_request_description')
+                : t('interactions.remove_interest_offer_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={removing}>{t('interactions.cancel')}</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleConfirmRegret} 
+            <AlertDialogAction
+              onClick={handleConfirmRegret}
               disabled={removing}
               className="bg-red-600 hover:bg-red-700"
             >
