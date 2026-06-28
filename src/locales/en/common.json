@@ -49,7 +49,12 @@
     
     "user": "User",
     "conversation": "Conversation",
-    "no_location_available": "No PIF location available."
+    "no_location_available": "No PIF location available.",
+    "unsaved_changes_title": "Save changes before leaving?",
+    "unsaved_changes_description": "You have unsaved changes. What would you like to do?",
+    "unsaved_changes_discard": "Discard",
+    "unsaved_changes_save": "Save",
+    "unsaved_changes_stay": "Stay"
   },
   "offline": {
     "title": "You're currently offline",

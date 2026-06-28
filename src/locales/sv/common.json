@@ -49,7 +49,12 @@
     
     "user": "Användare",
     "conversation": "Konversation",
-    "no_location_available": "Ingen PIF-plats tillgänglig."
+    "no_location_available": "Ingen PIF-plats tillgänglig.",
+    "unsaved_changes_title": "Spara ändringar innan du lämnar?",
+    "unsaved_changes_description": "Du har osparade ändringar. Vad vill du göra?",
+    "unsaved_changes_discard": "Kasta",
+    "unsaved_changes_save": "Spara",
+    "unsaved_changes_stay": "Stanna"
   },
   "offline": {
     "title": "Du är offline just nu",
