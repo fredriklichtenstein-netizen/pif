@@ -377,9 +377,15 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
       <AlertDialog open={markAsPiffedOpen} onOpenChange={setMarkAsPiffedOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('ui.mark_as_piffed_title')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {String(post?.item_type || '').toLowerCase() === 'request'
+                ? t('ui.mark_as_handed_off_request_title')
+                : t('ui.mark_as_handed_off_offer_title')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('ui.mark_as_piffed_description')}
+              {String(post?.item_type || '').toLowerCase() === 'request'
+                ? t('ui.mark_as_handed_off_request_description')
+                : t('ui.mark_as_handed_off_offer_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
