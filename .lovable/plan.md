@@ -1,33 +1,142 @@
+# Withdraw Signals Consolidation — `withdraw_pif` closed_reason fix
 
-## Confirmed: stale client, not stale code
+## Confirmation on the shared pif-branch value
 
-Good diagnosis on the payload shape — that's conclusive. Status of the live deploy:
+**Yes, intentional — keep `'fulfiller_withdrew'` shared across rows 1-3's pif branch.** All three call sites are the same actor (the piffer) performing the same conceptual action (unselecting the chosen receiver) on the same item type (pif). The UI entry point differs but the domain event does not, and `closed_reason` is a domain-level label, not a UI-trace label. Splitting it three ways would create labels that no downstream consumer cares about. The actor distinction (owner-initiated vs. self-withdrawal) is the only one that matters, and that's now correctly encoded by `'fulfiller_withdrew'` (owner) vs. `'receiver_self_withdrew'` (self).
 
-- Project **is published**, visibility public.
-- I have **no visibility into the published build hash** vs. the editor's current source from this side — Lovable doesn't expose "last published commit" through the tools I have. What I can confirm: the source in the editor (which is what the next publish ships) no longer contains the `create_notification('selection_made', ...)` block.
+## closed_reason matrix after fix
 
-Two ways the user can be hitting the old code:
+| Function | Branch | Actor | `closed_reason` |
+|---|---|---|---|
+| `withdraw_pif` | pif | owner (piffer) | `'fulfiller_withdrew'` *(unchanged, shared across rows 1-3)* |
+| `withdraw_pif` | wish | owner (wisher) | **`'owner_withdrew_fulfiller'`** ← fixed |
+| `withdraw_receiver` | pif | self (receiver) | `'receiver_self_withdrew'` |
+| `withdraw_receiver` | wish | self (fulfiller) | `'fulfiller_self_withdrew'` |
 
-1. **Editor changes were never published.** Frontend edits do not auto-deploy — they ship only when someone clicks **Publish → Update** in the Lovable editor. If that hasn't happened since the removal, `pif.today` is still serving the build with the old block. **This is the most likely cause** and the cheapest to rule in/out: open the publish dialog and check the "last published" timestamp against when the InterestSelectionList edit landed.
-2. **Stale client cache after a publish.** Even if it WAS republished, this project has two cache layers that can serve old JS:
-   - **Capacitor wrapper** (`capacitor.config.ts` present) — the native shell bundles webview assets; an installed iOS/Android build won't pick up a web republish until the app is rebuilt and reinstalled.
-   - **PWA / service worker** — if the user installed pif.today to home screen or visited it as a PWA, an app-shell SW can serve the old `index.html` + hashed JS chunk until the SW updates and the tab reloads. Hard reload (or `?sw=off` if a kill-switch exists) flushes it.
+Four distinct values, one per (item_type × actor) cell. No collisions.
 
-## Recommended next step (no code changes)
+## Corrected `withdraw_pif`
 
-Ask the user to confirm both:
+```sql
+DROP FUNCTION IF EXISTS public.withdraw_pif(bigint, text, uuid);
 
-- **A:** In the Lovable editor, open Publish and verify the last-published timestamp is **after** the InterestSelectionList edit. If not → click Update; the bug is gone on next page load.
-- **B:** Where they tested: published web (`pif.today`), preview URL, or an installed Capacitor app. If installed Capacitor → web republish won't fix it; needs a native rebuild. If web → hard reload (DevTools → Application → Service Workers → Unregister, then reload) to bypass SW cache.
+CREATE OR REPLACE FUNCTION public.withdraw_pif(
+  p_item_id bigint, p_action text, p_fulfiller_id uuid DEFAULT NULL
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_owner uuid; v_item_type text; v_title text;
+  v_conversation uuid; v_dropped uuid;
+  v_msg_to_fulfiller text;
+BEGIN
+  IF p_action NOT IN ('reopen', 'archive') THEN
+    RAISE EXCEPTION 'Invalid action: %', p_action USING ERRCODE = '22023';
+  END IF;
 
-If A shows the publish IS current and B is plain web with SW unregistered, then we're wrong about the cause and I'll reopen the investigation — but given the payload-shape evidence, I'd bet on A.
+  SELECT user_id, item_type, title INTO v_owner, v_item_type, v_title
+    FROM public.items WHERE id = p_item_id FOR UPDATE;
 
-## Confirmed: no migration needed
+  IF v_owner IS NULL THEN RAISE EXCEPTION 'Item not found' USING ERRCODE = 'P0002'; END IF;
+  IF v_owner <> auth.uid() THEN RAISE EXCEPTION 'Not authorized' USING ERRCODE = '42501'; END IF;
 
-`drop_legacy_selection_made_trigger.sql` not written. Nothing to drop on the DB side.
+  -- ===== WISH branch (owner-initiated unselect of a fulfiller) =====
+  IF v_item_type = 'request' THEN
+    IF p_fulfiller_id IS NULL THEN
+      RAISE EXCEPTION 'p_fulfiller_id is required when withdrawing on a wish'
+        USING ERRCODE = '22023';
+    END IF;
 
-## Backlog still standing (for the later missing-signal audit, not actioned now)
+    DELETE FROM public.interests
+      WHERE item_id = p_item_id AND status = 'selected' AND user_id = p_fulfiller_id;
 
-- Receiver withdrawing themselves — no notification, no system message.
-- Owner withdrawing a receiver/fulfiller from the feed item card (separate entry point from InterestSelectionList management popup Site B) — no notification, no system message.
-- Site B itself (owner unselecting via InterestSelectionList lines ~679–715) — also no signal.
+    SELECT c.id INTO v_conversation
+      FROM public.conversations c
+      JOIN public.conversation_participants cp ON cp.conversation_id = c.id
+      WHERE c.item_id = p_item_id AND cp.user_id = p_fulfiller_id
+        AND c.closed_at IS NULL
+      LIMIT 1;
+
+    IF v_conversation IS NOT NULL THEN
+      INSERT INTO public.messages (conversation_id, sender_id, content, is_system_message, target_user_id)
+        VALUES (v_conversation, v_owner,
+          'Önskaren har avmarkerat ditt erbjudande. Önskan är fortfarande aktiv för andra som vill hjälpa.',
+          true, p_fulfiller_id);
+      INSERT INTO public.messages (conversation_id, sender_id, content, is_system_message, target_user_id)
+        VALUES (v_conversation, v_owner,
+          'Du har avmarkerat hjälparen. Önskan förblir aktiv.', true, v_owner);
+
+      UPDATE public.conversations
+        SET closed_at = now(), closed_reason = 'owner_withdrew_fulfiller'  -- FIXED: distinct from withdraw_receiver's 'fulfiller_self_withdrew'
+        WHERE id = v_conversation AND closed_at IS NULL;
+    END IF;
+
+    -- Notification fires whether or not a conversation existed (signal-required path).
+    PERFORM public.notify_item_interest_event(
+      p_item_id, 'wish_offer_withdrew', p_fulfiller_id, false
+    );
+    RETURN;
+  END IF;
+
+  -- ===== PIF branch (owner-initiated unselect of the receiver) =====
+  SELECT user_id INTO v_dropped
+    FROM public.interests
+    WHERE item_id = p_item_id AND status = 'selected'
+    LIMIT 1;
+
+  DELETE FROM public.interests WHERE item_id = p_item_id AND status = 'selected';
+  UPDATE public.interests SET status = 'pending', selected_at = NULL
+    WHERE item_id = p_item_id AND status = 'not_selected';
+
+  IF p_action = 'reopen' THEN
+    UPDATE public.items SET pif_status = 'active',
+      piffer_confirmed_handoff = false, receiver_confirmed_receipt = false,
+      archived_at = NULL, archived_reason = NULL
+      WHERE id = p_item_id;
+  ELSE
+    UPDATE public.items SET pif_status = 'archived',
+      piffer_confirmed_handoff = false, receiver_confirmed_receipt = false,
+      archived_at = now(), archived_reason = 'Piffer withdrew'
+      WHERE id = p_item_id;
+  END IF;
+
+  IF v_dropped IS NOT NULL THEN
+    SELECT c.id INTO v_conversation
+      FROM public.conversations c
+      JOIN public.conversation_participants cp ON cp.conversation_id = c.id
+      WHERE c.item_id = p_item_id AND cp.user_id = v_dropped
+        AND c.closed_at IS NULL
+      LIMIT 1;
+
+    IF v_conversation IS NOT NULL THEN
+      v_msg_to_fulfiller := CASE WHEN p_action = 'reopen'
+        THEN 'Piffaren har avmarkerat dig som mottagare. Piffen är öppen igen för andra.'
+        ELSE 'Piffaren har avmarkerat dig som mottagare och avslutat piffen.' END;
+
+      INSERT INTO public.messages (conversation_id, sender_id, content, is_system_message, target_user_id)
+        VALUES (v_conversation, v_owner, v_msg_to_fulfiller, true, v_dropped);
+      INSERT INTO public.messages (conversation_id, sender_id, content, is_system_message, target_user_id)
+        VALUES (v_conversation, v_owner,
+          'Du har avmarkerat mottagaren. Mottagaren har informerats.', true, v_owner);
+    END IF;
+  END IF;
+
+  UPDATE public.conversations
+    SET closed_at = now(), closed_reason = 'fulfiller_withdrew'  -- unchanged; shared across rows 1-3 by design (owner-initiated, pif branch)
+    WHERE item_id = p_item_id AND closed_at IS NULL;
+
+  IF v_dropped IS NOT NULL THEN
+    PERFORM public.notify_item_interest_event(
+      p_item_id, 'interest_withdrawn', v_dropped, false
+    );
+  END IF;
+
+  PERFORM public.notify_item_interest_event(
+    p_item_id, CASE WHEN p_action = 'reopen' THEN 'pif_reopened' ELSE 'pif_archived' END,
+    v_dropped, false
+  );
+END;
+$function$;
+```
+
+Only `withdraw_pif` is resent; `withdraw_receiver` and `notify_item_interest_event` from the previous plan are unchanged and stand approved.
