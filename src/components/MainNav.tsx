@@ -1,4 +1,4 @@
-import { House, Map, MessageSquare, User as UserIcon, LogIn } from "lucide-react";
+import { House, Map, MessageSquare, LogIn } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { AvatarImage } from "@/components/ui/optimized-image";
@@ -7,7 +7,7 @@ import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
 import { useCachedAvatarSrc } from "@/hooks/profile/useCachedAvatarSrc";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
-import { resolveAvatarInitial } from "@/utils/displayName";
+import { resolveDisplayName } from "@/utils/displayName";
 
 export function MainNav() {
   const location = useLocation();
@@ -33,11 +33,8 @@ export function MainNav() {
     }
   };
 
-  const getUserInitials = () => {
-    if (!user) return "";
-    const emailPrefix = user.email ? user.email.split('@')[0] : "?";
-    return resolveAvatarInitial(cachedProfile, emailPrefix);
-  };
+  const emailPrefix = user?.email ? user.email.split('@')[0] : '';
+  const displayName = user ? resolveDisplayName(cachedProfile, emailPrefix) : '';
 
   const itemBase = "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 py-1";
   const activeColor = "text-primary";
@@ -103,18 +100,14 @@ export function MainNav() {
           state={initialized && !user ? { from: currentFullPath } : undefined}
           className={`${itemBase} ${isProfileActive ? activeColor : inactiveColor}`}
         >
-          {avatarUrl ? (
+          {user ? (
             <div className="w-[22px] h-[22px] rounded-full overflow-hidden">
               <AvatarImage
-                src={avatarUrl}
-                alt={t('nav.profile')}
-                className="w-full h-full object-cover"
+                src={avatarUrl ?? undefined}
+                alt={displayName}
                 size={22}
+                className="w-full h-full object-cover"
               />
-            </div>
-          ) : user ? (
-            <div className="w-[22px] h-[22px] rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-[9px] font-medium text-primary">{getUserInitials()}</span>
             </div>
           ) : (
             <LogIn size={22} />

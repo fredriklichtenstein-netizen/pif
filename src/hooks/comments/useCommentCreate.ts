@@ -53,7 +53,7 @@ export const useCommentCreate = (
         const newComment = addDemoComment(itemId, text.trim(), {
           id: currentUser.id,
           name: displayName,
-          avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
+          avatar: currentUser.avatar || undefined
         });
 
         if (parentId) {
@@ -78,7 +78,7 @@ export const useCommentCreate = (
           author: {
             id: currentUser.id,
             name: displayName,
-            avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
+            avatar: currentUser.avatar || undefined
           },
           createdAt: new Date(),
           likes: 0,
