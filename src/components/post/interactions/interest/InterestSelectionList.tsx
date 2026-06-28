@@ -430,45 +430,6 @@ export function InterestSelectionList({
           };
         })
       );
-
-      // Self-notification for the piffer: confirms the selection in the
-      // notifications inbox and links back to the unlocked conversation.
-      if (currentUserId) {
-        try {
-          const { data: itemRow } = await (supabase
-            .from("items") as any)
-            .select("title")
-            .eq("id", numericItemId)
-            .maybeSingle();
-          const itemTitle: string | null = itemRow?.title ?? null;
-          const receiverName = displayName(row);
-          const titleText = isWish
-            ? wasReselection
-              ? `Du har valt ${receiverName} på nytt att uppfylla önskan${itemTitle ? ` "${itemTitle}"` : ""}.`
-              : `Du har valt ${receiverName} till att uppfylla önskan${itemTitle ? ` "${itemTitle}"` : ""}.`
-            : `Du har valt ${receiverName} som mottagare${itemTitle ? ` för "${itemTitle}"` : ""}.`;
-          const actionUrl = conversationId
-            ? `/messages?conversation=${conversationId}`
-            : `/messages?item=${numericItemId}`;
-          await (supabase.rpc as any)("create_notification", {
-            p_user_id: currentUserId,
-            p_type: "selection_made",
-            p_payload: {
-              title: titleText,
-              actor_id: row.user_id,
-              actor_name: receiverName,
-              item_id: numericItemId,
-              item_title: itemTitle,
-              conversation_id: conversationId ?? null,
-              action_url: actionUrl,
-              reference_id: String(numericItemId),
-              reference_type: "item",
-            },
-          });
-        } catch (notifErr) {
-          console.warn("[InterestSelectionList] self-notification insert failed", notifErr);
-        }
-      }
       // Note: the wish-helper RPC seeds the helper's note as the first
       // message inside the same transaction, guarded so repeated calls
       // never insert duplicates. We intentionally do NOT insert from
