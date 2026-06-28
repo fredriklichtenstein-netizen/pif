@@ -662,6 +662,8 @@ export function InterestSelectionList({
           .map((r) => ({ ...r, status: "pending" })),
       );
       reload();
+      window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
+      window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
       toast({
         title: t("interactions.selection_withdrawn"),
         description: t("interactions.selection_withdrawn_description"),
@@ -691,13 +693,17 @@ export function InterestSelectionList({
       if (DEMO_MODE) {
         setRows((prev) => prev.filter((r) => r.user_id !== currentUserId));
       } else {
-        const { error } = await supabase
-          .from("interests")
-          .delete()
-          .eq("item_id", numericItemId)
-          .eq("user_id", currentUserId);
+        // Route through withdraw_receiver so the RPC emits system
+        // messages + a notification to the owner, and properly closes
+        // the conversation with the correct closed_reason.
+        const { error } = await (supabase.rpc as any)("withdraw_receiver", {
+          p_item_id: numericItemId,
+          p_comment: null,
+        });
         if (error) throw error;
       }
+      window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
+      window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
       toast({
         title: t("interactions.selection_withdrawn"),
       });

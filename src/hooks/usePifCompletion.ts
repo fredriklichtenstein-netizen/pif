@@ -461,62 +461,12 @@ export function usePifCompletion(
         console.error("withdraw_pif failed:", error);
         return { ok: false, error } as const;
       }
-      if (conversationId) {
-        const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
-        if (action === "reopen") {
-          // Note: for wishes the "is now open again" framing is intentionally
-          // dropped because withdraw_pif's current behaviour for wishes does
-          // not necessarily map to a closed→open transition (see plan.md
-          // entry on withdraw_pif multi-fulfiller bug).
-          await postPifSystemMessage(
-            conversationId,
-            pick(
-              "Du har ångrat valet av mottagare. Pifen är nu öppen igen.",
-              "Du har ångrat valet av den som skulle uppfylla önskan.",
-            ),
-            { targetUserId: currentUserId ?? null },
-          );
-          await postPifSystemMessage(
-            conversationId,
-            pick(
-              "Piffaren har ångrat sig och kan/vill inte längre piffa detta till dig. Pifen är nu öppen för andra att visa intresse.",
-              "Önskaren har ångrat sitt val. Du har inte längre uppdraget att uppfylla denna önskan.",
-            ),
-            { targetUserId: otherUserId ?? null },
-          );
-        } else {
-          await postPifSystemMessage(
-            conversationId,
-            pick(
-              "Du har arkiverat pifen.",
-              "Du har arkiverat önskan.",
-            ),
-            { targetUserId: currentUserId ?? null },
-          );
-          await postPifSystemMessage(
-            conversationId,
-            pick(
-              "Piffaren har ångrat sig och kan/vill inte längre piffa detta.",
-              "Önskaren har ångrat sig och vill inte längre att önskan uppfylls.",
-            ),
-            { targetUserId: otherUserId ?? null },
-          );
-        }
-      }
-      // Notify ALL interested users (selected + the rest) of the change.
+      // System messages + notifications are emitted server-side by
+      // withdraw_pif. Avoid duplicate client-side inserts here.
       try {
-        const event =
-          action === "reopen"
-            ? isRequest ? "wish_reopened" : "pif_reopened"
-            : isRequest ? "wish_archived" : "pif_archived";
-        await (supabase.rpc as any)("notify_item_interest_event", {
-          p_item_id: id,
-          p_event: event,
-          p_selected_user_id: otherUserId ?? null,
-        });
-      } catch (e) {
-        console.warn("notify_item_interest_event (withdraw) failed", e);
-      }
+        window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
+        window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
+      } catch {}
       setState((s) => ({
         ...s,
         pifStatus: action === "archive" ? "archived" : s.pifStatus,

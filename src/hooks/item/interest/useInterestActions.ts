@@ -77,6 +77,34 @@ export const useInterestActions = (
 };
 
 const removeInterest = async (itemId: number, userId: string) => {
+  // If the user is the currently-selected receiver/fulfiller, route
+  // through withdraw_receiver so the RPC emits system messages + a
+  // notification to the owner and closes the conversation. Otherwise
+  // (plain "no longer interested" before selection), do a direct
+  // delete — withdraw_receiver would reject with 'Not the selected
+  // receiver'.
+  const { data: rows, error: selectErr } = await supabase
+    .from('interests')
+    .select('status')
+    .eq('user_id', userId)
+    .eq('item_id', itemId)
+    .limit(1);
+  if (selectErr) throw selectErr;
+  const isSelected = (rows?.[0] as any)?.status === 'selected';
+
+  if (isSelected) {
+    const { error } = await (supabase.rpc as any)('withdraw_receiver', {
+      p_item_id: itemId,
+      p_comment: null,
+    });
+    if (error) throw error;
+    try {
+      window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
+      window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
+    } catch {}
+    return;
+  }
+
   const { error } = await supabase
     .from('interests')
     .delete()
