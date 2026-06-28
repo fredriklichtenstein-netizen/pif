@@ -41,6 +41,7 @@ export function PifRatingModal({
   allowSkip = true,
   isRequest = false,
 }: Props) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
