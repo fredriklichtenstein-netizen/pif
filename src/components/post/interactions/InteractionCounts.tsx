@@ -104,7 +104,7 @@ export function InteractionCounts({
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>{t('common.interested_users')}</DialogTitle>
+                <DialogTitle>{t('interactions.interested_neighbors_title')}</DialogTitle>
               </DialogHeader>
               <InteractionsList 
                 interested={interestedUsers} 

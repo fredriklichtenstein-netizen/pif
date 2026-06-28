@@ -274,15 +274,21 @@ export function InterestedPifsGrid({ userId }: { userId: string }) {
       <AlertDialog open={regretDialogOpen} onOpenChange={setRegretDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('interactions.remove_interest_title')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {regretItemType === 'request'
+                ? t('interactions.remove_interest_request_title')
+                : t('interactions.remove_interest_offer_title')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('interactions.remove_interest_confirm')}
+              {regretItemType === 'request'
+                ? t('interactions.remove_interest_request_description')
+                : t('interactions.remove_interest_offer_description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={removing}>{t('interactions.cancel')}</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleConfirmRegret} 
+            <AlertDialogAction
+              onClick={handleConfirmRegret}
               disabled={removing}
               className="bg-red-600 hover:bg-red-700"
             >

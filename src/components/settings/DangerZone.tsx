@@ -74,7 +74,7 @@ export function DangerZone() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('settings.are_you_sure')}</AlertDialogTitle>
+            <AlertDialogTitle>{t('settings.delete_account_title')}</AlertDialogTitle>
             <AlertDialogDescription>
               {t('settings.delete_account_warning')}
             </AlertDialogDescription>
