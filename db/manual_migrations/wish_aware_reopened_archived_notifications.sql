@@ -1,8 +1,3 @@
-Corrected: dropping the 4-arg signature and preserving `p_is_reselection boolean` in the new CREATE. Also preserves the live form's `set search_path to 'public'` and `as $function$` quoting (matching `reselection_aware_notifications.sql`), and keeps the `helper_selected` reselection branch intact.
-
-### Final SQL (file: `db/manual_migrations/wish_aware_reopened_archived_notifications.sql`)
-
-```sql
 -- Apply manually on your Supabase project.
 --
 -- Wish-aware, multi-fulfiller-neutral copy for the `wish_reopened` and
@@ -124,12 +119,12 @@ begin
 
     elsif p_event = 'wish_archived' then
       -- CHANGED: branch on p_selected_user_id.
-      --   * not null  → per-conversation withdraw-via-archive: only the
-      --                 affected fulfiller is messaged; all others
-      --                 continue (other fulfillers may still be active).
-      --   * null      → whole-wish archive/delete by the wisher: notify
-      --                 every interested user, with slightly different
-      --                 content for previously-selected fulfillers.
+      --   * not null  -> per-conversation withdraw-via-archive: only the
+      --                  affected fulfiller is messaged; all others
+      --                  continue (other fulfillers may still be active).
+      --   * null      -> whole-wish archive/delete by the wisher: notify
+      --                  every interested user, with slightly different
+      --                  content for previously-selected fulfillers.
       if p_selected_user_id is not null then
         if v_rec.user_id = p_selected_user_id then
           v_msg_title := 'Önskaren har avslutat samordningen med dig för "' || v_title || '".';
@@ -220,6 +215,3 @@ $function$;
 
 revoke all on function public.notify_item_interest_event(bigint, text, uuid, boolean) from public;
 grant execute on function public.notify_item_interest_event(bigint, text, uuid, boolean) to authenticated;
-```
-
-Ready to apply via Supabase MCP. Switch to build mode if you also want the file committed to the repo under `db/manual_migrations/`; otherwise this SQL is the full final artifact.
