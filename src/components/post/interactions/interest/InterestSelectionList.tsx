@@ -662,6 +662,8 @@ export function InterestSelectionList({
           .map((r) => ({ ...r, status: "pending" })),
       );
       reload();
+      window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
+      window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
       toast({
         title: t("interactions.selection_withdrawn"),
         description: t("interactions.selection_withdrawn_description"),
