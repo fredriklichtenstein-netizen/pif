@@ -6,6 +6,8 @@ import { useCommentActions } from "@/hooks/comments/useCommentActions";
 import { useCommentRealtime } from "@/hooks/comments/useCommentRealtime";
 import { useCommentLikesRealtime } from "@/hooks/comments/useCommentLikesRealtime";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
+import { resolveDisplayName } from "@/utils/displayName";
 import { CommentsPanel } from "./CommentsPanel";
 import { CommentsBannerSection } from "./CommentsBannerSection";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
@@ -56,10 +58,13 @@ export function LazyCommentsSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible, itemId]);
 
+  const { profile: cachedProfile } = useCachedProfile(user?.id);
+  const emailPrefix = user?.email ? user.email.split('@')[0] : 'User';
+  const displayName = user ? resolveDisplayName(cachedProfile, emailPrefix) : 'User';
   const currentUser = user ? {
     id: user.id,
-    name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-    avatar: user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.user_metadata?.full_name || 'U')}&background=random`
+    name: displayName,
+    avatar: cachedProfile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
   } : undefined;
 
   const { isSubscribed, error: realtimeError } = useCommentRealtime(itemId, comments, setComments, refreshComments);

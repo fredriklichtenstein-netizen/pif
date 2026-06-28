@@ -4,12 +4,15 @@ import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/hooks/auth/authStore";
+import { resolveDisplayName } from "@/utils/displayName";
 
 interface ProfileData {
   first_name?: string;
   last_name?: string;
+  username?: string;
   avatar_url?: string;
 }
+
 
 export function useCommentData(itemId: string) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -57,6 +60,7 @@ export function useCommentData(itemId: string) {
             profiles:user_id (
               first_name,
               last_name,
+              username,
               avatar_url
             )
           `)
@@ -77,23 +81,18 @@ export function useCommentData(itemId: string) {
         
         // Transform database comments into our Comment type
         const formattedComments: Comment[] = commentsData.map(comment => {
-          const profile = comment.profiles as ProfileData || {};
-          // Apply the new naming format (First name + first letter of last name without dot)
-          const firstName = profile.first_name || '';
-          const lastName = profile.last_name || '';
-          const fullName = firstName && lastName 
-            ? `${firstName} ${lastName.charAt(0)}`
-            : firstName || 'Anonymous';
-            
+          const profile = (comment.profiles as ProfileData) || null;
+          const fullName = resolveDisplayName(profile as any, 'Anonymous');
           const isOwnComment = comment.user_id === session?.user?.id;
-          
+
+
           return {
             id: comment.id.toString(),
             text: comment.content,
             author: {
               id: comment.user_id,
               name: fullName,
-              avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
+              avatar: profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`
             },
             likes: 0,
             isLiked: false,
@@ -122,7 +121,7 @@ export function useCommentData(itemId: string) {
       const fetchProfile = async () => {
         const { data, error } = await supabase
           .from('profiles')
-          .select('first_name, last_name, avatar_url')
+          .select('first_name, last_name, username, avatar_url')
           .eq('id', session.user.id)
           .single();
         
@@ -137,22 +136,14 @@ export function useCommentData(itemId: string) {
     }
   }, [session?.user?.id, authInitialized]);
 
-  // Construct the user's full name from profile data with the new format
+  // Construct the user's display name via the canonical resolver.
   const getFullName = () => {
-    const firstName = profileData?.first_name || '';
-    const lastName = profileData?.last_name || '';
-    
-    if (firstName && lastName) {
-      return `${firstName} ${lastName.charAt(0)}`; // Removed dot after initial here
-    }
-    
-    // Fall back to user metadata if profile not found
-    const metadataName = session?.user?.user_metadata?.full_name || 
-                         session?.user?.user_metadata?.name ||
-                         session?.user?.email?.split('@')[0] || 
-                         "Anonymous User";
-                         
-    return metadataName;
+    const metadataFallback =
+      session?.user?.user_metadata?.full_name ||
+      session?.user?.user_metadata?.name ||
+      session?.user?.email?.split('@')[0] ||
+      'Anonymous User';
+    return resolveDisplayName(profileData as any, metadataFallback);
   };
   
   // Extract user information with better fallbacks

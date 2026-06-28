@@ -54,17 +54,12 @@ export class OptimizedQueries {
           query = query.range(options.offset || 0, (options.offset || 0) + options.limit - 1);
         }
 
-        // Start profiles at the same time as items. This intentionally avoids
-        // PostgREST embeds and avoids waiting for the items response before
-        // beginning the profile request.
-        const profilesQuery = supabase
-          .from('profiles')
-          .select('id, first_name, last_name, username, avatar_url');
-
-        const [{ data, error }, { data: profiles, error: profilesError }] = await Promise.all([
-          query,
-          profilesQuery,
-        ]);
+        // Fetch items first so we know which authors to look up. We must
+        // scope the profiles query to those specific user ids — an unbounded
+        // `.select()` hits PostgREST's default 1000-row cap, silently
+        // dropping authors past that point and producing "Unknown User"
+        // fallbacks in the feed.
+        const { data, error } = await query;
         if (error) {
           console.error('🚨 CRITICAL: Database query failed:', error);
           throw new DatabaseError('Failed to fetch posts', error.code, error);
@@ -74,11 +69,21 @@ export class OptimizedQueries {
           return [];
         }
 
+        const uniqueUserIds = Array.from(
+          new Set((data as any[]).map((row: any) => row.user_id).filter(Boolean)),
+        );
+
         let profilesById = new Map<string, any>();
-        if (profilesError) {
-          console.warn('Profiles fetch failed (non-fatal):', profilesError);
-        } else if (profiles) {
-          profilesById = new Map(profiles.map((p: any) => [p.id, p]));
+        if (uniqueUserIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, username, avatar_url')
+            .in('id', uniqueUserIds);
+          if (profilesError) {
+            console.warn('Profiles fetch failed (non-fatal):', profilesError);
+          } else if (profiles) {
+            profilesById = new Map(profiles.map((p: any) => [p.id, p]));
+          }
         }
 
         return (data as any[]).map((row: any) => ({

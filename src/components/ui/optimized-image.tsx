@@ -59,11 +59,16 @@ export function OptimizedImage({
   }, [optimizedSrc, placeholderSrc, priority, src]);
   
   return (
-    <div className={`relative ${className}`} style={{ width, height }}>
+    <div
+      className={`relative overflow-hidden ${className ?? ''}`}
+      style={{ width, height }}
+    >
       <img
         src={priority ? optimizedSrc : currentSrc}
         alt={alt || ""}
-        className={`${className} ${!loaded && !priority ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+        width={width}
+        height={height}
+        className={`w-full h-full object-cover ${className ?? ''} ${!loaded && !priority ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
         onLoad={() => setLoaded(true)}
         onError={() => {
           console.error(`Error loading image at render time: ${currentSrc}`);
