@@ -86,9 +86,13 @@ export function PifRatingModal({
         {!askReport ? (
           <>
             <DialogHeader>
-              <DialogTitle>{isRequest ? "Betygsätt den som uppfyllde önskan" : "Betygsätt mottagaren"}</DialogTitle>
+              <DialogTitle>
+                {isRequest
+                  ? t("interactions.rate_helper_modal_title")
+                  : t("interactions.rate_receiver_modal_title")}
+              </DialogTitle>
               <DialogDescription>
-                Ditt omdöme hjälper grannar att lita på varandra.
+                {t("interactions.rate_modal_description")}
               </DialogDescription>
             </DialogHeader>
 
@@ -100,7 +104,7 @@ export function PifRatingModal({
                   onMouseEnter={() => setHover(n)}
                   onMouseLeave={() => setHover(0)}
                   onClick={() => setRating(n)}
-                  aria-label={`${n} stjärnor`}
+                  aria-label={t("interactions.stars_aria", { count: n })}
                   className="p-1"
                 >
                   <Star
@@ -116,7 +120,11 @@ export function PifRatingModal({
 
             <Textarea
               rows={3}
-              placeholder={isRequest ? "Lämna en kommentar (visas för den som uppfyllde önskan)" : "Lämna en kommentar (visas för mottagaren)"}
+              placeholder={
+                isRequest
+                  ? t("interactions.rate_helper_modal_placeholder")
+                  : t("interactions.rate_receiver_modal_placeholder")
+              }
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
@@ -128,7 +136,7 @@ export function PifRatingModal({
                   onClick={() => onOpenChange(false)}
                   disabled={submitting}
                 >
-                  Hoppa över
+                  {t("interactions.rate_modal_skip")}
                 </Button>
               )}
               <Button
@@ -138,21 +146,24 @@ export function PifRatingModal({
                 {submitting && (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 )}
-                Skicka betyg
+                {t("interactions.rate_modal_submit")}
               </Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Vill du rapportera problem med detta utbyte?</DialogTitle>
+              <DialogTitle>{t("interactions.report_exchange_problem_title")}</DialogTitle>
+              <DialogDescription>
+                {t("interactions.report_exchange_problem_description")}
+              </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 sm:gap-2">
               <Button
                 variant="ghost"
                 onClick={() => onOpenChange(false)}
               >
-                Nej tack
+                {t("interactions.report_exchange_no_thanks")}
               </Button>
               <Button
                 variant="destructive"
@@ -161,7 +172,7 @@ export function PifRatingModal({
                   onLowRatingReport?.();
                 }}
               >
-                Ja, rapportera
+                {t("interactions.report_exchange_yes")}
               </Button>
             </DialogFooter>
           </>
