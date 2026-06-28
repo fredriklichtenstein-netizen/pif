@@ -83,6 +83,8 @@ export function useCommentData(itemId: string) {
         const formattedComments: Comment[] = commentsData.map(comment => {
           const profile = (comment.profiles as ProfileData) || null;
           const fullName = resolveDisplayName(profile as any, 'Anonymous');
+          const isOwnComment = comment.user_id === session?.user?.id;
+
 
           return {
             id: comment.id.toString(),
@@ -141,7 +143,7 @@ export function useCommentData(itemId: string) {
       session?.user?.user_metadata?.name ||
       session?.user?.email?.split('@')[0] ||
       'Anonymous User';
-    return resolveDisplayName(profileData, metadataFallback);
+    return resolveDisplayName(profileData as any, metadataFallback);
   };
   
   // Extract user information with better fallbacks
