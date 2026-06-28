@@ -149,13 +149,20 @@ export function InterestUsersPopover({ itemId, itemOwnerId, itemType }: Interest
     }
     try {
       const numericItemId = typeof itemId === 'string' ? parseInt(itemId as string, 10) : itemId;
-      // Reset the previously selected receiver and any siblings back to pending
-      // so the piffer can pick a different person without losing prior interest signals.
-      await supabase
-        .from("interests")
-        .update({ status: "pending", selected_at: null } as any)
-        .eq("item_id", numericItemId);
+      // Route through withdraw_pif so the RPC emits system messages +
+      // notifications and scopes the effect to the targeted user.
+      const targetRow = users.find((u) => u.id === targetId);
+      const fulfillerId = targetRow?.user_id ?? null;
+      const isWish = String(itemType || '').toLowerCase() === 'request';
+      const { error } = await (supabase.rpc as any)("withdraw_pif", {
+        p_item_id: numericItemId,
+        p_action: "reopen",
+        p_fulfiller_id: isWish ? fulfillerId : fulfillerId, // scoped for both branches
+      });
+      if (error) throw error;
       fetchInterests();
+      window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
+      window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
       toast({
         title: t('interactions.selection_withdrawn'),
         description: t('interactions.selection_withdrawn_description'),
