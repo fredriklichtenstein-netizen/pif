@@ -48,7 +48,6 @@ export function CommentCard({
   };
   
   const authorName = comment.author.name || 'Anonymous';
-  const authorInitials = authorName.split(' ').map(name => name.charAt(0)).join('').toUpperCase() || 'U';
 
   return (
     <div className="space-y-4" data-comment-id={comment.id}>
@@ -56,7 +55,7 @@ export function CommentCard({
         <div className="flex items-start gap-2">
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <CommentHeader author={comment.author} createdAt={new Date(comment.createdAt)} authorInitials={authorInitials} />
+              <CommentHeader author={{ ...comment.author, name: authorName }} createdAt={new Date(comment.createdAt)} />
               <CommentActions isCurrentUserAuthor={isCurrentUserAuthor} onEdit={() => setIsEditing(true)} onDelete={() => onDelete(comment.id)} onReport={handleReport} />
             </div>
             

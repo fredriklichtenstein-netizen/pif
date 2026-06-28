@@ -3,7 +3,7 @@ import { ThumbsUp } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InteractionsList } from "./InteractionsList";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarImage } from "@/components/ui/optimized-image";
 import { useTranslation } from 'react-i18next';
 import type { User } from "@/hooks/item/useItemInteractions";
 import { useState, useEffect } from "react";
@@ -74,10 +74,9 @@ export function InteractionCounts({
               {likers.length > 0 ? (
                 likers.map(user => (
                   <div key={user.id} className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
+                    <div className="h-6 w-6 rounded-full overflow-hidden flex-shrink-0">
+                      <AvatarImage src={user.avatar} alt={user.name} size={24} className="w-full h-full object-cover" />
+                    </div>
                     <span className="text-sm">{user.name}</span>
                   </div>
                 ))

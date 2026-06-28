@@ -1,6 +1,6 @@
 
 import { MapPin, MoreVertical } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import { AvatarImage } from "../ui/optimized-image";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../ui/dropdown-menu";
 import { useUserFilterProfileStore } from "@/stores/userFilterProfileStore";
@@ -160,18 +160,16 @@ export function ItemCardHeader({
               }}
               className="flex items-center text-left"
             >
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
-                <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
-              </Avatar>
+              <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                <AvatarImage src={postedBy.avatar} alt={postedBy.name} size={32} className="w-full h-full object-cover" />
+              </div>
               <div className="text-sm font-medium">{postedBy.name}</div>
             </button>
           ) : (
             <div className="flex items-center">
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage src={postedBy.avatar} alt={postedBy.name} />
-                <AvatarFallback>{postedBy.name[0]}</AvatarFallback>
-              </Avatar>
+              <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                <AvatarImage src={postedBy.avatar} alt={postedBy.name} size={32} className="w-full h-full object-cover" />
+              </div>
               <div className="text-sm font-medium">{postedBy.name}</div>
             </div>
           )}
