@@ -35,10 +35,6 @@ export const fetchCommentersForItem = async (
     id: p.id,
     name:
       `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
-    avatar:
-      p.avatar_url ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        p.first_name || "U"
-      )}&background=random`,
+    avatar: p.avatar_url || undefined,
   }));
 };
