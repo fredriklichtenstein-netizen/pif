@@ -82,8 +82,7 @@ export function useCommentData(itemId: string) {
         // Transform database comments into our Comment type
         const formattedComments: Comment[] = commentsData.map(comment => {
           const profile = (comment.profiles as ProfileData) || null;
-          const fullName = resolveDisplayName(profile, 'Anonymous');
-          const isOwnComment = comment.user_id === session?.user?.id;
+          const fullName = resolveDisplayName(profile as any, 'Anonymous');
 
           return {
             id: comment.id.toString(),
