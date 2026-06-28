@@ -6,7 +6,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import type { Conversation } from "@/types/messaging";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { resolveDisplayName, resolveAvatarInitial } from "@/utils/displayName";
+import { resolveDisplayName } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
 
 interface ConversationListProps {
@@ -34,7 +34,6 @@ export function ConversationList({
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const fallbackName = t("messages.unknown_user");
-  const fallbackInitial = fallbackName.charAt(0).toUpperCase();
 
   const { active, history } = useMemo(() => {
     const a: Conversation[] = [];
@@ -66,7 +65,6 @@ export function ConversationList({
       (p) => p.user_id !== currentUserId
     );
     const displayName = resolveDisplayName(otherParticipant?.profile, fallbackName);
-    const initial = resolveAvatarInitial(otherParticipant?.profile, fallbackInitial);
     const preview = conversation.last_message_text?.trim();
     const unread = unreadByConversation?.[String(conversation.id)] ?? conversation.unread_count ?? 0;
 
@@ -88,7 +86,7 @@ export function ConversationList({
               <UserAvatar
                 src={otherParticipant?.profile?.avatar_url}
                 name={displayName}
-                initial={initial}
+                size={40}
                 className="h-10 w-10"
               />
             </Link>
@@ -96,7 +94,7 @@ export function ConversationList({
             <UserAvatar
               src={otherParticipant?.profile?.avatar_url}
               name={displayName}
-              initial={initial}
+              size={40}
               className="h-10 w-10"
             />
           )}

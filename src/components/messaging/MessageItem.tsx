@@ -30,7 +30,6 @@ interface MessageItemProps {
   otherProfile?: Profile | null;
   otherUserId?: string;
   otherDisplayName?: string;
-  otherInitial?: string;
   itemId?: number | string | null;
   onDelete?: (messageId: string) => void | Promise<void>;
 }
@@ -41,7 +40,6 @@ export function MessageItem({
   otherProfile,
   otherUserId,
   otherDisplayName = "",
-  otherInitial = "?",
   itemId,
   onDelete,
 }: MessageItemProps) {
@@ -148,8 +146,8 @@ export function MessageItem({
           <UserAvatar
             src={otherProfile?.avatar_url}
             name={otherDisplayName}
-            initial={otherInitial}
-            className="h-8 w-8 text-xs"
+            size={32}
+            className="h-8 w-8"
           />
         </button>
       )}
@@ -165,7 +163,6 @@ export function MessageItem({
           profile={otherProfile}
           userId={otherUserId}
           displayName={otherDisplayName}
-          initial={otherInitial}
         />
       )}
 
