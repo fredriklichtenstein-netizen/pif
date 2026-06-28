@@ -23,9 +23,10 @@ import { useTranslation } from "react-i18next";
 interface InterestUsersPopoverProps {
   itemId: number | string;
   itemOwnerId: string;
+  itemType?: string;
 }
 
-export function InterestUsersPopover({ itemId, itemOwnerId }: InterestUsersPopoverProps) {
+export function InterestUsersPopover({ itemId, itemOwnerId, itemType }: InterestUsersPopoverProps) {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
