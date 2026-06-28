@@ -1,5 +1,5 @@
 
-import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,30 +17,30 @@ interface ReportDialogProps {
 }
 
 export function ReportDialog({ onReport }: ReportDialogProps) {
+  const { t } = useTranslation();
   return (
     <AlertDialog>
       <AlertDialogTrigger data-report-trigger className="hidden">
-        Report
+        {t("interactions.report_item_action")}
       </AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-[425px]">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-lg font-semibold text-primary">
-            Report this item
+            {t("interactions.report_item")}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-sm text-muted-foreground">
-            Are you sure you want to report this item? This action cannot be undone.
-            Our moderators will review the item and take appropriate action.
+            {t("interactions.report_item_description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-4">
           <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200">
-            Cancel
+            {t("common.cancel")}
           </AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={onReport}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Report Item
+            {t("interactions.report_item_action")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

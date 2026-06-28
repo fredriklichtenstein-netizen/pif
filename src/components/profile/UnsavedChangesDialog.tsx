@@ -1,4 +1,5 @@
 
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,24 +27,25 @@ export function UnsavedChangesDialog({
   onCancel,
   onSave,
 }: UnsavedChangesDialogProps) {
+  const { t } = useTranslation();
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+          <AlertDialogTitle>{t("common.unsaved_changes_title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            You have unsaved changes in your profile. Would you like to save them before leaving?
+            {t("common.unsaved_changes_description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>
-            Stay on Page
+            {t("common.unsaved_changes_stay")}
           </AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
-            Discard Changes
+            {t("common.unsaved_changes_discard")}
           </AlertDialogAction>
           <Button onClick={onSave} variant="default">
-            Save Changes
+            {t("common.unsaved_changes_save")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

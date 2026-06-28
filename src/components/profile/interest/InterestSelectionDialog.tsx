@@ -1,4 +1,5 @@
 
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,19 +18,20 @@ interface InterestSelectionDialogProps {
 }
 
 export function InterestSelectionDialog({ open, onOpenChange, onConfirm }: InterestSelectionDialogProps) {
+  const { t } = useTranslation();
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Selection</AlertDialogTitle>
+          <AlertDialogTitle>{t("interactions.confirm_receiver_selection_title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to pif to this user?
+            {t("interactions.confirm_receiver_selection_description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
-            Confirm
+            {t("common.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
