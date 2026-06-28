@@ -710,7 +710,8 @@
     "signed_out": "Signed out successfully",
     "signed_out_description": "You have been signed out of your account",
     "error_signing_out": "Error signing out",
-    "signing_out": "Signing out..."
+    "signing_out": "Signing out...",
+    "delete_account_title": "Permanently delete your account?"
   },
   "notifications": {
     "is_interested_in_your_pif": "is interested in your pif",

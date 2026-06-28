@@ -710,7 +710,8 @@
     "signed_out": "Utloggad",
     "signed_out_description": "Du har loggats ut från ditt konto",
     "error_signing_out": "Fel vid utloggning",
-    "signing_out": "Loggar ut..."
+    "signing_out": "Loggar ut...",
+    "delete_account_title": "Radera ditt konto permanent?"
   },
   "notifications": {
     "is_interested_in_your_pif": "är intresserad av din pif",
