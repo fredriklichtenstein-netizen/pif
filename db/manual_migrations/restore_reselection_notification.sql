@@ -1,12 +1,3 @@
-## Plan: Restore reselection-only notification on `helper_selected`
-
-Single new migration. Redefines `notify_item_interest_event` only. No frontend changes — `InterestSelectionList.tsx` already passes `p_is_reselection`.
-
-Only the `helper_selected` branch differs from the live (`withdraw_signals_consolidation.sql`) function: chosen user `CONTINUE`s on first-time selection (system message in the newly-opened conversation covers it) and receives a notification only on reselection (the prior conversation was closed and could be missed). All other branches preserved verbatim.
-
-### File: `db/manual_migrations/restore_reselection_notification.sql`
-
-```sql
 -- =============================================================
 -- Restore reselection-only notification to chosen wish fulfiller.
 -- First-time selection remains silent (system message in the
@@ -142,11 +133,3 @@ BEGIN
   END LOOP;
 END;
 $function$;
-```
-
-### Apply
-You apply via Supabase MCP. No frontend edits.
-
-### Backlog (logged, not done here)
-- Pif reselection plumbing (stale `closed_at`, no system messages, no `was_reselection` from `select_receiver`).
-- "Du är vald" / "Uppfyller önskan" button clickability + popup selection-state visibility.
