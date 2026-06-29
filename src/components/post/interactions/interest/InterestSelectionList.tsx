@@ -702,17 +702,35 @@ export function InterestSelectionList({
     try {
       if (DEMO_MODE) {
         setRows((prev) => prev.filter((r) => r.user_id !== currentUserId));
-      } else if (isSelectedFulfiller) {
-        // Selected fulfiller: full withdraw_receiver flow.
+      } else {
+        // Server-authoritative routing. We do NOT trust the cached
+        // `ownRow.status` here — it can lag the DB (realtime hasn't
+        // arrived yet, popup opened before selection, etc.) and a
+        // stale 'pending' would otherwise silently downgrade a real
+        // selected fulfiller into a plain row delete, skipping system
+        // messages + owner notification + conversation close.
+        //
+        // Always try withdraw_receiver first; if Postgres rejects with
+        // ERRCODE 42501 ("Not the selected receiver"), the caller is
+        // genuinely a non-selected candidate and we fall back to the
+        // shared pre-selection helper. The message-text regex is a
+        // belt-and-suspenders backup in case a future migration drops
+        // the explicit ERRCODE; the code is the primary signal.
         const { error } = await (supabase.rpc as any)("withdraw_receiver", {
           p_item_id: numericItemId,
           p_comment: null,
         });
-        if (error) throw error;
-      } else {
-        // Mere candidate: shared pre-selection helper (delete + owner
-        // notification). Same code path as the toggle-interest button.
-        await withdrawPreSelectionInterest(numericItemId, currentUserId);
+        if (error) {
+          const code = (error as any)?.code;
+          const msg = String((error as any)?.message || "");
+          const isNotSelected =
+            code === "42501" || /not the selected receiver/i.test(msg);
+          if (isNotSelected) {
+            await withdrawPreSelectionInterest(numericItemId, currentUserId);
+          } else {
+            throw error;
+          }
+        }
       }
       window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
       window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
