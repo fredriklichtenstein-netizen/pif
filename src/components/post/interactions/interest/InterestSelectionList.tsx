@@ -683,24 +683,35 @@ export function InterestSelectionList({
   // (withdraw) button. Owner-only management controls (Vald,
   // Markera som uppfylld, Meddelande, trust indicators) must never be
   // shown to non-owners.
-  const isFulfillerView =
-    !isOwner && isWish && !!currentUserId &&
-    rows.some((r) => r.user_id === currentUserId);
+  //
+  // The popup must differentiate the viewer's actual selection state:
+  //   - selected → real fulfiller. Route through withdraw_receiver
+  //     (closes the conversation, owner notification, system messages).
+  //   - not selected (pending/null) → mere candidate. Route through the
+  //     shared pre-selection helper instead — withdraw_receiver would
+  //     reject these with 403 "Not the selected receiver".
+  const ownRow = !isOwner && isWish && !!currentUserId
+    ? rows.find((r) => r.user_id === currentUserId)
+    : undefined;
+  const isFulfillerView = !!ownRow;
+  const isSelectedFulfiller = ownRow?.status === "selected";
 
   const handleWithdrawOwnOffer = async () => {
     if (!currentUserId) return;
     try {
       if (DEMO_MODE) {
         setRows((prev) => prev.filter((r) => r.user_id !== currentUserId));
-      } else {
-        // Route through withdraw_receiver so the RPC emits system
-        // messages + a notification to the owner, and properly closes
-        // the conversation with the correct closed_reason.
+      } else if (isSelectedFulfiller) {
+        // Selected fulfiller: full withdraw_receiver flow.
         const { error } = await (supabase.rpc as any)("withdraw_receiver", {
           p_item_id: numericItemId,
           p_comment: null,
         });
         if (error) throw error;
+      } else {
+        // Mere candidate: shared pre-selection helper (delete + owner
+        // notification). Same code path as the toggle-interest button.
+        await withdrawPreSelectionInterest(numericItemId, currentUserId);
       }
       window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
       window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
@@ -719,12 +730,15 @@ export function InterestSelectionList({
   };
 
   if (isFulfillerView) {
-    const own = rows.find((r) => r.user_id === currentUserId)!;
+    const own = ownRow!;
+    const headerTitle = isSelectedFulfiller
+      ? t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan")
+      : t("interactions.wish_interest_self_title", "Du har visat intresse för denna önskan");
     return (
       <div className="max-h-[340px] overflow-y-auto">
         <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
           <h3 className="font-semibold text-sm">
-            {t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan")}
+            {headerTitle}
           </h3>
           <Button
             variant="ghost"
@@ -769,6 +783,7 @@ export function InterestSelectionList({
       </div>
     );
   }
+
 
   return (
     <div className="max-h-[340px] overflow-y-auto">
