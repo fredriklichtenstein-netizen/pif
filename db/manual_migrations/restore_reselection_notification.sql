@@ -64,16 +64,11 @@ BEGIN
       END IF;
 
     ELSIF p_event = 'helper_selected' THEN
-      -- Chosen user: silent on first-time selection (covered by system
-      -- message in newly-opened conversation); notified on reselection
-      -- because the prior conversation was closed and could be missed.
+      -- Per refined signal rule: chosen user is silent on BOTH first-time
+      -- selection AND reselection. Both leave the conversation in an
+      -- ACTIVE state, so the in-conversation system message is sufficient.
       IF p_selected_user_id IS NOT NULL AND v_rec.user_id = p_selected_user_id THEN
-        IF p_is_reselection THEN
-          v_msg_title := 'Önskaren har valt dig på nytt för "' || v_title || '".';
-          v_msg_content := 'Konversationen är öppen igen — ni kan fortsätta där ni slutade.';
-        ELSE
-          CONTINUE;
-        END IF;
+        CONTINUE;
       ELSE
         v_msg_title := 'Någon har valts till att uppfylla önskan "' || v_title || '".';
         v_msg_content := 'Ditt erbjudande är sparat ifall fler behövs.';
