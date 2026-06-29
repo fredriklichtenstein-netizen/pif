@@ -1,14 +1,11 @@
 -- =============================================================
--- Restore reselection-only notification to chosen wish fulfiller.
--- First-time selection remains silent (system message in the
--- newly-opened conversation is sufficient, per signal convention:
--- notifications only when an action closes/archives a conversation).
--- Reselection qualifies because it reopens a previously-closed one.
---
--- Pif reselection NOT covered: select_receiver doesn't clear
--- closed_at, insert system messages, or return was_reselection.
--- A notification would point at a stale invisible conversation.
--- Logged separately in plan.md.
+-- REVERTED: reselection no longer emits a notification.
+-- Refined signal rule: notifications are required ONLY when the
+-- action leaves the conversation in a CLOSED/ARCHIVED state.
+-- Reselection results in an ACTIVE conversation (reopened), so
+-- the system message inside the now-active conversation is the
+-- only signal — the chosen user will find it in their active
+-- conversations list, not buried in history.
 -- =============================================================
 
 DROP FUNCTION IF EXISTS public.notify_item_interest_event(bigint, text, uuid, boolean);
