@@ -30,6 +30,7 @@ import { PifferRatingDialog } from "@/components/profile/completion/PifferRating
 import { PifRatingModal } from "@/components/messaging/PifRatingModal";
 import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
 import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
+import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreSelection";
 
 interface InterestSelectionListProps {
   itemId: string | number;
