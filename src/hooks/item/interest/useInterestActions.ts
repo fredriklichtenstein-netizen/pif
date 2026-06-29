@@ -106,65 +106,10 @@ const removeInterest = async (itemId: number, userId: string) => {
     return;
   }
 
-  // Pre-selection withdraw: look up item metadata so we can notify the
-  // owner symmetrically with `interest_received`. Failures here must
-  // never block the delete itself.
-  let ownerId: string | null = null;
-  let itemTitle = '';
-  let itemType = 'offer';
-  try {
-    const { data: itemRow } = await supabase
-      .from('items')
-      .select('user_id, title, item_type')
-      .eq('id', itemId)
-      .maybeSingle();
-    if (itemRow) {
-      ownerId = (itemRow as any).user_id ?? null;
-      itemTitle = (itemRow as any).title ?? '';
-      itemType = (itemRow as any).item_type ?? 'offer';
-    }
-  } catch (lookupErr) {
-    console.warn('interest_withdrawn: item lookup failed', lookupErr);
-  }
-
-  const { error } = await supabase
-    .from('interests')
-    .delete()
-    .eq('user_id', userId)
-    .eq('item_id', itemId);
-
-  if (error) throw error;
-
-  // Symmetric counterpart to `interest_received` — notify the owner that
-  // someone withdrew their interest before being selected. No conversation
-  // exists at this stage, so a notification is the only possible signal.
-  if (!DEMO_MODE && ownerId && ownerId !== userId) {
-    const isWish = String(itemType).toLowerCase() === 'request' || String(itemType).toLowerCase() === 'wish';
-    const title = isWish
-      ? `Någon har dragit tillbaka sitt erbjudande för "${itemTitle}".`
-      : `Någon har dragit tillbaka sitt intresse för "${itemTitle}".`;
-    const content = isWish
-      ? 'Önskan är fortfarande aktiv för andra som vill hjälpa.'
-      : 'Piffen är fortfarande öppen för andra att visa intresse.';
-    try {
-      await (supabase.rpc as any)('create_notification', {
-        p_user_id: ownerId,
-        p_type: 'interest_withdrawn',
-        p_payload: {
-          title,
-          content,
-          reference_id: String(itemId),
-          reference_type: 'item',
-          action_url: `/item/${itemId}`,
-          item_id: itemId,
-          item_title: itemTitle,
-          actor_id: userId,
-        },
-      });
-    } catch (notifyErr) {
-      console.warn('interest_withdrawn: notification failed', notifyErr);
-    }
-  }
+  // Pre-selection withdraw: delegate to the shared helper so this path
+  // and the popup's "Ångra" candidate action stay in lockstep on copy,
+  // ordering, and DEMO_MODE gating.
+  await withdrawPreSelectionInterest(itemId, userId);
 };
 
 const addInterest = async (itemId: number, userId: string, note?: string) => {
