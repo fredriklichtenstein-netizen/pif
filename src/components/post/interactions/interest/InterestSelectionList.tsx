@@ -971,15 +971,26 @@ export function InterestSelectionList({
                         </Button>
                       )}
                       {!isOwner && currentUserId === r.user_id && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs py-1 px-2 h-auto whitespace-nowrap"
-                          onClick={() => openConversationWith(r.user_id)}
-                        >
-                          <MessageCircle className="h-3 w-3 mr-1" />
-                          {t("interactions.message_btn")}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
+                            onClick={handleWithdrawOwnOffer}
+                          >
+                            <UserMinus className="h-3 w-3 mr-1" />
+                            {t("interactions.withdraw_offer_btn", "Ångra")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                            onClick={() => openConversationWith(r.user_id)}
+                          >
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            {t("interactions.message_btn")}
+                          </Button>
+                        </>
                       )}
                     </>
                   )}
