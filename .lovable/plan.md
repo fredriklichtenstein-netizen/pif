@@ -1,55 +1,30 @@
-## Goal
+## Lovable investigation findings + proposed fix
 
-Fix the layout breakage in `InterestSelectionList.tsx` where a selected pif receiver's row truncates the user's name to "F.." and wraps the timestamp onto multiple lines, caused by the recently-added "Ångra" button competing for space with the existing "Vald" badge and "Meddelande" button inside a 320px-wide popover.
-
-## Root cause
-
-- Popover: `w-80` (320px).
-- Row: `flex flex-wrap items-center gap-2`, with the user Link as `flex-1 min-w-0` (left side) and the actions cluster as `ml-auto flex flex-wrap` (right side).
-- Actions for a selected pif receiver now contain three elements: "Vald" badge (~55px) + "Ångra" labeled button (~75px) + "Meddelande" labeled button (~95px) + gaps ≈ 235px. Plus 28px avatar → Link gets squeezed to ~30–40px, forcing name truncation and timestamp wrap.
-- The actions row's own `flex-wrap` doesn't trigger because the actions still fit; the Link side is what gets crushed.
-
-## Change
-
-In `src/components/post/interactions/interest/InterestSelectionList.tsx`, inside the `!isOwner && currentUserId === r.user_id` branch (the block added in the previous turn, ~lines 974–987), convert the "Ångra" button to icon-only:
-
-- Replace its label text with just the `<UserMinus />` icon (no `mr-1`).
-- Use `size="icon"` with `className="h-7 w-7 text-destructive hover:text-destructive"` to keep the dense row scale.
-- Preserve accessibility via `aria-label={t("interactions.withdraw_offer_btn", "Ångra")}` and add `title={t("interactions.withdraw_offer_btn", "Ångra")}` for hover tooltip parity.
-- Keep `onClick={handleWithdrawOwnOffer}` unchanged.
-
-Leave the "Meddelande" button immediately after it fully untouched (text + icon), since it's the primary CTA and benefits from the explicit label.
-
-## Out of scope
-
-- The owner-side withdraw button above (different branch, not affected).
-- The wish-side collapsed fulfiller view (no overflow there).
-- Any SQL, the `withdrawPreSelectionInterest` helper, the server-authoritative routing, the `isSelectedFulfiller` header copy logic, or any other branch in the file.
-- No CSS token changes, no popover width change.
-
-## Verification
-
-- Typecheck.
-- Visual check at 320px popover width (the failing case from the screenshot): name renders full, timestamp on one line, both buttons fit beside the "Vald" badge.
-- Functional re-test: clicking the icon-only Ångra still triggers `handleWithdrawOwnOffer` → server-authoritative `withdraw_receiver` for the pif receiver case.
-
-## Technical details
-
-File: `src/components/post/interactions/interest/InterestSelectionList.tsx`
-Lines affected: ~977–984 (the `<Button>` immediately inside the `!isOwner && currentUserId === r.user_id && (<>` fragment).
-Diff shape:
-
+### 1. Where the width is set
+Single location: `src/components/post/interactions/button/CounterButton.tsx` line 117:
 ```tsx
-<Button
-  size="icon"
-  variant="outline"
-  className="h-7 w-7 text-destructive hover:text-destructive"
-  onClick={handleWithdrawOwnOffer}
-  aria-label={t("interactions.withdraw_offer_btn", "Ångra")}
-  title={t("interactions.withdraw_offer_btn", "Ångra")}
->
-  <UserMinus className="h-3 w-3" />
-</Button>
+<PopoverContent className={useInterestList ? "w-80 p-2" : "w-64 p-2"} ...>
 ```
+`InterestSelectionList` itself sets no width — it inherits from this parent `PopoverContent`. This is the only mount point of `InterestSelectionList`, so changing it here affects every variant (owner list, wish-fulfiller collapsed view, pif candidate list, non-owner candidate list) uniformly and nothing else.
 
-No new translation keys (reuses `interactions.withdraw_offer_btn`). No new imports (`UserMinus` already imported).
+The shared primitive (`src/components/ui/popover.tsx`) has a default `w-72` that is overridden by the `className` above; no change needed there.
+
+### 2. Impact of widening on other in-popover content
+All rows use the same left-aligned `avatar + name/timestamp + right-side actions` layout. There is no fixed-width media, chart, or grid inside. Wider container → more room for the name; every existing row type benefits (owner "Välj" buttons, "Vald" badge + Meddelande + Ångra, plain candidate rows). No layout would look odd at a moderately wider size. The wish-fulfiller collapsed self-view is even less dense than the owner list, so it also stays fine.
+
+### 3. Alternative: pure truncation tuning
+The name Link already has `flex-1 min-w-0` and the actions cluster is `ml-auto`. The reason "Fredri…" truncates is not a missing `min-w-0` — it's that at 320px total, once you subtract padding (16px) + avatar (28px) + gap (~8px) + "Vald" badge (~55px) + Ångra icon (28px) + Meddelande (~95px) + gaps, the name column resolves to ~50–60px regardless of any additional `min-w` / `max-w` hint. Truncation tuning alone cannot fix this at 320px; the container must grow. So this alternative is rejected as insufficient.
+
+### Proposed minimal change
+One-line edit in `CounterButton.tsx` line 117:
+```tsx
+className={useInterestList ? "w-80 sm:w-96 p-2" : "w-64 p-2"}
+```
+- Mobile (<640px): unchanged at 320px — preserves the currently-working narrow case.
+- ≥640px (sm breakpoint, covers desktop and most tablets): 384px, adding 64px directly to the name column (actions cluster is fixed-width, so all extra space flows to `flex-1`). Enough to render "Fredrik S" comfortably; longer names still truncate gracefully via the existing `truncate` class.
+- Non-interest counter popovers (likes / comments via `UserPopoverContent`) stay at `w-64` — untouched.
+
+### Out of scope
+No changes to `InterestSelectionList` internals, the Ångra button, the shared popover primitive, or any width used elsewhere.
+
+Approve and I'll apply the one-line change in build mode.
