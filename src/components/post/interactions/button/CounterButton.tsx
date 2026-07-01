@@ -114,7 +114,7 @@ export function CounterButton({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className={useInterestList ? "w-80 p-2" : "w-64 p-2"}
+        className={useInterestList ? "w-80 sm:w-96 p-2" : "w-64 p-2"}
         onClick={(e) => e.stopPropagation()}
       >
         {useInterestList ? (
