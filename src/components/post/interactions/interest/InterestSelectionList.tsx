@@ -973,13 +973,14 @@ export function InterestSelectionList({
                       {!isOwner && currentUserId === r.user_id && (
                         <>
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="outline"
-                            className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
                             onClick={handleWithdrawOwnOffer}
+                            aria-label={t("interactions.withdraw_offer_btn", "Ångra")}
+                            title={t("interactions.withdraw_offer_btn", "Ångra")}
                           >
-                            <UserMinus className="h-3 w-3 mr-1" />
-                            {t("interactions.withdraw_offer_btn", "Ångra")}
+                            <UserMinus className="h-3 w-3" />
                           </Button>
                           <Button
                             size="sm"
