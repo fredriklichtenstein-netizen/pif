@@ -402,21 +402,25 @@ export function InterestSelectionList({
         conversationId = typeof rpcData === "string" ? rpcData : (rpcData ?? null);
       }
 
-      // Fan-out notifications to the chosen user AND every other
-      // interested/offering user so they know the slot was filled.
-      try {
-        const { error: notifyErr } = await (supabase.rpc as any)(
-          "notify_item_interest_event",
-          {
-            p_item_id: numericItemId,
-            p_event: isWish ? "helper_selected" : "receiver_selected",
-            p_selected_user_id: row.user_id,
-            p_is_reselection: isWish ? wasReselection : false,
-          },
-        );
-        if (notifyErr) console.warn("notify_item_interest_event failed", notifyErr);
-      } catch (notifyErr) {
-        console.warn("notify_item_interest_event threw", notifyErr);
+      // Fan-out notifications to interested users. For pifs this is now
+      // handled server-side inside select_receiver (fires before the
+      // not_selected flip). For wishes select_wish_helper does not yet
+      // fan out, so the client still triggers helper_selected here.
+      if (isWish) {
+        try {
+          const { error: notifyErr } = await (supabase.rpc as any)(
+            "notify_item_interest_event",
+            {
+              p_item_id: numericItemId,
+              p_event: "helper_selected",
+              p_selected_user_id: row.user_id,
+              p_is_reselection: wasReselection,
+            },
+          );
+          if (notifyErr) console.warn("notify_item_interest_event failed", notifyErr);
+        } catch (notifyErr) {
+          console.warn("notify_item_interest_event threw", notifyErr);
+        }
       }
       // Optimistically update UI: pifs are single-receiver, wishes can
       // have many helpers, so for wishes we only flip the picked row.

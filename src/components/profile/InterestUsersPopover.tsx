@@ -99,14 +99,10 @@ export function InterestUsersPopover({ itemId, itemOwnerId, itemType }: Interest
       });
       if (error) throw error;
 
-      // Notify all interested users (selected + the rest) of the choice.
-      await (supabase.rpc as any)('notify_item_interest_event', {
-        p_item_id: numericItemId,
-        p_event: 'receiver_selected',
-        p_selected_user_id: userId,
-      }).then(({ error: nErr }: any) => {
-        if (nErr) console.warn('notify_item_interest_event failed', nErr);
-      });
+      // receiver_selected fan-out is handled server-side inside
+      // select_receiver (runs before the not_selected flip).
+
+
 
       // Optimistically update local interest status so the UI reflects the choice immediately.
       setUsers((prev) =>
