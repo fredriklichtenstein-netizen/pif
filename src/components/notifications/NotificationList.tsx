@@ -206,9 +206,11 @@ export function NotificationList() {
                   ctaLabel = t('notifications.review_interest_cta');
                 } else if (isReceiverSelected) {
                   const isWishHelper = notif.type === 'helper_selected';
-                  // For wishes, prefer the payload title written server-side
-                  // by notify_item_interest_event (multi-fulfiller-neutral
-                  // copy). Fall back to a neutral wish line only if missing.
+                  // Payload-first: notify_item_interest_event writes
+                  // audience-specific title/content/action_url per recipient
+                  // (selected receiver vs non-selected interested users).
+                  // Trust the payload; only fall back to legacy templates
+                  // for pre-payload rows.
                   if (isWishHelper) {
                     displayTitle = safeTitle ?? (notif.item_title
                       ? `Önskaren vill gärna att du uppfyller önskan "${notif.item_title}".`
@@ -216,15 +218,15 @@ export function NotificationList() {
                     displayContent = notif.content ?? null;
                   } else {
                     displayTitle = safeTitle ?? t('interactions.receiver_selected_notif_title');
-                    displayContent = notif.item_title
+                    displayContent = notif.content ?? (notif.item_title
                       ? t('notifications.selected_for_item', { title: notif.item_title })
-                      : t('interactions.receiver_selected_notif_body');
+                      : t('interactions.receiver_selected_notif_body'));
                   }
-                  ctaUrl = notif.conversation_id
+                  ctaUrl = notif.action_url ?? (notif.conversation_id
                     ? `/messages?conversation=${notif.conversation_id}`
                     : notif.item_id
                       ? `/messages?item=${notif.item_id}`
-                      : '/messages';
+                      : '/messages');
                   ctaLabel = t('interactions.start_conversation');
                 } else if (isSelectionMade) {
                   const receiver = notif.actor_name || t('someone');
