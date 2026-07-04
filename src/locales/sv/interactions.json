@@ -547,7 +547,28 @@
     "image_viewer": "Bildvisare",
     "interest_error": "Kunde inte uppdatera intresse. Försök igen.",
     "no_unread_notifications": "Inga olästa aviseringar.",
-    "user": "Användare"
+    "user": "Användare",
+    "feedback": {
+      "fab_aria": "Skicka feedback",
+      "dialog_title": "Skicka feedback",
+      "mode_issue": "Rapportera ett problem",
+      "mode_feedback": "Ge feedback",
+      "placeholder_issue": "Berätta vad som hände...",
+      "placeholder_feedback": "Berätta vad du tycker om PIF...",
+      "capture_button": "Ta skärmbild",
+      "capture_hint": "Bifoga en bild av den aktuella vyn som referens.",
+      "capture_failed": "Kunde inte ta skärmbild — du kan fortfarande skicka utan bild.",
+      "screenshot_attached": "Skärmbild bifogad",
+      "remove_screenshot": "Ta bort skärmbild",
+      "submit": "Skicka",
+      "cancel": "Avbryt",
+      "sending": "Skickar…",
+      "success_title": "Tack för din feedback!",
+      "success_description": "Vi läser allt som kommer in.",
+      "error_title": "Kunde inte skicka",
+      "error_description": "Något gick fel. Försök igen.",
+      "anonymous_name": "Anonym"
+    }
   },
   "comments": {
     "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."
@@ -644,28 +665,7 @@
     "item_removed_or_invalid": "Objektet kan ha tagits bort eller länken är ogiltig.",
     "retrying": "Försöker igen...",
     "browse_feed": "Bläddra i flödet",
-    "redirecting": "Omdirigerar till objekt...",
-    "feedback": {
-      "fab_aria": "Skicka feedback",
-      "dialog_title": "Skicka feedback",
-      "mode_issue": "Rapportera ett problem",
-      "mode_feedback": "Ge feedback",
-      "placeholder_issue": "Berätta vad som hände...",
-      "placeholder_feedback": "Berätta vad du tycker om PIF...",
-      "capture_button": "Ta skärmbild",
-      "capture_hint": "Bifoga en bild av den aktuella vyn som referens.",
-      "capture_failed": "Kunde inte ta skärmbild — du kan fortfarande skicka utan bild.",
-      "screenshot_attached": "Skärmbild bifogad",
-      "remove_screenshot": "Ta bort skärmbild",
-      "submit": "Skicka",
-      "cancel": "Avbryt",
-      "sending": "Skickar…",
-      "success_title": "Tack för din feedback!",
-      "success_description": "Vi läser allt som kommer in.",
-      "error_title": "Kunde inte skicka",
-      "error_description": "Något gick fel. Försök igen.",
-      "anonymous_name": "Anonym"
-    }
+    "redirecting": "Omdirigerar till objekt..."
   },
   "settings": {
     "title": "Kontoinställningar",
