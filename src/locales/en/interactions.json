@@ -644,7 +644,28 @@
     "item_removed_or_invalid": "The item may have been removed or the link is invalid.",
     "retrying": "Retrying...",
     "browse_feed": "Browse Feed",
-    "redirecting": "Redirecting to item..."
+    "redirecting": "Redirecting to item...",
+    "feedback": {
+      "fab_aria": "Send feedback",
+      "dialog_title": "Send feedback",
+      "mode_issue": "Report an issue",
+      "mode_feedback": "Give feedback",
+      "placeholder_issue": "Describe what happened...",
+      "placeholder_feedback": "Tell us what you think about PIF...",
+      "capture_button": "Capture screen",
+      "capture_hint": "Attach a screenshot of the current view as reference.",
+      "capture_failed": "Couldn't capture screenshot — you can still send without an image.",
+      "screenshot_attached": "Screenshot attached",
+      "remove_screenshot": "Remove screenshot",
+      "submit": "Send",
+      "cancel": "Cancel",
+      "sending": "Sending…",
+      "success_title": "Thanks for your feedback!",
+      "success_description": "We read everything that comes in.",
+      "error_title": "Could not send",
+      "error_description": "Something went wrong. Please try again.",
+      "anonymous_name": "Anonymous"
+    }
   },
   "settings": {
     "title": "Account Settings",
