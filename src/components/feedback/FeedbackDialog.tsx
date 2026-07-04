@@ -85,21 +85,17 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
         try {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("first_name,last_name,full_name,email")
+            .select("first_name,last_name")
             .eq("id", user.id)
             .maybeSingle();
           if (profile) {
             const p = profile as {
               first_name?: string | null;
               last_name?: string | null;
-              full_name?: string | null;
-              email?: string | null;
             };
             senderName =
-              p.full_name ||
-              [p.first_name, p.last_name].filter(Boolean).join(" ") ||
-              "";
-            senderEmail = p.email || user.email || "";
+              [p.first_name, p.last_name].filter(Boolean).join(" ") || "";
+            senderEmail = user.email || "";
           } else {
             senderEmail = user.email || "";
           }
