@@ -59,7 +59,8 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
         backgroundColor: "#ffffff",
         ignoreElements: (el) =>
           el instanceof HTMLElement &&
-          el.closest("[data-feedback-dialog]") !== null,
+          (el.closest("[data-feedback-dialog]") !== null ||
+           el.closest("[data-radix-dialog-overlay]") !== null),
       });
       const dataUrl = canvas.toDataURL("image/png");
       setScreenshot(dataUrl);
