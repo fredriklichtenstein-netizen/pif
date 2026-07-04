@@ -1,36 +1,17 @@
-## Fix: feedback i18n block nested one level too deep
+## Fix: Exclude Radix dialog overlay from html2canvas capture
 
-### Root cause
-In both `src/locales/sv/interactions.json` and `src/locales/en/interactions.json`, the `"feedback"` block was inserted just before line 736's closing `}` — but that `}` closes the `settings` object, not `interactions`. So the keys currently resolve at `interactions.settings.feedback.*` while `FeedbackDialog.tsx` calls `t("interactions.feedback.*")`. Mismatch → raw key paths render.
+### Problem
+The dark Radix `DialogOverlay` (`bg-black/80`) is rendered in the DOM alongside `DialogContent` inside `DialogPortal`. The current `ignoreElements` predicate in `FeedbackDialog.tsx` only excludes `[data-feedback-dialog]` (the content wrapper), so the fixed-position backdrop is still captured in screenshots.
 
-### Change
-Move the `"feedback": { … }` block (lines 715–735 in both files) out of `settings` and into `interactions` as a sibling of the existing `interactions.*` keys. Content of the block stays byte-identical — only its nesting position changes.
+### Changes
+1. **`src/components/ui/dialog.tsx`** — Add `data-radix-dialog-overlay=""` to the `DialogPrimitive.Overlay` component so the overlay can be targeted explicitly.
+2. **`src/components/feedback/FeedbackDialog.tsx`** — Extend the `ignoreElements` predicate to also exclude any element matching `[data-radix-dialog-overlay]`:
+   ```text
+   ignoreElements: (el) =>
+     el instanceof HTMLElement &&
+     (el.closest("[data-feedback-dialog]") !== null ||
+      el.closest("[data-radix-dialog-overlay]") !== null),
+   ```
+3. Run `tsgo` / typecheck to confirm no regressions.
 
-Structure after the fix (both files):
-
-```text
-{
-  "interactions": {
-    "like": …,
-    …existing interactions keys…,
-    "feedback": { fab_aria, dialog_title, mode_issue, mode_feedback,
-                  placeholder_issue, placeholder_feedback,
-                  capture_button, capture_hint, capture_failed,
-                  screenshot_attached, remove_screenshot,
-                  submit, cancel, sending,
-                  success_title, success_description,
-                  error_title, error_description,
-                  anonymous_name },
-    "settings": { …unchanged, no feedback child… }
-  },
-  "notifications": {…},
-  "someone": "Någon"
-}
-```
-
-No component changes. No changes to `i18n/index.ts`. No other locale files touched.
-
-### Verification
-1. `python3 -c "import json,sys; d=json.load(open(p)); assert 'feedback' in d['interactions']; assert 'feedback' not in d['interactions']['settings']"` for both SV and EN.
-2. `tsgo` typecheck (should be a no-op since only JSON changed, but confirms nothing else regressed).
-3. Manually load the dialog in the preview and confirm Swedish/English strings render (no raw `interactions.feedback.*` paths).
+No other files need changes. This fix is scoped to the html2canvas call only.
