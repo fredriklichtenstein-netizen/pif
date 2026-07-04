@@ -125,12 +125,10 @@ export function InteractionButtonWithPopup({
         perspectiveLabel = t("interactions.you_are_selected", "Du är vald");
         perspectiveDisabled = true;
         perspectiveActiveColor = "#00D1A0";
-      } else if (hasSelection) {
-        // Another user is the chosen receiver — lock the button until the
-        // pif is completed (or selection is withdrawn).
-        perspectiveDisabled = true;
-        perspectiveDim = true;
       }
+      // Non-selected users may freely toggle interest until the pif is
+      // completed/archived. Single-selection is enforced server-side in
+      // select_receiver.
     }
   }
 

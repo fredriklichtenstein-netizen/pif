@@ -239,7 +239,7 @@
     "withdraw_selection_btn": "Avmarkera",
     "withdraw_selection_aria": "Avmarkera vald mottagare",
     "withdraw_selection_title": "Avmarkera vald mottagare?",
-    "withdraw_selection_description": "Mottagaren kommer inte längre vara vald och alla intresserade grannar kan väljas igen. Mottagaren meddelas inte automatiskt.",
+    "withdraw_selection_description": "Mottagaren kommer inte längre vara vald och alla intresserade grannar kan väljas igen. Mottagaren meddelas automatiskt om att piffen är öppen igen.",
     "withdraw_selection_cancel": "Behåll val",
     "withdraw_selection_confirm": "Avmarkera",
     "selection_withdrawn": "Valet har dragits tillbaka",

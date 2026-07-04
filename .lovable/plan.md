@@ -1,30 +1,45 @@
-## Lovable investigation findings + proposed fix
+## Lovable implementation plan for approval
 
-### 1. Where the width is set
-Single location: `src/components/post/interactions/button/CounterButton.tsx` line 117:
-```tsx
-<PopoverContent className={useInterestList ? "w-80 p-2" : "w-64 p-2"} ...>
-```
-`InterestSelectionList` itself sets no width — it inherits from this parent `PopoverContent`. This is the only mount point of `InterestSelectionList`, so changing it here affects every variant (owner list, wish-fulfiller collapsed view, pif candidate list, non-owner candidate list) uniformly and nothing else.
+Two pre-flight checks resolved. Frontend-only diffs unchanged in shape from the previous plan.
 
-The shared primitive (`src/components/ui/popover.tsx`) has a default `w-72` that is overridden by the `className` above; no change needed there.
+---
 
-### 2. Impact of widening on other in-popover content
-All rows use the same left-aligned `avatar + name/timestamp + right-side actions` layout. There is no fixed-width media, chart, or grid inside. Wider container → more room for the name; every existing row type benefits (owner "Välj" buttons, "Vald" badge + Meddelande + Ångra, plain candidate rows). No layout would look odd at a moderately wider size. The wish-fulfiller collapsed self-view is even less dense than the owner list, so it also stays fine.
+### Check A — Payload.title coverage per notification type (Fix 1)
 
-### 3. Alternative: pure truncation tuning
-The name Link already has `flex-1 min-w-0` and the actions cluster is `ml-auto`. The reason "Fredri…" truncates is not a missing `min-w-0` — it's that at 320px total, once you subtract padding (16px) + avatar (28px) + gap (~8px) + "Vald" badge (~55px) + Ångra icon (28px) + Meddelande (~95px) + gaps, the name column resolves to ~50–60px regardless of any additional `min-w` / `max-w` hint. Truncation tuning alone cannot fix this at 320px; the container must grow. So this alternative is rejected as insufficient.
+Every current insert path into `notifications` writes `payload.title`. Confirmed by grepping every DB migration that inserts notifications:
 
-### Proposed minimal change
-One-line edit in `CounterButton.tsx` line 117:
-```tsx
-className={useInterestList ? "w-80 sm:w-96 p-2" : "w-64 p-2"}
-```
-- Mobile (<640px): unchanged at 320px — preserves the currently-working narrow case.
-- ≥640px (sm breakpoint, covers desktop and most tablets): 384px, adding 64px directly to the name column (actions cluster is fixed-width, so all extra space flows to `flex-1`). Enough to render "Fredrik S" comfortably; longer names still truncate gracefully via the existing `truncate` class.
-- Non-interest counter popovers (likes / comments via `UserPopoverContent`) stay at `w-64` — untouched.
+- `receiver_selected` / `helper_selected` fan-out — `notify_item_interest_event` (`missing_signal_fixes.sql`, `wish_aware_helper_selected_notification.sql`, `reselection_aware_notifications.sql`, `restore_reselection_notification.sql`)
+- `selection_made` — `interest_status_change_notifications.sql` (both pif + wish branches include `title`)
+- pif/wish completed — `interest_status_change_notifications.sql`, `wish_aware_helper_selected_notification.sql`, `reselection_aware_notifications.sql`
+- `withdraw_receiver` / `withdraw_pif` fan-out + reopened — `withdraw_signals_consolidation.sql`, `withdraw_receiver_wish_delete_on_self_withdraw.sql`, `wish_aware_reopened_archived_notifications.sql`
+- system message mirrors — `interest_status_change_notifications.sql`
 
-### Out of scope
-No changes to `InterestSelectionList` internals, the Ångra button, the shared popover primitive, or any width used elsewhere.
+`safeTitle` in the renderer also guards against the transform-layer fallback `p.title ?? n.title ?? n.type` accidentally surfacing the raw type as a title. So the type-keyed template branch is only reached for genuinely legacy/pre-payload rows — no current type would fall through incorrectly. Safe to keep the existing template as a pure legacy fallback while switching to payload-first for `displayContent` and `ctaUrl` on `receiver_selected` / `helper_selected`.
 
-Approve and I'll apply the one-line change in build mode.
+No additional in-scope bug uncovered.
+
+---
+
+### Check B — `interests` unique constraint + toggle path (Fix 3)
+
+- The client already assumes a unique `(user_id, item_id)` constraint: `useInterestActions.addInterest` uses `.upsert([payload], { onConflict: 'user_id, item_id', ignoreDuplicates: !note })`. So a plain re-insert wouldn't happen — the existing add path is upsert-based and handles the collision.
+- Withdraw path for non-selected users (`removeInterest` → `withdrawPreSelectionInterest`) does a `DELETE` — because `status !== 'selected'`, it takes the plain-delete branch, not `withdraw_receiver`. So the row goes away cleanly before any re-add.
+- `showInterest` state is derived from **row existence**, not from `status` (`useInterests.ts` line 122: `setShowInterest(!!userInterest)`). So a `not_selected` row correctly renders the button as "already interested" — clicking it triggers the delete path (not another insert), no unique-collision case to handle.
+
+Concrete flow after Fix 3 for a non-selected user:
+1. They have a row with `status = 'not_selected'` → button shows active/interested (currently disabled; fix unlocks it).
+2. Click → `removeInterest` → row is not `selected` → `withdrawPreSelectionInterest` deletes the row cleanly.
+3. Click again to re-express interest → `addInterest` upserts a fresh row (status defaults to `pending`). Since the row was just deleted, this is a plain insert; the upsert guard would only matter if a stale realtime race left the row behind.
+
+Server-side single-selection guarantee stays intact: `select_receiver` enforces uniqueness of the selected receiver regardless of how many `pending`/`not_selected` interest rows exist alongside.
+
+No client changes needed beyond the button gate itself. No DB changes.
+
+---
+
+### Files to touch (unchanged from prior plan)
+
+- `src/components/notifications/NotificationList.tsx` — payload-first `displayContent` + `ctaUrl` for `receiver_selected` (both pif and wish sub-branches). Keep existing template as legacy fallback.
+- `src/locales/sv/interactions.json` — update `withdraw_selection_description` to say the receiver **is** notified automatically that the pif is open again.
+- `src/locales/en/interactions.json` — matching EN update.
+- `src/components/post/interactions/InteractionButtonWithPopup.tsx` — remove the `else if (hasSelection) { perspectiveDisabled = true; perspectiveDim = true; }` block in the pif branch so non-selected users can freely toggle. Wish branch and `isCurrentSelected` → "Du är vald" behavior untouched.
