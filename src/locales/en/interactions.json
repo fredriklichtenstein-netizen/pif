@@ -547,7 +547,28 @@
     "image_viewer": "Image viewer",
     "interest_error": "Could not update interest. Please try again.",
     "no_unread_notifications": "No unread notifications.",
-    "user": "User"
+    "user": "User",
+    "feedback": {
+      "fab_aria": "Send feedback",
+      "dialog_title": "Send feedback",
+      "mode_issue": "Report an issue",
+      "mode_feedback": "Give feedback",
+      "placeholder_issue": "Describe what happened...",
+      "placeholder_feedback": "Tell us what you think about PIF...",
+      "capture_button": "Capture screen",
+      "capture_hint": "Attach a screenshot of the current view as reference.",
+      "capture_failed": "Couldn't capture screenshot — you can still send without an image.",
+      "screenshot_attached": "Screenshot attached",
+      "remove_screenshot": "Remove screenshot",
+      "submit": "Send",
+      "cancel": "Cancel",
+      "sending": "Sending…",
+      "success_title": "Thanks for your feedback!",
+      "success_description": "We read everything that comes in.",
+      "error_title": "Could not send",
+      "error_description": "Something went wrong. Please try again.",
+      "anonymous_name": "Anonymous"
+    }
   },
   "comments": {
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."
@@ -711,28 +732,7 @@
     "signed_out_description": "You have been signed out of your account",
     "error_signing_out": "Error signing out",
     "signing_out": "Signing out...",
-    "delete_account_title": "Permanently delete your account?",
-    "feedback": {
-      "fab_aria": "Send feedback",
-      "dialog_title": "Send feedback",
-      "mode_issue": "Report an issue",
-      "mode_feedback": "Give feedback",
-      "placeholder_issue": "Describe what happened...",
-      "placeholder_feedback": "Tell us what you think about PIF...",
-      "capture_button": "Capture screen",
-      "capture_hint": "Attach a screenshot of the current view as reference.",
-      "capture_failed": "Couldn't capture screenshot — you can still send without an image.",
-      "screenshot_attached": "Screenshot attached",
-      "remove_screenshot": "Remove screenshot",
-      "submit": "Send",
-      "cancel": "Cancel",
-      "sending": "Sending…",
-      "success_title": "Thanks for your feedback!",
-      "success_description": "We read everything that comes in.",
-      "error_title": "Could not send",
-      "error_description": "Something went wrong. Please try again.",
-      "anonymous_name": "Anonymous"
-    }
+    "delete_account_title": "Permanently delete your account?"
   },
   "notifications": {
     "is_interested_in_your_pif": "is interested in your pif",
