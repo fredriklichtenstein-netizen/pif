@@ -79,6 +79,7 @@ function App() {
                 </main>
               </NetworkStatusWrapper>
               <ReceiverConfirmationWatcher />
+              <FeedbackFab />
               <Toaster />
               <Sonner />
               <AuthHydrationDebugPanel />
