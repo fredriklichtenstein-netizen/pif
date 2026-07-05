@@ -58,7 +58,7 @@ export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace state={{ from }} />;
   }
 
-  if (profileCompleted === false && window.location.pathname !== '/create-profile') {
+  if (!profileCompleted && window.location.pathname !== '/create-profile') {
     return <Navigate to="/create-profile" replace />;
   }
 

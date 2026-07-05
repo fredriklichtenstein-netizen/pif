@@ -99,7 +99,7 @@ export default function Auth() {
   
   useEffect(() => {
     if (user) {
-      if (profileCompleted === false) {
+      if (!profileCompleted) {
         navigate("/create-profile");
       } else if (fromPath && fromPath !== "/auth") {
         navigate(fromPath, { replace: true });
