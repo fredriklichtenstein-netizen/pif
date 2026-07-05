@@ -55,7 +55,6 @@ export function StepAddressPhone({
           countryCode={countryCode}
           onPhoneChange={onPhoneChange}
           required={false}
-          placeholder={t("profile.onboarding.phone_optional_placeholder")}
         />
       </div>
 
