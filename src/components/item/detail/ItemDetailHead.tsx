@@ -14,12 +14,11 @@ export function ItemDetailHead({ id, title, description, images, itemType }: Ite
   const normalizedType = String(itemType || "offer").toLowerCase();
   const isRequest = normalizedType === "request" || normalizedType === "wish";
 
-  const fallbackDescription = isRequest
-    ? "Någon söker detta!"
-    : "Någon vill piffa detta vidare!";
-
-  const ogTitle = `${title || "PIF"} — PIF`;
-  const ogDescription = description?.trim() ? description : fallbackDescription;
+  const trimmedTitle = title?.trim();
+  const ogTitle = trimmedTitle
+    ? (isRequest ? `Sökes: ${trimmedTitle}` : `Piffas nu: ${trimmedTitle}`)
+    : "PIF — Pay It Forward";
+  const ogDescription = description?.trim() ?? "";
   const ogImage = images && images.length > 0 ? images[0] : FALLBACK_IMAGE;
   const ogUrl = `https://app.pif.community/item/${id}`;
 
