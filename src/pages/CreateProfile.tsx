@@ -109,7 +109,7 @@ export default function CreateProfile() {
             .eq("id", user.id);
           if (!error) {
             useAuthStore.getState().setProfileCompleted(true);
-            navigate("/home", { replace: true });
+            navigate("/", { replace: true });
             return;
           }
         }
@@ -211,7 +211,7 @@ export default function CreateProfile() {
         description: t("profile.created_description"),
       });
 
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Onboarding submission error:", error);
       toast({
