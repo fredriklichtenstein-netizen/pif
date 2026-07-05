@@ -109,7 +109,7 @@ export default function CreateProfile() {
             .eq("id", user.id);
           if (!error) {
             useAuthStore.getState().setProfileCompleted(true);
-            navigate("/home", { replace: true });
+            navigate("/", { replace: true });
             return;
           }
         }
