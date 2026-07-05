@@ -2,7 +2,6 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PhoneInput } from "@/components/profile/PhoneInput";
 import { useTranslation } from "react-i18next";
 
 interface FormFieldsProps {
@@ -10,9 +9,6 @@ interface FormFieldsProps {
   setEmail: (email: string) => void;
   password: string;
   setPassword: (password: string) => void;
-  phone: string;
-  countryCode: string;
-  onPhoneChange: (newPhone: string, newCountryCode: string) => void;
   isSignUp: boolean;
   disabled: boolean;
   clearFormError: () => void;
@@ -23,15 +19,12 @@ export function FormFields({
   setEmail,
   password,
   setPassword,
-  phone,
-  countryCode,
-  onPhoneChange,
   isSignUp,
   disabled,
   clearFormError
 }: FormFieldsProps) {
   const { t } = useTranslation();
-  
+
   return (
     <div className="rounded-md shadow-sm space-y-4">
       <div>
@@ -52,7 +45,7 @@ export function FormFields({
           disabled={disabled}
         />
       </div>
-      
+
       <div>
         <Label htmlFor="password">{t('auth.password_label')}</Label>
         <Input
@@ -72,22 +65,6 @@ export function FormFields({
           disabled={disabled}
         />
       </div>
-      
-      {isSignUp && (
-        <div>
-          <Label htmlFor="phone">{t('auth.phone_label')}</Label>
-          <PhoneInput
-            value={phone}
-            countryCode={countryCode}
-            onPhoneChange={(newPhone, newCountryCode) => {
-              onPhoneChange(newPhone, newCountryCode);
-              clearFormError();
-            }}
-            required={false}
-            disabled={disabled}
-          />
-        </div>
-      )}
     </div>
   );
 }

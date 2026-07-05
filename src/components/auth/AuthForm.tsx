@@ -15,7 +15,7 @@ interface AuthFormProps {
   isSignUp: boolean;
   loading: boolean;
   error?: string | null;
-  onSubmit: (email: string, password: string, phone?: string, countryCode?: string) => Promise<boolean | void>;
+  onSubmit: (email: string, password: string) => Promise<boolean | void>;
   onToggleMode: () => void;
   onPasswordReset?: (email: string) => Promise<boolean>;
 }
@@ -31,8 +31,6 @@ export function AuthForm({
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [countryCode, setCountryCode] = useState("+46"); // Default to Sweden
   const [formError, setFormError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +44,6 @@ export function AuthForm({
   useEffect(() => {
     setEmail("");
     setPassword("");
-    setPhone("");
     setFormError("");
     setSubmitError("");
     setSubmitting(false);
@@ -102,9 +99,7 @@ export function AuthForm({
     setRequestTimeout(timeout);
     
     try {
-      const result = isSignUp
-        ? await onSubmit(email, password, phone, countryCode)
-        : await onSubmit(email, password);
+      const result = await onSubmit(email, password);
       
       // Clear the timeout and its warning if we got a result
       clearTimeout(timeout);
@@ -164,18 +159,11 @@ export function AuthForm({
       )}
       
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <FormFields 
+        <FormFields
           email={email}
           setEmail={setEmail}
           password={password}
           setPassword={setPassword}
-          phone={phone}
-          countryCode={countryCode}
-          onPhoneChange={(newPhone, newCountryCode) => {
-            setPhone(newPhone);
-            setCountryCode(newCountryCode);
-            setFormError("");
-          }}
           isSignUp={isSignUp}
           disabled={isLoading}
           clearFormError={clearFormError}

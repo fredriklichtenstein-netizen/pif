@@ -128,6 +128,8 @@ export function useSignIn() {
           description: t('auth.complete_profile_description'),
         });
         navigate("/create-profile");
+        setSigningIn(false);
+        return true;
       }
       navigate("/");
       setSigningIn(false);
