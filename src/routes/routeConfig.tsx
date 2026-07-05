@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
+import { OnboardingGate } from "@/components/auth/OnboardingGate";
 import i18n from "@/i18n";
 
 const LoadingFallback = () => (
@@ -59,15 +60,17 @@ const withSuspense = (Component: React.ComponentType) => (
   </Suspense>
 );
 
+const gated = (element: React.ReactNode) => <OnboardingGate>{element}</OnboardingGate>;
+
 export const publicRoutes = [
-  { path: "/", element: withSuspense(Home) },
-  { path: "/feed", element: withSuspense(Feed) },
-  { path: "/map", element: withSuspense(Map) },
+  { path: "/", element: gated(withSuspense(Home)) },
+  { path: "/feed", element: gated(withSuspense(Feed)) },
+  { path: "/map", element: gated(withSuspense(Map)) },
   { path: "/auth", element: withSuspense(Auth) },
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
-  { path: "/item/:id", element: withSuspense(ItemDetail) },
-  { path: "/user/:id", element: withSuspense(PublicProfile) },
+  { path: "/item/:id", element: gated(withSuspense(ItemDetail)) },
+  { path: "/user/:id", element: gated(withSuspense(PublicProfile)) },
   { path: "/share/:id", element: withSuspense(ShareRedirect) },
   { path: "/privacy", element: withSuspense(Privacy) },
   { path: "*", element: withSuspense(NotFound) },

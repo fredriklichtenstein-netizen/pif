@@ -106,21 +106,8 @@ export function useSignIn() {
     try {
       setAuthError(null);
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('onboarding_completed')
-        .eq('id', userId)
-        .maybeSingle();
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        toast({
-          title: t('auth.welcome_back'),
-          description: t('auth.welcome_back_description'),
-        });
-        navigate("/");
-        setSigningIn(false);
-        return true;
-      }
+      const { fetchProfileWithRetry } = await import("./fetchProfileWithRetry");
+      const profile = await fetchProfileWithRetry(userId);
 
       if (!profile || !profile.onboarding_completed) {
         toast({
@@ -136,11 +123,9 @@ export function useSignIn() {
       return true;
     } catch (profileError) {
       console.error("Error in profile check:", profileError);
-      toast({
-        title: t('auth.welcome_back'),
-        description: t('auth.welcome_back_description'),
-      });
-      navigate("/");
+      // Safe fallback: send to onboarding rather than main app so an
+      // unonboarded user is never dropped on a public page with no gate.
+      navigate("/create-profile");
       setSigningIn(false);
       return true;
     }

@@ -5,14 +5,22 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload";
 interface StepAvatarProps {
   avatarFile: File | null;
   avatarUrl: string | null;
+  hasExistingAvatar?: boolean;
   onFileChange: (file: File) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function StepAvatar({ avatarFile, avatarUrl, onFileChange, onNext, onBack }: StepAvatarProps) {
+export function StepAvatar({
+  avatarFile,
+  avatarUrl,
+  hasExistingAvatar,
+  onFileChange,
+  onNext,
+  onBack,
+}: StepAvatarProps) {
   const { t } = useTranslation();
-  const canContinue = avatarFile !== null;
+  const canContinue = avatarFile !== null || !!hasExistingAvatar;
 
   return (
     <div className="space-y-6">
