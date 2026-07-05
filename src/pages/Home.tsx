@@ -5,6 +5,7 @@ import { checkNetworkConnection } from "@/hooks/auth/networkUtils";
 import { useNavigate } from "react-router-dom";
 import { MainNav } from "@/components/MainNav";
 import { MainHeader } from "@/components/layout/MainHeader";
+import { InstallInstructionsBanner } from "@/components/pwa/InstallInstructionsBanner";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { isNetworkError } from "@/utils/connectionRetryUtils";
 import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin, Gift } from "lucide-react";
