@@ -24,13 +24,10 @@ export function useEmailConfirmation() {
 
     const checkAndRedirect = async (userId: string) => {
       try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', userId)
-          .maybeSingle();
+        const { fetchProfileWithRetry } = await import("@/hooks/auth/fetchProfileWithRetry");
+        const profile = await fetchProfileWithRetry(userId);
 
-        if (!error && profile?.onboarding_completed) {
+        if (profile?.onboarding_completed) {
           toast({
             title: t('interactions.welcome_back'),
             description: t('interactions.welcome_back_description'),
