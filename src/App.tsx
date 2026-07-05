@@ -12,7 +12,7 @@ import i18n from './i18n';
 import { NetworkStatusWrapper } from "@/components/common/NetworkStatusWrapper";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { SkipToContent } from "@/components/accessibility/SkipToContent";
-import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
+
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { ReceiverConfirmationWatcher } from "@/components/profile/completion/ReceiverConfirmationWatcher";
 import { FeedbackFab } from "@/components/feedback/FeedbackFab";
@@ -72,7 +72,6 @@ function App() {
             <BrowserRouter>
               <SkipToContent />
               <OfflineIndicator />
-              <PWAInstallPrompt />
               <NetworkStatusWrapper>
                 <main id="main-content" role="main">
                   <Routes />

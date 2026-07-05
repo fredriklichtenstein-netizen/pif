@@ -1,5 +1,6 @@
 import { OptimizedFeedContainer } from "@/components/feed/OptimizedFeedContainer";
 import { MainNav } from "@/components/MainNav";
+import { InstallInstructionsBanner } from "@/components/pwa/InstallInstructionsBanner";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
