@@ -79,6 +79,25 @@
     "pickup_use_other": "Use a different address",
     "pickup_address_in_use": "Address used for handover",
     "pickup_no_primary": "No primary address saved yet",
-    "pickup_no_address_set": "No address selected"
+    "pickup_no_address_set": "No address selected",
+    "onboarding": {
+      "step_indicator": "Step {{current}} of {{total}}",
+      "next": "Next",
+      "back": "Back",
+      "complete": "Complete",
+      "saving": "Saving...",
+      "welcome_title": "Welcome to PIF!",
+      "welcome_subtext": "PIF helps you give things a second life by passing them on to neighbors — and find useful things others no longer need.",
+      "first_name_label": "First name",
+      "last_name_label": "Last name",
+      "avatar_title": "Add a profile photo",
+      "avatar_subtext": "A photo helps your neighbors recognize you.",
+      "avatar_required": "A profile photo is required to continue.",
+      "address_title": "Where do you live?",
+      "address_subtext": "Your address is used to find pifs in your area.",
+      "address_required": "Please select an address from the suggestions so we can find your neighborhood.",
+      "phone_optional_label": "Phone number (optional)",
+      "phone_optional_placeholder": "E.g. +46 70 123 45 67"
+    }
   }
 }
