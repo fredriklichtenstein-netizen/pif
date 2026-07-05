@@ -28,13 +28,13 @@ export function useAuth() {
     return () => clearTimeout(timer);
   }, [initialized]);
 
-  const handleAuth = async (email: string, password: string, phone?: string, countryCode?: string) => {
+  const handleAuth = async (email: string, password: string) => {
     // Clear network error first
     clearNetworkError();
-    
+
     try {
       if (isSignUp) {
-        return await handleSignUp(email, password, phone, countryCode);
+        return await handleSignUp(email, password);
       } else {
         return await handleSignIn(email, password);
       }

@@ -11,18 +11,14 @@ export function useSignUp() {
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
-  const handleSignUp = async (email: string, password: string, phone?: string, countryCode?: string) => {
+  const handleSignUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const formattedPhone = phone && countryCode ? `${countryCode}${phone}` : null;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin + '/email-confirmation',
-          data: {
-            phone: formattedPhone
-          }
         },
       });
 
