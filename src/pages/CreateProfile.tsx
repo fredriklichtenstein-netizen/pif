@@ -211,7 +211,7 @@ export default function CreateProfile() {
         description: t("profile.created_description"),
       });
 
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Onboarding submission error:", error);
       toast({
