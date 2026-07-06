@@ -78,6 +78,14 @@ export default function CreateProfile() {
 
         if (cancelled) return;
 
+        // Single source of truth: if the DB flag says onboarding is done,
+        // never render any wizard step — sync the store and redirect.
+        if (profile?.onboarding_completed === true) {
+          useAuthStore.getState().setProfileCompleted(true);
+          navigate("/", { replace: true });
+          return;
+        }
+
         const fName = (profile?.first_name || "").trim();
         const lName = (profile?.last_name || "").trim();
         const avUrl = profile?.avatar_url || null;
