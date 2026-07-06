@@ -185,11 +185,6 @@ export default function Home() {
               </div>
             </Button>
           </div>
-        </div>
-        
-      </div>
-          </div>
-        </div>
       </div>
       
       {/* Bottom Navigation */}
