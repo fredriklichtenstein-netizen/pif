@@ -232,7 +232,7 @@ export function PostFormContainer({
           {renderCurrentStep()}
         </Card>
 
-        <div className="mt-auto pt-4 pb-6 bg-background">
+        <div className="mt-auto pt-4 pb-24 bg-background">
           <PostFormNavigation
             currentStep={finalCurrentStep}
             isOnFinalStep={finalIsOnFinalStep}
