@@ -185,6 +185,7 @@ export default function Home() {
               </div>
             </Button>
           </div>
+        </div>
       </div>
       
       {/* Bottom Navigation */}
