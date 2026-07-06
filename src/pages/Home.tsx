@@ -8,7 +8,7 @@ import { MainHeader } from "@/components/layout/MainHeader";
 import { InstallInstructionsBanner } from "@/components/pwa/InstallInstructionsBanner";
 import { NetworkStatus } from "@/components/common/NetworkStatus";
 import { isNetworkError } from "@/utils/connectionRetryUtils";
-import { Loader2, ArrowRight, Users, Recycle, Heart, MapPin, Gift } from "lucide-react";
+import { Loader2, ArrowRight, Heart, MapPin, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
 import { DEMO_MODE } from "@/config/demoMode";
@@ -119,24 +119,25 @@ export default function Home() {
           </div>
         )}
         
-        {/* Community Stats */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-green-100 shadow-sm max-w-3xl mx-auto w-full">
-          <h3 className="text-center text-green-700 font-semibold mb-4 flex items-center justify-center space-x-2">
-            <Users className="h-5 w-5" />
-            <span>{t('home.community_growing')}</span>
-          </h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl sm:text-3xl font-bold text-green-600">🤝</div>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">{t('home.shared_pifs')}</p>
+        {/* Concepts explainer */}
+        <div className="max-w-3xl mx-auto w-full mb-6">
+          <p className="text-center text-gray-600 text-sm sm:text-base mb-4 max-w-xl mx-auto px-2">
+            {t('home.concepts_intro')}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-100 shadow-sm">
+              <div className="flex items-center space-x-3 mb-2">
+                <span className="text-2xl">🎁</span>
+                <h3 className="font-semibold text-green-700">{t('home.concept_pif_title')}</h3>
+              </div>
+              <p className="text-sm text-gray-600">{t('home.concept_pif_description')}</p>
             </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-bold text-blue-600">🌱</div>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">{t('home.sustainable_choices')}</p>
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600">♻️</div>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">{t('home.circular_economy')}</p>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-amber-100 shadow-sm">
+              <div className="flex items-center space-x-3 mb-2">
+                <span className="text-2xl">✨</span>
+                <h3 className="font-semibold text-amber-700">{t('home.concept_wish_title')}</h3>
+              </div>
+              <p className="text-sm text-gray-600">{t('home.concept_wish_description')}</p>
             </div>
           </div>
         </div>
@@ -186,39 +187,7 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Mission Statement */}
-        <div className="text-center space-y-4 max-w-5xl mx-auto">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-700">{t('home.why_pif')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
-              <div className="flex items-start space-x-3">
-                <span className="text-green-600 text-lg">🌍</span>
-                <div className="text-left">
-                  <h3 className="font-medium text-green-700">{t('home.reduce_waste')}</h3>
-                  <p className="text-sm text-gray-600">{t('home.reduce_waste_description')}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200">
-              <div className="flex items-start space-x-3">
-                <span className="text-blue-600 text-lg">🏘️</span>
-                <div className="text-left">
-                  <h3 className="font-medium text-blue-700">{t('home.build_community')}</h3>
-                  <p className="text-sm text-gray-600">{t('home.build_community_description')}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-purple-50 to-green-50 p-4 rounded-xl border border-purple-200">
-              <div className="flex items-start space-x-3">
-                <span className="text-purple-600 text-lg">💚</span>
-                <div className="text-left">
-                  <h3 className="font-medium text-purple-700">{t('home.sustainable_future')}</h3>
-                  <p className="text-sm text-gray-600">{t('home.sustainable_future_description')}</p>
-                </div>
-              </div>
-            </div>
+      </div>
           </div>
         </div>
       </div>
