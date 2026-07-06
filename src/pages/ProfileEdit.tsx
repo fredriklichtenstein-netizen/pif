@@ -229,14 +229,14 @@ if (location) {
   return (
     <>
       <div className="container max-w-2xl mx-auto py-8 px-4 pb-24">
-        <div className="relative flex items-center justify-center mb-6">
-          <Link to="/profile" className="absolute left-0">
-            <Button variant="ghost" size="sm" className="gap-1">
+        <div className="flex items-center mb-6">
+          <Link to="/profile">
+            <Button variant="ghost" size="sm" className="gap-1 -ml-2">
               <ArrowLeft size={16} />
               {t('nav.back_to_profile')}
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-foreground">{t('profile.edit_profile')}</h1>
+          <h1 className="flex-1 text-3xl font-bold text-foreground text-center pr-[88px]">{t('profile.edit_profile')}</h1>
         </div>
         
         <div className="mb-6 flex justify-center">

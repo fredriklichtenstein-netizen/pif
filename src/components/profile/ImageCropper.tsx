@@ -57,7 +57,7 @@ export function ImageCropper({
           onValueChange={([value]) => setZoom(value)}
         />
       </div>
-      <DialogFooter>
+      <DialogFooter className="gap-2 sm:gap-2">
         <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
