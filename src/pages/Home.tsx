@@ -158,7 +158,7 @@ export default function Home() {
                 <p className="text-white/80 text-xs sm:text-sm">{t('home.discover_description')}</p>
               </div>
             </div>
-            <ArrowRight className="h-5 w-5" />
+            
           </Button>
           
           {/* Secondary actions */}
