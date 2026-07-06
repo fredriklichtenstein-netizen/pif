@@ -41,7 +41,7 @@ export function DangerZone() {
       });
       
       setShowDeleteDialog(false);
-      navigate("/auth");
+      navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Error during account deletion:", error);
       toast({

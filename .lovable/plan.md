@@ -1,24 +1,36 @@
-## Lovable implementation plan for approval
+# Bug: post-deletion redirect lands on sign-in page
 
-**Finding:**
+## Location
+`src/components/settings/DangerZone.tsx`, line 44 (inside `handleDeleteAccount`).
 
-The empty-state placeholder is in the i18n locale file, not hardcoded.
+## Root cause
+After `delete_own_account` RPC + `supabase.auth.signOut()`, the toast says "Omdirigerar till startsidan…" (Redirecting to home page), but the code calls:
 
-- `src/locales/sv/interactions.json`, line 590 (inside the `messages` object):
-  `"no_conversations_description": "När du skickar meddelande till någon om en pif visas det här."`
+```ts
+navigate("/auth");
+```
 
-- `src/locales/en/interactions.json`, line 590 (same key):
-  `"no_conversations_description": "When you message someone about an item, it will appear here."`
+That sends the (now unauthenticated) user straight to the sign-in page — exactly what the user is seeing. The redirect isn't missing and there's no race; it just points to the wrong route.
 
-- Rendered by: `src/pages/Messages.tsx`, line 289:
-  `<p className="text-sm text-muted-foreground">{t('messages.no_conversations_description')}</p>`
+The public landing page is `/` (`Home`, registered in `src/routes/routeConfig.tsx` line 66). It's wrapped in `OnboardingGate`, which explicitly passes unauthenticated visitors through (`src/components/auth/OnboardingGate.tsx` only redirects when `user && !profileCompleted`). So an unauthenticated user hitting `/` sees the public landing page, matching the toast copy and the desired behavior.
 
-**Proposed change:**
+## Fix
 
-Update the Swedish locale string to the requested copy. For i18n consistency, also update the matching English string to mention wishes.
+Change line 44 from:
 
-- `src/locales/sv/interactions.json` line 590 →  
-  `"no_conversations_description": "När du skickar meddelande till någon om en pif eller önskan visas det här."`
+```ts
+navigate("/auth");
+```
 
-- `src/locales/en/interactions.json` line 590 →  
-  `"no_conversations_description": "When you message someone about an item or wish, it will appear here."`
+to:
+
+```ts
+navigate("/", { replace: true });
+```
+
+`replace: true` prevents the settings page (which the user no longer has access to) from remaining in browser history.
+
+## Scope
+- One-line change in `src/components/settings/DangerZone.tsx`.
+- No locale, routing, RPC, or auth-logic changes.
+- Toast copy (SV "Omdirigerar till startsidan…" / EN "Redirecting to home page…") is already correct.
