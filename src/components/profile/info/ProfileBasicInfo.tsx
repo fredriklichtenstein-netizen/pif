@@ -23,7 +23,7 @@ export function ProfileBasicInfo({ avatarUrl, displayName, coordinates }: Profil
         size={96}
         className="mb-3 border"
       />
-      <div className="text-2xl font-semibold mb-1">{displayName || t('common.user')}</div>
+      <div className="text-2xl font-semibold mb-3">{displayName || t('common.user')}</div>
 
       {coordinates && (
         <div className="w-full max-w-md mb-6">
