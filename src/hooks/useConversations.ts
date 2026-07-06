@@ -312,42 +312,54 @@ export function useConversations() {
       return;
     }
     if (!user) return;
-    const ids = conversations.map((c) => String(c.id));
+    const ids = conversations
+      .filter((c) => (c.unread_count ?? 0) > 0)
+      .map((c) => String(c.id));
     if (ids.length === 0) return;
 
     // Optimistic local clear so the badge updates immediately.
     setConversations((prev) => prev.map((c) => ({ ...c, unread_count: 0 })));
     window.dispatchEvent(new CustomEvent('pif:messages:read-sync', { detail: { all: true } }));
 
-    try {
-      const nowIso = new Date().toISOString();
-      // Best-effort: advance last_read_at for the caller on every conversation,
-      // and null out unread messages directed at the caller.
-      await supabase
-        .from('conversation_participants')
-        .update({ last_read_at: nowIso })
-        .in('conversation_id', ids)
-        .eq('user_id', user.id);
+    // Route through the same SECURITY DEFINER RPC that the single-conversation
+    // open path uses — it reliably advances last_read_at and clears message
+    // read_at without depending on direct-table RLS updates.
+    const results = await Promise.allSettled(
+      ids.map((cid) =>
+        (supabase.rpc as any)('mark_conversation_read', { p_conversation_id: cid }),
+      ),
+    );
 
-      await supabase
-        .from('messages')
-        .update({ read_at: nowIso })
-        .in('conversation_id', ids)
-        .neq('sender_id', user.id)
-        .is('read_at', null);
-
-      // Let other parts of the app (badge counters, lists) reconcile.
-      for (const cid of ids) {
-        window.dispatchEvent(
-          new CustomEvent('pif:conversation-read', { detail: { conversationId: cid } }),
-        );
+    const failed: string[] = [];
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        failed.push(ids[i]);
+        console.error('[useConversations] mark_conversation_read rejected', {
+          conversationId: ids[i],
+          error: r.reason,
+        });
+      } else if ((r.value as any)?.error) {
+        failed.push(ids[i]);
+        console.error('[useConversations] mark_conversation_read error', {
+          conversationId: ids[i],
+          error: (r.value as any).error,
+        });
       }
-    } catch (err) {
-      console.error('[useConversations] markAllConversationsAsRead failed:', err);
-      // Refresh to reconcile any partial state.
+    });
+
+    // Notify counters/lists to recompute from fresh DB state.
+    for (const cid of ids) {
+      window.dispatchEvent(
+        new CustomEvent('pif:conversation-read', { detail: { conversationId: cid } }),
+      );
+    }
+
+    if (failed.length > 0) {
+      // Reconcile optimistic UI with server truth on any failure.
       fetchRef.current?.();
     }
   };
+
 
   return { conversations, isLoading, error, refreshConversations, markAllConversationsAsRead };
 }
