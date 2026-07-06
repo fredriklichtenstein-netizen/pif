@@ -2,7 +2,7 @@
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, ArrowRight, AlertCircle, Clock } from "lucide-react";
+import { MessageSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 type NotificationFilter = "all" | "unread";
 
 const FILTER_STORAGE_KEY = "pif.notifications.filter";
-const GROUP_PRIORITY: Record<string, number> = { selected: 0, interest: 1, other: 2 };
+
 
 function loadStoredFilter(): NotificationFilter {
   if (typeof window === "undefined") return "unread";
@@ -44,50 +44,14 @@ export function NotificationList() {
     [notifications, filter]
   );
 
-  // Categorization: place each notification in one of three buckets
-  // based on its `type` field.
-  //  - selected: current user is the chosen receiver of a pif, or a
-  //              helper has been picked to fulfill their wish
-  //  - interest: someone expressed interest / offered to help
-  //  - other:    everything else (messages, status changes, profile, etc.)
-  const categorize = (type: string): "selected" | "interest" | "other" => {
-    const t = (type || "").toLowerCase();
-    if (
-      t === "receiver_selected" ||
-      t === "selection" ||
-      t === "selection_made" ||
-      t === "wish_helper_offered" ||
-      t === "helper_offered" ||
-      t.includes("selected") ||
-      t.includes("helper_offered")
-    ) {
-      return "selected";
-    }
-    if (t === "interest" || t === "interest_received" || t.startsWith("interest")) {
-      return "interest";
-    }
-    return "other";
-  };
-
   const sortedNotifications = useMemo(() => {
     return [...visibleNotifications].sort((a, b) => {
       const readA = a.is_read ? 1 : 0;
       const readB = b.is_read ? 1 : 0;
       if (readA !== readB) return readA - readB;
-
-      const priorityA = GROUP_PRIORITY[categorize(a.type)] ?? 99;
-      const priorityB = GROUP_PRIORITY[categorize(b.type)] ?? 99;
-      if (priorityA !== priorityB) return priorityA - priorityB;
-
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
   }, [visibleNotifications]);
-
-  const groupDisplayInfo = {
-    selected: { name: t('interactions.group_selected', 'Du har valts'), icon: <AlertCircle className="h-5 w-5 text-green-600" /> },
-    interest: { name: t('interactions.group_interest'), icon: <AlertCircle className="h-5 w-5 text-blue-500" /> },
-    other: { name: t('interactions.group_other'), icon: <AlertCircle className="h-5 w-5 text-muted-foreground" /> },
-  };
 
   if (isLoading) {
     return <div className="py-8 text-center text-muted-foreground">{t('interactions.loading_notifications')}</div>;
