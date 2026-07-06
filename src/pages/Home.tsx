@@ -120,7 +120,7 @@ export default function Home() {
         )}
         
         {/* Concepts explainer */}
-        <div className="max-w-3xl mx-auto w-full mb-6">
+        <div className="max-w-3xl mx-auto w-full mb-6 mt-8">
           <p className="text-center text-gray-600 text-sm sm:text-base mb-4 max-w-xl mx-auto px-2">
             {t('home.concepts_intro')}
           </p>
