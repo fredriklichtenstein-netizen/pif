@@ -32,14 +32,14 @@ export default function AccountSettings() {
     <>
       <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 pb-24">
         <div className="max-w-3xl mx-auto space-y-8">
-          <div className="flex items-center">
+          <div className="space-y-4">
             <Link to="/profile">
               <Button variant="ghost" size="sm" className="gap-1">
                 <ArrowLeft size={16} />
                 {t('nav.back_to_profile')}
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold text-foreground mx-auto pr-10">
+            <h1 className="text-3xl font-bold text-foreground">
               {t('settings.title')}
             </h1>
           </div>
