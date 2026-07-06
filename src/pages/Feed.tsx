@@ -32,7 +32,7 @@ export default function Feed() {
 
 
       <main
-        className="pb-28"
+        className="pb-20"
         role="main"
         aria-label={t('feed.announcement')}
       >
