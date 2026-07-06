@@ -587,7 +587,7 @@
     "no_messages_yet": "No messages yet. Start the conversation!",
     "type_message": "Type a message...",
     "no_conversations_title": "No conversations yet",
-    "no_conversations_description": "When you message someone about an item, it will appear here.",
+    "no_conversations_description": "When you message someone about an item or wish, it will appear here.",
     "failed_load_conversations": "Failed to load conversations",
     "try_refreshing": "Please try refreshing the page",
     "regarding": "Re:",
