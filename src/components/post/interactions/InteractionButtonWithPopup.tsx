@@ -276,7 +276,7 @@ export function InteractionButtonWithPopup({
           onClick={handleToggleClick}
           onKeyDown={handleKeyDown}
           style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
-          className={`text-xs font-medium select-none ${disabledClass} ${dimClass}`}
+          className={`text-xs font-medium select-none whitespace-nowrap ${disabledClass} ${dimClass}`}
         >
           {labelText}
         </span>
