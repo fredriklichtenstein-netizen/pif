@@ -96,10 +96,11 @@ function PostEdit() {
   return (
     <div className="min-h-screen flex flex-col">
       <MainHeader />
-      <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
+      <div className="container max-w-2xl mx-auto pt-8 px-4 flex-1 flex flex-col">
         <h1 className="text-2xl font-bold mb-6">{t('profile.edit_pif')}</h1>
         <PostForm initialData={item} />
       </div>
+
       <MainNav />
     </div>
   );

@@ -29,7 +29,7 @@ const Post = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <MainHeader />
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
         <Suspense fallback={
           <div className="container mx-auto px-4 pt-4">
             <Skeleton className="h-[70vh] w-full rounded-lg" />
