@@ -305,16 +305,17 @@ export function useConversations() {
     fetchRef.current?.();
   };
 
-  const markAllConversationsAsRead = async () => {
+  const markAllConversationsAsRead = async (targetIds?: string[]) => {
     if (DEMO_MODE) {
       setConversations((prev) => prev.map((c) => ({ ...c, unread_count: 0 })));
       window.dispatchEvent(new CustomEvent('pif:messages:read-sync', { detail: { all: true } }));
       return;
     }
     if (!user) return;
-    const ids = conversations
-      .filter((c) => (c.unread_count ?? 0) > 0)
-      .map((c) => String(c.id));
+    const ids =
+      targetIds && targetIds.length > 0
+        ? Array.from(new Set(targetIds.map(String)))
+        : conversations.map((c) => String(c.id));
     if (ids.length === 0) return;
 
     // Optimistic local clear so the badge updates immediately.
