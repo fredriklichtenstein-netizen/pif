@@ -1,42 +1,58 @@
-# Notifications sort: unread first, then by created_at desc — no category tiebreaker
+## Root cause
 
-## Where sorting happens today
+`markAllConversationsAsRead` filters by `c.unread_count > 0`, but the `unread_count` field on `Conversation` is never populated by the fetch in `useConversations` (grep confirms it's only ever written to `0`, never read from the DB). So `ids` is always `[]` and the function returns at line 318 before firing any RPC — matching the HAR showing zero `mark_conversation_read` calls.
 
-- **Query** (`src/hooks/useNotifications.ts` line 208): `.order("created_at", { ascending: false })` — newest-first.
-- **Client** (`src/components/notifications/NotificationList.tsx` lines 72–84): re-sorts by (1) `is_read` asc, (2) a category priority (`selected` → `interest` → `other`), (3) `created_at` desc.
+The button's visibility, meanwhile, is gated by `unreadMessagesCount` from a different hook (`useUnreadMessagesCount`), which computes unread state directly from message rows. That hook also exposes `unreadByConversation` (a `{ [conversationId]: count }` map) — already imported and used in `Messages.tsx`. That's the authoritative source.
 
-The category tiebreaker at step 2 is what breaks the requested ordering: two unread notifications with different types get reordered by category instead of by time.
+## Fix
 
-## Read/unread field
+Change `markAllConversationsAsRead` to accept the list of conversation IDs to mark, and have `Messages.tsx` pass the unread IDs derived from `unreadByConversation`.
 
-- DB column: `read` (boolean).
-- Normalized to `is_read` in the transform (`useNotifications.ts` line 235: `n.read ?? n.is_read ?? false`).
-- Renderer uses `n.is_read` throughout — no change needed.
+### `src/hooks/useConversations.ts` (lines 308–318)
 
-## Fix (client-side sort only)
-
-In `src/components/notifications/NotificationList.tsx`, simplify `sortedNotifications` to two keys only:
+Replace the current signature and the broken filter:
 
 ```ts
-const sortedNotifications = useMemo(() => {
-  return [...visibleNotifications].sort((a, b) => {
-    const readA = a.is_read ? 1 : 0;
-    const readB = b.is_read ? 1 : 0;
-    if (readA !== readB) return readA - readB; // unread (0) before read (1)
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
-}, [visibleNotifications]);
+const markAllConversationsAsRead = async (targetIds?: string[]) => {
+  if (DEMO_MODE) {
+    setConversations((prev) => prev.map((c) => ({ ...c, unread_count: 0 })));
+    window.dispatchEvent(new CustomEvent('pif:messages:read-sync', { detail: { all: true } }));
+    return;
+  }
+  if (!user) return;
+
+  const ids =
+    targetIds && targetIds.length > 0
+      ? Array.from(new Set(targetIds.map(String)))
+      : conversations.map((c) => String(c.id)); // fallback: all conversations
+
+  if (ids.length === 0) return;
+  // ... rest of function unchanged (optimistic clear, Promise.allSettled RPC loop,
+  //     per-call error logging, pif:conversation-read events, reconcile on failure)
+};
 ```
 
-Also remove the now-unused helpers so the file doesn't accumulate dead code:
+Rationale for the fallback: the RPC is idempotent and SECURITY DEFINER-scoped to the caller, so marking a conversation with no unread messages is a cheap no-op. That guarantees the button always does *something* even if `unreadByConversation` hasn't hydrated yet.
 
-- `GROUP_PRIORITY` constant (line 13)
-- `categorize` function (lines 47–70)
-- `groupDisplayInfo` object (lines 86–90)
+### `src/pages/Messages.tsx` (line ~259)
 
-The query-level `ORDER BY created_at DESC` stays as-is (harmless, keeps realtime/silent refetches ordered before the client sort runs).
+Pass the unread IDs from `unreadByConversation`:
 
-## Scope
+```tsx
+onClick={() => {
+  const ids = Object.entries(unreadByConversation)
+    .filter(([, n]) => (n ?? 0) > 0)
+    .map(([cid]) => cid);
+  void markAllConversationsAsRead(ids);
+}}
+```
 
-- One file: `src/components/notifications/NotificationList.tsx`.
-- Presentation only. No hook, query, schema, or i18n changes. No changes to filter pills, mark-as-read, or realtime behavior.
+## Out of scope
+
+- No change to `useUnreadMessagesCount`, RLS, migrations, notifications sort, or i18n.
+- Not fixing `unread_count` population in `useConversations` fetch — that's a separate cleanup and not required to unblock this button.
+
+## Verification
+
+1. Build passes.
+2. In the running app: with unread conversations, click "Markera alla som lästa" → HAR shows one `mark_conversation_read` RPC call per unread conversation, badge stays at 0, no console errors.
