@@ -587,7 +587,7 @@
     "no_messages_yet": "Inga meddelanden än. Starta konversationen!",
     "type_message": "Skriv ett meddelande...",
     "no_conversations_title": "Inga konversationer än",
-    "no_conversations_description": "När du skickar meddelande till någon om en pif visas det här.",
+    "no_conversations_description": "När du skickar meddelande till någon om en pif eller önskan visas det här.",
     "failed_load_conversations": "Misslyckades att ladda konversationer",
     "try_refreshing": "Försök att uppdatera sidan",
     "regarding": "Ang:",
