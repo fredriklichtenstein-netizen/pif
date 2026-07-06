@@ -256,7 +256,12 @@ const Messages = () => {
               <div className="flex items-center justify-end gap-2 p-3 border-b bg-background">
                 <button
                   type="button"
-                  onClick={() => void markAllConversationsAsRead()}
+                  onClick={() => {
+                    const ids = Object.entries(unreadByConversation)
+                      .filter(([, n]) => (n ?? 0) > 0)
+                      .map(([cid]) => cid);
+                    void markAllConversationsAsRead(ids);
+                  }}
                   className="text-xs font-medium px-3 py-1 rounded-md border border-input bg-background hover:bg-muted"
                 >
                   {t('interactions.mark_all_read')}
