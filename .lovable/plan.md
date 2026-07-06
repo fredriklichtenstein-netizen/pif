@@ -1,30 +1,68 @@
-## Findings
+## Lovable implementation plan for approval
 
-**FAB** (`src/components/feedback/FeedbackFab.tsx:32`)
-- Classes: `fixed bottom-24 right-4 z-40 h-14 w-14` → occupies vertical band **96–152px** from the viewport bottom, right-aligned.
+Goal: On short steps of the post/wish creation flow, "Föregående"/"Nästa" should always sit at the bottom of the screen (just above the bottom nav), so they never share vertical space with the feedback FAB.
 
-**Bottom-right CTAs that collide with it**
-- Post/PostEdit forms use `PostFormNavigation.tsx` — a `flex justify-between` row where "Nästa" / "Slutför" / "Publicera" sit right-aligned. On the last step of a mobile form the button ends up in a page with `pb-20` (~80px nav clearance), so the button occupies roughly **80–120px** from the bottom-right corner — directly under the FAB.
-- Same pattern in `ProfileEdit.tsx` (`pb-24`) and other form pages.
+Approach: use a flex column that fills the viewport, let the form content grow, and push the navigation bar to the bottom of that column with `mt-auto`. No `position: fixed`; the CTA bar stays in flow but always lands at the bottom on short content and scrolls naturally on tall content.
 
-**MainNav** (`src/components/MainNav.tsx:45`)
-- Pill at `bottom-4 sm:bottom-3`, height ~48px → occupies ~**16–64px** from bottom.
-- Pages clear it with `pb-20` (80px) or `pb-24` (96px).
+### Files touched
 
-**Page bottom-padding that was inflated for the FAB, not the nav**
-- `src/pages/Feed.tsx:35` uses `pb-28` (112px). The nav only needs `pb-20`; the extra ~32px was buffer for the FAB. Every other page uses `pb-20`/`pb-24`. This is the one to trim once the FAB moves up.
-- No other page adds FAB-specific padding — the FAB is a fixed overlay, so pages don't need to reserve space for it beyond nav clearance.
+1. `src/pages/Post.tsx` — make the middle wrapper a flex column so its child can fill the height.
+2. `src/pages/PostEdit.tsx` — same, so the edit flow behaves identically.
+3. `src/components/post/form/PostFormContainer.tsx` — convert the container to a full‑height flex column and push the nav to the bottom.
 
-## Fix
+`PostFormNavigation.tsx` itself does not change — it already renders a `flex justify-between` row; we only change how the parent lays it out.
 
-1. **`src/components/feedback/FeedbackFab.tsx`** — change `bottom-24` → `bottom-40` (96px → 160px). New FAB band: 160–216px from bottom, well above any CTA button sitting in the pb-20/pb-24 zone. Also update the doc comment to match.
+### Diffs (conceptual)
 
-2. **`src/pages/Feed.tsx`** — reduce `<main className="pb-28">` → `pb-20` to match sibling pages, since the extra padding was there for the old FAB position.
+**`src/pages/Post.tsx`**
+```diff
+- <div className="flex-1">
++ <div className="flex-1 flex flex-col">
+     <Suspense …>
+       <PostForm />
+     </Suspense>
+   </div>
+```
+Same one-line change in `PostEdit.tsx` around the `<PostForm />` wrapper (the `container … py-8 px-4 pb-20` div becomes `… flex-1 flex flex-col` and drops `pb-20` since the child container owns bottom spacing).
 
-No other pages need padding changes; the FAB is a fixed overlay and the pages already clear the nav correctly.
+**`src/components/post/form/PostFormContainer.tsx`**
 
-## Verification
+Outer wrapper:
+```diff
+- <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
++ <div className="container max-w-2xl mx-auto px-4 pt-6 flex-1 flex flex-col min-h-0">
+```
 
-- On `/feed`, `/post`, `/post/edit/:id`, `/profile/edit`, `/account-settings`: at max scroll, tap targets on the bottom-right ("Nästa", "Slutför", form submit) must not sit under the FAB. Check at mobile viewport (390×… dpr 2.5).
-- FAB must still clear the MainNav pill and remain reachable one-thumb.
-- Build passes.
+Form element becomes the flex column that fills the remaining space, and the navigation is pushed to the bottom with `mt-auto`:
+```diff
+- <form onSubmit={handleFormSubmit} className="space-y-6">
+-   <Card className="p-6">
+-     {renderCurrentStep()}
+-   </Card>
+-   <PostFormNavigation … />
+- </form>
++ <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
++   <Card className="p-6 mb-6">
++     {renderCurrentStep()}
++   </Card>
++   <div className="mt-auto pt-4 pb-6 bg-background">
++     <PostFormNavigation … />
++   </div>
++ </form>
+```
+
+Notes:
+- `flex-1` chain: `Post.tsx .flex-1.flex.flex-col` → `PostFormContainer` outer `flex-1.flex.flex-col` → `<form> flex-1.flex.flex-col` → `<div className="mt-auto …">` sits at the bottom of the form column.
+- `min-h-0` on the flex columns prevents overflow clipping on iOS Safari.
+- We drop the previous `pb-20` on the container because the page-level `MainNav` is a sibling below `flex-1`, so it does not overlap; content ends where the nav begins. The nav bar block adds `pt-4 pb-6` breathing room above the MainNav.
+- `bg-background` on the nav wrapper prevents any card content bleeding through if the page ever scrolls behind it.
+- On tall steps (e.g. Images with many uploads), the form grows past the viewport and scrolls normally; CTAs stay at the natural end of the form, which on the last viewport is exactly the bottom of the screen. No overlap with the scrollable card because the nav wrapper is a sibling block, not absolutely positioned.
+
+### FAB clearance check
+- FAB sits at `right-4 bottom-40` (160–216 px band, right side).
+- Nav row's right-side button ("Nästa"/submit) will land at ~`bottom-24` (bottom of viewport minus MainNav height + `pb-6`), i.e. the 96–140 px band. That is fully below the FAB band with a ~20 px gap, matching the Feed page standard.
+
+### Out of scope
+- No change to `PostFormNavigation.tsx` internals.
+- No change to `FeedbackFab` position.
+- No change to other pages — this is scoped to the post/wish creation and edit flows only.
