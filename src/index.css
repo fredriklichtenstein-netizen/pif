@@ -122,10 +122,6 @@
     @apply bg-background text-foreground;
     background-color: hsl(var(--background));
   }
-
-  body {
-    padding-bottom: 60px; /* Reduced from 75px to 60px */
-  }
 }
 
 /* Custom styles for mapbox popups */
