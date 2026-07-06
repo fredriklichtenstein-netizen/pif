@@ -1,99 +1,33 @@
-## Lovable implementation plan for approval
+## Root cause
 
-Three targeted copy/section changes on the Home page (`/`). No layout system changes, no new components. All strings via i18n.
+Both inputs are the shadcn `Textarea` (`src/components/ui/textarea.tsx`), used by:
 
----
+- **Feed comments** → `src/components/comments/CommentInput.tsx` (rendered by `LazyCommentsSection` → `CommentsPanel`)
+- **Messages** → `src/components/messaging/EnhancedMessageInput.tsx`
 
-### 1. `src/locales/sv/home.json` — diff
+`Textarea` has `text-sm` (14px). **iOS Safari auto-zooms into any form field whose computed font-size is < 16px on focus.** That zoom is what the user perceives as "the viewport expanding horizontally beyond the screen" — the page stays laid out at 390 CSS px, but Safari scales it up, which produces horizontal panning/scrolling until the field is blurred.
 
-```diff
-   "pay_it_forward": "Pay It Forward",
--  "hero_description": "En plats där grannar hjälper grannar. Piffa, ge och ta emot med hjärtat i centrum.",
-+  "hero_description": "Piffa det du inte längre behöver. Hjälp en granne och gör plats för något nytt!",
-   "community_sharing_alt": "Gemenskapsdelning",
--  "community_growing": "Vår gemenskap växer",
--  "shared_pifs": "Delade piffar",
--  "sustainable_choices": "Hållbara val",
--  "circular_economy": "Cirkulär ekonomi",
-+  "concepts_intro": "En piff är något du ger bort till en granne. En önskan är något du hoppas hitta. Inte svårare än så!",
-+  "concept_pif_title": "Piffa",
-+  "concept_pif_description": "Något du inte behöver längre? Din granne kanske letar efter just det.",
-+  "concept_wish_title": "Önska",
-+  "concept_wish_description": "Behöver du något? Lägg upp en önskan så kanske en granne kan uppfylla den!",
-   "discover_pifs": "Upptäck piffar",
-   "discover_description": "Se vad som piffas i ditt område",
-   "give_away_something": "Piffa något",
-   "explore": "Utforska",
-   "find_nearby": "Hitta i din närhet",
--  "why_pif": "Varför piffa?",
--  "reduce_waste": "Minska avfall",
--  "reduce_waste_description": "Ge saker nytt liv genom att piffa",
--  "build_community": "Bygg gemenskap",
--  "build_community_description": "Skapa relationer med dina grannar",
--  "sustainable_future": "Hållbar framtid",
--  "sustainable_future_description": "En pif i taget",
-   "welcome_connected": ...
-```
+Contributing factor: the app has no global `overflow-x: hidden` on `html/body`, so any transient overflow (from the zoom or from a wide child) is scrollable rather than clipped.
 
-### 2. `src/locales/en/home.json` — mirror diff
+The viewport meta tag (`index.html` line 6) is correct and should NOT be changed to `maximum-scale=1, user-scalable=no` — that fixes the symptom but breaks pinch-zoom accessibility (WCAG 1.4.4). The right fix is to make the input font ≥ 16px on mobile.
 
-```diff
--  "hero_description": "A place where neighbors help neighbors. Pif, give and receive with the heart at the center.",
-+  "hero_description": "Pif what you no longer need. Help a neighbor and make room for something new!",
-   ...
--  "community_growing": "Our community is growing",
--  "shared_pifs": "Shared pifs",
--  "sustainable_choices": "Sustainable choices",
--  "circular_economy": "Circular economy",
-+  "concepts_intro": "A pif is something you give to a neighbor. A wish is something you hope to find. Simple as that!",
-+  "concept_pif_title": "Pif",
-+  "concept_pif_description": "Something you no longer need? Your neighbor might be looking for exactly that.",
-+  "concept_wish_title": "Wish",
-+  "concept_wish_description": "Need something? Post a wish and maybe a neighbor can fulfill it!",
-   ...
--  "why_pif": "Why pif?",
--  "reduce_waste": "...",  (and the other 5 removed keys)
-```
+## Fix
 
-### 3. `src/pages/Home.tsx` — structural swaps
+1. **`src/components/ui/textarea.tsx`** — change `text-sm` to `text-base md:text-sm`. Keeps the desktop look, prevents iOS zoom on mobile. This is the standard shadcn-on-iOS fix and applies everywhere `Textarea` is used (comment input, message input, rating comment, report dialog, etc.).
 
-**A. Replace the "Community Stats" block** (the `<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-6 ...">` containing `community_growing` + 3-column grid) with:
+2. **`src/components/ui/input.tsx`** — same change (`text-base md:text-sm`) for consistency, so single-line inputs elsewhere in the app (auth, profile edit, search) don't hit the same bug.
 
-```tsx
-{/* Concepts explainer */}
-<div className="max-w-3xl mx-auto w-full mb-6">
-  <p className="text-center text-gray-600 text-sm sm:text-base mb-4 max-w-xl mx-auto px-2">
-    {t('home.concepts_intro')}
-  </p>
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-100 shadow-sm">
-      <div className="flex items-center space-x-3 mb-2">
-        <span className="text-2xl">🎁</span>
-        <h3 className="font-semibold text-green-700">{t('home.concept_pif_title')}</h3>
-      </div>
-      <p className="text-sm text-gray-600">{t('home.concept_pif_description')}</p>
-    </div>
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-amber-100 shadow-sm">
-      <div className="flex items-center space-x-3 mb-2">
-        <span className="text-2xl">✨</span>
-        <h3 className="font-semibold text-amber-700">{t('home.concept_wish_title')}</h3>
-      </div>
-      <p className="text-sm text-gray-600">{t('home.concept_wish_description')}</p>
-    </div>
-  </div>
-</div>
-```
+3. **`src/index.css`** — add a safety net on the root:
+   ```css
+   html, body { overflow-x: hidden; }
+   ```
+   Belt-and-braces guard against any other wide child causing horizontal scroll on mobile.
 
-Card styling matches the existing `bg-white/80 backdrop-blur-sm rounded-2xl … border … shadow-sm` pattern already on the page. Pif card uses green (per memory: pifs=green), Wish card uses amber (per memory: wishes=amber) — consistent with the project's pif-vs-wish differentiation rule.
+## Verification
 
-**B. Delete the entire "Mission Statement" block** — the final `<div className="text-center space-y-4 max-w-5xl mx-auto">` containing the `why_pif` heading and the three cards (reduce_waste / build_community / sustainable_future).
+- Preview `/feed`, expand a post's comments, tap the comment field → page must not zoom or gain a horizontal scrollbar.
+- Preview `/messages`, open a conversation, tap the message field → same expectation.
+- Desktop view unchanged (still `text-sm`).
+- Build passes.
 
-**C. Remove now-unused `Users` and `Recycle` imports** from the `lucide-react` import line (kept if still referenced elsewhere in the file — they aren't).
-
-### Out of scope
-- No changes to hero image, logo, action cards (Discover / Piffa något / Utforska), header, nav, or network status.
-- No changes to other locales, routes, or components.
-
-### Verification
-- Build passes (auto).
-- Visually confirm on `/` in both `sv` and `en` that: hero text updated, old stats block replaced with intro + 2 cards, "Varför piffa?" section gone.
+No business-logic changes; purely presentational.
