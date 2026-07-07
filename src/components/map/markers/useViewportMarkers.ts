@@ -20,6 +20,9 @@ interface UseViewportMarkersArgs {
     count: number,
     clusterId: number
   ) => mapboxgl.Marker;
+  /** Bumped by `useClusterInit` after each async rebuild — forces
+   *  `updateMarkers` to re-run so freshly-clustered features paint. */
+  clusterVersion: number;
 }
 
 export function useViewportMarkers({
@@ -31,7 +34,9 @@ export function useViewportMarkers({
   clearMarkers,
   createPostMarker,
   createClusterMarker,
+  clusterVersion,
 }: UseViewportMarkersArgs) {
+
   const updateMarkers = useCallback(() => {
     if (
       !clusterIndexRef.current ||
