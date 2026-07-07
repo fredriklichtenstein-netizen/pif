@@ -51,10 +51,12 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   const selectedConditions = useFeedFiltersStore((s) => s.conditions);
   const selectedItemTypes = useFeedFiltersStore((s) => s.itemTypes);
   const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
+  const hideOwnPosts = useFeedFiltersStore((s) => s.hideOwnPosts);
   const setSelectedCategories = useFeedFiltersStore((s) => s.setCategories);
   const setSelectedConditions = useFeedFiltersStore((s) => s.setConditions);
   const setSelectedItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
   const setOnlyInterested = useFeedFiltersStore((s) => s.setOnlyInterested);
+  const setHideOwnPosts = useFeedFiltersStore((s) => s.setHideOwnPosts);
   const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { user } = useGlobalAuth();
@@ -64,7 +66,8 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   // user never sees an empty map with a hidden invisible filter applied.
   useEffect(() => {
     if (!user && onlyInterested) setOnlyInterested(false);
-  }, [user, onlyInterested, setOnlyInterested]);
+    if (!user && hideOwnPosts) setHideOwnPosts(false);
+  }, [user, onlyInterested, hideOwnPosts, setOnlyInterested, setHideOwnPosts]);
 
   // Apply all filters including distance
   const finalFilteredPosts = applyPostFilters(
@@ -74,9 +77,12 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       conditions: selectedConditions,
       itemTypes: selectedItemTypes,
       onlyInterested,
+      hideOwnPosts,
+      currentUserId: user?.id ?? null,
     },
     myInterestedIds,
   );
+
 
 
   const handleClearFilters = () => {
