@@ -124,11 +124,12 @@ export function MapFiltersSheet({
           {hasActive && (
             <Badge
               variant="secondary"
-              className="ml-2 h-5 min-w-5 p-0 flex items-center justify-center text-xs"
+              className="absolute -top-2 -right-2 h-5 min-w-5 px-1 flex items-center justify-center text-xs rounded-full shadow-sm"
             >
               {activeCount}
             </Badge>
           )}
+
         </Button>
       </SheetTrigger>
       <SheetContent
