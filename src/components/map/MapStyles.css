@@ -24,11 +24,13 @@
   height: 100%;
 }
 
-/* Lift Mapbox built-in controls just above the fixed bottom MainNav
-   (nav ~64px + small breathing gap). */
+/* The map container ends flush above the fixed MainNav (Map.tsx wraps
+   the map in <main h-[calc(100vh-73px)]> and MainNav is a sibling
+   below), so Mapbox's built-in bottom controls only need a small
+   internal breathing gap — not a full-nav offset. */
 .map-container .mapboxgl-ctrl-bottom-left,
 .map-container .mapboxgl-ctrl-bottom-right {
-  bottom: 68px !important;
+  bottom: 8px !important;
 }
 
 /* Loading state for markers */
