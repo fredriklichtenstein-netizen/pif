@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import type Supercluster from "supercluster";
 import type { Post } from "@/types/post";
@@ -27,6 +27,15 @@ export const MapMarkersLayer = ({
   > | null>(null);
   const enhancedPostsRef = useRef<EnhancedPost[]>([]);
   const [mapReady, setMapReady] = useState(false);
+  // Incremented every time `useClusterInit` finishes rebuilding the
+  // cluster index for a new `posts` array. Threaded into
+  // `useViewportMarkers` so it repaints markers exactly once the
+  // async rebuild completes — fixes stale markers after filter changes.
+  const [clusterVersion, setClusterVersion] = useState(0);
+  const bumpClusterVersion = useCallback(
+    () => setClusterVersion((v) => v + 1),
+    []
+  );
 
   const clearMarkers = useCallback(() => {
     markersRef.current.forEach((marker) => {
@@ -53,6 +62,7 @@ export const MapMarkersLayer = ({
     clusterIndexRef,
     clearMarkers,
     setMapReady,
+    bumpClusterVersion,
   });
 
   useViewportMarkers({
@@ -64,6 +74,7 @@ export const MapMarkersLayer = ({
     clearMarkers,
     createPostMarker,
     createClusterMarker,
+    clusterVersion,
   });
 
   // Cleanup on unmount
@@ -73,3 +84,4 @@ export const MapMarkersLayer = ({
 
   return null;
 };
+
