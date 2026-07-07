@@ -214,6 +214,8 @@ export function FeedItemList({
           const isFading = fadingIds?.has(String(post.id));
           const isRestoring = restoringIds?.has(String(post.id));
           const isArchived = post?.status === 'archived' || !!post?.archived_at;
+          const isCompleted = post?.status === 'completed';
+          const isTerminal = isArchived || isCompleted;
           const animationClass = isFading
             ? 'animate-fade-out-collapse pointer-events-none'
             : isRestoring
@@ -234,10 +236,20 @@ export function FeedItemList({
               id={`post-${post.id}`}
               className={[
                 animationClass,
-                isArchived ? 'opacity-75' : '',
+                isTerminal ? 'opacity-75 relative' : '',
               ].filter(Boolean).join(' ') || undefined}
               aria-hidden={isFading || undefined}
             >
+              {isCompleted && !isArchived && (
+                <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md bg-primary/90 text-primary-foreground text-xs font-medium shadow">
+                  {t('feed.completed', 'Genomförd')}
+                </div>
+              )}
+              {isArchived && (
+                <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium shadow">
+                  {t('feed.archived_badge', 'Arkiverad')}
+                </div>
+              )}
               {index < 3 ? card : <LazyMount>{card}</LazyMount>}
             </div>
           );

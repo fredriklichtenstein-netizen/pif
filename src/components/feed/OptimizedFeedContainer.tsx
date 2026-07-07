@@ -151,12 +151,25 @@ function OptimizedFeedBody({
     // no stale cache, prefetch, or realtime race can leak the wrong bucket
     // into the visible list. Terminal = archived OR completed OR archived_at.
     const isTerminal = (p: Post) => {
-      const s = (p as any).status ?? (p as any).pif_status;
+      const s = String((p as any).status ?? (p as any).pif_status ?? '');
       return s === 'archived' || s === 'completed' || !!p.archived_at;
     };
     const bucketed = effectiveIncludeArchived
       ? base.filter(isTerminal)
       : base.filter((p) => !isTerminal(p));
+    // Temporary diagnostic: log status breakdown of what actually reaches
+    // the render layer in the archived view so we can distinguish
+    // "completed rows shown as archived" from "genuine active leakage".
+    if (effectiveIncludeArchived && bucketed.length > 0 && typeof window !== 'undefined') {
+      const breakdown = bucketed.slice(0, 5).map((p) => ({
+        id: p.id,
+        status: (p as any).status,
+        pif_status: (p as any).pif_status,
+        archived_at: p.archived_at,
+      }));
+      // eslint-disable-next-line no-console
+      console.warn('[archived-view] first 5 items:', breakdown);
+    }
     return filteredUserId
       ? bucketed.filter((p) => p.postedBy?.id === filteredUserId)
       : bucketed;

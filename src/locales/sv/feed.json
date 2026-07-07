@@ -20,6 +20,8 @@
     "viewing_user_filter": "Visar piffar från {{name}}",
     "clear_user_filter": "Rensa användarfilter",
     "announcement": "Flödessidan laddad, visar gemenskapens inlägg",
-    "my_interest": "Mitt intresse"
+    "my_interest": "Mitt intresse",
+    "completed": "Genomförd",
+    "archived_badge": "Arkiverad"
   }
 }
