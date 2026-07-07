@@ -29,6 +29,8 @@ interface Props {
   onCategoryChange: (c: string[]) => void;
   includeArchived: boolean;
   onIncludeArchivedChange: (v: boolean) => void;
+  onlyInterested: boolean;
+  onOnlyInterestedChange: (v: boolean) => void;
   onResetAll: () => void;
   /** When true, hide private filters (archived) — viewing another user. */
   viewingOtherUser?: boolean;
@@ -50,6 +52,8 @@ export function FeedFiltersPanel({
   onCategoryChange,
   includeArchived,
   onIncludeArchivedChange,
+  onlyInterested,
+  onOnlyInterestedChange,
   onResetAll,
   viewingOtherUser = false,
   userFilterActive = false,
