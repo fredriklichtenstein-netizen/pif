@@ -2,7 +2,7 @@
 import type { Post } from "@/types/post";
 import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
-import { MapFilters } from "./MapFilters";
+import { MapFiltersSheet } from "./MapFiltersSheet";
 import { Button } from "@/components/ui/button";
 import { Locate, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState, memo } from "react";
