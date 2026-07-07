@@ -56,7 +56,7 @@ export function MapFiltersSheet({
   onCategoryChange,
   selectedConditions,
   onConditionChange,
-  selectedItemTypes,
+  
   selectedDistance,
   onDistanceChange,
   userLocation,
