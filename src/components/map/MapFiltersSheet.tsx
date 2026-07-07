@@ -41,6 +41,8 @@ interface Props {
   onUserLocationChange: (loc: [number, number] | null) => void;
   onlyInterested: boolean;
   onOnlyInterestedChange: (v: boolean) => void;
+  hideOwnPosts: boolean;
+  onHideOwnPostsChange: (v: boolean) => void;
   onResetAll: () => void;
 }
 
