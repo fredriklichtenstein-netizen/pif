@@ -69,9 +69,14 @@ export function useMarkerFactory({
           if (clusterIndexRef.current) {
             const expansionZoom =
               clusterIndexRef.current.getClusterExpansionZoom(clusterId);
+            // Land exactly at the split zoom, capped at 15 so we never
+            // fly past all the newly-separated pins (Supercluster
+            // maxZoom is 14; map maxZoom is 16). Previously used
+            // `expansionZoom + 0.5` up to 17, which frequently
+            // overshot and left the viewport empty.
             map.flyTo({
               center: [lng, lat],
-              zoom: Math.min(expansionZoom + 0.5, 17),
+              zoom: Math.min(expansionZoom, 15),
               duration: 500,
             });
           }
