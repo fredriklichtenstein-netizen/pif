@@ -1,17 +1,12 @@
 
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { MyPifsGrid } from "@/components/profile/MyPifsGrid";
-import { InterestedPifsGrid } from "@/components/profile/InterestedPifsGrid";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import { ProfileBasicInfo } from "@/components/profile/info/ProfileBasicInfo";
 import { MainNav } from "@/components/MainNav";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArchivedPifsGrid } from "@/components/profile/ArchivedPifsGrid";
 import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_PROFILE } from "@/data/mockProfiles";
 import { useTranslation } from "react-i18next";
@@ -25,7 +20,6 @@ function formatPublicName(profile: any) {
 
 const Profile = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
-  const [activeTab, setActiveTab] = useState("my-pifs");
   const { t } = useTranslation();
 
   const { profile: liveProfile, isLoading: profileLoading } = useCachedProfile(user?.id);
@@ -42,7 +36,6 @@ const Profile = () => {
     return null;
   })();
 
-  // Only show full-page loader on the very first load with no cached data.
   const loading = !DEMO_MODE && profileLoading && !profileData;
 
   if (authLoading || loading) {
@@ -82,26 +75,6 @@ const Profile = () => {
               coordinates={coordinates}
             />
           </Card>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-4 w-full h-auto">
-              <TabsTrigger value="my-pifs" className="min-w-0 whitespace-normal text-xs leading-tight text-center h-auto py-2">{t('profile.my_pifs_tab')}</TabsTrigger>
-              <TabsTrigger value="interested" className="min-w-0 whitespace-normal text-xs leading-tight text-center h-auto py-2">{t('profile.interested_tab')}</TabsTrigger>
-              <TabsTrigger value="archived" className="min-w-0 whitespace-normal text-xs leading-tight text-center h-auto py-2">{t('profile.archived_tab')}</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="my-pifs" className="mt-0">
-              <MyPifsGrid userId={profile.id} />
-            </TabsContent>
-            
-            <TabsContent value="interested" className="mt-0">
-              <InterestedPifsGrid userId={profile.id} />
-            </TabsContent>
-            
-            <TabsContent value="archived" className="mt-0">
-              <ArchivedPifsGrid userId={profile.id} />
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
       <MainNav />

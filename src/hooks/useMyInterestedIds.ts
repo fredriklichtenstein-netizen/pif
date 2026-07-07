@@ -40,7 +40,8 @@ export const useMyInterestedIds = () => {
       const { data, error } = await supabase
         .from("interests")
         .select("item_id")
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .neq("status", "not_selected");
       if (error) throw error;
       const next = new Set<string>(
         (data ?? []).map((r: any) => String(r.item_id))
@@ -86,7 +87,9 @@ export const useMyInterestedIds = () => {
           const row = payload.new ?? payload.old;
           const itemId = row?.item_id != null ? String(row.item_id) : null;
           if (!itemId) return;
-          if (payload.eventType === "INSERT") {
+          const newStatus = (payload.new as any)?.status;
+          const isActive = payload.eventType !== "DELETE" && newStatus !== "not_selected";
+          if (isActive) {
             setIds((prev) => {
               if (prev.has(itemId)) return prev;
               const next = new Set(prev);
@@ -94,7 +97,7 @@ export const useMyInterestedIds = () => {
               return next;
             });
             setMany([{ itemId, value: true }]);
-          } else if (payload.eventType === "DELETE") {
+          } else {
             setIds((prev) => {
               if (!prev.has(itemId)) return prev;
               const next = new Set(prev);

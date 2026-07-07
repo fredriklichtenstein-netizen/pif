@@ -29,6 +29,8 @@ interface Props {
   onCategoryChange: (c: string[]) => void;
   includeArchived: boolean;
   onIncludeArchivedChange: (v: boolean) => void;
+  onlyInterested: boolean;
+  onOnlyInterestedChange: (v: boolean) => void;
   onResetAll: () => void;
   /** When true, hide private filters (archived) — viewing another user. */
   viewingOtherUser?: boolean;
@@ -50,6 +52,8 @@ export function FeedFiltersPanel({
   onCategoryChange,
   includeArchived,
   onIncludeArchivedChange,
+  onlyInterested,
+  onOnlyInterestedChange,
   onResetAll,
   viewingOtherUser = false,
   userFilterActive = false,
@@ -77,6 +81,7 @@ export function FeedFiltersPanel({
     (userLocation ? 1 : 0) +
     (!distanceIsDefault ? 1 : 0) +
     (includeArchived ? 1 : 0) +
+    (onlyInterested ? 1 : 0) +
     (userFilterActive ? 1 : 0);
 
   const hasNonDefault = activeCount > 0;
@@ -209,6 +214,29 @@ export function FeedFiltersPanel({
               </DropdownMenuContent>
             </DropdownMenu>
           </section>
+
+          {/* My interest toggle (authenticated, own-feed only) */}
+          {user && !viewingOtherUser && (
+            <section className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold">
+                {t("feed.my_interest", "Mitt intresse")}
+              </h3>
+              <button
+                type="button"
+                onClick={() => onOnlyInterestedChange(!onlyInterested)}
+                aria-pressed={onlyInterested}
+                className={`relative inline-flex shrink-0 h-6 w-11 rounded-full transition-colors ${
+                  onlyInterested ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
+                    onlyInterested ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </section>
+          )}
 
           {/* Archived toggle (authenticated, own-feed only) */}
           {user && !viewingOtherUser && (
