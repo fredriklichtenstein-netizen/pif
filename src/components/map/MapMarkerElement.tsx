@@ -1,10 +1,13 @@
 
 interface MapMarkerElementProps {
-  onClick?: () => void;
+  onClick?: (event: MouseEvent) => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   highlighted?: boolean;
   itemType?: 'offer' | 'request';
+  /** When true, adds a distinct primary-colored ring so a logged-in
+   *  user can spot their own posts on the map at a glance. */
+  isOwn?: boolean;
 }
 
 // Color configurations for different item types
