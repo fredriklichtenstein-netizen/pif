@@ -92,7 +92,9 @@ export function useViewportMarkers({
     clearMarkers,
     createPostMarker,
     createClusterMarker,
+    clusterVersion,
   ]);
+
 
   useEffect(() => {
     if (!mapReady) return;
