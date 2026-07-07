@@ -631,7 +631,9 @@
     "loading_posts": "Loading posts...",
     "map_loaded_announcement": "Map page loaded, showing community posts on map",
     "interactive_map": "Interactive map",
-    "only_my_interest": "Interests I've shown"
+    "only_my_interest": "Interests I've shown",
+    "hide_own_posts": "Hide my own posts",
+    "open_post": "Open"
   },
   "email_confirmation": {
     "check_email": "Check your email",
