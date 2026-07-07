@@ -630,7 +630,8 @@
     "demo_viewing": "Viewing example locations in Stockholm",
     "loading_posts": "Loading posts...",
     "map_loaded_announcement": "Map page loaded, showing community posts on map",
-    "interactive_map": "Interactive map"
+    "interactive_map": "Interactive map",
+    "only_my_interest": "Interests I've shown"
   },
   "email_confirmation": {
     "check_email": "Check your email",
