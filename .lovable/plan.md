@@ -1,46 +1,84 @@
 ## Lovable implementation plan for approval
 
-### Root cause
+### Findings from code inspection
 
-Toggling the archived filter changes React Query's key inside `useOptimizedFeed`, but it does NOT unmount the hook. As a result, when the filter flips:
+**1. What the boundary guard actually checks** (`src/components/feed/OptimizedFeedContainer.tsx`, inside `OptimizedFeedBody.fullyFilteredPosts`):
 
-- The realtime channel `feed-shared-realtime` (fixed name, no key suffix) is torn down and re-created via its `[queryClient, includeArchived]` effect — the teardown and resubscribe overlap briefly on the same channel name, and the invalidation calls inside the realtime handler (`invalidateOptimizedFeedQueries`) fan out to *every* `['posts', 'optimized', ...]` query in the cache, not just the current one.
-- Existing observers of the previous key (still alive during the transition, plus any that React Query keeps around under StrictMode's double-mount in dev) get refetched. That's the HAR footprint: one request for `pif_status=in.(archived,completed)` and, simultaneously, one for the active `or=(pif_status.is.null, ...)` filter — two different keys, both observed, both refetched.
-- The reset effect I added last turn (bumping `feedVersion`, clearing caches, invalidating) actually *worsens* this: it fires an extra invalidation after the toggle, which is what pushes the stale-observer refetch over the line into the HAR.
+```ts
+const isTerminal = (p: Post) => {
+  const s = (p as any).status ?? (p as any).pif_status;
+  return s === 'archived' || s === 'completed' || !!p.archived_at;
+};
+const bucketed = effectiveIncludeArchived
+  ? base.filter(isTerminal)          // archived view: keep ONLY terminal
+  : base.filter((p) => !isTerminal(p));
+```
 
-So the container is not literally rendered twice — but `useOptimizedFeed` keeps its realtime subscription, its `useQuery` observer, its in-flight loaders, and its cache-generation counter across a filter change. Old and new observers coexist for the transition window, and both fire.
+- It reads `effectiveIncludeArchived` from **props** (passed from the outer container). The inner body is keyed on that same value, so the value the guard sees is always the one this mounted body was created with — there is no outer/inner drift window.
+- `??` is nullish-coalescing, so `status = ''` (which is what `transformPostData` sets for an active row: `status: item.pif_status || item.status || ''`) does fall through to `pif_status`, but the transformed `Post` object no longer carries `pif_status` — only `status`. For an active row, `status === ''`, `archived_at` is null, so `isTerminal → false`, and the archived-view filter correctly excludes it.
 
-### Fix
+**Conclusion:** the guard is correct for genuinely-active rows. It will not let a row with `pif_status = 'active'` / `null` pass into the archived view.
 
-Force a clean remount of everything that owns the feed's queries and realtime channel when `includeArchived` changes. The rest of the container (filter pills, header, refresh UX, distance/interests state) stays mounted so scroll position and filter panel state on the filter row itself are preserved.
+**2. What is actually leaking — two candidates**
 
-1. **Split `OptimizedFeedContainer` into two pieces**:
-   - `OptimizedFeedContainer` (outer) keeps the local `includeArchived` state, `FeedFiltersPanel`, profile header, refresh wiring, and layout.
-   - `OptimizedFeedBody` (new inner component in the same file) owns `useOptimizedFeed`, the posts memoization, `useDistanceFiltering`, hydration effects, `FeedItemList`, and the infinite-scroll sentinel. It receives `includeArchived` (and the props it needs) from the outer.
+- **Candidate A (most likely): `completed` rows look like active items in the UI.** Both `getOptimizedPosts` and the boundary guard treat `pif_status IN ('archived','completed')` as terminal, and the SQL query for the archived scope is `.in('pif_status', ['archived','completed'])`. So the archived view intentionally shows completed rows, but a completed row has no "Arkiverad" visual affordance (`FeedItemList` only badges rows where `status === 'archived' || archived_at`). To the user those look indistinguishable from active items "leaking in".
+- **Candidate B: stale React Query cache from a previous archived-scope mount.** `useOptimizedFeed`'s aggregator reads via `queryClient.getQueryData(['posts','optimized', page, includeArchived, feedVersion])`. `gcTime` is 5 min. If a row was archived when previously cached (`status='archived'`) but has since been restored server-side, the cached transformed Post still has `status='archived'` and passes the guard — but that's the opposite direction of the reported bug (an archived-looking row that's actually active).
 
-2. **Key the inner component on the filter identity**:
+**3. Cache/unmount behaviour**
+
+- The key-based remount unmounts the old `OptimizedFeedBody`, which unmounts its `useQuery` observer, tears down the realtime channel, and clears in-memory sets/timers. The **React Query cache itself is not cleared on unmount** — entries stay for `gcTime` (5 min) and are reused on remount. That is intentional (fast return-toggles) and is not by itself a leakage source, because entries are scoped by `includeArchived` in the query key.
+- `refresh()` calls `clearPostsCache()` (drops `DatabaseCache` + `transformCache`) but does NOT `queryClient.removeQueries(...)`. On a filter toggle we neither call `refresh` nor `removeQueries`, so the archived-scope React Query entry from any earlier archived-view session is served instantly on remount.
+
+### Root-cause hypothesis (to confirm with one diagnostic pass)
+
+The reported "active items appearing" is almost certainly **completed rows** that have no archived styling. Secondary risk: **stale archived-scope RQ cache** entries served before the fresh fetch completes.
+
+### Proposed fix
+
+Two small, additive changes — no behaviour change for active view:
+
+1. **Diagnose first (one-line log, removed after confirmation).** Temporarily log the `id + status + pif_status + archived_at` of the first ~5 items in `fullyFilteredPosts` when `effectiveIncludeArchived` is true. If they are all `completed`, we have Candidate A; if any show `''` / `active`, we have Candidate B.
+
+2. **Fix — regardless of which candidate wins, both are worth addressing:**
+
+   a. **Distinct visual badge for completed rows** in `FeedItemList` — mirror the existing `isArchived` styling with an `isCompleted` variant (localised label, e.g. "Genomförd"). This removes the "looks like an active item" perception.
+
+   b. **Purge the archived-scope React Query cache on `OptimizedFeedBody` unmount** so a stale entry from an older archived session can never render before the fresh fetch:
+
+   ```ts
+   useEffect(() => {
+     return () => {
+       queryClient.removeQueries({
+         predicate: (q) =>
+           q.queryKey[0] === 'posts' &&
+           q.queryKey[1] === 'optimized' &&
+           q.queryKey[3] === includeArchived,
+       });
+     };
+   }, [queryClient, includeArchived]);
    ```
-   <OptimizedFeedBody key={effectiveIncludeArchived ? 'archived' : 'active'} ... />
+
+   Placed inside `useOptimizedFeed` so it's colocated with the query definition.
+
+   c. **Tighten the guard to also drop cached rows whose transformed `status` disagrees with the current scope** (defence-in-depth, already almost there):
+
+   ```ts
+   const s = String((p as any).status ?? (p as any).pif_status ?? '');
+   const isTerminal = s === 'archived' || s === 'completed' || !!p.archived_at;
    ```
-   Toggling the filter unmounts the old body (which runs `useOptimizedFeed`'s cleanup: `supabase.removeChannel`, timer clears, React Query observer unsubscribe) *before* the new body mounts and subscribes. Only one feed instance is ever active.
 
-3. **Remove the fragile reset effect** added last turn in `useOptimizedFeed` (`isFirstArchivedEffect` + `setFeedVersion` on `includeArchived` change). The keyed remount replaces it — no more overlapping invalidations, no more `feedVersion` bump firing an extra fetch. `feedVersion` still exists for realtime-driven refreshes.
+   (Cast to string prevents any future non-string status from silently passing.)
 
-4. **Namespace the realtime channel by scope** so a leftover subscription can't collide with a fresh one during hot-reload:
-   ```
-   supabase.channel(`feed-shared-realtime-${includeArchived ? 'arch' : 'active'}`)
-   ```
-   With the keyed remount this is defense-in-depth, but it makes any future double-mount safe.
+### Files to touch
 
-5. **Keep the render-layer archive-boundary guard** in `fullyFilteredPosts` (added last turn) as defense-in-depth against any transient cache leak.
+- `src/hooks/feed/useOptimizedFeed.ts` — add unmount `removeQueries` for the current scope.
+- `src/components/feed/OptimizedFeedContainer.tsx` — tighten `isTerminal`; add temporary diagnostic log (removed after confirmation).
+- `src/components/feed/FeedItemList.tsx` — add `isCompleted` visual variant alongside `isArchived`.
+- `src/locales/{sv,en}/feed.json` — "Genomförd" / "Completed" label.
 
-### Files touched
+### Non-goals
 
-- `src/components/feed/OptimizedFeedContainer.tsx` — extract inner `OptimizedFeedBody`, add keyed remount.
-- `src/hooks/feed/useOptimizedFeed.ts` — remove the `isFirstArchivedEffect` reset effect; namespace the realtime channel by `includeArchived`.
+- No change to the SQL filter, network layer, or realtime channel — those are working as of the last fix.
+- No change to the outer/inner split — that fix stays.
 
-### Verification
-
-- Toggle "Visa endast arkiverade" on/off with the network panel open: exactly one items-table request per toggle, matching the current filter. No parallel active + archived request.
-- Scroll position resets on toggle (expected — new list); filter pills stay put.
-- Archive an item from the active feed → it disappears; toggle to archived → it appears; toggle back → it stays gone from active.
+Approve and I'll implement.
