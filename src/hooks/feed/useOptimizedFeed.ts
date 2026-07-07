@@ -253,6 +253,23 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     enabled: !DEMO_MODE // Skip query in demo mode
   });
 
+  // On unmount, purge the React Query cache entries for THIS scope so a
+  // future mount of the opposite scope can never render stale rows from a
+  // prior session before its own fresh fetch completes. Entries are scoped
+  // by `includeArchived` in the query key; removing them is safe because
+  // the surviving scope's cache is untouched.
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) &&
+          q.queryKey[0] === 'posts' &&
+          q.queryKey[1] === 'optimized' &&
+          q.queryKey[3] === includeArchived,
+      });
+    };
+  }, [queryClient, includeArchived]);
+
   // Aggregate all pages of posts, then strip optimistically-removed items.
   const allPosts = useMemo(() => {
     if (DEMO_MODE) return [];
