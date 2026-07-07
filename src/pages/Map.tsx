@@ -58,7 +58,7 @@ export default function Map() {
   }, [isRefreshing]);
 
   const handlePostClick = (postId: string) => {
-    navigate(`/feed?post=${postId}&t=${Date.now()}`);
+    navigate(`/item/${postId}`);
   };
 
   const handleTokenSubmit = () => {
