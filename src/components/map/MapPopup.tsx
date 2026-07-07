@@ -13,6 +13,8 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
   const popup = new mapboxgl.Popup({
     offset: 20,
     closeButton: false,
+    closeOnClick: true,
+    closeOnMove: false,
     anchor: 'bottom',
     maxWidth: '180px',
     className: 'map-item-popup enhanced-popup',
