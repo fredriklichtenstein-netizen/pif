@@ -282,6 +282,8 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
                 })}
                 onlyInterested={onlyInterested}
                 onOnlyInterestedChange={guarded(setOnlyInterested)}
+                hideOwnPosts={hideOwnPosts}
+                onHideOwnPostsChange={guarded(setHideOwnPosts)}
                 onResetAll={guarded(handleClearFilters)}
               />
             </div>
@@ -304,6 +306,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             // navigate while a refresh is in flight.
             onPostClick={guarded(onPostClick)}
             targetItemId={targetItemId}
+            currentUserId={user?.id ?? null}
           />
 
           <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
