@@ -20,6 +20,8 @@
     "viewing_user_filter": "Showing pifs from {{name}}",
     "clear_user_filter": "Clear user filter",
     "announcement": "Feed page loaded, showing community posts",
-    "my_interest": "My interest"
+    "my_interest": "My interest",
+    "completed": "Completed",
+    "archived_badge": "Archived"
   }
 }
