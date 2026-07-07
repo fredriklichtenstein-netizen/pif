@@ -4,7 +4,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FeedProfileHeader } from './FeedProfileHeader';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
 import { FeedItemList } from './FeedItemList';
-import { FeedLoadingState } from './FeedLoadingState';
 import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
 import { DemoModeBanner } from './DemoModeBanner';
@@ -58,13 +57,53 @@ export function OptimizedFeedContainer() {
   const [includeArchived, setIncludeArchived] = useState(false);
   // Archived view only makes sense on own feed (own or no user filter).
   const effectiveIncludeArchived = isLoggedIn && includeArchived && !viewingOtherUser;
-  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } = useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
 
   const clearUserFilter = useCallback(() => {
     const next = new URLSearchParams(searchParams);
     next.delete('user');
     setSearchParams(next, { replace: false });
   }, [searchParams, setSearchParams]);
+
+  // Key the inner body on the archived-scope so toggling the filter fully
+  // unmounts `useOptimizedFeed` (its React Query observer, realtime channel,
+  // in-flight timers) BEFORE the new-scope body mounts and subscribes. This
+  // guarantees only one feed instance is ever active, so the network log
+  // never shows an active + archived request racing side-by-side.
+  return (
+    <OptimizedFeedBody
+      key={effectiveIncludeArchived ? 'feed-archived' : 'feed-active'}
+      isLoggedIn={isLoggedIn}
+      viewingOtherUser={viewingOtherUser}
+      filteredUserId={filteredUserId}
+      includeArchived={includeArchived}
+      effectiveIncludeArchived={effectiveIncludeArchived}
+      onIncludeArchivedChange={setIncludeArchived}
+      onClearUserFilter={clearUserFilter}
+    />
+  );
+}
+
+interface OptimizedFeedBodyProps {
+  isLoggedIn: boolean;
+  viewingOtherUser: boolean;
+  filteredUserId: string | null;
+  includeArchived: boolean;
+  effectiveIncludeArchived: boolean;
+  onIncludeArchivedChange: (value: boolean) => void;
+  onClearUserFilter: () => void;
+}
+
+function OptimizedFeedBody({
+  isLoggedIn,
+  viewingOtherUser,
+  filteredUserId,
+  includeArchived,
+  effectiveIncludeArchived,
+  onIncludeArchivedChange,
+  onClearUserFilter,
+}: OptimizedFeedBodyProps) {
+  const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
+    useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
 
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
@@ -160,11 +199,6 @@ export function OptimizedFeedContainer() {
     visiblePostIdsKey,
   ]);
 
-  // Interaction state is a nice-to-have — never gate the entire feed on it.
-  // Buttons start neutral and fill in once hydration lands, but posts render
-  // immediately so a stuck likes/interests fetch can't freeze the page.
-  const interactionStateReady = true;
-
   // Single shared refresh action (announce + begin/end + try/finally)
   // — identical to the one used by the map view.
   const fetchFeed = useCallback(() => measureFetch(refresh), [measureFetch, refresh]);
@@ -210,7 +244,7 @@ export function OptimizedFeedContainer() {
   }
 
   const profileHeader = filteredUserId ? (
-    <FeedProfileHeader userId={filteredUserId} onClear={clearUserFilter} />
+    <FeedProfileHeader userId={filteredUserId} onClear={onClearUserFilter} />
   ) : null;
 
   const filtersPanel = (
@@ -226,7 +260,7 @@ export function OptimizedFeedContainer() {
         selectedCategories={selectedCategories}
         onCategoryChange={setCategories}
         includeArchived={includeArchived}
-        onIncludeArchivedChange={setIncludeArchived}
+        onIncludeArchivedChange={onIncludeArchivedChange}
         onlyInterested={onlyInterested}
         onOnlyInterestedChange={setOnlyInterested}
         viewingOtherUser={viewingOtherUser}
@@ -234,9 +268,9 @@ export function OptimizedFeedContainer() {
         onResetAll={() => {
           handleClearAll();
           setUserLocation(null);
-          setIncludeArchived(false);
+          onIncludeArchivedChange(false);
           setOnlyInterested(false);
-          clearUserFilter();
+          onClearUserFilter();
         }}
       />
       {isLoggedIn && !viewingOtherUser && (

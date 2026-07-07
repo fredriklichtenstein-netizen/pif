@@ -218,29 +218,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     };
   }, [queryClient, includeArchived]);
 
-  // Reset pagination + local caches whenever the archived toggle flips.
-  // Without this, `page` stays advanced from the previous view and the
-  // aggregated `allPosts` loop reads stale/missing pages under the new key,
-  // occasionally letting the wrong bucket render at the bottom of the list.
-  const isFirstArchivedEffect = useRef(true);
-  useEffect(() => {
-    if (isFirstArchivedEffect.current) {
-      isFirstArchivedEffect.current = false;
-      return;
-    }
-    setPage(0);
-    setFadingIds(new Set());
-    setActiveArchivedIds(new Set());
-    setRestoringIds(new Set());
-    fadeTimersRef.current.forEach((t) => clearTimeout(t));
-    fadeTimersRef.current.clear();
-    restoreTimersRef.current.forEach((t) => clearTimeout(t));
-    restoreTimersRef.current.clear();
-    loadMoreInFlightRef.current = false;
-    clearPostsCache();
-    setFeedVersion((v) => v + 1);
-    invalidateOptimizedFeedQueries(queryClient);
-  }, [includeArchived, queryClient]);
+
 
 
   // In demo mode, return mock data immediately
@@ -426,7 +404,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     };
 
     const channel = supabase
-      .channel('feed-shared-realtime')
+      .channel(`feed-shared-realtime-${includeArchived ? 'arch' : 'active'}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'items' },
