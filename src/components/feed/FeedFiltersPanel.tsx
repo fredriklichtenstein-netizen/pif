@@ -81,6 +81,7 @@ export function FeedFiltersPanel({
     (userLocation ? 1 : 0) +
     (!distanceIsDefault ? 1 : 0) +
     (includeArchived ? 1 : 0) +
+    (onlyInterested ? 1 : 0) +
     (userFilterActive ? 1 : 0);
 
   const hasNonDefault = activeCount > 0;
