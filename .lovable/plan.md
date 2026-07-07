@@ -1,42 +1,37 @@
 ## Lovable implementation plan for approval
 
-### Root cause
+### Root cause investigation
 
-All four feed action buttons (Gillar, Kommentera, Dela, Uppfyll önskan) render through the same `InteractionButtonWithPopup` component. Its label + counter row is:
+Traced the archived-filter path end-to-end. The **query layer is correct**: `OptimizedQueries.getPosts` (`src/services/database/queries.ts` lines 34–43) uses `.in('pif_status', ['archived','completed'])` when `includeArchived` is true, so the server returns only terminal-status rows. The **secondary cache boundary** (`applyArchiveBoundary` in `src/services/posts/optimized.ts` lines 27–30) also filters correctly, and the **React Query aggregator** (`useOptimizedFeed` lines 262–279) keeps only `isArchivedPost` items when `includeArchived` is true.
 
-```tsx
-<div className="flex flex-row items-center justify-center mt-1 gap-1.5">
-  <span className="text-xs font-medium ...">{labelText}</span>
-  {count > 0 && <CounterButton ... />}
-</div>
-```
+So in isolation each layer looks correct — but the bug is reproducible in the UI, which means one of the following is happening:
 
-The `<span>` has no `whitespace-nowrap`. The other three labels are single words ("Gillar", "Kommentera", "Dela") so they never wrap. "Uppfyll önskan" contains a space, so on narrow flex columns the browser breaks it into two lines. Once the span wraps, three things happen at once:
+**Most likely cause:** the `page` counter is **not reset** when the `includeArchived` toggle flips. `useOptimizedFeed` swaps the React Query key (which includes `includeArchived`), but keeps `page` at whatever it was on the active feed. The `allPosts` memo then iterates `for (i = 0; i <= page; i++)` reading `queryClient.getQueryData(['posts','optimized', i, includeArchived, feedVersion])`. Two side effects follow:
+1. Pages `0 .. page-1` are missing under the new key, so archived items are shown only for the current page's offset — a partial/wrong page.
+2. Because the current query fires with the old `page` value, the archived query is issued with a non-zero offset. Combined with an unreset `feedVersion`, stale React Query entries under an older `feedVersion` for `includeArchived=false` can still be found by any getQueryData lookup that doesn't match `feedVersion` — and the `page`+`includeArchived` mismatch also opens a small window where the previous active-feed pages remain in the aggregated result while a fresh archived fetch resolves.
 
-1. Two lines of text (issue #1).
-2. Wrapped text inside a span defaults to `text-align: left`, so the two lines look left-aligned (issue #2).
-3. The wrapped span grows to fill available width, pushing the `CounterButton` to the far right of the row (issue #3).
-
-So all three symptoms are the same bug: the label is allowed to wrap.
+**Contributing weakness:** the client-side filter inside `allPosts` trusts server + cache to already be scoped. But if any stale cache entry (React Query or `DatabaseCache`) leaks a non-archived row into the archived key, the filter passes it through only because it doesn't re-check pif_status when `includeArchived=true` (line 275 returns `isArchivedPost` — correct) — however, `Post.pif_status` is *not* set by `transformPostData`; only `Post.status` is populated. The filter reads both `(p as any).status` and `(p as any).pif_status`; the second is always undefined for transformed posts. This is safe today (`status` carries pif_status), but it means there is no defense-in-depth if `status` is ever cleared/renamed.
 
 ### Fix
 
-Two small changes, both scoped to presentation:
+1. **Reset `page` and clear stale in-memory caches whenever `includeArchived` changes** in `src/hooks/feed/useOptimizedFeed.ts`:
+   - Add an effect that runs on `includeArchived` change: `setPage(0)`, clear `fadingIds` / `activeArchivedIds` / `restoringIds`, call `clearPostsCache()`, bump `feedVersion`, and invalidate optimized queries. This guarantees the archived view starts fresh at page 0 with no leftover active pages in the aggregated view.
 
-1. **`src/components/post/interactions/InteractionButtonWithPopup.tsx`** (line 279)
-   Add `whitespace-nowrap` to the label span so no action label ever wraps:
-   ```
-   className={`text-xs font-medium select-none whitespace-nowrap ${disabledClass} ${dimClass}`}
-   ```
-   This alone fixes issues #2 and #3 for any label, and prevents future regressions if any other label grows.
+2. **Harden `allPosts` aggregation** in the same file:
+   - Skip pages whose cached data is `undefined` (already true), but also short-circuit the loop so it only aggregates pages that actually belong to the current `(includeArchived, feedVersion)` pair — this is implicit with the reset above but worth keeping explicit.
 
-2. **Shorten the Swedish copy** so "Uppfyll" fits comfortably next to the counter on 360–390px screens (the "Önskan" badge on the wish card already provides context):
-   - `src/locales/sv/interactions.json` → `"grant_wish": "Uppfyll önskan"` → `"grant_wish": "Uppfyll"`
-   - Leave English `"grant_wish": "Grant wish"` unchanged (fits on one line with `whitespace-nowrap`; parallel to "Comment"/"Share" length).
-   - Do **not** touch the perspective label `fulfilling_wish` ("Uppfyller önskan") — that only shows once the user is a selected fulfiller and by then the counter is hidden, so wrapping isn't a concern; but the new `whitespace-nowrap` still protects it.
+3. **Defense in depth at the render layer** in `src/components/feed/OptimizedFeedContainer.tsx`:
+   - Inside the `fullyFilteredPosts` memo, add a final guard: when `effectiveIncludeArchived` is true, keep only posts that are terminal (`status === 'archived' || status === 'completed' || archived_at != null`); when false, drop any post that is terminal. This mirrors the boundary and ensures no path — realtime, prefetch, or race — can leak the wrong bucket into the rendered list.
 
-### Out of scope
+4. **No query change needed.** The server-side `.in('pif_status', ['archived','completed'])` filter is already correct.
 
-- No changes to `CounterButton`, icon sizing, or the outer `flex-1 min-w-[60px]` column.
-- No changes to the other three buttons; they already look correct and inherit the `whitespace-nowrap` safety.
-- No copy change for the offer variant ("Intresserad") — single word, already fine.
+### Files touched
+
+- `src/hooks/feed/useOptimizedFeed.ts` — add the `includeArchived`-change reset effect.
+- `src/components/feed/OptimizedFeedContainer.tsx` — add the archive-boundary guard inside `fullyFilteredPosts`.
+
+### Verification
+
+- Toggle "Visa endast arkiverade" on with active-feed pagination already advanced: list should immediately show only archived items, no active items at the bottom.
+- Toggle it off again: list should return to active-only with no archived leaking in.
+- Archive an item while viewing archived: it should appear; restore it: it should disappear from the archived list.
