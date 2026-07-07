@@ -214,47 +214,47 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       
       {isMapReady && !error && map && (
         <>
-          {/* Quick type pills + Filtrera trigger (consolidated sheet) */}
-          <div className="absolute top-4 left-4 right-4 z-20 flex items-start gap-2 pointer-events-none">
-            <div className="pointer-events-auto flex-1 min-w-0">
-              <div className="flex items-center gap-1 bg-background rounded-lg shadow-md p-1 w-fit">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={guarded(() => setSelectedItemTypes([]))}
-                  className={`text-xs px-3 ${
-                    selectedItemTypes.length === 0 || selectedItemTypes.length === 2
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "hover:bg-accent"
-                  }`}
-                >
-                  {t("map_filters.all")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={guarded(() => setSelectedItemTypes(["offer"]))}
-                  className={`text-xs px-3 ${
-                    selectedItemTypes.length === 1 && selectedItemTypes.includes("offer")
-                      ? "bg-teal-600 hover:bg-teal-700 text-white"
-                      : "hover:bg-teal-50 text-teal-700"
-                  }`}
-                >
-                  🎁 {t("map_filters.pifs")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={guarded(() => setSelectedItemTypes(["request"]))}
-                  className={`text-xs px-3 ${
-                    selectedItemTypes.length === 1 && selectedItemTypes.includes("request")
-                      ? "bg-amber-500 hover:bg-amber-600 text-white"
-                      : "hover:bg-amber-50 text-amber-700"
-                  }`}
-                >
-                  ✨ {t("map_filters.wishes")}
-                </Button>
-              </div>
+          {/* Quick type pills + Filtrera trigger — all in a single
+              top-left group so the top-right stays free for Mapbox's
+              NavigationControl (zoom / compass). */}
+          <div className="absolute top-4 left-4 right-4 z-20 flex items-center gap-2 pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-1 bg-background rounded-lg shadow-md p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={guarded(() => setSelectedItemTypes([]))}
+                className={`text-xs px-3 ${
+                  selectedItemTypes.length === 0 || selectedItemTypes.length === 2
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-accent"
+                }`}
+              >
+                {t("map_filters.all")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={guarded(() => setSelectedItemTypes(["offer"]))}
+                className={`text-xs px-3 ${
+                  selectedItemTypes.length === 1 && selectedItemTypes.includes("offer")
+                    ? "bg-teal-600 hover:bg-teal-700 text-white"
+                    : "hover:bg-teal-50 text-teal-700"
+                }`}
+              >
+                🎁 {t("map_filters.pifs")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={guarded(() => setSelectedItemTypes(["request"]))}
+                className={`text-xs px-3 ${
+                  selectedItemTypes.length === 1 && selectedItemTypes.includes("request")
+                    ? "bg-amber-500 hover:bg-amber-600 text-white"
+                    : "hover:bg-amber-50 text-amber-700"
+                }`}
+              >
+                ✨ {t("map_filters.wishes")}
+              </Button>
             </div>
             <div className="pointer-events-auto">
               <MapFiltersSheet
@@ -279,6 +279,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
           </div>
 
 
+
           <DistanceRings
             map={map}
             center={locationTracking.userLocation}
@@ -296,7 +297,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             targetItemId={targetItemId}
           />
 
-          <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
+          <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
             <Button
               onClick={guarded(() => {
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}

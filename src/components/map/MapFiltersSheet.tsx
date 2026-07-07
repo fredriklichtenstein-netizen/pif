@@ -237,7 +237,7 @@ export function MapFiltersSheet({
           {user && (
             <section className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">
-                {t("feed.my_interest", "Mitt intresse")}
+                {t("map.only_my_interest", "Mina visade intressen")}
               </h3>
               <button
                 type="button"
