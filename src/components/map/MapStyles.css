@@ -24,10 +24,11 @@
   height: 100%;
 }
 
-/* Lift Mapbox built-in controls above the fixed bottom MainNav */
+/* Lift Mapbox built-in controls just above the fixed bottom MainNav
+   (nav ~64px + small breathing gap). */
 .map-container .mapboxgl-ctrl-bottom-left,
 .map-container .mapboxgl-ctrl-bottom-right {
-  bottom: 80px !important;
+  bottom: 68px !important;
 }
 
 /* Loading state for markers */
