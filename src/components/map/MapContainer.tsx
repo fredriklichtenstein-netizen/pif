@@ -297,7 +297,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             targetItemId={targetItemId}
           />
 
-          <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
+          <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
             <Button
               onClick={guarded(() => {
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
