@@ -265,7 +265,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
                 onCategoryChange={guarded(setSelectedCategories)}
                 selectedConditions={selectedConditions}
                 onConditionChange={guarded(setSelectedConditions)}
-                selectedItemTypes={selectedItemTypes}
+                
                 selectedDistance={selectedDistance}
                 onDistanceChange={guarded(setSelectedDistance)}
                 userLocation={locationTracking.userLocation}
