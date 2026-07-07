@@ -108,9 +108,19 @@ export function OptimizedFeedContainer() {
       },
       myInterestedIds,
     );
+    // Defense-in-depth: enforce the archive boundary at the render layer so
+    // no stale cache, prefetch, or realtime race can leak the wrong bucket
+    // into the visible list. Terminal = archived OR completed OR archived_at.
+    const isTerminal = (p: Post) => {
+      const s = (p as any).status ?? (p as any).pif_status;
+      return s === 'archived' || s === 'completed' || !!p.archived_at;
+    };
+    const bucketed = effectiveIncludeArchived
+      ? base.filter(isTerminal)
+      : base.filter((p) => !isTerminal(p));
     return filteredUserId
-      ? base.filter((p) => p.postedBy?.id === filteredUserId)
-      : base;
+      ? bucketed.filter((p) => p.postedBy?.id === filteredUserId)
+      : bucketed;
   }, [
     filteredPosts,
     selectedCategories,
@@ -120,6 +130,7 @@ export function OptimizedFeedContainer() {
     myInterestedIds,
     filteredUserId,
     viewingOtherUser,
+    effectiveIncludeArchived,
   ]);
 
 
