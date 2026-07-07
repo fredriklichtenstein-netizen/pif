@@ -16,6 +16,14 @@ interface UseClusterInitArgs {
   > | null>;
   clearMarkers: () => void;
   setMapReady: (ready: boolean) => void;
+  /**
+   * Incremented after each successful async cluster rebuild so
+   * `useViewportMarkers` re-runs `updateMarkers` and repaints markers
+   * with the fresh cluster index / enhanced posts. Without this,
+   * updates after the first render would race and leave stale markers
+   * on screen until the next viewport interaction.
+   */
+  bumpClusterVersion: () => void;
 }
 
 export function useClusterInit({
@@ -26,8 +34,11 @@ export function useClusterInit({
   clusterIndexRef,
   clearMarkers,
   setMapReady,
+  bumpClusterVersion,
 }: UseClusterInitArgs) {
   useEffect(() => {
+    let cancelled = false;
+
     const initializeClusters = async () => {
       const validPosts = posts.filter((post) => {
         if (!post.coordinates) return false;
@@ -41,7 +52,18 @@ export function useClusterInit({
       });
 
       if (validPosts.length === 0) {
+        if (cancelled) return;
         clearMarkers();
+        enhancedPostsRef.current = [];
+        clusterIndexRef.current = new Supercluster({
+          radius: 60,
+          maxZoom: 14,
+          minZoom: 0,
+          minPoints: 2,
+        });
+        clusterIndexRef.current.load([]);
+        setMapReady(true);
+        bumpClusterVersion();
         return;
       }
 
@@ -74,7 +96,9 @@ export function useClusterInit({
         })
       );
 
-      enhancedPostsRef.current = enhancedPosts;
+      // A newer posts array arrived while we were awaiting privacy
+      // offsets — drop this stale run entirely.
+      if (cancelled) return;
 
       // Tiny anti-stacking jitter (~±2 meters) so coincident offsets still
       // render as distinct pins at max zoom instead of overlapping pixel-perfect.
@@ -91,13 +115,19 @@ export function useClusterInit({
         properties: { postIndex: index },
       }));
 
-      clusterIndexRef.current = new Supercluster({
+      const index = new Supercluster<
+        { postIndex: number },
+        { postIndex: number }
+      >({
         radius: 60,
         maxZoom: 14,
         minZoom: 0,
         minPoints: 2,
       });
-      clusterIndexRef.current.load(features);
+      index.load(features);
+
+      enhancedPostsRef.current = enhancedPosts;
+      clusterIndexRef.current = index;
 
       const sessionInitialized = typeof sessionStorage !== 'undefined'
         && sessionStorage.getItem('map_session_initialized');
@@ -134,8 +164,15 @@ export function useClusterInit({
       }
 
       setMapReady(true);
+      // Notify viewport-marker layer that the cluster index is fresh
+      // so it re-runs updateMarkers with the new data.
+      bumpClusterVersion();
     };
 
     initializeClusters();
-  }, [posts, map, targetItemId, clearMarkers, enhancedPostsRef, clusterIndexRef, setMapReady]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [posts, map, targetItemId, clearMarkers, enhancedPostsRef, clusterIndexRef, setMapReady, bumpClusterVersion]);
 }
