@@ -1,27 +1,43 @@
-## Map page — three layout fixes (no filter logic changes)
+## Lovable implementation plan for approval
 
-### Fix 1 — Filtrera button overlapping Mapbox zoom/compass
-Move the `Filtrera` sheet trigger from the top-right slot into the same top-left inline group as the type pills (Alla / Piffar / Önskningar). Top-right is then fully free for Mapbox's built-in `NavigationControl`. Viewport is wide enough (613px) that pills + trigger fit comfortably on one row.
+### Findings
 
-**File:** `src/components/map/MapContainer.tsx`
-- Collapse the current two-column `flex … gap-2` top row into a single left-aligned pill+trigger group.
-- Remove the empty right-side pointer-events wrapper.
+**NavigationControl registration** (`src/components/map/useMapInitialization.ts:224`):
+```ts
+newMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+```
+No offset API is exposed by Mapbox for `addControl` position — offsetting must be done via CSS on the `.mapboxgl-ctrl-top-right` container.
 
-### Fix 2 — Bottom Mapbox controls floating too high
-Root cause: `map.setPadding()` only affects camera math, not DOM control positions. The real problem is a stale CSS offset. In `Map.tsx` the map lives inside `<main className="h-[calc(100vh-73px)]">` with `MainNav` as a sibling **below** it — the map-container's own `bottom: 0` is already flush above MainNav. The current `bottom: 68px !important` override pushes controls a further 68px up into the map area.
+**Filter row layout** (`src/components/map/MapContainer.tsx:220`):
+```tsx
+<div className="absolute top-4 left-4 right-4 z-20 flex items-center gap-2 ...">
+  <div className="... p-1">[type pills — sm buttons]</div>
+  <MapFiltersSheet ... />
+</div>
+```
+Measured height: `top-4` (16px) + pill row (~40px button height + 2×4px padding ≈ 48px) ≈ **~64px from viewport top**. On mobile (613px wide viewport), the Filtrera button sits at the right edge, directly over Mapbox's top-right control stack.
 
-**Files:**
-- `src/components/map/MapStyles.css` — change `.map-container .mapboxgl-ctrl-bottom-left/right { bottom: 68px }` → `bottom: 8px` (small breathing gap only).
-- `src/components/map/MapContainer.tsx` — change the custom Locate button wrapper from `bottom-20` (80px) → `bottom-4` (16px) so it sits just above the scale/logo strip instead of mid-map.
-- Leave `map.setPadding({ bottom: 80 })` untouched — it correctly reserves camera space for programmatic `flyTo`/`fitBounds`; it is not the layout lever.
+### Proposed fix — CSS only, scoped to `.map-container`
 
-### Fix 3 — Copy: "Mitt intresse" → "Mina visade intressen" (map only)
-`feed.my_interest` is shared with `FeedFiltersPanel.tsx` and `OptimizedFeedContainer.tsx`. Renaming it would change the label on `/feed` as well, which is out of scope. Instead, introduce a map-scoped key.
+Edit `src/components/map/MapStyles.css`. Add, alongside the existing bottom-controls override:
 
-**Files:**
-- `src/locales/sv/map.json` — add `"only_my_interest": "Mina visade intressen"`.
-- `src/locales/en/map.json` — add `"only_my_interest": "Interests I've shown"`.
-- `src/components/map/MapFiltersSheet.tsx` — swap the one label from `t("feed.my_interest", …)` to `t("map.only_my_interest", …)`. No active-filter badge renders this text (badge shows a numeric count only), so this single swap covers every visible occurrence on the map page.
+```css
+/* Push Mapbox's built-in top-right control stack (zoom + compass)
+   below the absolute-positioned filter row (top-4 + ~48px pills =
+   ~64px). Applied on all viewports — desktop was also partially
+   covered by the Filtrera trigger. */
+.map-container .mapboxgl-ctrl-top-right {
+  top: 68px !important;
+}
+```
 
-### Out of scope
-No filter logic, no state-shape changes, no changes to `FeedFiltersPanel`, no changes to `NavigationControl`/`ScaleControl` registration.
+Rationale for CSS over JS:
+- Mapbox's `addControl(control, position)` accepts only fixed position strings; no offset param. Wrapping in a custom container would require replacing the built-in `NavigationControl` mount, adding risk for no visual benefit.
+- The scoping selector `.map-container` (set on the wrapper div) ensures the profile page's `AddressMap` and any other map instance is unaffected.
+- `68px` clears the pill row (~64px) with a ~4px visual gap matching the existing `bottom: 8px` spacing.
+- Applied universally — desktop overlap was also present per the report and this improves it.
+
+### Files touched
+- `src/components/map/MapStyles.css` — one appended rule block (~4 lines).
+
+No changes to `MapContainer.tsx`, `useMapInitialization.ts`, or i18n. No filter logic touched.
