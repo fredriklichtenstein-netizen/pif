@@ -54,6 +54,7 @@ export const MapMarkersLayer = ({
     map,
     onPostClick,
     clusterIndexRef,
+    currentUserId,
   });
 
   useClusterInit({
