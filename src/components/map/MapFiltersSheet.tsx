@@ -35,7 +35,6 @@ interface Props {
   onCategoryChange: (categories: string[]) => void;
   selectedConditions: string[];
   onConditionChange: (conditions: string[]) => void;
-  selectedItemTypes: string[]; // used only for the active-count badge
   selectedDistance: number | null;
   onDistanceChange: (d: number | null) => void;
   userLocation: [number, number] | null;
@@ -57,7 +56,7 @@ export function MapFiltersSheet({
   onCategoryChange,
   selectedConditions,
   onConditionChange,
-  selectedItemTypes,
+  
   selectedDistance,
   onDistanceChange,
   userLocation,
@@ -76,7 +75,6 @@ export function MapFiltersSheet({
   const activeCount =
     (selectedCategories.length > 0 ? 1 : 0) +
     (selectedConditions.length > 0 ? 1 : 0) +
-    (selectedItemTypes.length > 0 && selectedItemTypes.length < 2 ? 1 : 0) +
     (userLocation ? 1 : 0) +
     (!distanceIsDefault ? 1 : 0) +
     (onlyInterested ? 1 : 0);
