@@ -75,7 +75,6 @@ export function MapFiltersSheet({
   const activeCount =
     (selectedCategories.length > 0 ? 1 : 0) +
     (selectedConditions.length > 0 ? 1 : 0) +
-    (selectedItemTypes.length > 0 && selectedItemTypes.length < 2 ? 1 : 0) +
     (userLocation ? 1 : 0) +
     (!distanceIsDefault ? 1 : 0) +
     (onlyInterested ? 1 : 0);
