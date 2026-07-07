@@ -94,6 +94,9 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
 
   useEffect(() => {
     if (isMapReady && map) {
+      // Reserve space at the bottom so map center/animations account
+      // for the MainNav + Mapbox scale/logo strip.
+      try { map.setPadding({ top: 0, right: 0, bottom: 80, left: 0 }); } catch {}
       const timer = setTimeout(() => {
         setIsMapVisible(true);
       }, 100);
@@ -101,6 +104,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     } else {
     }
   }, [isMapReady, map]);
+
 
   // When a refresh starts, dismiss any open marker popup so the user
   // can't tap a popup CTA mid-update.
