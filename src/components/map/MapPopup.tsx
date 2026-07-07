@@ -13,6 +13,8 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
   const popup = new mapboxgl.Popup({
     offset: 20,
     closeButton: false,
+    closeOnClick: true,
+    closeOnMove: false,
     anchor: 'bottom',
     maxWidth: '180px',
     className: 'map-item-popup enhanced-popup',
@@ -54,8 +56,10 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
       />`
     : `<div style="width:100%;height:100%;background:${fallbackBg};"></div>`;
 
+  const safeTitle = escapeHtml(post.title || '');
+
   popup.setHTML(`
-    <div style="
+    <div class="map-popup-tap" style="
       width:160px;
       height:160px;
       position:relative;
@@ -63,6 +67,7 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
       overflow:hidden;
       box-shadow:0 8px 32px rgba(0,0,0,0.18);
       background:white;
+      cursor:pointer;
     ">
       ${innerContent}
       <div style="
@@ -80,6 +85,31 @@ export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): map
         box-shadow:0 2px 6px rgba(0,0,0,0.25);
         border:2px solid white;
       ">${typeIcon}</div>
+      <div style="
+        position:absolute;
+        left:0;
+        right:0;
+        bottom:0;
+        padding:8px 10px 10px 10px;
+        background:linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 70%, rgba(0,0,0,0) 100%);
+        color:white;
+        font-size:12px;
+        line-height:1.2;
+        display:flex;
+        align-items:flex-end;
+        justify-content:space-between;
+        gap:6px;
+        pointer-events:none;
+      ">
+        <span style="
+          font-weight:600;
+          overflow:hidden;
+          display:-webkit-box;
+          -webkit-line-clamp:2;
+          -webkit-box-orient:vertical;
+          text-shadow:0 1px 2px rgba(0,0,0,0.4);
+        ">${safeTitle}</span>
+      </div>
     </div>
   `);
 

@@ -1,10 +1,13 @@
 
 interface MapMarkerElementProps {
-  onClick?: () => void;
+  onClick?: (event: MouseEvent) => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   highlighted?: boolean;
   itemType?: 'offer' | 'request';
+  /** When true, adds a distinct primary-colored ring so a logged-in
+   *  user can spot their own posts on the map at a glance. */
+  isOwn?: boolean;
 }
 
 // Color configurations for different item types
@@ -20,7 +23,10 @@ const MARKER_COLORS = {
 };
 
 // Create and cache element templates to improve performance
-const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDivElement => {
+const createElementTemplate = (
+  itemType: 'offer' | 'request' = 'offer',
+  isOwn = false,
+): HTMLDivElement => {
   const colors = MARKER_COLORS[itemType];
   
   const el = document.createElement("div");
@@ -42,7 +48,11 @@ const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDiv
   markerDot.style.backgroundColor = colors.main;
   markerDot.style.borderRadius = "50%";
   markerDot.style.border = "3px solid white";
-  markerDot.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+  // Own posts get an additional colored ring around the white border so
+  // both pif (green) and wish (amber) markers become visibly "mine".
+  markerDot.style.boxShadow = isOwn
+    ? "0 0 0 3px hsl(174 72% 30%), 0 2px 8px rgba(0,0,0,0.35)"
+    : "0 2px 6px rgba(0,0,0,0.3)";
   markerDot.style.transition = "box-shadow 0.2s ease, transform 0.2s ease";
   markerDot.classList.add("marker-dot");
   markerDot.style.display = "flex";
@@ -152,16 +162,19 @@ export const createMarkerElement = ({
   onMouseLeave,
   highlighted = false,
   itemType = 'offer',
+  isOwn = false,
 }: MapMarkerElementProps): HTMLDivElement => {
   // Ensure animation styles are added to the document
   ensureAnimationStyles();
   
-  // Create or clone from template based on item type
-  if (!elementTemplates[itemType]) {
-    elementTemplates[itemType] = createElementTemplate(itemType);
+  // Cache templates separately per (type, isOwn) so the own-post ring
+  // isn't ever shared across posts.
+  const key = `${itemType}:${isOwn ? "own" : "std"}`;
+  if (!elementTemplates[key]) {
+    elementTemplates[key] = createElementTemplate(itemType, isOwn);
   }
   
-  const el = elementTemplates[itemType].cloneNode(true) as HTMLDivElement;
+  const el = elementTemplates[key].cloneNode(true) as HTMLDivElement;
   
   // Apply highlighting if needed
   if (highlighted) {
@@ -172,7 +185,7 @@ export const createMarkerElement = ({
     }
   }
 
-  if (onClick) el.addEventListener("click", onClick);
+  if (onClick) el.addEventListener("click", onClick as EventListener);
   if (onMouseEnter) el.addEventListener("mouseenter", onMouseEnter);
   if (onMouseLeave) el.addEventListener("mouseleave", onMouseLeave);
 

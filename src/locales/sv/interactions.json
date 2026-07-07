@@ -631,7 +631,9 @@
     "loading_posts": "Laddar inlägg...",
     "map_loaded_announcement": "Kartsidan laddad, visar gemenskapens inlägg på kartan",
     "interactive_map": "Interaktiv karta",
-    "only_my_interest": "Mina visade intressen"
+    "only_my_interest": "Mina visade intressen",
+    "hide_own_posts": "Dölj mina egna inlägg",
+    "open_post": "Öppna"
   },
   "email_confirmation": {
     "check_email": "Kolla din e-post",

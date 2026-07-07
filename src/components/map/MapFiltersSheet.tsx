@@ -41,6 +41,8 @@ interface Props {
   onUserLocationChange: (loc: [number, number] | null) => void;
   onlyInterested: boolean;
   onOnlyInterestedChange: (v: boolean) => void;
+  hideOwnPosts: boolean;
+  onHideOwnPostsChange: (v: boolean) => void;
   onResetAll: () => void;
 }
 
@@ -63,6 +65,8 @@ export function MapFiltersSheet({
   onUserLocationChange,
   onlyInterested,
   onOnlyInterestedChange,
+  hideOwnPosts,
+  onHideOwnPostsChange,
   onResetAll,
 }: Props) {
   const { t } = useTranslation();
@@ -77,7 +81,8 @@ export function MapFiltersSheet({
     (selectedConditions.length > 0 ? 1 : 0) +
     (userLocation ? 1 : 0) +
     (!distanceIsDefault ? 1 : 0) +
-    (onlyInterested ? 1 : 0);
+    (onlyInterested ? 1 : 0) +
+    (hideOwnPosts ? 1 : 0);
 
   const hasActive = activeCount > 0;
 
@@ -249,6 +254,29 @@ export function MapFiltersSheet({
                 <span
                   className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
                     onlyInterested ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </section>
+          )}
+
+          {/* Hide own posts toggle */}
+          {user && (
+            <section className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold">
+                {t("map.hide_own_posts", "Dölj mina egna inlägg")}
+              </h3>
+              <button
+                type="button"
+                onClick={() => onHideOwnPostsChange(!hideOwnPosts)}
+                aria-pressed={hideOwnPosts}
+                className={`relative inline-flex shrink-0 h-6 w-11 rounded-full transition-colors ${
+                  hideOwnPosts ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
+                    hideOwnPosts ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
               </button>

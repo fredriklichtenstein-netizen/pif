@@ -5,6 +5,8 @@ export interface PostFilterCriteria {
   conditions: string[];
   itemTypes: string[];
   onlyInterested: boolean;
+  hideOwnPosts?: boolean;
+  currentUserId?: string | null;
 }
 
 /**
@@ -17,7 +19,14 @@ export function applyPostFilters(
   filters: PostFilterCriteria,
   interestedIds: Set<string>,
 ): Post[] {
-  const { categories, conditions, itemTypes, onlyInterested } = filters;
+  const {
+    categories,
+    conditions,
+    itemTypes,
+    onlyInterested,
+    hideOwnPosts,
+    currentUserId,
+  } = filters;
   return posts.filter((post) => {
     if (
       itemTypes.length > 0 &&
@@ -38,6 +47,9 @@ export function applyPostFilters(
       return false;
     }
     if (onlyInterested && !interestedIds.has(String(post.id))) {
+      return false;
+    }
+    if (hideOwnPosts && currentUserId && post.postedBy?.id === currentUserId) {
       return false;
     }
     return true;

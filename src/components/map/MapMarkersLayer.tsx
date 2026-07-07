@@ -12,6 +12,7 @@ interface MapMarkersLayerProps {
   posts: Post[];
   onPostClick: (postId: string) => void;
   targetItemId?: string | null;
+  currentUserId?: string | null;
 }
 
 export const MapMarkersLayer = ({
@@ -19,6 +20,7 @@ export const MapMarkersLayer = ({
   posts,
   onPostClick,
   targetItemId,
+  currentUserId,
 }: MapMarkersLayerProps) => {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const clusterIndexRef = useRef<Supercluster<
@@ -52,6 +54,7 @@ export const MapMarkersLayer = ({
     map,
     onPostClick,
     clusterIndexRef,
+    currentUserId,
   });
 
   useClusterInit({
