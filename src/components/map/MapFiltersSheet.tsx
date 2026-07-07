@@ -35,7 +35,6 @@ interface Props {
   onCategoryChange: (categories: string[]) => void;
   selectedConditions: string[];
   onConditionChange: (conditions: string[]) => void;
-  selectedItemTypes: string[]; // used only for the active-count badge
   selectedDistance: number | null;
   onDistanceChange: (d: number | null) => void;
   userLocation: [number, number] | null;
