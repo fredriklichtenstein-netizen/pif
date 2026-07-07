@@ -162,16 +162,19 @@ export const createMarkerElement = ({
   onMouseLeave,
   highlighted = false,
   itemType = 'offer',
+  isOwn = false,
 }: MapMarkerElementProps): HTMLDivElement => {
   // Ensure animation styles are added to the document
   ensureAnimationStyles();
   
-  // Create or clone from template based on item type
-  if (!elementTemplates[itemType]) {
-    elementTemplates[itemType] = createElementTemplate(itemType);
+  // Cache templates separately per (type, isOwn) so the own-post ring
+  // isn't ever shared across posts.
+  const key = `${itemType}:${isOwn ? "own" : "std"}`;
+  if (!elementTemplates[key]) {
+    elementTemplates[key] = createElementTemplate(itemType, isOwn);
   }
   
-  const el = elementTemplates[itemType].cloneNode(true) as HTMLDivElement;
+  const el = elementTemplates[key].cloneNode(true) as HTMLDivElement;
   
   // Apply highlighting if needed
   if (highlighted) {
@@ -182,7 +185,7 @@ export const createMarkerElement = ({
     }
   }
 
-  if (onClick) el.addEventListener("click", onClick);
+  if (onClick) el.addEventListener("click", onClick as EventListener);
   if (onMouseEnter) el.addEventListener("mouseenter", onMouseEnter);
   if (onMouseLeave) el.addEventListener("mouseleave", onMouseLeave);
 
