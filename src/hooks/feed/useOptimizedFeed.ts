@@ -404,7 +404,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     };
 
     const channel = supabase
-      .channel('feed-shared-realtime')
+      .channel(`feed-shared-realtime-${includeArchived ? 'arch' : 'active'}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'items' },
