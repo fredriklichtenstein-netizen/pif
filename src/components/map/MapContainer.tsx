@@ -210,25 +210,70 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       
       {isMapReady && !error && map && (
         <>
-          <MapFilters
-            posts={filteredPosts}
-            selectedCategories={selectedCategories}
-            selectedConditions={selectedConditions}
-            selectedItemTypes={selectedItemTypes}
-            onCategoryChange={guarded(setSelectedCategories)}
-            onConditionChange={guarded(setSelectedConditions)}
-            onItemTypeChange={guarded(setSelectedItemTypes)}
-            onClearFilters={guarded(handleClearFilters)}
-            selectedDistance={selectedDistance}
-            onDistanceChange={guarded(setSelectedDistance)}
-            userLocation={locationTracking.userLocation}
-            onRequestLocation={guarded(locationTracking.goToMyLocation)}
-            onUsePifAddress={guarded(locationTracking.setManualLocation)}
-            onlyInterested={onlyInterested}
-            onOnlyInterestedChange={guarded(setOnlyInterested)}
-            showInterestedFilter={!!user}
-            interestedCount={myInterestedIds.size}
-          />
+          {/* Quick type pills + Filtrera trigger (consolidated sheet) */}
+          <div className="absolute top-4 left-4 right-4 z-20 flex items-start gap-2 pointer-events-none">
+            <div className="pointer-events-auto flex-1 min-w-0">
+              <div className="flex items-center gap-1 bg-background rounded-lg shadow-md p-1 w-fit">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={guarded(() => setSelectedItemTypes([]))}
+                  className={`text-xs px-3 ${
+                    selectedItemTypes.length === 0 || selectedItemTypes.length === 2
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "hover:bg-accent"
+                  }`}
+                >
+                  {t("map_filters.all")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={guarded(() => setSelectedItemTypes(["offer"]))}
+                  className={`text-xs px-3 ${
+                    selectedItemTypes.length === 1 && selectedItemTypes.includes("offer")
+                      ? "bg-teal-600 hover:bg-teal-700 text-white"
+                      : "hover:bg-teal-50 text-teal-700"
+                  }`}
+                >
+                  🎁 {t("map_filters.pifs")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={guarded(() => setSelectedItemTypes(["request"]))}
+                  className={`text-xs px-3 ${
+                    selectedItemTypes.length === 1 && selectedItemTypes.includes("request")
+                      ? "bg-amber-500 hover:bg-amber-600 text-white"
+                      : "hover:bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  ✨ {t("map_filters.wishes")}
+                </Button>
+              </div>
+            </div>
+            <div className="pointer-events-auto">
+              <MapFiltersSheet
+                posts={filteredPosts}
+                selectedCategories={selectedCategories}
+                onCategoryChange={guarded(setSelectedCategories)}
+                selectedConditions={selectedConditions}
+                onConditionChange={guarded(setSelectedConditions)}
+                selectedItemTypes={selectedItemTypes}
+                selectedDistance={selectedDistance}
+                onDistanceChange={guarded(setSelectedDistance)}
+                userLocation={locationTracking.userLocation}
+                onUserLocationChange={guarded((loc) => {
+                  if (loc) locationTracking.setManualLocation(loc);
+                  else locationTracking.goToMyLocation();
+                })}
+                onlyInterested={onlyInterested}
+                onOnlyInterestedChange={guarded(setOnlyInterested)}
+                onResetAll={guarded(handleClearFilters)}
+              />
+            </div>
+          </div>
+
 
           <DistanceRings
             map={map}
