@@ -77,6 +77,24 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
     },
     myInterestedIds,
   );
+
+  // Diagnostic (temporary): confirms the type pill wiring reaches the
+  // final marker list. Remove once Bug 1 root cause is validated.
+  if (typeof window !== "undefined") {
+    const byType = finalFilteredPosts.reduce<Record<string, number>>((acc, p) => {
+      const k = (p.item_type as string) || "offer";
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {});
+    console.warn("[MapFilter]", {
+      selectedItemTypes,
+      rawCount: posts.length,
+      distanceFilteredCount: filteredPosts.length,
+      finalCount: finalFilteredPosts.length,
+      byType,
+    });
+  }
+
   const handleClearFilters = () => {
     clearAllFilters();
     setSelectedDistance(null);
