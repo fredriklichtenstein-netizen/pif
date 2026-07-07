@@ -19,6 +19,7 @@ interface FeedFiltersState extends MapFilterData {
   setConditions: (conditions: string[]) => void;
   setItemTypes: (itemTypes: string[]) => void;
   setOnlyInterested: (value: boolean) => void;
+  setHideOwnPosts: (value: boolean) => void;
   clearAll: () => void;
   /** Re-read the persisted payload (used by the cross-tab listener). */
   hydrate: () => void;
@@ -31,6 +32,7 @@ export const useFeedFiltersStore = create<FeedFiltersState>((set, get) => ({
   conditions: initial.conditions,
   itemTypes: initial.itemTypes,
   onlyInterested: initial.onlyInterested,
+  hideOwnPosts: initial.hideOwnPosts,
 
   setCategories: (categories) => {
     set({ categories });
@@ -48,12 +50,17 @@ export const useFeedFiltersStore = create<FeedFiltersState>((set, get) => ({
     set({ onlyInterested });
     persist(get());
   },
+  setHideOwnPosts: (hideOwnPosts) => {
+    set({ hideOwnPosts });
+    persist(get());
+  },
   clearAll: () => {
     const cleared: MapFilterData = {
       categories: [],
       conditions: [],
       itemTypes: [],
       onlyInterested: false,
+      hideOwnPosts: false,
     };
     set(cleared);
     persist(get());
@@ -65,6 +72,7 @@ export const useFeedFiltersStore = create<FeedFiltersState>((set, get) => ({
       conditions: fresh.conditions,
       itemTypes: fresh.itemTypes,
       onlyInterested: fresh.onlyInterested,
+      hideOwnPosts: fresh.hideOwnPosts,
     });
   },
 }));
@@ -75,6 +83,7 @@ function persist(state: FeedFiltersState) {
     conditions: state.conditions,
     itemTypes: state.itemTypes,
     onlyInterested: state.onlyInterested,
+    hideOwnPosts: state.hideOwnPosts,
   });
 }
 
