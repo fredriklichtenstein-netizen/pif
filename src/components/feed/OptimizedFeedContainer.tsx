@@ -90,6 +90,7 @@ export function OptimizedFeedContainer() {
   const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
   const setCategories = useFeedFiltersStore((s) => s.setCategories);
   const setItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
+  const setOnlyInterested = useFeedFiltersStore((s) => s.setOnlyInterested);
   const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { ids: myInterestedIds, isLoaded: interestedIdsLoaded } = useMyInterestedIds();
@@ -202,27 +203,47 @@ export function OptimizedFeedContainer() {
   ) : null;
 
   const filtersPanel = (
-    <FeedFiltersPanel
-      posts={filteredPosts}
-      selectedDistance={selectedDistance}
-      onDistanceChange={setSelectedDistance}
-      userLocation={userLocation}
-      onUserLocationChange={setUserLocation}
-      selectedItemTypes={selectedItemTypes}
-      onItemTypeChange={setItemTypes}
-      selectedCategories={selectedCategories}
-      onCategoryChange={setCategories}
-      includeArchived={includeArchived}
-      onIncludeArchivedChange={setIncludeArchived}
-      viewingOtherUser={viewingOtherUser}
-      userFilterActive={!!filteredUserId}
-      onResetAll={() => {
-        handleClearAll();
-        setUserLocation(null);
-        setIncludeArchived(false);
-        clearUserFilter();
-      }}
-    />
+    <div className="flex items-center gap-2 flex-wrap">
+      <FeedFiltersPanel
+        posts={filteredPosts}
+        selectedDistance={selectedDistance}
+        onDistanceChange={setSelectedDistance}
+        userLocation={userLocation}
+        onUserLocationChange={setUserLocation}
+        selectedItemTypes={selectedItemTypes}
+        onItemTypeChange={setItemTypes}
+        selectedCategories={selectedCategories}
+        onCategoryChange={setCategories}
+        includeArchived={includeArchived}
+        onIncludeArchivedChange={setIncludeArchived}
+        onlyInterested={onlyInterested}
+        onOnlyInterestedChange={setOnlyInterested}
+        viewingOtherUser={viewingOtherUser}
+        userFilterActive={!!filteredUserId}
+        onResetAll={() => {
+          handleClearAll();
+          setUserLocation(null);
+          setIncludeArchived(false);
+          setOnlyInterested(false);
+          clearUserFilter();
+        }}
+      />
+      {isLoggedIn && !viewingOtherUser && (
+        <button
+          type="button"
+          onClick={() => setOnlyInterested(!onlyInterested)}
+          aria-pressed={onlyInterested}
+          className={`h-9 px-3 rounded-md border text-sm font-medium inline-flex items-center gap-1.5 transition-colors ${
+            onlyInterested
+              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+              : "bg-background hover:bg-accent"
+          }`}
+        >
+          <span aria-hidden>♥</span>
+          {t("feed.my_interest", "Mitt intresse")}
+        </button>
+      )}
+    </div>
   );
 
 
