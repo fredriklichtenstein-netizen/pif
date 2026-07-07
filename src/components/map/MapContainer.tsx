@@ -239,7 +239,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
                 onClick={guarded(() => setSelectedItemTypes(["offer"]))}
                 className={`text-xs px-3 ${
                   selectedItemTypes.length === 1 && selectedItemTypes.includes("offer")
-                    ? "bg-teal-600 hover:bg-teal-700 text-white"
+                    ? "bg-teal-600 hover:bg-teal-700 text-white hover:text-white focus:text-white"
                     : "hover:bg-teal-50 text-teal-700"
                 }`}
               >
@@ -251,12 +251,13 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
                 onClick={guarded(() => setSelectedItemTypes(["request"]))}
                 className={`text-xs px-3 ${
                   selectedItemTypes.length === 1 && selectedItemTypes.includes("request")
-                    ? "bg-amber-500 hover:bg-amber-600 text-white"
+                    ? "bg-amber-500 hover:bg-amber-600 text-white hover:text-white focus:text-white"
                     : "hover:bg-amber-50 text-amber-700"
                 }`}
               >
                 ✨ {t("map_filters.wishes")}
               </Button>
+
             </div>
             <div className="pointer-events-auto">
               <MapFiltersSheet
