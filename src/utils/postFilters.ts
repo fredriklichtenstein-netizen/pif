@@ -49,7 +49,12 @@ export function applyPostFilters(
     if (onlyInterested && !interestedIds.has(String(post.id))) {
       return false;
     }
-    if (hideOwnPosts && currentUserId && post.postedBy?.id === currentUserId) {
+    if (
+      hideOwnPosts &&
+      currentUserId &&
+      post.postedBy?.id != null &&
+      String(post.postedBy.id) === String(currentUserId)
+    ) {
       return false;
     }
     return true;
