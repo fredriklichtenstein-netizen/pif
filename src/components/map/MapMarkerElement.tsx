@@ -23,7 +23,10 @@ const MARKER_COLORS = {
 };
 
 // Create and cache element templates to improve performance
-const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDivElement => {
+const createElementTemplate = (
+  itemType: 'offer' | 'request' = 'offer',
+  isOwn = false,
+): HTMLDivElement => {
   const colors = MARKER_COLORS[itemType];
   
   const el = document.createElement("div");
@@ -45,7 +48,11 @@ const createElementTemplate = (itemType: 'offer' | 'request' = 'offer'): HTMLDiv
   markerDot.style.backgroundColor = colors.main;
   markerDot.style.borderRadius = "50%";
   markerDot.style.border = "3px solid white";
-  markerDot.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+  // Own posts get an additional colored ring around the white border so
+  // both pif (green) and wish (amber) markers become visibly "mine".
+  markerDot.style.boxShadow = isOwn
+    ? "0 0 0 3px hsl(174 72% 30%), 0 2px 8px rgba(0,0,0,0.35)"
+    : "0 2px 6px rgba(0,0,0,0.3)";
   markerDot.style.transition = "box-shadow 0.2s ease, transform 0.2s ease";
   markerDot.classList.add("marker-dot");
   markerDot.style.display = "flex";
