@@ -65,6 +65,8 @@ export function MapFiltersSheet({
   onUserLocationChange,
   onlyInterested,
   onOnlyInterestedChange,
+  hideOwnPosts,
+  onHideOwnPostsChange,
   onResetAll,
 }: Props) {
   const { t } = useTranslation();
@@ -79,7 +81,8 @@ export function MapFiltersSheet({
     (selectedConditions.length > 0 ? 1 : 0) +
     (userLocation ? 1 : 0) +
     (!distanceIsDefault ? 1 : 0) +
-    (onlyInterested ? 1 : 0);
+    (onlyInterested ? 1 : 0) +
+    (hideOwnPosts ? 1 : 0);
 
   const hasActive = activeCount > 0;
 
