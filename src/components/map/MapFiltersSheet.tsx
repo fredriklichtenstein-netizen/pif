@@ -256,17 +256,16 @@ export function MapFiltersSheet({
             </section>
           )}
 
-          {hasActive && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onResetAll}
-              className="w-full"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {t("interactions.reset_filters", "Återställ filter")}
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onResetAll}
+            disabled={!hasActive}
+            className="w-full"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {t("interactions.reset_filters", "Återställ filter")}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>
