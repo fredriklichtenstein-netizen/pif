@@ -361,18 +361,6 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
 
       {/* Scrollable message list */}
       <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-        {fulfillerNote && (
-          <div className="flex justify-center my-2">
-            <div className="max-w-[85%] rounded-lg bg-muted/60 border border-border px-3 py-2 text-center">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
-                {t("messages.system_message_label", { defaultValue: "Systemmeddelande" })}
-              </div>
-              <p className="whitespace-pre-wrap break-words text-sm text-foreground">
-                {fulfillerNote}
-              </p>
-            </div>
-          </div>
-        )}
         {messagesLoading ? (
           <div className="flex justify-center items-center h-32">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
