@@ -64,7 +64,6 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     conversation,
     otherParticipant,
     item,
-    fulfillerNote,
     isLoading: detailsLoading,
   } = useConversationDetails(conversationId);
   
