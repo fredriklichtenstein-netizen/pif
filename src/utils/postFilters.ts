@@ -49,12 +49,8 @@ export function applyPostFilters(
     if (onlyInterested && !interestedIds.has(String(post.id))) {
       return false;
     }
-    if (
-      hideOwnPosts &&
-      currentUserId &&
-      post.postedBy?.id != null &&
-      String(post.postedBy.id) === String(currentUserId)
-    ) {
+    const ownerId = post.user_id ?? post.postedBy?.id;
+    if (hideOwnPosts && currentUserId && ownerId != null && String(ownerId) === String(currentUserId)) {
       return false;
     }
     return true;

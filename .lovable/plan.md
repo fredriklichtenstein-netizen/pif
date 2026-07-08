@@ -1,108 +1,150 @@
 ## Lovable implementation plan for approval
 
-### FIX 1 — Type pill needs 2–3 taps (root cause)
+### Findings
 
-**Root cause:** race between async cluster init and viewport marker rendering.
+**FIX 2 root cause — hide own posts**
 
-Flow on filter change:
-1. Tap → `setSelectedItemTypes` → `finalFilteredPosts` recomputed → new `posts` array passed to `MapMarkersLayer`.
-2. `useClusterInit` fires an **async** effect (`Promise.all(addLocationPrivacy)` per post), then eventually assigns `enhancedPostsRef.current = enhancedPosts`, rebuilds `clusterIndexRef.current`, and calls `setMapReady(true)`.
-3. In parallel, `useViewportMarkers`' effect re-runs (because `MapContainer` re-created `guarded(onPostClick)`, making `createPostMarker` a new callback → `updateMarkers` new → effect re-binds). It calls `updateMarkers()` **synchronously**, reading the still-stale `enhancedPostsRef.current` + previous `clusterIndexRef.current` → renders the OLD marker set.
-4. When the async cluster init finally finishes, nothing notifies React. `mapReady` was already `true`, so `setMapReady(true)` is a no-op. `enhancedPostsRef` / `clusterIndexRef` are refs (mutations don't trigger renders). No `moveend` / `zoomend` fires. So markers stay stale.
-5. On the next tap, the render cycle *happens* to run `updateMarkers` while the previous tap's async work has completed → user sees the previous tap's result. Hence "2–3 taps".
+The toggle state is wired correctly, and `applyPostFilters` is called correctly, but the owner comparison checks the wrong field for the map/feed data shape.
 
-**Proposed fix (in `useClusterInit.ts` + `useViewportMarkers.ts`):**
-- Add a `clusterVersion` counter (either lift a `useState` in `MapMarkersLayer` and pass down, or expose it from `useClusterInit`'s return).
-- At the very end of `initializeClusters()` — after `clusterIndexRef.current.load(features)` and `enhancedPostsRef.current = enhancedPosts` — increment `clusterVersion`.
-- Include `clusterVersion` in `useViewportMarkers`' `updateMarkers` `useCallback` deps (and the outer `useEffect` deps) so it re-runs and repaints markers exactly once the new cluster index is ready.
-- Guard against stale async: capture a local `cancelled` flag in `useClusterInit`'s effect cleanup so an in-flight run doesn't overwrite refs for a newer posts array.
+Exact code path:
 
-Minimal diff shape (illustrative, not final):
+```tsx
+// MapFiltersSheet.tsx
+<button
+  type="button"
+  onClick={() => onHideOwnPostsChange(!hideOwnPosts)}
+  aria-pressed={hideOwnPosts}
+>
+```
 
-```ts
-// MapMarkersLayer.tsx
-const [clusterVersion, setClusterVersion] = useState(0);
-useClusterInit({ ..., setClusterVersion });
-useViewportMarkers({ ..., clusterVersion });
+```tsx
+// MapContainer.tsx
+const hideOwnPosts = useFeedFiltersStore((s) => s.hideOwnPosts);
+const setHideOwnPosts = useFeedFiltersStore((s) => s.setHideOwnPosts);
+
+<MapFiltersSheet
+  hideOwnPosts={hideOwnPosts}
+  onHideOwnPostsChange={guarded(setHideOwnPosts)}
+/>
 ```
 
 ```ts
-// useClusterInit.ts (inside initializeClusters, at end)
-if (!cancelled) {
-  enhancedPostsRef.current = enhancedPosts;
-  clusterIndexRef.current = index;
-  setMapReady(true);
-  setClusterVersion(v => v + 1);
+// feedFiltersStore.ts
+setHideOwnPosts: (hideOwnPosts) => {
+  set({ hideOwnPosts });
+  persist(get());
+},
+```
+
+```tsx
+// MapContainer.tsx
+const finalFilteredPosts = applyPostFilters(
+  filteredPosts,
+  {
+    categories: selectedCategories,
+    conditions: selectedConditions,
+    itemTypes: selectedItemTypes,
+    onlyInterested,
+    hideOwnPosts,
+    currentUserId: user?.id ?? null,
+  },
+  myInterestedIds,
+);
+```
+
+```tsx
+// MapContainer.tsx
+<MapMarkersLayer
+  map={map}
+  posts={finalFilteredPosts}
+  onPostClick={guarded(onPostClick)}
+  targetItemId={targetItemId}
+  currentUserId={user?.id ?? null}
+/>
+```
+
+Then:
+
+```tsx
+// MapMarkersLayer.tsx -> useClusterInit.ts -> useViewportMarkers.ts
+posts={finalFilteredPosts}
+validPosts = posts.filter(...)
+enhancedPostsRef.current = enhancedPosts
+createPostMarker(enhancedPost)
+```
+
+The output variable is **`finalFilteredPosts`**, and yes, that exact variable is passed to marker rendering.
+
+The failure is inside `applyPostFilters`:
+
+```ts
+if (
+  hideOwnPosts &&
+  currentUserId &&
+  post.postedBy?.id != null &&
+  String(post.postedBy.id) === String(currentUserId)
+) {
+  return false;
 }
 ```
 
+But the map page gets posts from `useFeedPosts -> useFetchPosts`, whose transform returns this shape:
+
 ```ts
-// useViewportMarkers.ts
-const updateMarkers = useCallback(() => { ... }, [..., clusterVersion]);
+return {
+  id: item.id,
+  title: item.title,
+  ...
+  user_id: item.user_id,
+  user_name: user.name,
+  user_avatar: user.avatar || ''
+};
 ```
 
-No behavior change to filters, RPCs, or the store — this is purely a render-timing fix on the marker layer.
+It does **not** populate `postedBy`. So `post.postedBy?.id` is undefined, the condition never passes, and own posts remain visible.
 
----
+**FIX 3 root cause — own-post ring**
 
-### FIX 2 — "Piffar" active state text invisible (proposed diff)
+Same data-shape mismatch.
 
-**File:** `src/components/map/MapContainer.tsx` (the three pill buttons around lines 219–252).
+`useMarkerFactory.ts` currently computes ownership like this:
 
-Cause: pill buttons use `variant="ghost"` on shadcn `Button`, whose base ruleset includes `hover:text-accent-foreground`. On touch devices the `:hover` state sticks after tap, so `text-white` gets overridden by `text-accent-foreground` while the button retains hover — producing near-invisible text on the green/amber active background. Also, the inactive `text-teal-700` momentarily coexists with the active `bg-teal-600` if any Tailwind class-order oddity applies.
-
-Fix: on the active branch, also lock `hover:text-white` and `focus:text-white` so no state can override. Apply the same to the Önskningar active branch.
-
-Proposed change (Piffar):
-```tsx
-selectedItemTypes.length === 1 && selectedItemTypes.includes("offer")
-  ? "bg-teal-600 hover:bg-teal-700 text-white hover:text-white focus:text-white"
-  : "hover:bg-teal-50 text-teal-700"
+```ts
+const isOwn =
+  !!currentUserId &&
+  post.postedBy?.id != null &&
+  String(post.postedBy.id) === String(currentUserId);
 ```
 
-Proposed change (Önskningar):
-```tsx
-selectedItemTypes.length === 1 && selectedItemTypes.includes("request")
-  ? "bg-amber-500 hover:bg-amber-600 text-white hover:text-white focus:text-white"
-  : "hover:bg-amber-50 text-amber-700"
+But the marker receives map/feed posts with `user_id`, not `postedBy.id`, so `isOwn` is always `false` for this path.
+
+That means `createMarkerElement({ isOwn })` receives `isOwn: false`, so the marker gets the normal shadow:
+
+```ts
+markerDot.style.boxShadow = isOwn
+  ? "0 0 0 3px hsl(174 72% 30%), 0 2px 8px rgba(0,0,0,0.35)"
+  : "0 2px 6px rgba(0,0,0,0.3)";
 ```
 
-"Alla" already uses `text-primary-foreground` and doesn't have this issue — no change.
+So the expected DevTools result is: **the own-post ring box-shadow is not present**; this is not primarily an `overflow:hidden` clipping issue.
 
----
+### Implementation plan
 
-### FIX 3 — Filter count badge overflows viewport on mobile (proposed diff)
+1. Add a small owner-id fallback in `applyPostFilters`:
+   - Prefer `post.user_id` when present.
+   - Fall back to `post.postedBy?.id` for canonical `Post` objects.
+   - Compare with `String(ownerId) === String(currentUserId)`.
 
-**File:** `src/components/map/MapFiltersSheet.tsx` (lines 117–132).
+2. Apply the same fallback in `useMarkerFactory.ts`:
+   - `const ownerId = (post as any).user_id ?? post.postedBy?.id;`
+   - `const isOwn = !!currentUserId && ownerId != null && String(ownerId) === String(currentUserId);`
 
-Cause: badge is rendered inline (`ml-2`) inside the "Filtrera" button, so its width adds to the button's layout width. Combined with the wide pill group and `right-4` container inset on narrow viewports, the button extends past the screen edge.
+3. Update the `Post` type to acknowledge the existing optional raw fields used by this app path:
+   - `user_id?: string | number;`
+   - optionally `user_name` / `user_avatar` only if TypeScript needs them.
 
-Fix: render the badge as an absolutely-positioned corner overlay on the button (the button already has `relative`), so button width no longer depends on the badge.
+4. Keep marker rendering source unchanged otherwise:
+   - `finalFilteredPosts` already flows into `MapMarkersLayer`.
+   - No server-side `user_id` exclusion will be added; this remains client-side as designed.
 
-Proposed change:
-```tsx
-<Button
-  variant="outline"
-  size="sm"
-  className="bg-background shadow-md hover:bg-accent relative h-9"
->
-  <SlidersHorizontal className="h-4 w-4 mr-2" />
-  {t("interactions.filter_label", "Filtrera")}
-  {hasActive && (
-    <Badge
-      variant="secondary"
-      className="absolute -top-2 -right-2 h-5 min-w-5 px-1 flex items-center justify-center text-xs rounded-full shadow-sm"
-    >
-      {activeCount}
-    </Badge>
-  )}
-</Button>
-```
-
-The badge visually sits on the top-right corner of the button. Button width is unaffected → no overflow. The parent row's `right-4` inset is enough to keep the corner badge on-screen; if further safety is desired, we can nudge to `-top-1.5 -right-1.5`.
-
----
-
-### Scope
-
-Only `src/components/map/MapContainer.tsx`, `src/components/map/MapFiltersSheet.tsx`, `src/components/map/MapMarkersLayer.tsx`, `src/components/map/markers/useClusterInit.ts`, and `src/components/map/markers/useViewportMarkers.ts`. No i18n, backend, filter-store, or public API changes.
+5. No temporary `console.log` will remain in the final code, matching the project logging rule.
