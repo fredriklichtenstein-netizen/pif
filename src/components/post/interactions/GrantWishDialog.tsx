@@ -24,7 +24,7 @@ interface GrantWishDialogProps {
 }
 
 const MIN_NOTE = 4;
-const MAX_NOTE = 500;
+const MAX_NOTE = 150;
 
 /**
  * Dialog shown when a neighbor wants to help grant a wish.
