@@ -1021,9 +1021,9 @@ export function InterestSelectionList({
                 </div>
               </div>
 
-              {/* Helper note for wishes — visible to the wisher and to
-                  the helper themselves so they remember what they offered. */}
-              {isWish && r.note && (isOwner || currentUserId === r.user_id) && (
+              {/* Helper note for wishes — visible only to the wish owner.
+                  The helper sees their own note in the "own" section above. */}
+              {isWish && r.note && isOwner && (
                 <div className="ml-9 text-xs text-muted-foreground bg-amber-50 border border-amber-100 rounded px-2 py-1 italic">
                   “{r.note}”
                 </div>

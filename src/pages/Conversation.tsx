@@ -21,10 +21,11 @@ export default function Conversation() {
   const [isSending, setIsSending] = useState(false);
   const { t } = useTranslation();
   
-  const { 
-    conversation, 
-    isLoading: conversationLoading, 
-    error: conversationError 
+  const {
+    conversation,
+    fulfillerNote,
+    isLoading: conversationLoading,
+    error: conversationError
   } = useConversationDetails(id);
   
   const { 
@@ -130,10 +131,21 @@ export default function Conversation() {
           </div>
         </div>
 
-        <div 
+        <div
           id="messages-container"
-          className="flex flex-col space-y-4 h-[calc(100vh-240px)] overflow-y-auto mb-4 p-2"
+          className="flex flex-col h-[calc(100vh-240px)] overflow-y-auto mb-4 p-2"
         >
+          {fulfillerNote && (
+            <div className="sticky top-0 z-10 mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 shadow-sm">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">
+                {t('interactions.helper_offer_context_title')}
+              </p>
+              <p className="mt-1 text-sm italic text-amber-900">
+                “{fulfillerNote}”
+              </p>
+            </div>
+          )}
+          <div className="flex flex-col space-y-4">
           {messages.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               {t('messages.no_messages_yet')}
@@ -147,6 +159,7 @@ export default function Conversation() {
               />
             ))
           )}
+          </div>
         </div>
 
         <div className="fixed bottom-14 left-0 right-0 bg-background border-t p-2">

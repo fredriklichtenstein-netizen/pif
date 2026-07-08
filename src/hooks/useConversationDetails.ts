@@ -12,6 +12,7 @@ export function useConversationDetails(conversationId: string | null) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [otherParticipant, setOtherParticipant] = useState<ConversationParticipant | null>(null);
   const [item, setItem] = useState<Post | null>(null);
+  const [fulfillerNote, setFulfillerNote] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { user } = useGlobalAuth();
@@ -178,6 +179,26 @@ export function useConversationDetails(conversationId: string | null) {
             };
             
             setItem(transformedItem);
+
+            // Fetch the fulfiller's original offer note for wish conversations.
+            // Only visible to the wish owner. `item_type` normalizes to 'request' for wishes.
+            const itemType = String((data.item as any).item_type || '').toLowerCase();
+            const isWish = itemType === 'request' || itemType === 'wish';
+            const otherUserId = (data.participants || []).find(
+              (p: any) => p.user_id !== currentUserId
+            )?.user_id;
+            if (isWish && data.item.user_id === currentUserId && otherUserId) {
+              const { data: interestRow } = await supabase
+                .from('interests')
+                .select('note')
+                .eq('item_id', data.item.id)
+                .eq('user_id', otherUserId)
+                .maybeSingle();
+              const note = (interestRow as any)?.note?.trim();
+              setFulfillerNote(note ? note : null);
+            } else {
+              setFulfillerNote(null);
+            }
           }
         }
       } catch (err) {
@@ -210,5 +231,5 @@ export function useConversationDetails(conversationId: string | null) {
     };
   }, [conversationId, currentUserId, toast]);
 
-  return { conversation, otherParticipant, item, isLoading, error };
+  return { conversation, otherParticipant, item, fulfillerNote, isLoading, error };
 }
