@@ -160,18 +160,6 @@ export default function Conversation() {
             ))
           )}
           </div>
-            <p className="text-center text-muted-foreground py-8">
-              {t('messages.no_messages_yet')}
-            </p>
-          ) : (
-            messages.map(message => (
-              <MessageItem 
-                key={message.id} 
-                message={message} 
-                isOwnMessage={message.sender_id === user?.id} 
-              />
-            ))
-          )}
         </div>
 
         <div className="fixed bottom-14 left-0 right-0 bg-background border-t p-2">
