@@ -1,150 +1,49 @@
 ## Lovable implementation plan for approval
 
-### Findings
+### Root cause
 
-**FIX 2 root cause — hide own posts**
+The `note` argument is dropped in **one place** on the submit path used by feed cards, so `interests.note` is never written.
 
-The toggle state is wired correctly, and `applyPostFilters` is called correctly, but the owner comparison checks the wrong field for the map/feed data shape.
+Full trace (working path first, break at the end):
 
-Exact code path:
+1. `GrantWishDialog` → `onConfirm(trimmed)` — note captured ✅
+2. `InteractionButtonWithPopup.handleGrantConfirm(note)` → `await onClick(note)` ✅
+3. Wired via `PrimaryActions`/`ActionButtons.onClick={onShowInterest}` — JS still forwards the arg at runtime even where TS types drop it ✅
+4. Card-level `onShowInterest={handleShowInterest}` (from `useItemCard` → `useItemInteractions`) ✅
+5. **`src/hooks/item/useItemInteractions.tsx:50-57`** — `safeHandleShowInterest` is defined as `async () => { await handleShowInterest(); }`. This wrapper takes **no argument** and calls the underlying handler with **no argument**. The note is thrown away here. ❌
+6. Downstream (`useInterests.ts:165` → `useInterestActions.handleShowInterest` → `addInterest`) already forwards `note` correctly and upserts it. Verified `addInterest` includes `note` in the payload when present, and `interests.note` column exists.
 
-```tsx
-// MapFiltersSheet.tsx
-<button
-  type="button"
-  onClick={() => onHideOwnPostsChange(!hideOwnPosts)}
-  aria-pressed={hideOwnPosts}
->
-```
+So the note is fetched by the dialog and forwarded correctly until step 5, where the "safe wrapper" strips it. That is why every `interests` row has `note = null`.
 
-```tsx
-// MapContainer.tsx
-const hideOwnPosts = useFeedFiltersStore((s) => s.hideOwnPosts);
-const setHideOwnPosts = useFeedFiltersStore((s) => s.setHideOwnPosts);
+### Fix
 
-<MapFiltersSheet
-  hideOwnPosts={hideOwnPosts}
-  onHideOwnPostsChange={guarded(setHideOwnPosts)}
-/>
-```
+**File:** `src/hooks/item/useItemInteractions.tsx`
+
+Change `safeHandleShowInterest` to accept and forward the optional note:
 
 ```ts
-// feedFiltersStore.ts
-setHideOwnPosts: (hideOwnPosts) => {
-  set({ hideOwnPosts });
-  persist(get());
-},
-```
-
-```tsx
-// MapContainer.tsx
-const finalFilteredPosts = applyPostFilters(
-  filteredPosts,
-  {
-    categories: selectedCategories,
-    conditions: selectedConditions,
-    itemTypes: selectedItemTypes,
-    onlyInterested,
-    hideOwnPosts,
-    currentUserId: user?.id ?? null,
-  },
-  myInterestedIds,
-);
-```
-
-```tsx
-// MapContainer.tsx
-<MapMarkersLayer
-  map={map}
-  posts={finalFilteredPosts}
-  onPostClick={guarded(onPostClick)}
-  targetItemId={targetItemId}
-  currentUserId={user?.id ?? null}
-/>
-```
-
-Then:
-
-```tsx
-// MapMarkersLayer.tsx -> useClusterInit.ts -> useViewportMarkers.ts
-posts={finalFilteredPosts}
-validPosts = posts.filter(...)
-enhancedPostsRef.current = enhancedPosts
-createPostMarker(enhancedPost)
-```
-
-The output variable is **`finalFilteredPosts`**, and yes, that exact variable is passed to marker rendering.
-
-The failure is inside `applyPostFilters`:
-
-```ts
-if (
-  hideOwnPosts &&
-  currentUserId &&
-  post.postedBy?.id != null &&
-  String(post.postedBy.id) === String(currentUserId)
-) {
-  return false;
-}
-```
-
-But the map page gets posts from `useFeedPosts -> useFetchPosts`, whose transform returns this shape:
-
-```ts
-return {
-  id: item.id,
-  title: item.title,
-  ...
-  user_id: item.user_id,
-  user_name: user.name,
-  user_avatar: user.avatar || ''
+const safeHandleShowInterest = async (note?: string) => {
+  try {
+    await handleShowInterest(note);
+  } catch (error) {
+    console.error("Error in handleShowInterest:", error);
+  }
 };
 ```
 
-It does **not** populate `postedBy`. So `post.postedBy?.id` is undefined, the condition never passes, and own posts remain visible.
+No other files need to change:
+- `useInterests.ts` already returns `(note?: string) => originalHandleShowInterest(id, userId, note)`.
+- `useInterestActions.addInterest` already upserts `note` with `ignoreDuplicates: !note` so a fresh note overwrites an existing row.
+- `GrantWishDialog`, `InteractionButtonWithPopup`, `PrimaryActions`, `ActionButtons`, `ItemInteractions` already forward the arg at runtime.
 
-**FIX 3 root cause — own-post ring**
+### Validation
 
-Same data-shape mismatch.
+1. As a non-owner, open a wish, click "I can help", submit a note ≥4 chars.
+2. Verify `interests` row for that (user_id, item_id) has `note = <submitted text>`.
+3. Owner opens the fulfiller list popup → note appears under the helper row (FIX 2A already in place).
+4. Owner selects that helper → conversation opens with the note pinned as the sticky amber context card at top (FIX 2B already in place).
 
-`useMarkerFactory.ts` currently computes ownership like this:
+### Out of scope
 
-```ts
-const isOwn =
-  !!currentUserId &&
-  post.postedBy?.id != null &&
-  String(post.postedBy.id) === String(currentUserId);
-```
-
-But the marker receives map/feed posts with `user_id`, not `postedBy.id`, so `isOwn` is always `false` for this path.
-
-That means `createMarkerElement({ isOwn })` receives `isOwn: false`, so the marker gets the normal shadow:
-
-```ts
-markerDot.style.boxShadow = isOwn
-  ? "0 0 0 3px hsl(174 72% 30%), 0 2px 8px rgba(0,0,0,0.35)"
-  : "0 2px 6px rgba(0,0,0,0.3)";
-```
-
-So the expected DevTools result is: **the own-post ring box-shadow is not present**; this is not primarily an `overflow:hidden` clipping issue.
-
-### Implementation plan
-
-1. Add a small owner-id fallback in `applyPostFilters`:
-   - Prefer `post.user_id` when present.
-   - Fall back to `post.postedBy?.id` for canonical `Post` objects.
-   - Compare with `String(ownerId) === String(currentUserId)`.
-
-2. Apply the same fallback in `useMarkerFactory.ts`:
-   - `const ownerId = (post as any).user_id ?? post.postedBy?.id;`
-   - `const isOwn = !!currentUserId && ownerId != null && String(ownerId) === String(currentUserId);`
-
-3. Update the `Post` type to acknowledge the existing optional raw fields used by this app path:
-   - `user_id?: string | number;`
-   - optionally `user_name` / `user_avatar` only if TypeScript needs them.
-
-4. Keep marker rendering source unchanged otherwise:
-   - `finalFilteredPosts` already flows into `MapMarkersLayer`.
-   - No server-side `user_id` exclusion will be added; this remains client-side as designed.
-
-5. No temporary `console.log` will remain in the final code, matching the project logging rule.
+- TS signature widening of `onShowInterest: () => void` in `src/components/post/` (cosmetic only; runtime already forwards).
+- Any DB migration — `interests.note` column is confirmed present.

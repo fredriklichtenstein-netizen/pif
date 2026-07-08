@@ -47,9 +47,9 @@ export const useItemInteractions = (id: string) => {
   }, [likesLoading, interestsLoading, bookmarksLoading]);
 
   // Safe wrapper around handleShowInterest to handle any unexpected errors
-  const safeHandleShowInterest = async () => {
+  const safeHandleShowInterest = async (note?: string) => {
     try {
-      await handleShowInterest();
+      await handleShowInterest(note);
     } catch (error) {
       console.error("Error in handleShowInterest:", error);
       // We don't want to change loading state here because the useInterests hook manages it
