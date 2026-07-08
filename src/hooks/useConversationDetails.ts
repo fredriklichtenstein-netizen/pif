@@ -210,5 +210,5 @@ export function useConversationDetails(conversationId: string | null) {
     };
   }, [conversationId, currentUserId, toast]);
 
-  return { conversation, otherParticipant, item, fulfillerNote, isLoading, error };
+  return { conversation, otherParticipant, item, isLoading, error };
 }
