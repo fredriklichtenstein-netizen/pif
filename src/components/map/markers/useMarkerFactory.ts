@@ -65,10 +65,11 @@ export function useMarkerFactory({
       const itemType: "offer" | "request" =
         rawType === "request" || rawType === "wish" ? "request" : "offer";
 
+      const ownerId = post.user_id ?? post.postedBy?.id;
       const isOwn =
         !!currentUserId &&
-        post.postedBy?.id != null &&
-        String(post.postedBy.id) === String(currentUserId);
+        ownerId != null &&
+        String(ownerId) === String(currentUserId);
 
       const markerElement = createMarkerElement({
         onClick: (event) => {

@@ -45,6 +45,9 @@ export interface Coordinates {
 
 export interface Post {
   id: string;
+  user_id?: string | number;
+  user_name?: string;
+  user_avatar?: string;
   title: string;
   description: string;
   category: string;
