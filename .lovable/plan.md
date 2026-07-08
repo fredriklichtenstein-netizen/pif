@@ -1,34 +1,34 @@
 ## Lovable implementation plan for approval
 
-**Root cause confirmed:** `/messages` renders `ConversationView.tsx` (inline), not the standalone `/conversation/:id` page (`Conversation.tsx`). `useConversationDetails` already fetches and returns `fulfillerNote`, but `ConversationView` never destructures or renders it. That's why the amber card never appears for Fredrik in the inline thread.
+### FIX 1 findings — mobile conversation rendering path
 
-### Diffs
+- `src/routes/routeConfig.tsx` only registers `/messages`. There is **no `/conversation/:id` route** anywhere in the app.
+- `src/pages/Conversation.tsx` exists but is **not imported by any router or component** (verified with codebase search — zero references).
+- Therefore mobile and desktop both open a conversation the exact same way: `Messages.tsx` sets `activeConversationId` and renders `<ConversationView conversationId=... />`. The mobile layout just hides the list column (`hidden md:block`) and shows the ConversationView column full‑width — but it is the same component instance that already has the `[cv:debug]` log and the amber card wired.
+- Conclusion: there is no second rendering path to patch. The reason the `[cv:debug]` line didn't appear in the mobile console is almost certainly a stale bundle / cached service worker on the phone, not a routing gap. A hard reload on mobile will surface the log. No mobile‑specific code change is needed for parity.
 
-**1. `src/components/messaging/ConversationView.tsx`**
-- Destructure `fulfillerNote` from `useConversationDetails(conversationId)` (currently only pulls `conversation, otherParticipant, item, isLoading`).
-- Inside the scrollable messages container (`<div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">`), render the amber sticky context card as the FIRST child, before the loading/empty/messages branch:
-  ```tsx
-  {fulfillerNote && (
-    <div className="sticky top-0 z-10 mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 shadow-sm">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">
-        {t('interactions.helper_offer_context_title')}
-      </p>
-      <p className="mt-1 text-sm italic text-amber-900">
-        "{fulfillerNote}"
-      </p>
-    </div>
-  )}
-  ```
-- Owner-only + wish-only + non-empty gating is already enforced inside `useConversationDetails` (only sets `fulfillerNote` when `isWish && item.user_id === currentUserId && note.trim()`), so no extra guard needed in the component.
+I will also delete the unused `src/pages/Conversation.tsx` (dead code with its own copy of the amber card) so this ambiguity can't come back.
 
-**2. `src/hooks/useConversationDetails.ts`** — remove diagnostic logs:
-- Delete the `console.log('[fulfillerNote:debug]', {...})` block (lines 190–201).
-- Delete `console.log('[fulfillerNote:debug] interests row →', ...)` (line 209).
-- Delete `console.log('[fulfillerNote:debug] skipped fetch', ...)` (line 213).
+### FIX 2 — restyle the note as an inline system message
 
-**3. `src/pages/Conversation.tsx`** — remove diagnostic log:
-- Delete the render-time IIFE on line 138: `{(() => { console.log('[fulfillerNote:debug] render', { fulfillerNote }); return null; })()}`. Keep the amber card block itself unchanged.
+In `src/components/messaging/ConversationView.tsx`:
 
-### Notes
-- No changes to hook logic, styling, i18n keys, or business rules. Purely presentational parity between the two conversation surfaces + log cleanup.
-- Sticky positioning inside `overflow-y-auto` container works the same way as in `Conversation.tsx` — card stays pinned to top of the messages viewport as user scrolls.
+1. Remove the current amber sticky block (currently rendered above the messages list).
+2. Render the note **inside the messages list as its first child**, using the same visual treatment as `MessageItem.tsx`'s `is_system_message` branch:
+   - Container: `flex justify-center my-2`
+   - Bubble: `max-w-[85%] rounded-lg bg-muted/60 border border-border px-3 py-2 text-center`
+   - Small caps label: `text-[10px] uppercase tracking-wide text-muted-foreground mb-1` with `t('messages.system_message_label', { defaultValue: 'Systemmeddelande' })`
+   - Body: `whitespace-pre-wrap break-words text-sm text-foreground`, showing the note wrapped in curly quotes (or plain — will keep plain to match existing system messages; the existing `interactions.helper_offer_context_title` string can be dropped since the "SYSTEMMEDDELANDE" label already frames it).
+3. Keep the exact same gating that already lives in `useConversationDetails` (owner + wish + non-empty note), so no extra conditional logic in the component.
+4. Remove the `[cv:debug]` `console.log` added on line ~72.
+
+### Cleanup
+
+- Delete `src/pages/Conversation.tsx` (unrouted, contains an outdated duplicate of the amber card).
+- No changes to `useConversationDetails.ts` (already clean after the previous pass).
+- No i18n key changes needed; reuses the existing `messages.system_message_label`.
+
+### Out of scope
+
+- No changes to hook logic, DB, styling tokens, or other components.
+- No new translations.
