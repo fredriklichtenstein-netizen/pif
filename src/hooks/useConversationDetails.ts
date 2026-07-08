@@ -187,30 +187,16 @@ export function useConversationDetails(conversationId: string | null) {
             const otherUserId = (data.participants || []).find(
               (p: any) => p.user_id !== currentUserId
             )?.user_id;
-            console.log('[fulfillerNote:debug]', {
-              conversationId,
-              itemId: data.item.id,
-              itemType,
-              rawItemType: (data.item as any).item_type,
-              isWish,
-              itemOwnerId: data.item.user_id,
-              currentUserId,
-              isOwner: data.item.user_id === currentUserId,
-              otherUserId,
-              participantIds: (data.participants || []).map((p: any) => p.user_id),
-            });
             if (isWish && data.item.user_id === currentUserId && otherUserId) {
-              const { data: interestRow, error: interestErr } = await supabase
+              const { data: interestRow } = await supabase
                 .from('interests')
                 .select('note')
                 .eq('item_id', data.item.id)
                 .eq('user_id', otherUserId)
                 .maybeSingle();
-              console.log('[fulfillerNote:debug] interests row →', { interestRow, interestErr });
               const note = (interestRow as any)?.note?.trim();
               setFulfillerNote(note ? note : null);
             } else {
-              console.log('[fulfillerNote:debug] skipped fetch', { isWish, isOwner: data.item.user_id === currentUserId, otherUserId });
               setFulfillerNote(null);
             }
           }
