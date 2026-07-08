@@ -12,7 +12,6 @@ export function useConversationDetails(conversationId: string | null) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [otherParticipant, setOtherParticipant] = useState<ConversationParticipant | null>(null);
   const [item, setItem] = useState<Post | null>(null);
-  const [fulfillerNote, setFulfillerNote] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { user } = useGlobalAuth();
