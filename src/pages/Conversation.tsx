@@ -135,7 +135,7 @@ export default function Conversation() {
           id="messages-container"
           className="flex flex-col h-[calc(100vh-240px)] overflow-y-auto mb-4 p-2"
         >
-          {(() => { console.log('[fulfillerNote:debug] render', { fulfillerNote }); return null; })()}
+          
           {fulfillerNote && (
             <div className="sticky top-0 z-10 mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 shadow-sm">
               <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">

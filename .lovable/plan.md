@@ -1,49 +1,34 @@
 ## Lovable implementation plan for approval
 
-### Root cause
+**Root cause confirmed:** `/messages` renders `ConversationView.tsx` (inline), not the standalone `/conversation/:id` page (`Conversation.tsx`). `useConversationDetails` already fetches and returns `fulfillerNote`, but `ConversationView` never destructures or renders it. That's why the amber card never appears for Fredrik in the inline thread.
 
-The `note` argument is dropped in **one place** on the submit path used by feed cards, so `interests.note` is never written.
+### Diffs
 
-Full trace (working path first, break at the end):
+**1. `src/components/messaging/ConversationView.tsx`**
+- Destructure `fulfillerNote` from `useConversationDetails(conversationId)` (currently only pulls `conversation, otherParticipant, item, isLoading`).
+- Inside the scrollable messages container (`<div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">`), render the amber sticky context card as the FIRST child, before the loading/empty/messages branch:
+  ```tsx
+  {fulfillerNote && (
+    <div className="sticky top-0 z-10 mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 shadow-sm">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">
+        {t('interactions.helper_offer_context_title')}
+      </p>
+      <p className="mt-1 text-sm italic text-amber-900">
+        "{fulfillerNote}"
+      </p>
+    </div>
+  )}
+  ```
+- Owner-only + wish-only + non-empty gating is already enforced inside `useConversationDetails` (only sets `fulfillerNote` when `isWish && item.user_id === currentUserId && note.trim()`), so no extra guard needed in the component.
 
-1. `GrantWishDialog` → `onConfirm(trimmed)` — note captured ✅
-2. `InteractionButtonWithPopup.handleGrantConfirm(note)` → `await onClick(note)` ✅
-3. Wired via `PrimaryActions`/`ActionButtons.onClick={onShowInterest}` — JS still forwards the arg at runtime even where TS types drop it ✅
-4. Card-level `onShowInterest={handleShowInterest}` (from `useItemCard` → `useItemInteractions`) ✅
-5. **`src/hooks/item/useItemInteractions.tsx:50-57`** — `safeHandleShowInterest` is defined as `async () => { await handleShowInterest(); }`. This wrapper takes **no argument** and calls the underlying handler with **no argument**. The note is thrown away here. ❌
-6. Downstream (`useInterests.ts:165` → `useInterestActions.handleShowInterest` → `addInterest`) already forwards `note` correctly and upserts it. Verified `addInterest` includes `note` in the payload when present, and `interests.note` column exists.
+**2. `src/hooks/useConversationDetails.ts`** — remove diagnostic logs:
+- Delete the `console.log('[fulfillerNote:debug]', {...})` block (lines 190–201).
+- Delete `console.log('[fulfillerNote:debug] interests row →', ...)` (line 209).
+- Delete `console.log('[fulfillerNote:debug] skipped fetch', ...)` (line 213).
 
-So the note is fetched by the dialog and forwarded correctly until step 5, where the "safe wrapper" strips it. That is why every `interests` row has `note = null`.
+**3. `src/pages/Conversation.tsx`** — remove diagnostic log:
+- Delete the render-time IIFE on line 138: `{(() => { console.log('[fulfillerNote:debug] render', { fulfillerNote }); return null; })()}`. Keep the amber card block itself unchanged.
 
-### Fix
-
-**File:** `src/hooks/item/useItemInteractions.tsx`
-
-Change `safeHandleShowInterest` to accept and forward the optional note:
-
-```ts
-const safeHandleShowInterest = async (note?: string) => {
-  try {
-    await handleShowInterest(note);
-  } catch (error) {
-    console.error("Error in handleShowInterest:", error);
-  }
-};
-```
-
-No other files need to change:
-- `useInterests.ts` already returns `(note?: string) => originalHandleShowInterest(id, userId, note)`.
-- `useInterestActions.addInterest` already upserts `note` with `ignoreDuplicates: !note` so a fresh note overwrites an existing row.
-- `GrantWishDialog`, `InteractionButtonWithPopup`, `PrimaryActions`, `ActionButtons`, `ItemInteractions` already forward the arg at runtime.
-
-### Validation
-
-1. As a non-owner, open a wish, click "I can help", submit a note ≥4 chars.
-2. Verify `interests` row for that (user_id, item_id) has `note = <submitted text>`.
-3. Owner opens the fulfiller list popup → note appears under the helper row (FIX 2A already in place).
-4. Owner selects that helper → conversation opens with the note pinned as the sticky amber context card at top (FIX 2B already in place).
-
-### Out of scope
-
-- TS signature widening of `onShowInterest: () => void` in `src/components/post/` (cosmetic only; runtime already forwards).
-- Any DB migration — `interests.note` column is confirmed present.
+### Notes
+- No changes to hook logic, styling, i18n keys, or business rules. Purely presentational parity between the two conversation surfaces + log cleanup.
+- Sticky positioning inside `overflow-y-auto` container works the same way as in `Conversation.tsx` — card stays pinned to top of the messages viewport as user scrolls.

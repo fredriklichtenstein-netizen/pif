@@ -64,6 +64,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     conversation,
     otherParticipant,
     item,
+    fulfillerNote,
     isLoading: detailsLoading,
   } = useConversationDetails(conversationId);
 
@@ -360,6 +361,16 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
 
       {/* Scrollable message list */}
       <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+        {fulfillerNote && (
+          <div className="sticky top-0 z-10 mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 shadow-sm">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">
+              {t('interactions.helper_offer_context_title')}
+            </p>
+            <p className="mt-1 text-sm italic text-amber-900">
+              “{fulfillerNote}”
+            </p>
+          </div>
+        )}
         {messagesLoading ? (
           <div className="flex justify-center items-center h-32">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
