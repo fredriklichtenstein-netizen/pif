@@ -67,7 +67,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     fulfillerNote,
     isLoading: detailsLoading,
   } = useConversationDetails(conversationId);
-  console.log('[cv:debug] fulfillerNote =', fulfillerNote, 'conversationId =', conversationId);
+  
 
   const fallbackName = t("messages.unknown_user");
   const otherName = resolveDisplayName(otherParticipant?.profile, fallbackName);
