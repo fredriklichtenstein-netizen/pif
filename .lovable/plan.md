@@ -1,60 +1,25 @@
-# Plan: Diagnose fulfiller self-view logic bug + flag trackevents 403
+## Goal
+Prove which of three hypotheses explains why the correct `headerTitle` is computed but not visible: (a) commit-phase mismatch, (b) a second `InterestSelectionList` instance, (c) DOM staleness.
 
-## Context
+## Why no code fix yet
+The render path in `src/components/post/interactions/interest/InterestSelectionList.tsx` (lines 699-845) has no memoization, no `React.memo`, no `useMemo`, no portal caching, and the parent already forces a fresh mount via `key={showPopup ? "open" : "closed"}` in `CounterButton`. If the reported logs are accurate, React must be committing the "selected" JSX. Adding a fix now would be a shot in the dark.
 
-The console log confirms the fetched interests row for the current user has `status: "selected"`, yet `InterestSelectionList` is rendering the pending-state copy with no "Meddelande" button. Source code at lines 698–702 looks correct:
+## Diagnostic step 1 — instance id + commit-phase log
+In `InterestSelectionList.tsx`:
+- Generate a stable `instanceId` via `useRef(Math.random().toString(36).slice(2,7))` and include it in every existing `console.log`. This will show if two instances are interleaving.
+- Add a `useEffect` that runs on every render (no dep array) and logs `[fulfiller-self-view:committed]` with `{ instanceId, isFulfillerView, isSelectedFulfiller, headerTitleShown: document.querySelector('[data-testid="fulfiller-header"]')?.textContent, hasMessageBtn: !!document.querySelector('[data-testid="fulfiller-message-btn"]') }`. This runs AFTER commit, so it reports what actually reached the DOM.
+- Add `data-testid="fulfiller-header"` to the `<h3>` at line 789 and `data-testid="fulfiller-message-btn"` to the Meddelande `<Button>` at line 817.
 
-```ts
-const ownRow = !isOwner && isWish && !!currentUserId
-  ? rows.find((r) => r.user_id === currentUserId)
-  : undefined;
-const isFulfillerView = !!ownRow;
-const isSelectedFulfiller = ownRow?.status === "selected";
-```
+## Diagnostic step 2 — reproduce & report
+User reopens item 33's popup as Fredrik and copies the console output covering both `[InterestSelectionList v3] render` entries and the new `[fulfiller-self-view:committed]` entries.
 
-Something between the fetched data and this evaluation is failing. Candidates worth logging: `isOwner`/`isWish`/`currentUserId` gating `ownRow` to `undefined`; duplicate interest rows for the same user where `.find` picks a stale `pending`/`not_selected` row; a type/casing mismatch on `status`; or `currentUserId` not matching `user_id` (uuid string vs auth session mismatch).
+The committed-phase log tells us definitively:
+- If `headerTitleShown` = the selected copy → the DOM IS correct and the user was reading stale visuals; we're done.
+- If `headerTitleShown` = the pending copy while `isSelectedFulfiller` is `true` → React is committing the wrong branch, which would point to a Radix/portal bug and justify a structural rework (e.g. splitting the fulfiller-self view into its own component keyed by `isSelectedFulfiller`).
+- If two different `instanceId`s appear → there's a duplicate mount and we fix the caller, not this file.
 
-## Change 1 — Diagnostic logs in `src/components/post/interactions/interest/InterestSelectionList.tsx`
+## Files touched
+- `src/components/post/interactions/interest/InterestSelectionList.tsx` — diagnostics only.
 
-Right before the header ternary (currently line 757, inside the `if (isFulfillerView)` block), add:
-
-```ts
-console.log('[fulfiller-self-view:debug]', {
-  itemId,
-  currentUserId,
-  isOwner,
-  isWish,
-  ownRowUserId: ownRow?.user_id,
-  ownRowStatus: ownRow?.status,
-  isFulfillerView,
-  isSelectedFulfiller,
-  allRows: rows.map(r => ({ user_id: r.user_id, status: r.status, id: r.id })),
-});
-```
-
-Also add a second log immediately after the `ownRow` computation (line 702), OUTSIDE the `if (isFulfillerView)` guard, so we can see cases where `isFulfillerView` is false and the self-view branch is skipped entirely:
-
-```ts
-console.log('[fulfiller-self-view:gate]', {
-  itemId,
-  currentUserId,
-  isOwner,
-  isWish,
-  isFulfillerView,
-  matchedRow: ownRow ? { user_id: ownRow.user_id, status: ownRow.status } : null,
-  rowCount: rows.length,
-  currentUserRows: rows.filter(r => r.user_id === currentUserId).map(r => ({ status: r.status, id: r.id })),
-});
-```
-
-The `currentUserRows` filter is deliberately broader than `.find` — if it returns multiple rows for the same user, that explains the bug (duplicate interest rows, `.find` picks the wrong one).
-
-No other logic changes in this step. After the user reopens item 33's popup as Fredrik, we read the log output and decide the real fix.
-
-## Change 2 — trackevents 403 (flag only)
-
-Not fixed in this pass. Best-guess origin: a third-party analytics beacon (Plausible / a Lovable-injected analytics script / a PostHog-style endpoint) whose auth header or CORS config is misconfigured against the current preview origin. It is not from our own Supabase edge functions or app code (no `trackevents` reference in `src/`). Worth confirming by searching `index.html` and any injected scripts once we're in build mode; likely a config or allowlist change rather than a code fix. Non-blocking.
-
-## After the log lands
-
-User reopens the popup on item 33, shares the two log outputs, and we diagnose from there (expected outcomes: duplicate row / wrong-branch gate / stale rows). Then we propose the actual fix in a follow-up plan.
+## Cleanup
+Once the root cause is identified in the next turn, remove all `[fulfiller-self-view:*]`, `[InterestSelectionList v3]`, `[InterestSelectionList] mounted/fetch …` logs and the `data-testid` attributes.
