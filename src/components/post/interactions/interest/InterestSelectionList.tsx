@@ -705,6 +705,7 @@ export function InterestSelectionList({
   const isSelectedFulfiller = ownRow?.status === "selected";
 
   console.log('[fulfiller-self-view:gate]', {
+    instanceId,
     itemId,
     currentUserId,
     isOwner,
@@ -715,6 +716,19 @@ export function InterestSelectionList({
     currentUserRows: rows
       .filter((r) => r.user_id === currentUserId)
       .map((r) => ({ status: r.status, id: r.id })),
+  });
+
+  // Commit-phase diagnostic: fires AFTER React writes to the DOM,
+  // so we can compare computed vs. actually-visible header/button.
+  useEffect(() => {
+    console.log('[fulfiller-self-view:committed]', {
+      instanceId,
+      isFulfillerView,
+      isSelectedFulfiller,
+      headerTitleShown:
+        document.querySelector('[data-testid="fulfiller-header"]')?.textContent ?? null,
+      hasMessageBtn: !!document.querySelector('[data-testid="fulfiller-message-btn"]'),
+    });
   });
 
   const handleWithdrawOwnOffer = async () => {
