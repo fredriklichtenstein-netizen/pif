@@ -118,6 +118,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
         setFormData={setFormData}
         onAddressSelect={handleAddressSelect}
         isFormValid={isFormValid}
+        profileDefaults={profileDefaults}
       />
     </div>
   );
