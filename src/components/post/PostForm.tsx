@@ -25,6 +25,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     isSubmitting,
     isAnalyzing,
     isEditMode,
+    profileDefaults,
     setFormData,
     handleImageUpload,
     handleImagesChange,
