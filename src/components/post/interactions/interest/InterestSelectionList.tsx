@@ -770,6 +770,18 @@ export function InterestSelectionList({
     const headerTitle = isSelectedFulfiller
       ? t("interactions.wish_selected_self_title", "Du har valts att uppfylla denna önskan")
       : t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan");
+    console.log('[fulfiller-self-view:debug]', {
+      itemId,
+      currentUserId,
+      isOwner,
+      isWish,
+      ownRowUserId: own.user_id,
+      ownRowStatus: own.status,
+      isFulfillerView,
+      isSelectedFulfiller,
+      headerTitle,
+      allRows: rows.map((r) => ({ user_id: r.user_id, status: r.status, id: r.id })),
+    });
     return (
       <div className="max-h-[340px] overflow-y-auto">
         <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
