@@ -15,7 +15,7 @@
     "offer_action": "Pif",
     "offer_description": "Give away something you don't need",
     "request_action": "Wish",
-    "request_description": "Wish for something you need",
+    "request_description": "Request something you need",
     "title_label": "Title",
     "title_request_label": "What do you wish for?",
     "title_placeholder": "What do you want to pif?",
