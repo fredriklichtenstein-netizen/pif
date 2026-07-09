@@ -755,8 +755,8 @@ export function InterestSelectionList({
   if (isFulfillerView) {
     const own = ownRow!;
     const headerTitle = isSelectedFulfiller
-      ? t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan")
-      : t("interactions.wish_interest_self_title", "Du har visat intresse för denna önskan");
+      ? t("interactions.wish_selected_self_title", "Du har valts att uppfylla denna önskan")
+      : t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan");
     return (
       <div className="max-h-[340px] overflow-y-auto">
         <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
@@ -787,6 +787,17 @@ export function InterestSelectionList({
                 {format(new Date(own.created_at), "d MMM HH:mm", { locale: dateLocale })}
               </span>
             </div>
+            {isSelectedFulfiller && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs py-1 px-2 h-auto whitespace-nowrap"
+                onClick={() => openConversationWith(own.user_id)}
+              >
+                <MessageCircle className="h-3 w-3 mr-1" />
+                {t("interactions.message_btn")}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
