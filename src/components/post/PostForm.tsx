@@ -25,6 +25,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     isSubmitting,
     isAnalyzing,
     isEditMode,
+    profileDefaults,
     setFormData,
     handleImageUpload,
     handleImagesChange,
@@ -117,6 +118,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
         setFormData={setFormData}
         onAddressSelect={handleAddressSelect}
         isFormValid={isFormValid}
+        profileDefaults={profileDefaults}
       />
     </div>
   );

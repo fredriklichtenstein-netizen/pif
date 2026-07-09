@@ -37,6 +37,7 @@ interface PostFormContainerProps {
   setFormData: (data: any) => void;
   onAddressSelect: (address: string, coordinates: { lat: number; lng: number }) => void;
   isFormValid: boolean;
+  profileDefaults?: import("@/types/post").PickupProfileDefaults;
 }
 
 export function PostFormContainer({
@@ -51,6 +52,7 @@ export function PostFormContainer({
   setFormData,
   onAddressSelect,
   isFormValid,
+  profileDefaults,
 }: PostFormContainerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -190,6 +192,8 @@ export function PostFormContainer({
             setFormData={setFormData}
             onAddressSelect={onAddressSelect}
             fieldErrors={errorsForStep}
+            profileDefaults={profileDefaults}
+            isEditMode={isEditMode}
           />
         );
       default:

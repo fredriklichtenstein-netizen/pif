@@ -36,6 +36,16 @@ export interface PostFormData {
   pickup_address?: string;
   pickup_address_mode?: 'primary' | 'custom';
   primary_address?: string;
+  phone?: string;
+}
+
+export interface PickupProfileDefaults {
+  pickup_address: string;
+  pickup_door_code: string;
+  pickup_floor: string;
+  pickup_instructions: string;
+  phone: string;
+  primary_address: string;
 }
 
 export interface Coordinates {

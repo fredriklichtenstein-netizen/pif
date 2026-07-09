@@ -8,6 +8,7 @@ export function usePostForm(initialData?: any) {
   const {
     formData,
     setFormData,
+    profileDefaults,
     handleImagesChange,
     handleMeasurementChange,
   } = usePostFormState(initialData);
@@ -54,6 +55,7 @@ export function usePostForm(initialData?: any) {
     isAnalyzing,
     isFormValid,
     isEditMode,
+    profileDefaults,
     setFormData,
     handleImageUpload,
     handleImagesChange,

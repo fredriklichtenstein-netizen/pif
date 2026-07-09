@@ -1,9 +1,18 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { PostFormData } from "@/types/post";
+import type { PostFormData, PickupProfileDefaults } from "@/types/post";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+
+const EMPTY_DEFAULTS: PickupProfileDefaults = {
+  pickup_address: "",
+  pickup_door_code: "",
+  pickup_floor: "",
+  pickup_instructions: "",
+  phone: "",
+  primary_address: "",
+};
 
 export function usePostFormState(initialData?: any) {
   const [searchParams] = useSearchParams();
@@ -13,6 +22,14 @@ export function usePostFormState(initialData?: any) {
     initialData?.item_type ??
     (queryType === "request" || queryType === "offer" ? queryType : "offer");
 
+  // Note: title/description/category/condition/images and other non-PII fields
+  // continue to hydrate from `initialData` (edit-mode pre-fill). Pickup PII
+  // fields (pickup_address, pickup_door_code, pickup_floor, pickup_instructions,
+  // phone) also still hydrate from `initialData` here — that's necessary so
+  // editing an existing pif preserves what was previously saved on the item.
+  // What we DO NOT do (any more) is auto-populate these PII fields from the
+  // user's PROFILE on new posts — that behavior is removed below, replaced by
+  // the opt-in per-field toggle UI in PostFormLocation.
   const [formData, setFormData] = useState<PostFormData>({
     title: initialData?.title || "",
     description: initialData?.description || "",
@@ -36,43 +53,46 @@ export function usePostFormState(initialData?: any) {
     pickup_address: initialData?.pickup_address || "",
     pickup_address_mode: initialData?.pickup_address_mode || "primary",
     primary_address: initialData?.primary_address || "",
+    phone: initialData?.phone || "",
   });
 
-  // Prefill pickup_preference (and pickup address) from the user's profile
-  // default — only for new posts. Re-runs once auth is ready so we don't
-  // race a not-yet-hydrated session on hard refresh.
+  const [profileDefaults, setProfileDefaults] = useState<PickupProfileDefaults>(EMPTY_DEFAULTS);
+
   const { user: authUser } = useGlobalAuth();
   useEffect(() => {
-    if (initialData?.id) return;
     if (!authUser?.id) return;
     let cancelled = false;
     (async () => {
       try {
         const { data } = await supabase
           .from('profiles')
-          .select('pickup_preference, address, pickup_address, pickup_door_code, pickup_floor, pickup_instructions')
+          .select('pickup_preference, address, pickup_address, pickup_door_code, pickup_floor, pickup_instructions, phone')
           .eq('id', authUser.id)
           .single();
         if (cancelled || !data) return;
         const d = data as any;
-        const pref = d?.pickup_preference;
         const primary = d?.address || "";
-        const savedPickup = d?.pickup_address || "";
-        const doorCode = d?.pickup_door_code || "";
-        const floor = d?.pickup_floor != null ? String(d.pickup_floor) : "";
-        const instructions = d?.pickup_instructions || "";
+        const defaults: PickupProfileDefaults = {
+          pickup_address: d?.pickup_address || "",
+          pickup_door_code: d?.pickup_door_code || "",
+          pickup_floor: d?.pickup_floor != null ? String(d.pickup_floor) : "",
+          pickup_instructions: d?.pickup_instructions || "",
+          phone: d?.phone || "",
+          primary_address: primary,
+        };
+        setProfileDefaults(defaults);
+
+        // ONLY populate non-PII bootstrap fields into formData on new posts:
+        //  - pickup_preference: controls the collapsible's default-open behavior
+        //  - primary_address: needed as the "primary" option in the radio
+        // The sensitive fields (pickup_address, door code, floor, instructions,
+        // phone) remain empty until the user opts them in via the toggles.
+        if (initialData?.id) return;
+        const pref = d?.pickup_preference;
         setFormData((prev) => {
           const next = { ...prev };
           if (pref && !prev.pickup_preference) next.pickup_preference = pref;
           if (!prev.primary_address) next.primary_address = primary;
-          // Default the post's pickup_address to the user's saved preference
-          if (!prev.pickup_address) {
-            next.pickup_address = savedPickup || primary;
-            next.pickup_address_mode = savedPickup && savedPickup !== primary ? 'custom' : 'primary';
-          }
-          if (!prev.pickup_door_code && doorCode) next.pickup_door_code = doorCode;
-          if (!prev.pickup_floor && floor) next.pickup_floor = floor;
-          if (!prev.pickup_instructions && instructions) next.pickup_instructions = instructions;
           return next;
         });
       } catch {
@@ -103,6 +123,7 @@ export function usePostFormState(initialData?: any) {
   return {
     formData,
     setFormData,
+    profileDefaults,
     handleImagesChange,
     handleMeasurementChange,
   };
