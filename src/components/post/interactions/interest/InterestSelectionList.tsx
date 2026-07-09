@@ -701,6 +701,19 @@ export function InterestSelectionList({
   const isFulfillerView = !!ownRow;
   const isSelectedFulfiller = ownRow?.status === "selected";
 
+  console.log('[fulfiller-self-view:gate]', {
+    itemId,
+    currentUserId,
+    isOwner,
+    isWish,
+    isFulfillerView,
+    matchedRow: ownRow ? { user_id: ownRow.user_id, status: ownRow.status, id: ownRow.id } : null,
+    rowCount: rows.length,
+    currentUserRows: rows
+      .filter((r) => r.user_id === currentUserId)
+      .map((r) => ({ status: r.status, id: r.id })),
+  });
+
   const handleWithdrawOwnOffer = async () => {
     if (!currentUserId) return;
     try {
