@@ -77,9 +77,6 @@ export function InterestSelectionList({
   itemType,
   setShowPopup,
 }: InterestSelectionListProps) {
-  const instanceIdRef = useRef<string>(Math.random().toString(36).slice(2, 7));
-  const instanceId = instanceIdRef.current;
-  console.log('[InterestSelectionList v3] render', { instanceId, itemId, currentUserId, itemOwnerId, itemType });
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
   const navigate = useNavigate();
