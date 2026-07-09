@@ -52,6 +52,7 @@ export function PostFormContainer({
   setFormData,
   onAddressSelect,
   isFormValid,
+  profileDefaults,
 }: PostFormContainerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
