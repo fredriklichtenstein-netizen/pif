@@ -192,6 +192,8 @@ export function PostFormContainer({
             setFormData={setFormData}
             onAddressSelect={onAddressSelect}
             fieldErrors={errorsForStep}
+            profileDefaults={profileDefaults}
+            isEditMode={isEditMode}
           />
         );
       default:
