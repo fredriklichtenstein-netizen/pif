@@ -1,34 +1,60 @@
-## Lovable implementation plan for approval
+# Plan: Diagnose fulfiller self-view logic bug + flag trackevents 403
 
-### FIX 1 findings — mobile conversation rendering path
+## Context
 
-- `src/routes/routeConfig.tsx` only registers `/messages`. There is **no `/conversation/:id` route** anywhere in the app.
-- `src/pages/Conversation.tsx` exists but is **not imported by any router or component** (verified with codebase search — zero references).
-- Therefore mobile and desktop both open a conversation the exact same way: `Messages.tsx` sets `activeConversationId` and renders `<ConversationView conversationId=... />`. The mobile layout just hides the list column (`hidden md:block`) and shows the ConversationView column full‑width — but it is the same component instance that already has the `[cv:debug]` log and the amber card wired.
-- Conclusion: there is no second rendering path to patch. The reason the `[cv:debug]` line didn't appear in the mobile console is almost certainly a stale bundle / cached service worker on the phone, not a routing gap. A hard reload on mobile will surface the log. No mobile‑specific code change is needed for parity.
+The console log confirms the fetched interests row for the current user has `status: "selected"`, yet `InterestSelectionList` is rendering the pending-state copy with no "Meddelande" button. Source code at lines 698–702 looks correct:
 
-I will also delete the unused `src/pages/Conversation.tsx` (dead code with its own copy of the amber card) so this ambiguity can't come back.
+```ts
+const ownRow = !isOwner && isWish && !!currentUserId
+  ? rows.find((r) => r.user_id === currentUserId)
+  : undefined;
+const isFulfillerView = !!ownRow;
+const isSelectedFulfiller = ownRow?.status === "selected";
+```
 
-### FIX 2 — restyle the note as an inline system message
+Something between the fetched data and this evaluation is failing. Candidates worth logging: `isOwner`/`isWish`/`currentUserId` gating `ownRow` to `undefined`; duplicate interest rows for the same user where `.find` picks a stale `pending`/`not_selected` row; a type/casing mismatch on `status`; or `currentUserId` not matching `user_id` (uuid string vs auth session mismatch).
 
-In `src/components/messaging/ConversationView.tsx`:
+## Change 1 — Diagnostic logs in `src/components/post/interactions/interest/InterestSelectionList.tsx`
 
-1. Remove the current amber sticky block (currently rendered above the messages list).
-2. Render the note **inside the messages list as its first child**, using the same visual treatment as `MessageItem.tsx`'s `is_system_message` branch:
-   - Container: `flex justify-center my-2`
-   - Bubble: `max-w-[85%] rounded-lg bg-muted/60 border border-border px-3 py-2 text-center`
-   - Small caps label: `text-[10px] uppercase tracking-wide text-muted-foreground mb-1` with `t('messages.system_message_label', { defaultValue: 'Systemmeddelande' })`
-   - Body: `whitespace-pre-wrap break-words text-sm text-foreground`, showing the note wrapped in curly quotes (or plain — will keep plain to match existing system messages; the existing `interactions.helper_offer_context_title` string can be dropped since the "SYSTEMMEDDELANDE" label already frames it).
-3. Keep the exact same gating that already lives in `useConversationDetails` (owner + wish + non-empty note), so no extra conditional logic in the component.
-4. Remove the `[cv:debug]` `console.log` added on line ~72.
+Right before the header ternary (currently line 757, inside the `if (isFulfillerView)` block), add:
 
-### Cleanup
+```ts
+console.log('[fulfiller-self-view:debug]', {
+  itemId,
+  currentUserId,
+  isOwner,
+  isWish,
+  ownRowUserId: ownRow?.user_id,
+  ownRowStatus: ownRow?.status,
+  isFulfillerView,
+  isSelectedFulfiller,
+  allRows: rows.map(r => ({ user_id: r.user_id, status: r.status, id: r.id })),
+});
+```
 
-- Delete `src/pages/Conversation.tsx` (unrouted, contains an outdated duplicate of the amber card).
-- No changes to `useConversationDetails.ts` (already clean after the previous pass).
-- No i18n key changes needed; reuses the existing `messages.system_message_label`.
+Also add a second log immediately after the `ownRow` computation (line 702), OUTSIDE the `if (isFulfillerView)` guard, so we can see cases where `isFulfillerView` is false and the self-view branch is skipped entirely:
 
-### Out of scope
+```ts
+console.log('[fulfiller-self-view:gate]', {
+  itemId,
+  currentUserId,
+  isOwner,
+  isWish,
+  isFulfillerView,
+  matchedRow: ownRow ? { user_id: ownRow.user_id, status: ownRow.status } : null,
+  rowCount: rows.length,
+  currentUserRows: rows.filter(r => r.user_id === currentUserId).map(r => ({ status: r.status, id: r.id })),
+});
+```
 
-- No changes to hook logic, DB, styling tokens, or other components.
-- No new translations.
+The `currentUserRows` filter is deliberately broader than `.find` — if it returns multiple rows for the same user, that explains the bug (duplicate interest rows, `.find` picks the wrong one).
+
+No other logic changes in this step. After the user reopens item 33's popup as Fredrik, we read the log output and decide the real fix.
+
+## Change 2 — trackevents 403 (flag only)
+
+Not fixed in this pass. Best-guess origin: a third-party analytics beacon (Plausible / a Lovable-injected analytics script / a PostHog-style endpoint) whose auth header or CORS config is misconfigured against the current preview origin. It is not from our own Supabase edge functions or app code (no `trackevents` reference in `src/`). Worth confirming by searching `index.html` and any injected scripts once we're in build mode; likely a config or allowlist change rather than a code fix. Non-blocking.
+
+## After the log lands
+
+User reopens the popup on item 33, shares the two log outputs, and we diagnose from there (expected outcomes: duplicate row / wrong-branch gate / stale rows). Then we propose the actual fix in a follow-up plan.
