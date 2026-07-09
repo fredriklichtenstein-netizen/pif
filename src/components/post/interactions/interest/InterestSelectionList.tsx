@@ -77,9 +77,6 @@ export function InterestSelectionList({
   itemType,
   setShowPopup,
 }: InterestSelectionListProps) {
-  const instanceIdRef = useRef<string>(Math.random().toString(36).slice(2, 7));
-  const instanceId = instanceIdRef.current;
-  console.log('[InterestSelectionList v3] render', { instanceId, itemId, currentUserId, itemOwnerId, itemType });
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
   const navigate = useNavigate();
@@ -704,32 +701,8 @@ export function InterestSelectionList({
   const isFulfillerView = !!ownRow;
   const isSelectedFulfiller = ownRow?.status === "selected";
 
-  console.log('[fulfiller-self-view:gate]', {
-    instanceId,
-    itemId,
-    currentUserId,
-    isOwner,
-    isWish,
-    isFulfillerView,
-    matchedRow: ownRow ? { user_id: ownRow.user_id, status: ownRow.status, id: ownRow.id } : null,
-    rowCount: rows.length,
-    currentUserRows: rows
-      .filter((r) => r.user_id === currentUserId)
-      .map((r) => ({ status: r.status, id: r.id })),
-  });
 
-  // Commit-phase diagnostic: fires AFTER React writes to the DOM,
-  // so we can compare computed vs. actually-visible header/button.
-  useEffect(() => {
-    console.log('[fulfiller-self-view:committed]', {
-      instanceId,
-      isFulfillerView,
-      isSelectedFulfiller,
-      headerTitleShown:
-        document.querySelector('[data-testid="fulfiller-header"]')?.textContent ?? null,
-      hasMessageBtn: !!document.querySelector('[data-testid="fulfiller-message-btn"]'),
-    });
-  });
+
 
   const handleWithdrawOwnOffer = async () => {
     if (!currentUserId) return;
@@ -787,22 +760,10 @@ export function InterestSelectionList({
     const headerTitle = isSelectedFulfiller
       ? t("interactions.wish_selected_self_title", "Du har valts att uppfylla denna önskan")
       : t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan");
-    console.log('[fulfiller-self-view:debug]', {
-      itemId,
-      currentUserId,
-      isOwner,
-      isWish,
-      ownRowUserId: own.user_id,
-      ownRowStatus: own.status,
-      isFulfillerView,
-      isSelectedFulfiller,
-      headerTitle,
-      allRows: rows.map((r) => ({ user_id: r.user_id, status: r.status, id: r.id })),
-    });
     return (
       <div className="max-h-[340px] overflow-y-auto">
         <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
-          <h3 className="font-semibold text-sm" data-testid="fulfiller-header">
+          <h3 className="font-semibold text-sm">
             {headerTitle}
           </h3>
           <Button
@@ -835,7 +796,6 @@ export function InterestSelectionList({
                 variant="outline"
                 className="text-xs py-1 px-2 h-auto whitespace-nowrap"
                 onClick={() => openConversationWith(own.user_id)}
-                data-testid="fulfiller-message-btn"
               >
                 <MessageCircle className="h-3 w-3 mr-1" />
                 {t("interactions.message_btn")}
