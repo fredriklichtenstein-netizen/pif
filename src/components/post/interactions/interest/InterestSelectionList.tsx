@@ -802,7 +802,7 @@ export function InterestSelectionList({
     return (
       <div className="max-h-[340px] overflow-y-auto">
         <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
-          <h3 className="font-semibold text-sm">
+          <h3 className="font-semibold text-sm" data-testid="fulfiller-header">
             {headerTitle}
           </h3>
           <Button
