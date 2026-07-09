@@ -77,6 +77,7 @@ export function InterestSelectionList({
   itemType,
   setShowPopup,
 }: InterestSelectionListProps) {
+  console.log('[InterestSelectionList v3] render', { itemId, currentUserId, itemOwnerId, itemType });
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
   const navigate = useNavigate();
