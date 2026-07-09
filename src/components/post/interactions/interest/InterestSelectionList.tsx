@@ -835,6 +835,7 @@ export function InterestSelectionList({
                 variant="outline"
                 className="text-xs py-1 px-2 h-auto whitespace-nowrap"
                 onClick={() => openConversationWith(own.user_id)}
+                data-testid="fulfiller-message-btn"
               >
                 <MessageCircle className="h-3 w-3 mr-1" />
                 {t("interactions.message_btn")}
