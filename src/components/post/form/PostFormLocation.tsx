@@ -129,7 +129,18 @@ export function PostFormLocation({
     }
   };
 
+  const allEnabled = (Object.keys(enabledFields) as PickupField[]).every((f) => enabledFields[f]);
+
   const applyAllDefaults = () => {
+    if (allEnabled) {
+      // Clear all fields and toggle off
+      const cleared: Record<PickupField, boolean> = {
+        address: false, door_code: false, floor: false, instructions: false, phone: false,
+      };
+      setEnabledFields(cleared);
+      (Object.keys(defaultsMap) as PickupField[]).forEach((f) => clearField(f));
+      return;
+    }
     const next = { ...enabledFields };
     (Object.keys(defaultsMap) as PickupField[]).forEach((f) => {
       if (hasDefault(f)) {
