@@ -433,8 +433,8 @@ function PostPickupAddressSection({
           onChange={(addr) => onCustomAddressChange(addr)}
           mapButtonLabel={<Map className="w-4 h-4" />}
           hideSearch
-          placeholder={t('post.pickup_add_manually')}
         />
+
       )}
 
       <p className="text-xs text-muted-foreground">
