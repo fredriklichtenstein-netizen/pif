@@ -72,9 +72,13 @@ export default function CreateProfile() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          if (!cancelled) setPrefillLoading(false);
+          if (!cancelled) {
+            setHasSession(false);
+            setPrefillLoading(false);
+          }
           return;
         }
+        if (!cancelled) setHasSession(true);
         const { data: profile } = await supabase
           .from("profiles")
           .select("first_name,last_name,avatar_url,address,city,location_json,phone,onboarding_completed")
