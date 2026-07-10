@@ -48,6 +48,7 @@ export default function CreateProfile() {
 
   const [prefillLoading, setPrefillLoading] = useState(true);
   const [bailOut, setBailOut] = useState(false);
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
 
@@ -71,9 +72,13 @@ export default function CreateProfile() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          if (!cancelled) setPrefillLoading(false);
+          if (!cancelled) {
+            setHasSession(false);
+            setPrefillLoading(false);
+          }
           return;
         }
+        if (!cancelled) setHasSession(true);
         const { data: profile } = await supabase
           .from("profiles")
           .select("first_name,last_name,avatar_url,address,city,location_json,phone,onboarding_completed")
@@ -141,6 +146,19 @@ export default function CreateProfile() {
       cancelled = true;
     };
   }, [navigate]);
+
+  // Safety timeout — if prefill never resolves (e.g. orphaned tab from email-app
+  // in-app-browser handoff), stop showing the loader and fall through:
+  // - no session detected -> render the sign-in fallback card
+  // - session present but prefill still stalled -> proceed with empty defaults
+  useEffect(() => {
+    if (!prefillLoading) {
+      setBailOut(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setBailOut(true), PREFILL_AUTH_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [prefillLoading]);
 
   const handleAvatarChange = (file: File) => {
     setAvatarFile(file);
@@ -236,7 +254,31 @@ export default function CreateProfile() {
     }
   };
 
-  if (prefillLoading) {
+  // Orphaned-tab fallback: prefill timed out AND we could confirm there's no
+  // session. Show a clear sign-in card instead of spinning forever.
+  if ((bailOut && hasSession === false) || (!prefillLoading && hasSession === false)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 flex flex-col items-center gap-4 text-center">
+            <div className="text-xl font-bold">{t("profile.auth_required")}</div>
+            <p className="text-muted-foreground">{t("profile.sign_in_to_view")}</p>
+            <button
+              className="text-primary underline"
+              onClick={() => navigate("/auth", { replace: true })}
+            >
+              {t("profile.sign_in")}
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Still loading and haven't timed out — show spinner. Once bailOut fires
+  // with an assumed-valid session, fall through to render the wizard with
+  // whatever defaults we have (Option A: keep the user moving).
+  if (prefillLoading && !bailOut) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
