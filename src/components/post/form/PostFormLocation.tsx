@@ -129,25 +129,7 @@ export function PostFormLocation({
     }
   };
 
-  const allEnabled = (Object.keys(enabledFields) as PickupField[]).every((f) => enabledFields[f]);
-
-  const applyAllDefaults = () => {
-    if (allEnabled) {
-      // Clear all fields and toggle off (unconditional, regardless of profile defaults)
-      setEnabledFields({
-        address: false, door_code: false, floor: false, instructions: false, phone: false,
-      });
-      setFormData((prev) => ({
-        ...prev,
-        pickup_address: '',
-        pickup_address_mode: 'primary',
-        pickup_door_code: '',
-        pickup_floor: '',
-        pickup_instructions: '',
-        phone: '',
-      }));
-      return;
-    }
+  const applyDefaults = () => {
     const next = { ...enabledFields };
     (Object.keys(defaultsMap) as PickupField[]).forEach((f) => {
       if (hasDefault(f)) {
@@ -156,6 +138,21 @@ export function PostFormLocation({
       }
     });
     setEnabledFields(next);
+  };
+
+  const clearAll = () => {
+    setEnabledFields({
+      address: false, door_code: false, floor: false, instructions: false, phone: false,
+    });
+    setFormData((prev) => ({
+      ...prev,
+      pickup_address: '',
+      pickup_address_mode: 'primary',
+      pickup_door_code: '',
+      pickup_floor: '',
+      pickup_instructions: '',
+      phone: '',
+    }));
   };
 
   return (
@@ -226,15 +223,26 @@ export function PostFormLocation({
                 <p className="mt-1">{t('post.pickup_share_notice_body')}</p>
               </div>
 
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={applyAllDefaults}
-                className="w-full justify-center gap-2"
-              >
-                <Wand2 className="h-4 w-4" />
-                {allEnabled ? t('post.clear_all_fields') : t('post.use_my_defaults')}
-              </Button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={applyDefaults}
+                  disabled={!anyDefault}
+                  className="w-full justify-center gap-2"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  {t('post.use_my_defaults')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={clearAll}
+                  className="w-full justify-center gap-2"
+                >
+                  {t('post.clear_all_fields')}
+                </Button>
+              </div>
 
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
