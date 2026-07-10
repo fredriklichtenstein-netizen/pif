@@ -129,7 +129,18 @@ export function PostFormLocation({
     }
   };
 
+  const allEnabled = (Object.keys(enabledFields) as PickupField[]).every((f) => enabledFields[f]);
+
   const applyAllDefaults = () => {
+    if (allEnabled) {
+      // Clear all fields and toggle off
+      const cleared: Record<PickupField, boolean> = {
+        address: false, door_code: false, floor: false, instructions: false, phone: false,
+      };
+      setEnabledFields(cleared);
+      (Object.keys(defaultsMap) as PickupField[]).forEach((f) => clearField(f));
+      return;
+    }
     const next = { ...enabledFields };
     (Object.keys(defaultsMap) as PickupField[]).forEach((f) => {
       if (hasDefault(f)) {
@@ -212,17 +223,12 @@ export function PostFormLocation({
                 type="button"
                 variant="secondary"
                 onClick={applyAllDefaults}
-                disabled={!anyDefault}
                 className="w-full justify-center gap-2"
               >
                 <Wand2 className="h-4 w-4" />
-                {t('post.use_my_defaults')}
+                {allEnabled ? t('post.clear_all_fields') : t('post.use_my_defaults')}
               </Button>
-              {!anyDefault && (
-                <p className="text-xs text-muted-foreground -mt-3">
-                  {t('post.no_defaults_saved_hint')}
-                </p>
-              )}
+
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {pickupOptions.map(({ value, label, icon: Icon }) => {
@@ -350,27 +356,20 @@ export function PostFormLocation({
 interface PickupFieldRowProps {
   label: string;
   enabled: boolean;
-  hasDefault: boolean;
+  hasDefault?: boolean;
   onToggle: (on: boolean) => void;
   children: React.ReactNode;
 }
 
-function PickupFieldRow({ label, enabled, hasDefault, onToggle, children }: PickupFieldRowProps) {
-  const { t } = useTranslation();
+function PickupFieldRow({ label, enabled, onToggle, children }: PickupFieldRowProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <Label className={cn(!hasDefault && "text-muted-foreground")}>{label}</Label>
-          {!hasDefault && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t('post.pickup_field_no_default_hint')}
-            </p>
-          )}
+          <Label>{label}</Label>
         </div>
         <Switch
           checked={enabled}
-          disabled={!hasDefault}
           onCheckedChange={onToggle}
           aria-label={label}
         />
@@ -379,6 +378,7 @@ function PickupFieldRow({ label, enabled, hasDefault, onToggle, children }: Pick
     </div>
   );
 }
+
 
 interface PostPickupAddressSectionProps {
   primaryAddress: string;
@@ -396,30 +396,34 @@ function PostPickupAddressSection({
   onCustomAddressChange,
 }: PostPickupAddressSectionProps) {
   const { t } = useTranslation();
-  const resolved = mode === 'primary' ? primaryAddress : customAddress;
+  const hasPrimary = !!primaryAddress;
+  const effectiveMode = hasPrimary ? mode : 'custom';
+  const resolved = effectiveMode === 'primary' ? primaryAddress : customAddress;
 
   return (
     <div className="space-y-3">
-      <RadioGroup
-        value={mode}
-        onValueChange={(v) => onModeChange(v as 'primary' | 'custom')}
-        className="flex flex-col gap-2"
-      >
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="primary" id="post-pa-primary" />
-          <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
-            {t('profile.pickup_use_primary')}
-          </Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="custom" id="post-pa-custom" />
-          <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
-            {t('profile.pickup_use_other')}
-          </Label>
-        </div>
-      </RadioGroup>
+      {hasPrimary && (
+        <RadioGroup
+          value={mode}
+          onValueChange={(v) => onModeChange(v as 'primary' | 'custom')}
+          className="flex flex-col gap-2"
+        >
+          <div className="flex items-center gap-2">
+            <RadioGroupItem value="primary" id="post-pa-primary" />
+            <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
+              {t('profile.pickup_use_primary')}
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <RadioGroupItem value="custom" id="post-pa-custom" />
+            <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
+              {t('profile.pickup_use_other')}
+            </Label>
+          </div>
+        </RadioGroup>
+      )}
 
-      {mode === 'primary' ? (
+      {effectiveMode === 'primary' ? (
         <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
           {primaryAddress || t('profile.pickup_no_primary')}
         </div>
@@ -430,6 +434,7 @@ function PostPickupAddressSection({
           mapButtonLabel={<Map className="w-4 h-4" />}
           hideSearch
         />
+
       )}
 
       <p className="text-xs text-muted-foreground">
@@ -441,3 +446,4 @@ function PostPickupAddressSection({
     </div>
   );
 }
+

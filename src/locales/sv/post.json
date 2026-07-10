@@ -133,6 +133,8 @@
     "pickup_phone": "Telefonnummer",
     "pickup_phone_placeholder": "T.ex. 070-123 45 67",
     "use_my_defaults": "Använd mina standardinställningar",
+    "clear_all_fields": "Rensa alla fält",
+    "pickup_add_manually": "Lägg till manuellt",
     "no_defaults_saved_hint": "Du har inga sparade standardinställningar i din profil ännu.",
     "pickup_field_no_default_hint": "Inte sparat i din profil",
     "preferred_time_window": "Önskad tid för upphämtning",

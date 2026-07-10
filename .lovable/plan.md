@@ -1,25 +1,34 @@
-## Goal
-Prove which of three hypotheses explains why the correct `headerTitle` is computed but not visible: (a) commit-phase mismatch, (b) a second `InterestSelectionList` instance, (c) DOM staleness.
+## Lovable implementation plan for approval
 
-## Why no code fix yet
-The render path in `src/components/post/interactions/interest/InterestSelectionList.tsx` (lines 699-845) has no memoization, no `React.memo`, no `useMemo`, no portal caching, and the parent already forces a fresh mount via `key={showPopup ? "open" : "closed"}` in `CounterButton`. If the reported logs are accurate, React must be committing the "selected" JSX. Adding a fix now would be a shot in the dark.
+Two adjustments to `src/components/post/form/PostFormLocation.tsx` only. No changes to state hook, submission, DB, or types.
 
-## Diagnostic step 1 — instance id + commit-phase log
-In `InterestSelectionList.tsx`:
-- Generate a stable `instanceId` via `useRef(Math.random().toString(36).slice(2,7))` and include it in every existing `console.log`. This will show if two instances are interleaving.
-- Add a `useEffect` that runs on every render (no dep array) and logs `[fulfiller-self-view:committed]` with `{ instanceId, isFulfillerView, isSelectedFulfiller, headerTitleShown: document.querySelector('[data-testid="fulfiller-header"]')?.textContent, hasMessageBtn: !!document.querySelector('[data-testid="fulfiller-message-btn"]') }`. This runs AFTER commit, so it reports what actually reached the DOM.
-- Add `data-testid="fulfiller-header"` to the `<h3>` at line 789 and `data-testid="fulfiller-message-btn"` to the Meddelande `<Button>` at line 817.
+### FIX 1 — Toggles always enabled
 
-## Diagnostic step 2 — reproduce & report
-User reopens item 33's popup as Fredrik and copies the console output covering both `[InterestSelectionList v3] render` entries and the new `[fulfiller-self-view:committed]` entries.
+- Remove the `disabled={!hasDefault}` on the `Switch` in `PickupFieldRow`.
+- Remove the `hasDefault` prop from `PickupFieldRow` (and stop dimming the label / stop rendering the "Inte sparat i din profil" hint).
+- Keep `toggleField(f, on)` semantics: ON populates from profile default if one exists, otherwise leaves the field empty for manual typing; OFF clears the field.
+- Add a subtle placeholder-only hint via the existing inputs when toggled ON but no default exists. Concretely: pass the existing `t('post.pickup_add_manually')` (new key: SV "Lägg till manuellt" / EN "Add manually") as fallback placeholder to the address/door/floor/instructions/phone inputs when `!hasDefault && enabled`. For the address block, when no primary address exists and toggle is ON, render the custom `AddressInput` directly (skip the primary/custom radio, since there's nothing to choose).
+- The existing per-field `t('post.pickup_field_no_default_hint')` key can be left in the JSON (harmless) but is no longer referenced from the component.
 
-The committed-phase log tells us definitively:
-- If `headerTitleShown` = the selected copy → the DOM IS correct and the user was reading stale visuals; we're done.
-- If `headerTitleShown` = the pending copy while `isSelectedFulfiller` is `true` → React is committing the wrong branch, which would point to a Radix/portal bug and justify a structural rework (e.g. splitting the fulfiller-self view into its own component keyed by `isSelectedFulfiller`).
-- If two different `instanceId`s appear → there's a duplicate mount and we fix the caller, not this file.
+### FIX 2 — "Använd mina standardinställningar" becomes a two-way toggle
 
-## Files touched
-- `src/components/post/interactions/interest/InterestSelectionList.tsx` — diagnostics only.
+- Derive `allEnabled = every enabledFields[f] === true` (considering only fields that have a default? — see below).
+- Button behavior:
+  - If `allEnabled` is false: populate all fields that have a profile default and set their toggles ON. Fields with no default are left as-is (their toggle can still be flipped individually). This matches current "apply defaults" behavior.
+  - If `allEnabled` is true: clear ALL five fields and set ALL toggles OFF (including any fields the user had manually enabled without a default).
+- Button label switches:
+  - false → `t('post.use_my_defaults')` ("Använd mina standardinställningar" / "Use my default settings")
+  - true → `t('post.clear_all_fields')` ("Rensa alla fält" / "Clear all fields") — new key
+- The `disabled={!anyDefault}` guard and the `no_defaults_saved_hint` note are removed so the button is always available (user can still "clear all" even without profile defaults, which is a valid action after they typed things manually). If preferred, keep it disabled when both `!anyDefault && !allEnabled` (nothing to populate and nothing to clear); I'll go with "always enabled" for symmetry with FIX 1.
 
-## Cleanup
-Once the root cause is identified in the next turn, remove all `[fulfiller-self-view:*]`, `[InterestSelectionList v3]`, `[InterestSelectionList] mounted/fetch …` logs and the `data-testid` attributes.
+### `allEnabled` definition
+
+To make the toggle feel right, `allEnabled` is computed as: every field that either has a default OR is currently enabled is ON. In practice: `Object.values(enabledFields).every(Boolean)` — if any toggle (defaulted or manual) is OFF, the button reads "use defaults"; once everything is ON, it reads "clear all". Simple and predictable.
+
+### Files touched
+
+- `src/components/post/form/PostFormLocation.tsx` — UI/state changes above.
+- `src/locales/sv/post.json` — add `clear_all_fields: "Rensa alla fält"`, `pickup_add_manually: "Lägg till manuellt"`.
+- `src/locales/en/post.json` — add `clear_all_fields: "Clear all fields"`, `pickup_add_manually: "Add manually"`.
+
+No changes to `usePostFormState.ts`, `usePostFormSubmission.ts`, types, or DB migrations.
