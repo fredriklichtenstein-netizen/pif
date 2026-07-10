@@ -43,13 +43,27 @@ const Profile = () => {
 
   const loading = !DEMO_MODE && profileLoading && !profileData;
 
-  if (authLoading || loading) {
+  // Safety timeout — if auth never resolves (e.g. orphaned tab from email-app
+  // in-app-browser handoff), stop showing the loader and fall through to the
+  // "auth_required" card so the user can sign in.
+  const [bailOut, setBailOut] = useState(false);
+  useEffect(() => {
+    if (!authLoading) {
+      setBailOut(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setBailOut(true), PROFILE_AUTH_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [authLoading]);
+
+  if ((authLoading && !bailOut) || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <span className="text-muted-foreground">{t('profile.loading')}</span>
       </div>
     );
   }
+
 
   if (!profile) {
     return (
