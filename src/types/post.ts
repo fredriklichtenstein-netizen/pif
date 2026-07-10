@@ -46,6 +46,7 @@ export interface PickupProfileDefaults {
   pickup_instructions: string;
   phone: string;
   primary_address: string;
+  pickup_preference?: string;
 }
 
 export interface Coordinates {
