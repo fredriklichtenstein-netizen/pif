@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,10 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_PROFILE } from "@/data/mockProfiles";
 import { useTranslation } from "react-i18next";
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
+
+// Mirror PrivateRoute: never let an unresolved auth state spin forever.
+const PROFILE_AUTH_TIMEOUT_MS = 5000;
+
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
