@@ -12,6 +12,7 @@ const EMPTY_DEFAULTS: PickupProfileDefaults = {
   pickup_instructions: "",
   phone: "",
   primary_address: "",
+  pickup_preference: "",
 };
 
 export function usePostFormState(initialData?: any) {
