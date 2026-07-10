@@ -122,11 +122,10 @@ export function PostFormLocation({
 
   const toggleField = (f: PickupField, on: boolean) => {
     setEnabledFields((prev) => ({ ...prev, [f]: on }));
-    if (on) {
-      populateField(f);
-    } else {
-      clearField(f);
-    }
+    // Never auto-populate from profile defaults on individual toggle.
+    // Only `applyDefaults()` (the "Use my defaults" button) reads defaultsMap.
+    // ON reveals an empty editable input; OFF clears the field.
+    clearField(f);
   };
 
   const applyDefaults = () => {
