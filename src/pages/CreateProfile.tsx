@@ -17,6 +17,9 @@ type Coordinates = { lat: number; lng: number };
 
 const TOTAL_STEPS = 3;
 
+// Mirror PrivateRoute/Profile: never let the prefill auth fetch spin forever.
+const PREFILL_AUTH_TIMEOUT_MS = 5000;
+
 const KNOWN_COUNTRY_CODES = ["+358", "+46", "+45", "+47"];
 
 function splitPhone(phone: string | null | undefined): { countryCode: string; local: string } {
