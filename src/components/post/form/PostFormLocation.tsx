@@ -396,30 +396,34 @@ function PostPickupAddressSection({
   onCustomAddressChange,
 }: PostPickupAddressSectionProps) {
   const { t } = useTranslation();
-  const resolved = mode === 'primary' ? primaryAddress : customAddress;
+  const hasPrimary = !!primaryAddress;
+  const effectiveMode = hasPrimary ? mode : 'custom';
+  const resolved = effectiveMode === 'primary' ? primaryAddress : customAddress;
 
   return (
     <div className="space-y-3">
-      <RadioGroup
-        value={mode}
-        onValueChange={(v) => onModeChange(v as 'primary' | 'custom')}
-        className="flex flex-col gap-2"
-      >
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="primary" id="post-pa-primary" />
-          <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
-            {t('profile.pickup_use_primary')}
-          </Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="custom" id="post-pa-custom" />
-          <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
-            {t('profile.pickup_use_other')}
-          </Label>
-        </div>
-      </RadioGroup>
+      {hasPrimary && (
+        <RadioGroup
+          value={mode}
+          onValueChange={(v) => onModeChange(v as 'primary' | 'custom')}
+          className="flex flex-col gap-2"
+        >
+          <div className="flex items-center gap-2">
+            <RadioGroupItem value="primary" id="post-pa-primary" />
+            <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
+              {t('profile.pickup_use_primary')}
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <RadioGroupItem value="custom" id="post-pa-custom" />
+            <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
+              {t('profile.pickup_use_other')}
+            </Label>
+          </div>
+        </RadioGroup>
+      )}
 
-      {mode === 'primary' ? (
+      {effectiveMode === 'primary' ? (
         <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
           {primaryAddress || t('profile.pickup_no_primary')}
         </div>
@@ -429,6 +433,7 @@ function PostPickupAddressSection({
           onChange={(addr) => onCustomAddressChange(addr)}
           mapButtonLabel={<Map className="w-4 h-4" />}
           hideSearch
+          placeholder={t('post.pickup_add_manually')}
         />
       )}
 
@@ -441,3 +446,4 @@ function PostPickupAddressSection({
     </div>
   );
 }
+
