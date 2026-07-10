@@ -147,6 +147,19 @@ export default function CreateProfile() {
     };
   }, [navigate]);
 
+  // Safety timeout — if prefill never resolves (e.g. orphaned tab from email-app
+  // in-app-browser handoff), stop showing the loader and fall through:
+  // - no session detected -> render the sign-in fallback card
+  // - session present but prefill still stalled -> proceed with empty defaults
+  useEffect(() => {
+    if (!prefillLoading) {
+      setBailOut(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setBailOut(true), PREFILL_AUTH_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [prefillLoading]);
+
   const handleAvatarChange = (file: File) => {
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
