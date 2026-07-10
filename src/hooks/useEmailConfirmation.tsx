@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,8 @@ export function useEmailConfirmation() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
+  const hasRedirectedRef = useRef(false);
+
   useEffect(() => {
     // If there's a hash with access_token, let Supabase auto-process it.
     // We rely on onAuthStateChange below to handle the redirect.
@@ -23,6 +25,11 @@ export function useEmailConfirmation() {
     };
 
     const checkAndRedirect = async (userId: string) => {
+      // Guard: both getSession() and onAuthStateChange can fire for the same
+      // confirmation event. Only the first one may navigate.
+      if (hasRedirectedRef.current) return;
+      hasRedirectedRef.current = true;
+
       try {
         const { fetchProfileWithRetry } = await import("@/hooks/auth/fetchProfileWithRetry");
         const profile = await fetchProfileWithRetry(userId);
