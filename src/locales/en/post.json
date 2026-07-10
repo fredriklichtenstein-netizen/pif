@@ -133,6 +133,8 @@
     "pickup_phone": "Phone number",
     "pickup_phone_placeholder": "E.g. +46 70 123 45 67",
     "use_my_defaults": "Use my default settings",
+    "clear_all_fields": "Clear all fields",
+    "pickup_add_manually": "Add manually",
     "no_defaults_saved_hint": "You have no default settings saved in your profile yet.",
     "pickup_field_no_default_hint": "Not saved in your profile",
     "preferred_time_window": "Preferred time for pickup",
