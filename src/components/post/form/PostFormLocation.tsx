@@ -38,6 +38,7 @@ const EMPTY_DEFAULTS: PickupProfileDefaults = {
   pickup_instructions: "",
   phone: "",
   primary_address: "",
+  pickup_preference: "",
 };
 
 export function PostFormLocation({
@@ -137,6 +138,10 @@ export function PostFormLocation({
       }
     });
     setEnabledFields(next);
+    const pref = profileDefaults.pickup_preference;
+    if (pref) {
+      setFormData((prev) => ({ ...prev, pickup_preference: pref as PostFormData['pickup_preference'] }));
+    }
   };
 
   const clearAll = () => {
@@ -145,6 +150,7 @@ export function PostFormLocation({
     });
     setFormData((prev) => ({
       ...prev,
+      pickup_preference: '',
       pickup_address: '',
       pickup_address_mode: 'primary',
       pickup_door_code: '',

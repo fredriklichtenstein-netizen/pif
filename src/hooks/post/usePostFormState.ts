@@ -12,6 +12,7 @@ const EMPTY_DEFAULTS: PickupProfileDefaults = {
   pickup_instructions: "",
   phone: "",
   primary_address: "",
+  pickup_preference: "",
 };
 
 export function usePostFormState(initialData?: any) {
@@ -79,21 +80,18 @@ export function usePostFormState(initialData?: any) {
           pickup_instructions: d?.pickup_instructions || "",
           phone: d?.phone || "",
           primary_address: primary,
+          pickup_preference: d?.pickup_preference || "",
         };
         setProfileDefaults(defaults);
 
-        // ONLY populate non-PII bootstrap fields into formData on new posts:
-        //  - pickup_preference: controls the collapsible's default-open behavior
-        //  - primary_address: needed as the "primary" option in the radio
-        // The sensitive fields (pickup_address, door code, floor, instructions,
-        // phone) remain empty until the user opts them in via the toggles.
+        // ONLY populate the primary_address bootstrap field on new posts so the
+        // address radio can offer the "primary" option. pickup_preference and
+        // sensitive fields stay empty until the user opts in via the toggles
+        // or taps "Använd mina standardinställningar".
         if (initialData?.id) return;
-        const pref = d?.pickup_preference;
         setFormData((prev) => {
-          const next = { ...prev };
-          if (pref && !prev.pickup_preference) next.pickup_preference = pref;
-          if (!prev.primary_address) next.primary_address = primary;
-          return next;
+          if (prev.primary_address) return prev;
+          return { ...prev, primary_address: primary };
         });
       } catch {
         // ignore
