@@ -47,6 +47,7 @@ export default function CreateProfile() {
   const { toast } = useToast();
 
   const [prefillLoading, setPrefillLoading] = useState(true);
+  const [bailOut, setBailOut] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
 
