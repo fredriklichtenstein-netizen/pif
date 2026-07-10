@@ -1,49 +1,69 @@
 ## Lovable implementation plan for approval
 
-### Fix: `applyAllDefaults` clear branch in `src/components/post/form/PostFormLocation.tsx`
+### Change: Two always-visible buttons in `src/components/post/form/PostFormLocation.tsx`
 
-The current clear branch already calls `clearField(f)` for every key in `defaultsMap`, but relies on multiple sequential functional `setFormData` calls. To make the reset unconditional, explicit, and atomic (and to also reset `pickup_address_mode` so the address row doesn't fall back to the primary address on next re-open), replace the loop with a single `setFormData` that zeroes all five fields at once.
+Replace the single toggle button (currently ~lines 220-227) and remove `allEnabled` / the toggle branch in `applyAllDefaults` (~lines 129-160).
 
-### Exact diff (around lines 132–142)
+### Diff
 
-Before:
+**Remove** the `allEnabled` derivation and rewrite `applyAllDefaults` into two dedicated handlers:
+
 ```tsx
-const applyAllDefaults = () => {
-  if (allEnabled) {
-    // Clear all fields and toggle off
-    const cleared: Record<PickupField, boolean> = {
-      address: false, door_code: false, floor: false, instructions: false, phone: false,
-    };
-    setEnabledFields(cleared);
-    (Object.keys(defaultsMap) as PickupField[]).forEach((f) => clearField(f));
-    return;
-  }
+const applyDefaults = () => {
+  const next = { ...enabledFields };
+  (Object.keys(defaultsMap) as PickupField[]).forEach((f) => {
+    if (hasDefault(f)) {
+      next[f] = true;
+      populateField(f);
+    }
+  });
+  setEnabledFields(next);
+};
+
+const clearAll = () => {
+  setEnabledFields({
+    address: false, door_code: false, floor: false, instructions: false, phone: false,
+  });
+  setFormData((prev) => ({
+    ...prev,
+    pickup_address: '',
+    pickup_address_mode: 'primary',
+    pickup_door_code: '',
+    pickup_floor: '',
+    pickup_instructions: '',
+    phone: '',
+  }));
+};
 ```
 
-After:
+**Replace** the single `<Button>` block with a two-button row:
+
 ```tsx
-const applyAllDefaults = () => {
-  if (allEnabled) {
-    // Clear all fields and toggle off (unconditional, regardless of profile defaults)
-    setEnabledFields({
-      address: false, door_code: false, floor: false, instructions: false, phone: false,
-    });
-    setFormData((prev) => ({
-      ...prev,
-      pickup_address: '',
-      pickup_address_mode: 'primary',
-      pickup_door_code: '',
-      pickup_floor: '',
-      pickup_instructions: '',
-      phone: '',
-    }));
-    return;
-  }
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+  <Button
+    type="button"
+    variant="secondary"
+    onClick={applyDefaults}
+    disabled={!anyDefault}
+    className="w-full justify-center gap-2"
+  >
+    <Wand2 className="h-4 w-4" />
+    {t('post.use_my_defaults')}
+  </Button>
+  <Button
+    type="button"
+    variant="outline"
+    onClick={clearAll}
+    className="w-full justify-center gap-2"
+  >
+    {t('post.clear_all_fields')}
+  </Button>
+</div>
 ```
 
-### Why this fixes both bugs
+### Notes
 
-- **BUG 1**: All five field values (`pickup_address`, `pickup_door_code`, `pickup_floor`, `pickup_instructions`, `phone`) are reset to `''` in a single `setFormData` call alongside the toggle state reset.
-- **BUG 2**: The reset is unconditional — it doesn't check `hasDefault`, so every field clears regardless of profile presence. Also resets `pickup_address_mode` so the address input doesn't visually retain the profile's primary address when toggled back on later.
-
-No other code paths, translations, or components are touched.
+- Keeps existing translation keys `post.use_my_defaults` and `post.clear_all_fields` — no locale changes.
+- `anyDefault` already exists; drives the disabled state of Button 1.
+- `allEnabled` removed entirely.
+- No other files or logic touched; per-field toggles, address mode, and submission logic unchanged.

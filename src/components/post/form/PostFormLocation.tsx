@@ -129,25 +129,7 @@ export function PostFormLocation({
     }
   };
 
-  const allEnabled = (Object.keys(enabledFields) as PickupField[]).every((f) => enabledFields[f]);
-
-  const applyAllDefaults = () => {
-    if (allEnabled) {
-      // Clear all fields and toggle off (unconditional, regardless of profile defaults)
-      setEnabledFields({
-        address: false, door_code: false, floor: false, instructions: false, phone: false,
-      });
-      setFormData((prev) => ({
-        ...prev,
-        pickup_address: '',
-        pickup_address_mode: 'primary',
-        pickup_door_code: '',
-        pickup_floor: '',
-        pickup_instructions: '',
-        phone: '',
-      }));
-      return;
-    }
+  const applyDefaults = () => {
     const next = { ...enabledFields };
     (Object.keys(defaultsMap) as PickupField[]).forEach((f) => {
       if (hasDefault(f)) {
@@ -156,6 +138,21 @@ export function PostFormLocation({
       }
     });
     setEnabledFields(next);
+  };
+
+  const clearAll = () => {
+    setEnabledFields({
+      address: false, door_code: false, floor: false, instructions: false, phone: false,
+    });
+    setFormData((prev) => ({
+      ...prev,
+      pickup_address: '',
+      pickup_address_mode: 'primary',
+      pickup_door_code: '',
+      pickup_floor: '',
+      pickup_instructions: '',
+      phone: '',
+    }));
   };
 
   return (
