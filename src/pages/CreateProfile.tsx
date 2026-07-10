@@ -254,7 +254,31 @@ export default function CreateProfile() {
     }
   };
 
-  if (prefillLoading) {
+  // Orphaned-tab fallback: prefill timed out AND we could confirm there's no
+  // session. Show a clear sign-in card instead of spinning forever.
+  if ((bailOut && hasSession === false) || (!prefillLoading && hasSession === false)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 flex flex-col items-center gap-4 text-center">
+            <div className="text-xl font-bold">{t("profile.auth_required")}</div>
+            <p className="text-muted-foreground">{t("profile.sign_in_to_view")}</p>
+            <button
+              className="text-primary underline"
+              onClick={() => navigate("/auth", { replace: true })}
+            >
+              {t("profile.sign_in")}
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Still loading and haven't timed out — show spinner. Once bailOut fires
+  // with an assumed-valid session, fall through to render the wizard with
+  // whatever defaults we have (Option A: keep the user moving).
+  if (prefillLoading && !bailOut) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
