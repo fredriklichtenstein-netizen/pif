@@ -223,17 +223,12 @@ export function PostFormLocation({
                 type="button"
                 variant="secondary"
                 onClick={applyAllDefaults}
-                disabled={!anyDefault}
                 className="w-full justify-center gap-2"
               >
                 <Wand2 className="h-4 w-4" />
-                {t('post.use_my_defaults')}
+                {allEnabled ? t('post.clear_all_fields') : t('post.use_my_defaults')}
               </Button>
-              {!anyDefault && (
-                <p className="text-xs text-muted-foreground -mt-3">
-                  {t('post.no_defaults_saved_hint')}
-                </p>
-              )}
+
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {pickupOptions.map(({ value, label, icon: Icon }) => {
