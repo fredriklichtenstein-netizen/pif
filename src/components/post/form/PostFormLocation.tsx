@@ -356,27 +356,20 @@ export function PostFormLocation({
 interface PickupFieldRowProps {
   label: string;
   enabled: boolean;
-  hasDefault: boolean;
+  hasDefault?: boolean;
   onToggle: (on: boolean) => void;
   children: React.ReactNode;
 }
 
-function PickupFieldRow({ label, enabled, hasDefault, onToggle, children }: PickupFieldRowProps) {
-  const { t } = useTranslation();
+function PickupFieldRow({ label, enabled, onToggle, children }: PickupFieldRowProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <Label className={cn(!hasDefault && "text-muted-foreground")}>{label}</Label>
-          {!hasDefault && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t('post.pickup_field_no_default_hint')}
-            </p>
-          )}
+          <Label>{label}</Label>
         </div>
         <Switch
           checked={enabled}
-          disabled={!hasDefault}
           onCheckedChange={onToggle}
           aria-label={label}
         />
@@ -385,6 +378,7 @@ function PickupFieldRow({ label, enabled, hasDefault, onToggle, children }: Pick
     </div>
   );
 }
+
 
 interface PostPickupAddressSectionProps {
   primaryAddress: string;
