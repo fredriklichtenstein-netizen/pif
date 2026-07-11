@@ -197,10 +197,6 @@
     min-height: 100vh;
     min-height: 100dvh;
   }
-  .h-screen-dvh {
-    height: 100vh;
-    height: 100dvh;
-  }
   .pt-safe { padding-top: env(safe-area-inset-top); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   .pl-safe { padding-left: env(safe-area-inset-left); }

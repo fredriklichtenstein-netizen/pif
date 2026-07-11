@@ -1,29 +1,43 @@
-## Fix: Map broken due to indefinite container height
+# Top-cutoff follow-up
 
-### Root cause
-Mapbox needs a definite computed height at init. The flex chain uses `min-h-screen-dvh` + `flex-1`, but `PullToRefresh` wraps `<main>` and may not propagate a definite height, and `MapContainer`'s inner element likely relies on `h-full` which resolves against an indefinite ancestor → 0px → "invalid dimensions".
+Investigation confirmed there is **no shared parent** adding space. `#root` is `100dvh`, `App.tsx`'s `<main>` has no styling, and `MainHeader` returns `null`. The three symptoms have three different causes; only Map has a real layout bug.
 
-### Fix (Map only)
+## 1. Map — real layout bug (top + bottom gap)
 
-1. **`src/index.css`** — add a fixed-height utility:
-   ```css
-   .h-screen-dvh { height: 100vh; height: 100dvh; }
-   ```
+`src/pages/Map.tsx` reserves `73px` on `<main>` for a header that no longer renders, and mixes `100vh` with `100dvh` — causing a bottom gap (wrapper `bg-gray-50` shows) and, when Safari's URL bar toggles, a top displacement.
 
-2. **`src/pages/Map.tsx`** — main render branch (line 156): change outer wrapper to `h-screen-dvh overflow-hidden` (fixed height), keep `flex flex-col`. Leave error/loading branches on `min-h-screen-dvh` (they don't host the map).
+**Change:**
+- Replace the outer wrapper on all four render branches (loading, needs-token, error, main) with a **flex column** that fills the viewport:
+  - Outer: `flex flex-col min-h-screen-dvh bg-gray-50`
+  - `<main>`: `flex-1 relative` (no more `h-[calc(100vh-73px)]`, no more `100vh`)
+- Remove the four `<Separator />` elements below the null `<MainHeader />` (they are now meaningless 1px lines above the map).
+- Update the stale comment in `src/components/map/MapStyles.css:28` to reflect the new layout.
 
-3. **`src/pages/Map.tsx`** — ensure the height chain into Mapbox is definite:
-   - `<main className="relative flex-1 min-h-0">` (add `min-h-0` so flex child can shrink and take real height inside `overflow-hidden` parent)
-   - Verify `PullToRefresh` className `flex-1 flex flex-col` — also add `min-h-0` there.
+`MainNav` is `position: fixed`, so it doesn't affect the flex flow — the map fills the full viewport behind it, matching Home/Feed.
 
-4. **Defense-in-depth**: quickly inspect `src/components/map/MapContainer.tsx` (not yet read) to confirm its root has `h-full w-full`. If not, add it. Also confirm `useMapInitialization.ts` — I saw `trackResize: true`, but add a `requestAnimationFrame(() => map.resize())` after load as a safety net if container measured 0 initially.
+## 2. Home — deepen gradient top stop
 
-5. **CSS controls offset** in `MapStyles.css` already correct — no change.
+`src/pages/Home.tsx` outer wrapper:
+- `from-green-50` → `from-green-100` (still on-brand, but the top edge now reads as clearly colored instead of near-white).
+- Keep `via-background to-blue-50` unchanged.
 
-### Home/Profile perceived gap (lower priority, after Map verified)
-Ask user for a fresh screenshot after Map fix. If gap persists:
-- Home: the top of the gradient may still read as near-white on iOS; consider `from-primary/10` or a solid tint band instead of `from-green-100`.
-- Profile: check whether `bg-gray-50` on `<body>`/`#root` vs the profile wrapper causes a visible seam at the notch; may need `bg-gray-50` on `body` too, or push profile background to full-bleed.
+No structural change; this is a one-token swap.
 
-### Rollback option
-If step 2 doesn't restore the map within one iteration, revert Map wrapper to the pre-flex layout (`min-h-screen-dvh` with `<main className="relative h-[calc(100dvh-0px)]">`) — MainHeader returns null so no offset is needed; the previous `100vh` breakage was cosmetic on mobile chrome, not blocking.
+## 3. Profile — remove top padding
+
+`src/pages/Profile.tsx` main render branch outer wrapper:
+- `py-8 px-2` → `pt-4 pb-8 px-2` (shrinks the near-white band above the Card from 32px to 16px so the card sits close to the viewport top).
+- Loading and auth-required branches are already `flex items-center justify-center` — leave them.
+
+## Files touched
+
+- `src/pages/Map.tsx` — 4 branches: outer wrapper → `flex flex-col min-h-screen-dvh bg-gray-50`; `<main>` → `flex-1 relative ...`; remove `<Separator />` (4x).
+- `src/components/map/MapStyles.css` — update comment referring to the old calc offset.
+- `src/pages/Home.tsx` — `from-green-50` → `from-green-100`.
+- `src/pages/Profile.tsx` — main branch wrapper `py-8` → `pt-4 pb-8`.
+
+## Out of scope
+
+- `MainHeader` stays as `return null` (confirmed intentional).
+- No changes to `App.tsx`, `#root`, safe-area utilities, or the viewport meta — those are already correct.
+- Other pages still using `min-h-screen` (ShareRedirect, ResetPassword, Privacy, PostEdit, Post, EmailConfirmation, NotFound, AccountSettings) remain untouched per earlier agreement.
