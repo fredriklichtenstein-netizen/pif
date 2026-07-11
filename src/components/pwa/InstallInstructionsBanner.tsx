@@ -3,7 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Download, MoreVertical, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { isAndroid, isIOS, isMobile, isStandalone } from "@/utils/pwa/platform";
+import { isAndroid, isDesktopChromium, isIOS, isMobile, isStandalone } from "@/utils/pwa/platform";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
