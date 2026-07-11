@@ -114,12 +114,18 @@ export function InstallInstructionsBanner() {
             </p>
           )}
 
-          {android && deferredPrompt && (
+          {(android || desktopChromium) && deferredPrompt && (
             <div className="pt-1">
               <Button size="sm" onClick={handleInstall}>
                 {t("interactions.install_banner_install_cta")}
               </Button>
             </div>
+          )}
+
+          {desktopChromium && !deferredPrompt && (
+            <p className="text-muted-foreground">
+              {t("interactions.install_banner_desktop_instructions")}
+            </p>
           )}
         </div>
         <Button
