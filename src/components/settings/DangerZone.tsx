@@ -88,17 +88,21 @@ export function DangerZone() {
             <Input
               value={confirmationText}
               onChange={(e) => setConfirmationText(e.target.value)}
-              placeholder={t('settings.delete_confirmation_placeholder')}
+              placeholder={t('settings.delete_confirmation_phrase')}
               className="border-destructive/50"
             />
           </div>
           
+          {(() => {
+            const expectedPhrase = t('settings.delete_confirmation_phrase');
+            const matches = confirmationText.trim().toLowerCase() === expectedPhrase.toLowerCase();
+            return (
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>{t('common.cancel')}</AlertDialogCancel>
             <Button
               variant="destructive"
               onClick={() => {
-                if (confirmationText === "delete my account") {
+                if (matches) {
                   handleDeleteAccount();
                 } else {
                   toast({
@@ -108,11 +112,13 @@ export function DangerZone() {
                   });
                 }
               }}
-              disabled={loading || confirmationText !== "delete my account"}
+              disabled={loading || !matches}
             >
               {loading ? t('settings.deleting') : t('settings.delete_account')}
             </Button>
           </AlertDialogFooter>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
     </div>

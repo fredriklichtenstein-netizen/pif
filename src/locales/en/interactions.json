@@ -734,6 +734,7 @@
     "delete_account_warning": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "type_to_confirm": "Type \"delete my account\" to confirm:",
     "delete_confirmation_placeholder": "delete my account",
+    "delete_confirmation_phrase": "delete my account",
     "confirmation_mismatch": "Confirmation text doesn't match",
     "confirmation_mismatch_description": "Please type \"delete my account\" to confirm",
     "deleting": "Deleting...",
