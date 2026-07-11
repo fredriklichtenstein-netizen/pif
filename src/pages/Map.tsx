@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
-import { Separator } from "@/components/ui/separator";
+
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { FadeIn } from "@/components/animation/FadeIn";
