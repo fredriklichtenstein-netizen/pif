@@ -24,13 +24,13 @@
   height: 100%;
 }
 
-/* The map now fills the entire viewport (flex-1 inside a
-   min-h-screen-dvh column) and MainNav is a fixed overlay pill at
-   the bottom. Push Mapbox's built-in bottom controls above the
-   floating nav + iOS safe-area so they stay tappable. */
+/* The map container ends flush above the fixed MainNav (Map.tsx wraps
+   the map in <main h-[calc(100vh-73px)]> and MainNav is a sibling
+   below), so Mapbox's built-in bottom controls only need a small
+   internal breathing gap — not a full-nav offset. */
 .map-container .mapboxgl-ctrl-bottom-left,
 .map-container .mapboxgl-ctrl-bottom-right {
-  bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+  bottom: 8px !important;
 }
 
 /* Push Mapbox's built-in top-right control stack (zoom + compass)
