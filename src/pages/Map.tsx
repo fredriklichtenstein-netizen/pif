@@ -83,10 +83,9 @@ export default function Map() {
 
   if (DEMO_MODE && needsToken) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="flex flex-col min-h-screen-dvh bg-gray-50">
         <MainHeader />
-        <Separator />
-        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.map_requires_token')}>
+        <main className="relative flex-1 flex items-center justify-center" role="main" aria-label={t('map.map_requires_token')}>
           <div className="text-center p-6 max-w-md">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="h-8 w-8 text-primary" />
