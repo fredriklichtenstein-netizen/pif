@@ -278,6 +278,8 @@
     "install_banner_ios_share_aria": "Share",
     "install_banner_android_menu_aria": "Browser menu",
     "install_banner_dismiss_aria": "Dismiss install banner",
+    "install_banner_title_desktop": "Install PIF as an app",
+    "install_banner_desktop_instructions": "Click the install icon on the right side of your browser's address bar to install PIF.",
     "offline": "Offline",
     "error_title": "Error",
     "refresh": "Refresh",
