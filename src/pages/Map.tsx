@@ -153,15 +153,15 @@ export default function Map() {
   }
 
   return (
-    <div className="min-h-screen-dvh bg-gray-50">
+    <div className="flex flex-col min-h-screen-dvh bg-gray-50">
       <MainHeader />
-      <Separator />
       <PullToRefresh
         onRefresh={handleRefresh}
         disabled={isLoading || isRefreshing}
         ignoreSelector=".mapboxgl-map"
+        className="flex-1 flex flex-col"
       >
-        <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
+        <main className="relative flex-1" role="main" aria-label={t('map.interactive_map')}>
           <FadeIn className="h-full">
             {/* `inert` blocks pointer + keyboard + focus on every
                 descendant — including MapFilters, the distance slider
