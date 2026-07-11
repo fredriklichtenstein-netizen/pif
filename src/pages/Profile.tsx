@@ -58,7 +58,7 @@ const Profile = () => {
 
   if ((authLoading && !bailOut) || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen-dvh flex items-center justify-center bg-gray-50">
         <span className="text-muted-foreground">{t('profile.loading')}</span>
       </div>
     );
@@ -67,7 +67,7 @@ const Profile = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen-dvh bg-gray-50 flex items-center justify-center">
         <Card className="flex flex-col items-center p-8 gap-4 max-w-md">
           <AlertCircle className="h-12 w-12 text-amber-500" />
           <div className="text-xl font-bold">{t('profile.auth_required')}</div>
@@ -85,7 +85,7 @@ const Profile = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-8 px-2 flex flex-col items-center pb-20">
+      <div className="min-h-screen-dvh bg-gray-50 py-8 px-2 flex flex-col items-center pb-20">
         <div className="w-full max-w-3xl mx-auto">
           <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
             <ProfileBasicInfo

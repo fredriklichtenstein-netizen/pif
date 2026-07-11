@@ -191,3 +191,14 @@
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
+
+@layer utilities {
+  .min-h-screen-dvh {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
+}

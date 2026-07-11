@@ -78,7 +78,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-blue-50">
+    <div className="min-h-screen-dvh bg-gradient-to-br from-green-50 via-background to-blue-50">
       <MainHeader />
       <InstallInstructionsBanner />
       <div className="container max-w-md sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 py-[30px]">

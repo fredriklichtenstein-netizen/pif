@@ -42,7 +42,8 @@ export function MainNav() {
 
   return (
     <nav
-      className="fixed bottom-4 sm:bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-md"
+      className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-md"
+      style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
       aria-label={t('nav.explore_more', 'Navigation')}
     >
       <div className="bg-background/95 backdrop-blur border border-border rounded-full shadow-lg px-2 py-1.5 flex items-center">

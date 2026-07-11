@@ -258,7 +258,7 @@ export default function CreateProfile() {
   // session. Show a clear sign-in card instead of spinning forever.
   if ((bailOut && hasSession === false) || (!prefillLoading && hasSession === false)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen-dvh bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 flex flex-col items-center gap-4 text-center">
             <div className="text-xl font-bold">{t("profile.auth_required")}</div>
@@ -280,7 +280,7 @@ export default function CreateProfile() {
   // whatever defaults we have (Option A: keep the user moving).
   if (prefillLoading && !bailOut) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen-dvh bg-background flex flex-col items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
         <p className="text-muted-foreground">{t("profile.loading")}</p>
       </div>
@@ -288,7 +288,7 @@ export default function CreateProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="min-h-screen-dvh bg-background py-8 px-4">
       <div className="max-w-md mx-auto space-y-6">
         <div className="flex justify-end">
           <LanguageSelector />
