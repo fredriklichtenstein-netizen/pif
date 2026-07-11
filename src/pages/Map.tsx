@@ -69,10 +69,9 @@ export default function Map() {
 
   if (isTokenLoading) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="flex flex-col min-h-screen-dvh bg-gray-50">
         <MainHeader />
-        <Separator />
-        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.loading_map_credentials')}>
+        <main className="relative flex-1 flex items-center justify-center" role="main" aria-label={t('map.loading_map_credentials')}>
           <div className="text-center p-6">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-muted-foreground font-medium">{t('map.loading_map_credentials')}</p>
