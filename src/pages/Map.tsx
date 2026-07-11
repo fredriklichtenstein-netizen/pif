@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
-import { Separator } from "@/components/ui/separator";
+
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFeedPosts } from "@/hooks/useFeedPosts";
 import { FadeIn } from "@/components/animation/FadeIn";
@@ -69,10 +69,9 @@ export default function Map() {
 
   if (isTokenLoading) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="flex flex-col min-h-screen-dvh bg-gray-50">
         <MainHeader />
-        <Separator />
-        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.loading_map_credentials')}>
+        <main className="relative flex-1 flex items-center justify-center" role="main" aria-label={t('map.loading_map_credentials')}>
           <div className="text-center p-6">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-muted-foreground font-medium">{t('map.loading_map_credentials')}</p>
@@ -84,10 +83,9 @@ export default function Map() {
 
   if (DEMO_MODE && needsToken) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="flex flex-col min-h-screen-dvh bg-gray-50">
         <MainHeader />
-        <Separator />
-        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.map_requires_token')}>
+        <main className="relative flex-1 flex items-center justify-center" role="main" aria-label={t('map.map_requires_token')}>
           <div className="text-center p-6 max-w-md">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="h-8 w-8 text-primary" />
@@ -131,10 +129,9 @@ export default function Map() {
 
   if (tokenError || !mapToken) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="flex flex-col min-h-screen-dvh bg-gray-50">
         <MainHeader />
-        <Separator />
-        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.map_unavailable')}>
+        <main className="relative flex-1 flex items-center justify-center" role="main" aria-label={t('map.map_unavailable')}>
           <div className="text-center p-6 max-w-md">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-foreground mb-2">{t('map.map_unavailable')}</h2>
@@ -156,15 +153,15 @@ export default function Map() {
   }
 
   return (
-    <div className="min-h-screen-dvh bg-gray-50">
+    <div className="flex flex-col min-h-screen-dvh bg-gray-50">
       <MainHeader />
-      <Separator />
       <PullToRefresh
         onRefresh={handleRefresh}
         disabled={isLoading || isRefreshing}
         ignoreSelector=".mapboxgl-map"
+        className="flex-1 flex flex-col"
       >
-        <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
+        <main className="relative flex-1" role="main" aria-label={t('map.interactive_map')}>
           <FadeIn className="h-full">
             {/* `inert` blocks pointer + keyboard + focus on every
                 descendant — including MapFilters, the distance slider

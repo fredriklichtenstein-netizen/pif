@@ -1,75 +1,43 @@
-## Lovable implementation plan for approval
+# Top-cutoff follow-up
 
-### Current implementation
+Investigation confirmed there is **no shared parent** adding space. `#root` is `100dvh`, `App.tsx`'s `<main>` has no styling, and `MainHeader` returns `null`. The three symptoms have three different causes; only Map has a real layout bug.
 
-**`src/components/settings/DangerZone.tsx`** (lines ~90 and ~100):
-```tsx
-<Input
-  ...
-  placeholder={t('settings.delete_confirmation_placeholder')}
-/>
-...
-onClick={() => {
-  if (confirmationText === "delete my account") {  // ← hardcoded EN
-    handleDeleteAccount();
-  } else { toast({ ... }); }
-}}
-disabled={loading || confirmationText !== "delete my account"}  // ← hardcoded EN
-```
+## 1. Map — real layout bug (top + bottom gap)
 
-Instructional text uses `t('settings.type_to_confirm')` — but the SV translation itself embeds the English phrase literally:
-- SV: `"Skriv \"delete my account\" för att bekräfta:"`
-- SV placeholder: `"delete my account"`
-- SV mismatch desc: `"Skriv \"delete my account\" för att bekräfta"`
+`src/pages/Map.tsx` reserves `73px` on `<main>` for a header that no longer renders, and mixes `100vh` with `100dvh` — causing a bottom gap (wrapper `bg-gray-50` shows) and, when Safari's URL bar toggles, a top displacement.
 
-So both the copy AND the validation are wrong for SV.
+**Change:**
+- Replace the outer wrapper on all four render branches (loading, needs-token, error, main) with a **flex column** that fills the viewport:
+  - Outer: `flex flex-col min-h-screen-dvh bg-gray-50`
+  - `<main>`: `flex-1 relative` (no more `h-[calc(100vh-73px)]`, no more `100vh`)
+- Remove the four `<Separator />` elements below the null `<MainHeader />` (they are now meaningless 1px lines above the map).
+- Update the stale comment in `src/components/map/MapStyles.css:28` to reflect the new layout.
 
-### Diff
+`MainNav` is `position: fixed`, so it doesn't affect the flex flow — the map fills the full viewport behind it, matching Home/Feed.
 
-**1. `src/locales/sv/interactions.json`** (settings section, keys around line 735–738):
-```diff
-- "type_to_confirm": "Skriv \"delete my account\" för att bekräfta:",
-- "delete_confirmation_placeholder": "delete my account",
-+ "type_to_confirm": "Skriv \"radera mitt konto\" för att bekräfta:",
-+ "delete_confirmation_placeholder": "radera mitt konto",
-+ "delete_confirmation_phrase": "radera mitt konto",
-  "confirmation_mismatch": "...",
-- "confirmation_mismatch_description": "Skriv \"delete my account\" för att bekräfta"
-+ "confirmation_mismatch_description": "Skriv \"radera mitt konto\" för att bekräfta"
-```
+## 2. Home — deepen gradient top stop
 
-**2. `src/locales/en/interactions.json`** (add phrase key; existing strings unchanged):
-```diff
-  "type_to_confirm": "Type \"delete my account\" to confirm:",
-  "delete_confirmation_placeholder": "delete my account",
-+ "delete_confirmation_phrase": "delete my account",
-  "confirmation_mismatch_description": "Please type \"delete my account\" to confirm",
-```
+`src/pages/Home.tsx` outer wrapper:
+- `from-green-50` → `from-green-100` (still on-brand, but the top edge now reads as clearly colored instead of near-white).
+- Keep `via-background to-blue-50` unchanged.
 
-**3. `src/components/settings/DangerZone.tsx`** — compute expected phrase once and use it:
-```diff
-+ const expectedPhrase = t('settings.delete_confirmation_phrase');
-+ const normalized = confirmationText.trim().toLowerCase();
-+ const matches = normalized === expectedPhrase.toLowerCase();
-...
-  <Input
-    value={confirmationText}
-    onChange={(e) => setConfirmationText(e.target.value)}
--   placeholder={t('settings.delete_confirmation_placeholder')}
-+   placeholder={expectedPhrase}
-    className="border-destructive/50"
-  />
-...
-  onClick={() => {
--   if (confirmationText === "delete my account") {
-+   if (matches) {
-      handleDeleteAccount();
-    } else { toast({...}); }
-  }}
-- disabled={loading || confirmationText !== "delete my account"}
-+ disabled={loading || !matches}
-```
+No structural change; this is a one-token swap.
 
-Case-insensitive + trimmed comparison so a stray space or capital letter doesn't block a legitimate delete. Behavior in EN is unchanged; SV now expects and validates against `"radera mitt konto"`.
+## 3. Profile — remove top padding
 
-No other consumers of `delete_confirmation_placeholder` / `type_to_confirm` exist outside `DangerZone.tsx`.
+`src/pages/Profile.tsx` main render branch outer wrapper:
+- `py-8 px-2` → `pt-4 pb-8 px-2` (shrinks the near-white band above the Card from 32px to 16px so the card sits close to the viewport top).
+- Loading and auth-required branches are already `flex items-center justify-center` — leave them.
+
+## Files touched
+
+- `src/pages/Map.tsx` — 4 branches: outer wrapper → `flex flex-col min-h-screen-dvh bg-gray-50`; `<main>` → `flex-1 relative ...`; remove `<Separator />` (4x).
+- `src/components/map/MapStyles.css` — update comment referring to the old calc offset.
+- `src/pages/Home.tsx` — `from-green-50` → `from-green-100`.
+- `src/pages/Profile.tsx` — main branch wrapper `py-8` → `pt-4 pb-8`.
+
+## Out of scope
+
+- `MainHeader` stays as `return null` (confirmed intentional).
+- No changes to `App.tsx`, `#root`, safe-area utilities, or the viewport meta — those are already correct.
+- Other pages still using `min-h-screen` (ShareRedirect, ResetPassword, Privacy, PostEdit, Post, EmailConfirmation, NotFound, AccountSettings) remain untouched per earlier agreement.

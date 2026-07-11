@@ -85,7 +85,7 @@ const Profile = () => {
 
   return (
     <>
-      <div className="min-h-screen-dvh bg-gray-50 py-8 px-2 flex flex-col items-center pb-20">
+      <div className="min-h-screen-dvh bg-gray-50 pt-4 pb-8 px-2 flex flex-col items-center pb-20">
         <div className="w-full max-w-3xl mx-auto">
           <Card className="p-6 mb-6 flex flex-col items-center shadow rounded-xl">
             <ProfileBasicInfo
