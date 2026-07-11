@@ -35,3 +35,20 @@ export function isMobile(): boolean {
   // Fallback: narrow viewport also counts as mobile.
   return typeof window.innerWidth === "number" && window.innerWidth < 768;
 }
+
+/**
+ * True for desktop Chromium-based browsers (Chrome, Edge, Brave, Opera, Arc, etc.)
+ * that support installable PWAs via `beforeinstallprompt` and the address-bar
+ * install icon. Explicitly excludes mobile, Firefox, and Safari.
+ */
+export function isDesktopChromium(): boolean {
+  if (!hasWindow()) return false;
+  if (isMobile()) return false;
+  const ua = window.navigator.userAgent || "";
+  // Firefox: no PWA install support on desktop.
+  if (/Firefox\//i.test(ua)) return false;
+  // Safari desktop (Safari UA but not Chrome/Chromium/Edg).
+  const isChromiumUA = /Chrome\/|Chromium\/|Edg\/|OPR\/|Brave\//i.test(ua);
+  if (!isChromiumUA) return false;
+  return true;
+}
