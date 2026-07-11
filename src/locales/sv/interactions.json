@@ -278,6 +278,8 @@
     "install_banner_ios_share_aria": "Dela",
     "install_banner_android_menu_aria": "Webbläsarmeny",
     "install_banner_dismiss_aria": "Stäng installationsbannern",
+    "install_banner_title_desktop": "Installera PIF som app",
+    "install_banner_desktop_instructions": "Klicka på installationsikonen till höger i webbläsarens adressfält för att installera PIF.",
     "offline": "Offline",
     "error_title": "Fel",
     "refresh": "Uppdatera",
