@@ -242,6 +242,13 @@ export const useMapInitialization = (mapboxToken: string) => {
           }
           
           map.current = newMap;
+          // Defense-in-depth: if the container measured 0 on first paint
+          // (flex resolution timing), force a resize on the next frame
+          // once the layout has definitively settled.
+          requestAnimationFrame(() => {
+            try { newMap.resize(); } catch {}
+          });
+
           
         } catch (controlError) {
           console.error("🚨 [Map Init] Error adding controls:", controlError);
