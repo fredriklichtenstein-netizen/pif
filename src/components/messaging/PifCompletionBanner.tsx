@@ -55,7 +55,7 @@ export function PifCompletionBanner({
     return (
       <div className="border-t bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-800 flex items-center justify-center gap-2">
         <PartyPopper className="h-4 w-4" />
-        {pick("Pifen är genomförd! 🎉", "Önskan är uppfylld! 🎉")}
+        {pick("Piffen är genomförd! 🎉", "Önskan är uppfylld! 🎉")}
       </div>
     );
   }
@@ -85,7 +85,7 @@ export function PifCompletionBanner({
                 "Du har bekräftat att önskan är uppfylld",
               )
             : pick(
-                "Jag har lämnat över pifen ✓",
+                "Jag har lämnat över piffen ✓",
                 "Min önskan är uppfylld ✓",
               )}
         </Button>
@@ -149,7 +149,7 @@ export function PifCompletionBanner({
               "Du har bekräftat att önskan är uppfylld",
             )
           : pick(
-              "Jag har tagit emot pifen ✓",
+              "Jag har tagit emot piffen ✓",
               "Jag har uppfyllt önskan ✓",
             )}
       </Button>
