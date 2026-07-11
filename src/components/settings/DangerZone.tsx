@@ -117,6 +117,8 @@ export function DangerZone() {
               {loading ? t('settings.deleting') : t('settings.delete_account')}
             </Button>
           </AlertDialogFooter>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
     </div>
