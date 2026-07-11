@@ -3,6 +3,17 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { markConfirmationInProgress } from "@/lib/auth/confirmationFlag";
+
+// Detect a Supabase auth confirmation hash on the URL. We check this
+// synchronously on mount BEFORE Supabase has a chance to consume the hash,
+// so bystander tabs can be identified reliably (they won't see the hash).
+function detectConfirmationHash(): boolean {
+  if (typeof window === "undefined") return false;
+  const hash = window.location.hash || "";
+  if (!hash.includes("access_token=")) return false;
+  return /type=(signup|magiclink|invite|recovery|email_change)/.test(hash);
+}
 
 export function useEmailConfirmation() {
   const navigate = useNavigate();
@@ -14,19 +25,29 @@ export function useEmailConfirmation() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const hasRedirectedRef = useRef(false);
+  // Leader-election marker: true if THIS tab observed the confirmation hash
+  // on its own mount. Bystander tabs that receive SIGNED_IN via cross-tab
+  // localStorage sync will have this false and must not navigate.
+  const hasHashOnMountRef = useRef<boolean>(detectConfirmationHash());
+
+  // Set the shared confirmation flag ASAP so OnboardingGate in other tabs
+  // suppresses its redirect for the next ~5s.
+  if (hasHashOnMountRef.current) {
+    markConfirmationInProgress();
+  }
 
   useEffect(() => {
-    // If there's a hash with access_token, let Supabase auto-process it.
-    // We rely on onAuthStateChange below to handle the redirect.
-
     const getEmailFromParams = () => {
       const email = searchParams.get('email');
       if (email) setUserEmail(email);
     };
 
     const checkAndRedirect = async (userId: string) => {
-      // Guard: both getSession() and onAuthStateChange can fire for the same
-      // confirmation event. Only the first one may navigate.
+      // Only the leader tab (the one that saw the hash) may navigate.
+      // Bystander tabs receive SIGNED_IN via cross-tab sync and must not
+      // force the user into onboarding — OnboardingGate + this guard together
+      // ensure the confirming tab owns the onboarding flow.
+      if (!hasHashOnMountRef.current) return;
       if (hasRedirectedRef.current) return;
       hasRedirectedRef.current = true;
 
@@ -78,7 +99,7 @@ export function useEmailConfirmation() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, searchParams, toast]);
+  }, [navigate, searchParams, toast, t]);
 
   const handleResendConfirmation = async () => {
     if (!userEmail) {
