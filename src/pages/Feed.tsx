@@ -20,7 +20,7 @@ export default function Feed() {
   }, [announce, t]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen-dvh bg-background">
       {/* Sticky logo header — white halo follows the logo's own shape */}
       <header className="sticky top-0 z-40 w-full flex justify-center pt-2 pb-2 pointer-events-none bg-transparent">
         <img
