@@ -3,7 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Download, MoreVertical, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import { isAndroid, isIOS, isMobile, isStandalone } from "@/utils/pwa/platform";
+import { isAndroid, isDesktopChromium, isIOS, isMobile, isStandalone } from "@/utils/pwa/platform";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -36,16 +36,20 @@ export function InstallInstructionsBanner() {
     return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
   }, []);
 
-  // Only visible for authenticated users on mobile, not already installed, not dismissed.
+  // Only visible for authenticated users, not already installed, not dismissed.
   if (!user) return null;
   if (dismissed) return null;
   if (isStandalone()) return null;
-  if (!isMobile()) return null;
 
   const ios = isIOS();
   const android = isAndroid();
-  // If it's neither iOS nor Android but still mobile (rare), skip — no reliable copy.
-  if (!ios && !android) return null;
+  const mobile = isMobile();
+  const desktopChromium = !mobile && isDesktopChromium();
+
+  // Mobile that isn't iOS or Android (rare): skip — no reliable copy.
+  if (mobile && !ios && !android) return null;
+  // Desktop non-Chromium (Firefox, Safari): no install support — hide.
+  if (!mobile && !desktopChromium) return null;
 
   const handleDismiss = () => {
     try {
@@ -71,12 +75,12 @@ export function InstallInstructionsBanner() {
     <div
       className="mx-2 mb-3 rounded-lg border border-primary/20 bg-primary/10 p-3 text-sm text-foreground"
       role="region"
-      aria-label={t("interactions.install_banner_title")}
+      aria-label={t(desktopChromium ? "interactions.install_banner_title_desktop" : "interactions.install_banner_title")}
     >
       <div className="flex items-start gap-3">
         <Download className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="font-medium">{t("interactions.install_banner_title")}</p>
+          <p className="font-medium">{t(desktopChromium ? "interactions.install_banner_title_desktop" : "interactions.install_banner_title")}</p>
 
           {ios && (
             <p className="text-muted-foreground">
@@ -110,12 +114,18 @@ export function InstallInstructionsBanner() {
             </p>
           )}
 
-          {android && deferredPrompt && (
+          {(android || desktopChromium) && deferredPrompt && (
             <div className="pt-1">
               <Button size="sm" onClick={handleInstall}>
                 {t("interactions.install_banner_install_cta")}
               </Button>
             </div>
+          )}
+
+          {desktopChromium && !deferredPrompt && (
+            <p className="text-muted-foreground">
+              {t("interactions.install_banner_desktop_instructions")}
+            </p>
           )}
         </div>
         <Button
