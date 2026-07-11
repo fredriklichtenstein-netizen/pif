@@ -129,10 +129,9 @@ export default function Map() {
 
   if (tokenError || !mapToken) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="flex flex-col min-h-screen-dvh bg-gray-50">
         <MainHeader />
-        <Separator />
-        <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.map_unavailable')}>
+        <main className="relative flex-1 flex items-center justify-center" role="main" aria-label={t('map.map_unavailable')}>
           <div className="text-center p-6 max-w-md">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-foreground mb-2">{t('map.map_unavailable')}</h2>
