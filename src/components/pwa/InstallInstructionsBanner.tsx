@@ -75,12 +75,12 @@ export function InstallInstructionsBanner() {
     <div
       className="mx-2 mb-3 rounded-lg border border-primary/20 bg-primary/10 p-3 text-sm text-foreground"
       role="region"
-      aria-label={t("interactions.install_banner_title")}
+      aria-label={t(desktopChromium ? "interactions.install_banner_title_desktop" : "interactions.install_banner_title")}
     >
       <div className="flex items-start gap-3">
         <Download className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="font-medium">{t("interactions.install_banner_title")}</p>
+          <p className="font-medium">{t(desktopChromium ? "interactions.install_banner_title_desktop" : "interactions.install_banner_title")}</p>
 
           {ios && (
             <p className="text-muted-foreground">
