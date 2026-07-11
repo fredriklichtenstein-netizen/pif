@@ -36,16 +36,20 @@ export function InstallInstructionsBanner() {
     return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
   }, []);
 
-  // Only visible for authenticated users on mobile, not already installed, not dismissed.
+  // Only visible for authenticated users, not already installed, not dismissed.
   if (!user) return null;
   if (dismissed) return null;
   if (isStandalone()) return null;
-  if (!isMobile()) return null;
 
   const ios = isIOS();
   const android = isAndroid();
-  // If it's neither iOS nor Android but still mobile (rare), skip — no reliable copy.
-  if (!ios && !android) return null;
+  const mobile = isMobile();
+  const desktopChromium = !mobile && isDesktopChromium();
+
+  // Mobile that isn't iOS or Android (rare): skip — no reliable copy.
+  if (mobile && !ios && !android) return null;
+  // Desktop non-Chromium (Firefox, Safari): no install support — hide.
+  if (!mobile && !desktopChromium) return null;
 
   const handleDismiss = () => {
     try {
