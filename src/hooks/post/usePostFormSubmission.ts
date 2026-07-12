@@ -164,6 +164,15 @@ export function usePostFormSubmission(initialData?: any) {
       clearPostsCache();
       await queryClient.invalidateQueries({ queryKey: ['posts'] });
 
+      // Fire-and-forget: prewarm Hado's OG prerender cache so the very first
+      // share on Facebook/etc. gets a rich preview instead of the bare domain
+      // fallback. Not awaited — must not block the publish UX.
+      if (savedItemId != null) {
+        supabase.functions
+          .invoke('prewarm-og', { body: { itemId: String(savedItemId) } })
+          .catch(() => { /* best-effort, silent */ });
+      }
+
       toast({
         title: initialData?.id ? t('post.pif_updated') : 
                formData.item_type === 'request' ? t('post.request_created') : t('post.pif_created'),
