@@ -133,15 +133,21 @@ export function usePostFormSubmission(initialData?: any) {
         phone: formData.phone?.trim() || null,
       } as any;
       let result;
+      let savedItemId: string | number | null = initialData?.id ?? null;
       if (initialData?.id) {
         result = await supabase
           .from("items")
           .update(insertData)
           .eq("id", initialData.id);
       } else {
-        result = await supabase
-          .from("items")
-          .insert([insertData]);
+        result = await (supabase
+          .from("items") as any)
+          .insert([insertData])
+          .select("id")
+          .single();
+        if (!result.error && result.data?.id != null) {
+          savedItemId = result.data.id;
+        }
       }
       if (result.error) {
         console.error("Supabase error details:", {
