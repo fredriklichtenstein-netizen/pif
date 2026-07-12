@@ -69,7 +69,7 @@ export default function Map() {
 
   if (isTokenLoading) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="min-h-screen-dvh bg-background">
         <MainHeader />
         <Separator />
         <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.loading_map_credentials')}>
@@ -84,7 +84,7 @@ export default function Map() {
 
   if (DEMO_MODE && needsToken) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="min-h-screen-dvh bg-background">
         <MainHeader />
         <Separator />
         <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.map_requires_token')}>
@@ -131,7 +131,7 @@ export default function Map() {
 
   if (tokenError || !mapToken) {
     return (
-      <div className="min-h-screen-dvh bg-gray-50">
+      <div className="min-h-screen-dvh bg-background">
         <MainHeader />
         <Separator />
         <main className="relative h-[calc(100vh-73px)] flex items-center justify-center" role="main" aria-label={t('map.map_unavailable')}>
@@ -156,7 +156,7 @@ export default function Map() {
   }
 
   return (
-    <div className="min-h-screen-dvh bg-gray-50">
+    <div className="min-h-screen-dvh bg-background">
       <MainHeader />
       <Separator />
       <PullToRefresh
