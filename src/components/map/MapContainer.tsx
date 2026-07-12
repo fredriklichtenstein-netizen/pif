@@ -224,8 +224,10 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
         <>
           {/* Quick type pills + Filtrera trigger — all in a single
               top-left group so the top-right stays free for Mapbox's
-              NavigationControl (zoom / compass). */}
-          <div className="absolute top-4 left-4 right-4 z-20 flex items-center gap-2 pointer-events-none">
+              NavigationControl (zoom / compass). The outer wrapper now
+              starts at the viewport top and uses a safe-area-aware top
+              padding so it fills the notch/status-bar band on iPhones. */}
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-start gap-2 pointer-events-none bg-background pt-[max(1rem,env(safe-area-inset-top))] pb-3 px-4">
             <div className="pointer-events-auto flex items-center gap-1 bg-background rounded-lg shadow-md p-1">
               <Button
                 variant="ghost"

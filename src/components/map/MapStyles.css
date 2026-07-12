@@ -34,11 +34,12 @@
 }
 
 /* Push Mapbox's built-in top-right control stack (zoom + compass)
-   below the absolute-positioned filter row (top-4 + ~48px pills
-   ≈ 64px). Applied on all viewports — desktop was also partially
-   covered by the Filtrera trigger. */
+   below the absolute-positioned filter row. The filter strip now
+   starts at the viewport top and adds env(safe-area-inset-top), so
+   the control offset must also scale with the safe area. We keep the
+   old 68px as a minimum fallback for notchless devices. */
 .map-container .mapboxgl-ctrl-top-right {
-  top: 68px !important;
+  top: max(68px, calc(env(safe-area-inset-top) + 48px)) !important;
 }
 
 /* Loading state for markers */

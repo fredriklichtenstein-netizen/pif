@@ -139,7 +139,7 @@ export function MapFiltersSheet({
       </SheetTrigger>
       <SheetContent
         side="bottom"
-        className="max-h-[85vh] overflow-y-auto rounded-t-2xl z-[70]"
+        className="max-h-[85vh] overflow-y-auto rounded-t-2xl z-[70] pb-safe"
       >
         <SheetHeader>
           <SheetTitle>
