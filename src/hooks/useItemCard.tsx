@@ -29,7 +29,8 @@ export const useItemCard = (itemId: string) => {
     handleCommentToggle,
     fetchItemComments,
     setCommentsCount,
-    refreshComments
+    refreshComments,
+    hasCommented
   } = useItemCardComments(itemId);
 
   // Get interactions functionality
@@ -83,6 +84,7 @@ export const useItemCard = (itemId: string) => {
     commentsCount,
     commentsLoading,
     commentsError,
+    hasCommented,
     // Interactions
     isLiked,
     likesCount,

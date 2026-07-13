@@ -1,10 +1,17 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useComments } from "./useComments";
 import { Comment } from "@/types/comment";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
+import { useMyCommentedStore } from "@/stores/myCommentedStore";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { DEMO_MODE } from "@/config/demoMode";
 
 export const useItemComments = (itemId: string) => {
+  const { user } = useGlobalAuth();
+  const userId = user?.id;
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -23,6 +30,64 @@ export const useItemComments = (itemId: string) => {
   const commentsCount = commentsFetched
     ? Math.max(comments.length, initialCount ?? 0)
     : (initialCount ?? comments.length);
+
+  // Eager "have I commented" state — mirrors useLikes/useInterests so the
+  // button's active state is correct on mount instead of only becoming
+  // known after the full comment thread has been lazily fetched (which
+  // previously only happened once the user opened the comments section).
+  const myCommentedRealtime = useMyCommentedStore((s) => s.byItem[String(itemId)]);
+  const setMyCommented = useMyCommentedStore((s) => s.set);
+  const [hasCommented, setHasCommented] = useState(
+    typeof myCommentedRealtime === "boolean" ? myCommentedRealtime : false
+  );
+
+  useEffect(() => {
+    if (typeof myCommentedRealtime === "boolean") setHasCommented(myCommentedRealtime);
+  }, [myCommentedRealtime]);
+
+  // Per-card fallback: only needed if the bulk store hasn't seen this item
+  // yet (e.g. opened directly via a permalink, outside the feed's prefetch).
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (typeof myCommentedRealtime === "boolean") return;
+    if (!userId || !itemId) return;
+    if (isAuthRequestCircuitOpen()) return;
+    const numericId = parseInt(itemId, 10);
+    if (isNaN(numericId)) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("comments")
+          .select("id")
+          .eq("item_id", numericId)
+          .eq("user_id", userId)
+          .limit(1)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) {
+          maybeRecoverFromAuthError(error, "useItemComments hasCommented fetch");
+          return;
+        }
+        setHasCommented(!!data);
+        setMyCommented(itemId, !!data);
+      } catch (err) {
+        if (!cancelled) maybeRecoverFromAuthError(err, "useItemComments hasCommented fetch");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [itemId, userId, myCommentedRealtime, setMyCommented]);
+
+  // Once the full thread has actually been fetched locally, reconcile from
+  // ground truth — covers deletions and cross-checks the eager signal.
+  useEffect(() => {
+    if (!commentsFetched || !userId) return;
+    const actuallyCommented = comments.some((c) => c.author?.id === userId);
+    setHasCommented(actuallyCommented);
+    setMyCommented(itemId, actuallyCommented);
+  }, [commentsFetched, comments, userId, itemId, setMyCommented]);
 
   const fetchItemComments = useCallback(async () => {
     if (!itemId) return;
@@ -69,6 +134,7 @@ export const useItemComments = (itemId: string) => {
     setComments,
     handleCommentToggle,
     fetchItemComments,
-    setCommentsCount
+    setCommentsCount,
+    hasCommented
   };
 };

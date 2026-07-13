@@ -28,8 +28,10 @@ import { useFeedFiltersStore } from '@/stores/feedFiltersStore';
 import { applyPostFilters } from '@/utils/postFilters';
 import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
 import { useMyLikedIds } from '@/hooks/useMyLikedIds';
+import { useMyCommentedIds } from '@/hooks/useMyCommentedIds';
 import { useMyInterestStore } from '@/stores/myInterestStore';
 import { useMyLikedStore } from '@/stores/myLikedStore';
+import { useMyCommentedStore } from '@/stores/myCommentedStore';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
@@ -134,6 +136,7 @@ function OptimizedFeedBody({
 
   const { ids: myInterestedIds, isLoaded: interestedIdsLoaded } = useMyInterestedIds();
   const { ids: myLikedIds, isLoaded: likedIdsLoaded } = useMyLikedIds();
+  const { ids: myCommentedIds, isLoaded: commentedIdsLoaded } = useMyCommentedIds();
   const [hydratedInteractionKey, setHydratedInteractionKey] = useState('');
 
   const fullyFilteredPosts = useMemo(() => {
@@ -179,7 +182,7 @@ function OptimizedFeedBody({
   );
 
   useEffect(() => {
-    if (DEMO_MODE || isLoading || !likedIdsLoaded || !interestedIdsLoaded) return;
+    if (DEMO_MODE || isLoading || !likedIdsLoaded || !interestedIdsLoaded || !commentedIdsLoaded) return;
 
     const visibleIds = fullyFilteredPosts.map((post) => String(post.id));
     useMyLikedStore.getState().setMany(
@@ -188,14 +191,19 @@ function OptimizedFeedBody({
     useMyInterestStore.getState().setMany(
       visibleIds.map((itemId) => ({ itemId, value: myInterestedIds.has(itemId) })),
     );
+    useMyCommentedStore.getState().setMany(
+      visibleIds.map((itemId) => ({ itemId, value: myCommentedIds.has(itemId) })),
+    );
     setHydratedInteractionKey(visiblePostIdsKey);
   }, [
     fullyFilteredPosts,
     interestedIdsLoaded,
     isLoading,
     likedIdsLoaded,
+    commentedIdsLoaded,
     myInterestedIds,
     myLikedIds,
+    myCommentedIds,
     visiblePostIdsKey,
   ]);
 

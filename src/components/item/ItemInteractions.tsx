@@ -17,6 +17,7 @@ export function ItemInteractions({
   itemType,
   itemTitle,
   commentsCount = 0,
+  hasCommented,
   likesCount = 0,
   interestsCount = 0,
   likers = [],
@@ -40,8 +41,11 @@ export function ItemInteractions({
   const { user } = useGlobalAuth();
   const currentUserId = user?.id || "";
   const { handleShare } = useItemSharing(String(id));
-  // Check if current user has commented
-  const userHasCommented = hasUserCommented(commenters, currentUserId);
+  // Prefer the eagerly-known signal (seeded from myCommentedStore on mount);
+  // only fall back to deriving from `commenters` for callers that haven't
+  // been updated to pass it, since `commenters` itself is only populated
+  // once the full comment thread has been fetched.
+  const userHasCommented = hasCommented ?? hasUserCommented(commenters, currentUserId);
 
   // Calculate actual counts in case likers array has more precise data
   const actualLikeCount = likers.length || likesCount;

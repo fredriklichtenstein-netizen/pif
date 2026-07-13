@@ -49,6 +49,8 @@ export interface ItemInteractionsProps {
   /** Wish title — surfaced inside the Grant Wish dialog as context. */
   itemTitle?: string;
   commentsCount?: number;
+  /** Eagerly-known "has the current user commented" signal — preferred over deriving from `commenters`. */
+  hasCommented?: boolean;
   likesCount?: number;
   interestsCount?: number;
   likers?: any[];

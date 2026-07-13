@@ -68,6 +68,8 @@ export function ItemCardContainer({
     showComments,
     comments,
     commentsCount,
+    hasCommented,
+    commenters,
     showInterest,
     interestsCount,
     likers,
@@ -112,6 +114,8 @@ export function ItemCardContainer({
         isOwner={isOwner}
         showComments={showComments}
         commentsCount={commentsCount}
+        hasCommented={hasCommented}
+        commenters={commenters}
         likesCount={likesCount}
         interestsCount={interestsCount}
         likers={likers}

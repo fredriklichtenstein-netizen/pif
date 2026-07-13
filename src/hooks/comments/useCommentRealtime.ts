@@ -5,10 +5,26 @@ import { formatCommentFromDB } from '@/hooks/item/utils/commentFormatters';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
 import {
   subscribeItemTable,
   subscribeItemStatus,
 } from '@/services/realtime/itemRealtimeManager';
+
+// Realtime postgres_changes payloads only ever carry raw table columns —
+// never a joined `profiles` relation — so any comment arriving via realtime
+// needs its author profile fetched separately, otherwise it renders as
+// "Anonymous" even though the commenter has a real name/avatar (which a
+// plain REST fetch, with its join, resolves correctly).
+const withProfile = async (row: any) => {
+  if (row.profiles) return row;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, avatar_url')
+    .eq('id', row.user_id)
+    .maybeSingle();
+  return { ...row, profiles: profile ?? null };
+};
 
 const POLL_INTERVAL_MIN_MS = 15000;
 const POLL_INTERVAL_MAX_MS = 120000;
@@ -77,12 +93,13 @@ export const useCommentRealtime = (
   const userIdRef = useRef(user?.id);
   userIdRef.current = user?.id;
 
-  const handleCommentInsert = useCallback((newComment: any) => {
+  const handleCommentInsert = useCallback(async (newComment: any) => {
+    const myId = userIdRef.current;
+    const commentWithProfile = await withProfile(newComment);
     const list = commentsRef.current;
     const setList = setCommentsRef.current;
-    const myId = userIdRef.current;
-    const formattedComment = formatCommentFromDB(newComment, newComment.user_id === myId);
-    const parentId = newComment.parent_id ? String(newComment.parent_id) : null;
+    const formattedComment = formatCommentFromDB(commentWithProfile, commentWithProfile.user_id === myId);
+    const parentId = commentWithProfile.parent_id ? String(commentWithProfile.parent_id) : null;
 
     if (parentId) {
       const exists = list.some(c => c.replies?.some(r => r.id === formattedComment.id));
@@ -93,7 +110,7 @@ export const useCommentRealtime = (
           : c
       ));
 
-      if (newComment.user_id !== myId) {
+      if (commentWithProfile.user_id !== myId) {
         toast({
           title: t('interactions.new_comment'),
           description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
@@ -105,7 +122,7 @@ export const useCommentRealtime = (
     if (!list.some(c => c.id === formattedComment.id)) {
       setList([...list, formattedComment]);
 
-      if (newComment.user_id !== myId) {
+      if (commentWithProfile.user_id !== myId) {
         toast({
           title: t('interactions.new_comment'),
           description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
@@ -114,12 +131,13 @@ export const useCommentRealtime = (
     }
   }, [toast, t]);
 
-  const handleCommentUpdate = useCallback((updatedComment: any) => {
+  const handleCommentUpdate = useCallback(async (updatedComment: any) => {
+    const myId = userIdRef.current;
+    const commentWithProfile = await withProfile(updatedComment);
     const list = commentsRef.current;
     const setList = setCommentsRef.current;
-    const myId = userIdRef.current;
-    const formatted = formatCommentFromDB(updatedComment, updatedComment.user_id === myId);
-    const targetId = String(updatedComment.id);
+    const formatted = formatCommentFromDB(commentWithProfile, commentWithProfile.user_id === myId);
+    const targetId = String(commentWithProfile.id);
     setList(list.map(c => {
       if (c.id === targetId) return { ...formatted, replies: c.replies, likes: c.likes, isLiked: c.isLiked };
       if (c.replies?.some(r => r.id === targetId)) {

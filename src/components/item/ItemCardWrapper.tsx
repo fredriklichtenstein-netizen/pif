@@ -46,6 +46,7 @@ export function ItemCardWrapper({
     commentsCount,
     commentsLoading,
     commentsError,
+    hasCommented,
     interactionsLoading,
     showInterest,
     interestsCount,
@@ -138,6 +139,7 @@ export function ItemCardWrapper({
         isBookmarked={isBookmarked}
         showInterest={showInterest}
         commentsCount={commentsCount}
+        hasCommented={hasCommented}
         likesCount={likesCount}
         interestsCount={interestsCount}
         likers={likers}

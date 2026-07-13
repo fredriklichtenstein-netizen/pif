@@ -16,7 +16,8 @@ export const useItemCardComments = (itemId: string) => {
     setComments,
     handleCommentToggle,
     fetchItemComments,
-    setCommentsCount
+    setCommentsCount,
+    hasCommented
   } = useItemComments(itemId);
 
   // Method to refresh comments data when needed
@@ -45,6 +46,7 @@ export const useItemCardComments = (itemId: string) => {
     handleCommentToggle,
     fetchItemComments,
     setCommentsCount,
-    refreshComments
+    refreshComments,
+    hasCommented
   };
 };

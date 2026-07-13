@@ -35,6 +35,7 @@ export function ItemCardWrapperContent({
   isBookmarked,
   showInterest,
   commentsCount,
+  hasCommented,
   likesCount,
   interestsCount,
   likers,
@@ -108,8 +109,9 @@ export function ItemCardWrapperContent({
           showInterest={showInterest} 
           itemType={item_type}
           itemTitle={title}
-          commentsCount={commentsCount} 
-          likesCount={likesCount} 
+          commentsCount={commentsCount}
+          hasCommented={hasCommented}
+          likesCount={likesCount}
           interestsCount={interestsCount} 
           likers={likers} 
           interestedUsers={interestedUsers} 

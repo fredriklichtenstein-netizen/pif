@@ -11,6 +11,8 @@ interface ItemCardFooterProps {
   isOwner: boolean;
   showComments: boolean;
   commentsCount: number;
+  hasCommented?: boolean;
+  commenters?: User[];
   likesCount: number;
   interestsCount: number;
   likers: User[];
@@ -32,6 +34,8 @@ export function ItemCardFooter({
   isOwner,
   showComments,
   commentsCount,
+  hasCommented = false,
+  commenters = [],
   likesCount,
   interestsCount,
   likers,
@@ -55,6 +59,7 @@ export function ItemCardFooter({
           isOwner={isOwner}
           showComments={showComments}
           commentsCount={commentsCount}
+          hasCommented={hasCommented}
           likesCount={likesCount}
           interestsCount={interestsCount}
           likers={likers}
@@ -76,7 +81,7 @@ export function ItemCardFooter({
           getInterestedUsers={() => {}}
           setComments={() => {}}
           comments={[]}
-          commenters={[]}
+          commenters={commenters}
           commentsLoading={false}
           commentsError={null}
           interactionsLoading={false}

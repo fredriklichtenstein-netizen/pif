@@ -20,6 +20,7 @@ interface ItemCardActionsProps {
   itemType?: ItemType;
   itemTitle?: string;
   commentsCount: number;
+  hasCommented?: boolean;
   likesCount: number;
   interestsCount: number;
   likers: User[];
@@ -56,6 +57,7 @@ export function ItemCardActions({
   itemType,
   itemTitle,
   commentsCount,
+  hasCommented,
   likesCount,
   interestsCount,
   likers,
@@ -96,6 +98,7 @@ export function ItemCardActions({
         itemType={itemType}
         itemTitle={itemTitle}
         commentsCount={commentsCount}
+        hasCommented={hasCommented}
         likesCount={likesCount}
         interestsCount={interestsCount}
         likers={likers}
