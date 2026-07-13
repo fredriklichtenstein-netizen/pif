@@ -9,6 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { DEMO_MODE } from "@/config/demoMode";
 
+// `comments` is a nested tree — top-level rows with replies attached under
+// `.replies` — so `comments.length` alone silently excludes every reply.
+// Both the visible counter and the "have I commented" check need to count
+// (or search) the full tree, not just its top-level entries.
+const countAllComments = (list: Comment[]): number =>
+  list.reduce((sum, c) => sum + 1 + (c.replies?.length ?? 0), 0);
+
+const hasAuthor = (list: Comment[], userId: string): boolean =>
+  list.some((c) => c.author?.id === userId || c.replies?.some((r) => r.author?.id === userId));
+
 export const useItemComments = (itemId: string) => {
   const { user } = useGlobalAuth();
   const userId = user?.id;
@@ -28,8 +38,8 @@ export const useItemComments = (itemId: string) => {
     (s) => s.counts[String(itemId)]?.commentsCount
   );
   const commentsCount = commentsFetched
-    ? Math.max(comments.length, initialCount ?? 0)
-    : (initialCount ?? comments.length);
+    ? Math.max(countAllComments(comments), initialCount ?? 0)
+    : (initialCount ?? countAllComments(comments));
 
   // Eager "have I commented" state — mirrors useLikes/useInterests so the
   // button's active state is correct on mount instead of only becoming
@@ -84,7 +94,7 @@ export const useItemComments = (itemId: string) => {
   // ground truth — covers deletions and cross-checks the eager signal.
   useEffect(() => {
     if (!commentsFetched || !userId) return;
-    const actuallyCommented = comments.some((c) => c.author?.id === userId);
+    const actuallyCommented = hasAuthor(comments, userId);
     setHasCommented(actuallyCommented);
     setMyCommented(itemId, actuallyCommented);
   }, [commentsFetched, comments, userId, itemId, setMyCommented]);
@@ -100,9 +110,11 @@ export const useItemComments = (itemId: string) => {
       // Replace local state entirely so count stays in sync
       setComments(list);
       setCommentsFetched(true);
-      // Sync the bulk store so the feed counter reflects the latest count
+      // Sync the bulk store so the feed counter reflects the latest count.
+      // Must count replies too — `list` is a nested tree, and list.length
+      // alone would silently drop every reply from the shared counter.
       useInitialCountsStore.getState().setBulkCounts([
-        { itemId: itemId, commentsCount: list.length },
+        { itemId: itemId, commentsCount: countAllComments(list) },
       ]);
     } catch (error) {
       console.error("Error fetching comments:", error);

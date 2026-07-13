@@ -147,24 +147,27 @@ export const useCommentCreate = (
 
       if (data) {
         const newComment = formatCommentFromDB(data as any, true);
+        let added = false;
 
         if (parentId) {
-          setComments(comments.map(c =>
-            c.id === parentId
-              ? { ...c, replies: c.replies.some(r => r.id === newComment.id) ? c.replies : [...c.replies, newComment] }
-              : c
-          ));
-        } else {
-          const updatedComments = comments.some(c => c.id === newComment.id)
-            ? comments
-            : [...comments, newComment];
-          setComments(updatedComments);
-          // Bump global counter for top-level only (matches feed counter semantics).
+          setComments(comments.map(c => {
+            if (c.id !== parentId) return c;
+            if (c.replies.some(r => r.id === newComment.id)) return c;
+            added = true;
+            return { ...c, replies: [...c.replies, newComment] };
+          }));
+        } else if (!comments.some(c => c.id === newComment.id)) {
+          added = true;
+          setComments([...comments, newComment]);
+        }
+
+        // Bump the shared counter for both top-level comments and replies —
+        // the feed counter counts the whole thread, not just top-level
+        // entries (see countAllComments in useItemComments.tsx).
+        if (added) {
           const store = useInitialCountsStore.getState();
           const prev = store.counts[String(itemId)]?.commentsCount ?? comments.length;
-          store.setBulkCounts([
-            { itemId, commentsCount: Math.max(prev + 1, updatedComments.length) },
-          ]);
+          store.setBulkCounts([{ itemId, commentsCount: prev + 1 }]);
         }
         return newComment;
       }
