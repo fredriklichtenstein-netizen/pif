@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { UserPopoverContent } from './UserPopoverContent';
 import { PaginatedUserList } from './PaginatedUserList';
 import { InterestSelectionList } from '../interest/InterestSelectionList';
+import { useIgnoreToastOutsideClicks } from '@/hooks/useIgnoreToastOutsideClicks';
 import type { User } from '@/hooks/item/useItemInteractions';
 import type { FetchPage } from '@/services/interactions/fetchPaginatedUsers';
 
@@ -57,7 +58,8 @@ export function CounterButton({
   itemType,
 }: CounterButtonProps) {
   const { t } = useTranslation();
-  
+  const ignoreToastOutsideClicks = useIgnoreToastOutsideClicks();
+
   if (!isInteractive) {
     return (
       <span 
@@ -116,6 +118,8 @@ export function CounterButton({
       <PopoverContent
         className={useInterestList ? "w-80 sm:w-96 p-2" : "w-64 p-2"}
         onClick={(e) => e.stopPropagation()}
+        onPointerDownOutside={ignoreToastOutsideClicks}
+        onInteractOutside={ignoreToastOutsideClicks}
       >
         {useInterestList ? (
           <InterestSelectionList
