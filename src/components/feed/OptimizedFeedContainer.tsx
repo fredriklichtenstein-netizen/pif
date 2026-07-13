@@ -29,6 +29,7 @@ import { applyPostFilters } from '@/utils/postFilters';
 import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
 import { useMyLikedIds } from '@/hooks/useMyLikedIds';
 import { useMyCommentedIds } from '@/hooks/useMyCommentedIds';
+import { useFeedTypeCounts } from '@/hooks/feed/useFeedTypeCounts';
 import { useMyInterestStore } from '@/stores/myInterestStore';
 import { useMyLikedStore } from '@/stores/myLikedStore';
 import { useMyCommentedStore } from '@/stores/myCommentedStore';
@@ -106,6 +107,13 @@ function OptimizedFeedBody({
 }: OptimizedFeedBodyProps) {
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
     useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
+
+  // True all/pifs/wishes counts, independent of how many pages have been
+  // paginated in locally — see useFeedTypeCounts.
+  const { counts: feedTypeCounts } = useFeedTypeCounts(
+    effectiveIncludeArchived,
+    filteredUserId ?? undefined,
+  );
 
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
@@ -259,6 +267,7 @@ function OptimizedFeedBody({
     <div className="flex items-center gap-2 flex-wrap">
       <FeedFiltersPanel
         posts={filteredPosts}
+        typeCounts={feedTypeCounts}
         selectedDistance={selectedDistance}
         onDistanceChange={setSelectedDistance}
         userLocation={userLocation}

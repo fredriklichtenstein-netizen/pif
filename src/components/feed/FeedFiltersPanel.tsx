@@ -19,6 +19,8 @@ import type { Post } from "@/types/post";
 
 interface Props {
   posts: Post[];
+  /** True all/pifs/wishes counts (not scoped to distance) — see useFeedTypeCounts. Falls back to counting `posts` if omitted. */
+  typeCounts?: { all: number; pifs: number; wishes: number };
   selectedDistance: number | null;
   onDistanceChange: (d: number | null) => void;
   userLocation: [number, number] | null;
@@ -42,6 +44,7 @@ const DEFAULT_DISTANCE = 3;
 
 export function FeedFiltersPanel({
   posts,
+  typeCounts,
   selectedDistance,
   onDistanceChange,
   userLocation,
@@ -63,11 +66,16 @@ export function FeedFiltersPanel({
   const [open, setOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
 
-  const counts = useMemo(() => {
+  // Prefer the true, server-fetched totals (typeCounts) over counting only
+  // whatever's been paginated in locally — `posts` here can be as few as 6
+  // items on first load. Fall back to the local derivation only if the
+  // caller hasn't wired typeCounts up yet.
+  const derivedCounts = useMemo(() => {
     const pifs = posts.filter((p) => (p.item_type || "offer") === "offer").length;
     const wishes = posts.filter((p) => (p.item_type || "offer") === "request").length;
     return { all: posts.length, pifs, wishes };
   }, [posts]);
+  const counts = typeCounts ?? derivedCounts;
 
   const isOnlyPifs = selectedItemTypes.length === 1 && selectedItemTypes.includes("offer");
   const isOnlyWishes = selectedItemTypes.length === 1 && selectedItemTypes.includes("request");
