@@ -1,4 +1,5 @@
 // App entry point
+// Local push access confirmed
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
