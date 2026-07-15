@@ -28,6 +28,7 @@ export const REST_CATEGORY_KEYS = [
   "music",                 // Musik & instrument
   "furniture",             // Möbler
   "samlarobjekt",          // Samlarobjekt
+  "shoes",                 // Skor
   "skonhet_parfym",        // Skönhet & parfym
   "smycken_accessoarer",   // Smycken & accessoarer
   "games",                 // Spel
@@ -93,7 +94,10 @@ const KIDS_CLOTHING_SIZES = [
   "50", "56", "62", "68", "74", "80", "86", "92", "98", "104",
   "110", "116", "122", "128", "134", "140", "146", "152", "158", "164",
 ];
-const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"];
+// EU sizing is one continuous numeric scale across kids and adults (unlike
+// clothing, which uses different systems for each), so shoes get a single
+// unified range rather than separate kids/adult lists.
+const SHOE_SIZES = Array.from({ length: 46 - 20 + 1 }, (_, i) => String(20 + i));
 
 export function getSizeOptionsForCategory(category?: string | null): {
   sizes: string[];

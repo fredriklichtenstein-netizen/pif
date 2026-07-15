@@ -1,16 +1,9 @@
 
 import { useTranslation } from 'react-i18next';
+import { CATEGORY_KEYS } from '@/utils/categories';
 
 export const useCategoryTranslations = () => {
   const { t } = useTranslation();
-  
-  // All category keys used in the system
-  const CATEGORY_KEYS = [
-    'electronics', 'furniture', 'clothing', 'kids_clothing', 'books', 'sports',
-    'toys', 'home_garden', 'vehicles', 'kitchen', 'garden',
-    'tools', 'household', 'food', 'kids', 'pets', 'bicycle',
-    'health', 'art', 'music', 'games', 'hobby', 'mixed', 'mixed_kids', 'other'
-  ];
 
   // Build category map from keys + legacy English/Swedish names
   const categoryMap: Record<string, string> = {};
