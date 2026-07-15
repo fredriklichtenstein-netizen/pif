@@ -206,6 +206,22 @@
     min-height: 100vh;
     min-height: 100dvh;
   }
+  /* `vh` is computed against the largest possible mobile viewport (chrome
+     collapsed), not the viewport actually visible on first paint (address
+     bar still showing) — so a height/max-height built purely from `vh` can
+     render taller than what's really on screen until the browser
+     recalculates after the first scroll/tap. Until then, touches land on
+     whatever's actually behind the mismatch instead of the intended
+     scrollable container. `dvh` tracks the true current viewport and fixes
+     it immediately; same pattern as min-h-screen-dvh above. */
+  .h-70dvh {
+    height: 70vh;
+    height: 70dvh;
+  }
+  .max-h-70dvh {
+    max-height: 70vh;
+    max-height: 70dvh;
+  }
   .pt-safe { padding-top: env(safe-area-inset-top); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   .pl-safe { padding-left: env(safe-area-inset-left); }

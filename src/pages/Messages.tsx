@@ -296,7 +296,7 @@ const Messages = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div
-                  className={`md:col-span-1 border rounded-lg overflow-hidden md:max-h-[70vh] ${
+                  className={`md:col-span-1 border rounded-lg overflow-hidden md:max-h-70dvh ${
                     activeConversationId ? 'hidden md:block' : ''
                   }`}
                 >
@@ -308,7 +308,7 @@ const Messages = () => {
                   />
                 </div>
                 <div
-                  className={`md:col-span-2 border rounded-lg overflow-hidden flex flex-col h-[70vh] max-h-[70vh] min-h-0 ${
+                  className={`md:col-span-2 border rounded-lg overflow-hidden flex flex-col h-70dvh max-h-70dvh min-h-0 ${
                     activeConversationId ? '' : 'hidden md:flex'
                   }`}
                 >
