@@ -122,6 +122,15 @@
     @apply bg-background text-foreground;
     background-color: hsl(var(--background));
     overflow-x: hidden;
+    /* Without this, an imprecise diagonal trackpad/touch scroll can pick up
+       a stray horizontal delta and trigger the browser's native swipe-to-
+       navigate (back/forward) gesture, which visually nudges the whole page
+       sideways — feels like "the edges aren't fixed" while scrolling the
+       feed. Only in-browser tabs have this gesture; installed/standalone
+       PWA mode doesn't, which is why the issue is browser-only. Scoped to
+       the x-axis only — vertical overscroll drives the feed's swipe-to-
+       refresh gesture (see useSwipeGestures) and must keep working. */
+    overscroll-behavior-x: none;
   }
 }
 
