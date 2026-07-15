@@ -6,6 +6,7 @@ export interface PostFilterCriteria {
   itemTypes: string[];
   onlyInterested: boolean;
   hideOwnPosts?: boolean;
+  onlyOwnPosts?: boolean;
   currentUserId?: string | null;
 }
 
@@ -25,6 +26,7 @@ export function applyPostFilters(
     itemTypes,
     onlyInterested,
     hideOwnPosts,
+    onlyOwnPosts,
     currentUserId,
   } = filters;
   return posts.filter((post) => {
@@ -51,6 +53,9 @@ export function applyPostFilters(
     }
     const ownerId = post.user_id ?? post.postedBy?.id;
     if (hideOwnPosts && currentUserId && ownerId != null && String(ownerId) === String(currentUserId)) {
+      return false;
+    }
+    if (onlyOwnPosts && currentUserId && String(ownerId) !== String(currentUserId)) {
       return false;
     }
     return true;

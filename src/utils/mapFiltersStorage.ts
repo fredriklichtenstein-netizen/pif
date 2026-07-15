@@ -30,6 +30,7 @@ export interface MapFilterData {
   itemTypes: string[];
   onlyInterested: boolean;
   hideOwnPosts: boolean;
+  onlyOwnPosts: boolean;
 }
 
 interface VersionedFilterPayload {
@@ -37,7 +38,7 @@ interface VersionedFilterPayload {
   data: MapFilterData;
 }
 
-const CURRENT_VERSION = 4;
+const CURRENT_VERSION = 5;
 const STORAGE_KEY = "map_filters";
 const LEGACY_KEY_V1 = "map_filters_v1";
 
@@ -47,6 +48,7 @@ const EMPTY: MapFilterData = {
   itemTypes: [],
   onlyInterested: false,
   hideOwnPosts: false,
+  onlyOwnPosts: false,
 };
 
 /**
@@ -59,6 +61,8 @@ const MIGRATIONS: Array<{ to: number; run: (prev: any) => any }> = [
   { to: 3, run: (prev) => ({ ...prev, onlyInterested: false }) },
   // v3 -> v4: introduce `hideOwnPosts` toggle (default off).
   { to: 4, run: (prev) => ({ ...prev, hideOwnPosts: false }) },
+  // v4 -> v5: introduce `onlyOwnPosts` toggle (default off).
+  { to: 5, run: (prev) => ({ ...prev, onlyOwnPosts: false }) },
 ];
 
 const asStringArray = (v: unknown): string[] =>
@@ -70,6 +74,7 @@ const sanitiseData = (raw: any): MapFilterData => ({
   itemTypes: asStringArray(raw?.itemTypes),
   onlyInterested: typeof raw?.onlyInterested === "boolean" ? raw.onlyInterested : false,
   hideOwnPosts: typeof raw?.hideOwnPosts === "boolean" ? raw.hideOwnPosts : false,
+  onlyOwnPosts: typeof raw?.onlyOwnPosts === "boolean" ? raw.onlyOwnPosts : false,
 });
 
 const readRaw = (): { version: number; data: MapFilterData } | null => {
@@ -111,6 +116,7 @@ const dropUnknown = (data: MapFilterData, allowed: AllowedValues): MapFilterData
     : data.itemTypes,
   onlyInterested: data.onlyInterested,
   hideOwnPosts: data.hideOwnPosts,
+  onlyOwnPosts: data.onlyOwnPosts,
 });
 
 /**

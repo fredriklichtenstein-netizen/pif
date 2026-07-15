@@ -105,6 +105,7 @@ function OptimizedFeedBody({
   onIncludeArchivedChange,
   onClearUserFilter,
 }: OptimizedFeedBodyProps) {
+  const { user: currentUser } = useGlobalAuth();
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
     useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
 
@@ -137,9 +138,11 @@ function OptimizedFeedBody({
   const selectedConditions = useFeedFiltersStore((s) => s.conditions);
   const selectedItemTypes = useFeedFiltersStore((s) => s.itemTypes);
   const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
+  const onlyOwnPosts = useFeedFiltersStore((s) => s.onlyOwnPosts);
   const setCategories = useFeedFiltersStore((s) => s.setCategories);
   const setItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
   const setOnlyInterested = useFeedFiltersStore((s) => s.setOnlyInterested);
+  const setOnlyOwnPosts = useFeedFiltersStore((s) => s.setOnlyOwnPosts);
   const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { ids: myInterestedIds, isLoaded: interestedIdsLoaded } = useMyInterestedIds();
@@ -155,6 +158,8 @@ function OptimizedFeedBody({
         conditions: selectedConditions,
         itemTypes: selectedItemTypes,
         onlyInterested: viewingOtherUser ? false : onlyInterested,
+        onlyOwnPosts: viewingOtherUser ? false : onlyOwnPosts,
+        currentUserId: currentUser?.id,
       },
       myInterestedIds,
     );
@@ -177,6 +182,8 @@ function OptimizedFeedBody({
     selectedConditions,
     selectedItemTypes,
     onlyInterested,
+    onlyOwnPosts,
+    currentUser?.id,
     myInterestedIds,
     filteredUserId,
     viewingOtherUser,
@@ -287,6 +294,7 @@ function OptimizedFeedBody({
           setUserLocation(null);
           onIncludeArchivedChange(false);
           setOnlyInterested(false);
+          setOnlyOwnPosts(false);
           onClearUserFilter();
         }}
       />
@@ -303,6 +311,21 @@ function OptimizedFeedBody({
         >
           <span aria-hidden>♥</span>
           {t("feed.my_interest", "Mitt intresse")}
+        </button>
+      )}
+      {isLoggedIn && !viewingOtherUser && (
+        <button
+          type="button"
+          onClick={() => setOnlyOwnPosts(!onlyOwnPosts)}
+          aria-pressed={onlyOwnPosts}
+          className={`h-9 px-3 rounded-md border text-sm font-medium inline-flex items-center gap-1.5 transition-colors ${
+            onlyOwnPosts
+              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+              : "bg-background hover:bg-accent"
+          }`}
+        >
+          <span aria-hidden>📝</span>
+          {t("feed.my_posts", "Mina inlägg")}
         </button>
       )}
     </div>
