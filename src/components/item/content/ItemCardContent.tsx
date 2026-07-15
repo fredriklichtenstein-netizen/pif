@@ -13,9 +13,9 @@ interface ItemCardContentProps {
   measurements?: Record<string, string>;
 }
 
-// Collapsed peek height — generous enough to show several real lines of
-// content (not a token sliver) before the fade kicks in.
-const COLLAPSED_PEEK_HEIGHT_PX = 208;
+// Collapsed peek height — roughly 2-3 clearly-readable lines, then fades
+// out over the next 2-3 lines (see the h-16 fade zone below).
+const COLLAPSED_PEEK_HEIGHT_PX = 128;
 
 export function ItemCardContent({
   description,
@@ -69,7 +69,7 @@ export function ItemCardContent({
               hard cut, signalling there's more content below the toggle. */}
           {!expanded && overflows && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent"
               aria-hidden="true"
             />
           )}
