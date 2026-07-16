@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
+import { COUNTRY_CODES } from "@/utils/countryCodes";
 
 interface PhoneInputProps {
   value: string;
@@ -16,13 +17,6 @@ interface PhoneInputProps {
   required?: boolean;
   disabled?: boolean;
 }
-
-const countryCodes = [
-  { code: "+46", country: "Sweden" },
-  { code: "+45", country: "Denmark" },
-  { code: "+47", country: "Norway" },
-  { code: "+358", country: "Finland" },
-];
 
 export function PhoneInput({ value, countryCode, onPhoneChange, required, disabled }: PhoneInputProps) {
   const { t } = useTranslation();
@@ -42,11 +36,11 @@ export function PhoneInput({ value, countryCode, onPhoneChange, required, disabl
         required={required}
         disabled={disabled}
       >
-        <SelectTrigger className="w-[140px]">
+        <SelectTrigger className="w-[180px]">
           <SelectValue placeholder={t('interactions.country_code')} />
         </SelectTrigger>
         <SelectContent>
-          {countryCodes.map((country) => (
+          {COUNTRY_CODES.map((country) => (
             <SelectItem key={country.code} value={country.code}>
               {country.code} ({country.country})
             </SelectItem>

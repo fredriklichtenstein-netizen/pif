@@ -106,7 +106,7 @@ function ProfileEdit() {
       if (!tokenData?.token) return null;
       const encoded = encodeURIComponent(address);
       const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${tokenData.token}&country=SE&limit=1`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${tokenData.token}&limit=1`
       );
       const json = await res.json();
       if (json.features?.length > 0) {

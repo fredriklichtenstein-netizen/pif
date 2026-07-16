@@ -29,7 +29,8 @@ export function StepAddressPhone({
   onBack,
   onComplete,
 }: StepAddressPhoneProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const geocodeLang = i18n.language?.startsWith("sv") ? "sv" : "en";
   const { mapToken } = useMapbox();
   const [geocoding, setGeocoding] = useState(false);
   const canComplete = coordinates !== null && address.trim().length > 0 && !loading;
@@ -44,7 +45,7 @@ export function StepAddressPhone({
       const res = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
           trimmed,
-        )}.json?access_token=${mapToken}&country=SE&language=sv&types=address&limit=1`,
+        )}.json?access_token=${mapToken}&language=${geocodeLang}&types=address&limit=1`,
       );
       if (!res.ok) return;
       const json = await res.json();

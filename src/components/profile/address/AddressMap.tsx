@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import i18n from "@/i18n";
 
 interface AddressMapProps {
   mapToken: string;
@@ -41,8 +42,9 @@ export function AddressMap({ mapToken, coordinates, onAddressChange }: AddressMa
     marker.on("dragend", async () => {
       const lngLat = marker.getLngLat();
       try {
+        const geocodeLang = i18n.language?.startsWith("sv") ? "sv" : "en";
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapToken}&language=sv&country=SE`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapToken}&language=${geocodeLang}`
         );
         const data = await response.json();
         if (data.features && data.features.length > 0) {

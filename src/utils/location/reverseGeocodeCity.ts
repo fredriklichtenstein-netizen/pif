@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n";
 
 let cachedToken: string | null = null;
 
@@ -89,7 +90,8 @@ export async function reverseGeocodeCity(
     // reverse-geocode request; combining several types with `limit>1` (or
     // `limit=5`) returns HTTP 422. We instead omit `types`, take the
     // default feature set, and pick the most specific match client-side.
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&language=sv`;
+    const geocodeLang = i18n.language?.startsWith("sv") ? "sv" : "en";
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&language=${geocodeLang}`;
     const res = await fetch(url);
     if (!res.ok) return "";
     const json = await res.json();

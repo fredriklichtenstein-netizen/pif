@@ -17,7 +17,8 @@ export const useAddress = (
   onAddressChange: (address: string, coordinates?: { lat: number; lng: number }) => void
 ) => {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const geocodeLang = i18n.language?.startsWith("sv") ? "sv" : "en";
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -42,7 +43,7 @@ export const useAddress = (
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
             address
-          )}.json?access_token=${mapToken}&country=SE&language=sv&types=address`,
+          )}.json?access_token=${mapToken}&language=${geocodeLang}&types=address`,
           { signal: abortControllerRef.current.signal }
         );
         
@@ -61,7 +62,7 @@ export const useAddress = (
         setIsLoadingSuggestions(false);
       }
     }, 300),
-    [mapToken]
+    [mapToken, geocodeLang]
   );
 
   const handleAddressChange = (address: string) => {
@@ -76,7 +77,7 @@ export const useAddress = (
           const { latitude, longitude } = position.coords;
           try {
             const response = await fetch(
-              `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapToken}&language=sv&country=SE`
+              `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapToken}&language=${geocodeLang}`
             );
             const data = await response.json();
             if (data.features && data.features.length > 0) {
@@ -119,7 +120,7 @@ export const useAddress = (
 
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapToken}&country=SE&language=sv&types=address`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapToken}&language=${geocodeLang}&types=address`
       );
       const data = await response.json();
       if (data.features && data.features.length > 0) {
