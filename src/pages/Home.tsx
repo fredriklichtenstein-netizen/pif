@@ -12,6 +12,7 @@ import { Loader2, ArrowRight, Heart, MapPin, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
 import { DEMO_MODE } from "@/config/demoMode";
+import { LanguageSelector } from "@/components/common/LanguageSelector";
 
 export default function Home() {
   const { toast } = useToast();
@@ -82,6 +83,10 @@ export default function Home() {
       <MainHeader />
       <InstallInstructionsBanner />
       <div className="container max-w-md sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 py-[30px]">
+        <div className="flex justify-end mb-2">
+          <LanguageSelector />
+        </div>
+
         {/* Network status banner */}
         <NetworkStatus onRetry={handleRetry} />
         

@@ -87,8 +87,10 @@ const detectLanguage = (): string => {
 
   try {
     const browserLang = (typeof navigator !== "undefined" ? navigator.language : '').toLowerCase();
+    // Swedish system language -> Swedish. Anything else (including no
+    // detectable language) -> English.
     if (browserLang.startsWith('sv')) return 'sv';
-    if (browserLang.startsWith('en')) return 'en';
+    if (browserLang) return 'en';
   } catch {
     /* ignore */
   }
