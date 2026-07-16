@@ -104,6 +104,17 @@ const Messages = () => {
     }
   }, [authLoading, user]);
 
+  // React to ?tab=notifications even when this page is already mounted —
+  // e.g. tapping the bottom-nav "Meddelanden" link while already on
+  // /messages only changes the query string on the same route, which
+  // React Router doesn't remount, so the useState initializer above
+  // wouldn't otherwise re-run.
+  useEffect(() => {
+    if (searchParams.get("tab") === "notifications" && activeTab !== "notifications") {
+      setActiveTab("notifications");
+    }
+  }, [searchParams, activeTab]);
+
   const handleTabChange = (value: string) => {
     if (value === "messages" || value === "notifications") {
       console.debug('[messages] tab →', value);

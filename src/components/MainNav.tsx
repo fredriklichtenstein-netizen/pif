@@ -81,7 +81,7 @@ export function MainNav() {
         </Link>
 
         <Link
-          to="/messages"
+          to="/messages?tab=notifications"
           onClick={handleAuthRequiredClick}
           className={`${itemBase} ${isActive("/messages") ? activeColor : inactiveColor}`}
         >
