@@ -9,6 +9,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { ProfileRatingDisplay } from "@/components/rating/ProfileRatingDisplay";
+import { getCropPreviewStyle } from "@/utils/image/cropPreview";
 
 interface Profile {
   id: string;
@@ -90,7 +91,7 @@ function UserPifsGrid({ userId }: { userId: string }) {
     import("@/integrations/supabase/client").then(({ supabase }) => {
       supabase
         .from("items")
-        .select("id, title, description, created_at, images")
+        .select("id, title, description, created_at, images, image_crops")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .then(({ data }) => {
@@ -117,17 +118,20 @@ function UserPifsGrid({ userId }: { userId: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map((item) => {
           const thumb = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
+          const thumbCrop = Array.isArray(item.image_crops) ? item.image_crops[0] ?? null : null;
           return (
             <Link to={`/post/${item.id}`} key={item.id} aria-label={item.title}>
               <Card className="overflow-hidden hover:ring-2 ring-primary transition flex flex-col">
                 {thumb && (
-                  <img
-                    src={thumb}
-                    alt={item.title}
-                    loading="lazy"
-                    className="w-full h-32 object-cover"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
-                  />
+                  <div className="relative aspect-square overflow-hidden">
+                    <img
+                      src={thumb}
+                      alt={item.title}
+                      loading="lazy"
+                      style={getCropPreviewStyle(thumbCrop)}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://api.dicebear.com/7.x/shapes/svg?seed=placeholder"; }}
+                    />
+                  </div>
                 )}
                 <div className="p-3 flex flex-col gap-1">
                   <div className="font-bold text-sm">{item.title}</div>

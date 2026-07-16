@@ -6,21 +6,30 @@ import { useTranslation } from "react-i18next";
 import { compressImage } from "@/utils/image/compress";
 import { normalizeImageOrientation } from "@/utils/image/orientation";
 import { sanitizeFilename } from "@/utils/sanitizeFilename";
+import type { ImageCrop } from "@/types/post";
+
+export interface UploadedImage {
+  url: string;
+  crop: ImageCrop | null;
+}
 
 /**
- * Hook for handling image uploads for posts
+ * Hook for handling image uploads for posts. Each file carries its own
+ * preview-frame crop (or null) as a pair, not a separately-indexed array —
+ * Promise.all preserves input order here, but a failed upload is filtered
+ * out, which would silently misalign a positionally-tracked crop array.
+ * Pairing crop with file guarantees correct attribution regardless.
  */
-export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (urls: string[]) => void }) {
+export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (images: UploadedImage[]) => void }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
   const { user } = useGlobalAuth();
   const { t } = useTranslation();
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (files: File[], crops: (ImageCrop | null)[] = []) => {
     setIsAnalyzing(true);
     setUploadProgress(0);
-    const files = Array.from(e.target.files || []);
 
     if (!files || files.length === 0) {
       setIsAnalyzing(false);
@@ -29,12 +38,15 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
 
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      
+
       let completedUploads = 0;
-      
-      const uploadPromises = files.map(async (rawFile) => {
+
+      const uploadPromises = files.map(async (rawFile, index) => {
+        const crop = crops[index] ?? null;
         try {
-          // Normalize EXIF orientation, then compress to upright WEBP.
+          // Normalize EXIF orientation, then compress to upright WEBP. The
+          // full (uncropped) image is what's uploaded — `crop` is display
+          // metadata only, recorded separately below.
           const oriented = await normalizeImageOrientation(rawFile);
           const file = await compressImage(oriented, { maxDimension: 1600, quality: 0.82 });
           const timestamp = new Date().getTime();
@@ -64,7 +76,7 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
           const { data: urlData } = supabase.storage
             .from("post-images")
             .getPublicUrl(filePath);
-          return urlData.publicUrl;
+          return { url: urlData.publicUrl, crop } satisfies UploadedImage;
         } catch (fileError) {
           console.error("File upload error:", fileError);
           toast({
@@ -75,10 +87,12 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (ur
           return null;
         }
       });
-      const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
-      if (uploadedUrls.length > 0) {
-        onImagesUploaded(uploadedUrls);
-      } else if (files.length > 0 && uploadedUrls.length === 0) {
+      const uploaded = (await Promise.all(uploadPromises)).filter(
+        (u): u is UploadedImage => u !== null
+      );
+      if (uploaded.length > 0) {
+        onImagesUploaded(uploaded);
+      } else if (files.length > 0 && uploaded.length === 0) {
         toast({
           title: t('interactions.upload_failed'),
           description: t('interactions.upload_none_succeeded'),

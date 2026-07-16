@@ -3,12 +3,14 @@ import type { ReactNode } from "react";
 import { ItemCardContainer } from "./ItemCardContainer";
 import type { ItemType } from "@/components/item/types";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
+import type { ImageCrop } from "@/types/post";
 
 interface ItemCardProps {
   id: number;
   title: string;
   description: string;
   image: string;
+  imageCrops?: (ImageCrop | null)[];
   location: string;
   coordinates?: {
     lat: number;

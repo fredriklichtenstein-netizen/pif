@@ -139,9 +139,10 @@
     "pickup_field_no_default_hint": "Inte sparat i din profil",
     "preferred_time_window": "Önskad tid för upphämtning",
     "preferred_time_window_placeholder": "T.ex. Vardagar efter 17:00",
-    "crop_image": "Beskär bild",
-    "crop_image_description": "Dra bilden för att justera positionen och använd reglaget för att zooma in eller ut.",
-    "apply_crop": "Beskär",
+    "choose_preview_area": "Välj översiktsområde",
+    "choose_preview_area_description": "Välj vilken del av bilden som visas i flödesöversikten. Hela bilden sparas alltid och visas i sin helhet när någon klickar på den.",
+    "use_default_preview_area": "Använd standardvy",
+    "apply_crop": "Spara",
     "reset_crop": "Återställ",
     "validation": {
       "item_type_required": "Välj om du vill piffa eller önska.",

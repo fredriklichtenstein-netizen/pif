@@ -1,29 +1,34 @@
 import { useCallback, useRef, useState } from "react";
-import { getCroppedImg, normalizeImageOrientation } from "@/utils/image";
+import { normalizeImageOrientation } from "@/utils/image";
+import type { ImageCrop } from "@/types/post";
 
 /**
- * Pre-upload image cropping queue.
+ * Pre-upload preview-frame queue.
  *
- * Wraps the underlying `onImageUpload` (a file-input change handler) so that
- * every newly selected file is presented to the user in a crop dialog before
- * being passed to the actual upload handler. The user can either crop the
- * image (rectangular crop, free zoom) or skip cropping for that image. After
- * the queue is drained, the resulting Files (cropped or originals) are
- * forwarded to `onImageUpload` in their original order.
+ * Wraps the underlying `onImageUpload` so that every newly selected file is
+ * presented to the user in a square preview-frame picker before being
+ * passed to the actual upload handler. The image itself is never altered —
+ * "Save" only records which square region (as fractions of the image)
+ * should frame the feed/card thumbnail; "Skip" leaves that image with no
+ * preference (null). After the queue is drained, the original (EXIF-
+ * oriented) files and their parallel crop array are forwarded to
+ * `onImageUpload` together, in their original order.
  */
 export function useImageCropQueue(
-  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void
 ) {
   const [queue, setQueue] = useState<File[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const resultsRef = useRef<File[]>([]);
+  const cropsRef = useRef<(ImageCrop | null)[]>([]);
   const objectUrlsRef = useRef<string[]>([]);
 
   const cleanup = useCallback(() => {
     objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
     objectUrlsRef.current = [];
     resultsRef.current = [];
+    cropsRef.current = [];
     setQueue([]);
     setCurrentIndex(0);
     setCurrentUrl(null);
@@ -31,14 +36,9 @@ export function useImageCropQueue(
 
   const flush = useCallback(() => {
     const finalFiles = resultsRef.current;
+    const finalCrops = cropsRef.current;
     if (finalFiles.length > 0) {
-      const dt = new DataTransfer();
-      finalFiles.forEach((f) => dt.items.add(f));
-      const synthetic = {
-        target: { files: dt.files },
-        currentTarget: { files: dt.files },
-      } as unknown as React.ChangeEvent<HTMLInputElement>;
-      onImageUpload(synthetic);
+      onImageUpload(finalFiles, finalCrops);
     }
     cleanup();
   }, [onImageUpload, cleanup]);
@@ -69,10 +69,12 @@ export function useImageCropQueue(
         /* no-op */
       }
       if (rawFiles.length === 0) return;
-      // Normalize EXIF orientation up-front so the crop preview and the
-      // resulting cropped file are oriented the way the user expects.
+      // Normalize EXIF orientation up-front — once here, not again later —
+      // so the preview-frame picker and the eventually-uploaded file agree
+      // on orientation, and it isn't redundantly re-encoded a second time.
       const files = await Promise.all(rawFiles.map(normalizeImageOrientation));
       resultsRef.current = [];
+      cropsRef.current = [];
       setQueue(files);
       advance(0, files);
     },
@@ -80,26 +82,23 @@ export function useImageCropQueue(
   );
 
   const handleCropSave = useCallback(
-    async (pixelCrop: { width: number; height: number; x: number; y: number }) => {
-      if (!currentUrl) return;
+    (crop: ImageCrop) => {
       const original = queue[currentIndex];
-      const cropped = await getCroppedImg(currentUrl, pixelCrop, "rect");
-      const finalFile =
-        cropped
-          ? new File([cropped], original.name.replace(/\.[^.]+$/, "") + ".jpg", {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            })
-          : original;
-      resultsRef.current.push(finalFile);
+      if (original) {
+        resultsRef.current.push(original);
+        cropsRef.current.push(crop);
+      }
       advance(currentIndex + 1, queue);
     },
-    [advance, currentIndex, currentUrl, queue]
+    [advance, currentIndex, queue]
   );
 
   const handleCropSkip = useCallback(() => {
     const original = queue[currentIndex];
-    if (original) resultsRef.current.push(original);
+    if (original) {
+      resultsRef.current.push(original);
+      cropsRef.current.push(null);
+    }
     advance(currentIndex + 1, queue);
   }, [advance, currentIndex, queue]);
 

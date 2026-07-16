@@ -1,6 +1,6 @@
 
 import { parseCoordinatesFromDB } from "@/types/post";
-import type { Post } from "@/types/post";
+import type { Post, ImageCrop } from "@/types/post";
 import type { InteractionCounts } from "./types";
 import { extractUserFromProfile } from "@/hooks/item/utils/userUtils";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
@@ -21,9 +21,15 @@ export const transformPostData = (
   
   
   // Process measurements to ensure they are correctly formatted
-  const measurements = (typeof item.measurements === 'object' && item.measurements !== null) 
+  const measurements = (typeof item.measurements === 'object' && item.measurements !== null)
     ? item.measurements
     : {};
+
+  // image_crops is a plain array parallel to images; anything else (null,
+  // missing column, malformed value) means "no preference for any image".
+  const imageCrops: (ImageCrop | null)[] | undefined = Array.isArray(item.image_crops)
+    ? item.image_crops
+    : undefined;
 
   const extractedUser = extractUserFromProfile(item.profiles, item.user_id);
 
@@ -41,6 +47,7 @@ export const transformPostData = (
     item_type: normalizedType,
     measurements: measurements,
     images: item.images || [],
+    imageCrops,
     location: item.location || '',
     coordinates: parsedCoordinates,
     postedBy: {

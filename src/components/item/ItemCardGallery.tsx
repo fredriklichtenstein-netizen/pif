@@ -2,20 +2,24 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { optimizeImageUrl, preloadImages } from "@/utils/image";
+import { getCropPreviewStyle } from "@/utils/image/cropPreview";
 import { useCategoryTranslations } from "@/utils/translations/categories";
 import type { ItemType } from "./types";
+import type { ImageCrop } from "@/types/post";
 import { useTranslation } from "react-i18next";
 import { ImageLightbox } from "./ImageLightbox";
 import { ItemTypeBadge } from "./ItemTypeBadge";
 
 interface ItemCardGalleryProps {
   images: string[];
+  /** Per-image preview-frame metadata, parallel to `images`. */
+  imageCrops?: (ImageCrop | null)[];
   title: string;
   category: string;
   item_type?: ItemType;
 }
 
-export function ItemCardGallery({ images, title, category, item_type }: ItemCardGalleryProps) {
+export function ItemCardGallery({ images, imageCrops = [], title, category, item_type }: ItemCardGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -46,38 +50,42 @@ export function ItemCardGallery({ images, title, category, item_type }: ItemCard
 
   if (!imageUrls || imageUrls.length === 0) {
     return (
-      <div className="relative h-72 bg-muted flex items-center justify-center">
+      <div className="relative aspect-square bg-muted flex items-center justify-center">
         <p className="text-muted-foreground">{t('interactions.no_image_available')}</p>
       </div>
     );
   }
-  
+
   const handleNext = () => {
     setIsImageLoaded(false);
     setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length);
   };
-  
+
   const handlePrev = () => {
     setIsImageLoaded(false);
     setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
   };
 
   return (
-    <div className="relative h-72">
+    <div className="relative aspect-square overflow-hidden">
       {!isImageLoaded && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse" />
       )}
-      
+
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="block w-full h-72 p-0 m-0 border-0 bg-transparent cursor-zoom-in"
+        className="block absolute inset-0 w-full h-full p-0 m-0 border-0 bg-transparent cursor-zoom-in overflow-hidden"
         aria-label={t('interactions.expand_image', 'Expand image')}
       >
-        <img 
+        <img
           src={imageUrls[currentImageIndex]}
-          alt={title} 
-          className={`w-full h-72 object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          alt={title}
+          style={{
+            ...getCropPreviewStyle(imageCrops[currentImageIndex]),
+            opacity: isImageLoaded ? 1 : 0,
+            transition: "opacity 300ms",
+          }}
           onLoad={() => setIsImageLoaded(true)}
           onError={(e) => {
             e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Image";

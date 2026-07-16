@@ -20,18 +20,19 @@ export class OptimizedQueries {
       withRetry(async () => {
         // Narrow column list — only what feed cards / transform actually read
         // (measurements included — ItemCardContent/ItemMeasurements render
-        // it on every card). Pickup_* fields stay excluded here: they're
-        // private pickup logistics, only relevant once a conversation/
-        // selection begins, not bulk feed data. Profiles are fetched in a
-        // separate parallel query to keep PostgREST off the embed path
-        // (which has been observed to stall under load and silently fall
-        // through on permission edges).
+        // it on every card; image_crops included — card thumbnails use it to
+        // frame the square preview). Pickup_* fields stay excluded here:
+        // they're private pickup logistics, only relevant once a
+        // conversation/selection begins, not bulk feed data. Profiles are
+        // fetched in a separate parallel query to keep PostgREST off the
+        // embed path (which has been observed to stall under load and
+        // silently fall through on permission edges).
         let query = (supabase
           .from('items') as any)
           .select(`
             id, title, description, images, location, coordinates_json,
             category, condition, user_id, pif_status, item_type,
-            created_at, archived_at, archived_reason, measurements
+            created_at, archived_at, archived_reason, measurements, image_crops
           `);
 
         if (options.includeArchived) {

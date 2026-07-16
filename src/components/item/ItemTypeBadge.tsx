@@ -15,7 +15,7 @@ interface ItemTypeBadgeProps {
 /**
  * Shared pif/wish type badge. Single source of truth for the
  * amber+Star "Önskan" vs. pif-offer+Gift "Pif" visual convention.
- * Used by ItemCardGallery and the profile grids (MyPifsGrid, InterestedPifsGrid).
+ * Used by ItemCardGallery.
  */
 export function ItemTypeBadge({ item_type, className, size = "default" }: ItemTypeBadgeProps) {
   const { t } = useTranslation();

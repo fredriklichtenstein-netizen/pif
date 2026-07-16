@@ -29,6 +29,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     setFormData,
     handleImageUpload,
     handleImagesChange,
+    handleImageCropsChange,
     handleMeasurementChange,
     handleSubmit,
   } = usePostForm(initialData);
@@ -114,6 +115,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
         onFormSubmit={handleSubmit}
         onImageUpload={handleImageUpload}
         onImagesChange={handleImagesChange}
+        onImageCropsChange={handleImageCropsChange}
         onMeasurementChange={handleMeasurementChange}
         setFormData={setFormData}
         onAddressSelect={handleAddressSelect}

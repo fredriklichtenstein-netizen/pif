@@ -14,6 +14,7 @@ export function ItemCardWrapper({
   description,
   image,
   images = [],
+  imageCrops = [],
   location,
   coordinates,
   category,
@@ -117,6 +118,7 @@ export function ItemCardWrapper({
         description={description}
         image={image}
         images={images}
+        imageCrops={imageCrops}
         location={location}
         category={category}
         condition={condition}

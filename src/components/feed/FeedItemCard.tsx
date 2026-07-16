@@ -52,6 +52,7 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           description={post.description}
           image={post.images && post.images.length > 0 ? post.images[0] : ''}
           images={post.images}
+          imageCrops={post.imageCrops}
           location={post.location}
           coordinates={coordinates}
           category={post.category}

@@ -3,6 +3,7 @@ import { usePostImageUpload } from "./post/usePostImageUpload";
 import { usePostFormState } from "./post/usePostFormState";
 import { usePostFormSubmission } from "./post/usePostFormSubmission";
 import { usePostFormValidation } from "./post/usePostFormValidation";
+import type { ImageCrop } from "@/types/post";
 
 export function usePostForm(initialData?: any) {
   const {
@@ -10,6 +11,7 @@ export function usePostForm(initialData?: any) {
     setFormData,
     profileDefaults,
     handleImagesChange,
+    handleImageCropsChange,
     handleMeasurementChange,
   } = usePostFormState(initialData);
 
@@ -17,27 +19,17 @@ export function usePostForm(initialData?: any) {
   const { validateForm } = usePostFormValidation();
 
   const { handleImageUpload: uploadHandler, isAnalyzing } = usePostImageUpload({
-    onImagesUploaded: (urls: string[]) => {
+    onImagesUploaded: (uploaded) => {
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, ...urls]
+        images: [...prev.images, ...uploaded.map(u => u.url)],
+        imageCrops: [...(prev.imageCrops || []), ...uploaded.map(u => u.crop)],
       }));
     }
   });
 
-  const handleImageUpload = async (file: File) => {
-    // Create a synthetic event for the upload handler
-    const fileList = new DataTransfer();
-    fileList.items.add(file);
-    
-    const syntheticEvent = {
-      target: {
-        files: fileList.files
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    // Use the real upload handler to get permanent URLs
-    await uploadHandler(syntheticEvent);
+  const handleImageUpload = async (files: File[], crops: (ImageCrop | null)[] = []) => {
+    await uploadHandler(files, crops);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,6 +51,7 @@ export function usePostForm(initialData?: any) {
     setFormData,
     handleImageUpload,
     handleImagesChange,
+    handleImageCropsChange,
     handleMeasurementChange,
     handleSubmit,
   };

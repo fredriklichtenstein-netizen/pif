@@ -355,6 +355,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
               title={post.title}
               description={post.description}
               image={post.image}
+              imageCrops={post.image_crops || []}
               location={post.location}
               coordinates={post.coordinates}
               category={post.category}

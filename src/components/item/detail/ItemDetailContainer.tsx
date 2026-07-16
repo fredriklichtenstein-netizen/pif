@@ -29,6 +29,7 @@ export function ItemDetailContainer({
         description={displayItem.description || ""}
         image={displayItem.images?.[0] || ""}
         images={displayItem.images || []}
+        imageCrops={displayItem.image_crops || []}
         location={displayItem.location || ""}
         coordinates={coordinates}
         category={displayItem.category || ""}

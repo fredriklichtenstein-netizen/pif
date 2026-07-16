@@ -139,9 +139,10 @@
     "pickup_field_no_default_hint": "Not saved in your profile",
     "preferred_time_window": "Preferred time for pickup",
     "preferred_time_window_placeholder": "E.g. Weekdays after 5pm",
-    "crop_image": "Crop image",
-    "crop_image_description": "Drag the image to adjust position and use the slider to zoom in or out.",
-    "apply_crop": "Crop",
+    "choose_preview_area": "Choose preview area",
+    "choose_preview_area_description": "Choose which part of the image is shown in the feed overview. The full image is always saved and shown in full when someone clicks it.",
+    "use_default_preview_area": "Use default view",
+    "apply_crop": "Save",
     "reset_crop": "Reset",
     "validation": {
       "item_type_required": "Choose whether to pif or wish.",

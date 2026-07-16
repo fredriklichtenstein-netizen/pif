@@ -13,6 +13,7 @@ export function ItemCardWrapperContent({
   description,
   image,
   images = [],
+  imageCrops = [],
   location,
   category,
   condition,
@@ -91,9 +92,10 @@ export function ItemCardWrapperContent({
         />
       }
       gallery={
-        <ItemCardGallery 
-          images={images.length > 0 ? images : image ? [image] : []} 
-          title={title} 
+        <ItemCardGallery
+          images={images.length > 0 ? images : image ? [image] : []}
+          imageCrops={imageCrops}
+          title={title}
           category={category}
           item_type={item_type}
         />

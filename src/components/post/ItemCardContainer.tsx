@@ -9,6 +9,7 @@ import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog
 import { SimpleDeleteDialog } from "@/components/item/delete/SimpleDeleteDialog";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 import type { ItemType } from "@/components/item/types";
+import type { ImageCrop } from "@/types/post";
 
 
 interface ItemCardProps {
@@ -16,6 +17,7 @@ interface ItemCardProps {
   title: string;
   description: string;
   image: string;
+  imageCrops?: (ImageCrop | null)[];
   location: string;
   coordinates?: {
     lat: number;
@@ -44,6 +46,7 @@ export function ItemCardContainer({
   description,
   image,
   images = [],
+  imageCrops = [],
   location,
   coordinates,
   category,
@@ -88,7 +91,7 @@ export function ItemCardContainer({
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fade-in">
-      <ItemImage image={image} title={title} />
+      <ItemImage image={image} title={title} imageCrop={imageCrops[0] ?? null} />
 
       <ItemCardBody
         category={category}

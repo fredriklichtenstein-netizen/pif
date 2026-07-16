@@ -1,3 +1,16 @@
+/**
+ * Square preview-frame region chosen for a given image, as fractions
+ * (0-1) of that image's own dimensions. Display-only metadata — never
+ * alters the stored image file. A `null` entry (or a missing index) means
+ * no preference was set; feed thumbnails fall back to a plain centered
+ * `object-fit: cover` crop.
+ */
+export interface ImageCrop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export interface CreatePostInput {
   title: string;
@@ -12,6 +25,7 @@ export interface CreatePostInput {
   } | null;
   location: string;
   images: string[];
+  imageCrops?: (ImageCrop | null)[];
   measurements?: Record<string, string>;
 }
 
@@ -27,6 +41,7 @@ export interface PostFormData {
   } | null;
   location: string;
   images: string[];
+  imageCrops?: (ImageCrop | null)[];
   measurements: Record<string, string>;
   pickup_preference?: 'meetup' | 'leave_at_door' | 'flexible' | '';
   pickup_door_code?: string;
@@ -67,6 +82,7 @@ export interface Post {
   pif_status?: 'active' | 'completed' | 'cancelled' | 'archived';
   measurements: Record<string, string>;
   images: string[];
+  imageCrops?: (ImageCrop | null)[];
   location: string;
   coordinates: { lat: number; lng: number } | null;
   postedBy: {

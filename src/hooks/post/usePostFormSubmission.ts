@@ -113,6 +113,7 @@ export function usePostFormSubmission(initialData?: any) {
         coordinates_json: coordinatesJsonForDB,
         location: formData.location,
         images: formData.images,
+        image_crops: formData.imageCrops || [],
         measurements: formData.measurements,
         // Defensive guard: only forward values the DB check constraint accepts
         // (meetup | leave_at_door | flexible). Anything else — including legacy

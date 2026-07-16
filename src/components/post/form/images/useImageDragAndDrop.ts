@@ -1,16 +1,21 @@
 
 import { useState, useRef } from "react";
+import type { ImageCrop } from "@/types/post";
 
 interface UseImageDragAndDropProps {
   images: string[];
+  imageCrops?: (ImageCrop | null)[];
   onImagesChange: (images: string[]) => void;
+  onImageCropsChange?: (crops: (ImageCrop | null)[]) => void;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isRequest: boolean;
 }
 
 export function useImageDragAndDrop({
   images,
+  imageCrops = [],
   onImagesChange,
+  onImageCropsChange,
   onImageUpload,
   isRequest,
 }: UseImageDragAndDropProps) {
@@ -84,15 +89,25 @@ export function useImageDragAndDrop({
   const removeImage = (index: number) => {
     const newImages = images.filter((_, i) => i !== index);
     onImagesChange(newImages);
+    if (onImageCropsChange) {
+      onImageCropsChange(imageCrops.filter((_, i) => i !== index));
+    }
   };
 
   const moveImage = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= images.length) return;
-    
+
     const newImages = [...images];
     const [movedImage] = newImages.splice(fromIndex, 1);
     newImages.splice(toIndex, 0, movedImage);
     onImagesChange(newImages);
+
+    if (onImageCropsChange) {
+      const newCrops = [...imageCrops];
+      const [movedCrop] = newCrops.splice(fromIndex, 1);
+      newCrops.splice(toIndex, 0, movedCrop ?? null);
+      onImageCropsChange(newCrops);
+    }
   };
 
   const handleImageDragStart = (e: React.DragEvent, index: number) => {

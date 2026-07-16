@@ -9,28 +9,34 @@ import { useImageCropQueue } from "./images/useImageCropQueue";
 import { PostImageCropDialog } from "./images/PostImageCropDialog";
 import { useTranslation } from 'react-i18next';
 import { PostFieldError } from "./PostFieldError";
+import type { ImageCrop } from "@/types/post";
 
 interface PostFormImagesProps {
   images: string[];
+  imageCrops?: (ImageCrop | null)[];
   isAnalyzing: boolean;
-  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void;
   onImagesChange: (images: string[]) => void;
+  onImageCropsChange: (crops: (ImageCrop | null)[]) => void;
   itemType?: 'offer' | 'request';
   fieldErrors?: Partial<Record<string, string>>;
 }
 
 export function PostFormImages({
   images,
+  imageCrops = [],
   isAnalyzing,
   onImageUpload,
   onImagesChange,
+  onImageCropsChange,
   itemType = 'offer',
   fieldErrors = {},
 }: PostFormImagesProps) {
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
 
-  // Route every newly selected file through a crop dialog before upload.
+  // Route every newly selected file through a preview-area picker before
+  // upload (the image itself is never cropped/altered — see PostImageCropDialog).
   const {
     handleImageUpload: wrappedOnImageUpload,
     cropImage,
@@ -59,7 +65,9 @@ export function PostFormImages({
     handleImageDragEnd,
   } = useImageDragAndDrop({
     images,
+    imageCrops,
     onImagesChange,
+    onImageCropsChange,
     onImageUpload: wrappedOnImageUpload,
     isRequest,
   });

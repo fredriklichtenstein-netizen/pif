@@ -6,38 +6,52 @@ import { Slider } from "@/components/ui/slider";
 import Cropper from "react-easy-crop";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { ImageCrop } from "@/types/post";
 
 interface PostImageCropDialogProps {
   image: string | null;
   progress: { current: number; total: number } | null;
-  onSave: (pixelCrop: { width: number; height: number; x: number; y: number }) => void;
-  onSkip?: () => void;
+  /** Fractions (0-1) of the image's own dimensions — never a re-encoded file. */
+  onSave: (crop: ImageCrop) => void;
+  onSkip: () => void;
   onCancel: () => void;
 }
 
 /**
- * Cropping dialog for newly uploaded post images. Free aspect ratio with
- * zoom + pan; the user can either save the crop or cancel it for that image.
+ * Preview-frame picker for newly uploaded post images. The image itself is
+ * never altered or re-encoded here — this only records which square region
+ * (as fractions of the image) should be used to frame the feed/card
+ * thumbnail. The full original is always what gets uploaded and shown when
+ * a viewer opens the image.
  */
 export function PostImageCropDialog({
   image,
   progress,
   onSave,
+  onSkip,
   onCancel,
 }: PostImageCropDialogProps) {
   const { t } = useTranslation();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [pixels, setPixels] = useState<any>(null);
+  const [pixels, setPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
 
   React.useEffect(() => {
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setPixels(null);
+    setNaturalSize(null);
   }, [image]);
 
   const handleSave = () => {
-    if (pixels) onSave(pixels);
+    if (!pixels || !naturalSize || !naturalSize.width || !naturalSize.height) return;
+    onSave({
+      x: pixels.x / naturalSize.width,
+      y: pixels.y / naturalSize.height,
+      width: pixels.width / naturalSize.width,
+      height: pixels.height / naturalSize.height,
+    });
   };
 
   const handleReset = () => {
@@ -52,7 +66,7 @@ export function PostImageCropDialog({
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>
-            {t("post.crop_image", { defaultValue: "Beskär bild" })}
+            {t("post.choose_preview_area", { defaultValue: "Välj översiktsområde" })}
             {progress && progress.total > 1 && (
               <span className="ml-2 text-sm font-normal text-muted-foreground">
                 ({progress.current}/{progress.total})
@@ -60,9 +74,9 @@ export function PostImageCropDialog({
             )}
           </DialogTitle>
           <DialogDescription>
-            {t("post.crop_image_description", {
+            {t("post.choose_preview_area_description", {
               defaultValue:
-                "Dra bilden för att justera positionen och använd reglaget för att zooma in eller ut.",
+                "Välj vilken del av bilden som visas i flödesöversikten. Hela bilden sparas alltid och visas i sin helhet när någon klickar på den.",
             })}
           </DialogDescription>
         </DialogHeader>
@@ -74,12 +88,13 @@ export function PostImageCropDialog({
                 image={image}
                 crop={crop}
                 zoom={zoom}
-                aspect={undefined}
+                aspect={1}
                 cropShape="rect"
                 showGrid
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={(_a, p) => setPixels(p)}
+                onMediaLoaded={(size) => setNaturalSize({ width: size.naturalWidth, height: size.naturalHeight })}
               />
             </div>
             <div className="space-y-2">
@@ -114,8 +129,11 @@ export function PostImageCropDialog({
           <Button type="button" variant="ghost" onClick={onCancel}>
             {t("common.cancel", { defaultValue: "Avbryt" })}
           </Button>
+          <Button type="button" variant="outline" onClick={onSkip}>
+            {t("post.use_default_preview_area", { defaultValue: "Använd standardvy" })}
+          </Button>
           <Button type="button" onClick={handleSave} disabled={!pixels}>
-            {t("post.apply_crop", { defaultValue: "Beskär" })}
+            {t("post.apply_crop", { defaultValue: "Spara" })}
           </Button>
         </DialogFooter>
       </DialogContent>

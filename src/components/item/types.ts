@@ -1,4 +1,6 @@
 
+import type { ImageCrop } from "@/types/post";
+
 export type ItemType = 'offer' | 'request';
 
 export interface ItemCardProps {
@@ -7,6 +9,8 @@ export interface ItemCardProps {
   description?: string;
   image?: string;
   images?: string[];
+  /** Per-image preview-frame metadata, parallel to `images`. See ImageCrop. */
+  imageCrops?: (ImageCrop | null)[];
   location?: string;
   coordinates?: {
     lat: number;

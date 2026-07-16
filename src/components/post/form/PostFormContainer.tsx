@@ -24,6 +24,7 @@ import {
 import { usePostFormValidation } from "@/hooks/post/usePostFormValidation";
 import { usePostFormNavigation } from "@/hooks/post/usePostFormNavigation";
 import { useTranslation } from 'react-i18next';
+import type { ImageCrop } from "@/types/post";
 
 interface PostFormContainerProps {
   formData: any;
@@ -31,8 +32,9 @@ interface PostFormContainerProps {
   isAnalyzing: boolean;
   isEditMode?: boolean;
   onFormSubmit: (e: React.FormEvent) => void;
-  onImageUpload: (file: File) => void;
+  onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void;
   onImagesChange: (images: string[]) => void;
+  onImageCropsChange: (crops: (ImageCrop | null)[]) => void;
   onMeasurementChange: (field: string, value: string) => void;
   setFormData: (data: any) => void;
   onAddressSelect: (address: string, coordinates: { lat: number; lng: number }) => void;
@@ -48,6 +50,7 @@ export function PostFormContainer({
   onFormSubmit,
   onImageUpload,
   onImagesChange,
+  onImageCropsChange,
   onMeasurementChange,
   setFormData,
   onAddressSelect,
@@ -97,12 +100,6 @@ export function PostFormContainer({
     canProceed: validation.canProceed
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onImageUpload(file);
-    }
-  };
 
   // Inline validation surface: only show errors after the user attempts to
   // advance/submit. Cleared whenever the active step changes.
@@ -169,9 +166,11 @@ export function PostFormContainer({
         return (
           <PostFormImages
             images={formData.images || []}
+            imageCrops={formData.imageCrops || []}
             isAnalyzing={isAnalyzing}
-            onImageUpload={handleImageUpload}
+            onImageUpload={onImageUpload}
             onImagesChange={onImagesChange}
+            onImageCropsChange={onImageCropsChange}
             itemType={formData.item_type}
             fieldErrors={errorsForStep}
           />

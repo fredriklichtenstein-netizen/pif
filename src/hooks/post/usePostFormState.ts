@@ -45,6 +45,7 @@ export function usePostFormState(initialData?: any) {
     } : null,
     location: initialData?.location || "",
     images: initialData?.images || [],
+    imageCrops: initialData?.image_crops || [],
     measurements: initialData?.measurements || {},
     pickup_preference: initialData?.pickup_preference || "",
     pickup_door_code: initialData?.pickup_door_code || "",
@@ -108,6 +109,13 @@ export function usePostFormState(initialData?: any) {
     }));
   };
 
+  const handleImageCropsChange = (imageCrops: PostFormData['imageCrops']) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      imageCrops,
+    }));
+  };
+
   const handleMeasurementChange = (name: string, value: string) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -123,6 +131,7 @@ export function usePostFormState(initialData?: any) {
     setFormData,
     profileDefaults,
     handleImagesChange,
+    handleImageCropsChange,
     handleMeasurementChange,
   };
 }
