@@ -115,6 +115,7 @@ export function usePostFormSubmission(initialData?: any) {
         images: formData.images,
         image_crops: formData.imageCrops || [],
         measurements: formData.measurements,
+        visibility_radius_km: formData.visibilityRadiusKm ?? null,
         // Defensive guard: only forward values the DB check constraint accepts
         // (meetup | leave_at_door | flexible). Anything else — including legacy
         // in-flight form state — is coerced to NULL so the insert/update never

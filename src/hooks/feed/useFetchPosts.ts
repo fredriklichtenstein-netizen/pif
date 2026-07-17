@@ -150,6 +150,9 @@ export function useFetchPosts(options = { includeArchived: false }) {
           images: item.images,
           location: item.location,
           coordinates: extractCoordinates((item as any).coordinates_json),
+          visibilityRadiusKm: typeof (item as any).visibility_radius_km === 'number'
+            ? (item as any).visibility_radius_km
+            : null,
           category: item.category,
           condition: item.condition,
           measurements: item.measurements,

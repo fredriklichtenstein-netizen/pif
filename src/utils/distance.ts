@@ -1,6 +1,13 @@
 import { safeParseJSON } from "@/utils/safeStorage";
 
 /**
+ * Shared distance-slider steps (km) used by both the viewer-side distance
+ * filter (map/feed) and the poster-side visibility-radius control, so the
+ * two share the same vocabulary of distances throughout the app.
+ */
+export const DISTANCE_STEPS = [1, 2, 3, 5, 10, 15, 25];
+
+/**
 
  * Calculates the distance between two points using the Haversine formula
  * Coordinates should be in [lng, lat] format for consistency with Mapbox

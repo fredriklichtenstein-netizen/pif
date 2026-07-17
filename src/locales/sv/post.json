@@ -34,6 +34,8 @@
     "privacy_notice": "🔒 Integritetsskydd: Din exakta position kommer aldrig att delas. Andra användare ser endast ett ungefärligt område för att skydda din integritet.",
     "location_tip": "💡 Tips: Ange en tydlig plats där mottagaren kan hämta pifen. Detta gör det lättare för dem att bedöma om de kan hämta.",
     "search_area_description": "Ange ditt sökområde (inom 2 km från denna punkt söker du efter pifen)",
+    "visibility_radius_label": "Synlighetsradie",
+    "visibility_radius_description": "Begränsa hur långt bort andra användare måste vara (från sin aktuella plats eller hemadress) för att se det här inlägget. Lämna på \"Alla\" för att göra det synligt överallt.",
     "previous": "Föregående",
     "next": "Nästa",
     "create_offer_final": "Skapa pif",

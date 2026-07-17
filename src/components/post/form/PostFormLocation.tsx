@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { AddressInput } from "@/components/profile/address/AddressInput";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -17,6 +18,22 @@ import type { PostFormData, PickupProfileDefaults } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
 import { PostFieldError } from "./PostFieldError";
+import { DISTANCE_STEPS } from "@/utils/distance";
+
+// Slider steps: 1, 2, 3, 5, 10, 15, 25, null(Unlimited) — mirrors the
+// viewer-side distance filter's step set for a consistent distance vocabulary.
+const RADIUS_MAX_STEP = DISTANCE_STEPS.length; // index for "Unlimited"
+
+function radiusToStep(radius: number | null | undefined): number {
+  if (radius == null) return RADIUS_MAX_STEP;
+  const idx = DISTANCE_STEPS.indexOf(radius);
+  return idx >= 0 ? idx : RADIUS_MAX_STEP;
+}
+
+function stepToRadius(step: number): number | null {
+  if (step >= RADIUS_MAX_STEP) return null;
+  return DISTANCE_STEPS[step];
+}
 
 interface PostFormLocationProps {
   formData: PostFormData;
@@ -215,6 +232,27 @@ export function PostFormLocation({
             </div>
           </div>
         )}
+
+        <div className="space-y-2">
+          <Label>{t('post.visibility_radius_label')}</Label>
+          <p className="text-xs text-muted-foreground">{t('post.visibility_radius_description')}</p>
+          <div className="flex items-center gap-3">
+            <Slider
+              value={[radiusToStep(formData.visibilityRadiusKm)]}
+              min={0}
+              max={RADIUS_MAX_STEP}
+              step={1}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, visibilityRadiusKm: stepToRadius(value[0]) }))
+              }
+              className="flex-1 max-w-xs"
+              aria-label={t('post.visibility_radius_label')}
+            />
+            <span className="text-sm font-semibold text-foreground whitespace-nowrap min-w-[4.5rem] text-right">
+              {formData.visibilityRadiusKm ? `${formData.visibilityRadiusKm} km` : t('interactions.all')}
+            </span>
+          </div>
+        </div>
 
         {!isRequest && (
           <Collapsible defaultOpen={!!formData.pickup_preference} className="border rounded-lg">

@@ -27,6 +27,8 @@ export interface CreatePostInput {
   images: string[];
   imageCrops?: (ImageCrop | null)[];
   measurements?: Record<string, string>;
+  /** Max distance (km) from this item's location at which it's visible to other users. null/undefined = unlimited. */
+  visibilityRadiusKm?: number | null;
 }
 
 export interface PostFormData {
@@ -43,6 +45,8 @@ export interface PostFormData {
   images: string[];
   imageCrops?: (ImageCrop | null)[];
   measurements: Record<string, string>;
+  /** Max distance (km) from this item's location at which it's visible to other users. null = unlimited. */
+  visibilityRadiusKm?: number | null;
   pickup_preference?: 'meetup' | 'leave_at_door' | 'flexible' | '';
   pickup_door_code?: string;
   pickup_floor?: string;
@@ -85,6 +89,8 @@ export interface Post {
   imageCrops?: (ImageCrop | null)[];
   location: string;
   coordinates: { lat: number; lng: number } | null;
+  /** Max distance (km) from this item's location at which it's visible to other users. null/undefined = unlimited. */
+  visibilityRadiusKm?: number | null;
   postedBy: {
     id: string;
     name: string;

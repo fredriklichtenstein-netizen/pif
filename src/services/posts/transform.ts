@@ -31,6 +31,9 @@ export const transformPostData = (
     ? item.image_crops
     : undefined;
 
+  const visibilityRadiusKm: number | null =
+    typeof item.visibility_radius_km === 'number' ? item.visibility_radius_km : null;
+
   const extractedUser = extractUserFromProfile(item.profiles, item.user_id);
 
   // Normalize legacy item_type values ('wish' -> 'request', 'pif' -> 'offer')
@@ -50,6 +53,7 @@ export const transformPostData = (
     imageCrops,
     location: item.location || '',
     coordinates: parsedCoordinates,
+    visibilityRadiusKm,
     postedBy: {
       ...extractedUser,
       avatar: extractedUser.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'

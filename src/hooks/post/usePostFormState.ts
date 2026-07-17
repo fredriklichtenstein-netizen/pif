@@ -47,6 +47,7 @@ export function usePostFormState(initialData?: any) {
     images: initialData?.images || [],
     imageCrops: initialData?.image_crops || [],
     measurements: initialData?.measurements || {},
+    visibilityRadiusKm: initialData?.visibility_radius_km ?? null,
     pickup_preference: initialData?.pickup_preference || "",
     pickup_door_code: initialData?.pickup_door_code || "",
     pickup_floor: initialData?.pickup_floor != null ? String(initialData.pickup_floor) : "",

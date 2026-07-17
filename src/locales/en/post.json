@@ -34,6 +34,8 @@
     "privacy_notice": "🔒 Privacy protection: Your exact position will never be shared. Other users only see an approximate area to protect your privacy.",
     "location_tip": "💡 Tip: Specify a clear location where the receiver can pick up the pif. This makes it easier for them to assess if they can collect it.",
     "search_area_description": "Specify your search area (within 2 km from this point you're looking for the pif)",
+    "visibility_radius_label": "Visibility radius",
+    "visibility_radius_description": "Limit how far away other users need to be (from their current location or home address) to see this post. Leave at \"All\" to make it visible everywhere.",
     "previous": "Previous",
     "next": "Next", 
     "create_offer_final": "Create pif",

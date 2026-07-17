@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { usePifAddress } from '@/hooks/usePifAddress';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
+import { DISTANCE_STEPS } from '@/utils/distance';
 
 type LocationMode = 'current' | 'pif' | null;
 
@@ -26,7 +27,6 @@ interface DistanceFiltersProps {
 }
 
 // Slider steps: 1, 2, 3, 5, 10, 15, 25, null(All)
-const DISTANCE_STEPS = [1, 2, 3, 5, 10, 15, 25];
 const MAX_STEP = DISTANCE_STEPS.length; // index for "All"
 
 function distanceToStep(distance: number | null): number {
