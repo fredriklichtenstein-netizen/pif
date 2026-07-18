@@ -24,6 +24,7 @@ interface ItemInteractionsProps {
   itemTitle?: string;
 
   commentsCount?: number;
+  hasCommented?: boolean;
   likesCount?: number;
   interestsCount?: number;
   likers?: User[];
