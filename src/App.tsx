@@ -22,6 +22,7 @@ import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { useCityBackfill } from "@/hooks/profile/useCityBackfill";
 import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
+import { StagingBadge } from "@/components/debug/StagingBadge";
 import { debugLog } from "@/utils/authDebug";
 import "./App.css";
 
@@ -82,6 +83,7 @@ function App() {
               <Toaster />
               <Sonner />
               <AuthHydrationDebugPanel />
+              <StagingBadge />
             </BrowserRouter>
           </TooltipProvider>
         </I18nextProvider>

@@ -10,6 +10,12 @@ const SUPABASE_PUBLISHABLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc";
 const SUPABASE_STORAGE_KEY = "sb-epxqddygoarwxmbshvvx-auth-token";
 
+// True whenever this build is pointed at anything other than the production
+// Supabase project (e.g. the staging branch's own project ref) — lets the UI
+// show a staging indicator so it's never mistaken for production again.
+const PRODUCTION_SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co";
+export const IS_STAGING = SUPABASE_URL !== PRODUCTION_SUPABASE_URL;
+
 const authStorage = typeof window !== "undefined"
   ? {
       getItem: (key: string) => {
