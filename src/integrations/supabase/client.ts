@@ -2,10 +2,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-const SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co";
+// STAGING: points at the staging Supabase branch (project ref vhgreqsfgdjgiaowrfsq),
+// not production (heurpehcwbhohwklqnir). This file only diverges from production
+// on the staging git branch — do not carry this change into main.
+const SUPABASE_URL = "https://epxqddygoarwxmbshvvx.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldXJwZWhjd2Job2h3a2xxbmlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1Mjg1OTAsImV4cCI6MjA4OTEwNDU5MH0.53GF3SNG4gmwUGKNdaZx5i8PVy4f73FN7x53jna_l9w";
-const SUPABASE_STORAGE_KEY = "sb-heurpehcwbhohwklqnir-auth-token";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc";
+const SUPABASE_STORAGE_KEY = "sb-epxqddygoarwxmbshvvx-auth-token";
 
 const authStorage = typeof window !== "undefined"
   ? {

@@ -6,9 +6,11 @@ import { resolve } from "path";
 
 const BASE_URL = "https://app.pif.community";
 
-const SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co";
+// STAGING: points at the staging Supabase branch, not production. Keep in
+// sync with src/integrations/supabase/client.ts; do not carry into main.
+const SUPABASE_URL = "https://epxqddygoarwxmbshvvx.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldXJwZWhjd2Job2h3a2xxbmlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1Mjg1OTAsImV4cCI6MjA4OTEwNDU5MH0.53GF3SNG4gmwUGKNdaZx5i8PVy4f73FN7x53jna_l9w";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc";
 
 interface SitemapEntry {
   path: string;
