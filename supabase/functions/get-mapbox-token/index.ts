@@ -1,80 +1,22 @@
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
+// Intentionally unauthenticated: browsing the map/feed is public, auth is
+// only required for interacting with users/items. This mirrors what's
+// actually been running in production — the previous version of this file
+// (added an auth check via supabase.auth.getClaims()) was never actually
+// deployable: that method doesn't exist on the pinned supabase-js version,
+// so it would have failed on every request had it ever been deployed.
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    console.log("Handling OPTIONS preflight request");
-    return new Response(null, { 
-      headers: corsHeaders,
-      status: 204
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  try {
-    // Require authentication to prevent anonymous token harvesting
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const token_jwt = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: authError } = await supabase.auth.getClaims(token_jwt);
-    if (authError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const token = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
-    
-    console.log("Edge function: Token exists:", !!token);
-    
-    if (!token) {
-      console.error('MAPBOX_PUBLIC_TOKEN environment variable not set');
-      throw new Error('Mapbox token not configured in environment variables');
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        token,
-        expiresIn: 3600 // 1 hour in seconds
-      }),
-      {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'max-age=3600' // Allow caching for 1 hour
-        },
-        status: 200,
-      },
-    );
-  } catch (error) {
-    console.error('Error in get-mapbox-token function:', (error as Error).message);
-    return new Response(
-      JSON.stringify({ 
-        error: (error as Error).message,
-        timestamp: new Date().toISOString()
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      },
-    );
-  }
+  const token = Deno.env.get('MAPBOX_TOKEN') ?? '';
+  return new Response(
+    JSON.stringify({ token }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 });
