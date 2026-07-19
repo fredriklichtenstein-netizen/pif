@@ -49,7 +49,7 @@ export function AnnouncementModal() {
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) dismiss(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="overflow-x-hidden sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
             <Sparkles className="h-4 w-4" />
@@ -70,20 +70,20 @@ export function AnnouncementModal() {
           </CarouselContent>
         </Carousel>
 
-        <DialogFooter className="w-full min-w-0 flex-row flex-wrap items-center justify-between gap-2 sm:justify-between">
+        <DialogFooter className="grid w-full min-w-0 grid-cols-[1fr_auto] items-center gap-2 sm:grid-cols-[1fr_auto]">
           {announcements.length > 1 ? (
-            <div className="flex gap-1.5" aria-hidden="true">
+            <div className="flex min-w-0 gap-1.5" aria-hidden="true">
               {announcements.map((_, i) => (
                 <span
                   key={i}
-                  className={`h-1.5 w-1.5 rounded-full ${i === index ? "bg-primary" : "bg-muted"}`}
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${i === index ? "bg-primary" : "bg-muted"}`}
                 />
               ))}
             </div>
           ) : (
             <span />
           )}
-          <Button onClick={handleNext} size="sm">
+          <Button onClick={handleNext} size="sm" className="shrink-0 justify-self-end">
             {isLast ? t("announcements.done") : t("announcements.next")}
           </Button>
         </DialogFooter>
