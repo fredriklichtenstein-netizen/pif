@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
 import {
@@ -9,27 +9,41 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useAnnouncements } from "@/hooks/useAnnouncements";
 
 export function AnnouncementModal() {
   const { t, i18n } = useTranslation();
   const { announcements, dismiss } = useAnnouncements();
+  const [api, setApi] = useState<CarouselApi>();
   const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setIndex(api.selectedScrollSnap());
+    onSelect();
+    api.on("select", onSelect);
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
 
   if (announcements.length === 0) return null;
 
-  const current = announcements[index];
   const isLast = index === announcements.length - 1;
   const isSwedish = i18n.language?.startsWith("sv");
-  const title = isSwedish ? current.title_sv : current.title_en;
-  const body = isSwedish ? current.body_sv : current.body_en;
 
   const handleNext = () => {
     if (isLast) {
       dismiss();
     } else {
-      setIndex((i) => i + 1);
+      api?.scrollNext();
     }
   };
 
@@ -41,11 +55,20 @@ export function AnnouncementModal() {
             <Sparkles className="h-4 w-4" />
             {t("announcements.heading")}
           </div>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="whitespace-pre-wrap text-foreground">
-            {body}
-          </DialogDescription>
         </DialogHeader>
+
+        <Carousel setApi={setApi} opts={{ align: "start", loop: false }}>
+          <CarouselContent>
+            {announcements.map((a) => (
+              <CarouselItem key={a.id}>
+                <DialogTitle>{isSwedish ? a.title_sv : a.title_en}</DialogTitle>
+                <DialogDescription className="whitespace-pre-wrap text-foreground pt-2">
+                  {isSwedish ? a.body_sv : a.body_en}
+                </DialogDescription>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
 
         <DialogFooter className="flex-row items-center justify-between sm:justify-between">
           {announcements.length > 1 ? (
