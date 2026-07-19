@@ -12,11 +12,20 @@ export interface Announcement {
   published_at: string;
 }
 
+// A NULL watermark means "never seen any announcement" — covers brand-new
+// signups (handle_new_user() only sets `id`, leaving this column NULL). Cap
+// their welcome catch-up to the most recent few rather than the full
+// historical backlog.
+const NEW_USER_ANNOUNCEMENT_CAP = 3;
+
 /**
- * Fetches announcements published since the user last saw one, oldest
- * first. `dismiss` bumps the watermark (profiles.last_seen_announcement_at)
- * so the same batch never shows again — only announcements published after
- * this point will trigger the popup next time.
+ * Fetches announcements the user hasn't seen yet, oldest first. A brand-new
+ * user (no watermark yet) gets at most the `NEW_USER_ANNOUNCEMENT_CAP` most
+ * recent published announcements as a welcome catch-up; everyone else gets
+ * everything published since their last-seen watermark, uncapped. `dismiss`
+ * bumps the watermark (profiles.last_seen_announcement_at) so the same
+ * batch never shows again — only newly published announcements will
+ * trigger the popup next time.
  */
 export function useAnnouncements() {
   const { user } = useGlobalAuth();
@@ -36,7 +45,19 @@ export function useAnnouncements() {
         if (profileError || !profile) return;
 
         const watermark = (profile as any).last_seen_announcement_at;
-        if (!watermark) return;
+
+        if (!watermark) {
+          const { data, error } = await supabase
+            .from("feature_announcements")
+            .select("id, title_sv, title_en, body_sv, body_en, published_at")
+            .order("published_at", { ascending: false })
+            .limit(NEW_USER_ANNOUNCEMENT_CAP);
+
+          if (!cancelled && !error && data) {
+            setAnnouncements((data as Announcement[]).slice().reverse());
+          }
+          return;
+        }
 
         const { data, error } = await supabase
           .from("feature_announcements")
