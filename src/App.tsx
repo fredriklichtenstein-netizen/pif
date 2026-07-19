@@ -23,6 +23,7 @@ import { useCityBackfill } from "@/hooks/profile/useCityBackfill";
 import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
 import { StagingBadge } from "@/components/debug/StagingBadge";
+import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
 import { debugLog } from "@/utils/authDebug";
 import "./App.css";
 
@@ -79,6 +80,7 @@ function App() {
                 </main>
               </NetworkStatusWrapper>
               <ReceiverConfirmationWatcher />
+              <AnnouncementModal />
               <FeedbackFab />
               <Toaster />
               <Sonner />
