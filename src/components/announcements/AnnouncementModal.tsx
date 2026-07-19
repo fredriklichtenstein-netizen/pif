@@ -70,7 +70,7 @@ export function AnnouncementModal() {
           </CarouselContent>
         </Carousel>
 
-        <DialogFooter className="flex-row flex-wrap items-center justify-between gap-2 sm:justify-between">
+        <DialogFooter className="w-full min-w-0 flex-row flex-wrap items-center justify-between gap-2 sm:justify-between">
           {announcements.length > 1 ? (
             <div className="flex gap-1.5" aria-hidden="true">
               {announcements.map((_, i) => (
