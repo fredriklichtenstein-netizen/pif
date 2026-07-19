@@ -111,6 +111,16 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   (dropped at some point without updating the function) — it's already dead/broken there, so
   branches intentionally don't recreate `user_roles` either. Not a bug to fix, just a known
   pre-existing gap.
+- **Storage buckets aren't part of migration replay either** — same category of gap as the schema
+  one above. Production has 5 buckets (`avatars`, `post-media`, `profile-photos`, `post-images`,
+  `brand-assets`); only `avatars`/`post-media` were ever captured by a tracked migration, so a
+  fresh branch starts without the other 3 (and their `storage.objects` RLS policies), breaking
+  profile/post creation with "Bucket not found". Fixed the same way: a corrective migration
+  (`add_missing_storage_buckets_and_policies`, version `20260717160000`) inserts the missing
+  `storage.buckets` rows and recreates their policies. **Note**: `CREATE POLICY IF NOT EXISTS` is
+  not valid Postgres syntax (caught this before it broke a future branch) — the idempotent pattern
+  for policies is `DROP POLICY IF EXISTS "name" ON table; CREATE POLICY "name" ...`, mirroring the
+  `DROP FUNCTION IF EXISTS` pattern already used for functions.
 - **Edge Functions and their secrets are not automatically synced** to a new Supabase branch —
   deploy each function and `supabase secrets set` (CLI, linked via `--project-ref`, no DB password
   needed — Management-API-based auth) separately. Direct Postgres connections (e.g. for
