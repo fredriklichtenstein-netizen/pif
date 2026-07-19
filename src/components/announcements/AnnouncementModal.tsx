@@ -57,12 +57,12 @@ export function AnnouncementModal() {
           </div>
         </DialogHeader>
 
-        <Carousel setApi={setApi} opts={{ align: "start", loop: false }}>
+        <Carousel setApi={setApi} opts={{ align: "start", loop: false }} className="min-w-0">
           <CarouselContent>
             {announcements.map((a) => (
-              <CarouselItem key={a.id}>
+              <CarouselItem key={a.id} className="min-w-0">
                 <DialogTitle>{isSwedish ? a.title_sv : a.title_en}</DialogTitle>
-                <DialogDescription className="whitespace-pre-wrap text-foreground pt-2">
+                <DialogDescription className="whitespace-pre-wrap text-foreground pt-2 break-words">
                   {isSwedish ? a.body_sv : a.body_en}
                 </DialogDescription>
               </CarouselItem>
