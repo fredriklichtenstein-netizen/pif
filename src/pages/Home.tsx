@@ -147,6 +147,26 @@ export default function Home() {
           </div>
         </div>
         
+        {/* How it works */}
+        <div className="max-w-3xl mx-auto w-full mb-8">
+          <h2 className="text-center text-lg sm:text-xl font-semibold text-gray-800 mb-4">
+            {t('home.how_it_works_title')}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((step) => (
+              <div key={step} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-green-500 text-white text-sm font-semibold shrink-0">
+                    {step}
+                  </span>
+                  <h3 className="font-semibold text-gray-800">{t(`home.how_it_works_step${step}_title`)}</h3>
+                </div>
+                <p className="text-sm text-gray-600">{t(`home.how_it_works_step${step}_description`)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Action Cards */}
         <div className="space-y-4 mb-8 max-w-3xl mx-auto w-full">
           {/* Main CTA - Browse */}
