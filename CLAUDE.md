@@ -132,7 +132,22 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   cherry-pick (never a full `git merge`) the relevant commits onto `main` — a full merge would try
   to pull `staging`'s `client.ts`/`generate-sitemap.ts` (pointed at the staging Supabase project)
   into production. Any new DB migration gets promoted separately, directly via
-  `mcp__claude_ai_Supabase__execute_sql`/`apply_migration` against the production project ID.
+  `mcp__claude_ai_Supabase__execute_sql`/`apply_migration` against the production project ID. Once
+  the user has confirmed a fix works, publishing production via
+  `mcp__claude_ai_Lovable__deploy_project` (project `14386dc1-ec27-45d6-a49e-cf90acbe718a`) is
+  pre-authorized — no need to ask each time, though still confirm `latest_commit_sha` matches
+  before deploying and sanity-check the real domain after.
+- **Trap: backfilled watermark/timestamp columns can race against pre-curated content.** The
+  `feature_announcements` table's `add_feature_announcements` migration gave existing rows
+  `last_seen_announcement_at DEFAULT now()` so nobody sees a historical backlog on rollout — but
+  because that migration was promoted to production a day *after* the 3 real announcements were
+  authored/published on staging, applying it backfilled every existing user's watermark to a
+  timestamp *after* those announcements' `published_at`, silently hiding them from every current
+  user. Fixed with a one-off `UPDATE profiles SET last_seen_announcement_at = NULL` across all
+  production rows post-promotion. General lesson: when a migration adds a `DEFAULT now()`
+  watermark/seen-at column meant to gate pre-existing rows against new content, check whether any
+  of that content was already authored before promotion — if so, the backfilled default will
+  likely land after it and need a manual correction pass.
 - **Mapbox token**: currently the account's unrestricted default public token. Mapbox recommends
   a URL-restricted token instead (dashboard → Tokens → Create token → restrict to
   `app.pif.community`, `pif.today`, and the Lovable preview domains) — flagged, not yet done.
