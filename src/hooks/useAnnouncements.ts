@@ -81,10 +81,17 @@ export function useAnnouncements() {
   const dismiss = useCallback(() => {
     if (!user?.id) return;
     setAnnouncements([]);
+    // .update().eq() builds a lazy query — without .then() (or an await)
+    // the request is never actually sent, so this must stay chained.
     void supabase
       .from("profiles")
       .update({ last_seen_announcement_at: new Date().toISOString() } as any)
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .then(({ error }) => {
+        if (error) {
+          console.error("[useAnnouncements] failed to persist dismiss watermark:", error);
+        }
+      });
   }, [user?.id]);
 
   return { announcements, dismiss };
