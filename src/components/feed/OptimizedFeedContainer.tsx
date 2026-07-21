@@ -8,6 +8,7 @@ import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
 import { DemoModeBanner } from './DemoModeBanner';
 import { FeedFiltersPanel } from './FeedFiltersPanel';
+import { HowItWorksBanner } from '@/components/home/HowItWorksBanner';
 
 
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
@@ -271,6 +272,7 @@ function OptimizedFeedBody({
   ) : null;
 
   const filtersPanel = (
+    <>
     <div className="flex items-center gap-2 flex-wrap">
       <FeedFiltersPanel
         posts={filteredPosts}
@@ -329,6 +331,8 @@ function OptimizedFeedBody({
         </button>
       )}
     </div>
+    <HowItWorksBanner />
+    </>
   );
 
 
