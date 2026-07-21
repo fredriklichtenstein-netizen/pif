@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
 import { DEMO_MODE } from "@/config/demoMode";
 import { LanguageSelector } from "@/components/common/LanguageSelector";
+import { HowItWorksSteps } from "@/components/home/HowItWorksSteps";
 
 export default function Home() {
   const { toast } = useToast();
@@ -152,19 +153,7 @@ export default function Home() {
           <h2 className="text-center text-lg sm:text-xl font-semibold text-gray-800 mb-4">
             {t('home.how_it_works_title')}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center space-x-3 mb-2">
-                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-green-500 text-white text-sm font-semibold shrink-0">
-                    {step}
-                  </span>
-                  <h3 className="font-semibold text-gray-800">{t(`home.how_it_works_step${step}_title`)}</h3>
-                </div>
-                <p className="text-sm text-gray-600">{t(`home.how_it_works_step${step}_description`)}</p>
-              </div>
-            ))}
-          </div>
+          <HowItWorksSteps />
         </div>
 
         {/* Action Cards */}
