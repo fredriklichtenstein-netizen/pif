@@ -14,7 +14,7 @@ const SUPABASE_STORAGE_KEY = "sb-epxqddygoarwxmbshvvx-auth-token";
 // Supabase project (e.g. the staging branch's own project ref) — lets the UI
 // show a staging indicator so it's never mistaken for production again.
 const PRODUCTION_SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co";
-export const IS_STAGING = SUPABASE_URL !== PRODUCTION_SUPABASE_URL;
+export const IS_STAGING = (SUPABASE_URL as string) !== PRODUCTION_SUPABASE_URL;
 
 const authStorage = typeof window !== "undefined"
   ? {
