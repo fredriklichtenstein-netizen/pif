@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { ProfileRatingDisplay } from "@/components/rating/ProfileRatingDisplay";
 import { getCropPreviewStyle } from "@/utils/image/cropPreview";
+import { ImageLightbox } from "@/components/item/ImageLightbox";
 
 interface Profile {
   id: string;
@@ -151,6 +152,7 @@ export default function PublicProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
+  const [avatarLightboxOpen, setAvatarLightboxOpen] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -187,12 +189,27 @@ export default function PublicProfile() {
       <div className="flex flex-col items-center justify-center py-8 px-2 min-h-[70vh] pb-24">
         <Card className="p-6 rounded-xl shadow max-w-lg w-full">
           <div className="flex flex-col items-center">
-            <AvatarImage
-              src={profile.avatar_url || undefined}
-              alt={formatPublicName(profile)}
-              size={96}
-              className="mb-3 border"
-            />
+            <button
+              type="button"
+              onClick={() => profile.avatar_url && setAvatarLightboxOpen(true)}
+              className={profile.avatar_url ? "cursor-zoom-in" : "cursor-default"}
+              aria-label={t("interactions.expand_image")}
+            >
+              <AvatarImage
+                src={profile.avatar_url || undefined}
+                alt={formatPublicName(profile)}
+                size={96}
+                className="mb-3 border"
+              />
+            </button>
+            {profile.avatar_url && (
+              <ImageLightbox
+                images={[profile.avatar_url]}
+                open={avatarLightboxOpen}
+                onClose={() => setAvatarLightboxOpen(false)}
+                alt={formatPublicName(profile)}
+              />
+            )}
             <ProfileRatingDisplay userId={profile.id} className="mb-2" />
             <div className="text-xl font-semibold mb-2">{formatPublicName(profile)}</div>
             {coordinates && (
