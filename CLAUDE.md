@@ -135,8 +135,15 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   `mcp__claude_ai_Supabase__execute_sql`/`apply_migration` against the production project ID. Once
   the user has confirmed a fix works, publishing production via
   `mcp__claude_ai_Lovable__deploy_project` (project `14386dc1-ec27-45d6-a49e-cf90acbe718a`) is
-  pre-authorized — no need to ask each time, though still confirm `latest_commit_sha` matches
-  before deploying and sanity-check the real domain after.
+  pre-authorized — no need to ask each time. **Don't wait for the editor-preview build
+  (`id-preview-*.lovable.app`) to catch up before calling `deploy_project`** — that preview
+  pipeline is separate from what `deploy_project` actually builds/publishes, and can lag the
+  pushed commit by many minutes for no reason connected to publish-readiness. Just push, then call
+  `deploy_project` directly; verify success afterward via `get_project`'s `latest_commit_sha` (it
+  will match promptly) and by grepping the real domain's served bundle for a marker string from the
+  change — checking only the main `index-*.js` chunk can give a false "missing" since route-level
+  code lives in separate lazy-loaded chunks; a matching commit sha plus a correctly-rendered
+  screenshot is sufficient confirmation on its own.
 - **Trap: backfilled watermark/timestamp columns can race against pre-curated content.** The
   `feature_announcements` table's `add_feature_announcements` migration gave existing rows
   `last_seen_announcement_at DEFAULT now()` so nobody sees a historical backlog on rollout — but
