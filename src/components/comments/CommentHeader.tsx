@@ -30,7 +30,7 @@ export function CommentHeader({ author, createdAt }: CommentHeaderProps) {
   return (
     <div className="flex items-center gap-2">
       {author.id ? (
-        <Link to={`/user/${author.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link to={`/feed?user=${author.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           {inner}
         </Link>
       ) : (

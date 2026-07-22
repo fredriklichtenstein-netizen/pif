@@ -36,7 +36,7 @@ export function InterestUserItem({ user, isOwner, onSelect }: InterestUserItemPr
   return (
     <div className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded-md transition-all">
       <Link
-        to={`/user/${userProfileId}`}
+        to={`/feed?user=${userProfileId}`}
         className="flex items-center gap-2 hover:underline"
         target="_blank"
         rel="noopener noreferrer"

@@ -872,7 +872,7 @@ export function InterestSelectionList({
             >
               <div className="flex flex-wrap items-center gap-2">
                 <Link
-                  to={`/user/${r.user_id}`}
+                  to={`/feed?user=${r.user_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 min-w-0 flex-1 hover:underline"

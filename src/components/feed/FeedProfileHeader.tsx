@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProfileRatingDisplay } from "@/components/rating/ProfileRatingDisplay";
 import { ProfileLocationMap } from "@/components/profile/map/ProfileLocationMap";
+import { ImageLightbox } from "@/components/item/ImageLightbox";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import {
@@ -33,6 +34,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
   const [enriched, setEnriched] = useState<UserFilterStub | null>(stub ?? null);
   const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
+  const [avatarLightboxOpen, setAvatarLightboxOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,9 +75,22 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
   return (
     <div className="bg-card border-b border-border px-3 py-3">
       <div className="flex items-center gap-3">
-        <div className="h-14 w-14 rounded-full overflow-hidden flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => display.avatar && setAvatarLightboxOpen(true)}
+          className={`h-14 w-14 rounded-full overflow-hidden flex-shrink-0 ${display.avatar ? "cursor-zoom-in" : "cursor-default"}`}
+          aria-label={t("interactions.expand_image")}
+        >
           <AvatarImage src={display.avatar} alt={display.name} size={56} className="w-full h-full object-cover" />
-        </div>
+        </button>
+        {display.avatar && (
+          <ImageLightbox
+            images={[display.avatar]}
+            open={avatarLightboxOpen}
+            onClose={() => setAvatarLightboxOpen(false)}
+            alt={display.name}
+          />
+        )}
         <div className="flex-1 min-w-0">
           <div className="text-base font-semibold truncate">
             {display.name || t("interactions.user", "Användare")}

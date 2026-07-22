@@ -166,7 +166,7 @@ export function PaginatedUserList({
           {users.map((user) => (
             <Link
               key={user.id}
-              to={`/user/${user.id}`}
+              to={`/feed?user=${user.id}`}
               onClick={() => setShowPopup(false)}
               className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
             >
