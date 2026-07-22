@@ -607,7 +607,7 @@ export function InterestSelectionList({
             );
             await postPifSystemMessage(
               convId,
-              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+              "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
             );
           }
         }
