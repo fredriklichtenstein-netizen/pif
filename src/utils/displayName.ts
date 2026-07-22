@@ -12,7 +12,7 @@ export function resolveDisplayName(
   if (!profile) return fallback;
   const first = profile.first_name?.trim();
   const last = profile.last_name?.trim();
-  if (first && last) return `${first} ${last.charAt(0)}.`;
+  if (first && last) return `${first} ${Array.from(last)[0]}.`;
   if (first) return first;
   if (last) return last;
   const username = profile.username?.trim();

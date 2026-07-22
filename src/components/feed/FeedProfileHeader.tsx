@@ -46,8 +46,9 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;
+        const lastInitial = data.last_name ? Array.from(data.last_name)[0] : "";
         const name =
-          [data.first_name, data.last_name?.[0] ? `${data.last_name[0]}.` : ""]
+          [data.first_name, lastInitial ? `${lastInitial}.` : ""]
             .filter(Boolean)
             .join(" ") || stub?.name || "";
         const city = (data as any).city;

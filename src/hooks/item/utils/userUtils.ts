@@ -42,7 +42,7 @@ export const extractUserFromProfile = (
   
   if (firstName && lastName.length > 0) {
     // Preferred: "First L"
-    displayName = `${firstName} ${lastName.charAt(0)}`;
+    displayName = `${firstName} ${Array.from(lastName)[0]}`;
   } else if (firstName) {
     // Fallback: Just first name
     displayName = firstName;
