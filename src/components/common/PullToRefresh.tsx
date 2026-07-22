@@ -87,14 +87,28 @@ export function PullToRefresh({
 
     const onTouchMove = (e: TouchEvent) => {
       if (startYRef.current == null || refreshingRef.current) return;
+      // Re-validate on every move, not just at touchstart. If native
+      // scroll has genuinely engaged (e.g. the initial touch registered
+      // a hair of downward jitter before the user's real "keep scrolling
+      // down" motion took over), scrollTop will have moved off 0 -- bail
+      // out and let the browser's own scrolling continue undisturbed
+      // rather than fighting it with a stale, no-longer-valid gesture.
+      if (!isAtTop()) {
+        setPull(0);
+        activeRef.current = false;
+        startYRef.current = null;
+        return;
+      }
       const dy = e.touches[0].clientY - startYRef.current;
       if (dy <= 0) {
         setPull(0);
         activeRef.current = false;
         return;
       }
-      // Engage only once the user has clearly pulled down at the top.
-      if (!activeRef.current && dy > 8) activeRef.current = true;
+      // Engage only once the user has clearly, deliberately pulled down --
+      // a low threshold here false-positives on ordinary contact jitter at
+      // the start of a normal downward scroll gesture.
+      if (!activeRef.current && dy > 24) activeRef.current = true;
       if (!activeRef.current) return;
       // Resist the pull so it feels rubber-banded.
       const eased = Math.min(maxPull, dy * 0.55);
