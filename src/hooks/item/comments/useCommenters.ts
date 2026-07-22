@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "../utils/userUtils";
+import { resolveDisplayName } from "@/utils/displayName";
 
 export const useCommenters = () => {
   // Fetch users who commented on the item
@@ -38,7 +39,7 @@ export const useCommenters = () => {
       // Map profiles to User objects
       return profilesData.map(profile => ({
         id: profile.id,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
+        name: resolveDisplayName(profile, 'User'),
         avatar: profile.avatar_url || undefined,
       }));
     } catch (error) {

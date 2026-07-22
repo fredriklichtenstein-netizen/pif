@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@/hooks/item/utils/userUtils";
+import { resolveDisplayName } from "@/utils/displayName";
 
 /**
  * Fetch the unique users who have commented on a given item.
@@ -33,8 +34,7 @@ export const fetchCommentersForItem = async (
 
   return profiles.map((p: any) => ({
     id: p.id,
-    name:
-      `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
+    name: resolveDisplayName(p, "User"),
     avatar: p.avatar_url || undefined,
   }));
 };

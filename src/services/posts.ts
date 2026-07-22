@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CreatePostInput, Post } from "@/types/post";
 import { parseCoordinatesFromDB } from "@/types/post";
+import { resolveDisplayName } from "@/utils/displayName";
 
 /**
  * Add a new post to the database
@@ -124,9 +125,7 @@ export const getPosts = async (): Promise<Post[]> => {
         coordinates: parsedCoordinates,
         postedBy: {
           id: item.user_id,
-          name: item.profiles 
-            ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 'Unknown User'
-            : 'Unknown User',
+          name: resolveDisplayName(item.profiles, 'Unknown User'),
           avatar: item.profiles?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown'
         },
         createdAt: item.created_at || '',

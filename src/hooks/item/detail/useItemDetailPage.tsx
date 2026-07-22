@@ -7,6 +7,7 @@ import { parseCoordinatesFromDB } from '@/types/post';
 import { useItemCard } from '@/hooks/useItemCard';
 import { useTranslation } from 'react-i18next';
 import { safeParseJSON, safeStringify } from '@/utils/safeStorage';
+import { resolveDisplayName } from '@/utils/displayName';
 
 
 export function useItemDetailPage() {
@@ -110,9 +111,7 @@ export function useItemDetailPage() {
     
     postedBy = {
       id: profileData?.id || "",
-      name: profileData?.first_name 
-        ? `${profileData.first_name} ${profileData.last_name || ''}`
-        : "Unknown User",
+      name: resolveDisplayName(profileData, "Unknown User"),
       avatar: profileData?.avatar_url || ""
     };
 
