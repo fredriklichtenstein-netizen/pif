@@ -352,7 +352,7 @@ export function usePifCompletion(
           await postPifSystemMessage(
             conversationId,
             pick(
-              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+              "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
               "Önskan är uppfylld! Tack för att ni använde PIF. 🎉",
             ),
           );
@@ -395,7 +395,7 @@ export function usePifCompletion(
           await postPifSystemMessage(
             conversationId,
             pick(
-              "Du markerade pifen som genomförd.",
+              "Du markerade piffen som genomförd.",
               "Du markerade önskan som uppfylld.",
             ),
             { targetUserId: currentUserId ?? null },
@@ -403,7 +403,7 @@ export function usePifCompletion(
           await postPifSystemMessage(
             conversationId,
             pick(
-              "Piffaren har markerat pifen som genomförd.",
+              "Piffaren har markerat piffen som genomförd.",
               "Önskaren har markerat önskan som uppfylld.",
             ),
             { targetUserId: otherUserId ?? null },
@@ -411,7 +411,7 @@ export function usePifCompletion(
           await postPifSystemMessage(
             conversationId,
             pick(
-              "Pifen är genomförd! Tack för att ni använde PIF. 🎉",
+              "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
               "Önskan är uppfylld! Tack för att ni använde PIF. 🎉",
             ),
           );

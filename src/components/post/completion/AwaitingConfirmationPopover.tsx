@@ -39,7 +39,7 @@ export function AwaitingConfirmationPopover({
   const isWish = itemType === "request";
 
   const triggerLabel = receiverConfirmed
-    ? t("interactions.awaiting_both_confirmed", "Genomför pifen")
+    ? t("interactions.awaiting_both_confirmed", "Genomför piffen")
     : t("interactions.awaiting_pill", "Väntar på bekräftelse");
 
   const headline = isWish

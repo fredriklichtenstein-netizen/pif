@@ -415,9 +415,9 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         {isClosed ? (
           <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
             {completion.pifStatus === "archived"
-              ? (isRequest ? "Önskan har arkiverats — konversationen är avslutad." : "Pifen har arkiverats — konversationen är avslutad.")
+              ? (isRequest ? "Önskan har arkiverats — konversationen är avslutad." : "Piffen har arkiverats — konversationen är avslutad.")
               : completion.pifStatus === "completed"
-                ? (isRequest ? "Önskan är uppfylld — konversationen är avslutad." : "Pifen är genomförd — konversationen är avslutad.")
+                ? (isRequest ? "Önskan är uppfylld — konversationen är avslutad." : "Piffen är genomförd — konversationen är avslutad.")
                 : "Den här konversationen är avslutad."}
           </div>
         ) : (
@@ -483,7 +483,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
               <AlertDialogHeader>
                 <AlertDialogTitle>Ångra val av mottagare</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Vill du återöppna pifen så att andra kan visa intresse, eller arkivera den helt?
+                  Vill du återöppna piffen så att andra kan visa intresse, eller arkivera den helt?
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
@@ -492,14 +492,14 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
                   className="w-full"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  Återöppna pifen
+                  Återöppna piffen
                 </AlertDialogAction>
                 <AlertDialogAction
                   onClick={() => handleWithdraw("archive")}
                   className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   <Archive className="h-4 w-4 mr-2" />
-                  Arkivera pifen
+                  Arkivera piffen
                 </AlertDialogAction>
                 <AlertDialogCancel className="w-full mt-0">
                   Avbryt
