@@ -144,7 +144,7 @@ export function NotificationList() {
                   const name = notif.actor_name || t('someone');
                   const namePart = notif.actor_id ? (
                     <Link
-                      to={`/user/${notif.actor_id}`}
+                      to={`/feed?user=${notif.actor_id}`}
                       className="font-semibold text-primary hover:underline"
                       target="_blank"
                       rel="noopener noreferrer"

@@ -43,7 +43,7 @@ export function ProfilePopup({
           ) : null}
           {userId && (
             <Button asChild variant="outline" className="mt-2 w-full">
-              <Link to={`/user/${userId}`} onClick={() => onOpenChange(false)}>
+              <Link to={`/feed?user=${userId}`} onClick={() => onOpenChange(false)}>
                 {t("messages.view_full_profile", { defaultValue: "Visa profil" })}
               </Link>
             </Button>

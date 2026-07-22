@@ -48,7 +48,6 @@ const EmailConfirmation = enhancedLazy(() => import("@/pages/EmailConfirmation")
 const ResetPassword = enhancedLazy(() => import("@/pages/ResetPassword"));
 const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
 const ProfileEdit = enhancedLazy(() => import("@/pages/ProfileEdit"));
-const PublicProfile = enhancedLazy(() => import("@/pages/PublicProfile"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
 const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
@@ -70,7 +69,6 @@ export const publicRoutes = [
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
   { path: "/item/:id", element: gated(withSuspense(ItemDetail)) },
-  { path: "/user/:id", element: gated(withSuspense(PublicProfile)) },
   { path: "/share/:id", element: withSuspense(ShareRedirect) },
   { path: "/privacy", element: withSuspense(Privacy) },
   { path: "*", element: withSuspense(NotFound) },

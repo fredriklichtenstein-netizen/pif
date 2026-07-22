@@ -172,7 +172,7 @@ export const recoverFromCorruptedSession = async (
       /* noop */
     }
     // Only redirect away when the current page actually requires auth.
-    // Public/read-only pages (feed, map, item details, public profiles,
+    // Public/read-only pages (feed, map, item details,
     // share redirects) should keep rendering after we've cleared the
     // bad session — subsequent fetches just go through as anon.
     if (typeof window !== "undefined") {
@@ -182,7 +182,6 @@ export const recoverFromCorruptedSession = async (
         "/reset-password",
         "/email-confirmation",
         "/item/",
-        "/user/",
         "/share/",
       ];
       const isPublic =

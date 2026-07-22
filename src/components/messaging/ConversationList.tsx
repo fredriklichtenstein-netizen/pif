@@ -79,7 +79,7 @@ export function ConversationList({
         <div className="flex items-start gap-3">
           {otherParticipant?.user_id ? (
             <Link
-              to={`/user/${otherParticipant.user_id}`}
+              to={`/feed?user=${otherParticipant.user_id}`}
               className="flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >

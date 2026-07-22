@@ -58,7 +58,7 @@ export function InteractionsList({
       {users.map((user) => (
         <Link
           key={user.id}
-          to={`/user/${user.id}`}
+          to={`/feed?user=${user.id}`}
           className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors"
         >
           <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
