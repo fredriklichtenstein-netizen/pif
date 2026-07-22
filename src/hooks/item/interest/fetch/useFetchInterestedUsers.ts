@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "../../utils/userUtils";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
+import { resolveDisplayName } from "@/utils/displayName";
 
 export const useFetchInterestedUsers = () => {
   const fetchInterestedUsersCore = async (numericId: number): Promise<User[]> => {
@@ -29,10 +30,9 @@ export const useFetchInterestedUsers = () => {
         const profile = row.profiles;
         if (!profile || seen.has(profile.id)) continue;
         seen.add(profile.id);
-        const name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User';
         users.push({
           id: profile.id,
-          name,
+          name: resolveDisplayName(profile, 'User'),
           avatar: profile.avatar_url || undefined,
         });
       }

@@ -12,6 +12,7 @@ import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useMyLikedStore } from "@/stores/myLikedStore";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
+import { resolveDisplayName } from "@/utils/displayName";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -172,7 +173,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       
       const users = profilesData.map(profile => ({
         id: profile.id,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
+        name: resolveDisplayName(profile, 'User'),
         avatar: profile.avatar_url || undefined,
       }));
       

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@/hooks/item/utils/userUtils";
+import { resolveDisplayName } from "@/utils/displayName";
 
 /**
  * Paginated fetchers for the like / interest / commenter popovers.
@@ -14,7 +15,7 @@ const COMMENT_FETCH_BATCH = 60;
 
 const buildUser = (p: any): User => ({
   id: p.id,
-  name: `${p.first_name || ""} ${p.last_name || ""}`.trim() || "User",
+  name: resolveDisplayName(p, "User"),
   avatar: p.avatar_url || undefined,
 });
 
