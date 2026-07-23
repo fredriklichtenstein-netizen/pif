@@ -31,6 +31,8 @@ import { PifRatingModal } from "@/components/messaging/PifRatingModal";
 import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
 import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
 import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreSelection";
+import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
+import type { WithdrawCopy } from "@/hooks/item/useWithdrawInterestConfirm";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -92,6 +94,7 @@ export function InterestSelectionList({
   const [busyId, setBusyId] = useState<number | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [withdrawId, setWithdrawId] = useState<number | null>(null);
+  const [confirmSelfWithdrawOpen, setConfirmSelfWithdrawOpen] = useState(false);
   /** Helper currently being rated via the per-helper "Mark as granted" flow. */
   const [ratingHelper, setRatingHelper] = useState<{
     helperId: string;
@@ -683,6 +686,23 @@ export function InterestSelectionList({
     }
   };
 
+  // Same confirm-before-withdraw copy pattern as the main interest-toggle
+  // button's WithdrawInterestDialog (useWithdrawInterestConfirm) — reused
+  // here rather than duplicated so the two entry points stay in sync.
+  const selfWithdrawCopy: WithdrawCopy = isWish
+    ? {
+        title: t("interactions.withdraw_offer_title"),
+        description: t("interactions.withdraw_offer_description"),
+        cancel: t("interactions.withdraw_offer_cancel"),
+        confirm: t("interactions.withdraw_offer_confirm"),
+      }
+    : {
+        title: t("interactions.withdraw_interest_title"),
+        description: t("interactions.withdraw_interest_description"),
+        cancel: t("interactions.withdraw_interest_cancel"),
+        confirm: t("interactions.withdraw_interest_confirm"),
+      };
+
   // Full transparency by design: every candidate (owner or not, for both
   // pifs and wishes) sees the same full list of who's interested/selected
   // — see handleWithdrawOwnOffer below for the self-service withdraw path
@@ -918,7 +938,7 @@ export function InterestSelectionList({
                             size="icon"
                             variant="outline"
                             className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={handleWithdrawOwnOffer}
+                            onClick={() => setConfirmSelfWithdrawOpen(true)}
                             aria-label={t("interactions.withdraw_offer_btn", "Ångra")}
                             title={t("interactions.withdraw_offer_btn", "Ångra")}
                           >
@@ -956,7 +976,7 @@ export function InterestSelectionList({
                       size="icon"
                       variant="outline"
                       className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={handleWithdrawOwnOffer}
+                      onClick={() => setConfirmSelfWithdrawOpen(true)}
                       aria-label={t("interactions.withdraw_offer_btn", "Ångra")}
                       title={t("interactions.withdraw_offer_btn", "Ångra")}
                     >
@@ -1065,6 +1085,16 @@ export function InterestSelectionList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <WithdrawInterestDialog
+        open={confirmSelfWithdrawOpen}
+        onOpenChange={setConfirmSelfWithdrawOpen}
+        onConfirm={() => {
+          setConfirmSelfWithdrawOpen(false);
+          handleWithdrawOwnOffer();
+        }}
+        copy={selfWithdrawCopy}
+      />
 
       {ratingHelper && (
         <PifferRatingDialog
