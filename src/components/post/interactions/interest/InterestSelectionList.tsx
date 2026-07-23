@@ -683,11 +683,10 @@ export function InterestSelectionList({
     }
   };
 
-  // Fulfiller perspective (non-owner who has offered to fulfil a wish):
-  // collapse the popup to ONLY their own offering with a single "Ångra"
-  // (withdraw) button. Owner-only management controls (Vald,
-  // Markera som uppfylld, Meddelande, trust indicators) must never be
-  // shown to non-owners.
+  // Full transparency by design: every candidate (owner or not, for both
+  // pifs and wishes) sees the same full list of who's interested/selected
+  // — see handleWithdrawOwnOffer below for the self-service withdraw path
+  // available to a non-owner on their own row, whatever its status.
   //
   // The popup must differentiate the viewer's actual selection state:
   //   - selected → real fulfiller. Route through withdraw_receiver
@@ -695,15 +694,6 @@ export function InterestSelectionList({
   //   - not selected (pending/null) → mere candidate. Route through the
   //     shared pre-selection helper instead — withdraw_receiver would
   //     reject these with 403 "Not the selected receiver".
-  const ownRow = !isOwner && isWish && !!currentUserId
-    ? rows.find((r) => r.user_id === currentUserId)
-    : undefined;
-  const isFulfillerView = !!ownRow;
-  const isSelectedFulfiller = ownRow?.status === "selected";
-
-
-
-
   const handleWithdrawOwnOffer = async () => {
     if (!currentUserId) return;
     try {
@@ -754,72 +744,6 @@ export function InterestSelectionList({
       });
     }
   };
-
-  if (isFulfillerView) {
-    const own = ownRow!;
-    const headerTitle = isSelectedFulfiller
-      ? t("interactions.wish_selected_self_title", "Du har valts att uppfylla denna önskan")
-      : t("interactions.wish_offering_self_title", "Du erbjuder dig att uppfylla denna önskan");
-    return (
-      <div className="max-h-[340px] overflow-y-auto">
-        <div className="flex justify-between items-center mb-2 sticky top-0 bg-white z-10">
-          <h3 className="font-semibold text-sm">
-            {headerTitle}
-          </h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowPopup(false)}
-            className="h-6 w-6 p-0"
-          >
-            ×
-          </Button>
-        </div>
-        <div className="flex flex-col gap-1 p-2 rounded">
-          <div className="flex items-center gap-2">
-            <AvatarImage
-              src={own.profile?.avatar_url || ""}
-              size={28}
-              alt={displayName(own)}
-            />
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-medium truncate">
-                {displayName(own)}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {format(new Date(own.created_at), "d MMM HH:mm", { locale: dateLocale })}
-              </span>
-            </div>
-            {isSelectedFulfiller && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs py-1 px-2 h-auto whitespace-nowrap"
-                onClick={() => openConversationWith(own.user_id)}
-              >
-                <MessageCircle className="h-3 w-3 mr-1" />
-                {t("interactions.message_btn")}
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs py-1 px-2 h-auto whitespace-nowrap text-destructive hover:text-destructive"
-              onClick={handleWithdrawOwnOffer}
-            >
-              <UserMinus className="h-3 w-3 mr-1" />
-              {t("interactions.withdraw_offer_btn", "Ångra")}
-            </Button>
-          </div>
-          {own.note && (
-            <div className="ml-9 text-xs text-muted-foreground bg-amber-50 border border-amber-100 rounded px-2 py-1 italic">
-              “{own.note}”
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
 
 
   return (
@@ -1027,6 +951,18 @@ export function InterestSelectionList({
                           : t("interactions.select_btn")}
                     </Button>
                   )}
+                  {r.status === "pending" && !isOwner && currentUserId === r.user_id && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={handleWithdrawOwnOffer}
+                      aria-label={t("interactions.withdraw_offer_btn", "Ångra")}
+                      title={t("interactions.withdraw_offer_btn", "Ångra")}
+                    >
+                      <UserMinus className="h-3 w-3" />
+                    </Button>
+                  )}
                   {r.status === "not_selected" && !isWish && (
                     <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-xs whitespace-nowrap">
                       {t("interactions.not_selected_badge")}
@@ -1035,9 +971,11 @@ export function InterestSelectionList({
                 </div>
               </div>
 
-              {/* Helper note for wishes — visible only to the wish owner.
-                  The helper sees their own note in the "own" section above. */}
-              {isWish && r.note && isOwner && (
+              {/* Helper note for wishes — visible to the wish owner and to
+                  the helper who wrote it, but not to other candidates (the
+                  identity/status list is fully transparent by design, but a
+                  note's free-text content is more sensitive). */}
+              {isWish && r.note && (isOwner || currentUserId === r.user_id) && (
                 <div className="ml-9 text-xs text-muted-foreground bg-amber-50 border border-amber-100 rounded px-2 py-1 italic">
                   “{r.note}”
                 </div>
