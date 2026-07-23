@@ -389,20 +389,16 @@ export function InterestSelectionList({
       );
       if (rpcError) throw rpcError;
 
-      // select_wish_helper now returns jsonb { conversation_id, was_reselection };
-      // select_receiver still returns a bare uuid.
+      // Both select_wish_helper and select_receiver return
+      // jsonb { conversation_id, was_reselection }.
       let conversationId: string | null = null;
       let wasReselection = false;
-      if (isWish) {
-        if (rpcData && typeof rpcData === "object") {
-          conversationId = (rpcData as any).conversation_id ?? null;
-          wasReselection = !!(rpcData as any).was_reselection;
-        } else if (typeof rpcData === "string") {
-          // Defensive: pre-migration shape.
-          conversationId = rpcData;
-        }
-      } else {
-        conversationId = typeof rpcData === "string" ? rpcData : (rpcData ?? null);
+      if (rpcData && typeof rpcData === "object") {
+        conversationId = (rpcData as any).conversation_id ?? null;
+        wasReselection = !!(rpcData as any).was_reselection;
+      } else if (typeof rpcData === "string") {
+        // Defensive: pre-migration shape.
+        conversationId = rpcData;
       }
 
       // Fan-out notifications to interested users. For pifs this is now
