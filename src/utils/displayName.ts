@@ -25,5 +25,6 @@ export function resolveAvatarInitial(
   profile: Pick<Profile, "first_name" | "last_name" | "username"> | null | undefined,
   fallback: string
 ): string {
-  return resolveDisplayName(profile, fallback).charAt(0).toUpperCase();
+  const name = resolveDisplayName(profile, fallback);
+  return (Array.from(name)[0] || "").toUpperCase();
 }
