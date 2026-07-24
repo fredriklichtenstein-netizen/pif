@@ -97,7 +97,11 @@
       "address_subtext": "Your address is used to find pifs in your area.",
       "address_required": "Please select an address from the suggestions so we can find your neighborhood.",
       "phone_optional_label": "Phone number (optional)",
-      "phone_optional_placeholder": "E.g. +46 70 123 45 67"
+      "phone_optional_placeholder": "E.g. +46 70 123 45 67",
+      "pickup_prompt_title": "Want to set your default hand-off preferences?",
+      "pickup_prompt_subtext": "This makes creating new pifs faster — the settings are used automatically unless you set something different for a specific post. You can always change this later in Profile Settings.",
+      "pickup_prompt_yes": "Yes, add now",
+      "pickup_prompt_later": "Add later in Profile Settings"
     }
   }
 }

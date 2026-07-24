@@ -97,7 +97,11 @@
       "address_subtext": "Din adress används för att hitta piffar i ditt område.",
       "address_required": "Välj en adress från förslagen så vi kan hitta ditt område.",
       "phone_optional_label": "Telefonnummer (valfritt)",
-      "phone_optional_placeholder": "T.ex. 070-123 45 67"
+      "phone_optional_placeholder": "T.ex. 070-123 45 67",
+      "pickup_prompt_title": "Vill du ange dina standardinställningar för överlämning?",
+      "pickup_prompt_subtext": "Detta gör det snabbare att skapa nya piffar framöver — inställningarna används automatiskt om du inte anger något annat för ett specifikt inlägg. Du kan alltid ändra detta senare i profilinställningarna.",
+      "pickup_prompt_yes": "Ja, lägg till nu",
+      "pickup_prompt_later": "Lägg till senare i Profilinställningar"
     }
   }
 }

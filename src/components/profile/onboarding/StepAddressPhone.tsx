@@ -16,6 +16,8 @@ interface StepAddressPhoneProps {
   onPhoneChange: (phone: string, countryCode: string) => void;
   onBack: () => void;
   onComplete: () => void;
+  /** Override the final button's label — defaults to the "complete" copy. */
+  completeLabel?: string;
 }
 
 export function StepAddressPhone({
@@ -28,6 +30,7 @@ export function StepAddressPhone({
   onPhoneChange,
   onBack,
   onComplete,
+  completeLabel,
 }: StepAddressPhoneProps) {
   const { t, i18n } = useTranslation();
   const geocodeLang = i18n.language?.startsWith("sv") ? "sv" : "en";
@@ -94,7 +97,7 @@ export function StepAddressPhone({
           {t("profile.onboarding.back")}
         </Button>
         <Button className="flex-1" onClick={onComplete} disabled={!canComplete}>
-          {loading ? t("profile.onboarding.saving") : t("profile.onboarding.complete")}
+          {loading ? t("profile.onboarding.saving") : (completeLabel ?? t("profile.onboarding.complete"))}
         </Button>
       </div>
     </div>
