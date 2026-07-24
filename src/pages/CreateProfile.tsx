@@ -12,10 +12,12 @@ import { OnboardingProgress } from "@/components/profile/onboarding/OnboardingPr
 import { StepWelcomeName } from "@/components/profile/onboarding/StepWelcomeName";
 import { StepAvatar } from "@/components/profile/onboarding/StepAvatar";
 import { StepAddressPhone } from "@/components/profile/onboarding/StepAddressPhone";
+import { StepPickupPreferences } from "@/components/profile/onboarding/StepPickupPreferences";
+import type { PickupPreferencesData } from "@/components/profile/PickupPreferencesFields";
 
 type Coordinates = { lat: number; lng: number };
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 // Mirror PrivateRoute/Profile: never let the prefill auth fetch spin forever.
 const PREFILL_AUTH_TIMEOUT_MS = 5000;
@@ -49,7 +51,7 @@ export default function CreateProfile() {
   const [prefillLoading, setPrefillLoading] = useState(true);
   const [bailOut, setBailOut] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [loading, setLoading] = useState(false);
 
   const [firstName, setFirstName] = useState("");
@@ -64,6 +66,8 @@ export default function CreateProfile() {
   const [existingCity, setExistingCity] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+46");
+
+  const [pickupData, setPickupData] = useState<PickupPreferencesData>({});
 
   // Prefill from existing profile row, then decide where to resume.
   useEffect(() => {
@@ -216,17 +220,29 @@ export default function CreateProfile() {
       const trimmedPhone = phone.trim();
       const persistedPhone = trimmedPhone.length > 0 ? `${countryCode}${trimmedPhone}` : null;
 
+      const trimmedAddress = address.trim();
+      const floorParsed = pickupData.pickupFloor && pickupData.pickupFloor.trim() !== ""
+        ? parseInt(pickupData.pickupFloor, 10)
+        : null;
+
       const profileData: any = {
         id: user.id,
         username,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         avatar_url: avatarUrl,
-        address: address.trim(),
+        address: trimmedAddress,
         city,
         location_json: { lng: coordinates.lng, lat: coordinates.lat },
         phone: persistedPhone,
         onboarding_completed: true,
+        pickup_preference: pickupData.pickupPreference || null,
+        pickup_address: pickupData.pickupAddressMode === 'custom'
+          ? (pickupData.pickupAddress || null)
+          : (pickupData.pickupPreference ? trimmedAddress || null : null),
+        pickup_door_code: pickupData.pickupDoorCode || null,
+        pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
+        pickup_instructions: pickupData.pickupInstructions || null,
       };
 
       const { error: upsertError } = await supabase
@@ -334,6 +350,18 @@ export default function CreateProfile() {
                   setCountryCode(newCountryCode);
                 }}
                 onBack={() => setStep(2)}
+                onComplete={() => setStep(4)}
+                completeLabel={t("profile.onboarding.next")}
+              />
+            )}
+
+            {step === 4 && (
+              <StepPickupPreferences
+                address={address}
+                data={pickupData}
+                loading={loading}
+                onChange={setPickupData}
+                onBack={() => setStep(3)}
                 onComplete={handleComplete}
               />
             )}
