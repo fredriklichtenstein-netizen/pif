@@ -45,10 +45,10 @@ export default function AccountSettings() {
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-2 w-full">
+            <TabsList className="grid grid-cols-3 w-full">
               <TabsTrigger value="account">{t('settings.account')}</TabsTrigger>
+              <TabsTrigger value="notifications">{t('settings.notifications')}</TabsTrigger>
               {/* Temporarily hidden — keep code for future re-enable */}
-              {/* <TabsTrigger value="notifications">{t('settings.notifications')}</TabsTrigger> */}
               {/* <TabsTrigger value="privacy">{t('settings.privacy')}</TabsTrigger> */}
               <TabsTrigger value="danger" className="text-destructive">{t('settings.danger_zone')}</TabsTrigger>
             </TabsList>
