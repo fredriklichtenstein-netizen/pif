@@ -35,6 +35,13 @@ export function EmailNotifications({ preferences, onToggle }: EmailNotifications
           checked={preferences.email_item_updates}
           onToggle={() => onToggle("email_item_updates")}
         />
+
+        <NotificationToggle
+          id="email_announcements"
+          label={t('settings.feature_announcements')}
+          checked={preferences.email_announcements}
+          onToggle={() => onToggle("email_announcements")}
+        />
       </div>
     </div>
   );

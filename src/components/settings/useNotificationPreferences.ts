@@ -13,6 +13,7 @@ export function useNotificationPreferences() {
     email_messages: true,
     email_mentions: true,
     email_item_updates: true,
+    email_announcements: true,
     push_messages: true,
     push_mentions: true,
     push_item_updates: true,
@@ -41,6 +42,9 @@ export function useNotificationPreferences() {
           email_messages: Boolean(notificationPrefs.email_messages),
           email_mentions: Boolean(notificationPrefs.email_mentions),
           email_item_updates: Boolean(notificationPrefs.email_item_updates),
+          email_announcements: notificationPrefs.email_announcements !== undefined
+            ? Boolean(notificationPrefs.email_announcements)
+            : true,
           push_messages: Boolean(notificationPrefs.push_messages),
           push_mentions: Boolean(notificationPrefs.push_mentions),
           push_item_updates: Boolean(notificationPrefs.push_item_updates),
