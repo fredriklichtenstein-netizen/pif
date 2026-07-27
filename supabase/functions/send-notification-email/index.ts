@@ -10,6 +10,8 @@ const corsHeaders = {
 
 const NOTIFICATIONS_FROM = "PIF <notifications@pif.today>";
 const APP_URL = "https://app.pif.community";
+const LOGO_URL = "https://pif.today/pif-logo-long.png";
+const BRAND_TURQUOISE = "#00CC99";
 
 type NotificationType = "new_message_digest" | "new_comment" | "feature_announcement";
 
@@ -49,11 +51,11 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; color: #1f2937;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <span style="font-size: 20px; font-weight: 700; color: #1ABFA1;">PIF</span>
+        <img src="${LOGO_URL}" alt="PIF - Pay it Forward" height="32" style="height: 32px; width: auto;" />
       </div>
       ${bodyHtml}
       <div style="text-align: center; margin: 28px 0;">
-        <a href="${ctaUrl}" style="display: inline-block; background: #1ABFA1; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">${escape(ctaLabel)}</a>
+        <a href="${ctaUrl}" style="display: inline-block; background: ${BRAND_TURQUOISE}; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">${escape(ctaLabel)}</a>
       </div>
       <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 32px;">
         Du får det här mejlet för att du är medlem på PIF. Hantera dina mejlaviseringar under
@@ -131,6 +133,7 @@ serve(async (req) => {
       const commenterName = String(data.commenterName ?? "Någon");
       const itemTitle = String(data.itemTitle ?? "ditt inlägg");
       const itemId = String(data.itemId ?? "");
+      const commentId = data.commentId != null ? String(data.commentId) : "";
       const commentContent = data.commentContent ? String(data.commentContent).slice(0, 300) : "";
 
       const headline =
@@ -140,11 +143,12 @@ serve(async (req) => {
             ? `${commenterName} kommenterade i en tråd du är med i`
             : `${commenterName} kommenterade "${itemTitle}"`;
 
+      const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
       subject = headline;
       html = wrapEmail(
         `<h2 style="font-size: 18px;">${escape(headline)}</h2>
          ${commentContent ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(commentContent)}"</p>` : ""}`,
-        `${APP_URL}/item/${encodeURIComponent(itemId)}`,
+        commentId ? `${itemUrl}?comment=${encodeURIComponent(commentId)}` : itemUrl,
         "Visa inlägget",
       );
     } else if (type === "feature_announcement") {

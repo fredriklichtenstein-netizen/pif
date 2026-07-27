@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useLazyComments } from "@/hooks/comments/useLazyComments";
 import { useCommentActions } from "@/hooks/comments/useCommentActions";
@@ -35,8 +36,13 @@ export function LazyCommentsSection({
     useFallbackMode
   } = useLazyComments(itemId);
 
-  // Tracks the most recently added comment id so we can smoothly scroll to it.
-  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  // Tracks the most recently added comment id so we can smoothly scroll to
+  // it -- also seeded from ?comment=<id> so a notification link lands
+  // directly on (and highlights) the comment/reply it refers to.
+  const [searchParams] = useSearchParams();
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(
+    searchParams.get("comment"),
+  );
   const [reportTarget, setReportTarget] = useState<{ id: string; text: string } | null>(null);
 
   const findCommentText = (id: string): string => {
