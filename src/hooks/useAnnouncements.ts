@@ -10,6 +10,9 @@ export interface Announcement {
   body_sv: string;
   body_en: string;
   published_at: string;
+  action_url: string | null;
+  action_label_sv: string | null;
+  action_label_en: string | null;
 }
 
 // A NULL watermark means "never seen any announcement" — covers brand-new
@@ -49,7 +52,7 @@ export function useAnnouncements() {
         if (!watermark) {
           const { data, error } = await supabase
             .from("feature_announcements")
-            .select("id, title_sv, title_en, body_sv, body_en, published_at")
+            .select("id, title_sv, title_en, body_sv, body_en, published_at, action_url, action_label_sv, action_label_en")
             .order("published_at", { ascending: false })
             .limit(NEW_USER_ANNOUNCEMENT_CAP);
 

@@ -142,8 +142,17 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   `deploy_project` directly; verify success afterward via `get_project`'s `latest_commit_sha` (it
   will match promptly) and by grepping the real domain's served bundle for a marker string from the
   change — checking only the main `index-*.js` chunk can give a false "missing" since route-level
-  code lives in separate lazy-loaded chunks; a matching commit sha plus a correctly-rendered
-  screenshot is sufficient confirmation on its own.
+  code lives in separate lazy-loaded chunks.
+  **Trap confirmed on staging too, and there `latest_commit_sha`/screenshot are NOT sufficient on
+  their own** — both updated (commit sha matched, screenshot timestamp fresh) while the actual JS
+  served from `give-and-get-local.lovable.app` was still running code from ~4 commits earlier;
+  took ~40s longer than the API signals suggested before the real bundle caught up. The only
+  reliable check is fetching the live served bundle directly and grepping for a marker string from
+  the change, same as the production advice above — do this for staging `deploy_project` calls too,
+  don't stop at the API response. Concretely: `fetch('<staging-url>/')` → regex out
+  `assets/index-*.js` → fetch that → regex out the specific lazy chunk name (e.g.
+  `ItemCardWrapper-*.js`) → fetch that → search its text for the marker. Poll (re-fetch from
+  scratch, chunk hashes change each build) until the marker appears; don't trust one stale check.
 - **Trap: backfilled watermark/timestamp columns can race against pre-curated content.** The
   `feature_announcements` table's `add_feature_announcements` migration gave existing rows
   `last_seen_announcement_at DEFAULT now()` so nobody sees a historical backlog on rollout — but
