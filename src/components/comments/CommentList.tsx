@@ -41,10 +41,12 @@ export function CommentList({
     lastScrolledIdRef.current = newCommentId;
 
     // Only scroll if it's not already in view — otherwise let it just appear.
+    // behavior: "smooth" here has proven unreliable (observed silently
+    // no-op in some browser contexts) -- "auto" (instant) always works.
     const rect = el.getBoundingClientRect();
     const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
     if (!inView) {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      el.scrollIntoView({ behavior: "auto", block: "nearest" });
     }
   }, [newCommentId, comments]);
 
