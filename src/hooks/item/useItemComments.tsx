@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useComments } from "./useComments";
 import { Comment } from "@/types/comment";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
@@ -22,7 +23,12 @@ const hasAuthor = (list: Comment[], userId: string): boolean =>
 export const useItemComments = (itemId: string) => {
   const { user } = useGlobalAuth();
   const userId = user?.id;
-  const [showComments, setShowComments] = useState(false);
+  // A notification email/in-app link may deep-link straight to a comment via
+  // ?comment=<id> — auto-open the section in that case instead of requiring
+  // an extra tap.
+  const [searchParams] = useSearchParams();
+  const hasDeepLinkedComment = !!searchParams.get("comment");
+  const [showComments, setShowComments] = useState(hasDeepLinkedComment);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<Error | null>(null);

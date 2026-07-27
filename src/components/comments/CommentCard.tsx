@@ -18,10 +18,12 @@ interface CommentCardProps {
   onReport: (commentId: string) => void;
   currentUser?: string;
   level?: number;
+  highlightedCommentId?: string | null;
 }
 
 export function CommentCard({
   comment, onLike, onDelete, onEdit, onReply, onReport, currentUser = "", level = 0,
+  highlightedCommentId,
 }: CommentCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(comment.text);
@@ -48,10 +50,11 @@ export function CommentCard({
   };
   
   const authorName = comment.author.name || 'Anonymous';
+  const isHighlighted = highlightedCommentId != null && String(comment.id) === String(highlightedCommentId);
 
   return (
     <div className="space-y-4" data-comment-id={comment.id}>
-      <div className={`bg-gray-50 p-3 rounded-lg ${level > 0 ? 'ml-8' : ''}`}>
+      <div className={`p-3 rounded-lg transition-colors duration-1000 ${level > 0 ? 'ml-8' : ''} ${isHighlighted ? 'bg-primary/10 ring-2 ring-primary/40' : 'bg-gray-50'}`}>
         <div className="flex items-start gap-2">
           <div className="flex-1">
             <div className="flex items-center justify-between">
@@ -79,7 +82,7 @@ export function CommentCard({
       {comment.replies?.length > 0 && (
         <div className="space-y-4">
           {comment.replies.map((reply) => (
-            <CommentCard key={reply.id} comment={reply} onLike={onLike} onDelete={onDelete} onEdit={onEdit} onReply={onReply} onReport={onReport} currentUser={currentUser} level={level + 1} />
+            <CommentCard key={reply.id} comment={reply} onLike={onLike} onDelete={onDelete} onEdit={onEdit} onReply={onReply} onReport={onReport} currentUser={currentUser} level={level + 1} highlightedCommentId={highlightedCommentId} />
           ))}
         </div>
       )}

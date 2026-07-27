@@ -68,6 +68,7 @@ export function CommentList({
           onReply={onReply}
           onReport={onReport}
           currentUser={currentUserId}
+          highlightedCommentId={newCommentId}
         />
       ))}
     </div>
