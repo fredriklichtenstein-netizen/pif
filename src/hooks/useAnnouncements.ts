@@ -64,7 +64,7 @@ export function useAnnouncements() {
 
         const { data, error } = await supabase
           .from("feature_announcements")
-          .select("id, title_sv, title_en, body_sv, body_en, published_at")
+          .select("id, title_sv, title_en, body_sv, body_en, published_at, action_url, action_label_sv, action_label_en")
           .gt("published_at", watermark)
           .order("published_at", { ascending: true });
 
