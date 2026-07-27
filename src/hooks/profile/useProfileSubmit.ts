@@ -56,7 +56,6 @@ export const useProfileSubmit = (
         pickup_door_code: formData.pickupDoorCode || null,
         pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
         pickup_instructions: formData.pickupInstructions || null,
-        updated_at: new Date().toISOString(),
       } as any;
 
       // Optimistically update the cached profile so name/avatar appear instantly

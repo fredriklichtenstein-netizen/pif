@@ -72,9 +72,8 @@ export function useNotificationPreferences() {
 
       const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           notification_preferences: preferences as any,
-          updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
