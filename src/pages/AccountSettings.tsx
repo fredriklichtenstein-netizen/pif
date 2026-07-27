@@ -1,4 +1,5 @@
 import { useState, Suspense } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmailPasswordSettings } from "@/components/settings/EmailPasswordSettings";
@@ -24,8 +25,14 @@ const SettingsSkeleton = () => (
   </div>
 );
 
+const VALID_TABS = ["account", "notifications", "danger"];
+
 export default function AccountSettings() {
-  const [activeTab, setActiveTab] = useState("account");
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    requestedTab && VALID_TABS.includes(requestedTab) ? requestedTab : "account"
+  );
   const { t } = useTranslation();
 
   return (

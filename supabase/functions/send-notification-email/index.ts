@@ -156,12 +156,14 @@ serve(async (req) => {
     } else if (type === "feature_announcement") {
       const title = String(data.title ?? "Nyheter i PIF");
       const bodyText = String(data.body ?? "");
+      const actionUrl = data.actionUrl ? String(data.actionUrl) : "";
+      const actionLabel = data.actionLabel ? String(data.actionLabel) : "Öppna PIF";
       subject = `Nytt i PIF: ${title}`;
       html = wrapEmail(
         `<h2 style="font-size: 18px;">${escape(title)}</h2>
          <p>${escape(bodyText).replace(/\n/g, "<br>")}</p>`,
-        `${APP_URL}/`,
-        "Öppna PIF",
+        actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`,
+        actionLabel,
       );
     } else {
       return json(400, { error: `Unknown notification type: ${type}` });

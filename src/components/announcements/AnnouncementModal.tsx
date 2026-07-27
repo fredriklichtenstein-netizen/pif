@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import {
   Dialog,
@@ -65,6 +66,15 @@ export function AnnouncementModal() {
                 <DialogDescription className="whitespace-pre-wrap text-foreground pt-2 break-words">
                   {isSwedish ? a.body_sv : a.body_en}
                 </DialogDescription>
+                {a.action_url && (
+                  <Link
+                    to={a.action_url}
+                    onClick={dismiss}
+                    className="mt-3 inline-block text-sm font-medium text-primary underline underline-offset-2"
+                  >
+                    {(isSwedish ? a.action_label_sv : a.action_label_en) || t("announcements.learn_more")}
+                  </Link>
+                )}
               </CarouselItem>
             ))}
           </CarouselContent>
