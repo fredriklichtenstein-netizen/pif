@@ -9,7 +9,9 @@ const corsHeaders = {
 };
 
 const NOTIFICATIONS_FROM = "PIF <notifications@pif.today>";
-const APP_URL = "https://app.pif.community";
+// Overridable per-project so staging emails link back to the staging app
+// instead of production (a staging test item/conversation 404s on prod).
+const APP_URL = Deno.env.get("APP_URL") ?? "https://app.pif.community";
 const LOGO_URL = "https://pif.today/pif-logo-long.png";
 const BRAND_TURQUOISE = "#00CC99";
 
@@ -58,8 +60,8 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
         <a href="${ctaUrl}" style="display: inline-block; background: ${BRAND_TURQUOISE}; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">${escape(ctaLabel)}</a>
       </div>
       <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 32px;">
-        Du får det här mejlet för att du är medlem på PIF. Hantera dina mejlaviseringar under
-        <a href="${APP_URL}/account-settings" style="color: #9ca3af;">Profilinställningar</a>.
+        Du får det här mejlet för att du är medlem i PIF. Hantera dina mejlaviseringar under
+        <a href="${APP_URL}/account-settings" style="color: #9ca3af;">Kontoinställningar</a>.
       </p>
     </div>
   `;
