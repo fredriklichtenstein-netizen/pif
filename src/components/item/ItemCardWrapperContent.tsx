@@ -25,6 +25,7 @@ export function ItemCardWrapperContent({
   isItemArchived,
   archived_at,
   archived_reason,
+  stale_reminder_stage,
   realtimeError,
   handleRefresh,
   parsedCoordinates,
@@ -81,9 +82,10 @@ export function ItemCardWrapperContent({
           distanceText={distanceText}
           location={location}
           coordinates={parsedCoordinates}
-          isOwner={isOwner} 
+          isOwner={isOwner}
           isBookmarked={isBookmarked}
           isArchived={isItemArchived}
+          staleReminderStage={stale_reminder_stage}
           handleBookmark={handleBookmark}
           handleShare={handleShare}
           handleReport={handleReportClick}
