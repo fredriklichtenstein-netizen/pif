@@ -108,7 +108,20 @@ export function SimpleDeleteDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onCloseAutoFocus={(e) => {
+          // Defensive cleanup for the Radix body `pointer-events: none` leak
+          // that occasionally survives when this dialog closes while the
+          // dropdown menu it was opened from is also finishing its own
+          // close/focus-return cycle -- same fix already applied in
+          // ConversationView.tsx's withdraw dialog.
+          e.preventDefault();
+          if (typeof document !== "undefined") {
+            document.body.style.pointerEvents = "";
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{getDialogTitle()}</DialogTitle>
           <DialogDescription>{getDialogDescription()}</DialogDescription>
