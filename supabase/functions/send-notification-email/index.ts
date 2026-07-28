@@ -15,7 +15,12 @@ const APP_URL = Deno.env.get("APP_URL") ?? "https://app.pif.community";
 const LOGO_URL = "https://pif.today/pif-logo-long.png";
 const BRAND_TURQUOISE = "#00CC99";
 
-type NotificationType = "new_message_digest" | "new_comment" | "feature_announcement";
+type NotificationType =
+  | "new_message_digest"
+  | "new_comment"
+  | "feature_announcement"
+  | "stale_item_reminder"
+  | "item_force_archived";
 
 // Which notification_preferences key gates each email type. Comment
 // notifications reuse the existing "mentions" (someone replied to/near you)
@@ -28,6 +33,58 @@ const PREFERENCE_KEY: Record<string, string> = {
   thread_comment: "email_mentions",
   post_commented: "email_item_updates",
   feature_announcement: "email_announcements",
+  stale_item_reminder: "email_item_updates",
+  item_force_archived: "email_item_updates",
+};
+
+// Copy per stale-item CTA kind, keyed by what _process_stale_items() (in
+// Postgres) determined the item's current state to be.
+const STALE_CTA_COPY: Record<string, { heading: (title: string, days: number) => string; body: (days: number) => string; ctaLabel: string }> = {
+  no_interest: {
+    heading: (title) => `Ingen har visat intresse för "${title}" än`,
+    body: (days) => `Det har gått ${days} dagar sedan du la upp inlägget. Kika förbi och se om något behöver uppdateras.`,
+    ctaLabel: "Visa inlägget",
+  },
+  select_receiver: {
+    heading: (title) => `Grannar är intresserade av "${title}"`,
+    body: (days) => `Det har gått ${days} dagar. Välj en mottagare för att komma vidare.`,
+    ctaLabel: "Välj mottagare",
+  },
+  select_fulfiller: {
+    heading: (title) => `Grannar vill uppfylla din önskan "${title}"`,
+    body: (days) => `Det har gått ${days} dagar. Välj vem som ska uppfylla önskan.`,
+    ctaLabel: "Välj hjälpare",
+  },
+  confirm_handoff: {
+    heading: (title) => `Har du lämnat över "${title}"?`,
+    body: (days) => `Det har gått ${days} dagar sedan du valde en mottagare. Bekräfta överlämningen för att slutföra piffen.`,
+    ctaLabel: "Bekräfta överlämning",
+  },
+  awaiting_receiver: {
+    heading: (title) => `Väntar på bekräftelse för "${title}"`,
+    body: () => `Du har bekräftat överlämningen. Vi väntar nu på att mottagaren bekräftar mottagandet.`,
+    ctaLabel: "Visa inlägget",
+  },
+  mark_granted: {
+    heading: (title) => `Har din önskan "${title}" uppfyllts?`,
+    body: (days) => `Det har gått ${days} dagar sedan du valde en hjälpare. Markera önskan som uppfylld om den är klar.`,
+    ctaLabel: "Markera som uppfylld",
+  },
+  confirm_receipt: {
+    heading: (title) => `Har du fått "${title}"?`,
+    body: (days) => `Det har gått ${days} dagar sedan du blev vald. Bekräfta att du mottagit piffen.`,
+    ctaLabel: "Bekräfta mottagande",
+  },
+  awaiting_owner: {
+    heading: (title) => `Väntar på piffaren för "${title}"`,
+    body: () => `Du har bekräftat mottagandet. Vi väntar nu på att piffaren bekräftar överlämningen.`,
+    ctaLabel: "Visa inlägget",
+  },
+  check_in: {
+    heading: (title) => `Du blev vald för "${title}"`,
+    body: (days) => `Det har gått ${days} dagar sedan du blev vald. Hör av dig till önskaren om hur det går.`,
+    ctaLabel: "Visa inlägget",
+  },
 };
 
 const json = (status: number, body: unknown) =>
@@ -107,6 +164,41 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          ${commentContent ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(commentContent)}"</p>` : ""}`,
         commentId ? `${itemUrl}?comment=${encodeURIComponent(commentId)}` : itemUrl,
         "Visa inlägget",
+      ),
+    };
+  }
+
+  if (type === "stale_item_reminder") {
+    const itemId = String(data.itemId ?? "");
+    const itemTitle = String(data.itemTitle ?? "ditt inlägg");
+    const daysOpen = Number(data.daysOpen ?? 7);
+    const ctaKind = String(data.ctaKind ?? "no_interest");
+    const copy = STALE_CTA_COPY[ctaKind] ?? STALE_CTA_COPY.no_interest;
+    const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
+    const heading = copy.heading(itemTitle, daysOpen);
+    return {
+      subject: heading,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${escape(heading)}</h2><p>${escape(copy.body(daysOpen))}</p>`,
+        itemUrl,
+        copy.ctaLabel,
+      ),
+    };
+  }
+
+  if (type === "item_force_archived") {
+    const itemId = String(data.itemId ?? "");
+    const itemTitle = String(data.itemTitle ?? "ditt inlägg");
+    const itemType = String(data.itemType ?? "offer");
+    const noun = itemType === "offer" ? "Piffen" : "Önskan";
+    const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
+    return {
+      subject: `${noun} "${itemTitle}" har arkiverats automatiskt`,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${noun} "${escape(itemTitle)}" har arkiverats</h2>
+         <p>Efter 30 dagars inaktivitet har vi arkiverat ${noun.toLowerCase()} automatiskt. Du kan återaktivera den när du vill.</p>`,
+        itemUrl,
+        "Återaktivera",
       ),
     };
   }
@@ -249,6 +341,28 @@ serve(async (req) => {
         await sleep(120);
       }
 
+      const sent = results.filter((r) => r === "sent").length;
+      return json(200, { ok: true, total: results.length, sent });
+    }
+
+    // Same single-invocation throttling pattern as the announcement
+    // broadcast above, but for a mixed batch collected by
+    // _process_stale_items() -- each entry carries its own `type`
+    // ("stale_item_reminder" or "item_force_archived") and data.
+    if (type === "stale_item_reminders_batch") {
+      const items = Array.isArray(body.items) ? body.items : [];
+      const results: string[] = [];
+      for (const entry of items) {
+        const entryUserId = String(entry?.userId ?? "");
+        const entryType = String(entry?.type ?? "");
+        if (!entryUserId || !entryType) {
+          results.push("invalid_entry");
+          continue;
+        }
+        const { result } = await sendOne(admin, resendKey, entryUserId, entryType, entry);
+        results.push(result);
+        await sleep(120);
+      }
       const sent = results.filter((r) => r === "sent").length;
       return json(200, { ok: true, total: results.length, sent });
     }
