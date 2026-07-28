@@ -70,6 +70,21 @@ unauthenticated version all along, reading a secret literally named `MAPBOX_TOKE
 `MAPBOX_PUBLIC_TOKEN`. Fixed in the repo as of commit `4ad996c1`. Map/feed browsing is
 intentionally public — do not add an auth check back to this function).
 
+`send-notification-email` (added for the email-notifications feature) sends real email via Resend
+for new messages, comments, and feature announcements, triggered from Postgres via `pg_net` using
+a shared secret (`x-internal-secret`, stored in both Vault and as an edge function secret) since
+there's no user JWT in a trigger/cron context. **Trap: don't loop `net.http_post` once per
+recipient from SQL for a bulk send.** `notify_feature_announcement()` originally did exactly that
+for its "email every profile" broadcast — pg_net's background worker dispatches its whole queue in
+one burst regardless of how the enqueue calls were spaced out in SQL (confirmed directly: spacing
+enqueues with `pg_sleep(0.15)` between each of 149 calls still produced 149 responses with the
+*exact same* timestamp), blowing straight through Resend's 10 req/sec cap — 133 of 149 sends
+failed with `rate_limit_exceeded` the first time this ran for real, and a second attempt with the
+same per-profile-loop pattern still failed 129/149 even with the sleep in place. Fixed by adding a
+`feature_announcement_broadcast` mode to the edge function itself: **one** `net.http_post` call
+triggers **one** edge function invocation that loops every profile and sends sequentially with an
+awaited delay in a single continuous Deno process — throttling only works when it happens inside
+one process, not spread across many independently-dispatched async calls from Postgres.
 ## Staging environment (Supabase branch + Lovable remix)
 
 A parallel staging pipeline exists so changes can be tested before touching production. Pieces:
