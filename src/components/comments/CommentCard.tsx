@@ -75,7 +75,7 @@ export function CommentCard({
 
       {showReplyInput && (
         <div className="ml-8">
-          <CommentInput onSubmit={handleReply} placeholder={t('interactions.write_reply')} />
+          <CommentInput onSubmit={handleReply} placeholder={t('interactions.write_reply')} draftKey={`reply:${comment.id}`} />
         </div>
       )}
 

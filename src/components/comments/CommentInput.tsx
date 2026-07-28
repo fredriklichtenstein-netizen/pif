@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Smile } from "lucide-react";
@@ -10,19 +10,39 @@ import Picker from '@emoji-mart/react';
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/utils/safeStorage";
 
 interface CommentInputProps {
   onSubmit: (text: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  /**
+   * Identifies this input for draft persistence (e.g. `reply:${commentId}`
+   * for a reply box). Defaults to the current pathname, which is unique
+   * enough for a page's single main comment box. Pass an explicit key for
+   * any input that shares a page with others (like per-comment replies) to
+   * avoid draft collisions between them.
+   */
+  draftKey?: string;
 }
 
-export function CommentInput({ onSubmit, placeholder = "Write a comment...", disabled = false }: CommentInputProps) {
-  const [text, setText] = useState("");
+export function CommentInput({ onSubmit, placeholder = "Write a comment...", disabled = false, draftKey }: CommentInputProps) {
+  const location = useLocation();
+  const storageKey = `pif:comment-draft:${draftKey ?? location.pathname}`;
+  const [text, setText] = useState(() => safeGetItem(storageKey) ?? "");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const { user } = useGlobalAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const updateText = (value: string) => {
+    setText(value);
+    if (value) {
+      safeSetItem(storageKey, value);
+    } else {
+      safeRemoveItem(storageKey);
+    }
+  };
 
   const requireAuth = (): boolean => {
     if (!user) {
@@ -37,6 +57,7 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment...", dis
     if (!text.trim() || disabled) return;
     if (!requireAuth()) return;
     onSubmit(text);
+    safeRemoveItem(storageKey);
     setText("");
   };
 
@@ -48,7 +69,7 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment...", dis
   };
 
   const handleEmojiSelect = (emoji: any) => {
-    setText(prev => prev + emoji.native);
+    updateText(text + emoji.native);
     setShowEmojiPicker(false);
   };
 
@@ -57,7 +78,7 @@ export function CommentInput({ onSubmit, placeholder = "Write a comment...", dis
       <div className="flex-1 relative">
         <Textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => updateText(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
           className="min-h-[50px] py-2 pr-10 resize-none"
