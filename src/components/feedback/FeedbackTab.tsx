@@ -172,8 +172,10 @@ export function FeedbackTab() {
     >
       <div
         className={cn(
-          "overflow-hidden rounded-l-xl bg-background shadow-lg ring-1 ring-black/5 transition-[width,height] duration-300 ease-out",
-          open ? "h-auto w-[min(360px,calc(100vw-3.5rem))]" : "h-0 w-0",
+          "overflow-hidden rounded-l-xl bg-background transition-[width] duration-300 ease-out",
+          open
+            ? "w-[min(360px,calc(100vw-3.5rem))] shadow-lg ring-1 ring-black/5"
+            : "w-0",
         )}
       >
         <div className="flex h-full w-[min(360px,calc(100vw-3.5rem))] flex-col gap-3 p-4">
