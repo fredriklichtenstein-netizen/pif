@@ -102,12 +102,15 @@ export function ItemCardGallery({ images, imageCrops = [], title, category, item
       {/* Title and Category Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
         <div className="flex flex-col gap-1">
-          <h3 className="text-white text-base sm:text-lg font-display font-medium tracking-wide drop-shadow-md">
+          {/* order-2/order-1 keep title first in reading order (screen readers hit the
+              primary heading before the subtitle) while visually placing category above
+              it, matching the card's existing small-over-big rhythm. */}
+          <h2 className="order-2 text-white text-3xl font-display font-bold tracking-wide drop-shadow-md uppercase truncate">
             {title}
-          </h3>
-          <h2 className="text-white text-3xl font-display font-bold tracking-wide drop-shadow-md uppercase">
-            {translateCategory(category)}
           </h2>
+          <h3 className="order-1 text-white text-base sm:text-lg font-display font-medium tracking-wide drop-shadow-md">
+            {translateCategory(category)}
+          </h3>
         </div>
       </div>
       
