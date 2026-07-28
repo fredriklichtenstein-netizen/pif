@@ -109,7 +109,20 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+      <DialogContent
+        className="sm:max-w-md p-0 gap-0 overflow-hidden"
+        onCloseAutoFocus={(e) => {
+          // Defensive cleanup for the Radix body `pointer-events: none` leak
+          // that occasionally survives when this dialog closes while the
+          // dropdown menu it was opened from is also finishing its own
+          // close/focus-return cycle -- same fix already applied in
+          // ConversationView.tsx's withdraw dialog.
+          e.preventDefault();
+          if (typeof document !== "undefined") {
+            document.body.style.pointerEvents = "";
+          }
+        }}
+      >
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <DialogTitle className="text-lg font-semibold">{commentId != null ? t("interactions.report_comment_title") : t("interactions.report_post_title")}</DialogTitle>
           <button
