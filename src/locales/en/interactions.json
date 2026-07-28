@@ -561,6 +561,7 @@
     "user": "User",
     "feedback": {
       "fab_aria": "Send feedback",
+      "tab_label": "Feedback",
       "dialog_title": "Send feedback",
       "mode_issue": "Report an issue",
       "mode_feedback": "Give feedback",
