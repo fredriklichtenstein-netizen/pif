@@ -49,6 +49,8 @@ const escape = (s: string) =>
       })[c]!,
   );
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; color: #1f2937;">
@@ -67,6 +69,120 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
   `;
 }
 
+function buildEmail(type: string, data: Record<string, unknown>): { subject: string; html: string } | null {
+  if (type === "new_message_digest") {
+    const otherName = String(data.otherUserName ?? "din granne");
+    const conversationId = String(data.conversationId ?? "");
+    return {
+      subject: `Du har olästa meddelanden från ${otherName}`,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">Olästa meddelanden</h2>
+         <p>Du har olästa meddelanden i en konversation med <strong>${escape(otherName)}</strong> på PIF.</p>`,
+        `${APP_URL}/messages?conversation=${encodeURIComponent(conversationId)}`,
+        "Öppna konversationen",
+      ),
+    };
+  }
+
+  if (type === "new_comment") {
+    const commentType = String(data.commentType ?? "post_commented");
+    const commenterName = String(data.commenterName ?? "Någon");
+    const itemTitle = String(data.itemTitle ?? "ditt inlägg");
+    const itemId = String(data.itemId ?? "");
+    const commentId = data.commentId != null ? String(data.commentId) : "";
+    const commentContent = data.commentContent ? String(data.commentContent).slice(0, 300) : "";
+
+    const headline =
+      commentType === "comment_reply"
+        ? `${commenterName} svarade på din kommentar`
+        : commentType === "thread_comment"
+          ? `${commenterName} kommenterade i en tråd du är med i`
+          : `${commenterName} kommenterade "${itemTitle}"`;
+
+    const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
+    return {
+      subject: headline,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${escape(headline)}</h2>
+         ${commentContent ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(commentContent)}"</p>` : ""}`,
+        commentId ? `${itemUrl}?comment=${encodeURIComponent(commentId)}` : itemUrl,
+        "Visa inlägget",
+      ),
+    };
+  }
+
+  if (type === "feature_announcement") {
+    const title = String(data.title ?? "Nyheter i PIF");
+    const bodyText = String(data.body ?? "");
+    const actionUrl = data.actionUrl ? String(data.actionUrl) : "";
+    const actionLabel = data.actionLabel ? String(data.actionLabel) : "Öppna PIF";
+    return {
+      subject: `Nytt i PIF: ${title}`,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${escape(title)}</h2>
+         <p>${escape(bodyText).replace(/\n/g, "<br>")}</p>`,
+        actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`,
+        actionLabel,
+      ),
+    };
+  }
+
+  return null;
+}
+
+async function sendOne(
+  admin: ReturnType<typeof createClient>,
+  resendKey: string,
+  userId: string,
+  type: string,
+  data: Record<string, unknown>,
+): Promise<{ userId: string; result: string }> {
+  const prefKey = PREFERENCE_KEY[type] ?? PREFERENCE_KEY[String(data.commentType ?? "")];
+  if (prefKey) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("notification_preferences")
+      .eq("id", userId)
+      .maybeSingle();
+    const prefs = (profile as any)?.notification_preferences ?? {};
+    if (prefs[prefKey] === false) {
+      return { userId, result: "preference_disabled" };
+    }
+  }
+
+  const { data: userRes, error: userErr } = await admin.auth.admin.getUserById(userId);
+  if (userErr || !userRes?.user?.email) {
+    return { userId, result: "no_email" };
+  }
+
+  const email = buildEmail(type, data);
+  if (!email) {
+    return { userId, result: "unknown_type" };
+  }
+
+  const resendRes = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: NOTIFICATIONS_FROM,
+      to: [userRes.user.email],
+      subject: email.subject,
+      html: email.html,
+    }),
+  });
+
+  if (!resendRes.ok) {
+    const text = await resendRes.text();
+    console.error("Resend email failed", resendRes.status, text);
+    return { userId, result: `resend_error_${resendRes.status}` };
+  }
+
+  return { userId, result: "sent" };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -83,91 +199,11 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const userId = String(body.userId ?? "").trim();
-    const type = String(body.type ?? "").trim() as NotificationType | string;
-    const data = (body.data ?? {}) as Record<string, unknown>;
-
-    if (!userId || !type) {
-      return json(400, { error: "Missing userId or type" });
-    }
+    const type = String(body.type ?? "").trim();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceKey);
-
-    // Defense-in-depth: the caller (SQL trigger/cron) already checks
-    // notification_preferences before invoking this function, but re-check
-    // here too since this endpoint sends real email.
-    const prefKey = PREFERENCE_KEY[type] ?? PREFERENCE_KEY[String(data.commentType ?? "")];
-    if (prefKey) {
-      const { data: profile } = await admin
-        .from("profiles")
-        .select("notification_preferences")
-        .eq("id", userId)
-        .maybeSingle();
-      const prefs = (profile as any)?.notification_preferences ?? {};
-      if (prefs[prefKey] === false) {
-        return json(200, { ok: true, skipped: "preference_disabled" });
-      }
-    }
-
-    const { data: userRes, error: userErr } = await admin.auth.admin.getUserById(userId);
-    if (userErr || !userRes?.user?.email) {
-      return json(200, { ok: false, skipped: "no_email" });
-    }
-    const toEmail = userRes.user.email;
-
-    let subject = "";
-    let html = "";
-
-    if (type === "new_message_digest") {
-      const otherName = String(data.otherUserName ?? "din granne");
-      const conversationId = String(data.conversationId ?? "");
-      subject = `Du har olästa meddelanden från ${otherName}`;
-      html = wrapEmail(
-        `<h2 style="font-size: 18px;">Olästa meddelanden</h2>
-         <p>Du har olästa meddelanden i en konversation med <strong>${escape(otherName)}</strong> på PIF.</p>`,
-        `${APP_URL}/messages?conversation=${encodeURIComponent(conversationId)}`,
-        "Öppna konversationen",
-      );
-    } else if (type === "new_comment") {
-      const commentType = String(data.commentType ?? "post_commented");
-      const commenterName = String(data.commenterName ?? "Någon");
-      const itemTitle = String(data.itemTitle ?? "ditt inlägg");
-      const itemId = String(data.itemId ?? "");
-      const commentId = data.commentId != null ? String(data.commentId) : "";
-      const commentContent = data.commentContent ? String(data.commentContent).slice(0, 300) : "";
-
-      const headline =
-        commentType === "comment_reply"
-          ? `${commenterName} svarade på din kommentar`
-          : commentType === "thread_comment"
-            ? `${commenterName} kommenterade i en tråd du är med i`
-            : `${commenterName} kommenterade "${itemTitle}"`;
-
-      const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
-      subject = headline;
-      html = wrapEmail(
-        `<h2 style="font-size: 18px;">${escape(headline)}</h2>
-         ${commentContent ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(commentContent)}"</p>` : ""}`,
-        commentId ? `${itemUrl}?comment=${encodeURIComponent(commentId)}` : itemUrl,
-        "Visa inlägget",
-      );
-    } else if (type === "feature_announcement") {
-      const title = String(data.title ?? "Nyheter i PIF");
-      const bodyText = String(data.body ?? "");
-      const actionUrl = data.actionUrl ? String(data.actionUrl) : "";
-      const actionLabel = data.actionLabel ? String(data.actionLabel) : "Öppna PIF";
-      subject = `Nytt i PIF: ${title}`;
-      html = wrapEmail(
-        `<h2 style="font-size: 18px;">${escape(title)}</h2>
-         <p>${escape(bodyText).replace(/\n/g, "<br>")}</p>`,
-        actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`,
-        actionLabel,
-      );
-    } else {
-      return json(400, { error: `Unknown notification type: ${type}` });
-    }
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) {
@@ -175,27 +211,60 @@ serve(async (req) => {
       return json(200, { ok: false, skipped: "no_resend_key" });
     }
 
-    const emailRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: NOTIFICATIONS_FROM,
-        to: [toEmail],
-        subject,
-        html,
-      }),
-    });
+    // Broadcast mode: a single edge function invocation loops every profile
+    // and sends sequentially with a delay, instead of the DB firing one
+    // net.http_post per recipient. Firing 149 concurrent async requests from
+    // Postgres blew straight through Resend's 10 req/sec cap (133 of 149
+    // sends failed with rate_limit_exceeded) -- pg_net's worker dispatches
+    // its whole queue in one burst regardless of how the enqueue calls were
+    // spaced out in SQL, so throttling has to happen inside one continuous
+    // process instead.
+    if (type === "feature_announcement_broadcast") {
+      const announcementId = body.announcementId;
+      const { data: announcement, error: announcementErr } = await admin
+        .from("feature_announcements")
+        .select("title_sv, body_sv, action_url, action_label_sv")
+        .eq("id", announcementId)
+        .maybeSingle();
+      if (announcementErr || !announcement) {
+        return json(404, { error: "Announcement not found" });
+      }
 
-    if (!emailRes.ok) {
-      const text = await emailRes.text();
-      console.error("Resend email failed", emailRes.status, text);
-      return json(502, { error: "Resend send failed", detail: text });
+      const { data: profiles, error: profilesErr } = await admin.from("profiles").select("id");
+      if (profilesErr || !profiles) {
+        return json(500, { error: "Failed to list profiles" });
+      }
+
+      const data = {
+        title: announcement.title_sv,
+        body: announcement.body_sv,
+        actionUrl: announcement.action_url,
+        actionLabel: announcement.action_label_sv,
+      };
+
+      const results: string[] = [];
+      for (const profile of profiles) {
+        const { result } = await sendOne(admin, resendKey, profile.id, "feature_announcement", data);
+        results.push(result);
+        await sleep(120);
+      }
+
+      const sent = results.filter((r) => r === "sent").length;
+      return json(200, { ok: true, total: results.length, sent });
     }
 
-    return json(200, { ok: true });
+    const userId = String(body.userId ?? "").trim();
+    const data = (body.data ?? {}) as Record<string, unknown>;
+
+    if (!userId || !type) {
+      return json(400, { error: "Missing userId or type" });
+    }
+
+    const { result } = await sendOne(admin, resendKey, userId, type, data);
+    if (result === "sent") return json(200, { ok: true });
+    if (result === "preference_disabled") return json(200, { ok: true, skipped: result });
+    if (result === "no_email" || result === "unknown_type") return json(200, { ok: false, skipped: result });
+    return json(502, { error: "Resend send failed", detail: result });
   } catch (error) {
     console.error("send-notification-email error", error);
     return json(500, {
