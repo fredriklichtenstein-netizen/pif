@@ -8,8 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const FEEDBACK_TO = "fredrik.lichtenstein@gmail.com";
-const FEEDBACK_FROM = "PIF Feedback <reports@alwaysremember.se>";
+const FEEDBACK_TO = "hej@pif.today";
+const FEEDBACK_FROM = "PIF <hej@pif.today>";
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {

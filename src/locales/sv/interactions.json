@@ -561,6 +561,7 @@
     "user": "Användare",
     "feedback": {
       "fab_aria": "Skicka feedback",
+      "tab_label": "Feedback",
       "dialog_title": "Skicka feedback",
       "mode_issue": "Rapportera ett problem",
       "mode_feedback": "Ge feedback",
