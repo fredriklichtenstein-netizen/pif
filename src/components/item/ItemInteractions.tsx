@@ -47,9 +47,14 @@ export function ItemInteractions({
   // once the full comment thread has been fetched.
   const userHasCommented = hasCommented ?? hasUserCommented(commenters, currentUserId);
 
-  // Calculate actual counts in case likers array has more precise data
-  const actualLikeCount = likers.length || likesCount;
-  const actualInterestCount = interestedUsers.length || interestsCount;
+  // likesCount/interestsCount are kept live by the realtime count store
+  // (see useInteractionCountsRealtime) -- always trust them over
+  // likers/interestedUsers, which are only populated by an on-demand fetch
+  // (e.g. opening the "who liked this" popup) and, once fetched, would
+  // otherwise permanently freeze the badge at that one-time snapshot
+  // instead of continuing to reflect live updates.
+  const actualLikeCount = likesCount;
+  const actualInterestCount = interestsCount;
 
   // Wrapper for handleShare that doesn't require an event parameter
   const handleShareAction = () => {
