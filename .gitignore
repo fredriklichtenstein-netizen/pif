@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase CLI local state (machine-specific, not meant to be tracked)
+supabase/.temp/
