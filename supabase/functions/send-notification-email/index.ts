@@ -27,6 +27,9 @@ type NotificationType =
 // vs "item_updates" (someone commented on your own post) split that the
 // in-app notification types (comment_reply/thread_comment vs
 // post_commented) already encode.
+// item_force_archived has no entry here on purpose -- it's mandatory,
+// reporting something that already happened to the user's content, not an
+// opt-out-able nudge.
 const PREFERENCE_KEY: Record<string, string> = {
   new_message_digest: "email_messages",
   comment_reply: "email_mentions",
@@ -34,7 +37,6 @@ const PREFERENCE_KEY: Record<string, string> = {
   post_commented: "email_item_updates",
   feature_announcement: "email_announcements",
   stale_item_reminder: "email_item_updates",
-  item_force_archived: "email_item_updates",
 };
 
 // Copy per stale-item CTA kind, keyed by what _process_stale_items() (in
@@ -229,7 +231,12 @@ async function sendOne(
   type: string,
   data: Record<string, unknown>,
 ): Promise<{ userId: string; result: string }> {
-  const prefKey = PREFERENCE_KEY[type] ?? PREFERENCE_KEY[String(data.commentType ?? "")];
+  // The final reminder before the 30-day archive (and the archive notice
+  // itself, which never has a pref key at all) are mandatory -- skip the
+  // opt-out check regardless of the user's email_item_updates setting.
+  const prefKey = data.isFinalReminder
+    ? null
+    : PREFERENCE_KEY[type] ?? PREFERENCE_KEY[String(data.commentType ?? "")];
   if (prefKey) {
     const { data: profile } = await admin
       .from("profiles")
