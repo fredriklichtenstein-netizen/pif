@@ -24,6 +24,7 @@ export function ItemCardWrapper({
   postedBy,
   archived_at,
   archived_reason,
+  stale_reminder_stage,
   onOperationSuccess,
   showOwnerTint = false,
 }: ItemCardProps) {
@@ -130,6 +131,7 @@ export function ItemCardWrapper({
         isItemArchived={isItemArchived}
         archived_at={archived_at}
         archived_reason={archived_reason}
+        stale_reminder_stage={stale_reminder_stage}
         realtimeError={realtimeError}
         handleRefresh={handleRefresh}
         parsedCoordinates={parsedCoordinates}

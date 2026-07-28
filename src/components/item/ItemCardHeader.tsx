@@ -33,6 +33,8 @@ interface ItemCardHeaderProps {
   isOwner: boolean;
   isBookmarked: boolean;
   isArchived?: boolean;
+  /** Set once the stale-item reminder cron has sent at least one nudge; shows the "keep open" action. */
+  staleReminderStage?: number;
   handleBookmark?: () => void;
   handleShare?: () => void;
   handleReport?: (e: React.MouseEvent) => void;
@@ -51,6 +53,7 @@ export function ItemCardHeader({
   isOwner,
   isBookmarked,
   isArchived = false,
+  staleReminderStage = 0,
   handleBookmark,
   handleShare,
   handleReport,
@@ -64,6 +67,7 @@ export function ItemCardHeader({
   const { session } = useGlobalAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isKeepingOpen, setIsKeepingOpen] = useState(false);
   const { handleShare: shareItem } = useItemSharing(String(itemId));
   const isAuthenticated = !!session?.user;
   const queryClient = useQueryClient();
@@ -104,6 +108,22 @@ export function ItemCardHeader({
     }
   };
   
+  const handleKeepOpenClick = async () => {
+    if (isKeepingOpen) return;
+    setIsKeepingOpen(true);
+    try {
+      const numericId = typeof itemId === 'number' ? itemId : parseInt(String(itemId), 10);
+      const { error } = await (supabase as any).rpc('keep_item_open', { p_item_id: numericId });
+      if (error) throw error;
+      toast({ title: t('ui.kept_open') });
+    } catch (err: any) {
+      console.error('Keep open failed', err);
+      toast({ title: t('ui.keep_open_failed'), description: err?.message, variant: 'destructive' });
+    } finally {
+      setIsKeepingOpen(false);
+    }
+  };
+
   const handleBookmarkClick = async () => {
     // Check authentication
     if (!handleBookmark) return;
@@ -216,13 +236,25 @@ export function ItemCardHeader({
                     </DropdownMenuItem>
                   </>
                 ) : (
-                  <DropdownMenuItem
-                    onClick={handleLocalDeleteClick}
-                    className="text-destructive"
-                  >
-                    <Archive className="mr-2 h-4 w-4" />
-                    <span>{t('ui.archive')}</span>
-                  </DropdownMenuItem>
+                  <>
+                    {staleReminderStage > 0 && (
+                      <DropdownMenuItem
+                        onClick={handleKeepOpenClick}
+                        disabled={isKeepingOpen}
+                        className="text-primary"
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        <span>{t('ui.keep_open')}</span>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={handleLocalDeleteClick}
+                      className="text-destructive"
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      <span>{t('ui.archive')}</span>
+                    </DropdownMenuItem>
+                  </>
                 )}
               </>
             ) : (

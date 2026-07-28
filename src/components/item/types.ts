@@ -27,6 +27,8 @@ export interface ItemCardProps {
   };
   archived_at?: string;
   archived_reason?: string;
+  /** Set once the stale-item reminder cron has sent at least one nudge; shows the "keep open" action. */
+  stale_reminder_stage?: number;
   onOperationSuccess?: () => void;
   /** Server-provided counts to seed UI before per-card hooks load. */
   likesCount?: number;
