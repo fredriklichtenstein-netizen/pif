@@ -34,6 +34,9 @@ import { PifRatingModal } from "./PifRatingModal";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
 import { supabase } from "@/integrations/supabase/client";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/utils/safeStorage";
+
+const messageDraftKey = (conversationId: string) => `pif:message-draft:${conversationId}`;
 
 interface ConversationViewProps {
   conversationId: string;
@@ -47,7 +50,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const hasInitiallyScrolledRef = useRef(false);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState(() => safeGetItem(messageDraftKey(conversationId)) ?? "");
   const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
   const [hasRated, setHasRated] = useState(false);
@@ -117,6 +120,23 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   useEffect(() => {
     hasInitiallyScrolledRef.current = false;
   }, [conversationId]);
+
+  // This component stays mounted across conversation switches (no `key`
+  // prop from the parent), so the lazy useState initializer above only
+  // loads the right draft on first mount -- reload it here whenever the
+  // conversation actually changes.
+  useEffect(() => {
+    setNewMessage(safeGetItem(messageDraftKey(conversationId)) ?? "");
+  }, [conversationId]);
+
+  useEffect(() => {
+    const key = messageDraftKey(conversationId);
+    if (newMessage) {
+      safeSetItem(key, newMessage);
+    } else {
+      safeRemoveItem(key);
+    }
+  }, [newMessage, conversationId]);
 
   useEffect(() => {
     if (messagesLoading) return;
