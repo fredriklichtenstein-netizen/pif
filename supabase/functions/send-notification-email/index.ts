@@ -42,47 +42,47 @@ const PREFERENCE_KEY: Record<string, string> = {
 const STALE_CTA_COPY: Record<string, { heading: (title: string, days: number) => string; body: (days: number) => string; ctaLabel: string }> = {
   no_interest: {
     heading: (title) => `Ingen har visat intresse för "${title}" än`,
-    body: (days) => `Det har gått ${days} dagar sedan du la upp inlägget. Kika förbi och se om något behöver uppdateras.`,
+    body: (days) => `Det har gått ${days} dagar sedan du la upp inlägget. Om timingen inte känns rätt just nu kan du arkivera det och återaktivera det senare för att testa intresset igen — eller uppdatera bilder eller beskrivning för att sticka ut mer.`,
     ctaLabel: "Visa inlägget",
   },
   select_receiver: {
     heading: (title) => `Grannar är intresserade av "${title}"`,
-    body: (days) => `Det har gått ${days} dagar. Välj en mottagare för att komma vidare.`,
+    body: (days) => `Det har gått ${days} dagar. Välj en mottagare bland de intresserade för att låsa upp meddelanden och komma vidare med överlämningen.`,
     ctaLabel: "Välj mottagare",
   },
   select_fulfiller: {
     heading: (title) => `Grannar vill uppfylla din önskan "${title}"`,
-    body: (days) => `Det har gått ${days} dagar. Välj vem som ska uppfylla önskan.`,
+    body: (days) => `Det har gått ${days} dagar. Välj vem eller vilka som ska hjälpa dig, så kan ni stämma av detaljerna.`,
     ctaLabel: "Välj hjälpare",
   },
   confirm_handoff: {
     heading: (title) => `Har du lämnat över "${title}"?`,
-    body: (days) => `Det har gått ${days} dagar sedan du valde en mottagare. Bekräfta överlämningen för att slutföra piffen.`,
+    body: (days) => `Det har gått ${days} dagar sedan du valde en mottagare. Om ni inte redan bestämt tid för överlämning, ta kontakt för att komma överens. Redan klart? Bekräfta nedan så slutförs piffen.`,
     ctaLabel: "Bekräfta överlämning",
   },
   awaiting_receiver: {
     heading: (title) => `Väntar på bekräftelse för "${title}"`,
-    body: () => `Du har bekräftat överlämningen. Vi väntar nu på att mottagaren bekräftar mottagandet.`,
+    body: () => `Du har bekräftat överlämningen — bra jobbat! Vi väntar nu på att mottagaren bekräftar mottagandet. Har det gått tyst en stund kan det vara bra att höra av dig direkt.`,
     ctaLabel: "Visa inlägget",
   },
   mark_granted: {
     heading: (title) => `Har din önskan "${title}" uppfyllts?`,
-    body: (days) => `Det har gått ${days} dagar sedan du valde en hjälpare. Markera önskan som uppfylld om den är klar.`,
+    body: (days) => `Det har gått ${days} dagar sedan du valde en hjälpare. Om ni inte redan stämt av detaljerna, ta kontakt för att komma vidare. Redan uppfylld? Markera den som klar nedan.`,
     ctaLabel: "Markera som uppfylld",
   },
   confirm_receipt: {
     heading: (title) => `Har du fått "${title}"?`,
-    body: (days) => `Det har gått ${days} dagar sedan du blev vald. Bekräfta att du mottagit piffen.`,
+    body: (days) => `Det har gått ${days} dagar sedan du blev vald. Om ni inte bestämt tid för hämtning än, hör av dig till piffaren. Redan mottaget? Bekräfta nedan.`,
     ctaLabel: "Bekräfta mottagande",
   },
   awaiting_owner: {
     heading: (title) => `Väntar på piffaren för "${title}"`,
-    body: () => `Du har bekräftat mottagandet. Vi väntar nu på att piffaren bekräftar överlämningen.`,
+    body: () => `Du har bekräftat mottagandet — vi väntar nu på att piffaren bekräftar överlämningen. Har det gått tyst en stund kan det vara bra att påminna dem.`,
     ctaLabel: "Visa inlägget",
   },
   check_in: {
     heading: (title) => `Du blev vald för "${title}"`,
-    body: (days) => `Det har gått ${days} dagar sedan du blev vald. Hör av dig till önskaren om hur det går.`,
+    body: (days) => `Det har gått ${days} dagar sedan du blev vald att hjälpa till. Hör av dig till önskaren för att stämma av hur det går, om ni inte redan är i kontakt.`,
     ctaLabel: "Visa inlägget",
   },
 };
