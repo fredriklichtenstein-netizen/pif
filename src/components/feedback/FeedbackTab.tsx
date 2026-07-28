@@ -168,7 +168,7 @@ export function FeedbackTab() {
     <div
       ref={panelRef}
       data-feedback-panel
-      className="fixed bottom-40 right-0 z-40 flex items-stretch"
+      className="fixed bottom-40 right-0 z-40 flex items-end"
     >
       <div
         className={cn(
