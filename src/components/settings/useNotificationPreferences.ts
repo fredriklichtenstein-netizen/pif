@@ -37,19 +37,23 @@ export function useNotificationPreferences() {
       
       if (userProfile?.notification_preferences) {
         const notificationPrefs = userProfile.notification_preferences as Record<string, boolean>;
-        
+
+        // A key absent from the stored JSON means the user has never made an
+        // active choice -- treat that as "on", matching the edge function's
+        // opt-out semantics (it only skips a send when a key is explicitly false).
+        const withDefault = (key: keyof NotificationPreferences) =>
+          notificationPrefs[key] !== false;
+
         const typedPreferences: NotificationPreferences = {
-          email_messages: Boolean(notificationPrefs.email_messages),
-          email_mentions: Boolean(notificationPrefs.email_mentions),
-          email_item_updates: Boolean(notificationPrefs.email_item_updates),
-          email_announcements: notificationPrefs.email_announcements !== undefined
-            ? Boolean(notificationPrefs.email_announcements)
-            : true,
-          push_messages: Boolean(notificationPrefs.push_messages),
-          push_mentions: Boolean(notificationPrefs.push_mentions),
-          push_item_updates: Boolean(notificationPrefs.push_item_updates),
+          email_messages: withDefault('email_messages'),
+          email_mentions: withDefault('email_mentions'),
+          email_item_updates: withDefault('email_item_updates'),
+          email_announcements: withDefault('email_announcements'),
+          push_messages: withDefault('push_messages'),
+          push_mentions: withDefault('push_mentions'),
+          push_item_updates: withDefault('push_item_updates'),
         };
-        
+
         setPreferences(typedPreferences);
       }
     } catch (error) {
