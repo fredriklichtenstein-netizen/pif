@@ -481,8 +481,15 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         )}
       </div>
 
-      {/* Completion banner — only while pif is active */}
-      {!isClosed && !completion.loading && item && (
+      {/* Completion banner — only while the pif/wish itself is still
+          unresolved. Gated on pifStatus rather than isClosed so that a
+          REOPENED conversation (pif already completed, only the thread was
+          reopened) shows just the message input, not a redundant "already
+          completed" celebration banner re-appearing above it. */}
+      {completion.pifStatus !== "completed" &&
+        completion.pifStatus !== "archived" &&
+        !completion.loading &&
+        item && (
         <PifCompletionBanner
           role={role}
           pifferConfirmed={completion.pifferConfirmed}
