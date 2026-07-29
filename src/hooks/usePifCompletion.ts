@@ -42,6 +42,9 @@ export interface PifCompletionState {
   pifferConfirmed: boolean;
   receiverConfirmed: boolean;
   pifStatus: string | null;
+  /** When both sides confirmed (pif_status flips to 'completed'). Anchors
+   *  the 7-day conversation-reopen request window. */
+  completedAt: string | null;
   loading: boolean;
 }
 
@@ -97,6 +100,7 @@ export function usePifCompletion(
     pifferConfirmed: false,
     receiverConfirmed: false,
     pifStatus: null,
+    completedAt: null,
     loading: true,
   });
   // Whether the underlying item is a wish (item_type='request'). Drives
@@ -137,6 +141,7 @@ export function usePifCompletion(
         pifferConfirmed: !!row.piffer_confirmed_handoff,
         receiverConfirmed: !!row.receiver_confirmed_receipt,
         pifStatus: nextStatus,
+        completedAt: (row.completed_at as string) ?? null,
         loading: false,
       };
     });
@@ -152,7 +157,7 @@ export function usePifCompletion(
     (async () => {
       const { data, error } = await (supabase
         .from("items") as any)
-        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, item_type")
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, completed_at, item_type")
         .eq("id", id)
         .maybeSingle();
       if (cancelled) return;
@@ -241,7 +246,7 @@ export function usePifCompletion(
         return { ok: false, error } as const;
       }
       const { data: latestRow, error: latestErr } = await (supabase.from("items") as any)
-        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status")
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, completed_at")
         .eq("id", id)
         .maybeSingle();
       if (latestErr) {
@@ -261,6 +266,7 @@ export function usePifCompletion(
         pifferConfirmed: nextPifferConfirmed,
         receiverConfirmed: nextReceiverConfirmed,
         pifStatus: both ? "completed" : nextStatus ?? s.pifStatus,
+        completedAt: (latestRow?.completed_at as string | undefined) ?? s.completedAt,
       }));
       if (conversationId) {
         const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
@@ -509,7 +515,7 @@ export function usePifCompletion(
       }
       // Refetch fresh row so local UI reflects the cleared flags.
       const { data: latestRow } = await (supabase.from("items") as any)
-        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status")
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, completed_at")
         .eq("id", id)
         .maybeSingle();
       if (latestRow) applyRow(latestRow);
@@ -559,5 +565,89 @@ export function usePifCompletion(
     [id, conversationId, currentUserId, otherUserId, isRequest, applyRow],
   );
 
-  return { ...state, isRequest, confirmHandoff, completeWithRating, withdraw, undoConfirmation };
+  const requestReopen = useCallback(
+    async (comment?: string) => {
+      if (!conversationId) return { ok: false } as const;
+      if (!(await ensureSession("request_conversation_reopen"))) return { ok: false } as const;
+      const { error } = await (supabase.rpc as any)("request_conversation_reopen", {
+        p_conversation_id: conversationId,
+        p_comment: comment && comment.trim() ? comment.trim() : null,
+      });
+      if (error) {
+        console.error("request_conversation_reopen failed:", error);
+        return { ok: false, error } as const;
+      }
+      const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
+      await postPifSystemMessage(
+        conversationId,
+        pick(
+          "Du har bett om att öppna konversationen igen. Väntar på svar.",
+          "Du har bett om att öppna konversationen igen. Väntar på svar.",
+        ),
+        { targetUserId: currentUserId ?? null },
+      );
+      await postPifSystemMessage(
+        conversationId,
+        pick(
+          "Den andra parten vill öppna konversationen igen." +
+            (comment && comment.trim() ? ` Kommentar: "${comment.trim()}"` : ""),
+          "Den andra parten vill öppna konversationen igen." +
+            (comment && comment.trim() ? ` Kommentar: "${comment.trim()}"` : ""),
+        ),
+        { targetUserId: otherUserId ?? null },
+      );
+      try {
+        window.dispatchEvent(new CustomEvent('pif:conversation-refetch', { detail: { conversationId } }));
+        window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
+      } catch {
+        /* no-op in non-DOM environments */
+      }
+      return { ok: true } as const;
+    },
+    [conversationId, currentUserId, otherUserId, isRequest],
+  );
+
+  const respondToReopen = useCallback(
+    async (approve: boolean) => {
+      if (!conversationId) return { ok: false } as const;
+      if (!(await ensureSession("respond_conversation_reopen"))) return { ok: false } as const;
+      const { error } = await (supabase.rpc as any)("respond_conversation_reopen", {
+        p_conversation_id: conversationId,
+        p_approve: approve,
+      });
+      if (error) {
+        console.error("respond_conversation_reopen failed:", error);
+        return { ok: false, error } as const;
+      }
+      const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
+      await postPifSystemMessage(
+        conversationId,
+        approve
+          ? pick("Konversationen är öppen igen.", "Konversationen är öppen igen.")
+          : pick(
+              "Förfrågan om att öppna konversationen igen avböjdes.",
+              "Förfrågan om att öppna konversationen igen avböjdes.",
+            ),
+      );
+      try {
+        window.dispatchEvent(new CustomEvent('pif:conversation-refetch', { detail: { conversationId } }));
+        window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
+      } catch {
+        /* no-op in non-DOM environments */
+      }
+      return { ok: true } as const;
+    },
+    [conversationId, isRequest],
+  );
+
+  return {
+    ...state,
+    isRequest,
+    confirmHandoff,
+    completeWithRating,
+    withdraw,
+    undoConfirmation,
+    requestReopen,
+    respondToReopen,
+  };
 }

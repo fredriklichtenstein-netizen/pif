@@ -32,6 +32,14 @@ export interface Conversation {
   /** Set when the conversation has been closed (e.g. fulfiller withdrawn,
    *  pif completed/archived). Authoritative "thread is closed" signal. */
   closed_at?: string | null;
+  /** Pending reopen request awaiting the other party's response. */
+  reopen_requested_by?: string | null;
+  reopen_requested_at?: string | null;
+  reopen_request_comment?: string | null;
+  /** Once set, permanently overrides pif_status/closed_at-driven closure --
+   *  the conversation stays open for messaging regardless of the item's
+   *  (unchanged) completed/archived status. */
+  reopened_at?: string | null;
 }
 
 export interface Message {

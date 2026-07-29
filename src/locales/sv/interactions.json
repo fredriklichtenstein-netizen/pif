@@ -605,6 +605,7 @@
     "rate_helper_modal_placeholder": "Lämna en kommentar (visas för den som uppfyllde önskan)",
     "rate_modal_skip": "Hoppa över",
     "rate_modal_submit": "Skicka betyg",
+    "rate_modal_closes_conversation_note": "Detta markerar bytet som genomfört och stänger konversationen. Den kan öppnas igen inom 7 dagar genom en förfrågan till den andra parten.",
     "stars_aria": "{{count}} stjärnor"
   },
   "comments": {

@@ -29,12 +29,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { PifCompletionBanner } from "./PifCompletionBanner";
 import { PifRatingModal } from "./PifRatingModal";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/utils/safeStorage";
+
+const REOPEN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 const messageDraftKey = (conversationId: string) => `pif:message-draft:${conversationId}`;
 
@@ -56,6 +67,10 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const [hasRated, setHasRated] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [reopenDialogOpen, setReopenDialogOpen] = useState(false);
+  const [reopenComment, setReopenComment] = useState("");
+  const [reopenBusy, setReopenBusy] = useState(false);
+  const [respondBusy, setRespondBusy] = useState(false);
   const { t } = useTranslation();
   const {
     messages,
@@ -99,10 +114,32 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
   }, [item?.id, item?.title, completion.loading, isRequest, role]);
 
+  // reopened_at overrides closure permanently once the other party approves
+  // a reopen request -- the underlying pif_status/closed_at are untouched
+  // (per design, reopening the conversation never changes the transaction's
+  // own state), only this flag lets the thread accept messages again.
+  const reopenedAt = conversation?.reopened_at ?? null;
+  const reopenRequestedBy = conversation?.reopen_requested_by ?? null;
+  const reopenRequestComment = conversation?.reopen_request_comment ?? null;
+
   const isClosed =
-    !!conversation?.closed_at ||
-    completion.pifStatus === "completed" ||
-    completion.pifStatus === "archived";
+    (!!conversation?.closed_at ||
+      completion.pifStatus === "completed" ||
+      completion.pifStatus === "archived") &&
+    !reopenedAt;
+
+  // The reopen-request option is only offered for a *completed* exchange
+  // (not archived), and only within 7 days of both parties confirming.
+  const completedAtMs = completion.completedAt ? new Date(completion.completedAt).getTime() : null;
+  const reopenWindowOpen =
+    completion.pifStatus === "completed" &&
+    completedAtMs !== null &&
+    Date.now() <= completedAtMs + REOPEN_WINDOW_MS;
+  const isMyPendingReopenRequest = !!reopenRequestedBy && reopenRequestedBy === currentUserId;
+  const isOtherPendingReopenRequest =
+    !!reopenRequestedBy && reopenRequestedBy !== currentUserId;
+  const canRequestReopen =
+    isClosed && reopenWindowOpen && !reopenedAt && !reopenRequestedBy;
 
   const roleLabel = item
     ? isCurrentUserPiffer
@@ -288,6 +325,33 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     });
   };
 
+  const handleRequestReopen = async () => {
+    setReopenBusy(true);
+    try {
+      const res = await completion.requestReopen(reopenComment);
+      if (res.ok) {
+        setReopenDialogOpen(false);
+        setReopenComment("");
+      }
+    } finally {
+      setReopenBusy(false);
+    }
+  };
+
+  const handleRespondReopen = (approve: boolean) => {
+    setRespondBusy(true);
+    // Same reasoning as handleWithdraw: let any dialog/menu finish its own
+    // close cycle before the RPC's isClosed-flipping re-render lands, or
+    // Radix can leave pointer-events: none stuck on <body>.
+    requestAnimationFrame(async () => {
+      try {
+        await completion.respondToReopen(approve);
+      } finally {
+        setRespondBusy(false);
+      }
+    });
+  };
+
   if (detailsLoading) {
     return (
       <div className="h-full p-4">
@@ -433,12 +497,56 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       {/* Message input OR read-only status */}
       <div className="flex-shrink-0">
         {isClosed ? (
-          <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
-            {completion.pifStatus === "archived"
-              ? (isRequest ? "Önskan har arkiverats — konversationen är avslutad." : "Piffen har arkiverats — konversationen är avslutad.")
-              : completion.pifStatus === "completed"
-                ? (isRequest ? "Önskan är uppfylld — konversationen är avslutad." : "Piffen är genomförd — konversationen är avslutad.")
-                : "Den här konversationen är avslutad."}
+          <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground space-y-2">
+            <p>
+              {completion.pifStatus === "archived"
+                ? (isRequest ? "Önskan har arkiverats — konversationen är avslutad." : "Piffen har arkiverats — konversationen är avslutad.")
+                : completion.pifStatus === "completed"
+                  ? (isRequest ? "Önskan är uppfylld — konversationen är avslutad." : "Piffen är genomförd — konversationen är avslutad.")
+                  : "Den här konversationen är avslutad."}
+            </p>
+
+            {isOtherPendingReopenRequest ? (
+              <div className="rounded-md border bg-background p-3 text-left space-y-2">
+                <p className="text-sm text-foreground">
+                  {otherName} vill öppna konversationen igen.
+                  {reopenRequestComment ? ` "${reopenRequestComment}"` : ""}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="flex-1"
+                    disabled={respondBusy}
+                    onClick={() => handleRespondReopen(true)}
+                  >
+                    Öppna igen
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    disabled={respondBusy}
+                    onClick={() => handleRespondReopen(false)}
+                  >
+                    Avböj
+                  </Button>
+                </div>
+              </div>
+            ) : isMyPendingReopenRequest ? (
+              <p className="text-xs">
+                Du har bett om att öppna konversationen igen. Väntar på svar…
+              </p>
+            ) : canRequestReopen ? (
+              <button
+                type="button"
+                onClick={() => setReopenDialogOpen(true)}
+                className="text-xs text-primary underline hover:text-primary/80"
+              >
+                Öppna konversationen igen
+              </button>
+            ) : null}
           </div>
         ) : (
           <EnhancedMessageInput
@@ -449,6 +557,45 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           />
         )}
       </div>
+
+      {/* Reopen-request dialog */}
+      <Dialog open={reopenDialogOpen} onOpenChange={setReopenDialogOpen}>
+        <DialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            if (typeof document !== "undefined") {
+              document.body.style.pointerEvents = "";
+            }
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Öppna konversationen igen?</DialogTitle>
+            <DialogDescription>
+              {`${otherName} måste godkänna innan ni kan skriva igen. Detta ändrar inte statusen på ${isRequest ? "önskan" : "piffen"} — bara konversationen öppnas.`}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Valfri kommentar…"
+            value={reopenComment}
+            onChange={(e) => setReopenComment(e.target.value)}
+            maxLength={500}
+            rows={3}
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReopenDialogOpen(false)}
+              disabled={reopenBusy}
+            >
+              Avbryt
+            </Button>
+            <Button type="button" onClick={handleRequestReopen} disabled={reopenBusy}>
+              Skicka förfrågan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Piffer rating modal */}
       {role === "piffer" && (

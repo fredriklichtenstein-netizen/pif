@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Check, Loader2, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { PifRole } from "@/hooks/usePifCompletion";
 
 interface Props {
@@ -29,10 +39,18 @@ export function PifCompletionBanner({
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const bothDone = pifferConfirmed && receiverConfirmed;
   const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
 
+  // Whether clicking confirm right now would be the SECOND (finalizing)
+  // confirmation -- i.e. the other party has already confirmed, so this
+  // click closes the conversation immediately rather than just recording
+  // this user's own side of the handshake.
+  const otherAlreadyConfirmed = role === "piffer" ? receiverConfirmed : pifferConfirmed;
+
   const handleConfirm = async () => {
+    setConfirmDialogOpen(false);
     setBusy(true);
     try {
       await onConfirm();
@@ -50,6 +68,46 @@ export function PifCompletionBanner({
       setUndoing(false);
     }
   };
+
+  const confirmDialog = (
+    <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+      <AlertDialogContent
+        onCloseAutoFocus={(e) => {
+          // Same defensive pointer-events reset already applied elsewhere
+          // in this codebase for dialogs that close right as a parent
+          // re-render (here: the banner swapping for the closed-conversation
+          // footer) is in flight.
+          e.preventDefault();
+          if (typeof document !== "undefined") {
+            document.body.style.pointerEvents = "";
+          }
+        }}
+      >
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {otherAlreadyConfirmed
+              ? pick("Bekräfta att piffen är genomförd?", "Bekräfta att önskan är uppfylld?")
+              : pick("Bekräfta din del av bytet?", "Bekräfta din del av bytet?")}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {otherAlreadyConfirmed
+              ? pick(
+                  "Den andra parten har redan bekräftat. Detta markerar piffen som genomförd och stänger konversationen. Den kan öppnas igen inom 7 dagar genom en förfrågan till den andra parten.",
+                  "Den andra parten har redan bekräftat. Detta markerar önskan som uppfylld och stänger konversationen. Den kan öppnas igen inom 7 dagar genom en förfrågan till den andra parten.",
+                )
+              : pick(
+                  "Detta bekräftar din del av utbytet. När den andra parten också bekräftar markeras piffen som genomförd och konversationen stängs (kan öppnas igen inom 7 dagar genom en förfrågan).",
+                  "Detta bekräftar din del av utbytet. När den andra parten också bekräftar markeras önskan som uppfylld och konversationen stängs (kan öppnas igen inom 7 dagar genom en förfrågan).",
+                )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Avbryt</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>Bekräfta</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   if (bothDone) {
     return (
@@ -71,7 +129,7 @@ export function PifCompletionBanner({
           size="sm"
           variant={confirmed ? "secondary" : "default"}
           disabled={confirmed || busy}
-          onClick={handleConfirm}
+          onClick={() => setConfirmDialogOpen(true)}
           className="w-full justify-center gap-2"
         >
           {busy ? (
@@ -120,6 +178,7 @@ export function PifCompletionBanner({
             </Button>
           </>
         )}
+        {confirmDialog}
       </div>
     );
   }
@@ -135,7 +194,7 @@ export function PifCompletionBanner({
         size="sm"
         variant={confirmed ? "secondary" : "default"}
         disabled={confirmed || busy}
-        onClick={handleConfirm}
+        onClick={() => setConfirmDialogOpen(true)}
         className="w-full justify-center gap-2"
       >
         {busy ? (
@@ -173,6 +232,7 @@ export function PifCompletionBanner({
           )}
         </p>
       )}
+      {confirmDialog}
     </div>
   );
 }

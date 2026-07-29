@@ -605,6 +605,7 @@
     "rate_helper_modal_placeholder": "Leave a comment (shown to the wish fulfiller)",
     "rate_modal_skip": "Skip",
     "rate_modal_submit": "Submit rating",
+    "rate_modal_closes_conversation_note": "This marks the exchange as completed and closes the conversation. It can be reopened within 7 days by requesting it from the other party.",
     "stars_aria": "{{count}} stars"
   },
   "comments": {

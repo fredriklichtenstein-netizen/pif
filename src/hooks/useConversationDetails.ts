@@ -92,6 +92,10 @@ export function useConversationDetails(conversationId: string | null) {
             item_id: data.item_id,
             last_message_text: data.last_message_text,
             closed_at: (data as any).closed_at ?? null,
+            reopen_requested_by: (data as any).reopen_requested_by ?? null,
+            reopen_requested_at: (data as any).reopen_requested_at ?? null,
+            reopen_request_comment: (data as any).reopen_request_comment ?? null,
+            reopened_at: (data as any).reopened_at ?? null,
             participants: (data.participants || []).map((p: any) => ({ ...p, id: String(p.id) })),
             item: data.item ? {
               id: String(data.item.id),
@@ -195,9 +199,9 @@ export function useConversationDetails(conversationId: string | null) {
 
     fetchConversationDetails();
 
-    // Allow external actions (e.g. usePifCompletion.withdraw) to request a
-    // refetch so freshly-changed fields like conversations.closed_at land in
-    // the UI without a full page reload.
+    // Allow external actions (e.g. usePifCompletion.withdraw/requestReopen)
+    // to request a refetch so freshly-changed fields like closed_at or the
+    // reopen_* columns land in the UI without a full page reload.
     const onRefetch = (event: Event) => {
       const detail = (event as CustomEvent<{ conversationId?: string }>).detail;
       if (!detail?.conversationId || detail.conversationId === conversationId) {
@@ -205,8 +209,23 @@ export function useConversationDetails(conversationId: string | null) {
       }
     };
     window.addEventListener('pif:conversation-refetch', onRefetch);
+
+    // Live updates for the OTHER participant: a reopen request/response is
+    // made from their client, not ours, so the custom event above never
+    // fires here -- only a real postgres_changes subscription reflects it
+    // without requiring a manual refresh.
+    const channel = supabase
+      .channel(`conversation-reopen:${conversationId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversationId}` },
+        () => fetchConversationDetails(),
+      )
+      .subscribe();
+
     return () => {
       window.removeEventListener('pif:conversation-refetch', onRefetch);
+      supabase.removeChannel(channel);
     };
   }, [conversationId, currentUserId, toast]);
 
