@@ -205,7 +205,7 @@ export function PostFormContainer({
 
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 pt-6 flex-1 flex flex-col min-h-0">
+    <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
       <div className="relative">
         <PostFormHeader
           title={isRequest ? t('post.create_request') : t('post.create_offer')}
@@ -230,25 +230,23 @@ export function PostFormContainer({
         onStepClick={finalGoToStep}
       />
 
-      <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
-        <Card className="p-6 mb-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
+        <Card className="p-6">
           {renderCurrentStep()}
         </Card>
 
-        <div className="mt-auto pt-4 pb-24 bg-background">
-          <PostFormNavigation
-            currentStep={finalCurrentStep}
-            isOnFinalStep={finalIsOnFinalStep}
-            canProceedNow={canProceedNow}
-            isFormValid={true /* surfacing happens via inline errors */}
-            isSubmitting={isSubmitting}
-            isRequest={isRequest}
-            isEditMode={isEditMode}
-            onPrevStep={finalPrevStep}
-            onNextStep={attemptNext}
-            onCancel={() => setCancelDialogOpen(true)}
-          />
-        </div>
+        <PostFormNavigation
+          currentStep={finalCurrentStep}
+          isOnFinalStep={finalIsOnFinalStep}
+          canProceedNow={canProceedNow}
+          isFormValid={true /* surfacing happens via inline errors */}
+          isSubmitting={isSubmitting}
+          isRequest={isRequest}
+          isEditMode={isEditMode}
+          onPrevStep={finalPrevStep}
+          onNextStep={attemptNext}
+          onCancel={() => setCancelDialogOpen(true)}
+        />
       </form>
 
 

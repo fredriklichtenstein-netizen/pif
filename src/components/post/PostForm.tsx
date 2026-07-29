@@ -101,7 +101,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     formData.images.length > 0;
 
   return (
-    <div className="relative flex-1 flex flex-col">
+    <div className="relative">
       {DEMO_MODE && (
         <div className="container mx-auto px-4 pt-4 max-w-2xl">
           <DemoModeBanner />
