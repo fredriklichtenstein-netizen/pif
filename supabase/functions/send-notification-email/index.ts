@@ -20,7 +20,9 @@ type NotificationType =
   | "new_comment"
   | "feature_announcement"
   | "stale_item_reminder"
-  | "item_force_archived";
+  | "item_force_archived"
+  | "conversation_reopen_requested"
+  | "conversation_reopen_responded";
 
 // Which notification_preferences key gates each email type. Comment
 // notifications reuse the existing "mentions" (someone replied to/near you)
@@ -37,6 +39,8 @@ const PREFERENCE_KEY: Record<string, string> = {
   post_commented: "email_item_updates",
   feature_announcement: "email_announcements",
   stale_item_reminder: "email_item_updates",
+  conversation_reopen_requested: "email_messages",
+  conversation_reopen_responded: "email_messages",
 };
 
 // Copy per stale-item CTA kind, keyed by what _process_stale_items() (in
@@ -201,6 +205,45 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          <p>Efter 30 dagars inaktivitet har vi arkiverat ${noun.toLowerCase()} automatiskt. Du kan återaktivera den när du vill.</p>`,
         itemUrl,
         "Återaktivera",
+      ),
+    };
+  }
+
+  if (type === "conversation_reopen_requested") {
+    const itemTitle = String(data.itemTitle ?? "utbytet");
+    const requesterName = String(data.requesterName ?? "En granne");
+    const conversationId = String(data.conversationId ?? "");
+    const comment = data.comment ? String(data.comment) : "";
+    const url = `${APP_URL}/messages?conversation=${encodeURIComponent(conversationId)}`;
+    const heading = `${requesterName} vill öppna konversationen om "${itemTitle}" igen`;
+    return {
+      subject: heading,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${escape(heading)}</h2>
+         <p>Detta ändrar inte statusen på piffen/önskan — bara konversationen öppnas igen om du godkänner. Du kan godkänna eller avböja direkt i konversationen.</p>
+         ${comment ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(comment)}"</p>` : ""}`,
+        url,
+        "Visa förfrågan",
+      ),
+    };
+  }
+
+  if (type === "conversation_reopen_responded") {
+    const itemTitle = String(data.itemTitle ?? "utbytet");
+    const responderName = String(data.responderName ?? "Den andra parten");
+    const conversationId = String(data.conversationId ?? "");
+    const isApproved = data.isApproved === true;
+    const url = `${APP_URL}/messages?conversation=${encodeURIComponent(conversationId)}`;
+    const heading = isApproved
+      ? `${responderName} öppnade konversationen om "${itemTitle}" igen`
+      : `${responderName} avböjde din förfrågan om "${itemTitle}"`;
+    return {
+      subject: heading,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${escape(heading)}</h2>
+         <p>${isApproved ? "Ni kan nu skriva i konversationen igen." : "Konversationen förblir stängd."}</p>`,
+        url,
+        "Visa konversationen",
       ),
     };
   }

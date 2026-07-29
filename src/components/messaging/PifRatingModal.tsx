@@ -129,6 +129,10 @@ export function PifRatingModal({
               onChange={(e) => setComment(e.target.value)}
             />
 
+            <p className="text-xs text-muted-foreground">
+              {t("interactions.rate_modal_closes_conversation_note")}
+            </p>
+
             <DialogFooter className="gap-2 sm:gap-2">
               {allowSkip && (
                 <Button
