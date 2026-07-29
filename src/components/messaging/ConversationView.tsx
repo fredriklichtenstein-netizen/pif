@@ -310,8 +310,15 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     // subsequent isClosed flip + footer/input swap) before close
     // leaves `pointer-events: none` stuck on <body>, deadening the
     // whole page until manual refresh.
+    //
+    // setTimeout, not requestAnimationFrame: rAF callbacks are suspended
+    // for as long as the tab/window is hidden (backgrounded app, switched
+    // tabs mid-tap), which would leave this callback -- and any busy-state
+    // flag gating a disabled button -- stuck pending indefinitely. A
+    // macrotask timeout still runs on the very next tick either way, but
+    // isn't tied to the rendering pipeline.
     setWithdrawOpen(false);
-    requestAnimationFrame(async () => {
+    setTimeout(async () => {
       const res = await completion.withdraw(action);
       if (!res.ok) return;
       if (isRequest) {
@@ -322,7 +329,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       // Pif: thread is over — leave it.
       if (onBack) onBack();
       else navigate("/messages");
-    });
+    }, 0);
   };
 
   const handleRequestReopen = async () => {
@@ -340,16 +347,17 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
 
   const handleRespondReopen = (approve: boolean) => {
     setRespondBusy(true);
-    // Same reasoning as handleWithdraw: let any dialog/menu finish its own
-    // close cycle before the RPC's isClosed-flipping re-render lands, or
-    // Radix can leave pointer-events: none stuck on <body>.
-    requestAnimationFrame(async () => {
+    // setTimeout, not requestAnimationFrame -- see handleWithdraw above.
+    // Caught live: with the tab backgrounded, the rAF callback never fired,
+    // leaving respondBusy (and the Approve/Decline buttons) stuck disabled
+    // forever since the deferred RPC call itself never ran.
+    setTimeout(async () => {
       try {
         await completion.respondToReopen(approve);
       } finally {
         setRespondBusy(false);
       }
-    });
+    }, 0);
   };
 
   if (detailsLoading) {
