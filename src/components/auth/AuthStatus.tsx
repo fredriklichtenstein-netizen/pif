@@ -29,7 +29,7 @@ export function AuthStatus({
   const avatarUrl = cachedProfile?.avatar_url ?? null;
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 min-w-0 ${className}`}>
       {user ? (
         <>
           {showAvatar && (
@@ -44,7 +44,7 @@ export function AuthStatus({
           )}
 
           {showName && (
-            <span className="text-sm font-medium overflow-hidden text-ellipsis">
+            <span className="text-sm font-medium truncate">
               {displayName}
             </span>
           )}

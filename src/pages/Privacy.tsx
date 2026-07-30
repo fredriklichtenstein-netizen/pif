@@ -138,7 +138,7 @@ function SwedishPolicy() {
         <br />Kontakta oss på: hej@pif.community
         <br />PIF App AB, Kristinebergs slottsväg 3, 112 14 Stockholm
       </div>
-      <p className="text-sm text-muted-foreground italic mt-8">Senast uppdaterad: juni 2026</p>
+      <p className="text-sm text-muted-foreground italic mt-8">Senast uppdaterad: juli 2026</p>
     </article>
   );
 }
@@ -265,7 +265,7 @@ function EnglishPolicy() {
         <br />Contact us at: hej@pif.community
         <br />PIF App AB, Kristinebergs slottsväg 3, 112 14 Stockholm, Sweden
       </div>
-      <p className="text-sm text-muted-foreground italic mt-8">Last updated: June 2026</p>
+      <p className="text-sm text-muted-foreground italic mt-8">Last updated: July 2026</p>
     </article>
   );
 }

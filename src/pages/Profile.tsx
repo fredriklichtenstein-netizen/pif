@@ -19,8 +19,7 @@ const PROFILE_AUTH_TIMEOUT_MS = 5000;
 
 function formatPublicName(profile: any) {
   if (!profile.first_name) return "";
-  const initial = profile.last_name ? Array.from(profile.last_name)[0].toUpperCase() : "";
-  return `${profile.first_name} ${initial}`;
+  return `${profile.first_name} ${profile.last_name || ""}`.trim();
 }
 
 const Profile = () => {

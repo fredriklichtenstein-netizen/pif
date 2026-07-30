@@ -15,7 +15,7 @@ export function ProfileOverview({ user }: { user: any }) {
         size={96}
         className="mb-3 border"
       />
-      <div className="text-2xl font-semibold">{user.first_name} {user.last_name?.[0]}</div>
+      <div className="text-2xl font-semibold text-center px-4">{user.first_name} {user.last_name}</div>
       <div className="text-muted-foreground mb-2">{user.email}</div>
       <div className="flex gap-6 mt-4">
         <div className="text-center">

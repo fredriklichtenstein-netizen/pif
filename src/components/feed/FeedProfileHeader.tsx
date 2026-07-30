@@ -46,9 +46,8 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;
-        const lastInitial = data.last_name ? Array.from(data.last_name)[0] : "";
         const name =
-          [data.first_name, lastInitial ? `${lastInitial}.` : ""]
+          [data.first_name, data.last_name || ""]
             .filter(Boolean)
             .join(" ") || stub?.name || "";
         const city = (data as any).city;
@@ -111,7 +110,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between gap-2 rounded-md bg-muted/60 px-3 py-2">
-        <span className="text-sm">
+        <span className="text-sm min-w-0 truncate">
           {t("feed.viewing_user_filter", "Visar piffar från {{name}}", {
             name: display.name || t("interactions.user", "användare"),
           })}

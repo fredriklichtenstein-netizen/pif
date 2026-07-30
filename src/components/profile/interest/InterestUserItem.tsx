@@ -48,7 +48,7 @@ export function InterestUserItem({ user, isOwner, onSelect }: InterestUserItemPr
         />
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-sm font-medium truncate">
-            {profile.first_name} {profile.last_name?.[0] || ""}
+            {profile.first_name} {profile.last_name || ""}
           </span>
           <span className="text-xs text-muted-foreground">
             {format(new Date(user.created_at), "d MMM HH:mm", { locale })}

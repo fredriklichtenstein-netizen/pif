@@ -2,8 +2,10 @@ import type { Profile } from "@/types/messaging";
 
 /**
  * Resolve a human-readable display name for a profile.
- * Prefers first_name + last name initial, then first_name, then username,
- * then the localized fallback.
+ * Prefers first_name + full last name, then first_name, then username,
+ * then the localized fallback. Callers rendering this in tight spaces
+ * (list rows, nav bars) should truncate visually via CSS (e.g. `truncate`)
+ * rather than shortening the name itself.
  */
 export function resolveDisplayName(
   profile: Pick<Profile, "first_name" | "last_name" | "username"> | null | undefined,
@@ -12,7 +14,7 @@ export function resolveDisplayName(
   if (!profile) return fallback;
   const first = profile.first_name?.trim();
   const last = profile.last_name?.trim();
-  if (first && last) return `${first} ${Array.from(last)[0]}.`;
+  if (first && last) return `${first} ${last}`;
   if (first) return first;
   if (last) return last;
   const username = profile.username?.trim();
