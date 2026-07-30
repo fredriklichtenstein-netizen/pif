@@ -28,16 +28,8 @@ export const useCommentCreate = (
   const [isLoading, setIsLoading] = useState(false);
   const addDemoComment = useDemoInteractionsStore(state => state.addComment);
 
-  // Format user name as "First name + first letter of last name"
-  const formatUserName = (fullName: string): string => {
-    if (!fullName) return 'User';
-    
-    const parts = fullName.split(' ');
-    if (parts.length > 1) {
-      return `${parts[0]} ${Array.from(parts[parts.length - 1])[0]}`;
-    }
-    return fullName;
-  };
+  // Format user name helper
+  const formatUserName = (fullName: string): string => fullName || 'User';
 
   // Add a new comment (or reply when parentId is provided)
   const handleAddComment = async (text: string, parentId?: string) => {

@@ -30,20 +30,11 @@ export const useCommentActions = (
   const toggleDemoCommentLike = useDemoInteractionsStore(state => state.toggleCommentLike);
 
   // Format user name helper
-  const formatUserName = (fullName: string): string => {
-    if (!fullName) return 'User';
-    
-    const parts = fullName.split(' ');
-    if (parts.length > 1) {
-      return `${parts[0]} ${Array.from(parts[parts.length - 1])[0]}`;
-    }
-    return fullName;
-  };
+  const formatUserName = (fullName: string): string => fullName || 'User';
 
   // Format current user info if available
   useEffect(() => {
     if (currentUser && currentUser.name) {
-      // Apply "First name + first letter of last name" format
       const formattedName = formatUserName(currentUser.name);
       
       if (formattedName !== currentUser.name) {
