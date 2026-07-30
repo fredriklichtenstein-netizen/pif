@@ -9,8 +9,8 @@ export type User = {
 
 /**
  * Utility function to safely extract user data from profile object
- * and to format name in "First LastInitial" form, only ever exposing
- * the first letter of the last name (never full last name).
+ * and to format name as "First Last". Callers rendering this in tight
+ * spaces should truncate visually via CSS rather than shortening the name.
  */
 export const extractUserFromProfile = (
   userProfile: Record<string, any> | null,
@@ -41,8 +41,8 @@ export const extractUserFromProfile = (
   let displayName = "";
   
   if (firstName && lastName.length > 0) {
-    // Preferred: "First L"
-    displayName = `${firstName} ${Array.from(lastName)[0]}`;
+    // Preferred: "First Last"
+    displayName = `${firstName} ${lastName}`;
   } else if (firstName) {
     // Fallback: Just first name
     displayName = firstName;
