@@ -73,11 +73,11 @@ export function InteractionCounts({
             <div className="max-h-[200px] overflow-y-auto space-y-2">
               {likers.length > 0 ? (
                 likers.map(user => (
-                  <div key={user.id} className="flex items-center gap-2">
+                  <div key={user.id} className="flex items-center gap-2 min-w-0">
                     <div className="h-6 w-6 rounded-full overflow-hidden flex-shrink-0">
                       <AvatarImage src={user.avatar} alt={user.name} size={24} className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-sm">{user.name}</span>
+                    <span className="text-sm truncate">{user.name}</span>
                   </div>
                 ))
               ) : (

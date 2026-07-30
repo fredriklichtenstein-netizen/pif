@@ -23,20 +23,20 @@ export function CommentHeader({ author, createdAt }: CommentHeaderProps) {
           className="w-full h-full object-cover"
         />
       </div>
-      <span className="font-medium">{author.name}</span>
+      <span className="font-medium truncate">{author.name}</span>
     </>
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 min-w-0">
       {author.id ? (
-        <Link to={`/feed?user=${author.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link to={`/feed?user=${author.id}`} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
           {inner}
         </Link>
       ) : (
-        <div className="flex items-center gap-2">{inner}</div>
+        <div className="flex items-center gap-2 min-w-0 flex-1">{inner}</div>
       )}
-      <span className="text-sm text-gray-500">
+      <span className="text-sm text-gray-500 flex-shrink-0">
         {formatRelativeTime(createdAt)}
       </span>
     </div>

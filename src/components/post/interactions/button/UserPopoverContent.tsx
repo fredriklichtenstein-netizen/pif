@@ -68,12 +68,12 @@ export function UserPopoverContent({
               key={user.id}
               to={`/feed?user=${user.id}`}
               onClick={() => setShowPopup(false)}
-              className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors min-w-0"
             >
               <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
                 <AvatarImage src={user.avatar} alt={user.name} size={32} className="w-full h-full object-cover" />
               </div>
-              <span className="text-sm font-medium">{user.name}</span>
+              <span className="text-sm font-medium truncate">{user.name}</span>
             </Link>
           ))}
         </div>

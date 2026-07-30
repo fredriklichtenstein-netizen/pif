@@ -69,7 +69,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     postedBy: {
       id: data.user_id,
       name: data.profiles?.first_name
-        ? `${data.profiles.first_name} ${data.profiles.last_name?.[0] || ""}`
+        ? `${data.profiles.first_name} ${data.profiles.last_name || ""}`
         : t('common.user'),
       avatar: data.profiles?.avatar_url || "",
     },

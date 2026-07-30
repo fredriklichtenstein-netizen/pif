@@ -159,7 +159,7 @@ export function ItemCardHeader({
   return (
     <>
       <div className="p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {postedBy.id ? (
             <button
               type="button"
@@ -178,19 +178,19 @@ export function ItemCardHeader({
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
               }}
-              className="flex items-center text-left"
+              className="flex items-center text-left min-w-0"
             >
               <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
                 <AvatarImage src={postedBy.avatar} alt={postedBy.name} size={32} className="w-full h-full object-cover" />
               </div>
-              <div className="text-sm font-medium">{postedBy.name}</div>
+              <div className="text-sm font-medium truncate">{postedBy.name}</div>
             </button>
           ) : (
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0">
               <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
                 <AvatarImage src={postedBy.avatar} alt={postedBy.name} size={32} className="w-full h-full object-cover" />
               </div>
-              <div className="text-sm font-medium">{postedBy.name}</div>
+              <div className="text-sm font-medium truncate">{postedBy.name}</div>
             </div>
           )}
           {distanceText && (

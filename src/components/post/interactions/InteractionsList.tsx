@@ -59,13 +59,13 @@ export function InteractionsList({
         <Link
           key={user.id}
           to={`/feed?user=${user.id}`}
-          className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors"
+          className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors min-w-0"
         >
           <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
             <AvatarImage src={user.avatar} alt={user.name} size={32} className="w-full h-full object-cover" />
           </div>
-          <div>
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+          <div className="min-w-0">
+            <p className="text-sm font-medium leading-none truncate">{user.name}</p>
           </div>
         </Link>
       ))}

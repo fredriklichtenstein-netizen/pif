@@ -346,8 +346,7 @@ export function InterestSelectionList({
   const displayName = (r: InterestRow) => {
     const p = r.profile;
     if (!p) return t("interactions.interested");
-    const lastInitial = p.last_name ? Array.from(p.last_name)[0] : "";
-    return `${p.first_name || ""} ${lastInitial}`.trim() ||
+    return `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
       t("interactions.interested");
   };
 
