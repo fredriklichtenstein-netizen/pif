@@ -179,9 +179,19 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   watermark/seen-at column meant to gate pre-existing rows against new content, check whether any
   of that content was already authored before promotion — if so, the backfilled default will
   likely land after it and need a manual correction pass.
-- **Mapbox token**: currently the account's unrestricted default public token. Mapbox recommends
-  a URL-restricted token instead (dashboard → Tokens → Create token → restrict to
-  `app.pif.community`, `pif.today`, and the Lovable preview domains) — flagged, not yet done.
+- **Mapbox token**: swapped from the account's unrestricted default public token to a
+  URL-restricted one. Mapbox tokens don't support wildcards, but subdomains are auto-authorized
+  (adding `example.com` also covers `anything.example.com`), so the allowed list is just the four
+  root domains: `pif.today`, `app.pif.community`, `give-and-get-local.lovable.app`,
+  `pif-pay-it-forward.lovable.app`. Lovable's dynamic in-editor preview URLs
+  (`id-preview--*.lovable.app`) are intentionally NOT covered — they're siblings of the two
+  published domains above, not subdomains, so covering them would require the bare `lovable.app`
+  domain, which would authorize every other project on Lovable's shared domain too. Trade-off
+  accepted: maps may 403 in the Lovable in-editor preview while building, but work fine on the
+  real published staging/production URLs (which is what the deploy-verification workflow above
+  actually checks). Set via `supabase secrets set MAPBOX_TOKEN=... --project-ref <ref>` on both
+  projects — the `get-mapbox-token` edge function picks up a changed secret immediately, no
+  redeploy needed.
 
 ## Git / deployment workflow
 
