@@ -73,40 +73,6 @@ export const fetchLikersPage = async (
   return { users, hasMore, nextOffset: offset + slice.length };
 };
 
-export const fetchInterestedUsersPage = async (
-  itemId: string | number,
-  offset: number,
-  limit: number = PAGE_SIZE
-): Promise<PageResult> => {
-  const numericId = parseId(itemId);
-  if (numericId === null)
-    return { users: [], hasMore: false, nextOffset: offset };
-
-  const { data, error } = await supabase
-    .from("interests")
-    .select(
-      "user_id, created_at, profiles:user_id(id, first_name, last_name, avatar_url)"
-    )
-    .eq("item_id", numericId)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit);
-
-  if (error || !data)
-    return { users: [], hasMore: false, nextOffset: offset };
-
-  const hasMore = data.length > limit;
-  const slice = data.slice(0, limit);
-  const seen = new Set<string>();
-  const users: User[] = [];
-  for (const row of slice as any[]) {
-    const p = row.profiles;
-    if (!p || seen.has(p.id)) continue;
-    seen.add(p.id);
-    users.push(buildUser(p));
-  }
-  return { users, hasMore, nextOffset: offset + slice.length };
-};
-
 export const fetchCommentersPage = async (
   itemId: string | number,
   offset: number,

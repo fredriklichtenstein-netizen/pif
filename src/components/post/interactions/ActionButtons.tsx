@@ -3,7 +3,6 @@ import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./ShareButton";
 import {
   fetchLikersPage,
-  fetchInterestedUsersPage,
   fetchCommentersPage,
 } from "@/services/interactions/fetchPaginatedUsers";
 import type { User } from "@/hooks/item/useItemInteractions";
@@ -33,7 +32,6 @@ interface ActionButtonsProps {
   onShare: (e: React.MouseEvent) => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
-  fetchCommenters?: () => Promise<User[]>;
 }
 
 
@@ -61,13 +59,10 @@ export function ActionButtons({
   onShare,
   fetchLikers,
   fetchInterestedUsers,
-  fetchCommenters,
 }: ActionButtonsProps) {
   const { user } = useGlobalAuth();
   const effectiveCurrentUserId = currentUserId ?? user?.id;
   const fetchLikersPageFn = (offset: number) => fetchLikersPage(itemId, offset);
-  const fetchInterestedPageFn = (offset: number) =>
-    fetchInterestedUsersPage(itemId, offset);
   const fetchCommentersPageFn = (offset: number, seen?: Set<string>) =>
     fetchCommentersPage(itemId, offset, undefined, seen);
   return (
@@ -110,7 +105,6 @@ export function ActionButtons({
         users={interestedUsers}
         onClick={onShowInterest}
         onCounterClick={fetchInterestedUsers}
-        fetchPage={fetchInterestedPageFn}
         isOwner={isOwner}
         labelPassive="Interest"
         labelActive="Interested"
