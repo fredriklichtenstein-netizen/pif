@@ -26,7 +26,6 @@ interface ItemInteractionButtonsProps {
   onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
-  fetchCommenters?: () => Promise<User[]>;
 }
 
 export const ItemInteractionButtons = ({
@@ -52,7 +51,6 @@ export const ItemInteractionButtons = ({
   onShare,
   fetchLikers,
   fetchInterestedUsers,
-  fetchCommenters,
 }: ItemInteractionButtonsProps) => {
   return (
     <PrimaryActions
@@ -78,7 +76,6 @@ export const ItemInteractionButtons = ({
       onShare={onShare}
       fetchLikers={fetchLikers}
       fetchInterestedUsers={fetchInterestedUsers}
-      fetchCommenters={fetchCommenters}
     />
   );
 };

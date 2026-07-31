@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import {
   fetchLikersPage,
-  fetchInterestedUsersPage,
   fetchCommentersPage,
 } from "@/services/interactions/fetchPaginatedUsers";
 
@@ -33,7 +32,6 @@ interface PrimaryActionsProps {
   onShare: () => void;
   fetchLikers?: () => Promise<User[]>;
   fetchInterestedUsers?: () => Promise<User[]>;
-  fetchCommenters?: () => Promise<User[]>;
 }
 
 export function PrimaryActions({
@@ -59,7 +57,6 @@ export function PrimaryActions({
   onShare,
   fetchLikers,
   fetchInterestedUsers,
-  fetchCommenters,
 }: PrimaryActionsProps) {
   const { t } = useTranslation();
   const { user } = useGlobalAuth();
@@ -73,8 +70,6 @@ export function PrimaryActions({
   // captures the item id so the popover can request page after page
   // without ever loading the full list upfront.
   const fetchLikersPageFn = (offset: number) => fetchLikersPage(itemId, offset);
-  const fetchInterestedPageFn = (offset: number) =>
-    fetchInterestedUsersPage(itemId, offset);
   const fetchCommentersPageFn = (offset: number, seen?: Set<string>) =>
     fetchCommentersPage(itemId, offset, undefined, seen);
 
@@ -131,7 +126,6 @@ export function PrimaryActions({
           users={interestedUsers}
           onClick={onShowInterest}
           onCounterClick={fetchInterestedUsers}
-          fetchPage={fetchInterestedPageFn}
           isOwner={isOwner}
           labelPassive={
             itemType === 'request'

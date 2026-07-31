@@ -9,10 +9,9 @@ export const useComments = (itemId: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
-  const { 
-    fetchComments, 
-    fetchCommentsCount, 
-    fetchCommenters,
+  const {
+    fetchComments,
+    fetchCommentsCount,
     isLoading: isFetchLoading,
     error: fetchError,
     useFallbackMode
@@ -34,7 +33,6 @@ export const useComments = (itemId: string) => {
     addComment,
     deleteComment,
     fetchCommentsCount,
-    fetchCommenters,
     isLoading,
     error,
     useFallbackMode

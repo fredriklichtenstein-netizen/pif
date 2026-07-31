@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useToast } from "../use-toast";
 import { useFetchComments } from "./comments/useFetchComments";
 import { useCommentsCount } from "./comments/useCommentsCount";
-import { useCommenters } from "./comments/useCommenters";
 
 export const useCommentsFetch = (itemId: string) => {
   const { toast } = useToast();
@@ -19,8 +18,7 @@ export const useCommentsFetch = (itemId: string) => {
   } = useFetchComments(itemId);
   
   const { fetchCommentsCount } = useCommentsCount();
-  const { fetchCommenters } = useCommenters();
-  
+
   // Update loading and error states based on fetchComments states
   useEffect(() => {
     setIsLoading(isFetchLoading);
@@ -30,7 +28,6 @@ export const useCommentsFetch = (itemId: string) => {
   return {
     fetchComments,
     fetchCommentsCount,
-    fetchCommenters,
     isLoading,
     error,
     useFallbackMode
