@@ -4,15 +4,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { markConfirmationInProgress } from "@/lib/auth/confirmationFlag";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 // Detect a Supabase auth confirmation hash on the URL. We check this
 // synchronously on mount BEFORE Supabase has a chance to consume the hash,
 // so bystander tabs can be identified reliably (they won't see the hash).
 function detectConfirmationHash(): boolean {
   if (typeof window === "undefined") return false;
-  // PKCE flow (client uses flowType: "pkce"): confirmation links redirect
-  // with ?code=... in the query string, not a #access_token hash fragment.
-  if (new URLSearchParams(window.location.search).has("code")) return true;
+  const search = new URLSearchParams(window.location.search);
+  // token_hash + type: verified explicitly via verifyOtp (see checkAndRedirect
+  // below) — no locally-stored PKCE code verifier needed, so this works even
+  // when the link is opened in a different browser/device than the one that
+  // signed up.
+  if (search.has("token_hash")) return true;
+  // Transitional: an already-sent email using the previous ?code= format.
+  if (search.has("code")) return true;
   const hash = window.location.hash || "";
   if (!hash.includes("access_token=")) return false;
   return /type=(signup|magiclink|invite|recovery|email_change)/.test(hash);
@@ -77,8 +83,28 @@ export function useEmailConfirmation() {
       }
     };
 
+    // If the link used the token_hash format, verify it explicitly first —
+    // unlike ?code= or #access_token=, Supabase's automatic detectSessionInUrl
+    // doesn't recognize this format, so the SDK won't establish a session on
+    // its own.
+    const verifyTokenHashIfPresent = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const tokenHash = params.get("token_hash");
+      const otpType = params.get("type");
+      if (!tokenHash || !otpType) return;
+
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: otpType as EmailOtpType,
+      });
+      if (error) {
+        console.error("Email confirmation verification failed:", error);
+      }
+    };
+
     // Check if user is already signed in and confirmed
     const getSession = async () => {
+      await verifyTokenHashIfPresent();
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
