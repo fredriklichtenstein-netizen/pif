@@ -10,6 +10,9 @@ import { markConfirmationInProgress } from "@/lib/auth/confirmationFlag";
 // so bystander tabs can be identified reliably (they won't see the hash).
 function detectConfirmationHash(): boolean {
   if (typeof window === "undefined") return false;
+  // PKCE flow (client uses flowType: "pkce"): confirmation links redirect
+  // with ?code=... in the query string, not a #access_token hash fragment.
+  if (new URLSearchParams(window.location.search).has("code")) return true;
   const hash = window.location.hash || "";
   if (!hash.includes("access_token=")) return false;
   return /type=(signup|magiclink|invite|recovery|email_change)/.test(hash);
