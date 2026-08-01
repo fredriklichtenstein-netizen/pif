@@ -9,6 +9,7 @@ import { AlertCircle, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -24,10 +25,38 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const checkToken = async () => {
-      // PKCE flow (client is configured with flowType: "pkce"): the recovery
-      // link redirects with ?code=... in the query string, not a #access_token
-      // hash fragment. Exchange it for a session.
-      const code = new URLSearchParams(window.location.search).get("code");
+      const params = new URLSearchParams(window.location.search);
+
+      // Preferred: token_hash + type, verified directly via verifyOtp — no
+      // locally-stored PKCE code verifier needed, so this works even when
+      // the link is opened in a different browser/device/app than the one
+      // that requested the reset (e.g. Mail.app opening the link in Safari
+      // when the request was made in Chrome).
+      const tokenHash = params.get("token_hash");
+      const otpType = params.get("type");
+
+      if (tokenHash && otpType) {
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: otpType as EmailOtpType,
+          });
+          if (error) throw error;
+          if (!data.session) {
+            throw new Error("No session returned when verifying token");
+          }
+          setTokenVerified(true);
+        } catch (err: any) {
+          console.error("Token verification failed:", err);
+          setTokenVerified(false);
+          setError(err.message || t('auth.link_expired_description'));
+        }
+        return;
+      }
+
+      // Transitional fallback: PKCE ?code= link (an already-sent email using
+      // the previous template format).
+      const code = params.get("code");
 
       if (code) {
         try {
