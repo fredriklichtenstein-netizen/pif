@@ -24,45 +24,68 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const checkToken = async () => {
+      // PKCE flow (client is configured with flowType: "pkce"): the recovery
+      // link redirects with ?code=... in the query string, not a #access_token
+      // hash fragment. Exchange it for a session.
+      const code = new URLSearchParams(window.location.search).get("code");
+
+      if (code) {
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          if (!data.session) {
+            throw new Error("No session returned when verifying token");
+          }
+          setTokenVerified(true);
+        } catch (err: any) {
+          console.error("Token verification failed:", err);
+          setTokenVerified(false);
+          setError(err.message || t('auth.link_expired_description'));
+        }
+        return;
+      }
+
+      // Fallback: legacy implicit-flow links (#access_token=...), in case an
+      // older email is still sitting unopened in someone's inbox.
       const hash = window.location.hash;
-      
+
       if (!hash || !hash.includes("access_token")) {
         console.error("Invalid or missing token in URL:", window.location.href);
         setTokenVerified(false);
         setError(t('auth.link_expired_description'));
         return;
       }
-      
+
       try {
         const hashParams = new URLSearchParams(hash.substring(1));
         const accessToken = hashParams.get('access_token');
-        
+
         if (!accessToken) {
           throw new Error("No access token found in URL");
         }
-        
+
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: hashParams.get('refresh_token') || '',
         });
-        
+
         if (error) {
           console.error("Error verifying token:", error);
           throw error;
         }
-        
+
         if (!data.session) {
           throw new Error("No session returned when verifying token");
         }
         setTokenVerified(true);
-        
+
       } catch (err: any) {
         console.error("Token verification failed:", err);
         setTokenVerified(false);
         setError(err.message || t('auth.link_expired_description'));
       }
     };
-    
+
     checkToken();
   }, []);
 
