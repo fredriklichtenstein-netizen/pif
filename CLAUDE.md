@@ -64,6 +64,46 @@ Mapbox GL JS requires a DEFINITE (not min-height) container height at initializa
 `flex-1` chains can resolve to 0px and break map rendering entirely — this has happened twice. Any
 change near the Map page's layout must be tested on a real device before considering it done.
 
+## Supabase Auth emails (templates + PWA deep-linking)
+
+All 13 auth email templates are brand-styled (bilingual sv/en, logo, `#00CC99` CTA) and managed via
+the Management API (`PATCH /v1/projects/<ref>/config/auth`, fields `mailer_templates_*_content` /
+`mailer_subjects_*`), NOT the dashboard. Keep production and staging in sync — staging had drifted
+completely (still on Supabase defaults) until it was synced from production.
+
+**Never use `{{ .ConfirmationURL }}` in a template with a link.** It resolves to
+`<project-ref>.supabase.co/auth/v1/verify?...&redirect_to=...`, i.e. a *different origin* than the
+app. That breaks two things at once:
+- The installed PWA can't capture it (out of scope) → always opens a fresh, usually logged-out browser window.
+- It routes through the PKCE `?code=` exchange, which **cannot work across browsers/devices** — the
+  code verifier is stored locally, so a link requested in one browser and opened in another (e.g.
+  Mail opening Safari) fails with `AuthPKCECodeVerifierMissingError`.
+
+Use `{{ .SiteURL }}/<route>?token_hash={{ .TokenHash }}&type=<otp_type>` instead, verified client-side
+with `supabase.auth.verifyOtp({ token_hash, type })` — no locally-stored secret, works from any
+browser/device. Routes: `/reset-password` (`type=recovery`), `/email-confirmation`
+(`type=signup|email_change|magiclink|invite`). Both pages keep `?code=` and legacy `#access_token=`
+paths as fallbacks for already-sent emails.
+
+**PWA deep-linking depends on origin/scope agreement, not on anything in the email itself.**
+`pif.today` and `app.pif.community` are two separate origins both serving the app, and
+`app.pif.community/manifest.json` 302-redirects cross-origin to `pif.today/manifest.json` (Lovable/DNS
+level, not changeable from the repo). Since a PWA's scope derives from its *manifest URL*, installs
+from either domain end up scoped to `pif.today`. So `site_url` **must stay `https://pif.today`** —
+pointing it at `app.pif.community` puts every email link outside the installed app's scope and macOS
+hands them to Safari (this was the actual bug). `public/manifest.json` declares `id`/`scope`/
+`handle_links` explicitly so identity doesn't depend on which domain served the install. Changing
+`id`/`scope` can make Safari treat it as a new app — an existing Dock install may need re-adding.
+Staging's `site_url` is `https://give-and-get-local.lovable.app` (it also wrongly pointed at
+production's domain until this was found).
+
+Other gotchas: `smtp_max_frequency` is the minimum gap between sends *within one request* — secure
+email change sends two emails (old + new address) in a single `updateUser({email})` call, so a high
+value (it was 60s) makes that call unable to finish inside any sane client timeout and **no emails
+arrive at all**; it's 5s now, and that call gets a 25s client timeout vs 15s elsewhere.
+`security_update_password_require_reauthentication` is on, so `updateUser({password})` fails with
+`reauthentication_needed` on sessions older than 24h and needs the `reauthenticate()` + `nonce` flow.
+
 ## Edge Functions
 
 Tracked in repo (`supabase/functions/`): `analyze-image`, `delete-account`, `prewarm-og`,
