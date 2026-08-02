@@ -76,7 +76,7 @@ export function EmailPasswordSettings() {
       });
     } catch (error: any) {
       if (error instanceof AuthTimeoutError) {
-        setEmailError(t('settings.auth_call_taking_long'));
+        setEmailError(t('settings.email_update_taking_long'));
       } else {
         setEmailError(error.message);
         toast({
@@ -149,7 +149,7 @@ export function EmailPasswordSettings() {
       finishPasswordUpdateSuccess();
     } catch (error: any) {
       if (error instanceof AuthTimeoutError) {
-        setPasswordError(t('settings.auth_call_taking_long'));
+        setPasswordError(t('settings.password_update_taking_long'));
       } else {
         setPasswordError(error.message);
         toast({
@@ -179,7 +179,7 @@ export function EmailPasswordSettings() {
       finishPasswordUpdateSuccess();
     } catch (error: any) {
       const message = error instanceof AuthTimeoutError
-        ? t('settings.auth_call_taking_long')
+        ? t('settings.password_update_taking_long')
         : error.code === 'reauthentication_not_valid'
           ? t('settings.reauth_invalid_code')
           : error.message;
@@ -220,6 +220,7 @@ export function EmailPasswordSettings() {
           <Input
             id="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -284,6 +285,7 @@ export function EmailPasswordSettings() {
             <Label htmlFor="current-password">{t('settings.current_password')}</Label>
             <PasswordInput
               id="current-password"
+              autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
@@ -294,6 +296,7 @@ export function EmailPasswordSettings() {
             <Label htmlFor="new-password">{t('settings.new_password')}</Label>
             <PasswordInput
               id="new-password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
@@ -305,6 +308,7 @@ export function EmailPasswordSettings() {
             <Label htmlFor="confirm-password">{t('settings.confirm_new_password')}</Label>
             <PasswordInput
               id="confirm-password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
