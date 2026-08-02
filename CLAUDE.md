@@ -48,6 +48,15 @@ always use `heurpehcwbhohwklqnir` and verify against `src/integrations/supabase/
 - RLS policies should use `(SELECT auth.uid())` rather than bare `auth.uid()` for performance.
 - Test/dummy data has been fully wiped — the database is clean and production-ready. Don't reintroduce
   test data casually.
+- **`auth.users`'s text columns (`email_change`, `email_change_token_current`, `email_change_token_new`,
+  `confirmation_token`, `recovery_token`, etc.) must never be set to SQL `NULL` via direct SQL — always
+  `''` (empty string) instead.** Nothing at the Postgres schema level enforces this (all nullable, no
+  constraint), but GoTrue's Go code scans them into non-nullable strings; a `NULL` there breaks login
+  outright for that user with `"error finding user: sql: Scan error... converting NULL to string is
+  unsupported"`. Hit this directly while manually resetting a test account's email after verifying
+  `get_pending_email_change()`'s semantics — fixed by rewriting the `NULL`s back to `''`. Also:
+  `auth.identities.email` is a generated column (derived from `identity_data->>'email'`) — update
+  `identity_data` via `jsonb_set`, never `email` directly.
 
 ## Mapbox
 
