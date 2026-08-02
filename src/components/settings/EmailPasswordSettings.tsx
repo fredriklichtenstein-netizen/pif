@@ -16,6 +16,11 @@ import { withAuthTimeout, AuthTimeoutError } from "@/utils/withAuthTimeout";
 // running server-side even after we give up waiting on it client-side, so a
 // timeout here means "we don't know the outcome", not "it failed".
 const AUTH_CALL_TIMEOUT_MS = 15000;
+// Email change (with secure_email_change enabled) sends confirmation emails
+// to both the old and new address in a single request, gated by GoTrue's
+// smtp_max_frequency throttle between each send — needs more headroom than
+// a single-email operation like a password change.
+const EMAIL_UPDATE_TIMEOUT_MS = 25000;
 
 export function EmailPasswordSettings() {
   const { toast } = useToast();
@@ -64,7 +69,7 @@ export function EmailPasswordSettings() {
     try {
       const { error } = await withAuthTimeout(
         supabase.auth.updateUser({ email }),
-        AUTH_CALL_TIMEOUT_MS,
+        EMAIL_UPDATE_TIMEOUT_MS,
         () => {}
       );
       if (error) throw error;
