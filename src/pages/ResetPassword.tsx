@@ -141,25 +141,36 @@ export default function ResetPassword() {
     }
     
     setLoading(true);
+    // Defensive timeout, matching the same pattern used in usePasswordReset
+    // for the "send me a reset email" step — an unresponsive network
+    // shouldn't leave the button stuck on "Processing..." indefinitely.
+    const timeoutId = setTimeout(() => {
+      setError(t('auth.failed_reset_password'));
+      setLoading(false);
+    }, 15000);
+
     try {
       const { error } = await supabase.auth.updateUser({
         password
       });
-      
+
+      clearTimeout(timeoutId);
+
       if (error) {
         throw error;
       }
-      
+
       setSuccess(true);
       toast({
         title: t('auth.password_updated'),
         description: t('auth.password_updated_description'),
       });
-      
+
       setTimeout(() => {
         navigate("/auth");
       }, 3000);
     } catch (error: any) {
+      clearTimeout(timeoutId);
       console.error("Error resetting password:", error);
       setError(error.message || t('auth.failed_reset_password'));
     } finally {
