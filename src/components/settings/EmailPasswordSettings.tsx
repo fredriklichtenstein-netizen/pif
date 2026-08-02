@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,16 +9,32 @@ import { AlertCircle, Check } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 
+// Defensive timeout for auth calls, matching the pattern already used in
+// usePasswordReset/ResetPassword — an unresponsive network shouldn't leave
+// a submit button stuck indefinitely.
+const AUTH_CALL_TIMEOUT_MS = 15000;
+
+function withTimeout<T>(promise: Promise<T>, onTimeout: () => void): Promise<T> {
+  const timeoutId = setTimeout(onTimeout, AUTH_CALL_TIMEOUT_MS);
+  return promise.finally(() => clearTimeout(timeoutId));
+}
+
 export function EmailPasswordSettings() {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
+
   const [email, setEmail] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+
   // Supabase requires reauthentication before a password change when the
   // session is older than 24h (security_update_password_require_reauthentication).
   // When that kicks in, updateUser fails with `reauthentication_needed`; we
@@ -28,45 +44,54 @@ export function EmailPasswordSettings() {
   const [reauthCode, setReauthCode] = useState("");
   const [reauthLoading, setReauthLoading] = useState(false);
 
-  useState(() => {
-    const fetchUserEmail = async () => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
       const { data } = await supabase.auth.getUser();
-      if (data.user) {
+      if (!cancelled && data.user) {
         setEmail(data.user.email || "");
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    fetchUserEmail();
-  });
+  }, []);
 
   const updateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
+    setEmailLoading(true);
+    setEmailError(null);
+    setEmailSuccess(null);
 
     try {
-      const { error } = await supabase.auth.updateUser({ email });
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ email }),
+        () => {
+          setEmailError(t('settings.email_update_failed'));
+          setEmailLoading(false);
+        }
+      );
       if (error) throw error;
 
-      setSuccess(t('settings.email_update_requested_description'));
+      setEmailSuccess(t('settings.email_update_requested_description'));
       toast({
         title: t('settings.email_update_requested'),
         description: t('settings.email_update_requested_description'),
       });
     } catch (error: any) {
-      setError(error.message);
+      setEmailError(error.message);
       toast({
         title: t('settings.email_update_failed'),
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
   const finishPasswordUpdateSuccess = () => {
-    setSuccess(t('settings.password_updated'));
+    setPasswordSuccess(t('settings.password_updated'));
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -81,25 +106,34 @@ export function EmailPasswordSettings() {
 
   const updatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
+    setPasswordLoading(true);
+    setPasswordError(null);
+    setPasswordSuccess(null);
 
     if (newPassword !== confirmPassword) {
-      setError(t('settings.passwords_dont_match'));
-      setLoading(false);
+      setPasswordError(t('settings.passwords_dont_match'));
+      setPasswordLoading(false);
       return;
     }
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: currentPassword,
-      });
+      const { error: signInError } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password: currentPassword }),
+        () => {
+          setPasswordError(t('settings.password_update_failed'));
+          setPasswordLoading(false);
+        }
+      );
 
       if (signInError) throw new Error(t('settings.current_password_incorrect'));
 
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ password: newPassword }),
+        () => {
+          setPasswordError(t('settings.password_update_failed'));
+          setPasswordLoading(false);
+        }
+      );
 
       if (error) {
         if (error.code === 'reauthentication_needed') {
@@ -118,27 +152,30 @@ export function EmailPasswordSettings() {
 
       finishPasswordUpdateSuccess();
     } catch (error: any) {
-      setError(error.message);
+      setPasswordError(error.message);
       toast({
         title: t('settings.password_update_failed'),
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setPasswordLoading(false);
     }
   };
 
   const submitReauthCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setReauthLoading(true);
-    setError(null);
+    setPasswordError(null);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-        nonce: reauthCode,
-      });
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ password: newPassword, nonce: reauthCode }),
+        () => {
+          setPasswordError(t('settings.reauth_invalid_code'));
+          setReauthLoading(false);
+        }
+      );
       if (error) throw error;
 
       finishPasswordUpdateSuccess();
@@ -146,7 +183,7 @@ export function EmailPasswordSettings() {
       const message = error.code === 'reauthentication_not_valid'
         ? t('settings.reauth_invalid_code')
         : error.message;
-      setError(message);
+      setPasswordError(message);
       toast({
         title: t('settings.password_update_failed'),
         description: message,
@@ -160,26 +197,24 @@ export function EmailPasswordSettings() {
   const cancelReauth = () => {
     setReauthRequired(false);
     setReauthCode("");
-    setError(null);
+    setPasswordError(null);
   };
 
   return (
     <div className="space-y-8">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      {success && (
-        <Alert className="bg-primary/10 text-primary border-primary/20">
-          <Check className="h-4 w-4 text-primary" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
       <form onSubmit={updateEmail} className="space-y-4">
+        {emailError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{emailError}</AlertDescription>
+          </Alert>
+        )}
+        {emailSuccess && (
+          <Alert className="bg-primary/10 text-primary border-primary/20">
+            <Check className="h-4 w-4 text-primary" />
+            <AlertDescription>{emailSuccess}</AlertDescription>
+          </Alert>
+        )}
         <div className="space-y-2">
           <Label htmlFor="email">{t('settings.email_address')}</Label>
           <Input
@@ -190,7 +225,7 @@ export function EmailPasswordSettings() {
             required
           />
         </div>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={emailLoading || !email}>
           {t('settings.update_email')}
         </Button>
       </form>
@@ -199,6 +234,12 @@ export function EmailPasswordSettings() {
 
       {reauthRequired ? (
         <form onSubmit={submitReauthCode} className="space-y-4">
+          {passwordError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{passwordError}</AlertDescription>
+            </Alert>
+          )}
           <p className="text-sm text-muted-foreground">
             {t('settings.reauth_required_description')}
           </p>
@@ -227,6 +268,18 @@ export function EmailPasswordSettings() {
         </form>
       ) : (
         <form onSubmit={updatePassword} className="space-y-4">
+          {passwordError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{passwordError}</AlertDescription>
+            </Alert>
+          )}
+          {passwordSuccess && (
+            <Alert className="bg-primary/10 text-primary border-primary/20">
+              <Check className="h-4 w-4 text-primary" />
+              <AlertDescription>{passwordSuccess}</AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-2">
             <Label htmlFor="current-password">{t('settings.current_password')}</Label>
             <Input
@@ -262,7 +315,7 @@ export function EmailPasswordSettings() {
             />
           </div>
 
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={passwordLoading}>
             {t('settings.update_password')}
           </Button>
         </form>
