@@ -32,6 +32,9 @@ export function useEmailConfirmation() {
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  // Set when an email_change link was confirmed but the *other* address still
+  // has an outstanding confirmation (secure email change sends one to each).
+  const [emailChangePendingFor, setEmailChangePendingFor] = useState<string | null>(null);
 
   const hasRedirectedRef = useRef(false);
   // Leader-election marker: true if THIS tab observed the confirmation hash
@@ -87,11 +90,13 @@ export function useEmailConfirmation() {
     // unlike ?code= or #access_token=, Supabase's automatic detectSessionInUrl
     // doesn't recognize this format, so the SDK won't establish a session on
     // its own.
-    const verifyTokenHashIfPresent = async () => {
+    // Returns true if this link has been fully handled and the caller should
+    // NOT fall through to the usual session-check/redirect.
+    const verifyTokenHashIfPresent = async (): Promise<boolean> => {
       const params = new URLSearchParams(window.location.search);
       const tokenHash = params.get("token_hash");
       const otpType = params.get("type");
-      if (!tokenHash || !otpType) return;
+      if (!tokenHash || !otpType) return false;
 
       const { error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
@@ -99,12 +104,28 @@ export function useEmailConfirmation() {
       });
       if (error) {
         console.error("Email confirmation verification failed:", error);
+        return false;
       }
+
+      // Secure email change needs BOTH addresses confirmed. After the first
+      // click there's no session yet and the change isn't applied, so tell the
+      // user which inbox still needs a click instead of silently bouncing them
+      // to the feed as if everything were done.
+      if (otpType === "email_change") {
+        const { data } = await (supabase.rpc as any)("get_pending_email_change");
+        if (data) {
+          setEmailChangePendingFor(
+            data.current_confirmed ? data.new_email : data.current_email
+          );
+          return true;
+        }
+      }
+      return false;
     };
 
     // Check if user is already signed in and confirmed
     const getSession = async () => {
-      await verifyTokenHashIfPresent();
+      if (await verifyTokenHashIfPresent()) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
@@ -187,6 +208,7 @@ export function useEmailConfirmation() {
     loading,
     resendCooldown,
     userEmail,
+    emailChangePendingFor,
     handleResendConfirmation,
   };
 }
