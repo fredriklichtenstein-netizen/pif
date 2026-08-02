@@ -19,6 +19,14 @@ export function EmailPasswordSettings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Supabase requires reauthentication before a password change when the
+  // session is older than 24h (security_update_password_require_reauthentication).
+  // When that kicks in, updateUser fails with `reauthentication_needed`; we
+  // send a nonce via reauthenticate() and ask the user to enter it, then
+  // retry updateUser with that nonce attached.
+  const [reauthRequired, setReauthRequired] = useState(false);
+  const [reauthCode, setReauthCode] = useState("");
+  const [reauthLoading, setReauthLoading] = useState(false);
 
   useState(() => {
     const fetchUserEmail = async () => {
@@ -57,6 +65,20 @@ export function EmailPasswordSettings() {
     }
   };
 
+  const finishPasswordUpdateSuccess = () => {
+    setSuccess(t('settings.password_updated'));
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setReauthRequired(false);
+    setReauthCode("");
+
+    toast({
+      title: t('status.success'),
+      description: t('settings.password_update_success'),
+    });
+  };
+
   const updatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -78,17 +100,23 @@ export function EmailPasswordSettings() {
       if (signInError) throw new Error(t('settings.current_password_incorrect'));
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
 
-      setSuccess(t('settings.password_updated'));
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      
-      toast({
-        title: t('status.success'),
-        description: t('settings.password_update_success'),
-      });
+      if (error) {
+        if (error.code === 'reauthentication_needed') {
+          const { error: reauthError } = await supabase.auth.reauthenticate();
+          if (reauthError) throw reauthError;
+
+          setReauthRequired(true);
+          toast({
+            title: t('settings.reauth_required_title'),
+            description: t('settings.reauth_required_description'),
+          });
+          return;
+        }
+        throw error;
+      }
+
+      finishPasswordUpdateSuccess();
     } catch (error: any) {
       setError(error.message);
       toast({
@@ -99,6 +127,40 @@ export function EmailPasswordSettings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const submitReauthCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReauthLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+        nonce: reauthCode,
+      });
+      if (error) throw error;
+
+      finishPasswordUpdateSuccess();
+    } catch (error: any) {
+      const message = error.code === 'reauthentication_not_valid'
+        ? t('settings.reauth_invalid_code')
+        : error.message;
+      setError(message);
+      toast({
+        title: t('settings.password_update_failed'),
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setReauthLoading(false);
+    }
+  };
+
+  const cancelReauth = () => {
+    setReauthRequired(false);
+    setReauthCode("");
+    setError(null);
   };
 
   return (
@@ -135,46 +197,76 @@ export function EmailPasswordSettings() {
 
       <div className="my-6 border-t border-border" />
 
-      <form onSubmit={updatePassword} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="current-password">{t('settings.current_password')}</Label>
-          <Input
-            id="current-password"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="new-password">{t('settings.new_password')}</Label>
-          <Input
-            id="new-password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            minLength={6}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="confirm-password">{t('settings.confirm_new_password')}</Label>
-          <Input
-            id="confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            minLength={6}
-          />
-        </div>
-        
-        <Button type="submit" disabled={loading}>
-          {t('settings.update_password')}
-        </Button>
-      </form>
+      {reauthRequired ? (
+        <form onSubmit={submitReauthCode} className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {t('settings.reauth_required_description')}
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="reauth-code">{t('settings.reauth_code_label')}</Label>
+            <Input
+              id="reauth-code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder={t('settings.reauth_code_placeholder')}
+              value={reauthCode}
+              onChange={(e) => setReauthCode(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={reauthLoading || !reauthCode}>
+              {t('settings.reauth_submit')}
+            </Button>
+            <Button type="button" variant="outline" onClick={cancelReauth} disabled={reauthLoading}>
+              {t('settings.reauth_cancel')}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={updatePassword} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="current-password">{t('settings.current_password')}</Label>
+            <Input
+              id="current-password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="new-password">{t('settings.new_password')}</Label>
+            <Input
+              id="new-password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">{t('settings.confirm_new_password')}</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
+
+          <Button type="submit" disabled={loading}>
+            {t('settings.update_password')}
+          </Button>
+        </form>
+      )}
     </div>
   );
 }
