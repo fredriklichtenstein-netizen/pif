@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react";
@@ -10,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { withAuthTimeout, AuthTimeoutError } from "@/utils/withAuthTimeout";
+
+const AUTH_CALL_TIMEOUT_MS = 15000;
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -141,20 +145,13 @@ export default function ResetPassword() {
     }
     
     setLoading(true);
-    // Defensive timeout, matching the same pattern used in usePasswordReset
-    // for the "send me a reset email" step — an unresponsive network
-    // shouldn't leave the button stuck on "Processing..." indefinitely.
-    const timeoutId = setTimeout(() => {
-      setError(t('auth.failed_reset_password'));
-      setLoading(false);
-    }, 15000);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password
-      });
-
-      clearTimeout(timeoutId);
+      const { error } = await withAuthTimeout(
+        supabase.auth.updateUser({ password }),
+        AUTH_CALL_TIMEOUT_MS,
+        () => {}
+      );
 
       if (error) {
         throw error;
@@ -170,9 +167,12 @@ export default function ResetPassword() {
         navigate("/auth");
       }, 3000);
     } catch (error: any) {
-      clearTimeout(timeoutId);
       console.error("Error resetting password:", error);
-      setError(error.message || t('auth.failed_reset_password'));
+      if (error instanceof AuthTimeoutError) {
+        setError(t('auth.reset_password_taking_long'));
+      } else {
+        setError(error.message || t('auth.failed_reset_password'));
+      }
     } finally {
       setLoading(false);
     }
@@ -254,10 +254,9 @@ export default function ResetPassword() {
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <Label htmlFor="password">{t('auth.new_password')}</Label>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="new-password"
                 required
                 value={password}
@@ -267,13 +266,12 @@ export default function ResetPassword() {
                 disabled={loading}
               />
             </div>
-            
+
             <div>
               <Label htmlFor="confirm-password">{t('auth.confirm_password')}</Label>
-              <Input
+              <PasswordInput
                 id="confirm-password"
                 name="confirm-password"
-                type="password"
                 autoComplete="new-password"
                 required
                 value={confirmPassword}

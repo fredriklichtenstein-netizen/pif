@@ -6,6 +6,8 @@
     "retry": "Retry",
     "refresh": "Refresh",
     "close": "Close",
+    "show_password": "Show password",
+    "hide_password": "Hide password",
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete", 
