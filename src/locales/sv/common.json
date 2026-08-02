@@ -6,6 +6,8 @@
     "retry": "Försök igen",
     "refresh": "Uppdatera",
     "close": "Stäng",
+    "show_password": "Visa lösenord",
+    "hide_password": "Dölj lösenord",
     "cancel": "Avbryt",
     "save": "Spara",
     "delete": "Ta bort",

@@ -2,22 +2,20 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Check } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
+import { withAuthTimeout, AuthTimeoutError } from "@/utils/withAuthTimeout";
 
-// Defensive timeout for auth calls, matching the pattern already used in
-// usePasswordReset/ResetPassword — an unresponsive network shouldn't leave
-// a submit button stuck indefinitely.
+// Defensive timeout for auth calls — an unresponsive network shouldn't leave
+// a submit button stuck indefinitely. Note the underlying request keeps
+// running server-side even after we give up waiting on it client-side, so a
+// timeout here means "we don't know the outcome", not "it failed".
 const AUTH_CALL_TIMEOUT_MS = 15000;
-
-function withTimeout<T>(promise: Promise<T>, onTimeout: () => void): Promise<T> {
-  const timeoutId = setTimeout(onTimeout, AUTH_CALL_TIMEOUT_MS);
-  return promise.finally(() => clearTimeout(timeoutId));
-}
 
 export function EmailPasswordSettings() {
   const { toast } = useToast();
@@ -64,12 +62,10 @@ export function EmailPasswordSettings() {
     setEmailSuccess(null);
 
     try {
-      const { error } = await withTimeout(
+      const { error } = await withAuthTimeout(
         supabase.auth.updateUser({ email }),
-        () => {
-          setEmailError(t('settings.email_update_failed'));
-          setEmailLoading(false);
-        }
+        AUTH_CALL_TIMEOUT_MS,
+        () => {}
       );
       if (error) throw error;
 
@@ -79,12 +75,16 @@ export function EmailPasswordSettings() {
         description: t('settings.email_update_requested_description'),
       });
     } catch (error: any) {
-      setEmailError(error.message);
-      toast({
-        title: t('settings.email_update_failed'),
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error instanceof AuthTimeoutError) {
+        setEmailError(t('settings.auth_call_taking_long'));
+      } else {
+        setEmailError(error.message);
+        toast({
+          title: t('settings.email_update_failed'),
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setEmailLoading(false);
     }
@@ -117,22 +117,18 @@ export function EmailPasswordSettings() {
     }
 
     try {
-      const { error: signInError } = await withTimeout(
+      const { error: signInError } = await withAuthTimeout(
         supabase.auth.signInWithPassword({ email, password: currentPassword }),
-        () => {
-          setPasswordError(t('settings.password_update_failed'));
-          setPasswordLoading(false);
-        }
+        AUTH_CALL_TIMEOUT_MS,
+        () => {}
       );
 
       if (signInError) throw new Error(t('settings.current_password_incorrect'));
 
-      const { error } = await withTimeout(
+      const { error } = await withAuthTimeout(
         supabase.auth.updateUser({ password: newPassword }),
-        () => {
-          setPasswordError(t('settings.password_update_failed'));
-          setPasswordLoading(false);
-        }
+        AUTH_CALL_TIMEOUT_MS,
+        () => {}
       );
 
       if (error) {
@@ -152,12 +148,16 @@ export function EmailPasswordSettings() {
 
       finishPasswordUpdateSuccess();
     } catch (error: any) {
-      setPasswordError(error.message);
-      toast({
-        title: t('settings.password_update_failed'),
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error instanceof AuthTimeoutError) {
+        setPasswordError(t('settings.auth_call_taking_long'));
+      } else {
+        setPasswordError(error.message);
+        toast({
+          title: t('settings.password_update_failed'),
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setPasswordLoading(false);
     }
@@ -169,20 +169,20 @@ export function EmailPasswordSettings() {
     setPasswordError(null);
 
     try {
-      const { error } = await withTimeout(
+      const { error } = await withAuthTimeout(
         supabase.auth.updateUser({ password: newPassword, nonce: reauthCode }),
-        () => {
-          setPasswordError(t('settings.reauth_invalid_code'));
-          setReauthLoading(false);
-        }
+        AUTH_CALL_TIMEOUT_MS,
+        () => {}
       );
       if (error) throw error;
 
       finishPasswordUpdateSuccess();
     } catch (error: any) {
-      const message = error.code === 'reauthentication_not_valid'
-        ? t('settings.reauth_invalid_code')
-        : error.message;
+      const message = error instanceof AuthTimeoutError
+        ? t('settings.auth_call_taking_long')
+        : error.code === 'reauthentication_not_valid'
+          ? t('settings.reauth_invalid_code')
+          : error.message;
       setPasswordError(message);
       toast({
         title: t('settings.password_update_failed'),
@@ -282,9 +282,8 @@ export function EmailPasswordSettings() {
           )}
           <div className="space-y-2">
             <Label htmlFor="current-password">{t('settings.current_password')}</Label>
-            <Input
+            <PasswordInput
               id="current-password"
-              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
@@ -293,9 +292,8 @@ export function EmailPasswordSettings() {
 
           <div className="space-y-2">
             <Label htmlFor="new-password">{t('settings.new_password')}</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
@@ -305,9 +303,8 @@ export function EmailPasswordSettings() {
 
           <div className="space-y-2">
             <Label htmlFor="confirm-password">{t('settings.confirm_new_password')}</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
