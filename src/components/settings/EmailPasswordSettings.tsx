@@ -10,6 +10,15 @@ import { AlertCircle, Check } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { withAuthTimeout, AuthTimeoutError } from "@/utils/withAuthTimeout";
+import { Clock } from "lucide-react";
+
+interface PendingEmailChange {
+  current_email: string;
+  new_email: string;
+  current_confirmed: boolean;
+  new_confirmed: boolean;
+  requested_at: string;
+}
 
 // Defensive timeout for auth calls — an unresponsive network shouldn't leave
 // a submit button stuck indefinitely. Note the underlying request keeps
@@ -30,6 +39,7 @@ export function EmailPasswordSettings() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [pendingEmailChange, setPendingEmailChange] = useState<PendingEmailChange | null>(null);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -47,6 +57,13 @@ export function EmailPasswordSettings() {
   const [reauthCode, setReauthCode] = useState("");
   const [reauthLoading, setReauthLoading] = useState(false);
 
+  const refreshPendingEmailChange = async () => {
+    const { data, error } = await (supabase.rpc as any)('get_pending_email_change');
+    if (!error) {
+      setPendingEmailChange((data as PendingEmailChange | null) ?? null);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -55,6 +72,7 @@ export function EmailPasswordSettings() {
         setEmail(data.user.email || "");
       }
     })();
+    refreshPendingEmailChange();
     return () => {
       cancelled = true;
     };
@@ -79,6 +97,7 @@ export function EmailPasswordSettings() {
         title: t('settings.email_update_requested'),
         description: t('settings.email_update_requested_description'),
       });
+      refreshPendingEmailChange();
     } catch (error: any) {
       if (error instanceof AuthTimeoutError) {
         setEmailError(t('settings.email_update_taking_long'));
@@ -231,6 +250,21 @@ export function EmailPasswordSettings() {
             required
           />
         </div>
+        {pendingEmailChange && (
+          <Alert className="bg-muted/50 border-border">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <AlertDescription className="text-muted-foreground">
+              {!pendingEmailChange.current_confirmed && !pendingEmailChange.new_confirmed
+                ? t('settings.email_change_pending_both', {
+                    current: pendingEmailChange.current_email,
+                    new: pendingEmailChange.new_email,
+                  })
+                : !pendingEmailChange.current_confirmed
+                  ? t('settings.email_change_pending_one', { email: pendingEmailChange.current_email })
+                  : t('settings.email_change_pending_one', { email: pendingEmailChange.new_email })}
+            </AlertDescription>
+          </Alert>
+        )}
         <Button type="submit" disabled={emailLoading || !email}>
           {t('settings.update_email')}
         </Button>

@@ -706,6 +706,8 @@
     "email_update_requested": "Email update requested",
     "email_update_requested_description": "Please check your new email for a confirmation link.",
     "email_update_failed": "Email update failed",
+    "email_change_pending_both": "Waiting for email confirmation from both {{current}} and {{new}}.",
+    "email_change_pending_one": "Waiting for email confirmation from {{email}}.",
     "current_password": "Current Password",
     "new_password": "New Password",
     "confirm_new_password": "Confirm New Password",
