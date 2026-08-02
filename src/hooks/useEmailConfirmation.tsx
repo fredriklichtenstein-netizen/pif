@@ -35,6 +35,11 @@ export function useEmailConfirmation() {
   // Set when an email_change link was confirmed but the *other* address still
   // has an outstanding confirmation (secure email change sends one to each).
   const [emailChangePendingFor, setEmailChangePendingFor] = useState<string | null>(null);
+  // True while an inbound confirmation link is still being verified. Without
+  // this the page briefly renders its default post-signup "check your email"
+  // state — with a blank address and a Resend button that can only error —
+  // in the async gap before the redirect fires.
+  const [verifying, setVerifying] = useState<boolean>(() => detectConfirmationHash());
 
   const hasRedirectedRef = useRef(false);
   // Leader-election marker: true if THIS tab observed the confirmation hash
@@ -125,15 +130,19 @@ export function useEmailConfirmation() {
 
     // Check if user is already signed in and confirmed
     const getSession = async () => {
-      if (await verifyTokenHashIfPresent()) return;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        setUserEmail(session.user.email);
-        if (session.user.email_confirmed_at) {
-          await checkAndRedirect(session.user.id);
+      try {
+        if (await verifyTokenHashIfPresent()) return;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email) {
+          setUserEmail(session.user.email);
+          if (session.user.email_confirmed_at) {
+            await checkAndRedirect(session.user.id);
+          }
+        } else {
+          getEmailFromParams();
         }
-      } else {
-        getEmailFromParams();
+      } finally {
+        setVerifying(false);
       }
     };
 
@@ -209,6 +218,7 @@ export function useEmailConfirmation() {
     resendCooldown,
     userEmail,
     emailChangePendingFor,
+    verifying,
     handleResendConfirmation,
   };
 }
