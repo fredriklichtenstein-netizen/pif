@@ -673,7 +673,10 @@
     "check_inbox": "Please check your inbox and click the link to continue with your profile creation.",
     "resend_in": "Resend in {{seconds}}s",
     "sending": "Sending...",
-    "resend_confirmation": "Resend confirmation email"
+    "resend_confirmation": "Resend confirmation email",
+    "email_change_one_left_title": "One step left",
+    "email_change_one_left_body": "Thanks! Now just click the confirmation link we sent to {{email}}. Check your spam folder if it doesn't show up in your inbox.",
+    "back_to_app": "Back to the app"
   },
   "share": {
     "validating_item": "Validating item...",

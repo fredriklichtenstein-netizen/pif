@@ -673,7 +673,10 @@
     "check_inbox": "Kontrollera din inkorg och klicka på länken för att fortsätta med att skapa din profil.",
     "resend_in": "Skicka igen om {{seconds}}s",
     "sending": "Skickar...",
-    "resend_confirmation": "Skicka bekräftelsemail igen"
+    "resend_confirmation": "Skicka bekräftelsemail igen",
+    "email_change_one_left_title": "Ett steg kvar",
+    "email_change_one_left_body": "Tack! Nu återstår bara att klicka på bekräftelselänken vi skickade till {{email}}. Kolla även skräpposten om mejlet inte dyker upp i inkorgen.",
+    "back_to_app": "Tillbaka till appen"
   },
   "share": {
     "validating_item": "Validerar objekt...",

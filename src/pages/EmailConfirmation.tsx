@@ -9,6 +9,7 @@ export default function EmailConfirmation() {
     loading,
     resendCooldown,
     userEmail,
+    emailChangePendingFor,
     handleResendConfirmation,
   } = useEmailConfirmation();
 
@@ -21,6 +22,7 @@ export default function EmailConfirmation() {
           resendCooldown={resendCooldown}
           loading={loading}
           onResend={handleResendConfirmation}
+          emailChangePendingFor={emailChangePendingFor}
         />
       </div>
     </div>

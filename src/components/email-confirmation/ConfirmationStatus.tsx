@@ -1,4 +1,5 @@
-import { Mail } from "lucide-react";
+import { Mail, CheckCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
@@ -7,6 +8,9 @@ interface ConfirmationStatusProps {
   resendCooldown: number;
   loading: boolean;
   onResend: () => void;
+  /** Set when one side of a secure email change is confirmed but the other
+   * address still needs a click — shows which inbox to check next. */
+  emailChangePendingFor?: string | null;
 }
 
 export function ConfirmationStatus({
@@ -14,9 +18,29 @@ export function ConfirmationStatus({
   resendCooldown,
   loading,
   onResend,
+  emailChangePendingFor,
 }: ConfirmationStatusProps) {
   const { t } = useTranslation();
-  
+
+  if (emailChangePendingFor) {
+    return (
+      <div className="max-w-md w-full space-y-8 text-center">
+        <div className="mx-auto w-fit p-4 bg-primary/10 rounded-full">
+          <CheckCircle className="h-12 w-12 text-primary" />
+        </div>
+        <h2 className="text-3xl font-bold text-foreground">
+          {t('email_confirmation.email_change_one_left_title')}
+        </h2>
+        <p className="text-muted-foreground">
+          {t('email_confirmation.email_change_one_left_body', { email: emailChangePendingFor })}
+        </p>
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/feed">{t('email_confirmation.back_to_app')}</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md w-full space-y-8 text-center">
       <div className="mx-auto w-fit p-4 bg-primary/10 rounded-full">
