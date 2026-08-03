@@ -15,7 +15,7 @@
     "offer_description": "Ge bort något du inte behöver",
     "request_action": "Önska",
     "request_description": "Efterfråga något du behöver",
-    "title_label": "Titel",
+    "title_label": "Rubrik",
     "title_request_label": "Vad önskar du?",
     "title_placeholder": "Vad vill du piffa?",
     "title_request_placeholder": "t.ex. 'Barnstol', 'Cykel för vuxen'",
@@ -154,6 +154,7 @@
       "location_required": "Välj en plats från sökresultaten.",
       "incomplete_summary": "Något saknas innan du kan publicera. Vi har tagit dig till steget som behöver kompletteras.",
       "step_incomplete_summary": "Fyll i det som saknas i det här steget först."
-    }
+    },
+    "map_pick_hint": "Tryck på kartan för att välja plats, eller dra nålen."
   }
 }

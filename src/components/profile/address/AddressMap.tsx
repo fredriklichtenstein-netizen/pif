@@ -8,18 +8,28 @@ interface AddressMapProps {
   mapToken: string;
   coordinates: { lat: number; lng: number };
   onAddressChange: (address: string) => void;
+  /**
+   * Called when the user picks a point directly on the map (tap or marker
+   * drag), with BOTH the reverse-geocoded address and the exact coordinates.
+   * Prefer this over onAddressChange: passing only an address string makes
+   * the consumer fall back to `coordinates || null`, which wipes the location
+   * instead of setting it.
+   */
+  onLocationPick?: (address: string, coords: { lat: number; lng: number }) => void;
 }
 
-export function AddressMap({ mapToken, coordinates, onAddressChange }: AddressMapProps) {
+export function AddressMap({ mapToken, coordinates, onAddressChange, onLocationPick }: AddressMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
-  // Keep the latest callback in a ref so we don't recreate the map
+  // Keep the latest callbacks in refs so we don't recreate the map
   // when the parent passes a new function reference each render.
   const onAddressChangeRef = useRef(onAddressChange);
+  const onLocationPickRef = useRef(onLocationPick);
   useEffect(() => {
     onAddressChangeRef.current = onAddressChange;
-  }, [onAddressChange]);
+    onLocationPickRef.current = onLocationPick;
+  }, [onAddressChange, onLocationPick]);
 
   // Initialize the map exactly once on mount, destroy on unmount.
   useEffect(() => {
@@ -39,21 +49,36 @@ export function AddressMap({ mapToken, coordinates, onAddressChange }: AddressMa
       .addTo(map);
     markerRef.current = marker;
 
-    marker.on("dragend", async () => {
-      const lngLat = marker.getLngLat();
+    // Resolve a point to an address and hand BOTH back to the consumer.
+    const commitPoint = async (lngLat: mapboxgl.LngLat) => {
+      const coords = { lat: lngLat.lat, lng: lngLat.lng };
       try {
         const geocodeLang = i18n.language?.startsWith("sv") ? "sv" : "en";
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${lngLat.lng},${lngLat.lat}.json?access_token=${mapToken}&language=${geocodeLang}`
         );
         const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          onAddressChangeRef.current(data.features[0].place_name);
+        const placeName = data.features?.[0]?.place_name;
+        if (!placeName) return;
+
+        if (onLocationPickRef.current) {
+          onLocationPickRef.current(placeName, coords);
+        } else {
+          onAddressChangeRef.current(placeName);
         }
       } catch (error) {
         console.error("Error reverse geocoding:", error);
       }
+    };
+
+    marker.on("dragend", () => commitPoint(marker.getLngLat()));
+
+    // Tap/click anywhere on the map to drop the pin there.
+    map.on("click", (e) => {
+      marker.setLngLat(e.lngLat);
+      commitPoint(e.lngLat);
     });
+    map.getCanvas().style.cursor = "crosshair";
 
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 

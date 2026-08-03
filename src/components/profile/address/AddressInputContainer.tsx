@@ -110,11 +110,20 @@ export function AddressInputContainer({
       )}
 
       {showMap && coordinates && (
-        <AddressMap
-          mapToken={mapToken}
-          coordinates={coordinates}
-          onAddressChange={handleAddressInput}
-        />
+        <div className="space-y-1.5">
+          <AddressMap
+            mapToken={mapToken}
+            coordinates={coordinates}
+            onAddressChange={handleAddressInput}
+            onLocationPick={(address, coords) => {
+              setSuggestions([]);
+              onChange(address, coords);
+            }}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('post.map_pick_hint')}
+          </p>
+        </div>
       )}
     </div>
   );

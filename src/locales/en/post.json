@@ -154,6 +154,7 @@
       "location_required": "Pick an address from the suggestions.",
       "incomplete_summary": "Something's missing before you can publish. We've taken you to the step that needs completing.",
       "step_incomplete_summary": "Please fill in what's missing in this step first."
-    }
+    },
+    "map_pick_hint": "Tap the map to pick a location, or drag the pin."
   }
 }
