@@ -9,12 +9,6 @@ export interface PostFieldError {
   messageKey: string;
 }
 
-interface UsePostFormValidationProps {
-  formData: PostFormData;
-  currentStep: number;
-  steps: any[];
-}
-
 function collectStepErrors(
   formData: PostFormData,
   stepComponent: string | undefined,
@@ -43,7 +37,7 @@ function collectStepErrors(
   return errors;
 }
 
-export function usePostFormValidation(props?: UsePostFormValidationProps) {
+export function usePostFormValidation() {
   const validateForm = (formData: PostFormData): boolean => {
     return !!(
       formData.title?.trim() &&
@@ -68,21 +62,24 @@ export function usePostFormValidation(props?: UsePostFormValidationProps) {
     return collectStepErrors(formData, steps[currentStep].component);
   };
 
-  const canProceed = (): boolean => {
-    if (!props) return false;
-    return validateCurrentStep(props.formData, props.currentStep, props.steps);
-  };
-
-  const currentStepErrors = (): PostFieldError[] => {
-    if (!props) return [];
-    return getStepErrors(props.formData, props.currentStep, props.steps);
+  /**
+   * Index of the earliest step that still has missing required fields, or -1
+   * if every step is complete. Needed because the progress indicator lets the
+   * user jump back to a visited step, clear something, and jump forward again
+   * — so being on the final step does NOT imply the earlier ones are still
+   * valid, and validating only the current step silently passes over the gap.
+   */
+  const firstInvalidStep = (formData: PostFormData, steps: any[]): number => {
+    for (let i = 0; i < steps.length; i++) {
+      if (collectStepErrors(formData, steps[i]?.component).length > 0) return i;
+    }
+    return -1;
   };
 
   return {
     validateForm,
     validateCurrentStep,
     getStepErrors,
-    canProceed,
-    currentStepErrors,
+    firstInvalidStep,
   };
 }

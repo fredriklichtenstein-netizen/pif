@@ -1,8 +1,7 @@
-
 {
   "post": {
     "create_offer": "Pif something",
-    "create_request": "Wish for something", 
+    "create_request": "Wish for something",
     "offer_subtitle": "Give away something you don't need",
     "request_subtitle": "Describe what you wish for and your search area",
     "step_type": "Type",
@@ -28,7 +27,7 @@
     "description_placeholder": "Describe the pif, its features and any special characteristics...",
     "description_request_placeholder": "Describe what you wish for and any specific requirements or preferences...",
     "location_label": "Location",
-    "search_area_label": "Search area", 
+    "search_area_label": "Search area",
     "location_placeholder": "Where can the pif be picked up?",
     "search_area_placeholder": "Where are you looking for the pif?",
     "privacy_notice": "🔒 Privacy protection: Your exact position will never be shared. Other users only see an approximate area to protect your privacy.",
@@ -37,7 +36,7 @@
     "visibility_radius_label": "Visibility radius",
     "visibility_radius_description": "Limit how far away other users need to be (from their current location or home address) to see this post. Leave at \"All\" to make it visible everywhere.",
     "previous": "Previous",
-    "next": "Next", 
+    "next": "Next",
     "create_offer_final": "Create pif",
     "create_request_final": "Create wish",
     "creating": "Creating...",
@@ -152,8 +151,9 @@
       "title_required": "Enter a title.",
       "category_required": "Pick a category.",
       "condition_required": "Pick a condition.",
-      "location_required": "Pick an address from the suggestions."
+      "location_required": "Pick an address from the suggestions.",
+      "incomplete_summary": "Something's missing before you can publish. We've taken you to the step that needs completing.",
+      "step_incomplete_summary": "Please fill in what's missing in this step first."
     }
   }
 }
-

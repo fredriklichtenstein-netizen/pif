@@ -1,4 +1,3 @@
-
 {
   "post": {
     "create_offer": "Piffa något",
@@ -152,8 +151,9 @@
       "title_required": "Ange en titel.",
       "category_required": "Välj en kategori.",
       "condition_required": "Välj ett skick.",
-      "location_required": "Välj en plats från sökresultaten."
+      "location_required": "Välj en plats från sökresultaten.",
+      "incomplete_summary": "Något saknas innan du kan publicera. Vi har tagit dig till steget som behöver kompletteras.",
+      "step_incomplete_summary": "Fyll i det som saknas i det här steget först."
     }
   }
 }
-
