@@ -117,6 +117,15 @@ export function PostFormContainer({
     fieldErrors[err.field] = t(err.messageKey);
   }
 
+  // Clear the surfaced errors as soon as the step is actually complete, so the
+  // banner doesn't linger after the user has filled in what was missing.
+  useEffect(() => {
+    if (stepErrors.length === 0) {
+      setShowErrors(false);
+      setSummaryError(null);
+    }
+  }, [stepErrors.length]);
+
   const scrollToFirstError = () => {
     if (typeof window === 'undefined') return;
     requestAnimationFrame(() => {
@@ -268,7 +277,11 @@ export function PostFormContainer({
 
 
   return (
-    <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
+    // Bottom padding must clear the floating MainNav pill, which sits at
+    // bottom: max(1rem, env(safe-area-inset-bottom)) and is ~56px tall — so on
+    // devices with a home indicator the previous pb-20 (80px) left the
+    // Föregående/Nästa buttons partially underneath it at full scroll.
+    <div className="container max-w-2xl mx-auto py-8 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="relative">
         <PostFormHeader
           title={isRequest ? t('post.create_request') : t('post.create_offer')}
