@@ -7,6 +7,8 @@ interface AddressInputProps {
   locationButtonLabel?: React.ReactNode;
   mapButtonLabel?: React.ReactNode;
   hideSearch?: boolean;
+  alwaysShowMap?: boolean;
+  defaultCenter?: { lat: number; lng: number };
 }
 
 export function AddressInput(props: AddressInputProps) {
