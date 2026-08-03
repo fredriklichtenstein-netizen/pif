@@ -199,6 +199,8 @@ export function PostFormLocation({
           </Label>
           <AddressInput
             value={formData.location}
+            alwaysShowMap
+            defaultCenter={formData.coordinates ?? undefined}
             onChange={(address, coordinates) => {
               setFormData(prev => ({
                 ...prev,

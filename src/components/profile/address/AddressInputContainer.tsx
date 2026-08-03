@@ -10,20 +10,33 @@ import { AddressSearchBar } from "./AddressSearchBar";
 import { UsePifAddressButton } from "./UsePifAddressButton";
 import { useTranslation } from "react-i18next";
 
+/** Fallback map centre when nothing has been picked yet (central Stockholm). */
+const DEFAULT_MAP_CENTER = { lat: 59.3293, lng: 18.0686 };
+
 interface AddressInputProps {
   value: string;
   onChange: (address: string, coordinates?: { lat: number; lng: number }) => void;
   locationButtonLabel?: React.ReactNode;
   mapButtonLabel?: React.ReactNode;
   hideSearch?: boolean;
+  /**
+   * Render the map immediately instead of only after an address has been
+   * geocoded, so the user can just tap a spot without typing anything.
+   * Opt-in, since most callers show the map behind the toggle button.
+   */
+  alwaysShowMap?: boolean;
+  /** Where to centre the map before anything is picked. */
+  defaultCenter?: { lat: number; lng: number };
 }
 
-export function AddressInputContainer({ 
-  value, 
-  onChange, 
-  locationButtonLabel, 
+export function AddressInputContainer({
+  value,
+  onChange,
+  locationButtonLabel,
   mapButtonLabel = <Map className="w-4 h-4" />,
-  hideSearch 
+  hideSearch,
+  alwaysShowMap,
+  defaultCenter,
 }: AddressInputProps) {
   const { t } = useTranslation();
   const { mapToken } = useMapbox();
@@ -109,11 +122,12 @@ export function AddressInputContainer({
         />
       )}
 
-      {showMap && coordinates && (
+      {(alwaysShowMap ? !!mapToken : showMap && !!coordinates) && (
         <div className="space-y-1.5">
           <AddressMap
             mapToken={mapToken}
-            coordinates={coordinates}
+            coordinates={coordinates ?? defaultCenter ?? DEFAULT_MAP_CENTER}
+            hasSelection={!!coordinates}
             onAddressChange={handleAddressInput}
             onLocationPick={(address, coords) => {
               setSuggestions([]);
