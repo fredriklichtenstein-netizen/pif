@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PostFormSteps } from "./PostFormSteps";
 import { PostFormHeader } from "./PostFormHeader";
@@ -10,7 +10,8 @@ import { PostFormProgress } from "./PostFormProgress";
 import { PostFormNavigation } from "./PostFormNavigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { X, AlertCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,20 +75,10 @@ export function PostFormContainer({
     { title: isRequest ? t('post.step_search_area') : t('post.step_location'), component: "location" },
   ];
 
-  // Initialize navigation first
-  const { currentStep, nextStep, prevStep, isOnFinalStep, maxVisitedStep, goToStep } = usePostFormNavigation({
-    steps,
-    canProceed: () => false // Temporary, will be updated below
-  });
+  // Single navigation instance. canProceed takes the step index, so there's no
+  // circular dependency between navigation and validation to work around.
+  const validation = usePostFormValidation();
 
-  // Now create validation with current step
-  const validation = usePostFormValidation({
-    formData,
-    currentStep,
-    steps
-  });
-
-  // Update navigation with the real canProceed function
   const {
     currentStep: finalCurrentStep,
     nextStep: finalNextStep,
@@ -97,16 +88,30 @@ export function PostFormContainer({
     goToStep: finalGoToStep,
   } = usePostFormNavigation({
     steps,
-    canProceed: validation.canProceed
+    canProceed: (idx) => validation.validateCurrentStep(formData, idx, steps),
   });
 
 
   // Inline validation surface: only show errors after the user attempts to
-  // advance/submit. Cleared whenever the active step changes.
+  // advance/submit. Cleared whenever the active step changes — EXCEPT when we
+  // deliberately navigated to a step in order to surface its errors, which is
+  // what pendingErrorStepRef marks.
   const [showErrors, setShowErrors] = useState(false);
-  useEffect(() => { setShowErrors(false); }, [finalCurrentStep]);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const pendingErrorStepRef = useRef<number | null>(null);
 
-  const stepErrors = validation.currentStepErrors();
+  useEffect(() => {
+    if (pendingErrorStepRef.current === finalCurrentStep) {
+      pendingErrorStepRef.current = null;
+      setShowErrors(true);
+      scrollToFirstError();
+      return;
+    }
+    setShowErrors(false);
+    setSummaryError(null);
+  }, [finalCurrentStep]);
+
+  const stepErrors = validation.getStepErrors(formData, finalCurrentStep, steps);
   const fieldErrors: Partial<Record<string, string>> = {};
   for (const err of stepErrors) {
     fieldErrors[err.field] = t(err.messageKey);
@@ -124,12 +129,39 @@ export function PostFormContainer({
     });
   };
 
+  /**
+   * Route the user to the earliest step that's still missing something and
+   * surface that step's errors. Returns true if a problem was found.
+   */
+  const goToFirstProblem = (): boolean => {
+    const idx = validation.firstInvalidStep(formData, steps);
+    if (idx === -1) return false;
+
+    const errs = validation.getStepErrors(formData, idx, steps);
+    setSummaryError(
+      errs.length ? t(errs[0].messageKey) : t('post.validation.incomplete_summary')
+    );
+
+    if (idx === finalCurrentStep) {
+      setShowErrors(true);
+      scrollToFirstError();
+    } else {
+      // The step-change effect would immediately clear showErrors, so mark the
+      // target and let that effect turn the errors on once we've landed.
+      pendingErrorStepRef.current = idx;
+      finalGoToStep(idx);
+    }
+    return true;
+  };
+
   const attemptNext = () => {
-    if (validation.canProceed()) {
+    if (validation.validateCurrentStep(formData, finalCurrentStep, steps)) {
       setShowErrors(false);
+      setSummaryError(null);
       finalNextStep();
     } else {
       setShowErrors(true);
+      setSummaryError(t('post.validation.step_incomplete_summary'));
       scrollToFirstError();
     }
   };
@@ -137,12 +169,43 @@ export function PostFormContainer({
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (finalCurrentStep !== steps.length - 1) return;
-    if (!isFormValid || !validation.canProceed()) {
+    // Validate EVERY step, not just the current one. The progress indicator
+    // lets the user jump back to a visited step and clear a required field,
+    // so reaching the last step doesn't mean the earlier ones are still valid
+    // — and an error on a non-rendered step used to fail completely silently.
+    if (goToFirstProblem()) return;
+    if (!isFormValid) {
+      setSummaryError(t('post.validation.incomplete_summary'));
       setShowErrors(true);
       scrollToFirstError();
       return;
     }
     onFormSubmit(e);
+  };
+
+  /**
+   * Progress-indicator jumps: back is always allowed, but jumping FORWARD past
+   * a step that's still incomplete drops the user on that step with its errors
+   * shown instead.
+   */
+  const handleStepClick = (index: number) => {
+    if (index > finalCurrentStep) {
+      for (let i = 0; i < index; i++) {
+        const errs = validation.getStepErrors(formData, i, steps);
+        if (errs.length > 0) {
+          setSummaryError(t(errs[0].messageKey));
+          if (i === finalCurrentStep) {
+            setShowErrors(true);
+            scrollToFirstError();
+          } else {
+            pendingErrorStepRef.current = i;
+            finalGoToStep(i);
+          }
+          return;
+        }
+      }
+    }
+    finalGoToStep(index);
   };
 
   const handleConfirmCancel = () => {
@@ -227,10 +290,17 @@ export function PostFormContainer({
         steps={steps}
         currentStep={finalCurrentStep}
         maxVisitedStep={finalMaxVisited}
-        onStepClick={finalGoToStep}
+        onStepClick={handleStepClick}
       />
 
       <form onSubmit={handleFormSubmit} className="space-y-6">
+        {summaryError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{summaryError}</AlertDescription>
+          </Alert>
+        )}
+
         <Card className="p-6">
           {renderCurrentStep()}
         </Card>

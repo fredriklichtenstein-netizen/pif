@@ -3,7 +3,12 @@ import { useState, useCallback } from "react";
 
 interface PostFormNavigationProps {
   steps: any[];
-  canProceed: () => boolean;
+  /** Receives the step index to validate. Taking it as an argument (rather
+   * than closing over the hook's own currentStep) is what lets the caller use
+   * a SINGLE navigation instance — previously the circular dependency was
+   * worked around by creating two, and validation was wired to the throwaway
+   * one that never advanced past step 0. */
+  canProceed: (stepIndex: number) => boolean;
 }
 
 export function usePostFormNavigation({ steps, canProceed }: PostFormNavigationProps) {
@@ -12,7 +17,7 @@ export function usePostFormNavigation({ steps, canProceed }: PostFormNavigationP
 
   const nextStep = useCallback(() => {
     setTimeout(() => {
-      const canGoNext = canProceed();
+      const canGoNext = canProceed(currentStep);
       if (currentStep < steps.length - 1 && canGoNext) {
         const next = currentStep + 1;
         setCurrentStep(next);
