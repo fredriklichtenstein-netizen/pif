@@ -105,7 +105,23 @@ export function ItemCardGallery({ images, imageCrops = [], title, category, item
           {/* order-2/order-1 keep title first in reading order (screen readers hit the
               primary heading before the subtitle) while visually placing category above
               it, matching the card's existing small-over-big rhythm. */}
-          <h2 className="order-2 text-white text-3xl font-display font-bold tracking-wide drop-shadow-md uppercase truncate">
+          {/* Titles wrap to at most two rows. The size steps down as the title
+              gets longer so a long one still fits those two rows on a narrow
+              screen instead of being cut off after a few characters — the
+              uppercase + tracking-wide display face is wide, so the thresholds
+              are deliberately conservative. line-clamp-2 is the final backstop
+              for titles that predate the input's maxLength. */}
+          <h2
+            className={`order-2 text-white font-display font-bold tracking-wide drop-shadow-md uppercase line-clamp-2 break-words ${
+              title.length <= 18
+                ? "text-3xl"
+                : title.length <= 28
+                  ? "text-2xl"
+                  : title.length <= 40
+                    ? "text-xl"
+                    : "text-lg"
+            }`}
+          >
             {title}
           </h2>
           <h3 className="order-1 text-white text-base sm:text-lg font-display font-medium tracking-wide drop-shadow-md">
