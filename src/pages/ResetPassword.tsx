@@ -157,6 +157,18 @@ export default function ResetPassword() {
         throw error;
       }
 
+      // Revoke every OTHER session so a device that was already signed in
+      // can't keep using the account after the password was changed — GoTrue
+      // leaves them alive by default. 'others' deliberately preserves this
+      // session, so the user isn't kicked out of the flow they just finished.
+      // Best-effort: the password change itself already succeeded, so a
+      // failure here must not surface as "reset failed".
+      try {
+        await supabase.auth.signOut({ scope: 'others' });
+      } catch (signOutError) {
+        console.error("Could not revoke other sessions:", signOutError);
+      }
+
       setSuccess(true);
       toast({
         title: t('auth.password_updated'),
@@ -170,6 +182,10 @@ export default function ResetPassword() {
       console.error("Error resetting password:", error);
       if (error instanceof AuthTimeoutError) {
         setError(t('auth.reset_password_taking_long'));
+      } else if (error?.code === 'same_password') {
+        // GoTrue rejects reusing the current password with a 422. Surfacing
+        // its raw English string here read as an unexplained failure.
+        setError(t('auth.same_password'));
       } else {
         setError(error.message || t('auth.failed_reset_password'));
       }
