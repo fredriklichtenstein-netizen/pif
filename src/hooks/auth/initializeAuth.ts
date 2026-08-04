@@ -258,8 +258,20 @@ const setupAuthListener = () => {
         }
       }
 
-      // Handle token refresh and tab-focus sign-in silently
+      // Handle token refresh and tab-focus sign-in silently.
+      //
+      // USER_UPDATED belongs here too, and leaving it out caused a real
+      // deadlock: supabase-js awaits _notifyAllSubscribers('USER_UPDATED')
+      // *inside* updateUser(), so updateUser's promise cannot resolve until
+      // this callback returns — but the fall-through branch below awaits a
+      // PostgREST query, which needs the auth session updateUser is still
+      // holding. Changing a password from /reset-password therefore hung the
+      // UI until the client-side timeout fired, even though the server had
+      // already applied the change in ~150ms. A user/password update also
+      // can't change onboarding_completed, so refetching the profile here
+      // was pointless as well as harmful.
       if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' ||
+          event === 'USER_UPDATED' ||
           (event === 'SIGNED_IN' && currentAuth.initialized)) {
         if (session) {
           currentAuth.setSession(session);
