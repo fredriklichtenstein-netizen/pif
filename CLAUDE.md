@@ -64,6 +64,26 @@ Mapbox GL JS requires a DEFINITE (not min-height) container height at initializa
 `flex-1` chains can resolve to 0px and break map rendering entirely — this has happened twice. Any
 change near the Map page's layout must be tested on a real device before considering it done.
 
+## Email domains: pif.today SENDS, pif.community RECEIVES
+
+These are not interchangeable and the difference is invisible in code:
+
+- **`pif.today`** — verified in Resend for *sending*, but has **no MX record**. Nothing addressed to
+  it can ever arrive. Use it only as a `From`/sender.
+- **`pif.community`** — has MX (Google Workspace). This is the real inbox, and the address the
+  privacy policy lists as the contact.
+
+Routing the in-app feedback form to `hej@pif.today` silently black-holed every submission for a week
+(2026-07-28 → 08-04): the app and edge function returned 200 throughout, Resend accepted the sends,
+and they then bounced / sat in `delivery_delayed` where nobody was looking. **Symptom of this class
+of bug is total silence, not an error** — if mail "isn't arriving", check Resend's per-message
+*status* (not just that a send happened) and `dig MX <domain>` before touching any code. Recovered
+message bodies are retrievable from Resend's log via `get-email` even for bounced sends.
+
+For the same reason, never create an *account* on `@pif.today` — it can't receive confirmation or
+password-reset mail. One such user existed (`hej@pif.today`, never signed in) and was deleted
+2026-08-04.
+
 ## Supabase Auth emails (templates + PWA deep-linking)
 
 All 13 auth email templates are brand-styled (bilingual sv/en, logo, `#00CC99` CTA) and managed via
