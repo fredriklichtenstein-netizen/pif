@@ -42,10 +42,19 @@ export function ItemCardLayout({
     : "border-l-4 border-l-pif-offer";
   // Highlight the current user's own posts only in contexts that opt-in
   // (e.g. main feed). Soft pink that doesn't fight the type-coded border.
-  const ownerTintClass = isOwner && showOwnerTint ? "bg-[#FFE5E5]" : "";
+  const hasOwnerTint = isOwner && showOwnerTint;
+  const ownerTintClass = hasOwnerTint ? "bg-[#FFE5E5]" : "";
 
   return (
-    <Card id={`item-card-${id}`} className={`overflow-hidden transition-shadow hover:shadow-md rounded-none border-x-0 ${borderClass} ${ownerTintClass}`}>
+    // --card-surface publishes this card's actual background so descendants
+    // that need to fade INTO it (see ItemCardContent's peek gradient) can't
+    // drift out of sync. Hardcoding `from-white` there meant own posts showed
+    // a white fade over the pink tint.
+    <Card
+      id={`item-card-${id}`}
+      style={{ ["--card-surface" as string]: hasOwnerTint ? "#FFE5E5" : "hsl(var(--card))" }}
+      className={`overflow-hidden transition-shadow hover:shadow-md rounded-none border-x-0 ${borderClass} ${ownerTintClass}`}
+    >
       {isRealtimeError && (
         <div className="p-2 bg-gray-50 py-0">
           <NetworkStatus onRetry={refreshItemData} />

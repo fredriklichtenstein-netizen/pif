@@ -24,6 +24,14 @@ interface PostFormInformationProps {
   fieldErrors?: Partial<Record<string, string>>;
 }
 
+/**
+ * Feed cards render the title in an uppercase display face over the image,
+ * wrapping to at most two rows. Beyond roughly this length even the smallest
+ * step-down size can't fit two rows on a narrow screen, so cap input here
+ * rather than let it be silently clipped on the card.
+ */
+const TITLE_MAX_LENGTH = 50;
+
 const CONDITIONS = [
   { key: "new", value: "conditions.new" },
   { key: "like_new", value: "conditions.like_new" },
@@ -101,8 +109,20 @@ export function PostFormInformation({
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder={isRequest ? t('post.title_request_placeholder') : t('post.title_placeholder')}
               required
+              maxLength={TITLE_MAX_LENGTH}
             />
-            <PostFieldError message={fieldErrors.title} />
+            <div className="flex items-center justify-between gap-2">
+              <PostFieldError message={fieldErrors.title} />
+              <span
+                className={`ml-auto shrink-0 text-xs ${
+                  formData.title.length >= TITLE_MAX_LENGTH
+                    ? "text-destructive"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {formData.title.length}/{TITLE_MAX_LENGTH}
+              </span>
+            </div>
           </div>
 
           {/* Kategori */}

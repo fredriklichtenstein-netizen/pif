@@ -66,10 +66,13 @@ export function ItemCardContent({
           {hasDetails && <ItemMeasurements measurements={measurements} />}
 
           {/* Fades the clipped peek into the card's background instead of a
-              hard cut, signalling there's more content below the toggle. */}
+              hard cut, signalling there's more content below the toggle.
+              Reads --card-surface from ItemCardLayout so this tracks the real
+              background — own posts are tinted pink, and a hardcoded white
+              fade showed up as an obvious white smear over them. */}
           {!expanded && overflows && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--card-surface,hsl(var(--card)))] to-transparent"
               aria-hidden="true"
             />
           )}
