@@ -8,7 +8,15 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const FEEDBACK_TO = "hej@pif.today";
+// IMPORTANT: these two domains are NOT interchangeable.
+//   pif.today     — verified in Resend for SENDING, but has NO MX record, so
+//                   it cannot receive mail. Anything addressed here bounces.
+//   pif.community — has MX (Google Workspace), i.e. the real inbox.
+// Routing feedback to hej@pif.today silently black-holed every submission
+// (bounced / delivery_delayed in Resend) from 2026-07-28 until this fix.
+// The From must stay on pif.today because that's the verified sending domain;
+// replies are handled by reply_to, which is set to the submitting user.
+const FEEDBACK_TO = "hej@pif.community";
 const FEEDBACK_FROM = "PIF <hej@pif.today>";
 
 const json = (status: number, body: unknown) =>
