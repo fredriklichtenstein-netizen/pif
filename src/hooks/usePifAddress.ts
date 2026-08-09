@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { fetchMyProfile } from "@/services/profile/myProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
@@ -28,11 +29,10 @@ export const usePifAddress = () => {
 
     setIsLoading(true);
     try {
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("address, location_json")
-        .eq("id", user.id)
-        .single();
+      // Own profile via RPC: address and location_json are not readable through
+      // a table select by any role. get_my_profile() returns them under the same
+      // field names, so the consumers below are unchanged.
+      const { data: profile, error } = await fetchMyProfile();
 
       if (error) {
         console.error("[usePifAddress] Error fetching profile:", error);

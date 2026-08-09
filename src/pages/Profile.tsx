@@ -32,8 +32,10 @@ const Profile = () => {
 
   const coordinates = (() => {
     if (DEMO_MODE) return { lng: 18.0686, lat: 59.3293 };
-    if ((profileData as any)?.location_json) {
-      const c = parseCoordinates((profileData as any).location_json);
+    // Coarse point: this page renders for any user, and only the owner may
+    // see an exact home coordinate.
+    if ((profileData as any)?.coordinates_public) {
+      const c = parseCoordinates((profileData as any).coordinates_public);
       if (c) return c;
     }
     if (profileData?.address) return { lat: 59.3293, lng: 18.0686 };

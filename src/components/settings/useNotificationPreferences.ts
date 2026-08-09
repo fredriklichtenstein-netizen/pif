@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { fetchMyProfile } from '@/services/profile/myProfile';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationPreferences } from "./types";
@@ -24,11 +25,8 @@ export function useNotificationPreferences() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: userProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('notification_preferences')
-        .eq('id', user.id)
-        .single();
+      // Own profile via RPC — notification_preferences is not table-readable.
+      const { data: userProfile, error: profileError } = await fetchMyProfile();
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
