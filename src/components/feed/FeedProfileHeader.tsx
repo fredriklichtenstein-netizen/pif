@@ -42,7 +42,9 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, avatar_url, city, location_json")
+          // coordinates_public, not location_json: this is ANOTHER user's home
+            // location, and only the coarse point may be shown.
+            .select("id, first_name, last_name, avatar_url, city, coordinates_public")
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;
@@ -59,7 +61,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
         };
         setProfile(next);
         setEnriched(next);
-        const coords = parseCoordinates((data as any).location_json);
+        const coords = parseCoordinates((data as any).coordinates_public);
         if (coords) setCoordinates({ lng: coords.lng, lat: coords.lat });
       } catch {
         /* silent — fall back to stub */

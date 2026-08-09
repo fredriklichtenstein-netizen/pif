@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { fetchMyProfile } from "@/services/profile/myProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { DEMO_MODE } from "@/config/demoMode";
@@ -22,11 +23,9 @@ export function useCityBackfill() {
 
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("location_json, city")
-          .eq("id", userId)
-          .maybeSingle();
+        // Backfills the caller's OWN city from their own coordinates, so this
+        // goes through the RPC — location_json is not table-readable any more.
+        const { data, error } = await fetchMyProfile();
         if (error || !data) return;
         const existing = (data as any).city;
         if (existing && String(existing).trim()) return;

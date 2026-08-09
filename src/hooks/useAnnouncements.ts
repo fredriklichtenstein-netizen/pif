@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { fetchMyProfile } from "@/services/profile/myProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { DEMO_MODE } from "@/config/demoMode";
@@ -40,11 +41,8 @@ export function useAnnouncements() {
 
     (async () => {
       try {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("last_seen_announcement_at")
-          .eq("id", user.id)
-          .maybeSingle();
+        // Own profile via RPC — last_seen_announcement_at is not table-readable.
+        const { data: profile, error: profileError } = await fetchMyProfile();
         if (profileError || !profile) return;
 
         const watermark = (profile as any).last_seen_announcement_at;

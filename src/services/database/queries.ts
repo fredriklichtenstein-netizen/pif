@@ -1,4 +1,5 @@
 
+import { PROFILE_PUBLIC_COLUMNS } from "@/services/profile/publicColumns";
 import { supabase } from "@/integrations/supabase/client";
 import { withRetry, DatabaseError } from "./connection";
 import { monitorQuery } from "./monitor";
@@ -195,7 +196,8 @@ export class OptimizedQueries {
       withRetry(async () => {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          // Arbitrary user id — public columns only.
+          .select(PROFILE_PUBLIC_COLUMNS)
           .eq('id', userId)
           .single();
           

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { PROFILE_PUBLIC_COLUMNS } from "@/services/profile/publicColumns";
 import { supabase } from "@/integrations/supabase/client";
 import {
   isAuthInvalidError,
@@ -224,9 +225,12 @@ const fetchProfileOnce = (userId: string): Promise<any | null> => {
   const promise = (async () => {
     if (isAuthRequestCircuitOpen()) return null;
     try {
+      // Takes an arbitrary user id, so public columns only. Reading your own
+      // private fields is fetchMyProfile(); other people's are not readable at
+      // all — the database refuses them, it is not merely a convention here.
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_PUBLIC_COLUMNS)
         .eq("id", userId)
         .maybeSingle();
 

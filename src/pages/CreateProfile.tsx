@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { fetchMyProfile } from "@/services/profile/myProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/hooks/auth/authStore";
 import { useToast } from "@/hooks/use-toast";
@@ -83,11 +84,9 @@ export default function CreateProfile() {
           return;
         }
         if (!cancelled) setHasSession(true);
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("first_name,last_name,avatar_url,address,city,location_json,phone,onboarding_completed")
-          .eq("id", user.id)
-          .maybeSingle();
+        // Own profile during onboarding — address, phone and location_json are
+        // not table-readable by any role; the RPC returns them by the same names.
+        const { data: profile } = await fetchMyProfile();
 
         if (cancelled) return;
 
