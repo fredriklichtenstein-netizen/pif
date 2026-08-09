@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { PostFormData, PickupProfileDefaults } from "@/types/post";
+import { fetchMyProfile } from '@/services/profile/myProfile';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 
@@ -67,11 +68,9 @@ export function usePostFormState(initialData?: any) {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('pickup_preference, address, pickup_address, pickup_door_code, pickup_floor, pickup_instructions, phone')
-          .eq('id', authUser.id)
-          .single();
+        // Own profile via RPC — these pickup/address columns are no longer
+        // readable through a table select by any role. See fetchMyProfile().
+        const { data } = await fetchMyProfile();
         if (cancelled || !data) return;
         const d = data as any;
         const primary = d?.address || "";
