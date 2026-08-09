@@ -19,6 +19,89 @@ const corsHeaders = {
 const FEEDBACK_TO = "hej@pif.community";
 const FEEDBACK_FROM = "PIF <hej@pif.today>";
 
+// --- Trello mirroring -------------------------------------------------------
+// Feedback is also filed as a card on the PIF backlog board so it lands in the
+// triage flow instead of only an inbox.
+//
+// DELIBERATELY MINIMAL: the card carries ONLY the category, the free text and
+// the submission time. No screenshot, no user id, no name, no email. The full
+// record — including the screenshot and who sent it — stays in the email, which
+// is a single mailbox already under the controller's control. Keeping Trello
+// free of identifiers means mirroring feedback does not widen the personal-data
+// footprint to another processor. Do not "helpfully" add the sender back.
+//
+// These ids are not secrets (they identify a private board, they don't grant
+// access to it), so they live here rather than in env. Regenerate from
+// https://trello.com/b/Fs4TDO6L/pif-backlog-mvp-2026 if the board is recreated.
+const TRELLO_INBOX_LIST_ID = "6a789ba356a85081c2421fec"; // "Inbox"
+const TRELLO_BUG_LABEL_ID = "6a789ba356a85081c24220d1"; // red "Bug"
+
+/**
+ * Mirror a submission to Trello. Best-effort by design: feedback reaching the
+ * mailbox is what matters, so any failure here is logged and swallowed. A Trello
+ * outage, an expired token or a deleted list must never turn a submission into
+ * an error for the user — silent loss of feedback is the exact failure this
+ * function already suffered once (2026-07-28 → 08-04).
+ */
+async function mirrorToTrello(
+  feedbackType: "issue" | "feedback",
+  feedbackText: string,
+  submittedAt: Date,
+): Promise<void> {
+  const key = Deno.env.get("TRELLO_KEY");
+  const token = Deno.env.get("TRELLO_TOKEN");
+  if (!key || !token) return; // not configured (e.g. staging) — skip quietly
+
+  const typeLabel = feedbackType === "issue" ? "Problem" : "Feedback";
+
+  // Local time for a human reading the board; ISO kept in the body so the exact
+  // instant is unambiguous regardless of who reads it from where.
+  const local = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Stockholm",
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(submittedAt);
+
+  const firstLine = feedbackText.replace(/\s+/g, " ").trim();
+  const title = `[${typeLabel}] ${
+    firstLine.length > 80 ? `${firstLine.slice(0, 80)}…` : firstLine
+  }`;
+
+  const desc = [
+    `**Kategori:** ${typeLabel}`,
+    `**Inskickat:** ${local} (${submittedAt.toISOString()})`,
+    "",
+    "---",
+    "",
+    feedbackText,
+    "",
+    "---",
+    "_Inskickat via appens feedbackformulär. Avsändare och ev. skärmbild finns",
+    "endast i mejlet till hej@pif.community — medvetet inte här._",
+  ].join("\n");
+
+  const params = new URLSearchParams({
+    key,
+    token,
+    idList: TRELLO_INBOX_LIST_ID,
+    name: title,
+    desc,
+    pos: "top",
+  });
+  if (feedbackType === "issue") params.set("idLabels", TRELLO_BUG_LABEL_ID);
+
+  try {
+    const res = await fetch(`https://api.trello.com/1/cards?${params}`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      console.error("Trello card creation failed", res.status, await res.text());
+    }
+  } catch (err) {
+    console.error("Trello card creation threw", err);
+  }
+}
+
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
     status,
@@ -123,6 +206,11 @@ serve(async (req) => {
       console.error("Resend feedback email failed", emailRes.status, text);
       return json(500, { error: "Failed to send email" });
     }
+
+    // Mirror to the backlog board only after the email is safely away, and
+    // awaited so the Deno process isn't torn down mid-request. Failures inside
+    // are swallowed — the submission has already succeeded by this point.
+    await mirrorToTrello(feedbackType, feedbackText, new Date());
 
     return json(200, { ok: true });
   } catch (error) {
