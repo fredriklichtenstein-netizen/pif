@@ -7,6 +7,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
+import { ITEM_PUBLIC_SELECT } from "@/services/items/publicColumns";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useAuthStore } from "@/hooks/auth/authStore";
 import {
@@ -118,9 +119,11 @@ export function useFetchPosts(options = { includeArchived: false }) {
 
 
     try {
+      // Explicit column list, never select('*') — see ITEM_PUBLIC_SELECT. The
+      // feed is public, so it must not request columns the owner alone may read.
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)');
+        .select(ITEM_PUBLIC_SELECT);
       
       if (options.includeArchived) {
         query = query
@@ -148,8 +151,8 @@ export function useFetchPosts(options = { includeArchived: false }) {
           title: item.title,
           description: item.description,
           images: item.images,
-          location: item.location,
-          coordinates: extractCoordinates((item as any).coordinates_json),
+          location: (item as any).location_public,
+          coordinates: extractCoordinates((item as any).coordinates_public),
           visibilityRadiusKm: typeof (item as any).visibility_radius_km === 'number'
             ? (item as any).visibility_radius_km
             : null,

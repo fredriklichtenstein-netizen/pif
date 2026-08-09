@@ -9,12 +9,15 @@ export const transformPostData = (
   item: any,
   interactionCounts: InteractionCounts
 ): Post => {
+  // coordinates_public only — the coarse, server-offset point. The exact
+  // coordinate never reaches a generic item transform; an owner or selected
+  // receiver fetches it deliberately via fetchItemPrivateLocation().
   let parsedCoordinates = null;
-  if (item.coordinates_json) {
+  if (item.coordinates_public) {
     try {
-      parsedCoordinates = extractCoordinates(item.coordinates_json);
+      parsedCoordinates = extractCoordinates(item.coordinates_public);
     } catch (err) {
-      console.error("Error parsing coordinates:", err, item.coordinates_json);
+      console.error("Error parsing coordinates:", err, item.coordinates_public);
     }
   }
   
@@ -51,7 +54,7 @@ export const transformPostData = (
     measurements: measurements,
     images: item.images || [],
     imageCrops,
-    location: item.location || '',
+    location: item.location_public || '',
     coordinates: parsedCoordinates,
     visibilityRadiusKm,
     postedBy: {

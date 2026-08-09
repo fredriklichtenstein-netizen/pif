@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import Supercluster from "supercluster";
 import type { Post } from "@/types/post";
-import { addLocationPrivacy } from "@/utils/locationPrivacy";
 import type { EnhancedPost, PointFeature } from "./types";
 
 interface UseClusterInitArgs {
@@ -67,37 +66,27 @@ export function useClusterInit({
         return;
       }
 
-      const enhancedPosts = await Promise.all(
-        validPosts.map(async (post) => {
-          const { lng, lat } = post.coordinates;
-          try {
-            const [privacyLng, privacyLat] = await addLocationPrivacy(
-              lng,
-              lat,
-              map
-            );
-            return {
-              post,
-              originalCoordinates: { lng, lat },
-              privacyCoordinates: { lng: privacyLng, lat: privacyLat },
-            };
-          } catch {
-            const minimalOffsetLng = lng + (Math.random() - 0.5) * 0.001;
-            const minimalOffsetLat = lat + (Math.random() - 0.5) * 0.001;
-            return {
-              post,
-              originalCoordinates: { lng, lat },
-              privacyCoordinates: {
-                lng: minimalOffsetLng,
-                lat: minimalOffsetLat,
-              },
-            };
-          }
-        })
-      );
+      // post.coordinates is ALREADY the coarse public point: the database
+      // serves `coordinates_public`, offset 150-500 m from the true position by
+      // a deterministic, row-seeded function, and never releases the exact
+      // value here at all.
+      //
+      // The offset deliberately does NOT happen on the client any more. It used
+      // to, via addLocationPrivacy(), which was decorative in two ways: the true
+      // coordinate was in the API response regardless, and the offset was
+      // redrawn with Math.random() on every render, so averaging a handful of
+      // page loads recovered the exact address. Do not reintroduce a
+      // client-side offset — it cannot protect data the client already holds.
+      const enhancedPosts = validPosts.map((post) => {
+        const { lng, lat } = post.coordinates;
+        return {
+          post,
+          originalCoordinates: { lng, lat },
+          privacyCoordinates: { lng, lat },
+        };
+      });
 
-      // A newer posts array arrived while we were awaiting privacy
-      // offsets — drop this stale run entirely.
+      // A newer posts array arrived mid-run — drop this stale pass entirely.
       if (cancelled) return;
 
       // Tiny anti-stacking jitter (~±2 meters) so coincident offsets still

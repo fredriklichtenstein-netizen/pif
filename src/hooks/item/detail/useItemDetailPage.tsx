@@ -115,8 +115,10 @@ export function useItemDetailPage() {
       avatar: profileData?.avatar_url || ""
     };
 
-    // Coordinates live in the jsonb {lng,lat} column.
-    const cj: any = (displayItem as any).coordinates_json;
+    // The COARSE point (server-offset 150-500 m), which is all the detail page
+    // shows. The exact coordinate is not present on the item at all — an owner
+    // or selected receiver obtains it through fetchItemPrivateLocation().
+    const cj: any = (displayItem as any).coordinates_public;
     coordinates = (cj && typeof cj === 'object' && 'lat' in cj && 'lng' in cj)
       ? { lat: Number(cj.lat), lng: Number(cj.lng) }
       : undefined;

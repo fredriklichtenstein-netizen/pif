@@ -30,7 +30,7 @@ export class OptimizedQueries {
         let query = (supabase
           .from('items') as any)
           .select(`
-            id, title, description, images, location, coordinates_json,
+            id, title, description, images, location_public, coordinates_public,
             category, condition, user_id, pif_status, item_type,
             created_at, archived_at, archived_reason, measurements, image_crops,
             visibility_radius_km
