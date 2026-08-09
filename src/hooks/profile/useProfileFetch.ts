@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
+import { fetchMyProfile } from '@/services/profile/myProfile';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileFormData } from "./types";
@@ -59,9 +60,13 @@ export const useProfileFetch = () => {
         }
       }, timeoutMs);
       
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles').select('*').eq('id', user.id)
-        .abortSignal(abortController.current.signal).single();
+      // Own profile via RPC: the sensitive columns (address, phone, coordinates,
+      // door code) are revoked from `authenticated` so nobody can read them for
+      // another user, and column grants are not row-aware — so this is also the
+      // only way to read your own.
+      const { data: profile, error: profileError } = await fetchMyProfile({
+        signal: abortController.current.signal,
+      });
       
       clearTimeout(timeoutId);
 

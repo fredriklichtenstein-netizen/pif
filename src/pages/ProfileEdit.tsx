@@ -56,12 +56,10 @@ function ProfileEdit() {
     if (!user) return;
 
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      // Own profile via RPC — see fetchMyProfile() for why a table select
+      // cannot reach these columns any more.
+      const { fetchMyProfile } = await import("@/services/profile/myProfile");
+      const { data, error } = await fetchMyProfile();
 
       if (error) throw error;
 
