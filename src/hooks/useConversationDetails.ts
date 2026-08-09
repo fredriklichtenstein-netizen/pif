@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import type { Conversation, ConversationParticipant } from "@/types/messaging";
 import type { Post } from "@/types/post";
 import { parseCoordinatesFromDB } from "@/types/post";
+import { ITEM_PUBLIC_COLUMNS } from "@/services/items/publicColumns";
 
 export function useConversationDetails(conversationId: string | null) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -34,9 +35,11 @@ export function useConversationDetails(conversationId: string | null) {
         // separately via a SECURITY DEFINER RPC because RLS on
         // conversation_participants restricts direct SELECT to the caller's
         // own row, hiding the "other" participant in 1:1 conversations.
+        // item:items(...) must name public columns explicitly — an embed of
+        // items(*) would request owner-only columns the database refuses.
         const { data, error: conversationError } = await supabase
           .from('conversations')
-          .select(`*, item:items(*)`)
+          .select(`*, item:items(${ITEM_PUBLIC_COLUMNS})`)
           .eq('id', conversationId)
           .single();
 
@@ -112,9 +115,13 @@ export function useConversationDetails(conversationId: string | null) {
                   {}
                 ) : {},
               images: data.item.images || [],
-              location: data.item.location || "",
+              location: (data.item as any).location_public || "",
               coordinates: (() => {
-                const cj: any = (data.item as any).coordinates_json;
+                // Coarse point only. A selected receiver who needs the exact
+                // pickup location gets it from fetchItemPrivateLocation(), which
+                // the database authorises per-user; it is never carried on the
+                // conversation payload.
+                const cj: any = (data.item as any).coordinates_public;
                 if (cj && typeof cj === 'object' && 'lat' in cj && 'lng' in cj) {
                   return { lat: Number(cj.lat), lng: Number(cj.lng) };
                 }
@@ -161,9 +168,13 @@ export function useConversationDetails(conversationId: string | null) {
                   {}
                 ) : {},
               images: data.item.images || [],
-              location: data.item.location || "",
+              location: (data.item as any).location_public || "",
               coordinates: (() => {
-                const cj: any = (data.item as any).coordinates_json;
+                // Coarse point only. A selected receiver who needs the exact
+                // pickup location gets it from fetchItemPrivateLocation(), which
+                // the database authorises per-user; it is never carried on the
+                // conversation payload.
+                const cj: any = (data.item as any).coordinates_public;
                 if (cj && typeof cj === 'object' && 'lat' in cj && 'lng' in cj) {
                   return { lat: Number(cj.lat), lng: Number(cj.lng) };
                 }

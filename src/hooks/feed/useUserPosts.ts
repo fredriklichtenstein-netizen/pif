@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { extractUserFromProfile } from '@/hooks/item/utils/userUtils';
 import { useGlobalAuth } from '../useGlobalAuth';
 import { extractCoordinates } from '@/utils/coordinates/coordinateExtractor';
+import { ITEM_PUBLIC_SELECT } from '@/services/items/publicColumns';
 
 interface UseUserPostsOptions {
   includeArchived?: boolean;
@@ -24,8 +25,8 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       title: item.title,
       description: item.description,
       images: item.images,
-      location: item.location,
-      coordinates: extractCoordinates((item as any).coordinates_json),
+      location: (item as any).location_public,
+      coordinates: extractCoordinates((item as any).coordinates_public),
       visibilityRadiusKm: typeof (item as any).visibility_radius_km === 'number'
         ? (item as any).visibility_radius_km
         : null,
@@ -87,7 +88,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
 
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
+        .select(ITEM_PUBLIC_SELECT)
         .in('id', itemIds)
         .order('created_at', { ascending: false })
         .abortSignal(signal);
@@ -135,7 +136,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
+        .select(ITEM_PUBLIC_SELECT)
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
         .abortSignal(signal);
@@ -183,7 +184,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       const { data: items, error: itemsError } = await supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
+        .select(ITEM_PUBLIC_SELECT)
         .eq('user_id', currentUser.id)
         .in('pif_status', ['archived', 'completed'])
         .order('archived_at', { ascending: false, nullsFirst: false })
@@ -241,7 +242,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       let query = supabase
         .from('items')
-        .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
+        .select(ITEM_PUBLIC_SELECT)
         .in('id', itemIds)
         .order('created_at', { ascending: false })
         .abortSignal(signal);

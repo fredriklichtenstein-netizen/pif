@@ -28,9 +28,10 @@ function PostEdit() {
     const fetchItem = async () => {
       try {
         const { supabase } = await import("@/integrations/supabase/client");
+        const { ITEM_PUBLIC_COLUMNS } = await import("@/services/items/publicColumns");
         const { data, error } = await supabase
           .from("items")
-          .select("*")
+          .select(ITEM_PUBLIC_COLUMNS)
           .eq("id", parseInt(id, 10))
           .single();
 
@@ -46,15 +47,29 @@ function PostEdit() {
           throw new Error("You don't have permission to edit this item");
         }
 
-        // Coordinates live in the jsonb {lng,lat} column.
-        // usePostFormState expects { x: lng, y: lat }.
+        // The item select above deliberately carries only public columns, so the
+        // exact coordinate, address and pickup details are not on `data`. As the
+        // owner, fetch them through the authorised RPC — the only route the
+        // database permits — and merge them back for the edit form.
+        // usePostFormState expects coordinates as { x: lng, y: lat }.
+        const { fetchItemPrivateLocation } = await import("@/services/items/privateLocation");
+        const priv = await fetchItemPrivateLocation(parseInt(id, 10));
+
         let normalizedCoordinates: { x: number; y: number } | null = null;
-        const rawJson = (data as any).coordinates_json;
-        if (rawJson && typeof rawJson === "object" && "lng" in rawJson && "lat" in rawJson) {
-          normalizedCoordinates = { x: Number(rawJson.lng), y: Number(rawJson.lat) };
+        if (priv?.coordinates) {
+          normalizedCoordinates = { x: priv.coordinates.lng, y: priv.coordinates.lat };
         }
 
-        setItem({ ...data, coordinates: normalizedCoordinates });
+        setItem({
+          ...data,
+          location: priv?.location ?? (data as any).location_public ?? "",
+          pickup_address: priv?.pickupAddress ?? "",
+          pickup_door_code: priv?.pickupDoorCode ?? "",
+          pickup_floor: priv?.pickupFloor ?? "",
+          pickup_instructions: priv?.pickupInstructions ?? "",
+          phone: priv?.phone ?? "",
+          coordinates: normalizedCoordinates,
+        });
       } catch (err: any) {
         console.error("Error fetching item:", err);
         setError(err.message || "Failed to load item");
