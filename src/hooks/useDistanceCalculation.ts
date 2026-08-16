@@ -27,7 +27,7 @@ export const useDistanceCalculation = (coordinates: Coordinates | null): string 
     }
 
     try {
-      const distance = calculateDistance(userLocation[1], userLocation[0], lat, lng);
+      const distance = calculateDistance(userLocation[0], userLocation[1], lng, lat);
       if (isNaN(distance) || distance < 0) {
         return '';
       }

@@ -58,10 +58,10 @@ export function ItemHeader({
             try {
               // Calculate distance using true coordinates for accuracy
               const distance = calculateDistance(
-                position.coords.latitude,
                 position.coords.longitude,
-                coordinates.lat,
-                coordinates.lng
+                position.coords.latitude,
+                coordinates.lng,
+                coordinates.lat
               );
               
               if (isMounted) {
