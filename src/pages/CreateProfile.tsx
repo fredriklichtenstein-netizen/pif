@@ -224,30 +224,33 @@ export default function CreateProfile() {
         ? parseInt(pickupData.pickupFloor, 10)
         : null;
 
-      const profileData: any = {
-        id: user.id,
-        username,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        avatar_url: avatarUrl,
-        address: trimmedAddress,
-        city,
-        location_json: { lng: coordinates.lng, lat: coordinates.lat },
-        phone: persistedPhone,
-        onboarding_completed: true,
-        pickup_preference: pickupData.pickupPreference || null,
-        pickup_address: pickupData.pickupAddressMode === 'custom'
+      // A direct table upsert() can't work here: authenticated only has
+      // column-level SELECT on profiles' public columns (see
+      // services/profile/publicColumns.ts), and handle_new_user() already
+      // inserted a bare row on signup, so this always resolves via
+      // ON CONFLICT DO UPDATE — which requires SELECT on every column the
+      // DO UPDATE clause touches, private ones included. complete_onboarding()
+      // is a SECURITY DEFINER RPC scoped to auth.uid() that does the write
+      // server-side instead, mirroring get_my_profile() on the read side.
+      const { error: rpcError } = await supabase.rpc("complete_onboarding", {
+        p_username: username,
+        p_first_name: firstName.trim(),
+        p_last_name: lastName.trim(),
+        p_avatar_url: avatarUrl,
+        p_address: trimmedAddress,
+        p_city: city,
+        p_location_json: { lng: coordinates.lng, lat: coordinates.lat },
+        p_phone: persistedPhone,
+        p_onboarding_completed: true,
+        p_pickup_preference: pickupData.pickupPreference || null,
+        p_pickup_address: pickupData.pickupAddressMode === 'custom'
           ? (pickupData.pickupAddress || null)
           : (pickupData.pickupPreference ? trimmedAddress || null : null),
-        pickup_door_code: pickupData.pickupDoorCode || null,
-        pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
-        pickup_instructions: pickupData.pickupInstructions || null,
-      };
-
-      const { error: upsertError } = await supabase
-        .from("profiles")
-        .upsert(profileData);
-      if (upsertError) throw upsertError;
+        p_pickup_door_code: pickupData.pickupDoorCode || null,
+        p_pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
+        p_pickup_instructions: pickupData.pickupInstructions || null,
+      });
+      if (rpcError) throw rpcError;
 
       useAuthStore.getState().setProfileCompleted(true);
 
