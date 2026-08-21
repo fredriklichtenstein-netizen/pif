@@ -14,8 +14,13 @@ import { DEMO_MODE } from "@/config/demoMode";
  * Order is deliberate:
  *  1. Read item metadata (owner, title, type) BEFORE deleting, so the
  *     notification has the strings it needs even if the row is gone.
- *  2. Delete the interests row.
- *  3. Fire the notification. Failures here are logged but never thrown —
+ *  2. If the caller's own row is currently 'selected', route to
+ *     withdraw_receiver() instead of deleting — a plain delete has no
+ *     conversation-closing/item-reset logic (found live: a stale
+ *     conversation stuck open forever after a selected receiver's row
+ *     was deleted this way).
+ *  3. Otherwise, delete the interests row.
+ *  4. Fire the notification. Failures here are logged but never thrown —
  *     a notification hiccup must not block the user-visible withdrawal.
  *
  * DEMO_MODE skips ONLY the notification RPC; the delete path runs as
@@ -45,15 +50,44 @@ export const withdrawPreSelectionInterest = async (
     console.warn("withdrawPreSelectionInterest: item lookup failed", lookupErr);
   }
 
-  // 2. Delete the interests row.
-  const { error } = await supabase
+  // 2. A row that is currently the SELECTED receiver must go through
+  // withdraw_receiver() instead — it closes the conversation and resets
+  // the item's state, none of which a plain delete does. DB-side RLS also
+  // blocks this delete outright for status='selected' as a backstop, but
+  // check first so we can route correctly instead of just failing.
+  const { data: ownRow } = await supabase
+    .from("interests")
+    .select("status")
+    .eq("user_id", userId)
+    .eq("item_id", itemId)
+    .maybeSingle();
+
+  if ((ownRow as any)?.status === "selected") {
+    const { error: rpcError } = await (supabase.rpc as any)("withdraw_receiver", {
+      p_item_id: itemId,
+      p_comment: null,
+    });
+    if (rpcError) throw rpcError;
+    return;
+  }
+
+  // 3. Delete the interests row.
+  const { data: deletedRows, error } = await supabase
     .from("interests")
     .delete()
     .eq("user_id", userId)
-    .eq("item_id", itemId);
+    .eq("item_id", itemId)
+    .select("id");
   if (error) throw error;
+  if (!deletedRows || deletedRows.length === 0) {
+    // RLS silently no-ops a blocked delete rather than erroring — this
+    // means the row was already gone or (should be unreachable given the
+    // check above) still selected. Surface it instead of pretending the
+    // withdrawal succeeded while the row/conversation are untouched.
+    throw new Error("withdrawPreSelectionInterest: delete affected 0 rows");
+  }
 
-  // 3. Notify the owner (best-effort).
+  // 4. Notify the owner (best-effort).
   if (DEMO_MODE || !ownerId || ownerId === userId) return;
 
   const isWish =
