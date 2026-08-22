@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { useTranslation } from 'react-i18next';
+import { ITEM_PUBLIC_SELECT } from '@/services/items/publicColumns';
 
 /**
  * Local "auth ready" signal that does NOT depend on the global auth store.
@@ -77,15 +78,7 @@ export function useItemDetail(id: string) {
           async () => {
             return await supabase
               .from('items')
-              .select(`
-                *,
-                profiles:user_id (
-                  id,
-                  first_name,
-                  last_name,
-                  avatar_url
-                )
-              `)
+              .select(ITEM_PUBLIC_SELECT)
               .eq('id', numericId)
               .single();
           },
