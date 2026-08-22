@@ -258,6 +258,8 @@
     "location_permission_description": "Aktivera platsbehörigheter i dina webbläsarinställningar och uppdatera sidan.",
     "location_unavailable": "Plats otillgänglig",
     "location_unavailable_description": "Kunde inte bestämma din plats. Kontrollera enhetens platstjänster.",
+    "location_timeout": "Det tog för lång tid",
+    "location_timeout_description": "Det tog för lång tid att hämta din plats. Försök igen.",
     "location_taking_longer": "Platsen tar längre tid",
     "location_taking_longer_description": "Försöker fortfarande hämta din plats...",
     "location_unavailable_retry": "Kunde inte hämta din plats efter flera försök. Försök igen senare.",
