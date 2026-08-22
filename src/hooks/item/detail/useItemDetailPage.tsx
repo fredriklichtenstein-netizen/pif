@@ -92,8 +92,13 @@ export function useItemDetailPage() {
     }
   }, [item, localItem, toast]);
 
-  // If there's no item data at all, return redirect flag
-  if (!item && !localItem && hasCheckedLocalStorage && !isLoading) {
+  // Only redirect to /404 when the fetch has CONFIRMED the item doesn't
+  // exist (see useItemDetail.ts's isNotFound flag) -- a transient network
+  // error, timeout, or other failure must fall through to the retryable
+  // error card instead. Found live: every fetch failure was being treated
+  // as "item not found", which turned flaky notification/email/map-click
+  // loads into permanent 404s.
+  if (!item && !localItem && hasCheckedLocalStorage && !isLoading && (error as any)?.isNotFound) {
     return { redirectTo404: true };
   }
 

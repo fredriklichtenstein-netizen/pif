@@ -68,7 +68,9 @@ export function useItemDetail(id: string) {
       try {
         const numericId = parseInt(id, 10);
         if (isNaN(numericId)) {
-          throw new Error('Invalid item ID');
+          const e = new Error('Invalid item ID');
+          (e as any).isNotFound = true;
+          throw e;
         }
 
         const { data, error } = await withRetry(
@@ -103,12 +105,24 @@ export function useItemDetail(id: string) {
 
         if (error) {
           console.error('Supabase error fetching item:', JSON.stringify(error));
-          throw error;
+          const e = new Error(error.message || 'Failed to load item');
+          // PGRST116 = .single() matched 0 (or >1) rows -- the only case
+          // that means "this item genuinely doesn't exist", as opposed to
+          // a network blip, timeout, or other transient failure. Found
+          // live: every failure here was being treated as a 404, so a
+          // plain retryable connection error on an item-detail link
+          // (notification/email/map click) permanently bounced the user
+          // to /404 instead of showing a retry option.
+          (e as any).isNotFound = (error as any).code === 'PGRST116';
+          (e as any).code = (error as any).code;
+          throw e;
         }
 
         if (!data) {
           console.error('Item not found');
-          throw new Error('Item not found');
+          const e = new Error('Item not found');
+          (e as any).isNotFound = true;
+          throw e;
         }
         return data;
       } catch (err) {
