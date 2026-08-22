@@ -30,7 +30,7 @@ export function ItemDetailContainer({
         image={displayItem.images?.[0] || ""}
         images={displayItem.images || []}
         imageCrops={displayItem.image_crops || []}
-        location={displayItem.location || ""}
+        location={displayItem.location_public || ""}
         coordinates={coordinates}
         category={displayItem.category || ""}
         condition={displayItem.condition}
