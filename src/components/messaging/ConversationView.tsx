@@ -41,7 +41,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { PifCompletionBanner } from "./PifCompletionBanner";
 import { PifRatingModal } from "./PifRatingModal";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
-import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
 import type { WithdrawCopy } from "@/hooks/item/useWithdrawInterestConfirm";
 import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreSelection";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
@@ -782,12 +781,32 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       </AlertDialog>
 
       {/* Withdraw-my-interest dialog (receiver only) */}
-      <WithdrawInterestDialog
-        open={withdrawReceiverOpen}
-        onOpenChange={setWithdrawReceiverOpen}
-        onConfirm={handleWithdrawReceiverInterest}
-        copy={withdrawReceiverCopy}
-      />
+      <AlertDialog open={withdrawReceiverOpen} onOpenChange={setWithdrawReceiverOpen}>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            // Same Radix body `pointer-events: none` leak as the piffer
+            // withdraw dialog above -- this one also flips isClosed +
+            // swaps the footer on confirm, so it needs the same cleanup.
+            // Confirmed live: without this, the app froze after a
+            // successful withdrawal until a manual page refresh.
+            e.preventDefault();
+            if (typeof document !== "undefined") {
+              document.body.style.pointerEvents = "";
+            }
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>{withdrawReceiverCopy.title}</AlertDialogTitle>
+            <AlertDialogDescription>{withdrawReceiverCopy.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{withdrawReceiverCopy.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleWithdrawReceiverInterest}>
+              {withdrawReceiverCopy.confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Report dialog (both parties) */}
       {item && (
