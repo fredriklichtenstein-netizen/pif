@@ -11,7 +11,13 @@ const corsHeaders = {
 const NOTIFICATIONS_FROM = "PIF <notifications@pif.today>";
 // Overridable per-project so staging emails link back to the staging app
 // instead of production (a staging test item/conversation 404s on prod).
-const APP_URL = Deno.env.get("APP_URL") ?? "https://app.pif.community";
+// Default must stay pif.today, not app.pif.community: the latter has a
+// documented DNS/hosting-level redirect quirk (see CLAUDE.md) that strips
+// the original path on a cold cross-origin navigation -- confirmed live as
+// the cause of "Kunde inte ladda objektdetaljer" / 404 reports on item and
+// conversation email links landing on pif.today/404 with zero React
+// Router state.
+const APP_URL = Deno.env.get("APP_URL") ?? "https://pif.today";
 const LOGO_URL = "https://pif.today/pif-logo-long.png";
 const BRAND_TURQUOISE = "#00CC99";
 
