@@ -11,7 +11,7 @@ import { resolveDisplayName } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
 import { ProfilePopup } from "./ProfilePopup";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MoreVertical, Flag, RotateCcw, Archive } from "lucide-react";
+import { ArrowLeft, MoreVertical, Flag, RotateCcw, Archive, UserMinus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +41,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { PifCompletionBanner } from "./PifCompletionBanner";
 import { PifRatingModal } from "./PifRatingModal";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
+import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
+import type { WithdrawCopy } from "@/hooks/item/useWithdrawInterestConfirm";
+import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreSelection";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/utils/safeStorage";
 
@@ -67,11 +71,13 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const [hasRated, setHasRated] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawReceiverOpen, setWithdrawReceiverOpen] = useState(false);
   const [reopenDialogOpen, setReopenDialogOpen] = useState(false);
   const [reopenComment, setReopenComment] = useState("");
   const [reopenBusy, setReopenBusy] = useState(false);
   const [respondBusy, setRespondBusy] = useState(false);
   const { t } = useTranslation();
+  const { toast } = useToast();
   const {
     messages,
     isLoading: messagesLoading,
@@ -332,6 +338,75 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }, 0);
   };
 
+  // Same copy pattern as InterestSelectionList's self-withdraw dialog
+  // (selfWithdrawCopy) — reused so both entry points to a receiver's own
+  // withdrawal stay in sync.
+  const withdrawReceiverCopy: WithdrawCopy = isRequest
+    ? {
+        title: t("interactions.withdraw_offer_title"),
+        description: t("interactions.withdraw_offer_description"),
+        cancel: t("interactions.withdraw_offer_cancel"),
+        confirm: t("interactions.withdraw_offer_confirm"),
+      }
+    : {
+        title: t("interactions.withdraw_interest_title"),
+        description: t("interactions.withdraw_interest_description"),
+        cancel: t("interactions.withdraw_interest_cancel"),
+        confirm: t("interactions.withdraw_interest_confirm"),
+      };
+
+  // Receiver's own "withdraw my interest" action, mirroring
+  // InterestSelectionList.handleWithdrawOwnOffer: always try
+  // withdraw_receiver first (closes the conversation, resets item state,
+  // notifies the owner); only fall back to the shared pre-selection
+  // delete helper if Postgres rejects with 42501 ("Not the selected
+  // receiver"), which withdrawPreSelectionInterest itself now also
+  // guards against deleting a still-selected row.
+  const handleWithdrawReceiverInterest = () => {
+    setWithdrawReceiverOpen(false);
+    // setTimeout, not requestAnimationFrame -- see handleWithdraw above.
+    setTimeout(async () => {
+      if (!item?.id || !currentUserId) return;
+      const numericItemId = parseInt(String(item.id), 10);
+      if (!Number.isFinite(numericItemId)) return;
+      try {
+        const { error } = await (supabase.rpc as any)("withdraw_receiver", {
+          p_item_id: numericItemId,
+          p_comment: null,
+        });
+        if (error) {
+          const code = (error as any)?.code;
+          const msg = String((error as any)?.message || "");
+          const isNotSelected =
+            code === "42501" || /not the selected receiver/i.test(msg);
+          if (isNotSelected) {
+            await withdrawPreSelectionInterest(numericItemId, currentUserId);
+          } else {
+            throw error;
+          }
+        }
+        window.dispatchEvent(new CustomEvent("pif:conversation-refetch"));
+        window.dispatchEvent(new CustomEvent("pif:conversations-refresh"));
+        toast({ title: t("interactions.selection_withdrawn") });
+        if (isRequest) {
+          // Wish: the item itself stays active, only this single
+          // conversation closes. Stay on the thread; refetch flips UI.
+          return;
+        }
+        // Pif: thread is over — leave it.
+        if (onBack) onBack();
+        else navigate("/messages");
+      } catch (e) {
+        console.error("[ConversationView] withdraw receiver interest failed", e);
+        toast({
+          variant: "destructive",
+          title: t("interactions.error_title"),
+          description: t("interactions.error_withdraw_selection"),
+        });
+      }
+    }, 0);
+  };
+
   const handleRequestReopen = async () => {
     setReopenBusy(true);
     try {
@@ -430,6 +505,20 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
                   <DropdownMenuItem onClick={() => setWithdrawOpen(true)}>
                     <RotateCcw className="h-4 w-4 mr-2" />
                     {isRequest ? "Ångra val av uppfyllare" : "Ångra val av mottagare"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {role === "receiver" && !isClosed && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => setWithdrawReceiverOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <UserMinus className="h-4 w-4 mr-2" />
+                    {isRequest
+                      ? t("interactions.withdraw_offer_confirm")
+                      : t("interactions.withdraw_interest_confirm")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
@@ -691,6 +780,14 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           )}
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Withdraw-my-interest dialog (receiver only) */}
+      <WithdrawInterestDialog
+        open={withdrawReceiverOpen}
+        onOpenChange={setWithdrawReceiverOpen}
+        onConfirm={handleWithdrawReceiverInterest}
+        copy={withdrawReceiverCopy}
+      />
 
       {/* Report dialog (both parties) */}
       {item && (
