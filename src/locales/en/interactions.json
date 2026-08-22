@@ -258,6 +258,8 @@
     "location_permission_description": "Please enable location permissions in your browser settings and refresh the page.",
     "location_unavailable": "Location Unavailable",
     "location_unavailable_description": "Could not determine your location. Please check your device's location services.",
+    "location_timeout": "Taking Too Long",
+    "location_timeout_description": "Getting your location took too long. Please try again.",
     "location_taking_longer": "Location Taking Longer",
     "location_taking_longer_description": "Still trying to get your location...",
     "location_unavailable_retry": "Unable to get your location after several attempts. Please try again later.",

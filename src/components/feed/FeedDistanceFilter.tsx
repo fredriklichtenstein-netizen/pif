@@ -47,11 +47,18 @@ export function FeedDistanceFilter({
       },
       (err) => {
         setRequesting(false);
-        toast({
-          variant: "destructive",
-          title: t("map.location_error"),
-          description: err.message || t("interactions.geolocation_not_supported"),
-        });
+        // Surface the real GeolocationPositionError code instead of
+        // falling back to "not supported" copy -- that fallback was firing
+        // even when geolocation genuinely IS available, just because
+        // err.message came back empty on some browsers (confirmed live:
+        // the real signal was a second toast, "Timeout expired").
+        const [title, description] =
+          err.code === err.PERMISSION_DENIED
+            ? [t("interactions.location_permission_denied"), t("interactions.location_permission_description")]
+            : err.code === err.TIMEOUT
+              ? [t("interactions.location_timeout"), t("interactions.location_timeout_description")]
+              : [t("interactions.location_unavailable"), t("interactions.location_unavailable_description")];
+        toast({ variant: "destructive", title, description });
       }
     );
   }, [requesting, startTracking, updateLocation, toast, t]);
