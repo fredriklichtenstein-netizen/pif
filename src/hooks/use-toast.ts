@@ -6,7 +6,16 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+// Grace period between a toast being dismissed (open:false) and actually
+// being removed from state -- just long enough for the exit animation to
+// play, NOT how long the toast stays visible (Radix's own Root handles
+// that via its default 5s auto-dismiss duration). This was 1000000ms
+// (~16.7 min) -- a toast that failed to animate out cleanly (see the
+// mobile exit-animation fix in toast.tsx) stayed mounted and visually
+// stuck on screen for that entire window. Found live: a "Kunde inte
+// ladda meddelanden" error toast stayed pinned at the top of the screen
+// after being dismissed, overlapping the conversation header.
+const TOAST_REMOVE_DELAY = 1000
 
 type ToasterToast = ToastProps & {
   id: string

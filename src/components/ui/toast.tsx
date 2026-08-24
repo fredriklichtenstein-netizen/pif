@@ -30,7 +30,13 @@ const toastVariants = cva(
   // translate-x) tracks that axis; data-[swipe=move] applies during the drag
   // itself, data-[swipe=end] plays the fling-away animation on release past
   // the threshold, and data-[swipe=cancel] springs back to 0 otherwise.
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-y-0 data-[swipe=end]:translate-y-[var(--radix-toast-swipe-end-y)] data-[swipe=move]:translate-y-[var(--radix-toast-swipe-move-y)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  //
+  // Exit animation must mirror entrance per breakpoint (mobile: top:top,
+  // desktop: bottom:right) -- it previously always slid out to the right
+  // regardless of breakpoint, mismatched with the mobile viewport's fixed
+  // top-0 position (ToastViewport). Found live: a dismissed toast stayed
+  // visually stuck at the top of the screen on mobile instead of clearing.
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-y-0 data-[swipe=end]:translate-y-[var(--radix-toast-swipe-end-y)] data-[swipe=move]:translate-y-[var(--radix-toast-swipe-move-y)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-top-full data-[state=closed]:sm:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
