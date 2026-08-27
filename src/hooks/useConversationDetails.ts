@@ -26,9 +26,16 @@ export function useConversationDetails(conversationId: string | null) {
       return;
     }
 
-    const fetchConversationDetails = async () => {
+    // `silent` skips the isLoading flip for background refetches -- a
+    // message insert bumps the conversation row (trg_bump_conversation_on_message),
+    // which fires the postgres_changes subscription below on EVERY message
+    // sent. Flipping isLoading there flashed the whole ConversationView to
+    // its skeleton UI and back on every single message -- reported live as
+    // "refreshes the conversation thread every time I send a message."
+    // Only the very first, real load should show the skeleton.
+    const fetchConversationDetails = async (opts: { silent?: boolean } = {}) => {
       try {
-        setIsLoading(true);
+        if (!opts.silent) setIsLoading(true);
         setError(null);
 
         // Fetch the conversation row + item. Participants are fetched
@@ -204,7 +211,7 @@ export function useConversationDetails(conversationId: string | null) {
           description: (err as Error).message,
         });
       } finally {
-        setIsLoading(false);
+        if (!opts.silent) setIsLoading(false);
       }
     };
 
@@ -212,11 +219,13 @@ export function useConversationDetails(conversationId: string | null) {
 
     // Allow external actions (e.g. usePifCompletion.withdraw/requestReopen)
     // to request a refetch so freshly-changed fields like closed_at or the
-    // reopen_* columns land in the UI without a full page reload.
+    // reopen_* columns land in the UI without a full page reload. Silent --
+    // the user just took an action and already sees its direct feedback
+    // (dialog closing, toast), a skeleton flash on top of that is noise.
     const onRefetch = (event: Event) => {
       const detail = (event as CustomEvent<{ conversationId?: string }>).detail;
       if (!detail?.conversationId || detail.conversationId === conversationId) {
-        fetchConversationDetails();
+        fetchConversationDetails({ silent: true });
       }
     };
     window.addEventListener('pif:conversation-refetch', onRefetch);
@@ -224,13 +233,16 @@ export function useConversationDetails(conversationId: string | null) {
     // Live updates for the OTHER participant: a reopen request/response is
     // made from their client, not ours, so the custom event above never
     // fires here -- only a real postgres_changes subscription reflects it
-    // without requiring a manual refresh.
+    // without requiring a manual refresh. Silent -- this also fires on
+    // every message sent (trg_bump_conversation_on_message bumps the
+    // conversation row on each insert), so a loud refetch here flashed the
+    // whole view to its skeleton on every message.
     const channel = supabase
       .channel(`conversation-reopen:${conversationId}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversationId}` },
-        () => fetchConversationDetails(),
+        () => fetchConversationDetails({ silent: true }),
       )
       .subscribe();
 

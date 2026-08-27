@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMessages } from "@/hooks/useMessages";
 import { MessageItem } from "./MessageItem";
@@ -180,41 +180,39 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
   }, [newMessage, conversationId]);
 
+  // Deliberately NOT using scrollIntoView -- it targets whichever
+  // scrollable ancestor it decides on and can be interrupted mid-animation,
+  // both of which were suspected in earlier live testing that still
+  // didn't reliably land at the bottom. Setting scrollTop directly is the
+  // one thing guaranteed to work regardless of ancestor/animation quirks.
+  const doScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, []);
+
   useEffect(() => {
     if (messagesLoading) return;
     if (messages.length === 0) return;
 
-    const isInitial = !hasInitiallyScrolledRef.current;
-    const behavior: ScrollBehavior = isInitial ? "auto" : "smooth";
-
-    const doScroll = () => {
-      const end = messagesEndRef.current;
-      const container = messagesContainerRef.current;
-      if (end && typeof end.scrollIntoView === "function") {
-        end.scrollIntoView({ behavior, block: "end" });
-      }
-      // Fallback: force the container itself, in case scrollIntoView
-      // bubbled to the wrong ancestor (e.g. page-level scroll).
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-    };
-
-    // Run after paint, then once more shortly after to catch late
-    // layout shifts from avatars/images loading in message rows.
+    // Run after paint, then a few more times over the next ~500ms to
+    // catch layout still settling (avatars/images loading late, or on
+    // mobile the on-screen keyboard closing after tapping Send, which
+    // resizes this dvh-based container -- see Messages.tsx -- without
+    // `messages` changing).
     const raf = requestAnimationFrame(() => {
       doScroll();
       hasInitiallyScrolledRef.current = true;
     });
-    const t1 = window.setTimeout(doScroll, 80);
-    const t2 = window.setTimeout(doScroll, 300);
+    const delays = [50, 150, 300, 500];
+    const timeouts = delays.map((ms) => window.setTimeout(doScroll, ms));
 
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      timeouts.forEach((id) => window.clearTimeout(id));
     };
-  }, [messages, messagesLoading, conversationId]);
+  }, [messages, messagesLoading, conversationId, doScroll]);
 
   // If piffer just completed both sides via confirm, surface rating modal once.
   // We intentionally do NOT gate on pifStatus !== "completed" here because the
