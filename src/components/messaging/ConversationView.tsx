@@ -180,14 +180,13 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
   }, [newMessage, conversationId]);
 
-  const doScroll = useCallback((behavior: ScrollBehavior) => {
-    const end = messagesEndRef.current;
+  // Deliberately NOT using scrollIntoView -- it targets whichever
+  // scrollable ancestor it decides on and can be interrupted mid-animation,
+  // both of which were suspected in earlier live testing that still
+  // didn't reliably land at the bottom. Setting scrollTop directly is the
+  // one thing guaranteed to work regardless of ancestor/animation quirks.
+  const doScroll = useCallback(() => {
     const container = messagesContainerRef.current;
-    if (end && typeof end.scrollIntoView === "function") {
-      end.scrollIntoView({ behavior, block: "end" });
-    }
-    // Fallback: force the container itself, in case scrollIntoView
-    // bubbled to the wrong ancestor (e.g. page-level scroll).
     if (container) {
       container.scrollTop = container.scrollHeight;
     }
@@ -197,48 +196,23 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     if (messagesLoading) return;
     if (messages.length === 0) return;
 
-    const isInitial = !hasInitiallyScrolledRef.current;
-    const behavior: ScrollBehavior = isInitial ? "auto" : "smooth";
-
-    // Run after paint, then once more shortly after to catch late
-    // layout shifts from avatars/images loading in message rows.
+    // Run after paint, then a few more times over the next ~500ms to
+    // catch layout still settling (avatars/images loading late, or on
+    // mobile the on-screen keyboard closing after tapping Send, which
+    // resizes this dvh-based container -- see Messages.tsx -- without
+    // `messages` changing).
     const raf = requestAnimationFrame(() => {
-      doScroll(behavior);
+      doScroll();
       hasInitiallyScrolledRef.current = true;
     });
-    const t1 = window.setTimeout(() => doScroll(behavior), 80);
-    const t2 = window.setTimeout(() => doScroll(behavior), 300);
+    const delays = [50, 150, 300, 500];
+    const timeouts = delays.map((ms) => window.setTimeout(doScroll, ms));
 
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      timeouts.forEach((id) => window.clearTimeout(id));
     };
   }, [messages, messagesLoading, conversationId, doScroll]);
-
-  // Reported live: after sending a message, the conversation sometimes
-  // scrolled to the TOP instead of showing the message just sent. The
-  // effect above only re-anchors when `messages` changes, but tapping
-  // the send button blurs the textarea and closes the on-screen
-  // keyboard, which resizes this container (it's height is dvh-based,
-  // see Messages.tsx) WITHOUT `messages` changing -- so that layout
-  // shift landed after the scroll-to-bottom above already ran and was
-  // never corrected. Re-anchor to the bottom on any container resize,
-  // but only when already close to the bottom, so this never yanks a
-  // user back down mid-scroll while reading older history.
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => {
-      const distanceFromBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight;
-      if (distanceFromBottom < 150) {
-        doScroll("auto");
-      }
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [conversationId, doScroll]);
 
   // If piffer just completed both sides via confirm, surface rating modal once.
   // We intentionally do NOT gate on pifStatus !== "completed" here because the
