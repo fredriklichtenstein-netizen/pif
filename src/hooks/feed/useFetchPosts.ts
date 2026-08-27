@@ -147,7 +147,14 @@ export function useFetchPosts(options = { includeArchived: false }) {
       const transformedData = applyArchiveBoundary(data?.map(item => {
         const user = extractUserFromProfile(item.profiles, item.user_id);
         return {
-          id: item.id,
+          // String(): items.id is numeric in Postgres: PostgREST returns it
+          // as a JS number at runtime despite Post.id being typed string.
+          // Left un-stringified, posts.find(post => post.id === targetItemId)
+          // (targetItemId always a string, from a URL search param) never
+          // matches -- reported live as a feed card's distance-link
+          // navigation to /map?item=<id> never actually flying to the
+          // item, silently leaving the map at its last-saved position.
+          id: String(item.id),
           title: item.title,
           description: item.description,
           images: item.images,
