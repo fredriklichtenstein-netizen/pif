@@ -159,11 +159,16 @@ function PickupAddressSection({
           {primaryAddress || t('profile.pickup_no_primary')}
         </div>
       ) : (
+        // alwaysShowMap: same fix as onboarding's StepAddressPhone --
+        // without it the map only renders after an address has already
+        // been picked. Shared across Profile Edit, onboarding's pickup
+        // step, and CreateProfile -- fixing it here covers all three.
         <AddressInput
           value={customAddress}
           onChange={(addr) => onCustomAddressChange(addr)}
           mapButtonLabel={<Map className="w-4 h-4" />}
           hideSearch
+          alwaysShowMap
         />
       )}
 

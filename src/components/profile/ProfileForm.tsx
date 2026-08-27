@@ -62,11 +62,16 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
 
             <div className="space-y-2">
               <Label>{t('profile.primary_address')}</Label>
+              {/* alwaysShowMap: same fix as onboarding's StepAddressPhone --
+                  without it the map only renders after an address has
+                  already been picked, so there's no way to tap the map to
+                  set a location before typing anything. */}
               <AddressInput
                 value={formData.address}
                 onChange={(address) => handleChange({ address })}
                 mapButtonLabel={<Map className="w-4 h-4" />}
                 hideSearch
+                alwaysShowMap
               />
             </div>
 
