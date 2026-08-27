@@ -125,6 +125,17 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
   // First-load: restore saved mode (current/pif) or center on PIF address by default (once per session)
   useEffect(() => {
     if (!isMapReady || !map) return;
+    // A specific item was requested (e.g. tapping a feed card's distance
+    // badge, which navigates to /map?item=<id>) -- that's an explicit,
+    // synchronous intent to see THIS item's location. Restoring a saved
+    // "current location" mode here fires an async geolocation fetch that
+    // can resolve after the target-item-centering effect below's flyTo
+    // and silently override it -- reported live as the distance link
+    // taking the user to their own current location instead of the
+    // item's. The target-item effect is the sole authority whenever
+    // targetItemId is set; skip (not consume the once-per-session flag)
+    // so a later plain /map visit still restores the saved mode normally.
+    if (targetItemId) return;
     try {
       const alreadyInitialized = sessionStorage.getItem(MAP_SESSION_INIT_KEY);
       // If the map already has a saved session state (zoom/center), respect it
@@ -155,7 +166,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
       console.error('[MapContainer] session init centering failed:', e);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMapReady, map, pifCoordinates]);
+  }, [isMapReady, map, pifCoordinates, targetItemId]);
 
   // Handle target item centering
   useEffect(() => {
