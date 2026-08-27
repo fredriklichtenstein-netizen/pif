@@ -36,23 +36,45 @@ export const useLocationTracking = (map: mapboxgl.Map | null): LocationTrackingR
 
     setIsLoadingLocation(true);
 
+    const onSuccess = (position: GeolocationPosition) => {
+      const coords: [number, number] = [position.coords.longitude, position.coords.latitude];
+      setUserLocation(coords);
+      setIsLoadingLocation(false);
+      updateLocationMarker(coords);
+      try { sessionStorage.setItem('map_session_initialized', '1'); } catch {}
+      map.flyTo({ center: coords, zoom: 14, duration: 1500, essential: true });
+    };
+
+    const onFinalError = (error: GeolocationPositionError) => {
+      console.error("Geolocation error:", error);
+      setIsLoadingLocation(false);
+      if (error.code === error.PERMISSION_DENIED) {
+        toast({ variant: "destructive", title: t('interactions.location_permission_denied'), description: t('interactions.location_permission_description') });
+      } else {
+        toast({ variant: "destructive", title: t('interactions.location_unavailable'), description: t('interactions.location_unavailable_description') });
+      }
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const coords: [number, number] = [position.coords.longitude, position.coords.latitude];
-        setUserLocation(coords);
-        setIsLoadingLocation(false);
-        updateLocationMarker(coords);
-        try { sessionStorage.setItem('map_session_initialized', '1'); } catch {}
-        map.flyTo({ center: coords, zoom: 14, duration: 1500, essential: true });
-      },
+      onSuccess,
       (error) => {
-        console.error("Geolocation error:", error);
-        setIsLoadingLocation(false);
+        console.error("Geolocation error (first attempt):", error);
+        // A first-attempt failure is frequently just the OS location
+        // provider warming up, not a real denial -- reported live: the
+        // button errors on the first tap and succeeds immediately on a
+        // second tap. Retry once automatically (enableHighAccuracy: false,
+        // so it can resolve from Wi-Fi/network positioning instead of
+        // waiting on a cold GPS fix) before bothering the user with an
+        // error toast. A real permission denial won't change on retry.
         if (error.code === error.PERMISSION_DENIED) {
-          toast({ variant: "destructive", title: t('interactions.location_permission_denied'), description: t('interactions.location_permission_description') });
-        } else {
-          toast({ variant: "destructive", title: t('interactions.location_unavailable'), description: t('interactions.location_unavailable_description') });
+          onFinalError(error);
+          return;
         }
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          onFinalError,
+          { enableHighAccuracy: false, maximumAge: 10000, timeout: 15000 }
+        );
       },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
     );
