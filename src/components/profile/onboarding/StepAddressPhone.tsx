@@ -72,7 +72,14 @@ export function StepAddressPhone({
       </div>
 
       <div className="space-y-2" onBlur={handleAddressBlur}>
-        <AddressInput value={address} onChange={onAddressChange} hideSearch />
+        {/* alwaysShowMap: without it, AddressInputContainer only renders the
+            map after showMap && coordinates are both set (i.e. after an
+            address has already been picked) -- there was no way to tap
+            the map to set a location before typing anything. This is the
+            same fix the pif/wish creation flow already got (July 2026);
+            reusing AddressMap here instead of patching a second
+            implementation, per the original bug report. */}
+        <AddressInput value={address} onChange={onAddressChange} hideSearch alwaysShowMap />
         {!coordinates && address.trim().length > 0 && !geocoding && (
           <p className="text-sm text-muted-foreground">
             {t("profile.onboarding.address_required")}
