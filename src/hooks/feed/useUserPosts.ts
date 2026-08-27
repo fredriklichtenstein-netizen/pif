@@ -21,7 +21,9 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
   const transformItem = useCallback((item: any) => {
     const itemUser = extractUserFromProfile(item.profiles, item.user_id);
     return {
-      id: item.id,
+      // String(): see the matching comment in useFetchPosts.ts -- items.id
+      // is numeric at runtime despite Post.id being typed string.
+      id: String(item.id),
       title: item.title,
       description: item.description,
       images: item.images,
