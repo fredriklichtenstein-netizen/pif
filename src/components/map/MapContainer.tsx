@@ -312,17 +312,20 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             currentUserId={user?.id ?? null}
           />
 
-          {/* bottom-20 (80px), matching the map's own bottom padding
-              reserved above for "MainNav + Mapbox scale/logo strip" --
-              MainNav is a fixed, near-full-width pill on narrow viewports
-              (w-[calc(100%-1rem)]) with a higher z-index (z-50 vs this
-              button's z-10), so at bottom-4 it was completely hidden
-              behind the nav on mobile while appearing fine on desktop,
-              where MainNav's max-w-md keeps it clear of the bottom-right
-              corner. Reported live: button worked via the filter menu's
-              "current location" option but the floating button itself
-              was invisible on mobile. */}
-          <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-10">
+          {/* bottom-28 (112px). MainNav is a fixed, near-full-width pill
+              on narrow viewports (w-[calc(100%-1rem)]) with a higher
+              z-index (z-50 vs this button's z-10), so at the original
+              bottom-4 it was completely hidden behind the nav on mobile
+              while appearing fine on desktop, where MainNav's max-w-md
+              keeps it clear of the bottom-right corner. bottom-20 (80px,
+              matching the map's own "MainNav + Mapbox scale/logo strip"
+              padding reservation above) cleared the overlap but left the
+              button crowding the nav pill with almost no gap on mobile --
+              confirmed live -- so bumped further for comfortable spacing.
+              Reported live: button worked via the filter menu's "current
+              location" option but the floating button itself was
+              invisible on mobile at bottom-4. */}
+          <div className="absolute bottom-28 right-4 flex flex-col gap-2 z-10">
             <Button
               onClick={guarded(() => {
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
