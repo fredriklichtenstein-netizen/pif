@@ -173,7 +173,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       
       const users = profilesData.map(profile => ({
         id: profile.id,
-        name: resolveDisplayName(profile, 'User'),
+        name: resolveDisplayName(profile as any, 'User'),
         avatar: profile.avatar_url || undefined,
       }));
       
