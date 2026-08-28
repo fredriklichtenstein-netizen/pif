@@ -120,7 +120,31 @@ const escape = (s: string) =>
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
+// HMAC-SHA256 signature over `${userId}:${prefKey}`, verified by the
+// unsubscribe-notification edge function. Both sides read the same
+// INTERNAL_FUNCTION_SECRET already used for the pg_net -> this-function
+// call, so no new secret to provision.
+async function signUnsubscribe(userId: string, prefKey: string, secret: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(`${userId}:${prefKey}`));
+  return Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function buildUnsubscribeUrl(userId: string, prefKey: string, secret: string): Promise<string> {
+  const sig = await signUnsubscribe(userId, prefKey, secret);
+  const base = Deno.env.get("SUPABASE_URL")!;
+  const params = new URLSearchParams({ u: userId, k: prefKey, sig });
+  return `${base}/functions/v1/unsubscribe-notification?${params.toString()}`;
+}
+
+function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string, unsubscribeUrl?: string): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; color: #1f2937;">
       <div style="text-align: center; margin-bottom: 24px;">
@@ -132,13 +156,17 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
       </div>
       <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 32px;">
         Du får det här mejlet för att du är medlem i PIF. Hantera dina mejlaviseringar under
-        <a href="${APP_URL}/account-settings" style="color: #9ca3af;">Kontoinställningar</a>.
+        <a href="${APP_URL}/account-settings?tab=notifications" style="color: #9ca3af;">mejlaviseringar</a>${
+          unsubscribeUrl
+            ? ` — eller <a href="${unsubscribeUrl}" style="color: #9ca3af;">avregistrera dig från den här typen av mejl</a>`
+            : ""
+        }.
       </p>
     </div>
   `;
 }
 
-function buildEmail(type: string, data: Record<string, unknown>): { subject: string; html: string } | null {
+function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?: string): { subject: string; html: string } | null {
   if (type === "new_message_digest") {
     const otherName = String(data.otherUserName ?? "din granne");
     const conversationId = String(data.conversationId ?? "");
@@ -149,6 +177,7 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          <p>Du har olästa meddelanden i en konversation med <strong>${escape(otherName)}</strong> på PIF.</p>`,
         `${APP_URL}/messages?conversation=${encodeURIComponent(conversationId)}`,
         "Öppna konversationen",
+        unsubscribeUrl,
       ),
     };
   }
@@ -176,6 +205,7 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          ${commentContent ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(commentContent)}"</p>` : ""}`,
         commentId ? `${itemUrl}?comment=${encodeURIComponent(commentId)}` : itemUrl,
         "Visa inlägget",
+        unsubscribeUrl,
       ),
     };
   }
@@ -194,6 +224,7 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
         `<h2 style="font-size: 18px;">${escape(heading)}</h2><p>${escape(copy.body(daysOpen))}</p>`,
         itemUrl,
         copy.ctaLabel,
+        unsubscribeUrl,
       ),
     };
   }
@@ -211,6 +242,8 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          <p>Efter 30 dagars inaktivitet har vi arkiverat ${noun.toLowerCase()} automatiskt. Du kan återaktivera den när du vill.</p>`,
         itemUrl,
         "Återaktivera",
+        // No unsubscribeUrl -- mandatory notice, never opt-out-able (see
+        // PREFERENCE_KEY's comment above).
       ),
     };
   }
@@ -230,6 +263,7 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          ${comment ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(comment)}"</p>` : ""}`,
         url,
         "Visa förfrågan",
+        unsubscribeUrl,
       ),
     };
   }
@@ -250,6 +284,7 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          <p>${isApproved ? "Ni kan nu skriva i konversationen igen." : "Konversationen förblir stängd."}</p>`,
         url,
         "Visa konversationen",
+        unsubscribeUrl,
       ),
     };
   }
@@ -266,6 +301,7 @@ function buildEmail(type: string, data: Record<string, unknown>): { subject: str
          <p>${escape(bodyText).replace(/\n/g, "<br>")}</p>`,
         actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`,
         actionLabel,
+        unsubscribeUrl,
       ),
     };
   }
@@ -303,7 +339,18 @@ async function sendOne(
     return { userId, result: "no_email" };
   }
 
-  const email = buildEmail(type, data);
+  // Only opt-out-able notifications (prefKey set) get an unsubscribe link
+  // -- a mandatory notice like item_force_archived has nothing to
+  // unsubscribe FROM.
+  let unsubscribeUrl: string | undefined;
+  if (prefKey) {
+    const secret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
+    if (secret) {
+      unsubscribeUrl = await buildUnsubscribeUrl(userId, prefKey, secret);
+    }
+  }
+
+  const email = buildEmail(type, data, unsubscribeUrl);
   if (!email) {
     return { userId, result: "unknown_type" };
   }
@@ -319,6 +366,18 @@ async function sendOne(
       to: [userRes.user.email],
       subject: email.subject,
       html: email.html,
+      // RFC 8058 one-click unsubscribe -- what actually gets Gmail/Outlook/
+      // Yahoo to show their own prominent "Unsubscribe" button next to the
+      // sender, instead of leaving "report spam" as the only visible exit.
+      // Required by Gmail/Yahoo for bulk senders since their 2024 rules.
+      ...(unsubscribeUrl
+        ? {
+            headers: {
+              "List-Unsubscribe": `<${unsubscribeUrl}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
+          }
+        : {}),
     }),
   });
 
