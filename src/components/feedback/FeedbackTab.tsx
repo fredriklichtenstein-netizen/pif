@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { resolveDisplayName } from "@/utils/displayName";
 import { cn } from "@/lib/utils";
 
 type FeedbackMode = "issue" | "feedback";
@@ -98,27 +99,23 @@ export function FeedbackTab() {
     if (!text.trim() || submitting) return;
     setSubmitting(true);
     try {
-      // Fetch sender info (best-effort, not blocking)
+      // Fetch sender info (best-effort, not blocking). Uses the same
+      // resolveDisplayName the rest of the app uses (messages, nav) --
+      // this used to be a narrower inline first_name+last_name-only join
+      // with no username fallback and no username even in the SELECT, so
+      // any user without both names filled in showed as "Anonym" here
+      // even when they had an identifiable username.
       let senderName = "";
       let senderEmail = "";
       if (user?.id) {
         try {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("first_name,last_name")
+            .select("first_name,last_name,username")
             .eq("id", user.id)
             .maybeSingle();
-          if (profile) {
-            const p = profile as {
-              first_name?: string | null;
-              last_name?: string | null;
-            };
-            senderName =
-              [p.first_name, p.last_name].filter(Boolean).join(" ") || "";
-            senderEmail = user.email || "";
-          } else {
-            senderEmail = user.email || "";
-          }
+          senderName = resolveDisplayName(profile as any, "");
+          senderEmail = user.email || "";
         } catch {
           senderEmail = user.email || "";
         }
