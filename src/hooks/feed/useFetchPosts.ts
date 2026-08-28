@@ -136,7 +136,9 @@ export function useFetchPosts(options = { includeArchived: false }) {
           .order('created_at', { ascending: false });
       }
 
-      const { data, error } = await query;
+      const { data: rawData, error } = await query;
+      // types.ts is a stub (Database = any); rows arrive untyped.
+      const data = rawData as any[] | null;
 
       if (fetchSeq !== fetchSeqRef.current) {
         return;
