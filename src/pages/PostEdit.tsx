@@ -29,11 +29,14 @@ function PostEdit() {
       try {
         const { supabase } = await import("@/integrations/supabase/client");
         const { ITEM_PUBLIC_COLUMNS } = await import("@/services/items/publicColumns");
-        const { data, error } = await supabase
+        const { data: rawData, error } = await supabase
           .from("items")
           .select(ITEM_PUBLIC_COLUMNS)
           .eq("id", parseInt(id, 10))
           .single();
+
+        // types.ts is a stub (Database = any); the row arrives untyped.
+        const data = rawData as any;
 
         if (error) {
           throw error;

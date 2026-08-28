@@ -44,13 +44,18 @@ export function useConversationDetails(conversationId: string | null) {
         // own row, hiding the "other" participant in 1:1 conversations.
         // item:items(...) must name public columns explicitly — an embed of
         // items(*) would request owner-only columns the database refuses.
-        const { data, error: conversationError } = await supabase
+        const { data: rawData, error: conversationError } = await supabase
           .from('conversations')
           .select(`*, item:items(${ITEM_PUBLIC_COLUMNS})`)
           .eq('id', conversationId)
           .single();
 
         if (conversationError) throw conversationError;
+
+        // types.ts is a stub (Database = any), so the select-string parser
+        // cannot resolve the renamed `item:items(...)` embed — treat the row
+        // as untyped here.
+        const data = rawData as any;
 
         // Step 1: participants for this conversation (RPC, with fallback).
         let participantsRaw: any[] = [];
