@@ -21,38 +21,68 @@
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/15</loc>
-    <lastmod>2026-08-03</lastmod>
+    <loc>https://app.pif.community/item/39</loc>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/16</loc>
-    <lastmod>2026-08-03</lastmod>
+    <loc>https://app.pif.community/item/40</loc>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/1</loc>
-    <lastmod>2026-07-21</lastmod>
+    <loc>https://app.pif.community/item/41</loc>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/18</loc>
-    <lastmod>2026-08-04</lastmod>
+    <loc>https://app.pif.community/item/43</loc>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/17</loc>
-    <lastmod>2026-08-03</lastmod>
+    <loc>https://app.pif.community/item/44</loc>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/19</loc>
-    <lastmod>2026-08-09</lastmod>
+    <loc>https://app.pif.community/item/46</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.pif.community/item/47</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.pif.community/item/49</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.pif.community/item/42</loc>
+    <lastmod>2026-07-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.pif.community/item/53</loc>
+    <lastmod>2026-07-13</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.pif.community/item/48</loc>
+    <lastmod>2026-07-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>

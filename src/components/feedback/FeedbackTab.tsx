@@ -74,11 +74,26 @@ export function FeedbackTab() {
   const handleCapture = async () => {
     setCapturing(true);
     try {
-      // Hide the panel visually while capturing so it isn't in the shot.
+      // x/y/width/height constrain html2canvas to exactly the current
+      // viewport. Without them it defaults to the full SCROLLABLE height
+      // of document.body -- reported live: the resulting screenshot
+      // included far more than what was actually on screen, and was
+      // visually distorted (a fixed-position element -- MainNav's pill --
+      // appeared duplicated/misplaced partway down the image). Both match
+      // a documented html2canvas issue: capturing content taller than one
+      // viewport clones the DOM into an off-screen render and can
+      // duplicate/mislocate position:fixed elements at each "page" of
+      // that clone. Capturing only the actual viewport avoids the
+      // multi-page clone entirely, since there's exactly one viewport's
+      // worth of content to render.
       const canvas = await html2canvas(document.body, {
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
+        x: window.scrollX,
+        y: window.scrollY,
+        width: window.innerWidth,
+        height: window.innerHeight,
         ignoreElements: (el) =>
           el instanceof HTMLElement && el.closest("[data-feedback-panel]") !== null,
       });
