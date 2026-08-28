@@ -169,9 +169,17 @@ serve(async (req) => {
     const displayName = senderName || "Anonym";
     const subject = `PIF — ${typeLabelSv} från ${displayName}`;
 
-    // Screenshot as inline data URI in HTML body (approved approach).
-    const screenshotHtml = screenshotBase64
-      ? `<h3>Skärmbild</h3><img src="data:image/png;base64,${screenshotBase64}" alt="Screenshot" style="max-width:100%;border:1px solid #ddd;border-radius:8px" />`
+    // Screenshot as a proper email ATTACHMENT, not an inline data: URI in
+    // the HTML body. Reported live: screenshots "rarely render at all" on
+    // desktop and load slowly on mobile -- desktop Outlook's Word-based
+    // rendering engine is well known for not supporting data: URI images
+    // in <img src> at all (explains "rarely renders on desktop"), and a
+    // multi-MB inline base64 blob (html2canvas captures the whole page)
+    // bloats the entire email's payload (explains "loads slowly on
+    // mobile"). A real attachment is universally supported and keeps the
+    // HTML body itself small.
+    const screenshotNote = screenshotBase64
+      ? `<p>📎 En skärmbild är bifogad mejlet.</p>`
       : "";
 
     const html = `
@@ -183,7 +191,7 @@ serve(async (req) => {
       </table>
       <h3>Meddelande</h3>
       <div style="white-space:pre-wrap;padding:12px;background:#f6f6f6;border-radius:8px">${escapeHtml(feedbackText)}</div>
-      ${screenshotHtml}
+      ${screenshotNote}
     `;
 
     const emailRes = await fetch("https://api.resend.com/emails", {
@@ -198,6 +206,9 @@ serve(async (req) => {
         subject,
         html,
         reply_to: senderEmail || undefined,
+        ...(screenshotBase64
+          ? { attachments: [{ filename: "skarmbild.png", content: screenshotBase64 }] }
+          : {}),
       }),
     });
 
