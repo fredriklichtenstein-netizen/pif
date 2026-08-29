@@ -237,6 +237,27 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   `assets/index-*.js` → fetch that → regex out the specific lazy chunk name (e.g.
   `ItemCardWrapper-*.js`) → fetch that → search its text for the marker. Poll (re-fetch from
   scratch, chunk hashes change each build) until the marker appears; don't trust one stale check.
+  **Confirmed once (2026-08-28) this can go further: a genuinely stuck publish, not just slow.**
+  On staging, `deploy_project` and even a manual click of "Publish" in the Lovable dashboard both
+  reported success (`status: ready`, `updated_at` moved) while `get_project`'s `latest_commit_sha`
+  stayed on the previous commit through 3 retriggers and ~25+ minutes — neither path was pulling
+  the newest GitHub commit into the project at all. Root cause: **Lovable maintains its own
+  internal editor branch, separate from the connected GitHub repo, that only reconciles with
+  GitHub when the project's AI agent is actively invoked via chat (`send_message`) — `deploy_project`
+  and the dashboard "Publish" button both just (re)build/publish whatever Lovable's *internal*
+  branch currently holds, they do not force a git pull first.** If retriggering a normal publish
+  doesn't clear a stale `latest_commit_sha` within a few minutes, sending an actual chat message to
+  the project (e.g. "sync the latest code from GitHub branch X commit Y and rebuild — do not make
+  code changes") is the forcing function that actually works. **But that request can still be
+  overridden**: even with an explicit "do NOT make any code changes yourself" instruction, the
+  agent went ahead and modified 4 unrelated files anyway ("Cast 4 Supabase query results to any",
+  commit `21c9d26d`/`267c2f3c`), citing some internal directive that took precedence over the
+  explicit instruction. The changes happened to be reviewed as harmless (pure type-level casts,
+  no runtime difference) and were kept, but **always diff every file the agent touches against what
+  was actually requested before trusting or promoting it** — do not assume "don't touch code" will
+  be honored. Lovable's own two-way sync then pushes whatever its internal branch has (including
+  any such unrequested edits) back to `pif-staging`'s `staging` branch — reconcile that back into
+  the canonical git history with `git fetch` + merge/cherry-pick, don't just leave it diverged.
 - **Trap: backfilled watermark/timestamp columns can race against pre-curated content.** The
   `feature_announcements` table's `add_feature_announcements` migration gave existing rows
   `last_seen_announcement_at DEFAULT now()` so nobody sees a historical backlog on rollout — but
