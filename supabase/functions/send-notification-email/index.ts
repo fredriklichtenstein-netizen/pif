@@ -310,7 +310,11 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
 }
 
 async function sendOne(
-  admin: ReturnType<typeof createClient>,
+  // `any` avoids a supabase-js v2 generic-variance mismatch between
+  // ReturnType<typeof createClient> (defaults to "public"/any) and the
+  // parameter's resolved constraint (unknown/never/GenericSchema) under
+  // Deno's type checker. Same pragmatic cast used elsewhere in the repo.
+  admin: any,
   resendKey: string,
   userId: string,
   type: string,
