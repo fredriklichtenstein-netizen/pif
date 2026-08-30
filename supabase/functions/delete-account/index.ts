@@ -24,7 +24,11 @@ const PAGE_LIMIT = 1000;
 const MAX_PAGES = 20; // safety fuse: up to 20k objects per bucket
 
 async function purgeBucket(
-  admin: ReturnType<typeof createClient>,
+  // `any` avoids a supabase-js v2 generic-variance mismatch between
+  // ReturnType<typeof createClient> (defaults to "public"/any) and the
+  // parameter's resolved constraint (unknown/never/GenericSchema) under
+  // Deno's type checker. Same pragmatic cast used elsewhere in the repo.
+  admin: any,
   userId: string,
   plan: BucketPlan,
   warnings: Array<Record<string, unknown>>,
@@ -136,12 +140,15 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } =
-      await userClient.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims?.sub) {
+    // auth.getClaims() does not exist on the supabase-js client at any
+    // version; auth.getUser(token) is the documented way to resolve a user
+    // from a JWT inside an Edge Function.
+    const { data: userData, error: userErr } =
+      await userClient.auth.getUser(token);
+    if (userErr || !userData?.user?.id) {
       return json(401, { error: "Unauthorized" });
     }
-    const userId = claimsData.claims.sub as string;
+    const userId = userData.user.id;
 
     const admin = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
