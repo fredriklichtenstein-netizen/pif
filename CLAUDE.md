@@ -258,6 +258,27 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   be honored. Lovable's own two-way sync then pushes whatever its internal branch has (including
   any such unrequested edits) back to `pif-staging`'s `staging` branch — reconcile that back into
   the canonical git history with `git fetch` + merge/cherry-pick, don't just leave it diverged.
+- **The user has a Lovable feature enabled that auto-fixes build errors on BOTH projects every
+  morning at 6am — including production.** Confirmed 2026-08-30: a scoped, sync-only `send_message`
+  to the **production** project ("pull commit X, make no code changes") triggered the agent to also
+  fix unrelated Deno typecheck errors in `delete-account`/`send-notification-email`, and its
+  two-way sync pushed the result **straight to `origin/main`** — no staging, no review, before
+  `deploy_project` was ever called. This is a different mechanism from the instruction-override
+  above (that was the agent ignoring a direct request; this is a legitimate standing feature the
+  agent was right to act on) but has the same practical effect: unreviewed commits can land on
+  production's `main` between one turn and the next. **After ANY `send_message` to a project
+  (even a "just sync" one), diff `origin/main` against what you expect before calling
+  `deploy_project`** — `git fetch origin main && git log --oneline <expected-tip>..origin/main`.
+  Don't assume a sync-only request stayed sync-only. If unexpected commits appear: read the actual
+  diff (`git diff <expected-tip> origin/main`) rather than trusting the agent's self-reported
+  summary, cross-check any real (non-type-only) logic change against what's *actually deployed*
+  live (`mcp__claude_ai_Supabase__get_edge_function`) before judging risk — the repo and live can
+  already differ for unrelated reasons (see the `get-mapbox-token` gap above), and a "fix" can turn
+  out to just be the tracked file catching up to reality. Get the user's explicit confirmation
+  before folding anything auth/data-deletion-adjacent into a promotion regardless of assessed risk.
+  Recommended fix (not yet done, needs the user in the Lovable dashboard): disable the auto-fix
+  job on the **production** project specifically; it's low-stakes left on staging since anything
+  it does there still passes through this same review before promotion.
 - **Trap: backfilled watermark/timestamp columns can race against pre-curated content.** The
   `feature_announcements` table's `add_feature_announcements` migration gave existing rows
   `last_seen_announcement_at DEFAULT now()` so nobody sees a historical backlog on rollout — but
