@@ -60,8 +60,8 @@ async function purgeBucket(
       if (!data || data.length === 0) return removed;
 
       const paths = data
-        .filter((entry) => entry && entry.name && !entry.name.endsWith("/"))
-        .map((entry) => plan.toPath(entry.name));
+        .filter((entry: any) => entry && entry.name && !entry.name.endsWith("/"))
+        .map((entry: any) => plan.toPath(entry.name));
 
       if (paths.length > 0) {
         const { error: rmErr } = await admin.storage
