@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { MapContainer } from "@/components/map/MapContainer";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { Separator } from "@/components/ui/separator";
@@ -15,10 +15,7 @@ import { RefreshCw, AlertCircle, MapPin, ExternalLink } from "lucide-react";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
-import { PullToRefresh } from "@/components/common/PullToRefresh";
 import { RefreshOverlay } from "@/components/common/RefreshOverlay";
-import { useSharedRefresh } from "@/hooks/useSharedRefresh";
-import { toast } from "sonner";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -26,8 +23,6 @@ export default function Map() {
   const { announce } = useAnnouncement();
   const { posts, isLoading, refreshPosts } = useFeedPosts();
   const [targetItemId, setTargetItemId] = useState<string | null>(null);
-  // Single shared refresh action — same hook used by the feed.
-  const { refresh: handleRefresh, isRefreshing } = useSharedRefresh(refreshPosts, "map");
   const { mapToken, isLoading: isTokenLoading, error: tokenError, retryFetchToken, needsToken, setDemoToken } = useMapbox();
   const [tokenInput, setTokenInput] = useState("");
   const { t } = useTranslation();
@@ -44,18 +39,6 @@ export default function Map() {
     announce(t('map.map_loaded_announcement'));
     refreshPosts();
   }, [announce, refreshPosts, t]);
-
-  // One-shot guard: the "filters disabled" toast may only show once per
-  // refresh session, no matter how many times the veil is tapped.
-  const filtersToastShownRef = useRef(false);
-
-  // Auto-dismiss the toast and re-arm the guard when the refresh completes.
-  useEffect(() => {
-    if (!isRefreshing) {
-      toast.dismiss('refresh-filters-disabled');
-      filtersToastShownRef.current = false;
-    }
-  }, [isRefreshing]);
 
   const handlePostClick = (postId: string) => {
     navigate(`/item/${postId}`);
@@ -159,70 +142,32 @@ export default function Map() {
     <div className="min-h-screen-dvh bg-background">
       <MainHeader />
       <Separator />
-      <PullToRefresh
-        onRefresh={handleRefresh}
-        disabled={isLoading || isRefreshing}
-        ignoreSelector=".mapboxgl-map"
-      >
-        <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
-          <FadeIn className="h-full">
-            {/* `inert` blocks pointer + keyboard + focus on every
-                descendant — including MapFilters, the distance slider
-                and the "my location" control — so users can't change
-                the map state while a refresh is in flight. */}
-            <div
-              className="absolute inset-0 z-0"
-              aria-busy={isRefreshing}
-              {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
-            >
-              <SlideIn direction="up" className="h-full">
-                <MapContainer
-                  mapboxToken={mapToken}
-                  posts={posts}
-                  onPostClick={handlePostClick}
-                  targetItemId={targetItemId}
-                />
-              </SlideIn>
+      <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
+        <FadeIn className="h-full">
+          <div className="absolute inset-0 z-0">
+            <SlideIn direction="up" className="h-full">
+              <MapContainer
+                mapboxToken={mapToken}
+                posts={posts}
+                onPostClick={handlePostClick}
+                targetItemId={targetItemId}
+              />
+            </SlideIn>
+          </div>
+        </FadeIn>
+
+        {DEMO_MODE && (
+          <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
+            <div className="bg-amber-50/95 backdrop-blur-sm border border-amber-200 rounded-lg px-4 py-2 shadow-lg pointer-events-auto">
+              <p className="text-xs text-amber-800 text-center">
+                <strong>{t('map.demo_mode')}</strong> — {t('map.demo_viewing')}
+              </p>
             </div>
-          </FadeIn>
+          </div>
+        )}
 
-          {DEMO_MODE && (
-            <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
-              <div className="bg-amber-50/95 backdrop-blur-sm border border-amber-200 rounded-lg px-4 py-2 shadow-lg pointer-events-auto">
-                <p className="text-xs text-amber-800 text-center">
-                  <strong>{t('map.demo_mode')}</strong> — {t('map.demo_viewing')}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Translucent veil over the map while refreshing so the
-              stale data is visibly de-emphasised but still in place.
-              Click handler informs the user why filters/markers are
-              unresponsive — sonner dedupes via the stable `id`. */}
-          {isRefreshing && (
-            <div
-              className="absolute inset-0 z-40 bg-background/30 backdrop-blur-[1px] cursor-wait transition-opacity"
-              onClick={() => {
-                if (filtersToastShownRef.current) return;
-                filtersToastShownRef.current = true;
-                toast.message(t('interactions.filters_disabled_during_refresh'), {
-                  id: 'refresh-filters-disabled',
-                  description: t('interactions.filters_disabled_during_refresh_description'),
-                  duration: 1800,
-                });
-              }}
-              aria-hidden="true"
-            />
-          )}
-
-          <RefreshOverlay
-            show={isRefreshing || isLoading}
-            label={isRefreshing ? t('interactions.refreshing_feed') : t('map.loading_posts')}
-            className="!fixed"
-          />
-        </main>
-      </PullToRefresh>
+        <RefreshOverlay show={isLoading} label={t('map.loading_posts')} className="!fixed" />
+      </main>
       <MainNav />
     </div>
   );

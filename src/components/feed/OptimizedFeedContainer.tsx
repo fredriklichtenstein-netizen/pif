@@ -13,10 +13,7 @@ import { HowItWorksBanner } from '@/components/home/HowItWorksBanner';
 
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
 import { useAnnouncement } from '@/hooks/accessibility/useAnnouncement';
-import { useSwipeGestures } from '@/hooks/mobile/useSwipeGestures';
-import { useVibration } from '@/hooks/mobile/useVibration';
 import { EnhancedLoading } from '@/components/ui/enhanced-loading';
-import { PullToRefresh } from '@/components/common/PullToRefresh';
 import { RefreshOverlay } from '@/components/common/RefreshOverlay';
 import { FeedSkeleton } from './FeedSkeleton';
 import { InfiniteScrollSentinel } from './InfiniteScrollSentinel';
@@ -119,7 +116,6 @@ function OptimizedFeedBody({
 
   const { measureFetch } = usePerformanceMonitor('OptimizedFeedContainer');
   const { announce } = useAnnouncement();
-  const { vibrate } = useVibration();
   const { t } = useTranslation();
 
   // Shared with the map view (same localStorage key) so the user only
@@ -232,15 +228,6 @@ function OptimizedFeedBody({
     announce(t('interactions.loading_more_posts'), "polite");
     await measureFetch(loadMore);
   }, [announce, measureFetch, loadMore, t]);
-
-  useSwipeGestures({
-    onSwipeDown: () => {
-      if (!isLoading) {
-        handleRefresh();
-        vibrate(50);
-      }
-    }
-  });
 
   const handleClearAll = useCallback(() => {
     clearAllFilters();
@@ -372,7 +359,7 @@ function OptimizedFeedBody({
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} disabled={isLoading || isRefreshing}>
+    <>
       <RefreshOverlay show={isRefreshing} />
       <div
         className={isRefreshing ? "space-y-4 opacity-60 pointer-events-none select-none" : "space-y-4"}
@@ -429,6 +416,6 @@ function OptimizedFeedBody({
           </div>
         )}
       </div>
-    </PullToRefresh>
+    </>
   );
 }
