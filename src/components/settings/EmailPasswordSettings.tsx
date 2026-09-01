@@ -31,6 +31,7 @@ export function EmailPasswordSettings() {
   const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
+  const [currentEmail, setCurrentEmail] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
@@ -57,6 +58,7 @@ export function EmailPasswordSettings() {
       const { data } = await supabase.auth.getUser();
       if (!cancelled && data.user) {
         setEmail(data.user.email || "");
+        setCurrentEmail(data.user.email || "");
       }
     })();
     refreshPendingEmailChange();
@@ -100,6 +102,15 @@ export function EmailPasswordSettings() {
       setEmailLoading(false);
     }
   };
+
+  // Trim only -- a stray leading/trailing space shouldn't count as "changed".
+  // Deliberately NOT case-folding: checked against GoTrue's actual UserUpdate
+  // handler and production's users_email_partial_key index, and email-change
+  // is case-sensitive there (unlike login, which does match against
+  // lower(email)). Case-folding here would silently block a legitimate
+  // case-only correction (e.g. "Foo@Bar.com" -> "foo@bar.com") that the
+  // server would otherwise actually process and confirm.
+  const isEmailUnchanged = email.trim() === currentEmail.trim();
 
   const requestPasswordChange = async () => {
     if (!email) return;
@@ -149,7 +160,7 @@ export function EmailPasswordSettings() {
             </AlertDescription>
           </Alert>
         )}
-        <Button type="submit" disabled={emailLoading || !email}>
+        <Button type="submit" disabled={emailLoading || !email || isEmailUnchanged}>
           {t('settings.update_email')}
         </Button>
       </form>
