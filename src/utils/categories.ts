@@ -20,6 +20,7 @@ export const REST_CATEGORY_KEYS = [
   "pets",                  // Husdjur
   "household",             // Husgeråd
   "health",                // Hälsa
+  "inredning",             // Inredning
   "art",                   // Konst & hantverk
   "clothing",              // Kläder
   "kitchen",               // Kök
@@ -86,6 +87,7 @@ export const CATEGORY_MEASUREMENT_FIELDS: Record<string, string[]> = {
   kids_clothing: ["Chest", "Length"],
   kids: ["Age", "Height", "Chest", "Length"],
   furniture: ["Width", "Depth", "Height"],
+  inredning: ["Width", "Depth", "Height"],
 };
 
 // Size preset options per category (used by PostFormSizeSelector).
