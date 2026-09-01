@@ -12,6 +12,7 @@ import { useOptimisticFeedUpdates } from "@/hooks/feed/useOptimisticFeedUpdates"
 import { useOfflineAwareFeed } from "@/hooks/useOfflineAwareFeed";
 import { useTranslation } from 'react-i18next';
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
+import { CATEGORY_KEYS } from "@/utils/categories";
 
 export function FeedContainer() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -35,15 +36,11 @@ export function FeedContainer() {
     return () => clearTimeout(timer);
   }, []);
   
-  // Categories: Blandat group first, then alphabetical by Swedish display name
-  const CATEGORIES = [
-    'mixed', 'mixed_kids',
-    'kids', 'kids_clothing', 'books', 'bicycle', 'electronics', 'vehicles',
-    'hobby', 'home_garden', 'pets', 'household', 'health', 'art', 'clothing',
-    'kitchen', 'toys', 'food', 'music', 'furniture', 'games', 'sports',
-    'garden', 'tools', 'other'
-  ];
-  
+  // Categories: Blandat group first, then alphabetical by Swedish display name.
+  // Sourced from the central list so this can't drift out of sync (was previously
+  // a hand-maintained duplicate that had already fallen behind — see Trello C3).
+  const CATEGORIES = CATEGORY_KEYS;
+
   // Get post ID from URL if present
   const postIdParam = searchParams.get('post');
   const timeParam = searchParams.get('t');
