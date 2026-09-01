@@ -179,7 +179,7 @@ export function MapFiltersSheet({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-[calc(100vw-3rem)] sm:w-80 max-h-80 overflow-y-auto bg-background z-[80]"
+                className="w-[calc(100vw-3rem)] sm:w-80 max-h-[min(20rem,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto bg-background z-[80]"
               >
                 <DropdownMenuLabel>
                   {t("categories.mixed", "Blandat")}
