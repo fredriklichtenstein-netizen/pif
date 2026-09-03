@@ -181,8 +181,20 @@ serve(async (req) => {
       );
     }
 
-    // Now delete the account (cascades DB rows).
-    const { error: rpcErr } = await admin.rpc("delete_own_account", {
+    // Now delete the account (cascades DB rows). Deliberately called via
+    // userClient (the caller's own JWT), NOT admin/service-role -- so
+    // auth.uid() is populated inside delete_own_account() and the function
+    // can enforce "only ever delete whoever is really, currently
+    // authenticated", regardless of what id is passed. Previously this ran
+    // under service_role, so the function had no way to verify who was
+    // really asking and trusted p_user_id unconditionally -- safe only
+    // because this was the sole caller and it happened to authenticate
+    // first. One accidental GRANT, or one future caller that skipped its
+    // own auth check, would have reopened total account deletion
+    // (Trello A6). Still one request from the client's perspective --
+    // storage purge and account deletion both still happen server-side,
+    // sequentially, inside this same edge function call.
+    const { error: rpcErr } = await userClient.rpc("delete_own_account", {
       p_user_id: userId,
     });
     if (rpcErr) {
