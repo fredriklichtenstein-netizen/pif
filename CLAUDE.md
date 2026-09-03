@@ -117,6 +117,23 @@ hands them to Safari (this was the actual bug). `public/manifest.json` declares 
 Staging's `site_url` is `https://give-and-get-local.lovable.app` (it also wrongly pointed at
 production's domain until this was found).
 
+**That origin/scope fix only covers hand-off *within* the browser (a link opened by the browser
+itself lands in the right scope). It does NOT make another app — Mail, Gmail — hand a tapped link
+to the installed PWA at all, on mobile.** Confirmed 2026-09-03 (Trello B13): notification email
+links correctly open the installed PWA on desktop but open a plain mobile browser instead, even
+with `site_url`/scope already correct. Root cause is structural, not a repo bug: that OS-level
+"this URL belongs to an installed app" handoff is what iOS Universal Links
+(`apple-app-site-association`) and Android App Links / Digital Asset Links (`assetlinks.json`)
+exist for — neither file exists in this repo, and both require a real native app (signing
+entitlements for iOS, an APK's signature for Android) to register against, which this project
+doesn't have (Capacitor is present but no native build has ever shipped). `handle_links` and
+`apple-mobile-web-app-capable` in the manifest/`index.html` only affect behavior *inside* the
+browser/PWA — they're irrelevant to a tap originating in another app. Desktop is unaffected
+because desktop OS/browser combos register an installed PWA with the system's own URL-handling
+layer more deeply than mobile's "Add to Home Screen" does. **No code-level fix is possible for
+this without shipping an actual native app wrapper with proper entitlements — don't re-attempt a
+manifest/scope tweak for it.**
+
 Other gotchas: `smtp_max_frequency` is the minimum gap between sends *within one request* — secure
 email change sends two emails (old + new address) in a single `updateUser({email})` call, so a high
 value (it was 60s) makes that call unable to finish inside any sane client timeout and **no emails
