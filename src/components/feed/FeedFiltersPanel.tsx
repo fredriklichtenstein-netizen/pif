@@ -80,7 +80,19 @@ export function FeedFiltersPanel({
   const activeCount =
     (selectedCategories.length > 0 ? 1 : 0) +
     (selectedItemTypes.length > 0 && selectedItemTypes.length < 2 ? 1 : 0) +
-    (userLocation ? 1 : 0) +
+    // Deliberately NOT `userLocation ? 1 : 0` on its own (Trello B11). A
+    // known location persists in localStorage indefinitely from a single
+    // past tap of "Current location"/"Use pif address" in EITHER this
+    // sheet or the map's -- shared storage, no expiry -- independent of
+    // whether the distance itself is still "Alla" (default). The
+    // distance row's own label already reads "Alla" in that state, so
+    // counting userLocation separately double-reported the same thing:
+    // one real choice (a specific km radius) was showing as two "active
+    // filters," and a location on file with no radius chosen was showing
+    // as one despite narrowing nothing the user asked for. Whether
+    // distance-based filtering is actually active is fully captured by
+    // !distanceIsDefault (a real radius selection implies a location is
+    // known too) -- so that's the only term counted here.
     (!distanceIsDefault ? 1 : 0) +
     (includeArchived ? 1 : 0) +
     (onlyInterested ? 1 : 0) +

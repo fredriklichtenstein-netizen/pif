@@ -73,7 +73,14 @@ export function MapFiltersSheet({
   const activeCount =
     (selectedCategories.length > 0 ? 1 : 0) +
     (selectedConditions.length > 0 ? 1 : 0) +
-    (userLocation ? 1 : 0) +
+    // Deliberately NOT `userLocation ? 1 : 0` on its own (Trello B11) --
+    // same fix as FeedFiltersPanel.tsx. A known location persists in
+    // localStorage indefinitely from a single past tap of "Current
+    // location"/"Use pif address" in EITHER sheet -- shared storage, no
+    // expiry -- independent of whether the distance itself is still
+    // "Alla" (default), whose own label already reads "Alla" in that
+    // state. !distanceIsDefault alone fully captures whether
+    // distance-based filtering is actually active.
     (!distanceIsDefault ? 1 : 0) +
     (onlyInterested ? 1 : 0) +
     (hideOwnPosts ? 1 : 0);
