@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
@@ -33,6 +34,15 @@ interface InteractionButtonWithPopupProps {
   itemType?: 'offer' | 'request';
   /** Surfaced inside the Grant Wish dialog as context. */
   itemTitle?: string;
+  /**
+   * DOM node (rendered by PrimaryActions, below the whole action grid) that
+   * the counter/summary chip portals into instead of rendering inline next
+   * to the toggle label. See CounterButton.tsx for why -- an inline counter
+   * squeezed next to another clickable label was the actual root cause of
+   * Trello B2, not just tap-target size. Null on first render (ref not
+   * attached yet); the chip simply doesn't render until it's available.
+   */
+  summaryPortalTarget?: HTMLElement | null;
 }
 
 export function InteractionButtonWithPopup({
@@ -53,6 +63,7 @@ export function InteractionButtonWithPopup({
   currentUserId,
   itemType,
   itemTitle,
+  summaryPortalTarget,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -267,20 +278,25 @@ export function InteractionButtonWithPopup({
         />
       </div>
 
-      {/* Label + counter on the same row */}
-      <div className="flex flex-row items-center justify-center mt-1 gap-1.5">
-        <span
-          role="button"
-          aria-disabled={isToggleDisabled}
-          tabIndex={isToggleDisabled ? -1 : 0}
-          onClick={handleToggleClick}
-          onKeyDown={handleKeyDown}
-          style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
-          className={`text-xs font-medium select-none whitespace-nowrap ${disabledClass} ${dimClass}`}
-        >
-          {labelText}
-        </span>
-        {(displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) && (
+      {/* Label -- toggle only now. The counter used to sit right here, 6px
+          away, which is what made Trello B2's first fix unreliable (see
+          CounterButton.tsx). It now portals into a shared row below the
+          whole action grid instead -- nothing to overlap here anymore. */}
+      <span
+        role="button"
+        aria-disabled={isToggleDisabled}
+        tabIndex={isToggleDisabled ? -1 : 0}
+        onClick={handleToggleClick}
+        onKeyDown={handleKeyDown}
+        style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
+        className={`mt-1 text-xs font-medium select-none whitespace-nowrap ${disabledClass} ${dimClass}`}
+      >
+        {labelText}
+      </span>
+
+      {summaryPortalTarget &&
+        (displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) &&
+        createPortal(
           <CounterButton
             count={displayCount}
             isActive={isActive}
@@ -298,9 +314,9 @@ export function InteractionButtonWithPopup({
             itemOwnerId={itemOwnerId}
             currentUserId={currentUserId}
             itemType={itemType}
-          />
+          />,
+          summaryPortalTarget,
         )}
-      </div>
 
 
       {useWishGrantFlow && (

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { User } from "@/hooks/item/useItemInteractions";
 import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./button/ShareButton";
@@ -61,6 +62,16 @@ export function PrimaryActions({
   const { t } = useTranslation();
   const { user } = useGlobalAuth();
   const effectiveCurrentUserId = currentUserId ?? user?.id;
+
+  // Target for the like/comment/interest counter chips, portaled here from
+  // InteractionButtonWithPopup instead of rendering inline next to each
+  // toggle label (Trello B2 -- see CounterButton.tsx for why). A callback
+  // ref (not useRef) because children need the real DOM node to portal
+  // into, and useRef's value isn't available until after the first commit;
+  // this triggers the extra render that makes it available. `empty:hidden`
+  // below collapses the row to nothing when no chip actually portals in.
+  const [summaryEl, setSummaryEl] = useState<HTMLDivElement | null>(null);
+
   const handleShareClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onShare();
@@ -74,78 +85,92 @@ export function PrimaryActions({
     fetchCommentersPage(itemId, offset, undefined, seen);
 
   return (
-    <div className="grid grid-cols-4 w-full gap-1 mb-1">
-      <div className="flex justify-center">
-        <InteractionButtonWithPopup
-          type="like"
-          isActive={isLiked}
-          count={likesCount}
-          users={likers}
-          onClick={onLikeToggle}
-          onCounterClick={fetchLikers}
-          fetchPage={fetchLikersPageFn}
-          isOwner={isOwner}
-          labelPassive={t('interactions.like')}
-          labelActive={t('interactions.liked')}
-          iconPassive="heart"
-          iconActive="heart"
-          itemId={itemId}
-        />
+    <div className="w-full mb-1">
+      <div className="grid grid-cols-4 w-full gap-1">
+        <div className="flex justify-center">
+          <InteractionButtonWithPopup
+            type="like"
+            isActive={isLiked}
+            count={likesCount}
+            users={likers}
+            onClick={onLikeToggle}
+            onCounterClick={fetchLikers}
+            fetchPage={fetchLikersPageFn}
+            isOwner={isOwner}
+            labelPassive={t('interactions.like')}
+            labelActive={t('interactions.liked')}
+            iconPassive="heart"
+            iconActive="heart"
+            itemId={itemId}
+            summaryPortalTarget={summaryEl}
+          />
+        </div>
+
+        <div className="flex justify-center">
+          <InteractionButtonWithPopup
+            type="comment"
+            isActive={hasCommented}
+            count={commentsCount}
+            users={commenters}
+            fetchPage={fetchCommentersPageFn}
+            itemId={itemId}
+            onClick={onCommentToggle}
+            labelPassive={t('interactions.comment')}
+            labelActive={t('interactions.commented')}
+            iconPassive="message-square"
+            iconActive="message-square"
+            isOwner={false}
+            summaryPortalTarget={summaryEl}
+          />
+        </div>
+
+        <div className="flex justify-center">
+          <ShareButton
+            itemId={itemId}
+            onShareClick={handleShareClick}
+            disabled={false}
+          />
+        </div>
+
+        <div className="flex justify-center">
+          <InteractionButtonWithPopup
+            type="interest"
+            isActive={showInterest}
+            count={interestsCount}
+            users={interestedUsers}
+            onClick={onShowInterest}
+            onCounterClick={fetchInterestedUsers}
+            isOwner={isOwner}
+            labelPassive={
+              itemType === 'request'
+                ? t('interactions.grant_wish', 'Grant wish')
+                : t('interactions.interest')
+            }
+            labelActive={
+              itemType === 'request'
+                ? t('interactions.granting', 'Granting')
+                : t('interactions.interested')
+            }
+            iconPassive={itemType === 'request' ? 'sparkles' : 'star'}
+            iconActive={itemType === 'request' ? 'sparkles' : 'star'}
+            itemId={itemId}
+            itemOwnerId={itemOwnerId}
+            currentUserId={effectiveCurrentUserId}
+            itemType={itemType}
+            itemTitle={itemTitle}
+            summaryPortalTarget={summaryEl}
+          />
+        </div>
       </div>
-      
-      <div className="flex justify-center">
-        <InteractionButtonWithPopup
-          type="comment"
-          isActive={hasCommented}
-          count={commentsCount}
-          users={commenters}
-          fetchPage={fetchCommentersPageFn}
-          itemId={itemId}
-          onClick={onCommentToggle}
-          labelPassive={t('interactions.comment')}
-          labelActive={t('interactions.commented')}
-          iconPassive="message-square"
-          iconActive="message-square"
-          isOwner={false}
-        />
-      </div>
-      
-      <div className="flex justify-center">
-        <ShareButton
-          itemId={itemId}
-          onShareClick={handleShareClick}
-          disabled={false}
-        />
-      </div>
-      
-      <div className="flex justify-center">
-        <InteractionButtonWithPopup
-          type="interest"
-          isActive={showInterest}
-          count={interestsCount}
-          users={interestedUsers}
-          onClick={onShowInterest}
-          onCounterClick={fetchInterestedUsers}
-          isOwner={isOwner}
-          labelPassive={
-            itemType === 'request'
-              ? t('interactions.grant_wish', 'Grant wish')
-              : t('interactions.interest')
-          }
-          labelActive={
-            itemType === 'request'
-              ? t('interactions.granting', 'Granting')
-              : t('interactions.interested')
-          }
-          iconPassive={itemType === 'request' ? 'sparkles' : 'star'}
-          iconActive={itemType === 'request' ? 'sparkles' : 'star'}
-          itemId={itemId}
-          itemOwnerId={itemOwnerId}
-          currentUserId={effectiveCurrentUserId}
-          itemType={itemType}
-          itemTitle={itemTitle}
-        />
-      </div>
+
+      {/* Trello B2: like/comment/interest counters land here instead of
+          squeezed inline next to their toggle labels -- full width, real
+          gaps, nothing else nearby to collide with. empty:hidden collapses
+          this to zero height when every count is 0 (nothing portals in). */}
+      <div
+        ref={setSummaryEl}
+        className="empty:hidden flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-1 px-2"
+      />
     </div>
   );
 }
