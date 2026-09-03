@@ -6,14 +6,8 @@ import { ChevronDown, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { FeedDistanceFilter } from "./FeedDistanceFilter";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MIXED_CATEGORY_KEYS, REST_CATEGORY_KEYS, CATEGORY_KEYS } from "@/utils/categories";
 import type { Post } from "@/types/post";
 
@@ -179,8 +173,23 @@ export function FeedFiltersPanel({
             <h3 className="text-sm font-semibold">
               {t("interactions.filter_category", "Kategori")}
             </h3>
-            <DropdownMenu open={catOpen} onOpenChange={setCatOpen}>
-              <DropdownMenuTrigger asChild>
+            {/*
+              A plain inline Collapsible, not a DropdownMenu -- deliberately.
+              DropdownMenu portals its content to document.body as a sibling
+              of this Sheet's own portal, and applies its own modal
+              scroll-lock nested inside the Sheet's. On mobile that nested
+              two-portal/two-lock structure was confirmed (live, on device)
+              to make the category list unscrollable, even after a CSS-only
+              sizing fix (Trello B3) -- the sizing fix addressed a real but
+              secondary issue (the popover rendering past the viewport
+              edge), not the actual touch-scroll blocker. Collapsible
+              renders its content inline in the normal DOM flow (no portal,
+              no scroll-lock), so the list just becomes part of this
+              Sheet's own already-working max-h-[85vh] overflow-y-auto --
+              one scroll region instead of two nested ones.
+            */}
+            <Collapsible open={catOpen} onOpenChange={setCatOpen}>
+              <CollapsibleTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full justify-between">
                   <span>
                     {selectedCategories.length === 0
@@ -191,36 +200,49 @@ export function FeedFiltersPanel({
                           .join(", ") +
                         (selectedCategories.length > 3 ? ` +${selectedCategories.length - 3}` : "")}
                   </span>
-                  <ChevronDown className="h-4 w-4 opacity-60" />
+                  <ChevronDown
+                    className={`h-4 w-4 opacity-60 transition-transform ${catOpen ? "rotate-180" : ""}`}
+                  />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="w-[calc(100vw-3rem)] sm:w-80 max-h-[min(20rem,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto bg-background z-[60]"
-              >
-                <DropdownMenuLabel>{t("categories.mixed", "Blandat")}</DropdownMenuLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-1 rounded-md border p-2">
+                <p className="px-1 py-1 text-xs font-semibold text-muted-foreground">
+                  {t("categories.mixed", "Blandat")}
+                </p>
                 {MIXED_CATEGORY_KEYS.map((key) => (
-                  <DropdownMenuCheckboxItem
+                  <label
                     key={key}
-                    checked={selectedCategories.includes(key)}
-                    onCheckedChange={() => toggleCategory(key)}
+                    htmlFor={`feed-cat-${key}`}
+                    className="flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-sm hover:bg-accent"
                   >
+                    <Checkbox
+                      id={`feed-cat-${key}`}
+                      checked={selectedCategories.includes(key)}
+                      onCheckedChange={() => toggleCategory(key)}
+                    />
                     {t(`categories.${key}`)}
-                  </DropdownMenuCheckboxItem>
+                  </label>
                 ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>{t("map_filters.categories_label")}</DropdownMenuLabel>
+                <div className="my-1 h-px bg-border" />
+                <p className="px-1 py-1 text-xs font-semibold text-muted-foreground">
+                  {t("map_filters.categories_label")}
+                </p>
                 {REST_CATEGORY_KEYS.map((key) => (
-                  <DropdownMenuCheckboxItem
+                  <label
                     key={key}
-                    checked={selectedCategories.includes(key)}
-                    onCheckedChange={() => toggleCategory(key)}
+                    htmlFor={`feed-cat-${key}`}
+                    className="flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-sm hover:bg-accent"
                   >
+                    <Checkbox
+                      id={`feed-cat-${key}`}
+                      checked={selectedCategories.includes(key)}
+                      onCheckedChange={() => toggleCategory(key)}
+                    />
                     {t(`categories.${key}`)}
-                  </DropdownMenuCheckboxItem>
+                  </label>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </CollapsibleContent>
+            </Collapsible>
           </section>
 
           {/* My interest toggle (authenticated, own-feed only) */}
