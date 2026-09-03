@@ -33,6 +33,28 @@ interface CounterButtonProps {
   itemType?: 'offer' | 'request';
 }
 
+// Trello B2, round 2: the first fix (Trello B2, round 1) enlarged this into
+// an invisible hit-slop (p-3.5 -m-3.5) while it still lived inline next to
+// the toggle label, 6px away. That invisible box overlapped the label's own
+// clickable area (and reached toward the icon row above it) -- two
+// differently-behaved targets stacked on the same pixels, so which one a
+// tap actually fired came down to paint order, not where the user aimed.
+// Confirmed not fixed by real-device testing after that round shipped.
+//
+// This component is no longer rendered inline next to the toggle label at
+// all -- InteractionButtonWithPopup portals it into a shared summary row
+// below the whole action grid (see PrimaryActions.tsx), where it's the only
+// interactive thing anywhere near it. That means it can go back to being a
+// REAL, visibly-sized chip with real padding instead of an invisible trick:
+// its hit box is exactly its visible box, so it can't silently overlap a
+// neighbor, and it reads as its own distinct interactive element ("3
+// gillningar") instead of a bare digit tacked onto someone else's label.
+const summaryKey = (type: CounterButtonProps["type"]) => {
+  if (type === "like") return "interactions.summary_like";
+  if (type === "interest") return "interactions.summary_interest";
+  return "interactions.summary_comment";
+};
+
 const labelKey = (type: CounterButtonProps["type"]) => {
   if (type === "like") return "interactions.like";
   if (type === "interest") return "interactions.interest";
@@ -60,20 +82,22 @@ export function CounterButton({
   const { t } = useTranslation();
   const ignoreToastOutsideClicks = useIgnoreToastOutsideClicks();
 
+  const summaryText = t(summaryKey(type), { count });
+
   if (!isInteractive) {
     return (
-      <span 
-        className="text-xs font-semibold select-none underline underline-offset-4"
+      <span
+        className="text-xs font-medium select-none"
         style={{
           color: isActive ? activeColor : passiveColor
         }}
         aria-label={`${count} ${t(labelKey(type))}`}
       >
-        {count}
+        {summaryText}
       </span>
     );
   }
-  
+
   const useInterestList = type === "interest" && !!itemId;
   const showNumber = count > 0;
 
@@ -96,15 +120,10 @@ export function CounterButton({
           onClick={handleClick}
           className={
             showNumber
-              ? // p-3.5 -m-3.5 is a hit-slop, not a visual change: padding
-                // grows the button's actual clickable box to ~44px (iOS HIG /
-                // Material's minimum tap target), while the matching negative
-                // margin pulls it back so the surrounding layout doesn't
-                // shift -- the digits still render at their original size and
-                // position. Previously this had p-0 (Trello B2), a tap target
-                // sized to the bare glyph -- on the rightmost column of the
-                // action row, that was reported as practically untappable.
-                "text-xs font-semibold underline underline-offset-4 bg-transparent border-none p-3.5 -m-3.5 focus:outline-none transition-colors"
+              ? // Real chip, real size -- no negative margin, nothing to
+                // overlap. Sits in its own row (see the portal above), so a
+                // generous real tap target costs nothing here.
+                "inline-flex items-center rounded-full px-3 py-2 text-xs font-medium bg-muted/70 hover:bg-muted active:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               : "sr-only"
           }
           style={
@@ -112,7 +131,6 @@ export function CounterButton({
               ? {
                   color: isActive ? activeColor : passiveColor,
                   cursor: "pointer",
-                  background: "none",
                 }
               : undefined
           }
@@ -120,7 +138,7 @@ export function CounterButton({
           type="button"
           tabIndex={showNumber ? 0 : -1}
         >
-          {showNumber ? count : ""}
+          {showNumber ? summaryText : ""}
         </button>
       </PopoverTrigger>
       <PopoverContent
