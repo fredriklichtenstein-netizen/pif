@@ -116,12 +116,27 @@ export function FeedFiltersPanel({
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
+      {/*
+        overflow-y-auto lives on the inner div below, NOT on SheetContent
+        itself -- deliberately. SheetContent carries the Sheet's CSS
+        transform-based enter/exit animation (animate-in/slide-in-from-
+        bottom); putting overflow-y-auto on that same transformed element
+        is a known class of iOS Safari bug where momentum-scrolling a long
+        list inside a transformed/animated ancestor causes content to
+        blank out / flicker mid-scroll. Confirmed live: this surfaced only
+        once the category list (Trello B3) made the sheet's content tall
+        enough to actually require real scrolling. Splitting "the element
+        that animates" (SheetContent, flex column, height-capped but not
+        itself scrollable) from "the element that scrolls" (the inner div,
+        flex-1 min-h-0 overflow-y-auto) fixes it -- same pattern already
+        proven elsewhere in this app (ConversationView.tsx's message list).
+      */}
+      <SheetContent side="bottom" className="max-h-[85vh] flex flex-col rounded-t-2xl">
         <SheetHeader>
           <SheetTitle>{t("interactions.filter_label", "Filtrera")}</SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto space-y-6 py-4">
           {/* Location + distance */}
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">
