@@ -131,9 +131,18 @@ export function MapFiltersSheet({
 
         </Button>
       </SheetTrigger>
+      {/*
+        overflow-y-auto lives on the inner div below, NOT on SheetContent
+        itself -- deliberately. Same fix as FeedFiltersPanel.tsx: putting
+        overflow-y-auto on the same element as the Sheet's transform-based
+        enter/exit animation is a known class of iOS Safari bug (content
+        blanks out / flickers mid-scroll on a long list), confirmed live
+        once the category list (Trello B3) made this sheet's content tall
+        enough to actually require real scrolling.
+      */}
       <SheetContent
         side="bottom"
-        className="max-h-[85vh] overflow-y-auto rounded-t-2xl z-[70] pb-safe"
+        className="max-h-[85vh] flex flex-col rounded-t-2xl z-[70]"
       >
         <SheetHeader>
           <SheetTitle>
@@ -141,7 +150,7 @@ export function MapFiltersSheet({
           </SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto pb-safe space-y-6 py-4">
           {/* Location + distance (map-specific) */}
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">
