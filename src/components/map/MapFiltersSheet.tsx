@@ -8,14 +8,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -166,48 +160,69 @@ export function MapFiltersSheet({
             <h3 className="text-sm font-semibold">
               {t("interactions.filter_category", "Kategori")}
             </h3>
-            <DropdownMenu open={catOpen} onOpenChange={setCatOpen}>
-              <DropdownMenuTrigger asChild>
+            {/*
+              A plain inline Collapsible, not a DropdownMenu -- deliberately.
+              Same fix as FeedFiltersPanel.tsx: DropdownMenu portals its
+              content to document.body as a sibling of this Sheet's own
+              portal, with its own modal scroll-lock nested inside the
+              Sheet's -- confirmed live, on device, to make the category
+              list unscrollable on mobile even after a CSS-only sizing fix
+              (Trello B3). Collapsible has no portal and no scroll-lock, so
+              the list is just part of this Sheet's own already-working
+              max-h-[85vh] overflow-y-auto -- one scroll region, not two
+              nested ones.
+            */}
+            <Collapsible open={catOpen} onOpenChange={setCatOpen}>
+              <CollapsibleTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full justify-between"
                 >
                   <span className="truncate">{catSummary}</span>
-                  <ChevronDown className="h-4 w-4 opacity-60 ml-2 shrink-0" />
+                  <ChevronDown
+                    className={`h-4 w-4 opacity-60 ml-2 shrink-0 transition-transform ${catOpen ? "rotate-180" : ""}`}
+                  />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="w-[calc(100vw-3rem)] sm:w-80 max-h-[min(20rem,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto bg-background z-[80]"
-              >
-                <DropdownMenuLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-1 rounded-md border p-2">
+                <p className="px-1 py-1 text-xs font-semibold text-muted-foreground">
                   {t("categories.mixed", "Blandat")}
-                </DropdownMenuLabel>
+                </p>
                 {MIXED_CATEGORY_KEYS.map((key) => (
-                  <DropdownMenuCheckboxItem
+                  <label
                     key={key}
-                    checked={selectedCategories.includes(key)}
-                    onCheckedChange={() => toggleCategory(key)}
+                    htmlFor={`map-cat-${key}`}
+                    className="flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-sm hover:bg-accent"
                   >
+                    <Checkbox
+                      id={`map-cat-${key}`}
+                      checked={selectedCategories.includes(key)}
+                      onCheckedChange={() => toggleCategory(key)}
+                    />
                     {t(`categories.${key}`)}
-                  </DropdownMenuCheckboxItem>
+                  </label>
                 ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>
+                <div className="my-1 h-px bg-border" />
+                <p className="px-1 py-1 text-xs font-semibold text-muted-foreground">
                   {t("map_filters.categories_label")}
-                </DropdownMenuLabel>
+                </p>
                 {REST_CATEGORY_KEYS.map((key) => (
-                  <DropdownMenuCheckboxItem
+                  <label
                     key={key}
-                    checked={selectedCategories.includes(key)}
-                    onCheckedChange={() => toggleCategory(key)}
+                    htmlFor={`map-cat-${key}`}
+                    className="flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-sm hover:bg-accent"
                   >
+                    <Checkbox
+                      id={`map-cat-${key}`}
+                      checked={selectedCategories.includes(key)}
+                      onCheckedChange={() => toggleCategory(key)}
+                    />
                     {t(`categories.${key}`)}
-                  </DropdownMenuCheckboxItem>
+                  </label>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </CollapsibleContent>
+            </Collapsible>
           </section>
 
           {/* Condition (map-specific "Skick") */}
