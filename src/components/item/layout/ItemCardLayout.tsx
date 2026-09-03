@@ -66,8 +66,12 @@ export function ItemCardLayout({
       {header}
       {gallery}
       
-      {/* Actions section */}
-      <div className="pt-2 pb-0 px-0">
+      {/* Actions section. px-2 (not px-0) deliberately -- this Card has
+          border-x-0 and spans edge-to-edge on mobile, so zero horizontal
+          padding here put the rightmost action's tap target flush against
+          the actual screen edge (Trello B2). A small inset gives every
+          column, especially the last one, real clearance. */}
+      <div className="pt-2 pb-0 px-2">
         {actions}
       </div>
       

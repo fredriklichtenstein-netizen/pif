@@ -96,7 +96,15 @@ export function CounterButton({
           onClick={handleClick}
           className={
             showNumber
-              ? "text-xs font-semibold underline underline-offset-4 bg-transparent border-none p-0 focus:outline-none transition-colors"
+              ? // p-3.5 -m-3.5 is a hit-slop, not a visual change: padding
+                // grows the button's actual clickable box to ~44px (iOS HIG /
+                // Material's minimum tap target), while the matching negative
+                // margin pulls it back so the surrounding layout doesn't
+                // shift -- the digits still render at their original size and
+                // position. Previously this had p-0 (Trello B2), a tap target
+                // sized to the bare glyph -- on the rightmost column of the
+                // action row, that was reported as practically untappable.
+                "text-xs font-semibold underline underline-offset-4 bg-transparent border-none p-3.5 -m-3.5 focus:outline-none transition-colors"
               : "sr-only"
           }
           style={
