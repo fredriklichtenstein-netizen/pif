@@ -269,21 +269,28 @@ export function PostFormLocation({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Trello B14: default Button variants set whitespace-nowrap
+                    with a fixed h-10 -- "Använd mina standardinställningar"
+                    doesn't fit on one line at mobile widths and, unable to
+                    wrap, overflowed and got visually cropped at the button's
+                    edge. h-auto + whitespace-normal lets it wrap to 2 lines
+                    instead; py-2.5 keeps single-line buttons (like the one
+                    beside it) close to the original h-10 footprint. */}
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={applyDefaults}
                   disabled={!anyDefault}
-                  className="w-full justify-center gap-2"
+                  className="w-full h-auto min-h-10 justify-center gap-2 whitespace-normal py-2.5 text-center"
                 >
-                  <Wand2 className="h-4 w-4" />
+                  <Wand2 className="h-4 w-4 shrink-0" />
                   {t('post.use_my_defaults')}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={clearAll}
-                  className="w-full justify-center gap-2"
+                  className="w-full h-auto min-h-10 justify-center gap-2 whitespace-normal py-2.5 text-center"
                 >
                   {t('post.clear_all_fields')}
                 </Button>
