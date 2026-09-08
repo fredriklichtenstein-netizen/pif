@@ -6,6 +6,7 @@ import { ImagePreviewList } from "./images/ImagePreviewList";
 import { ImageFormTips } from "./images/ImageFormTips";
 import { useImageDragAndDrop } from "./images/useImageDragAndDrop";
 import { useImageCropQueue } from "./images/useImageCropQueue";
+import { PostImageTrimDialog } from "./images/PostImageTrimDialog";
 import { PostImageCropDialog } from "./images/PostImageCropDialog";
 import { useTranslation } from 'react-i18next';
 import { PostFieldError } from "./PostFieldError";
@@ -35,16 +36,20 @@ export function PostFormImages({
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
 
-  // Route every newly selected file through a preview-area picker (+
-  // rotate/trim, Trello C4) before upload — see PostImageCropDialog for
-  // which of those actually alter the file vs. just record metadata.
+  // Route every newly selected file through an optional rotate/trim step
+  // (PostImageTrimDialog) THEN a preview-area picker (PostImageCropDialog),
+  // Trello C4 -- see useImageCropQueue for which of those actually alter
+  // the file vs. just record metadata, and why they're two sequential
+  // steps rather than one.
   const {
     handleImageUpload: wrappedOnImageUpload,
     cropImage,
     cropProgress,
+    phase,
     handleRotate,
     isRotating,
-    handleTrim,
+    handleTrimApply,
+    handleTrimSkip,
     isTrimming,
     handleCropSave,
     handleCropSkip,
@@ -136,17 +141,26 @@ export function PostFormImages({
         </div>
       )}
 
-      <PostImageCropDialog
-        image={cropImage}
-        progress={cropProgress}
-        onSave={handleCropSave}
-        onSkip={handleCropSkip}
-        onCancel={handleCancelAll}
-        onRotate={handleRotate}
-        isRotating={isRotating}
-        onTrim={handleTrim}
-        isTrimming={isTrimming}
-      />
+      {phase === 'trim' ? (
+        <PostImageTrimDialog
+          image={cropImage}
+          progress={cropProgress}
+          onRotate={handleRotate}
+          isRotating={isRotating}
+          onApply={handleTrimApply}
+          isApplying={isTrimming}
+          onSkip={handleTrimSkip}
+          onCancel={handleCancelAll}
+        />
+      ) : (
+        <PostImageCropDialog
+          image={cropImage}
+          progress={cropProgress}
+          onSave={handleCropSave}
+          onSkip={handleCropSkip}
+          onCancel={handleCancelAll}
+        />
+      )}
     </div>
   );
 }

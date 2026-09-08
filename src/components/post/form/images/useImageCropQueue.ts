@@ -5,32 +5,39 @@ import { normalizeImageOrientation, rotateImage, getCroppedImg } from "@/utils/i
 import type { ImageCrop } from "@/types/post";
 
 /**
- * Pre-upload preview-frame (+ rotate/trim, Trello C4) queue.
+ * Pre-upload rotate/trim + preview-frame queue (Trello C4).
  *
- * Wraps the underlying `onImageUpload` so that every newly selected file is
- * presented to the user in a square preview-frame picker before being
- * passed to the actual upload handler. The preview-frame selection itself
- * never alters the image — "Save" only records which square region (as
- * fractions of the image) should frame the feed/card thumbnail; "Skip"
- * leaves that image with no preference (null).
+ * Each newly selected file goes through two SEQUENTIAL phases, tracked by
+ * `phase`:
  *
- * Rotate and trim are both different: they genuinely re-encode the file
- * (rotateImage / getCroppedImg — the same canvas-crop utility the avatar
- * flow already uses), because fixing a sideways photo or removing an
- * unwanted edge needs the STORED image changed, not just its thumbnail
- * framing — the full original is what a viewer sees in the lightbox.
- * handleRotate replaces the current queue slot with the rotated file, so
- * it's what both the crop-frame picker operates on next AND what
- * ultimately gets uploaded. handleTrim is terminal for the current image
- * instead: once trimmed, the image already IS exactly the selected
- * rectangle, so there's nothing left for the (now-redundant) preview-frame
- * step to do — it pushes straight to the results and advances, with no
- * crop preference recorded (null — the whole, now-trimmed image is what
- * gets shown).
+ * 1. 'trim' (PostImageTrimDialog) -- optional, freeform. Rotate and trim
+ *    both genuinely re-encode the file (rotateImage / getCroppedImg -- the
+ *    same canvas-crop utility the avatar flow already uses), because
+ *    fixing a sideways photo or removing an unwanted edge needs the
+ *    STORED image changed, not just its thumbnail framing: the full
+ *    original is what a viewer sees in the lightbox. handleRotate updates
+ *    the current queue slot in place (still mid-trim-phase, same image).
+ *    handleTrimApply is terminal for THIS PHASE -- once applied, it also
+ *    replaces the queue slot and advances to the 'preview' phase for the
+ *    SAME image. handleTrimSkip just advances phase without touching the
+ *    file (any rotation already applied stays -- that's not staged).
  *
- * After the queue is drained, the final (possibly-rotated/trimmed, EXIF-
- * oriented) files and their parallel crop array are forwarded to
- * `onImageUpload` together, in their original order.
+ * 2. 'preview' (PostImageCropDialog) -- the original square preview-frame
+ *    picker, unchanged: never alters the file, only records which region
+ *    (as fractions) should frame the feed/card thumbnail. Save/Skip here
+ *    push the (possibly rotated/trimmed) file to the results and advance
+ *    to the NEXT image, which resets phase back to 'trim'.
+ *
+ * These were originally one merged step sharing a single square-only crop
+ * selection -- confirmed via user testing that this was poor UX (forced a
+ * square-shaped trim, conflated "cut this permanently" with "frame the
+ * thumbnail" as the same choice). Splitting them into sequential phases
+ * needed no changes to the wizard's own step array/navigation -- this is
+ * still all happening inside the single "images" wizard step, just with
+ * two sub-phases per image within it.
+ *
+ * After the queue is drained, the final files and their parallel crop
+ * array are forwarded to `onImageUpload` together, in their original order.
  */
 export function useImageCropQueue(
   onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void
@@ -40,6 +47,7 @@ export function useImageCropQueue(
   const [queue, setQueue] = useState<File[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
+  const [phase, setPhase] = useState<'trim' | 'preview'>('trim');
   const [isRotating, setIsRotating] = useState(false);
   const [isTrimming, setIsTrimming] = useState(false);
   const resultsRef = useRef<File[]>([]);
@@ -54,6 +62,7 @@ export function useImageCropQueue(
     setQueue([]);
     setCurrentIndex(0);
     setCurrentUrl(null);
+    setPhase('trim');
   }, []);
 
   const flush = useCallback(() => {
@@ -76,6 +85,7 @@ export function useImageCropQueue(
       objectUrlsRef.current.push(url);
       setCurrentIndex(nextIndex);
       setCurrentUrl(url);
+      setPhase('trim'); // every new image starts at the rotate/trim phase
     },
     [flush]
   );
@@ -157,26 +167,28 @@ export function useImageCropQueue(
     [queue, currentIndex, isRotating, t, toast],
   );
 
-  /**
-   * Trello C4 (round 2): a real, permanent trim -- distinct from
-   * handleCropSave, which only ever records preview-frame metadata and
-   * never touches the file. pixelCrop comes from the SAME crop-rectangle
-   * selection the dialog already computes for the preview-frame step
-   * (react-easy-crop's onCropComplete) -- trim and "use as preview frame"
-   * are two different things you can do with one selection, not two
-   * separate selection UIs.
-   */
-  const handleTrim = useCallback(
+  /** Applies a freeform trim (natural-image pixel coordinates, already
+   *  scaled by the caller -- see PostImageTrimDialog). Replaces the
+   *  current queue slot, same as handleRotate, then advances THIS image
+   *  to the 'preview' phase rather than pushing to results -- the square
+   *  preview-frame step still runs on the (now-trimmed) result. */
+  const handleTrimApply = useCallback(
     async (pixelCrop: { x: number; y: number; width: number; height: number }) => {
       const source = currentUrl;
-      if (!source || isRotating || isTrimming) return;
+      if (!source || isTrimming) return;
       setIsTrimming(true);
       try {
         const trimmed = await getCroppedImg(source, pixelCrop);
         if (!trimmed) throw new Error("getCroppedImg returned null");
-        resultsRef.current.push(trimmed);
-        cropsRef.current.push(null);
-        advance(currentIndex + 1, queue);
+        setQueue((q) => {
+          const next = [...q];
+          next[currentIndex] = trimmed;
+          return next;
+        });
+        const url = URL.createObjectURL(trimmed);
+        objectUrlsRef.current.push(url);
+        setCurrentUrl(url);
+        setPhase('preview');
       } catch (err) {
         console.error("Trim failed:", err);
         toast({
@@ -188,17 +200,23 @@ export function useImageCropQueue(
         setIsTrimming(false);
       }
     },
-    [currentUrl, isRotating, isTrimming, advance, currentIndex, queue, t, toast],
+    [currentUrl, isTrimming, currentIndex, t, toast],
   );
+
+  const handleTrimSkip = useCallback(() => {
+    setPhase('preview');
+  }, []);
 
   return {
     handleImageUpload,
     cropImage: currentUrl,
     cropProgress:
       queue.length > 0 ? { current: currentIndex + 1, total: queue.length } : null,
+    phase,
     handleRotate,
     isRotating,
-    handleTrim,
+    handleTrimApply,
+    handleTrimSkip,
     isTrimming,
     handleCropSave,
     handleCropSkip,
