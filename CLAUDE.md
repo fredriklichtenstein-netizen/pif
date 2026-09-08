@@ -275,6 +275,33 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   be honored. Lovable's own two-way sync then pushes whatever its internal branch has (including
   any such unrequested edits) back to `pif-staging`'s `staging` branch — reconcile that back into
   the canonical git history with `git fetch` + merge/cherry-pick, don't just leave it diverged.
+  **Confirmed again 2026-09-08, and worse than the above: `latest_commit_sha` can report the
+  CORRECT commit while the actual build still used stale code, with no eventual catch-up.** A
+  plain `git push` immediately followed by `deploy_project` (no intervening `send_message` in
+  between) shipped a build that was functionally one commit behind — `get_project`'s
+  `latest_commit_sha` matched the new commit immediately, the bundle hash changed on every poll,
+  and status was `ready`/`agentFinished: true` throughout, yet the actual deployed logic still
+  matched the *previous* commit, indefinitely (not just briefly lagging — repeated re-deploys and
+  waits produced the same stale result). Root cause, consistent with the internal-editor-branch
+  finding above: `latest_commit_sha` reflects GitHub's branch tip directly (always accurate,
+  since it's just reading the connected repo) -- it is **not** a report of what Lovable's internal
+  editor branch actually pulled or what `deploy_project` actually built from. The two can be
+  silently decoupled for an unbounded time until something (only ever observed to be a
+  `send_message` call) forces the internal branch to reconcile with GitHub. **Practical rule:
+  don't trust a bare `git push` + `deploy_project` sequence at all -- always route through
+  `send_message` with an explicit sync-only instruction (as in the existing forcing-function
+  advice above) before or as part of every `deploy_project` call, even the very first one for a
+  given round of changes, not just as a fallback once polling looks stuck.**
+  Caught this only because the change (removing one boolean condition, `!ownerViewMode &&`) had
+  no distinctive string for the usual "grep the bundle for a marker" check to catch -- both the
+  correct and stale version of the file share 100% of their static strings/classNames, differing
+  only in compiled JS logic. When a change has no grep-able marker, verify structurally instead:
+  build the exact target commit locally (`bun run build`), find the relevant compiled fragment in
+  the local `dist/` output via a distinctive but variable-name-agnostic pattern (e.g. search for a
+  literal JSX-compiled marker like `children:["(",` rather than a specific minified identifier,
+  since minifier variable names are not stable across separate build invocations even for
+  identical source), then fetch that exact same pattern from the live bundle and diff the two
+  fragments by structure (presence/absence of `!`/`&&`/other operators), not by exact text.
 - **The user has a Lovable feature enabled that auto-fixes build errors on BOTH projects every
   morning at 6am — including production.** Confirmed 2026-08-30: a scoped, sync-only `send_message`
   to the **production** project ("pull commit X, make no code changes") triggered the agent to also
