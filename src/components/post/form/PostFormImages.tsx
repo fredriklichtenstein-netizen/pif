@@ -35,14 +35,17 @@ export function PostFormImages({
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
 
-  // Route every newly selected file through a preview-area picker before
-  // upload (the image itself is never cropped/altered — see PostImageCropDialog).
+  // Route every newly selected file through a preview-area picker (+
+  // rotate/trim, Trello C4) before upload — see PostImageCropDialog for
+  // which of those actually alter the file vs. just record metadata.
   const {
     handleImageUpload: wrappedOnImageUpload,
     cropImage,
     cropProgress,
     handleRotate,
     isRotating,
+    handleTrim,
+    isTrimming,
     handleCropSave,
     handleCropSkip,
     handleCancelAll,
@@ -141,6 +144,8 @@ export function PostFormImages({
         onCancel={handleCancelAll}
         onRotate={handleRotate}
         isRotating={isRotating}
+        onTrim={handleTrim}
+        isTrimming={isTrimming}
       />
     </div>
   );
