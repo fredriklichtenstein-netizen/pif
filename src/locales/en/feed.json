@@ -21,6 +21,9 @@
     "clear_user_filter": "Clear user filter",
     "announcement": "Feed page loaded, showing community posts",
     "my_interest": "Shown interest",
+    "location_banner_title": "See distances to your neighbors",
+    "location_banner_description": "Enable location to see how far away each pif and wish is.",
+    "location_banner_cta": "Enable location",
     "my_posts": "My posts",
     "completed": "Completed",
     "archived_badge": "Archived"

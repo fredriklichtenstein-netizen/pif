@@ -20,6 +20,14 @@ import { create } from "zustand";
  * sees no behavior change and no surprise prompt (feed/map browsing is
  * intentionally public/unauthenticated). If permission isn't granted,
  * callers should keep falling back to the existing localStorage value.
+ *
+ * Trello B16: that "only if already granted" design left visitors who've
+ * never granted permission with no way to ever get live distances on the
+ * feed -- `ensureFreshLocation` deliberately never surfaces the native
+ * prompt itself. `requestLocation` is the explicit, user-gesture-triggered
+ * counterpart (called from LocationPermissionBanner's tap) that DOES
+ * surface it, sharing the same fetch/retry logic and updating the same
+ * store so every card's distance badge picks up the result immediately.
  */
 
 const FRESH_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
@@ -28,12 +36,54 @@ interface LiveLocationState {
   location: [number, number] | null;
   fetchedAt: number | null;
   status: "idle" | "checking" | "unavailable";
-  /** No-ops if already fresh or a check is already in flight. */
+  /** No-ops if already fresh or a check is already in flight. Never
+   *  surfaces the native permission prompt -- silently bails if
+   *  permission isn't already 'granted'. */
   ensureFreshLocation: () => Promise<void>;
+  /** User-gesture-triggered: DOES surface the native permission prompt if
+   *  permission is still undecided. Safe to call even mid-check. */
+  requestLocation: () => Promise<void>;
 }
 
 function isFresh(fetchedAt: number | null): boolean {
   return fetchedAt !== null && Date.now() - fetchedAt < FRESH_WINDOW_MS;
+}
+
+/** Shared fetch/retry logic for both actions below. A cold GPS fix
+ *  commonly fails/times out on the first request even with permission
+ *  already granted (same pattern as the map's "current location"
+ *  button) -- retry once automatically before giving up. */
+function fetchAndStore(set: (partial: Partial<LiveLocationState>) => void) {
+  set({ status: "checking" });
+
+  const onSuccess = (position: GeolocationPosition) => {
+    set({
+      location: [position.coords.longitude, position.coords.latitude],
+      fetchedAt: Date.now(),
+      status: "idle",
+    });
+  };
+
+  const onFinalError = (error: GeolocationPositionError) => {
+    console.warn("[liveLocationStore] geolocation failed:", error);
+    set({ status: "unavailable" });
+  };
+
+  navigator.geolocation.getCurrentPosition(
+    onSuccess,
+    (error) => {
+      if (error.code === error.PERMISSION_DENIED) {
+        onFinalError(error);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        onSuccess,
+        onFinalError,
+        { enableHighAccuracy: false, maximumAge: 10000, timeout: 15000 },
+      );
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
+  );
 }
 
 export const useLiveLocationStore = create<LiveLocationState>((set, get) => ({
@@ -69,36 +119,16 @@ export const useLiveLocationStore = create<LiveLocationState>((set, get) => ({
       return;
     }
 
-    const onSuccess = (position: GeolocationPosition) => {
-      set({
-        location: [position.coords.longitude, position.coords.latitude],
-        fetchedAt: Date.now(),
-        status: "idle",
-      });
-    };
+    fetchAndStore(set);
+  },
 
-    const onFinalError = (error: GeolocationPositionError) => {
-      console.warn("[liveLocationStore] geolocation failed:", error);
+  requestLocation: async () => {
+    const state = get();
+    if (state.status === "checking") return;
+    if (!navigator.geolocation) {
       set({ status: "unavailable" });
-    };
-
-    // Same retry pattern as the map's "current location" button: a cold
-    // GPS fix commonly fails/times out on the first request while the OS
-    // location provider warms up, even with permission already granted.
-    navigator.geolocation.getCurrentPosition(
-      onSuccess,
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          onFinalError(error);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          onSuccess,
-          onFinalError,
-          { enableHighAccuracy: false, maximumAge: 10000, timeout: 15000 },
-        );
-      },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
-    );
+      return;
+    }
+    fetchAndStore(set);
   },
 }));

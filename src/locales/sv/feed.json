@@ -21,6 +21,9 @@
     "clear_user_filter": "Rensa användarfilter",
     "announcement": "Flödessidan laddad, visar gemenskapens inlägg",
     "my_interest": "Visat intresse",
+    "location_banner_title": "Se avstånd till dina grannar",
+    "location_banner_description": "Aktivera plats för att se hur nära varje pif och önskan är.",
+    "location_banner_cta": "Aktivera plats",
     "my_posts": "Mina inlägg",
     "completed": "Genomförd",
     "archived_badge": "Arkiverad"

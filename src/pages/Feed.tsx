@@ -1,6 +1,7 @@
 import { OptimizedFeedContainer } from "@/components/feed/OptimizedFeedContainer";
 import { MainNav } from "@/components/MainNav";
 import { InstallInstructionsBanner } from "@/components/pwa/InstallInstructionsBanner";
+import { LocationPermissionBanner } from "@/components/feed/LocationPermissionBanner";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -38,6 +39,7 @@ export default function Feed() {
       >
         <div className="w-full pt-1">
           <InstallInstructionsBanner />
+          <LocationPermissionBanner />
           {/* Compact action bar */}
           <div className="grid grid-cols-2 gap-2 mb-3 px-2">
             <Button
