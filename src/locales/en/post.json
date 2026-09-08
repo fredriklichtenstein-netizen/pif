@@ -143,6 +143,10 @@
     "choose_preview_area": "Choose preview area",
     "choose_preview_area_description": "Choose which part of the image is shown in the feed overview. The full image is always saved and shown in full when someone clicks it.",
     "use_default_preview_area": "Use default view",
+    "rotate": "Rotate",
+    "rotate_left": "Rotate left",
+    "rotate_right": "Rotate right",
+    "rotate_error": "Failed to rotate image. Please try again.",
     "apply_crop": "Save",
     "reset_crop": "Reset",
     "validation": {

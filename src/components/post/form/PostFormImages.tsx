@@ -41,6 +41,8 @@ export function PostFormImages({
     handleImageUpload: wrappedOnImageUpload,
     cropImage,
     cropProgress,
+    handleRotate,
+    isRotating,
     handleCropSave,
     handleCropSkip,
     handleCancelAll,
@@ -137,6 +139,8 @@ export function PostFormImages({
         onSave={handleCropSave}
         onSkip={handleCropSkip}
         onCancel={handleCancelAll}
+        onRotate={handleRotate}
+        isRotating={isRotating}
       />
     </div>
   );

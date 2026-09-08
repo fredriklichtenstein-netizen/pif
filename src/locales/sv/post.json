@@ -143,6 +143,10 @@
     "choose_preview_area": "Välj översiktsområde",
     "choose_preview_area_description": "Välj vilken del av bilden som visas i flödesöversikten. Hela bilden sparas alltid och visas i sin helhet när någon klickar på den.",
     "use_default_preview_area": "Använd standardvy",
+    "rotate": "Rotera",
+    "rotate_left": "Rotera moturs",
+    "rotate_right": "Rotera medurs",
+    "rotate_error": "Kunde inte rotera bilden. Försök igen.",
     "apply_crop": "Spara",
     "reset_crop": "Återställ",
     "validation": {
