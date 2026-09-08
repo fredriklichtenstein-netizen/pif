@@ -276,7 +276,7 @@ export function FeedFiltersPanel({
           {user && !viewingOtherUser && (
             <section className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold">
-                {t("feed.my_interest", "Mitt intresse")}
+                {t("feed.my_interest", "Visat intresse")}
               </h3>
               <button
                 type="button"

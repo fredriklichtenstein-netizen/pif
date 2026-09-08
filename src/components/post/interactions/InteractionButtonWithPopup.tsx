@@ -143,18 +143,15 @@ export function InteractionButtonWithPopup({
     }
   }
 
-  // Owner-view mode: on the owner's own pif card, the like/interest
-  // CTAs become entry points to the corresponding user list popover
-  // (who liked / who's interested) instead of inert disabled toggles.
-  // Wishes are intentionally not included in this pass.
-  // Wish owners get the same entry point on the interest button only;
-  // the like button on wishes is intentionally left as-is in this pass.
+  // Owner-view mode: on the owner's own item card (pif or wish), the
+  // like/interest CTAs become entry points to the corresponding user list
+  // popover (who liked / who's interested) instead of inert disabled
+  // toggles. Trello E4: this used to exclude "like" on wishes -- an owner's
+  // own wish left its like button fully disabled rather than opening the
+  // "who liked" list, unlike every other case here. No reason for that
+  // asymmetry, so wishes now get the same like-button treatment as pifs.
   const ownerViewMode =
-    isOwner &&
-    (
-      (itemType !== "request" && (type === "like" || type === "interest")) ||
-      (itemType === "request" && type === "interest")
-    );
+    isOwner && (type === "like" || type === "interest");
 
   const isToggleDisabled =
     !ownerViewMode &&
@@ -254,7 +251,21 @@ export function InteractionButtonWithPopup({
   const visualActive =
     isActive || (isInterestType && isCurrentSelected);
   const effectiveActiveColor = perspectiveActiveColor ?? ACTIVE_COLOR;
-  const labelText = perspectiveLabel ?? (isActive ? labelActive : labelPassive);
+
+  // Trello E4: on your OWN item, "Visa intresse"/"Gilla" are invitations to
+  // interact with your own post -- doesn't make sense, and was reported
+  // twice. ownerViewMode already made the button OPEN the right popover;
+  // the label text just never followed. Interest gets its own short noun
+  // ("Intresserade") since the visitor-facing strings are either an
+  // imperative ("Visa intresse") or, on wishes, "Uppfyll"/"Grant wish" --
+  // neither makes sense read back to the owner. Like reuses the existing
+  // "liked" string ("Gillar") rather than a new one: it already reads
+  // correctly both as "[you] liked" (the visitor active-state meaning) and
+  // as a plain heading over the list of people who liked this.
+  const ownerLabel = ownerViewMode
+    ? (type === "like" ? t("interactions.liked") : t("interactions.owner_view_interested", "Intresserade"))
+    : null;
+  const labelText = ownerLabel ?? perspectiveLabel ?? (isActive ? labelActive : labelPassive);
   const dimClass = perspectiveDim ? "opacity-40" : "";
   const disabledClass = isToggleDisabled
     ? "opacity-60 cursor-not-allowed"
