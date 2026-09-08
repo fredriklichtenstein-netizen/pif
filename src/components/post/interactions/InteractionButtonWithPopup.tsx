@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { InteractionIcon } from "./button/InteractionIcon";
-import { CounterButton } from "./button/CounterButton";
+import { UserPopoverContent } from "./button/UserPopoverContent";
+import { PaginatedUserList } from "./button/PaginatedUserList";
+import { InterestSelectionList } from "./interest/InterestSelectionList";
 import { GrantWishDialog } from "./GrantWishDialog";
 import { useItemSelectedReceiver } from "@/hooks/item/useItemSelectedReceiver";
+import { useIgnoreToastOutsideClicks } from "@/hooks/useIgnoreToastOutsideClicks";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
@@ -34,15 +37,6 @@ interface InteractionButtonWithPopupProps {
   itemType?: 'offer' | 'request';
   /** Surfaced inside the Grant Wish dialog as context. */
   itemTitle?: string;
-  /**
-   * DOM node (rendered by PrimaryActions, below the whole action grid) that
-   * the counter/summary chip portals into instead of rendering inline next
-   * to the toggle label. See CounterButton.tsx for why -- an inline counter
-   * squeezed next to another clickable label was the actual root cause of
-   * Trello B2, not just tap-target size. Null on first render (ref not
-   * attached yet); the chip simply doesn't render until it's available.
-   */
-  summaryPortalTarget?: HTMLElement | null;
 }
 
 export function InteractionButtonWithPopup({
@@ -63,13 +57,13 @@ export function InteractionButtonWithPopup({
   currentUserId,
   itemType,
   itemTitle,
-  summaryPortalTarget,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [popupUsers, setPopupUsers] = useState<User[]>(users);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const ignoreToastOutsideClicks = useIgnoreToastOutsideClicks();
 
   // Keep popup users in sync with the latest authoritative list from
   // realtime so a stale fetch doesn't show "no one yet" while the
@@ -244,9 +238,6 @@ export function InteractionButtonWithPopup({
 
   const displayCount = count;
   const useInterestList = type === "interest" && !!itemId;
-  const isCounterInteractive =
-    (displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) &&
-    (!!onCounterClick || !!fetchPage || useInterestList);
 
   const visualActive =
     isActive || (isInterestType && isCurrentSelected);
@@ -271,64 +262,108 @@ export function InteractionButtonWithPopup({
     ? "opacity-60 cursor-not-allowed"
     : "cursor-pointer";
 
+  // Trello B2, round 3: on your own item, the label above already reads
+  // "Intresserade"/"Gillar" and opens this exact popover -- a second count
+  // badge saying the same thing was pure duplication for owners, so it's
+  // dropped entirely there. For everyone else there's no popover at all
+  // (that view is owner-only, per product decision 2026-09-08): the badge
+  // is just a plain count that performs the SAME toggle as the label when
+  // tapped, not a second competing action -- so unlike B2's earlier rounds,
+  // there's no risk in sitting it right next to the label again.
+  const showCountBadge = !ownerViewMode && displayCount > 0;
+
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
-      {/* Icon toggle */}
-      <div
-        role="button"
-        aria-disabled={isToggleDisabled}
-        aria-label={labelText}
-        tabIndex={isToggleDisabled ? -1 : 0}
-        onClick={handleToggleClick}
-        onKeyDown={handleKeyDown}
-        className={`flex items-center justify-center h-7 rounded group select-none ${disabledClass} ${dimClass}`}
-      >
-        <InteractionIcon
-          type={visualActive ? iconActive : iconPassive}
-          isActive={visualActive}
-        />
-      </div>
+      <Popover open={showPopup} onOpenChange={setShowPopup}>
+        {/* PopoverAnchor, not PopoverTrigger -- positions the popup without
+            attaching its own click-to-toggle handler, which would race with
+            handleToggleClick's own setShowPopup(true) below. Only owners
+            ever flip showPopup true (see handleToggleClick/
+            shouldAutoOpenSelection, both isOwner-gated), so this Popover is
+            simply inert for everyone else. */}
+        <PopoverAnchor asChild>
+          <div className="flex flex-col items-center">
+            {/* Icon toggle */}
+            <div
+              role="button"
+              aria-disabled={isToggleDisabled}
+              aria-label={labelText}
+              tabIndex={isToggleDisabled ? -1 : 0}
+              onClick={handleToggleClick}
+              onKeyDown={handleKeyDown}
+              className={`flex items-center justify-center h-7 rounded group select-none ${disabledClass} ${dimClass}`}
+            >
+              <InteractionIcon
+                type={visualActive ? iconActive : iconPassive}
+                isActive={visualActive}
+              />
+            </div>
 
-      {/* Label -- toggle only now. The counter used to sit right here, 6px
-          away, which is what made Trello B2's first fix unreliable (see
-          CounterButton.tsx). It now portals into a shared row below the
-          whole action grid instead -- nothing to overlap here anymore. */}
-      <span
-        role="button"
-        aria-disabled={isToggleDisabled}
-        tabIndex={isToggleDisabled ? -1 : 0}
-        onClick={handleToggleClick}
-        onKeyDown={handleKeyDown}
-        style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
-        className={`mt-1 text-xs font-medium select-none whitespace-nowrap ${disabledClass} ${dimClass}`}
-      >
-        {labelText}
-      </span>
+            {/* Label + count badge on the same row. Both call
+                handleToggleClick -- identical behavior, so no need to keep
+                them apart the way B2 originally had to. */}
+            <div className="flex flex-row items-center justify-center mt-1 gap-1">
+              <span
+                role="button"
+                aria-disabled={isToggleDisabled}
+                tabIndex={isToggleDisabled ? -1 : 0}
+                onClick={handleToggleClick}
+                onKeyDown={handleKeyDown}
+                style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
+                className={`text-xs font-medium select-none whitespace-nowrap ${disabledClass} ${dimClass}`}
+              >
+                {labelText}
+              </span>
+              {showCountBadge && (
+                <span
+                  role="button"
+                  aria-disabled={isToggleDisabled}
+                  aria-label={`${displayCount} ${labelText}`}
+                  tabIndex={isToggleDisabled ? -1 : 0}
+                  onClick={handleToggleClick}
+                  onKeyDown={handleKeyDown}
+                  style={{ color: visualActive ? effectiveActiveColor : PASSIVE_COLOR }}
+                  className={`text-xs font-medium select-none whitespace-nowrap ${disabledClass} ${dimClass}`}
+                >
+                  ({displayCount})
+                </span>
+              )}
+            </div>
+          </div>
+        </PopoverAnchor>
 
-      {summaryPortalTarget &&
-        (displayCount > 0 || shouldAutoOpenSelection || ownerViewMode) &&
-        createPortal(
-          <CounterButton
-            count={displayCount}
-            isActive={isActive}
-            activeColor={ACTIVE_COLOR}
-            passiveColor={PASSIVE_COLOR}
-            type={type}
-            users={popupUsers}
-            loading={loading}
-            showPopup={showPopup}
-            setShowPopup={setShowPopup}
-            onCounterClick={handleCounterClick}
-            isInteractive={isCounterInteractive}
-            fetchPage={fetchPage}
-            itemId={itemId}
-            itemOwnerId={itemOwnerId}
-            currentUserId={currentUserId}
-            itemType={itemType}
-          />,
-          summaryPortalTarget,
-        )}
-
+        <PopoverContent
+          className={useInterestList ? "w-80 sm:w-96 p-2" : "w-64 p-2"}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDownOutside={ignoreToastOutsideClicks}
+          onInteractOutside={ignoreToastOutsideClicks}
+        >
+          {useInterestList ? (
+            <InterestSelectionList
+              key={showPopup ? "open" : "closed"}
+              itemId={itemId}
+              itemOwnerId={itemOwnerId}
+              currentUserId={currentUserId}
+              itemType={itemType}
+              setShowPopup={setShowPopup}
+            />
+          ) : fetchPage ? (
+            <PaginatedUserList
+              type={type}
+              fetchPage={fetchPage}
+              setShowPopup={setShowPopup}
+              itemId={itemId}
+            />
+          ) : (
+            <UserPopoverContent
+              type={type}
+              users={popupUsers}
+              loading={loading}
+              setShowPopup={setShowPopup}
+            />
+          )}
+        </PopoverContent>
+      </Popover>
 
       {useWishGrantFlow && (
         <GrantWishDialog

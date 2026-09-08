@@ -7,6 +7,12 @@ const Popover = PopoverPrimitive.Root
 
 const PopoverTrigger = PopoverPrimitive.Trigger
 
+// Positions PopoverContent relative to this element without attaching any
+// click-to-toggle behavior (unlike PopoverTrigger) -- for callers that
+// already manage `open` themselves via their own click handlers and just
+// need the anchor.
+const PopoverAnchor = PopoverPrimitive.Anchor
+
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
@@ -26,4 +32,4 @@ const PopoverContent = React.forwardRef<
 ))
 PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
-export { Popover, PopoverTrigger, PopoverContent }
+export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent }
