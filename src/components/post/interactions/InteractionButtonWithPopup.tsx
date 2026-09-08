@@ -262,15 +262,15 @@ export function InteractionButtonWithPopup({
     ? "opacity-60 cursor-not-allowed"
     : "cursor-pointer";
 
-  // Trello B2, round 3: on your own item, the label above already reads
-  // "Intresserade"/"Gillar" and opens this exact popover -- a second count
-  // badge saying the same thing was pure duplication for owners, so it's
-  // dropped entirely there. For everyone else there's no popover at all
-  // (that view is owner-only, per product decision 2026-09-08): the badge
-  // is just a plain count that performs the SAME toggle as the label when
-  // tapped, not a second competing action -- so unlike B2's earlier rounds,
-  // there's no risk in sitting it right next to the label again.
-  const showCountBadge = !ownerViewMode && displayCount > 0;
+  // Trello B2, round 4: shown for everyone, owner included (2026-09-08
+  // follow-up) -- the visual counter display should be consistent
+  // regardless of who's looking; only the LABEL text (Gillar/Intresserade
+  // vs Gilla/Visa intresse) and the INTERACTION it triggers (popup vs
+  // toggle) differ by ownership, both already handled above/below. No
+  // extra logic needed here: the badge calls the same handleToggleClick
+  // as the label, which already branches on ownerViewMode correctly no
+  // matter which element was actually tapped.
+  const showCountBadge = displayCount > 0;
 
   return (
     <div className="relative flex flex-col items-center flex-1 min-w-[60px]">
