@@ -299,7 +299,7 @@ function OptimizedFeedBody({
           }`}
         >
           <span aria-hidden>♥</span>
-          {t("feed.my_interest", "Mitt intresse")}
+          {t("feed.my_interest", "Visat intresse")}
         </button>
       )}
       {isLoggedIn && !viewingOtherUser && (

@@ -507,6 +507,7 @@
     "summary_comment_other": "{{count}} kommentarer",
     "summary_interest_one": "{{count}} intresserad",
     "summary_interest_other": "{{count}} intresserade",
+    "owner_view_interested": "Intresserade",
     "no_interest_yet_label": "Inget intresse än.",
     "status_waiting": "Väntar",
     "status_selected_label": "Vald",
