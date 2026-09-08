@@ -74,13 +74,16 @@ function clampPercentCrop(crop: Crop): Crop {
  *
  * Interaction is deliberately edges-only: the crop box starts covering the
  * WHOLE image (clearly showing it's croppable, not requiring the user to
- * first figure out how to draw one), can't be dragged around as a block
- * (`.ReactCrop__crop-selection` -- the whole-box move handle -- has
- * pointer-events disabled via the scoped CSS below; the corner/edge resize
- * handles are separate DOM nodes and stay fully interactive), and can't be
- * cleared entirely (`keepSelection`). Only resizing from the edges/corners
- * is possible -- confirmed via user testing that letting the box be moved
- * or lost entirely made precise trimming needlessly fiddly.
+ * first figure out how to draw one), can't be dragged around as a block,
+ * and can't be cleared entirely (`keepSelection`) -- confirmed via user
+ * testing that letting the box be moved or lost entirely made precise
+ * trimming needlessly fiddly. Only resizing from the edges/corners is
+ * possible: pointer-events is disabled on `.ReactCrop__crop-selection`
+ * (the whole-box move area) via the scoped CSS below, with it explicitly
+ * re-enabled on `.ReactCrop__drag-handle`/`-bar` (the corner/edge resize
+ * handles) since those turned out to be DESCENDANTS of crop-selection,
+ * not siblings -- confirmed live: the first version of this disabled
+ * resizing too, not just the move, since pointer-events inherits.
  */
 export function PostImageTrimDialog({
   image,
@@ -178,14 +181,25 @@ export function PostImageTrimDialog({
                 </ReactCrop>
               </div>
               {/* Scoped to this dialog's own wrapper class, not a global
-                  override -- only .ReactCrop__crop-selection (the whole-box
-                  drag-to-move handle) loses pointer-events; the separate
-                  .ReactCrop__drag-handle/-bar corner/edge elements are
-                  untouched by this selector and stay fully interactive. */}
+                  override. Confirmed live: .ReactCrop__drag-handle/-bar
+                  (the corner/edge resize handles) turned out to be
+                  DESCENDANTS of .ReactCrop__crop-selection, not siblings --
+                  disabling pointer-events on the parent cascaded down and
+                  silently disabled resizing too, not just the whole-box
+                  move this was meant to block. pointer-events is an
+                  inherited CSS property, so re-enabling it explicitly on
+                  the handles overrides that inherited `none` regardless of
+                  the actual nesting -- correct either way, whether they're
+                  descendants (this fix) or were siblings all along
+                  (harmless no-op in that case). */}
               <style>{`
                 .pif-trim-crop .ReactCrop__crop-selection {
                   pointer-events: none;
                   cursor: default;
+                }
+                .pif-trim-crop .ReactCrop__drag-handle,
+                .pif-trim-crop .ReactCrop__drag-bar {
+                  pointer-events: auto;
                 }
               `}</style>
 
