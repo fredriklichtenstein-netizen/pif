@@ -139,8 +139,45 @@ export function PostImageTrimDialog({
 
   return (
     <>
-      <Dialog open={!!image} onOpenChange={(open) => { if (!open) onCancel(); }}>
-        <DialogContent className="sm:max-w-[480px]">
+      <Dialog
+        open={!!image}
+        onOpenChange={(open) => {
+          // Defense in depth alongside onInteractOutside below: even if
+          // some other signal fires onOpenChange(false) while the confirm
+          // AlertDialog is opening (trimConfirmOpen already true by then --
+          // setTrimConfirmOpen(true) commits synchronously in the same
+          // click handler, before any async Radix dismiss signal could
+          // fire), don't treat it as a real close.
+          if (!open && !trimConfirmOpen) onCancel();
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-[480px]"
+          // Round 6 (2nd pass): the guard above only covers the AlertDialog
+          // OPENING (trimConfirmOpen is already false again by the time any
+          // of ITS close paths -- Avbryt, Escape, outside-click, or even a
+          // successful "Ja, beskär" -- resolve, since those all set
+          // trimConfirmOpen(false) as part of closing). Adversarial review
+          // confirmed that leaves this Dialog exposed to the same class of
+          // spurious dismissal on the CLOSE transition too. Fix it at the
+          // source instead of reacting after Radix has already decided:
+          // Radix's AlertDialogContent renders with role="alertdialog", so
+          // ignore any pointer-down/focus interaction that originates
+          // inside one, regardless of which direction (open or close)
+          // triggered it.
+          onInteractOutside={(event) => {
+            // instanceof guard, not just `?.`: Radix types event.target as
+            // EventTarget | null (not Element), and an unchecked cast plus
+            // single-level optional-chaining would still throw if target
+            // were ever a non-Element EventTarget (e.g. Document) --
+            // essentially never happens for a real pointerdown/focusin,
+            // but costs nothing to rule out.
+            const target = event.target;
+            if (target instanceof Element && target.closest('[role="alertdialog"]')) {
+              event.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>
               {t("post.trim_step_title", { defaultValue: "Rotera och beskär (valfritt)" })}
@@ -160,7 +197,35 @@ export function PostImageTrimDialog({
 
           {image && (
             <div className="space-y-4">
-              <div className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[360px]">
+              {/* p-4 + max-h-[392px]: adversarial review (round 6) traced
+                  the actual box model and found the corner resize handles
+                  are centered ON the crop-selection's corners via
+                  `transform: translate(50%, 50%)`, so ~half of each
+                  handle's hit area (up to 12px of the 24px mobile-bumped
+                  size) necessarily sits OUTSIDE the image's own box. With
+                  no buffer, this container's overflow-hidden (needed to
+                  clip the image to rounded-md) was clipping that outward
+                  half away too -- not just visually but for hit-testing,
+                  since CSS overflow clips both. Since overflow clips at
+                  the padding edge (not the content edge), padding creates
+                  a buffer zone the handles can overflow into while
+                  staying tappable, without dropping overflow-hidden
+                  (which would reintroduce square image corners poking
+                  past the rounded container on whichever axis the image
+                  is flush against the cap).
+                  max-h bumped from 360 to 392 (360 + 2*16px padding) in
+                  the SAME pass: Tailwind's border-box preflight means
+                  max-height caps padding+content together, so p-4 alone
+                  would have shrunk the available content height to 328px
+                  -- for any image tall enough to hit ITS OWN independent
+                  max-h-[360px] (the <img> tag below, unchanged), that's a
+                  32px overflow clipped by this same overflow-hidden,
+                  re-clipping exactly the top/bottom edge handles this fix
+                  was meant to free, on top of visibly cropping real photo
+                  content. 392px keeps the content budget at the original
+                  360px the image already assumes, with padding now
+                  genuinely additive outside it. */}
+              <div className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[392px] p-4">
                 <ReactCrop
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(clampPercentCrop(percentCrop))}
@@ -191,7 +256,28 @@ export function PostImageTrimDialog({
                   the handles overrides that inherited `none` regardless of
                   the actual nesting -- correct either way, whether they're
                   descendants (this fix) or were siblings all along
-                  (harmless no-op in that case). */}
+                  (harmless no-op in that case).
+
+                  touch-action, round 6: react-image-crop's own stylesheet
+                  sets `touch-action: none` only on .ReactCrop__crop-
+                  selection itself (plus the image), not on the handles/
+                  bars -- fine normally, since a descendant's *effective*
+                  touch-action is supposed to intersect with its ancestors'.
+                  But that ancestor is exactly the element we just set
+                  pointer-events:none on above, and mobile Safari/Chrome
+                  were confirmed live to still hand a touchstart landing on
+                  a handle to native scroll/pan handling instead of to
+                  react-image-crop's onPointerDown (which reads
+                  data-ord off e.target via bubbling -- pointer-events:auto
+                  makes the handle a valid hit-test target and bubbling
+                  is unaffected by an ancestor's pointer-events, but the
+                  BROWSER's pre-JS decision of "is this gesture a scroll"
+                  is a separate, touch-action-driven check that isn't
+                  guaranteed to inherit reliably through a reassigned
+                  pointer-events chain). Setting touch-action:none directly
+                  on the handles/bars removes any dependency on that
+                  ancestor inheritance and is correct regardless of which
+                  browser behavior caused the mobile failure. */}
               <style>{`
                 .pif-trim-crop .ReactCrop__crop-selection {
                   pointer-events: none;
@@ -200,6 +286,7 @@ export function PostImageTrimDialog({
                 .pif-trim-crop .ReactCrop__drag-handle,
                 .pif-trim-crop .ReactCrop__drag-bar {
                   pointer-events: auto;
+                  touch-action: none;
                 }
               `}</style>
 
