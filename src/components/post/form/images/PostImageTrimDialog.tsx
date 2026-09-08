@@ -43,11 +43,26 @@ interface PostImageTrimDialogProps {
   onCancel: () => void;
 }
 
+/** Clamps a percent-unit crop so it can never extend past the image's own
+ *  0-100 bounds, regardless of what a drag/resize gesture reported.
+ *  react-image-crop is a CONTROLLED component here (crop driven by our own
+ *  state), so clamping in the onChange handler is enough to constrain the
+ *  rendered rectangle even if the library's raw output briefly overshoots
+ *  during a drag -- confirmed live: without this, the box could be pulled
+ *  outside the visible image, making precise edge placement hard. */
+function clampPercentCrop(crop: Crop): Crop {
+  const width = Math.min(crop.width, 100);
+  const height = Math.min(crop.height, 100);
+  const x = Math.max(0, Math.min(crop.x, 100 - width));
+  const y = Math.max(0, Math.min(crop.y, 100 - height));
+  return { ...crop, x, y, width, height };
+}
+
 /**
- * Trello C4 round 3: true freeform trim, split into its own step BEFORE the
- * existing square preview-frame picker (PostImageCropDialog) rather than
- * sharing one crop-rectangle selection between two different actions --
- * confirmed via user testing that merging them was poor UX (forces a
+ * Trello C4 round 3/4: true freeform trim, split into its own step BEFORE
+ * the existing square preview-frame picker (PostImageCropDialog) rather
+ * than sharing one crop-rectangle selection between two different actions
+ * -- confirmed via user testing that merging them was poor UX (forces a
  * square-shaped trim, and conflates "cut this permanently" with "frame the
  * thumbnail" as if they were the same choice).
  *
@@ -56,6 +71,16 @@ interface PostImageTrimDialogProps {
  * rectangle, so it can't do genuine freeform trim. react-image-crop can,
  * so this step alone uses it; the preview-frame step is untouched and
  * still uses react-easy-crop for its square window.
+ *
+ * Interaction is deliberately edges-only: the crop box starts covering the
+ * WHOLE image (clearly showing it's croppable, not requiring the user to
+ * first figure out how to draw one), can't be dragged around as a block
+ * (`.ReactCrop__crop-selection` -- the whole-box move handle -- has
+ * pointer-events disabled via the scoped CSS below; the corner/edge resize
+ * handles are separate DOM nodes and stay fully interactive), and can't be
+ * cleared entirely (`keepSelection`). Only resizing from the edges/corners
+ * is possible -- confirmed via user testing that letting the box be moved
+ * or lost entirely made precise trimming needlessly fiddly.
  */
 export function PostImageTrimDialog({
   image,
@@ -78,6 +103,17 @@ export function PostImageTrimDialog({
     setCompletedCrop(undefined);
     setTrimConfirmOpen(false);
   }, [image]);
+
+  /** Seeds the crop box to cover the whole rendered image as soon as it
+   *  loads, in both the percent form ReactCrop wants for its `crop` prop
+   *  and the pixel form completedCrop needs -- without this, "Beskär"
+   *  stays disabled and the box starts as nothing until the user first
+   *  draws one from scratch. */
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    setCrop({ unit: '%', x: 0, y: 0, width: 100, height: 100 });
+    setCompletedCrop({ unit: 'px', x: 0, y: 0, width: img.width, height: img.height });
+  };
 
   const handleTrimConfirm = () => {
     const img = imgRef.current;
@@ -121,17 +157,37 @@ export function PostImageTrimDialog({
 
           {image && (
             <div className="space-y-4">
-              <div className="flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[360px]">
+              <div className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[360px]">
                 <ReactCrop
                   crop={crop}
-                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  onChange={(_, percentCrop) => setCrop(clampPercentCrop(percentCrop))}
                   onComplete={(c) => setCompletedCrop(c)}
+                  keepSelection
+                  minWidth={20}
+                  minHeight={20}
                   // No `aspect` prop -- that's what makes this freeform,
                   // unlike the preview-frame step's locked aspect={1}.
                 >
-                  <img ref={imgRef} src={image} alt="" className="max-h-[360px] max-w-full" />
+                  <img
+                    ref={imgRef}
+                    src={image}
+                    alt=""
+                    className="max-h-[360px] max-w-full"
+                    onLoad={handleImageLoad}
+                  />
                 </ReactCrop>
               </div>
+              {/* Scoped to this dialog's own wrapper class, not a global
+                  override -- only .ReactCrop__crop-selection (the whole-box
+                  drag-to-move handle) loses pointer-events; the separate
+                  .ReactCrop__drag-handle/-bar corner/edge elements are
+                  untouched by this selector and stay fully interactive. */}
+              <style>{`
+                .pif-trim-crop .ReactCrop__crop-selection {
+                  pointer-events: none;
+                  cursor: default;
+                }
+              `}</style>
 
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
