@@ -166,10 +166,14 @@ export function PrimaryActions({
       {/* Trello B2: like/comment/interest counters land here instead of
           squeezed inline next to their toggle labels -- full width, real
           gaps, nothing else nearby to collide with. empty:hidden collapses
-          this to zero height when every count is 0 (nothing portals in). */}
+          this to zero height when every count is 0 (nothing portals in).
+          justify-start (not -center): with just one chip active this reads
+          as a metadata line continuing the row above (Instagram/Facebook's
+          "Liked by X" convention) rather than an unrelated floating badge --
+          confirmed looking disconnected when centered with only 1 chip. */}
       <div
         ref={setSummaryEl}
-        className="empty:hidden flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-1 px-2"
+        className="empty:hidden flex flex-wrap items-center justify-start gap-x-2 gap-y-1 mt-1 px-2"
       />
     </div>
   );
