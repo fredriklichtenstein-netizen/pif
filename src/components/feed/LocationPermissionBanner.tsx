@@ -25,6 +25,7 @@ export function LocationPermissionBanner() {
   const { t } = useTranslation();
   const requestLocation = useLiveLocationStore((s) => s.requestLocation);
   const status = useLiveLocationStore((s) => s.status);
+  const location = useLiveLocationStore((s) => s.location);
 
   const [permissionState, setPermissionState] = useState<PermissionState | "unsupported" | null>(null);
   const [dismissed, setDismissed] = useState<boolean>(() => {
@@ -76,6 +77,15 @@ export function LocationPermissionBanner() {
   };
 
   if (dismissed) return null;
+  // A successful fetch is proof permission is now granted -- check this
+  // BEFORE the Permissions API state below, not just after it. Confirmed
+  // live: after granting, the query()'s own 'change' event did not
+  // reliably fire (environment-dependent -- observed in Lovable's preview
+  // iframe), which left the banner reappearing after every tap even
+  // though the request had genuinely succeeded each time. The store's own
+  // location/status update from requestLocation()'s result doesn't depend
+  // on that event at all, so it can't have the same gap.
+  if (location) return null;
   // Only the genuinely-undecided state gets a nudge -- 'granted' has
   // nothing to do (ensureFreshLocation already handles it silently) and
   // 'denied' can't be fixed from here.
@@ -94,7 +104,16 @@ export function LocationPermissionBanner() {
           <p className="text-muted-foreground">{t("feed.location_banner_description")}</p>
           <div className="pt-1">
             <Button size="sm" onClick={handleEnable} disabled={status === "checking"}>
-              {status === "checking" ? t("interactions.requesting") : t("feed.location_banner_cta")}
+              {/* "requesting" lives under interactions.json's nested "map"
+                  object, not "interactions" -- this file bundles several
+                  namespaces together (interactions/comments/messages/map/
+                  email_confirmation/share/settings/notifications/someone),
+                  so t()'s first path segment has to match the RIGHT one,
+                  not the filename. Confirmed live: t("interactions.requesting")
+                  rendered the literal key text since that path doesn't
+                  exist -- i18next's fallback with no explicit default arg
+                  is the raw key, not a silently-broken blank. */}
+              {status === "checking" ? t("map.requesting") : t("feed.location_banner_cta")}
             </Button>
           </div>
         </div>
