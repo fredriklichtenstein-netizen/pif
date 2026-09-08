@@ -19,12 +19,16 @@ interface ItemCardGalleryProps {
   item_type?: ItemType;
 }
 
+const SWIPE_THRESHOLD = 50;
+
 export function ItemCardGallery({ images, imageCrops = [], title, category, item_type }: ItemCardGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const mountedRef = useRef(true);
+  const touchStartX = useRef<number | null>(null);
+  const touchDeltaX = useRef(0);
   const { translateCategory } = useCategoryTranslations();
   const { t } = useTranslation();
 
@@ -66,6 +70,34 @@ export function ItemCardGallery({ images, imageCrops = [], title, category, item
     setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
   };
 
+  // Trello C1: same touch-handler pattern already proven in ImageLightbox.tsx,
+  // adapted for the one difference that matters here -- this swipe area is
+  // ALSO the tap target that opens the lightbox (onClick below), so a real
+  // swipe has to stop that tap from firing too. preventDefault() in
+  // touchend reliably suppresses the synthetic click that would otherwise
+  // follow on mobile browsers; below the threshold, nothing is called and
+  // the normal click opens the lightbox exactly as before.
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = touchDeltaX.current;
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+    if (Math.abs(delta) < SWIPE_THRESHOLD || imageUrls.length <= 1) return;
+    e.preventDefault();
+    if (delta < 0) handleNext();
+    else handlePrev();
+  };
+
   return (
     <div className="relative aspect-square overflow-hidden">
       {!isImageLoaded && (
@@ -75,6 +107,9 @@ export function ItemCardGallery({ images, imageCrops = [], title, category, item
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         className="block absolute inset-0 w-full h-full p-0 m-0 border-0 bg-transparent cursor-zoom-in overflow-hidden"
         aria-label={t('interactions.expand_image', 'Expand image')}
       >
