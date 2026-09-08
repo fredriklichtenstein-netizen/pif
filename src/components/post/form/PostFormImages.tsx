@@ -141,26 +141,40 @@ export function PostFormImages({
         </div>
       )}
 
-      {phase === 'trim' ? (
-        <PostImageTrimDialog
-          image={cropImage}
-          progress={cropProgress}
-          onRotate={handleRotate}
-          isRotating={isRotating}
-          onApply={handleTrimApply}
-          isApplying={isTrimming}
-          onSkip={handleTrimSkip}
-          onCancel={handleCancelAll}
-        />
-      ) : (
-        <PostImageCropDialog
-          image={cropImage}
-          progress={cropProgress}
-          onSave={handleCropSave}
-          onSkip={handleCropSkip}
-          onCancel={handleCancelAll}
-        />
-      )}
+      {/* Both dialogs stay mounted at all times -- only their `image` prop
+          (and so their own internal Radix `open` state) toggles between
+          phases, via null vs. the real URL. Previously this ternary'd
+          between rendering ONE or the OTHER component, which meant
+          switching phases unmounted whichever Dialog was open and mounted
+          a fresh instance of the other -- on the LAST image, phase and
+          cropImage reset to their initial values in the same batch
+          (useImageCropQueue's cleanup()), so the just-open preview-frame
+          Dialog got torn down mid-close instead of running its own normal
+          close transition. Confirmed live: this left Radix's body
+          scroll-lock/pointer-events stuck, so the wizard's own "Next"
+          button stopped responding to taps after finishing image upload
+          -- nothing wrong with Next itself, the page just couldn't
+          receive clicks anymore. Keeping both components permanently
+          mounted and only toggling `open` (exactly how a single dialog
+          already worked before this was split into two) avoids the
+          unmount-while-open race entirely. */}
+      <PostImageTrimDialog
+        image={phase === 'trim' ? cropImage : null}
+        progress={cropProgress}
+        onRotate={handleRotate}
+        isRotating={isRotating}
+        onApply={handleTrimApply}
+        isApplying={isTrimming}
+        onSkip={handleTrimSkip}
+        onCancel={handleCancelAll}
+      />
+      <PostImageCropDialog
+        image={phase === 'preview' ? cropImage : null}
+        progress={cropProgress}
+        onSave={handleCropSave}
+        onSkip={handleCropSkip}
+        onCancel={handleCancelAll}
+      />
     </div>
   );
 }
