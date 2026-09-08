@@ -44,10 +44,18 @@ export function FeedbackTab() {
     setSubmitting(false);
   };
 
+  // Trello B15: this used to call reset() unconditionally, so dismissing
+  // the panel for ANY reason -- the X button, tapping outside, Escape --
+  // silently wiped whatever the user had typed. Reopening then showed an
+  // empty form with no indication the draft was ever lost. close() now
+  // only hides the panel; the draft (text/mode/screenshot) survives until
+  // either a successful submit (see handleSubmit) or the tab is actually
+  // reopened and cleared some other way. There's no separate "discard
+  // draft" affordance yet -- out of scope for this fix, which is just
+  // about not losing a draft the user never asked to discard.
   const close = () => {
     if (submitting) return;
     setOpen(false);
-    reset();
   };
 
   // Close on outside click or Escape, matching the expected behavior of a
@@ -156,7 +164,10 @@ export function FeedbackTab() {
         title: t("interactions.feedback.success_title"),
         description: t("interactions.feedback.success_description"),
       });
-      close();
+      // Unlike close(), a successful send DOES clear the draft -- there's
+      // nothing left worth keeping once it's actually been sent.
+      setOpen(false);
+      reset();
     } catch (err) {
       console.error("send-feedback failed", err);
       toast({
