@@ -53,7 +53,16 @@ const removePostFromArchivedCache = (
   );
 };
 
-const invalidateOptimizedFeedQueries = (
+/**
+ * Exported so any code path that can move an item off the active feed --
+ * not just this hook's own realtime/event listeners, which only run while
+ * the feed is actually mounted -- can force a fresh fetch on the feed's
+ * next mount/observation, regardless of React Query's staleTime. See
+ * usePifCompletion's notifyFeedItemLeftActivePool for the concrete case
+ * this was added for: completion always happens from the conversation
+ * view, so the feed is essentially never mounted at the moment it occurs.
+ */
+export const invalidateOptimizedFeedQueries = (
   queryClient: ReturnType<typeof useQueryClient>,
 ) => {
   queryClient.invalidateQueries({
