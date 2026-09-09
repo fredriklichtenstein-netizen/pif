@@ -277,7 +277,22 @@ export function PostImageTrimDialog({
                   pointer-events chain). Setting touch-action:none directly
                   on the handles/bars removes any dependency on that
                   ancestor inheritance and is correct regardless of which
-                  browser behavior caused the mobile failure. */}
+                  browser behavior caused the mobile failure.
+
+                  round 7: user-supplied screenshot on an iOS PWA showed the
+                  dashed selection outline tracing the image correctly, but
+                  NO visible handle at any corner -- the library's own
+                  default handle style (--rc-drag-handle-bg-colour: #0003,
+                  a ~20%-opacity black fill, with a 1px semi-transparent
+                  white border) is nominally present and functionally wired
+                  up (round 5/6 already fixed hit-testing), but reads as
+                  near-invisible against a busy/dark real photo -- the user
+                  had no visible affordance to find, so "can't drag the
+                  handles" was actually "can't find the handles to drag."
+                  Overridden below with a fixed-contrast style (solid white
+                  fill, dark border, drop shadow) that reads the same way
+                  regardless of what's underneath, instead of the library's
+                  translucent default which was designed to blend in. */}
               <style>{`
                 .pif-trim-crop .ReactCrop__crop-selection {
                   pointer-events: none;
@@ -287,6 +302,20 @@ export function PostImageTrimDialog({
                 .pif-trim-crop .ReactCrop__drag-bar {
                   pointer-events: auto;
                   touch-action: none;
+                }
+                .pif-trim-crop .ReactCrop__drag-handle {
+                  width: 20px;
+                  height: 20px;
+                  background-color: #ffffff;
+                  border: 2px solid #1a1a1a;
+                  border-radius: 9999px;
+                  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+                }
+                @media (pointer: coarse) {
+                  .pif-trim-crop .ReactCrop__drag-handle {
+                    width: 28px;
+                    height: 28px;
+                  }
                 }
               `}</style>
 
