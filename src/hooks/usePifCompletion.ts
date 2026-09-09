@@ -1,7 +1,52 @@
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { debugLog } from "@/utils/authDebug";
 import { toast } from "@/hooks/use-toast";
+import { clearPostsCache } from "@/services/posts/optimized";
+import { invalidateOptimizedFeedQueries } from "@/hooks/feed/useOptimizedFeed";
+
+/**
+ * Tells the feed a pif/wish just left the active pool, regardless of
+ * whether the feed happens to be mounted right now. Completion always
+ * happens from the conversation view, never from the feed itself, so
+ * useOptimizedFeed's own 'item-operation-success' listener (registered
+ * only while it's mounted) is frequently NOT listening at the moment
+ * this fires -- confirmed live as the actual bug behind "completed pifs
+ * don't disappear from the feed": realtime delivery, RLS, grants, the
+ * server query and the client-side terminal-status filter all check out
+ * correctly (verified directly against production), but two separate
+ * caches sit in front of that correct query, and neither was ever
+ * invalidated by completion:
+ *  - getOptimizedPosts' OWN in-memory cache (services/posts/optimized.ts,
+ *    DatabaseCache, 5-minute TTL) -- module-level, survives the feed
+ *    unmounting. clearPostsCache() is a plain function, not tied to any
+ *    mounted listener, so calling it here works regardless of mount state.
+ *  - React Query's own cache (staleTime 30s) -- a fresh mount within that
+ *    30s window would serve its cached (pre-completion) data WITHOUT even
+ *    calling getOptimizedPosts again, so clearing the cache above alone
+ *    isn't enough. invalidateOptimizedFeedQueries marks the cached query
+ *    stale directly on the shared QueryClient singleton, which (like
+ *    clearPostsCache) needs no mounted observer to take effect -- it's
+ *    the same call useOptimizedFeed's own listeners already make when
+ *    the feed IS mounted, just reachable here too.
+ * The event dispatch alongside both is a bonus for when the feed IS
+ * mounted (immediate fade-out + surgical cache removal, via
+ * useOptimizedFeed's existing 'item-operation-success' handler).
+ */
+function notifyFeedItemLeftActivePool(itemId: number, queryClient: QueryClient) {
+  try {
+    clearPostsCache();
+    invalidateOptimizedFeedQueries(queryClient);
+    document.dispatchEvent(
+      new CustomEvent("item-operation-success", {
+        detail: { itemId, operationType: "archive" },
+      }),
+    );
+  } catch (e) {
+    console.error("Failed to notify feed of item leaving the active pool:", e);
+  }
+}
 
 /**
  * Verify a hydrated Supabase session exists before invoking auth-sensitive
@@ -96,6 +141,7 @@ export function usePifCompletion(
   otherUserId?: string | null,
 ) {
   const id = numericItemId(itemId);
+  const queryClient = useQueryClient();
   const [state, setState] = useState<PifCompletionState>({
     pifferConfirmed: false,
     receiverConfirmed: false,
@@ -261,6 +307,7 @@ export function usePifCompletion(
       const nextStatus = (latestRow?.pif_status as string | undefined) || null;
       const both =
         nextPifferConfirmed && nextReceiverConfirmed;
+      if (both && id !== null) notifyFeedItemLeftActivePool(id, queryClient);
       setState((s) => ({
         ...s,
         pifferConfirmed: nextPifferConfirmed,
@@ -366,7 +413,7 @@ export function usePifCompletion(
       }
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, isRequest, state.pifferConfirmed, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, isRequest, state.pifferConfirmed, state.receiverConfirmed, queryClient],
   );
 
   const completeWithRating = useCallback(
@@ -391,6 +438,7 @@ export function usePifCompletion(
         console.error("complete_pif_with_rating failed:", error);
         return { ok: false, error } as const;
       }
+      notifyFeedItemLeftActivePool(id, queryClient);
       if (conversationId) {
         const pick = (pif: string, wish: string) => (isRequest ? wish : pif);
         // Hard-complete path: receiver hadn't confirmed yet. Only this
@@ -448,7 +496,7 @@ export function usePifCompletion(
       setState((s) => ({ ...s, pifStatus: "completed" }));
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, isRequest, state.receiverConfirmed],
+    [id, conversationId, currentUserId, otherUserId, isRequest, state.receiverConfirmed, queryClient],
   );
 
   const withdraw = useCallback(
@@ -467,6 +515,7 @@ export function usePifCompletion(
         console.error("withdraw_pif failed:", error);
         return { ok: false, error } as const;
       }
+      if (action === "archive") notifyFeedItemLeftActivePool(id, queryClient);
       // System messages + notifications are emitted server-side by
       // withdraw_pif. Avoid duplicate client-side inserts here.
       try {
@@ -491,7 +540,7 @@ export function usePifCompletion(
       }
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, isRequest],
+    [id, conversationId, currentUserId, otherUserId, isRequest, queryClient],
   );
 
   const undoConfirmation = useCallback(

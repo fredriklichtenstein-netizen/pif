@@ -1,9 +1,12 @@
 
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 import { useTranslation } from 'react-i18next';
+import { clearPostsCache } from '@/services/posts/optimized';
+import { invalidateOptimizedFeedQueries } from '@/hooks/feed/useOptimizedFeed';
 
 interface UseItemOperationsProps {
   onSuccess?: (operationType?: OperationType) => void;
@@ -13,6 +16,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   const checkInterestedCount = useCallback(async (itemId: string | number): Promise<number> => {
@@ -62,6 +66,17 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         console.warn('notify_item_interest_event (archive) failed', e);
       }
       try {
+        // clearPostsCache() alongside the event: the event only reaches
+        // useOptimizedFeed's listener while the feed is actually mounted
+        // (registered in a useEffect) -- archiving from a page where the
+        // feed isn't open (e.g. item detail) would otherwise leave the
+        // feed's own in-memory query cache (5-minute TTL, module-level,
+        // survives unmount) serving the pre-archive list on the next
+        // visit even though the DB is already correct. Same fix as
+        // usePifCompletion's notifyFeedItemLeftActivePool, applied here
+        // for the same underlying gap.
+        clearPostsCache();
+        invalidateOptimizedFeedQueries(queryClient);
         document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'archive' } }));
       } catch (e) { console.error('Failed to dispatch archive event:', e); }
       if (onSuccess) onSuccess('archive');
@@ -73,7 +88,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
       toast({ title: t('interactions.error_title'), description: errorMsg, variant: "destructive" });
       return false;
     } finally { setIsProcessing(false); }
-  }, [toast, onSuccess, t]);
+  }, [toast, onSuccess, t, queryClient]);
   
   const deleteItem = useCallback(async (itemId: string | number, reason?: string): Promise<boolean> => {
     setIsProcessing(true);
@@ -95,6 +110,8 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
       }
       toast({ title: t('interactions.item_deleted'), description: t('interactions.item_deleted_description') });
       try {
+        clearPostsCache();
+        invalidateOptimizedFeedQueries(queryClient);
         document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'delete' } }));
       } catch (e) { console.error('Failed to dispatch delete event:', e); }
       if (onSuccess) onSuccess('delete');
@@ -106,7 +123,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
       toast({ title: t('interactions.error_title'), description: errorMsg, variant: "destructive" });
       return false;
     } finally { setIsProcessing(false); }
-  }, [toast, onSuccess, t]);
+  }, [toast, onSuccess, t, queryClient]);
   
   const restoreItem = useCallback(async (itemId: string | number): Promise<boolean> => {
     setIsProcessing(true);
@@ -129,6 +146,8 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
       }
       toast({ title: t('interactions.item_restored_op'), description: t('interactions.item_restored_op_description') });
       try {
+        clearPostsCache();
+        invalidateOptimizedFeedQueries(queryClient);
         document.dispatchEvent(new CustomEvent('item-operation-success', { detail: { itemId: numericId, operationType: 'restore' } }));
         document.dispatchEvent(new CustomEvent('item-operation-undone', { detail: { itemId: numericId, operationType: 'archive' } }));
       } catch (e) { console.error('Failed to dispatch restore event:', e); }
@@ -141,7 +160,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
       toast({ title: t('interactions.error_title'), description: errorMsg, variant: "destructive" });
       return false;
     } finally { setIsProcessing(false); }
-  }, [toast, onSuccess, t]);
+  }, [toast, onSuccess, t, queryClient]);
 
   return { isProcessing, error, checkInterestedCount, archiveItem, deleteItem, restoreItem };
 }
