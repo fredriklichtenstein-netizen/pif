@@ -8,7 +8,11 @@ interface LocationStorage {
   clearStoredData: () => void;
 }
 
-const LOCATION_KEY = 'pif_user_location';
+/** Exported so liveLocationStore (Trello C8) can write the same key when
+ *  an explicit permission grant produces a fresh fix -- keeps the feed
+ *  distance filter and map, which read via getStoredLocation(), in sync
+ *  with what the onboarding step / settings toggle just obtained. */
+export const LOCATION_KEY = 'pif_user_location';
 const TRACKING_KEY = 'pif_location_tracking';
 
 const isLngLat = (v: unknown): v is [number, number] =>

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmailPasswordSettings } from "@/components/settings/EmailPasswordSettings";
+import { LocationAccessSettings } from "@/components/settings/LocationAccessSettings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { DangerZone } from "@/components/settings/DangerZone";
@@ -84,6 +85,12 @@ export default function AccountSettings() {
                 </CardHeader>
                 <CardContent>
                   <LanguageSelector />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <LocationAccessSettings />
                 </CardContent>
               </Card>
 

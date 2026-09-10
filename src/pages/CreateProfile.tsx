@@ -14,11 +14,12 @@ import { StepWelcomeName } from "@/components/profile/onboarding/StepWelcomeName
 import { StepAvatar } from "@/components/profile/onboarding/StepAvatar";
 import { StepAddressPhone } from "@/components/profile/onboarding/StepAddressPhone";
 import { StepPickupPreferences } from "@/components/profile/onboarding/StepPickupPreferences";
+import { StepLocationPermission } from "@/components/profile/onboarding/StepLocationPermission";
 import type { PickupPreferencesData } from "@/components/profile/PickupPreferencesFields";
 
 type Coordinates = { lat: number; lng: number };
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 // Mirror PrivateRoute/Profile: never let the prefill auth fetch spin forever.
 const PREFILL_AUTH_TIMEOUT_MS = 5000;
@@ -52,7 +53,7 @@ export default function CreateProfile() {
   const [prefillLoading, setPrefillLoading] = useState(true);
   const [bailOut, setBailOut] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [loading, setLoading] = useState(false);
 
   const [firstName, setFirstName] = useState("");
@@ -179,6 +180,7 @@ export default function CreateProfile() {
   };
 
   const handleComplete = async () => {
+    if (loading) return; // re-entrancy guard: step 5 has two onComplete triggers
     if (!coordinates) return;
     if (!avatarFile && !existingAvatarUrl) return;
     setLoading(true);
@@ -364,6 +366,15 @@ export default function CreateProfile() {
                 loading={loading}
                 onChange={setPickupData}
                 onBack={() => setStep(3)}
+                onComplete={() => setStep(5)}
+                advanceLabel={t("profile.onboarding.next")}
+              />
+            )}
+
+            {step === 5 && (
+              <StepLocationPermission
+                loading={loading}
+                onBack={() => setStep(4)}
                 onComplete={handleComplete}
               />
             )}

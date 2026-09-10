@@ -10,6 +10,10 @@ interface StepPickupPreferencesProps {
   onChange: (data: PickupPreferencesData) => void;
   onBack: () => void;
   onComplete: () => void;
+  /** Override the advance button's label — defaults to the "complete"
+   *  copy. Set to "next" when another step follows (Trello C8 added a
+   *  location step after this one). */
+  advanceLabel?: string;
 }
 
 /**
@@ -24,9 +28,11 @@ export function StepPickupPreferences({
   onChange,
   onBack,
   onComplete,
+  advanceLabel,
 }: StepPickupPreferencesProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const advanceCopy = advanceLabel ?? t("profile.onboarding.complete");
 
   if (!expanded) {
     return (
@@ -66,7 +72,7 @@ export function StepPickupPreferences({
           {t("profile.onboarding.back")}
         </Button>
         <Button className="flex-1" onClick={onComplete} disabled={loading}>
-          {loading ? t("profile.onboarding.saving") : t("profile.onboarding.complete")}
+          {loading ? t("profile.onboarding.saving") : advanceCopy}
         </Button>
       </div>
     </div>
