@@ -101,7 +101,13 @@
       "pickup_prompt_title": "Vill du ange dina standardinställningar för överlämning?",
       "pickup_prompt_subtext": "Detta gör det snabbare att skapa nya piffar framöver — inställningarna används automatiskt om du inte anger något annat för ett specifikt inlägg. Du kan alltid ändra detta senare i profilinställningarna.",
       "pickup_prompt_yes": "Ja, lägg till nu",
-      "pickup_prompt_later": "Lägg till senare i Profilinställningar"
+      "pickup_prompt_later": "Lägg till senare i Profilinställningar",
+      "location_title": "Se avstånd till dina grannar",
+      "location_subtext": "Dela din plats för att se hur nära varje pif och önskan är, filtrera flödet efter avstånd och hitta dig själv på kartan. Du kan ändra detta när som helst i inställningarna.",
+      "location_allow": "Tillåt plats",
+      "location_skip": "Hoppa över",
+      "location_already_on": "Platsåtkomst är redan på.",
+      "location_denied_hint": "Platsåtkomst är blockerad i webbläsaren. Du kan tillåta den senare via inställningarna och webbläsarens sidinställningar."
     }
   }
 }

@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { safeStringify } from "@/utils/safeStorage";
+import { LOCATION_KEY } from "@/components/map/location/useLocationStorage";
 
 /**
  * Passive, silent "live" location for feed distance badges.
@@ -41,8 +43,14 @@ interface LiveLocationState {
    *  permission isn't already 'granted'. */
   ensureFreshLocation: () => Promise<void>;
   /** User-gesture-triggered: DOES surface the native permission prompt if
-   *  permission is still undecided. Safe to call even mid-check. */
-  requestLocation: () => Promise<void>;
+   *  permission is still undecided. Safe to call even mid-check. Resolves
+   *  once the outcome is known -- `"granted"` when a fix came back (and was
+   *  written to both this store and the `pif_user_location` localStorage
+   *  the feed/map read), `"denied"` on an explicit permission denial,
+   *  `"unavailable"` for anything else (no geolocation, timeout, error).
+   *  The onboarding step and settings control (Trello C8) await this to
+   *  decide what to show next. */
+  requestLocation: () => Promise<"granted" | "denied" | "unavailable">;
 }
 
 function isFresh(fetchedAt: number | null): boolean {
@@ -52,38 +60,47 @@ function isFresh(fetchedAt: number | null): boolean {
 /** Shared fetch/retry logic for both actions below. A cold GPS fix
  *  commonly fails/times out on the first request even with permission
  *  already granted (same pattern as the map's "current location"
- *  button) -- retry once automatically before giving up. */
-function fetchAndStore(set: (partial: Partial<LiveLocationState>) => void) {
+ *  button) -- retry once automatically before giving up. Resolves with
+ *  the outcome so `requestLocation` callers can react. */
+function fetchAndStore(
+  set: (partial: Partial<LiveLocationState>) => void,
+): Promise<"granted" | "denied" | "unavailable"> {
   set({ status: "checking" });
 
-  const onSuccess = (position: GeolocationPosition) => {
-    set({
-      location: [position.coords.longitude, position.coords.latitude],
-      fetchedAt: Date.now(),
-      status: "idle",
-    });
-  };
+  return new Promise((resolve) => {
+    const onSuccess = (position: GeolocationPosition) => {
+      set({
+        location: [position.coords.longitude, position.coords.latitude],
+        fetchedAt: Date.now(),
+        status: "idle",
+      });
+      resolve("granted");
+    };
 
-  const onFinalError = (error: GeolocationPositionError) => {
-    console.warn("[liveLocationStore] geolocation failed:", error);
-    set({ status: "unavailable" });
-  };
-
-  navigator.geolocation.getCurrentPosition(
-    onSuccess,
-    (error) => {
-      if (error.code === error.PERMISSION_DENIED) {
-        onFinalError(error);
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        onSuccess,
-        onFinalError,
-        { enableHighAccuracy: false, maximumAge: 10000, timeout: 15000 },
+    const onFinalError = (error: GeolocationPositionError) => {
+      console.warn("[liveLocationStore] geolocation failed:", error);
+      set({ status: "unavailable" });
+      resolve(
+        error.code === error.PERMISSION_DENIED ? "denied" : "unavailable",
       );
-    },
-    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
-  );
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      onSuccess,
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          onFinalError(error);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          onFinalError,
+          { enableHighAccuracy: false, maximumAge: 10000, timeout: 15000 },
+        );
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
+    );
+  });
 }
 
 export const useLiveLocationStore = create<LiveLocationState>((set, get) => ({
@@ -119,16 +136,25 @@ export const useLiveLocationStore = create<LiveLocationState>((set, get) => ({
       return;
     }
 
-    fetchAndStore(set);
+    await fetchAndStore(set);
   },
 
   requestLocation: async () => {
     const state = get();
-    if (state.status === "checking") return;
+    if (state.status === "checking") return "unavailable";
     if (!navigator.geolocation) {
       set({ status: "unavailable" });
-      return;
+      return "unavailable";
     }
-    fetchAndStore(set);
+    const outcome = await fetchAndStore(set);
+    if (outcome === "granted") {
+      const loc = get().location;
+      // Mirror the fresh fix into the localStorage key the feed distance
+      // filter and map read (useLocationStorage) -- only on this explicit,
+      // user-gesture path (Trello C8), NOT the silent ensureFreshLocation
+      // one, so `pif_user_location` stays a deliberate choice.
+      if (loc) safeStringify(LOCATION_KEY, loc);
+    }
+    return outcome;
   },
 }));

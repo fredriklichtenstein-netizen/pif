@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { useLiveLocationStore } from "@/stores/liveLocationStore";
+import { useGeolocationPermission } from "@/hooks/useGeolocationPermission";
 
 const DISMISS_KEY = "pif.locationBanner.dismissed";
 
@@ -26,8 +27,8 @@ export function LocationPermissionBanner() {
   const requestLocation = useLiveLocationStore((s) => s.requestLocation);
   const status = useLiveLocationStore((s) => s.status);
   const location = useLiveLocationStore((s) => s.location);
+  const { permission: permissionState } = useGeolocationPermission();
 
-  const [permissionState, setPermissionState] = useState<PermissionState | "unsupported" | null>(null);
   const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
       return window.sessionStorage.getItem(DISMISS_KEY) === "1";
@@ -35,33 +36,6 @@ export function LocationPermissionBanner() {
       return false;
     }
   });
-
-  useEffect(() => {
-    if (!navigator.permissions) {
-      setPermissionState("unsupported");
-      return;
-    }
-    let cancelled = false;
-    let permissionStatus: PermissionStatus | undefined;
-    const onChange = () => {
-      if (!cancelled && permissionStatus) setPermissionState(permissionStatus.state);
-    };
-    navigator.permissions
-      .query({ name: "geolocation" as PermissionName })
-      .then((p) => {
-        if (cancelled) return;
-        permissionStatus = p;
-        setPermissionState(p.state);
-        p.addEventListener("change", onChange);
-      })
-      .catch(() => {
-        if (!cancelled) setPermissionState("unsupported");
-      });
-    return () => {
-      cancelled = true;
-      permissionStatus?.removeEventListener("change", onChange);
-    };
-  }, []);
 
   const handleDismiss = () => {
     try {

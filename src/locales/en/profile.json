@@ -101,7 +101,13 @@
       "pickup_prompt_title": "Want to set your default hand-off preferences?",
       "pickup_prompt_subtext": "This makes creating new pifs faster — the settings are used automatically unless you set something different for a specific post. You can always change this later in Profile Settings.",
       "pickup_prompt_yes": "Yes, add now",
-      "pickup_prompt_later": "Add later in Profile Settings"
+      "pickup_prompt_later": "Add later in Profile Settings",
+      "location_title": "See distances to your neighbours",
+      "location_subtext": "Share your location to see how close each pif and wish is, filter the feed by distance, and find yourself on the map. You can change this any time in settings.",
+      "location_allow": "Allow location",
+      "location_skip": "Skip",
+      "location_already_on": "Location access is already on.",
+      "location_denied_hint": "Location access is blocked in your browser. You can allow it later via settings and your browser's site permissions."
     }
   }
 }
