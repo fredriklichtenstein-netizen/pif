@@ -33,8 +33,14 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://app.pif.community/item/19</loc>
-    <lastmod>2026-08-09</lastmod>
+    <loc>https://app.pif.community/item/21</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.pif.community/item/20</loc>
+    <lastmod>2026-09-08</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
