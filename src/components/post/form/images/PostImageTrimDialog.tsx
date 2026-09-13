@@ -197,35 +197,30 @@ export function PostImageTrimDialog({
 
           {image && (
             <div className="space-y-4">
-              {/* p-4 + max-h-[392px]: adversarial review (round 6) traced
-                  the actual box model and found the corner resize handles
-                  are centered ON the crop-selection's corners via
-                  `transform: translate(50%, 50%)`, so ~half of each
-                  handle's hit area (up to 12px of the 24px mobile-bumped
-                  size) necessarily sits OUTSIDE the image's own box. With
-                  no buffer, this container's overflow-hidden (needed to
-                  clip the image to rounded-md) was clipping that outward
-                  half away too -- not just visually but for hit-testing,
-                  since CSS overflow clips both. Since overflow clips at
-                  the padding edge (not the content edge), padding creates
-                  a buffer zone the handles can overflow into while
-                  staying tappable, without dropping overflow-hidden
-                  (which would reintroduce square image corners poking
-                  past the rounded container on whichever axis the image
-                  is flush against the cap).
-                  max-h bumped from 360 to 392 (360 + 2*16px padding) in
-                  the SAME pass: Tailwind's border-box preflight means
-                  max-height caps padding+content together, so p-4 alone
-                  would have shrunk the available content height to 328px
-                  -- for any image tall enough to hit ITS OWN independent
-                  max-h-[360px] (the <img> tag below, unchanged), that's a
-                  32px overflow clipped by this same overflow-hidden,
-                  re-clipping exactly the top/bottom edge handles this fix
-                  was meant to free, on top of visibly cropping real photo
-                  content. 392px keeps the content budget at the original
-                  360px the image already assumes, with padding now
-                  genuinely additive outside it. */}
-              <div className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[392px] p-4">
+              {/* p-8 (round 8, up from round 6's p-4): a user report
+                  ("unable to pull the crop handles for rectangle shaped
+                  image") plus a fresh adversarial pass found the round-6
+                  buffer left only a ~2px safety margin on whichever axis
+                  the image is bound (height via the <img>'s own max-h, or
+                  width via max-w-full) -- worked out with real numbers for
+                  several aspect ratios, that margin turned out to be
+                  IDENTICAL regardless of image shape (not thinner for
+                  rectangles specifically -- that part of the original
+                  round-6 reasoning didn't hold up), but it's still a real,
+                  needlessly thin margin that sub-pixel/DPR rounding could
+                  plausibly eat into on some devices. Bumped to 32px per
+                  side for real headroom (18px margin instead of 2px).
+                  Deliberately did NOT grow the container's own
+                  max-h-[392px] to compensate this time (round 6's
+                  max-h-[360->392] approach): a second review flagged that
+                  this dialog has no scroll fallback (plain shadcn
+                  DialogContent), so a taller crop area risks pushing the
+                  footer buttons off-screen on short viewports. Instead the
+                  <img>'s own cap below is shrunk from 360 to 328
+                  (392 - 2*32) so the TOTAL container height stays exactly
+                  392px as before -- same dialog height, same net budget,
+                  just reapportioned from image space to buffer space. */}
+              <div className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[392px] p-8">
                 <ReactCrop
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(clampPercentCrop(percentCrop))}
@@ -240,7 +235,7 @@ export function PostImageTrimDialog({
                     ref={imgRef}
                     src={image}
                     alt=""
-                    className="max-h-[360px] max-w-full"
+                    className="max-h-[328px] max-w-full"
                     onLoad={handleImageLoad}
                   />
                 </ReactCrop>
@@ -292,7 +287,36 @@ export function PostImageTrimDialog({
                   Overridden below with a fixed-contrast style (solid white
                   fill, dark border, drop shadow) that reads the same way
                   regardless of what's underneath, instead of the library's
-                  translucent default which was designed to blend in. */}
+                  translucent default which was designed to blend in.
+
+                  round 8: a real user report -- "unable to pull the crop
+                  handles for rectangle shaped image" -- traced to
+                  react-image-crop's OWN default stylesheet (not anything
+                  from round 5/6/7), confirmed by reading its source
+                  directly: `@media (pointer:coarse){.ord-n,.ord-e,.ord-s,
+                  .ord-w{display:none}}` unconditionally hides the four
+                  MID-EDGE handles/bars on any touchscreen, leaving only
+                  the 4 corners -- and a corner drag always recomputes
+                  BOTH width and height together (confirmed in
+                  resizeCrop()'s source: corners are in the "xyOrds" set,
+                  which never resizes a single axis independently). So on
+                  mobile there was never a way to trim just one side of a
+                  photo while keeping the other dimension untouched --
+                  exactly the natural gesture "rectangle shaped image"
+                  implies (crop off empty width, keep full height, or vice
+                  versa), and exactly what a square photo doesn't
+                  especially invite trying (shrinking evenly via a corner
+                  already looks right for a square). This was true from
+                  round 3 onward, not a round 6/7 regression -- it just
+                  took a real rectangular photo + a user who wanted
+                  single-axis trimming to surface it. Fixed by overriding
+                  the library's own hide rule for our freeform (no aspect
+                  lock) use case, restoring the same mid-edge affordance
+                  desktop mouse users already had (mouse never triggers
+                  `pointer:coarse`, so this was mobile-only). The existing
+                  handle-dot styling above already applies to ord-n/e/s/w
+                  too (not corner-scoped), so no extra visibility work
+                  needed once unhidden. */}
               <style>{`
                 .pif-trim-crop .ReactCrop__crop-selection {
                   pointer-events: none;
@@ -315,6 +339,12 @@ export function PostImageTrimDialog({
                   .pif-trim-crop .ReactCrop__drag-handle {
                     width: 28px;
                     height: 28px;
+                  }
+                  .pif-trim-crop .ReactCrop .ord-n,
+                  .pif-trim-crop .ReactCrop .ord-e,
+                  .pif-trim-crop .ReactCrop .ord-s,
+                  .pif-trim-crop .ReactCrop .ord-w {
+                    display: block;
                   }
                 }
               `}</style>
