@@ -43,6 +43,20 @@ interface PostImageTrimDialogProps {
   onCancel: () => void;
 }
 
+/** Round 9: react-image-crop's OWN minWidth/minHeight props were removed
+ *  from <ReactCrop> below after confirming this is a known, unresolved,
+ *  multi-report upstream bug (github.com/sekoyo/react-image-crop issues
+ *  #61, #300, #554, #502) -- passing them makes getPointRegion() use a
+ *  position-INDEPENDENT branch ("never flip") instead of comparing the
+ *  live pointer position, which corrupts single-axis mid-edge resizing
+ *  (confirmed live: north/west edges became undraggable while east/south
+ *  kept working, matching this bug class exactly -- one report states
+ *  plainly "the issue does not occur when minHeight and minWidth props
+ *  are removed"). Enforced the same practical floor ourselves instead,
+ *  in the Beskär button's disabled check below, which the library can't
+ *  corrupt since it never touches the drag math. */
+const MIN_CROP_SIZE_PX = 20;
+
 /** Clamps a percent-unit crop so it can never extend past the image's own
  *  0-100 bounds, regardless of what a drag/resize gesture reported.
  *  react-image-crop is a CONTROLLED component here (crop driven by our own
@@ -226,10 +240,11 @@ export function PostImageTrimDialog({
                   onChange={(_, percentCrop) => setCrop(clampPercentCrop(percentCrop))}
                   onComplete={(c) => setCompletedCrop(c)}
                   keepSelection
-                  minWidth={20}
-                  minHeight={20}
                   // No `aspect` prop -- that's what makes this freeform,
                   // unlike the preview-frame step's locked aspect={1}.
+                  // No `minWidth`/`minHeight` either (round 9) -- see the
+                  // MIN_CROP_SIZE_PX comment above; enforced ourselves in
+                  // the Beskär button's disabled check instead.
                 >
                   <img
                     ref={imgRef}
@@ -391,7 +406,12 @@ export function PostImageTrimDialog({
             <Button
               type="button"
               onClick={() => setTrimConfirmOpen(true)}
-              disabled={!completedCrop?.width || isApplying}
+              disabled={
+                !completedCrop?.width ||
+                completedCrop.width < MIN_CROP_SIZE_PX ||
+                completedCrop.height < MIN_CROP_SIZE_PX ||
+                isApplying
+              }
             >
               {isApplying ? (
                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
