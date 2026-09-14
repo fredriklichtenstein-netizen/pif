@@ -166,7 +166,34 @@ export function PostImageTrimDialog({
         }}
       >
         <DialogContent
-          className="sm:max-w-[480px]"
+          className="sm:max-w-[480px] max-h-90dvh overflow-y-auto"
+          // Round 10: rounds 8/9 fixed the mid-edge handles' own CSS/JS and
+          // both were confirmed byte-exact in the live bundle, yet the user
+          // still couldn't reach the north/south handles on mobile -- while
+          // east/west worked fine. That east/west-only-works asymmetry is
+          // the tell: shadcn's base DialogContent (dialog.tsx) has no
+          // max-height or scroll fallback at all -- it's `fixed ...
+          // translate-x/y(-50%)`, sized purely by content. This dialog's
+          // content stack (header text + rotate row + the crop wrapper's
+          // fixed 392px + footer) can exceed a real mobile viewport's
+          // height, and because the dialog is centered via translate(-50%),
+          // any overflow pushes equally off BOTH the top and bottom of the
+          // screen -- never left/right, since width is separately capped by
+          // max-w-[480px] and never overflows. That cuts off exactly the
+          // north/south handles (rendered at the very top/bottom of the
+          // crop area) while east/west (positioned mid-height, within the
+          // horizontally-centered and never-overflowing width) stay fully
+          // reachable -- matching the report exactly, and explaining why it
+          // took a genuinely tall/portrait image ("rectangle shaped") to
+          // surface it: a landscape image renders shorter within the same
+          // 392px budget, so its dialog is shorter overall and may never
+          // hit this. Fixed the same way profile/PostModal.tsx already
+          // handles a similarly tall dialog: cap height and let it scroll
+          // instead of silently rendering off-screen. Uses the existing
+          // dvh-utility pattern (see index.css's .max-h-70dvh comment on
+          // why plain `vh` is unreliable on mobile) rather than the `vh`
+          // PostModal itself uses, for the same reason.
+          //
           // Round 6 (2nd pass): the guard above only covers the AlertDialog
           // OPENING (trimConfirmOpen is already false again by the time any
           // of ITS close paths -- Avbryt, Escape, outside-click, or even a

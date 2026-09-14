@@ -222,6 +222,10 @@
     max-height: 70vh;
     max-height: 70dvh;
   }
+  .max-h-90dvh {
+    max-height: 90vh;
+    max-height: 90dvh;
+  }
   .pt-safe { padding-top: env(safe-area-inset-top); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   .pl-safe { padding-left: env(safe-area-inset-left); }
