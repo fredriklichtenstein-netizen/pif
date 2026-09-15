@@ -302,15 +302,67 @@ export function PostImageTrimDialog({
                   max-h-[392px] to compensate this time (round 6's
                   max-h-[360->392] approach): a second review flagged that
                   this dialog has no scroll fallback (plain shadcn
-                  DialogContent), so a taller crop area risks pushing the
-                  footer buttons off-screen on short viewports. Instead the
-                  <img>'s own cap below is shrunk from 360 to 328
-                  (392 - 2*32) so the TOTAL container height stays exactly
-                  392px as before -- same dialog height, same net budget,
-                  just reapportioned from image space to buffer space. */}
+                  DialogContent) -- fixed properly in round 10 below. The
+                  <img>'s own size cap (originally shrunk 360->328 here to
+                  keep the total footprint at 392) was superseded in round
+                  12 below by a fixed, format-independent size -- see that
+                  comment for the current numbers; this p-8 outer buffer
+                  is unchanged and still applies on top of it. */}
+              {/* Round 12: rounds 8-11 fixed the handles' CSS visibility,
+                  the library's own resize math, the dialog's height/scroll,
+                  and added a WebKit touch-gesture workaround -- all
+                  individually verified correct (round 8/10 CSS confirmed
+                  byte-exact live, round 9/11 confirmed via a real headless-
+                  engine reproduction), yet the user's real iOS Safari device
+                  still reports the exact same symptom, unchanged. Rather
+                  than keep chasing theories that verify correct in
+                  isolation but don't resolve the actual on-device behavior,
+                  switched to a format-independent structural guarantee
+                  instead: previously the image could butt right up against
+                  the wrapper's padding edge on whichever axis it was
+                  "bound" on (max-h-[328px] exactly matched the vertical
+                  content budget for a height-bound/portrait image, same gap
+                  as the horizontal one only by coincidence of the specific
+                  numbers chosen in round 8).
+
+                  First attempt here used percentage max-h/max-w on the
+                  <img> (82% of the wrapper's content box) -- verified
+                  BROKEN before shipping via a real headless-engine
+                  reproduction of this exact DOM, not just reasoned about:
+                  react-image-crop's own .ReactCrop/.ReactCrop__child-wrapper
+                  are shrink-to-fit boxes with no definite height, so a
+                  percentage max-height on the <img> silently resolves to
+                  `none` (ignored) per spec -- and worse, a percentage
+                  max-WIDTH also broke horizontal centering, because
+                  .ReactCrop's own shrink-to-fit width computation used the
+                  full available width rather than narrowing to match the
+                  now-smaller image, leaving the image flush against the
+                  left padding edge with all the slack dumped on the right
+                  (measured live: 32px left vs 82px right, not the
+                  symmetric split centering is supposed to produce).
+
+                  Fixed version below uses FIXED PIXEL dimensions instead
+                  (same proven mechanism round 8 already used for the
+                  height axis alone, now applied to both the wrapper and
+                  the image on both axes) -- sidesteps the percentage-
+                  resolution circularity entirely. Wrapper is now a fixed
+                  260x392 "stage" (mx-auto to stay centered in wider
+                  dialogs), and the image caps at 160x260 (~80% of the
+                  wrapper's 196x328 content box on the binding axis, more
+                  on the other) -- confirmed via the same reproduction:
+                  symmetric ~50px+ margin on every side across portrait/
+                  landscape/square test images, and confirmed the fixed
+                  260px wrapper width doesn't overflow even a 360px-wide
+                  viewport (a common Android baseline, narrower than any
+                  iPhone) with real margin to spare. Deliberately NOT sized
+                  to use all available width on wider dialogs (a cosmetic
+                  cost on desktop, where this was never actually broken --
+                  round 6 confirmed desktop cropping worked from the start)
+                  in exchange for a guarantee that holds on the narrowest
+                  real device rather than a responsive-but-riskier layout. */}
               <div
                 ref={cropWrapperRef}
-                className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[392px] p-8"
+                className="pif-trim-crop mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden w-[260px] h-[392px] p-8"
               >
                 <ReactCrop
                   crop={crop}
@@ -327,7 +379,7 @@ export function PostImageTrimDialog({
                     ref={imgRef}
                     src={image}
                     alt=""
-                    className="max-h-[328px] max-w-full"
+                    className="max-h-[260px] max-w-[160px]"
                     onLoad={handleImageLoad}
                   />
                 </ReactCrop>
