@@ -111,6 +111,7 @@ export function PostImageTrimDialog({
 }: PostImageTrimDialogProps) {
   const { t } = useTranslation();
   const imgRef = useRef<HTMLImageElement>(null);
+  const cropWrapperRef = useRef<HTMLDivElement>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [trimConfirmOpen, setTrimConfirmOpen] = useState(false);
@@ -119,6 +120,52 @@ export function PostImageTrimDialog({
     setCrop(undefined);
     setCompletedCrop(undefined);
     setTrimConfirmOpen(false);
+  }, [image]);
+
+  /** Round 11: rounds 8-10 fixed the handles' CSS visibility, the library's
+   *  own resize math (minWidth/minHeight removal), and the dialog's own
+   *  height/scroll -- all independently confirmed correct via a real
+   *  headless-engine reproduction (exact positioning AND resize math both
+   *  checked out, including the exact compound "drag left edge, then drag
+   *  top edge" sequence from the user's own report). Yet the user's real
+   *  iOS Safari device still couldn't drag the north/south handles, while
+   *  east/west worked. The one thing no available tool can reproduce is
+   *  WebKit's native touch-vs-scroll gesture arbitration, which runs on the
+   *  compositor BEFORE any JS executes -- `touch-action: none` (set on
+   *  these handles since round 6, both directly and via the library's own
+   *  cascading rule on .ReactCrop__crop-selection) is the correct, spec-
+   *  compliant way to opt out of that, but has a well-documented history of
+   *  gaps specifically on iOS Safari for touch sequences that begin inside
+   *  a nested/transformed layout (this Dialog is centered via `transform:
+   *  translate(-50%,-50%)`, and round 10 just made it scrollable too,
+   *  giving iOS's gesture recognizer a real competing vertical-scroll
+   *  target to resolve toward -- east/west drags have no such competing
+   *  gesture, which would explain the asymmetry even if touch-action is
+   *  technically correct). The standard, widely-precedented workaround for
+   *  this exact class of iOS bug (used by most touch-drag libraries) is a
+   *  manually-attached, non-passive `touchstart` listener that force-calls
+   *  preventDefault() -- CSS touch-action alone isn't always enough on iOS
+   *  Safari, but JS can still win the race if attached in the capture phase
+   *  before the browser commits to a scroll. React's own synthetic event
+   *  system doesn't cover this (React defaults touchstart/touchmove to
+   *  passive for perf, which would make preventDefault() a no-op), so this
+   *  has to be a real addEventListener, not a JSX onTouchStart prop. */
+  useEffect(() => {
+    const wrapper = cropWrapperRef.current;
+    if (!wrapper) return;
+
+    const blockScrollOnHandle = (e: TouchEvent) => {
+      const target = e.target;
+      if (
+        target instanceof Element &&
+        (target.closest(".ReactCrop__drag-handle") || target.closest(".ReactCrop__drag-bar"))
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    wrapper.addEventListener("touchstart", blockScrollOnHandle, { capture: true, passive: false });
+    return () => wrapper.removeEventListener("touchstart", blockScrollOnHandle, { capture: true } as EventListenerOptions);
   }, [image]);
 
   /** Seeds the crop box to cover the whole rendered image as soon as it
@@ -261,7 +308,10 @@ export function PostImageTrimDialog({
                   (392 - 2*32) so the TOTAL container height stays exactly
                   392px as before -- same dialog height, same net budget,
                   just reapportioned from image space to buffer space. */}
-              <div className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[392px] p-8">
+              <div
+                ref={cropWrapperRef}
+                className="pif-trim-crop flex items-center justify-center bg-muted rounded-md overflow-hidden max-h-[392px] p-8"
+              >
                 <ReactCrop
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(clampPercentCrop(percentCrop))}
