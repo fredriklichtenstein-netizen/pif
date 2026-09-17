@@ -21,9 +21,19 @@ import { DEMO_MODE } from '@/config/demoMode';
 import { useTranslation } from 'react-i18next';
 import { useDistanceFiltering } from '@/hooks/useDistanceFiltering';
 import { useLocationStorage } from '@/components/map/location/useLocationStorage';
+import { useLocationProvider } from '@/components/map/location/useLocationProvider';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useFeedFiltersStore } from '@/stores/feedFiltersStore';
 import { applyPostFilters } from '@/utils/postFilters';
+import { sortPosts, type FeedSortMode } from '@/utils/postSort';
 import { useMyInterestedIds } from '@/hooks/useMyInterestedIds';
 import { useMyLikedIds } from '@/hooks/useMyLikedIds';
 import { useMyCommentedIds } from '@/hooks/useMyCommentedIds';
@@ -35,6 +45,8 @@ import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import type { Post } from '@/types/post';
+
+const FEED_SORT_STORAGE_KEY = 'feed_sort_mode';
 
 export function OptimizedFeedContainer() {
   const { user } = useGlobalAuth();
@@ -120,10 +132,54 @@ function OptimizedFeedBody({
 
   // Shared with the map view (same localStorage key) so the user only
   // has to grant location once and the distance preference syncs.
-  const { getStoredLocation } = useLocationStorage();
+  const { getStoredLocation, setStoredLocation } = useLocationStorage();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     () => getStoredLocation()
   );
+
+  // Trello: "Sort the feed on distance and/or on published time." Persisted
+  // the same way useDistanceFiltering persists selectedDistance (plain
+  // sessionStorage, not the shared feedFiltersStore) -- sort is feed-only,
+  // the map view has no equivalent linear order to sort.
+  const [sortBy, setSortByState] = useState<FeedSortMode>(() => {
+    try {
+      const raw = sessionStorage.getItem(FEED_SORT_STORAGE_KEY);
+      return raw === 'distance' ? 'distance' : 'recent';
+    } catch {
+      return 'recent';
+    }
+  });
+  const { startTracking } = useLocationProvider();
+  const { toast } = useToast();
+
+  const setSortBy = useCallback((mode: FeedSortMode) => {
+    setSortByState(mode);
+    try {
+      sessionStorage.setItem(FEED_SORT_STORAGE_KEY, mode);
+    } catch { /* best-effort */ }
+
+    // Picking "distance" without a known location yet: request it via the
+    // same geolocation flow FeedDistanceFilter already uses, rather than
+    // silently no-op'ing the sort (sortPosts() falls back to server order
+    // when userLocation is null, which would look like the option did
+    // nothing). Persist to the SAME storage key the distance filter and
+    // map view read, so granting it here also benefits those.
+    if (mode === 'distance' && !userLocation) {
+      startTracking(
+        ({ coords }) => {
+          setUserLocation(coords);
+          setStoredLocation(coords);
+        },
+        (err) => {
+          const description =
+            err.code === err.PERMISSION_DENIED
+              ? t('interactions.location_permission_description')
+              : t('feed.sort_distance_needs_location');
+          toast({ variant: 'destructive', description });
+        },
+      );
+    }
+  }, [userLocation, startTracking, toast, t]);
 
   const memoizedPosts = useMemo(() => posts, [posts]);
 
@@ -187,16 +243,24 @@ function OptimizedFeedBody({
     effectiveIncludeArchived,
   ]);
 
+  // Trello: "Sort the feed on distance and/or on published time." A no-op
+  // for 'recent' (the server query is already created_at DESC) -- see
+  // sortPosts()'s own comment for why 'distance' is client-side, matching
+  // the existing distance FILTER's architecture.
+  const sortedPosts = useMemo(
+    () => sortPosts(fullyFilteredPosts, sortBy, userLocation),
+    [fullyFilteredPosts, sortBy, userLocation],
+  );
 
   const visiblePostIdsKey = useMemo(
-    () => fullyFilteredPosts.map((post) => String(post.id)).join(','),
-    [fullyFilteredPosts],
+    () => sortedPosts.map((post) => String(post.id)).join(','),
+    [sortedPosts],
   );
 
   useEffect(() => {
     if (DEMO_MODE || isLoading || !likedIdsLoaded || !interestedIdsLoaded || !commentedIdsLoaded) return;
 
-    const visibleIds = fullyFilteredPosts.map((post) => String(post.id));
+    const visibleIds = sortedPosts.map((post) => String(post.id));
     useMyLikedStore.getState().setMany(
       visibleIds.map((itemId) => ({ itemId, value: myLikedIds.has(itemId) })),
     );
@@ -208,7 +272,7 @@ function OptimizedFeedBody({
     );
     setHydratedInteractionKey(visiblePostIdsKey);
   }, [
-    fullyFilteredPosts,
+    sortedPosts,
     interestedIdsLoaded,
     isLoading,
     likedIdsLoaded,
@@ -287,6 +351,23 @@ function OptimizedFeedBody({
           onClearUserFilter();
         }}
       />
+      {/* Trello: "Sort the feed on distance and/or on published time."
+          A plain always-visible control (not buried in the Filtrera
+          sheet) since sort, unlike the filters in there, never narrows
+          the result set -- matches the visibility of the "Visat
+          intresse"/"Mina inlägg" toggle buttons right beside it. */}
+      <Select value={sortBy} onValueChange={(v) => setSortBy(v as FeedSortMode)}>
+        <SelectTrigger
+          className="h-9 w-auto gap-1.5 bg-background text-sm"
+          aria-label={t('feed.sort_label', 'Sortera')}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="recent">{t('feed.sort_recent', 'Senast publicerad')}</SelectItem>
+          <SelectItem value="distance">{t('feed.sort_distance', 'Närmast mig')}</SelectItem>
+        </SelectContent>
+      </Select>
       {isLoggedIn && !viewingOtherUser && (
         <button
           type="button"
@@ -373,10 +454,10 @@ function OptimizedFeedBody({
 
         <section role="feed" aria-label={t('interactions.community_posts')}>
           {isRefreshing ? (
-            <FeedSkeleton count={Math.min(3, Math.max(1, fullyFilteredPosts.length))} />
+            <FeedSkeleton count={Math.min(3, Math.max(1, sortedPosts.length))} />
           ) : (
             <FeedItemList
-              posts={fullyFilteredPosts}
+              posts={sortedPosts}
               fadingIds={fadingIds}
               restoringIds={restoringIds}
               selectedCategories={selectedCategories}

@@ -15,6 +15,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearPostsCache } from "@/services/posts/optimized";
+import { formatRelativeTime } from "@/utils/formatDate";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -24,6 +25,11 @@ interface ItemCardHeaderProps {
   };
   itemId: string | number;
   itemTitle?: string;
+  /** ISO timestamp of when the post was published — rendered as a
+   *  relative time ("2h ago") next to the distance badge. Trello: "Sort
+   *  the feed on distance and/or on published time" / "Display published
+   *  time stamp at the top of every post." */
+  createdAt?: string;
   distanceText?: string;
   location?: string;
   coordinates?: {
@@ -47,6 +53,7 @@ export function ItemCardHeader({
   postedBy,
   itemId,
   itemTitle,
+  createdAt,
   distanceText,
   location,
   coordinates,
@@ -71,6 +78,14 @@ export function ItemCardHeader({
   const { handleShare: shareItem } = useItemSharing(String(itemId));
   const isAuthenticated = !!session?.user;
   const queryClient = useQueryClient();
+
+  // Guard against an unparseable/missing timestamp rather than letting
+  // formatRelativeTime(new Date(undefined)) render "Invalid Date".
+  const parsedCreatedAt = createdAt ? new Date(createdAt) : null;
+  const timeText =
+    parsedCreatedAt && !isNaN(parsedCreatedAt.getTime())
+      ? formatRelativeTime(parsedCreatedAt)
+      : null;
 
   const handleRestoreClick = async () => {
     if (isRestoring) return;
@@ -160,6 +175,17 @@ export function ItemCardHeader({
     <>
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
+          {/* Trello: "Display published time stamp at the top of every
+              post." Restructured name from a single line to a 2-line
+              block (name, then a distance+time subtitle) rather than
+              cramming a 4th inline item into the old single row, which
+              would have overflowed next to a long display name on
+              narrow phones. The distance sub-affordance is now a nested
+              `span` (not a `button`) with stopPropagation, since a real
+              <button> can't nest inside the outer name button -- same
+              click behavior, just not independently focusable by
+              keyboard, an acceptable trade for a secondary affordance
+              that was already inside a two-target row before this. */}
           {postedBy.id ? (
             <button
               type="button"
@@ -183,24 +209,57 @@ export function ItemCardHeader({
               <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
                 <AvatarImage src={postedBy.avatar} alt={postedBy.name} size={32} className="w-full h-full object-cover" />
               </div>
-              <div className="text-sm font-medium truncate">{postedBy.name}</div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium truncate">{postedBy.name}</div>
+                {(distanceText || timeText) && (
+                  <div className="text-xs text-gray-500 flex items-center gap-2">
+                    {distanceText && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); handleLocationClick(); }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handleLocationClick();
+                          }
+                        }}
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        <MapPin size={12} className="mr-1" />
+                        {distanceText}
+                      </span>
+                    )}
+                    {timeText && <span>{timeText}</span>}
+                  </div>
+                )}
+              </div>
             </button>
           ) : (
             <div className="flex items-center min-w-0">
               <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
                 <AvatarImage src={postedBy.avatar} alt={postedBy.name} size={32} className="w-full h-full object-cover" />
               </div>
-              <div className="text-sm font-medium truncate">{postedBy.name}</div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium truncate">{postedBy.name}</div>
+                {(distanceText || timeText) && (
+                  <div className="text-xs text-gray-500 flex items-center gap-2">
+                    {distanceText && (
+                      <button
+                        type="button"
+                        onClick={handleLocationClick}
+                        className="flex items-center hover:text-primary transition-colors"
+                      >
+                        <MapPin size={12} className="mr-1" />
+                        {distanceText}
+                      </button>
+                    )}
+                    {timeText && <span>{timeText}</span>}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-          {distanceText && (
-            <button
-              onClick={handleLocationClick}
-              className="text-xs text-gray-500 flex items-center hover:text-primary transition-colors"
-            >
-              <MapPin size={12} className="mr-1" />
-              {distanceText}
-            </button>
           )}
         </div>
         

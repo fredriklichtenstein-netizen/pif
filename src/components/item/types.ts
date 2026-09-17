@@ -25,6 +25,10 @@ export interface ItemCardProps {
     name: string;
     avatar?: string;
   };
+  /** When the post was originally published — rendered as a relative
+   *  timestamp ("2h ago") in ItemCardHeader. ISO string, same shape as
+   *  the `items.created_at` column / Post.createdAt. */
+  createdAt?: string;
   archived_at?: string;
   archived_reason?: string;
   /** Set once the stale-item reminder cron has sent at least one nudge; shows the "keep open" action. */

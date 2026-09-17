@@ -22,6 +22,7 @@ export function ItemCardWrapper({
   item_type,
   measurements = {},
   postedBy,
+  createdAt,
   archived_at,
   archived_reason,
   stale_reminder_stage,
@@ -126,6 +127,7 @@ export function ItemCardWrapper({
         item_type={item_type}
         measurements={measurements}
         postedBy={postedBy}
+        createdAt={createdAt}
         isOwner={isOwner}
         showOwnerTint={showOwnerTint}
         isItemArchived={isItemArchived}
