@@ -345,24 +345,44 @@ export function PostImageTrimDialog({
                   (same proven mechanism round 8 already used for the
                   height axis alone, now applied to both the wrapper and
                   the image on both axes) -- sidesteps the percentage-
-                  resolution circularity entirely. Wrapper is now a fixed
-                  260x392 "stage" (mx-auto to stay centered in wider
-                  dialogs), and the image caps at 160x260 (~80% of the
-                  wrapper's 196x328 content box on the binding axis, more
-                  on the other) -- confirmed via the same reproduction:
-                  symmetric ~50px+ margin on every side across portrait/
-                  landscape/square test images, and confirmed the fixed
-                  260px wrapper width doesn't overflow even a 360px-wide
-                  viewport (a common Android baseline, narrower than any
-                  iPhone) with real margin to spare. Deliberately NOT sized
-                  to use all available width on wider dialogs (a cosmetic
-                  cost on desktop, where this was never actually broken --
-                  round 6 confirmed desktop cropping worked from the start)
-                  in exchange for a guarantee that holds on the narrowest
-                  real device rather than a responsive-but-riskier layout. */}
+                  resolution circularity entirely.
+
+                  Round 13: the 260x392/160x260 numbers above shipped and
+                  fixed the original bug (user-confirmed working), but
+                  Lovable's own automated monitoring immediately flagged a
+                  real regression: "photo trim view is now tiny... a normal
+                  landscape photo sees a postage-stamp preview (roughly
+                  160x90)... on phones and desktop alike." The user
+                  clarified the real trigger is specifically HORIZONTAL
+                  (landscape) images, not mobile-vs-desktop -- correct: a
+                  fixed max-w-[160px] forces any width-bound (landscape)
+                  image's rendered height down proportionally regardless of
+                  device, and round 12 additionally had NO responsive tier
+                  at all, so desktop was stuck with the same mobile-safe
+                  160x260 cap despite having far more room to work with.
+
+                  Rebalanced with two goals verified via the same
+                  reproduction harness: (1) meaningfully bigger on both
+                  axes, especially width (directly grows landscape images),
+                  and (2) never let the TRUE extra margin -- content-box
+                  slack beyond the existing p-8 padding, i.e. what round 12
+                  actually added on top of round 8's already-insufficient
+                  32px -- drop back near zero on any axis; an early attempt
+                  at bigger numbers accidentally reduced this to ~2px on
+                  the landscape width axis, which is the same "flush to the
+                  padding edge" shape as the original bug, just at a
+                  different size. Final numbers keep 14-43px of true extra
+                  margin on every axis across portrait/landscape at every
+                  tested viewport, confirmed to still not overflow a 360px
+                  viewport, with a much larger sm: (>=640px) tier for
+                  desktop/tablet sized against the dialog's actual content
+                  width (480 outer max-width minus its own p-6 padding =
+                  432px available -- confirmed via the same harness that
+                  an earlier attempt at this got that arithmetic wrong and
+                  overflowed the dialog). */}
               <div
                 ref={cropWrapperRef}
-                className="pif-trim-crop mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden w-[260px] h-[392px] p-8"
+                className="pif-trim-crop mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden w-[296px] h-[420px] sm:w-[420px] sm:h-[520px] p-8"
               >
                 <ReactCrop
                   crop={crop}
@@ -379,7 +399,7 @@ export function PostImageTrimDialog({
                     ref={imgRef}
                     src={image}
                     alt=""
-                    className="max-h-[260px] max-w-[160px]"
+                    className="max-h-[310px] max-w-[205px] sm:max-h-[420px] sm:max-w-[320px]"
                     onLoad={handleImageLoad}
                   />
                 </ReactCrop>
