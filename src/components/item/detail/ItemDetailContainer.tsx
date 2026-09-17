@@ -21,8 +21,11 @@ export function ItemDetailContainer({
   measurements,
 }: ItemDetailContainerProps) {
   return (
-    <div className="container mx-auto px-4 py-8">
-      
+    // App-wide width sweep: was bare `container` (only caps at 1400px,
+    // effectively full width below that). Now matches
+    // Profile/AccountSettings's max-w-3xl standard. See Feed.tsx.
+    <div className="max-w-3xl mx-auto px-4 py-8">
+
       <ItemCardWrapper
         id={displayItem.id.toString()} // Convert number to string to satisfy the type requirement
         title={displayItem.title}

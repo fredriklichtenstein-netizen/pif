@@ -281,7 +281,14 @@ export function PostFormContainer({
     // bottom: max(1rem, env(safe-area-inset-bottom)) and is ~56px tall — so on
     // devices with a home indicator the previous pb-20 (80px) left the
     // Föregående/Nästa buttons partially underneath it at full scroll.
-    <div className="container max-w-2xl mx-auto py-8 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
+    //
+    // App-wide width sweep: max-w-2xl (672px) widened to max-w-3xl (768px)
+    // to match the standard now used everywhere else (Profile/
+    // AccountSettings/Feed/Messages/etc.) -- see Feed.tsx for the sweep's
+    // rationale. This is the REAL width for the pif/wish creation flow
+    // (Post.tsx's own wrapper has none; PostForm.tsx's max-w-2xl instances
+    // only cover early-return demo-mode banners, not the actual form).
+    <div className="container max-w-3xl mx-auto py-8 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="relative">
         <PostFormHeader
           title={isRequest ? t('post.create_request') : t('post.create_offer')}

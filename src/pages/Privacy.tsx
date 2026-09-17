@@ -276,7 +276,9 @@ export default function Privacy() {
 
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 pb-24 text-left">
-      <div className="max-w-[700px] mx-auto">
+      {/* App-wide width sweep: nudged from a bespoke 700px to the app's
+          max-w-3xl (768px) standard for exact consistency. See Feed.tsx. */}
+      <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Link to="/">
             <Button variant="ghost" size="sm" className="gap-1">

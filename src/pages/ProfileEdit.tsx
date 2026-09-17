@@ -198,7 +198,7 @@ if (location) {
 
   if (isLoading || profileLoading) {
     return (
-      <div className="container max-w-2xl mx-auto py-8 px-4">
+      <div className="container max-w-3xl mx-auto py-8 px-4">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="space-y-4">
           <Skeleton className="h-24 w-24 rounded-full mx-auto" />
@@ -212,7 +212,7 @@ if (location) {
 
   if (!user) {
     return (
-      <div className="container max-w-2xl mx-auto py-8 px-4">
+      <div className="container max-w-3xl mx-auto py-8 px-4">
         <Card className="p-8 flex flex-col items-center">
           <AlertCircle className="text-amber-500 h-10 w-10 mb-4" />
           <h2 className="text-xl font-semibold mb-2">{t('auth.authentication_required')}</h2>
@@ -226,7 +226,7 @@ if (location) {
   
   return (
     <>
-      <div className="container max-w-2xl mx-auto py-8 px-4 pb-24">
+      <div className="container max-w-3xl mx-auto py-8 px-4 pb-24">
         <div className="mb-2">
           <Link to="/profile">
             <Button variant="ghost" size="sm" className="gap-1 -ml-2">

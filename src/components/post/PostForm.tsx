@@ -44,7 +44,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
 
   if (DEMO_MODE && needsToken && !mapToken) {
     return (
-      <div className="container mx-auto px-4 pt-4 max-w-2xl">
+      <div className="container mx-auto px-4 pt-4 max-w-3xl">
         <DemoModeBanner />
         <Alert className="mb-4">
           <MapPin className="h-4 w-4" />
@@ -86,11 +86,11 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
   }
 
   if (mapLoading) {
-    return <div className="container mx-auto px-4 pt-4">{t('interactions.loading_map_config')}</div>;
+    return <div className="container max-w-3xl mx-auto px-4 pt-4">{t('interactions.loading_map_config')}</div>;
   }
 
   if (!mapToken && !DEMO_MODE) {
-    return <div className="container mx-auto px-4 pt-4">{t('interactions.loading_map_config')}</div>;
+    return <div className="container max-w-3xl mx-auto px-4 pt-4">{t('interactions.loading_map_config')}</div>;
   }
 
   const isFormValid = 
@@ -103,7 +103,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
   return (
     <div className="relative">
       {DEMO_MODE && (
-        <div className="container mx-auto px-4 pt-4 max-w-2xl">
+        <div className="container mx-auto px-4 pt-4 max-w-3xl">
           <DemoModeBanner />
         </div>
       )}
