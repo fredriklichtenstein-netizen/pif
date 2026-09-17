@@ -138,12 +138,27 @@ export function PostFormLocation({
     });
   };
 
+  // Trello: "Cell phone number does not populate from profile page to pick
+  // up instructions in pif creation flow." Traced to real data: the
+  // reporting user's phone WAS correctly saved on their profile and
+  // correctly returned by get_my_profile() -- the actual bug is this
+  // toggle's own (previously deliberate) behavior: turning a field's
+  // switch ON always revealed an EMPTY input regardless of whether a
+  // saved default existed, on the theory that only the separate "Use my
+  // defaults" button should ever read defaultsMap. That doesn't match
+  // ordinary user expectation -- toggling on "include my phone number"
+  // and seeing it blank reads as "my phone number isn't populating from
+  // my profile", not as "I still need to press a different button".
+  // Fields the user has never saved a value for are unaffected --
+  // populateField() is a no-op when defaultsMap has nothing for that
+  // field, so this can't invent PII that isn't already on the profile.
   const toggleField = (f: PickupField, on: boolean) => {
     setEnabledFields((prev) => ({ ...prev, [f]: on }));
-    // Never auto-populate from profile defaults on individual toggle.
-    // Only `applyDefaults()` (the "Use my defaults" button) reads defaultsMap.
-    // ON reveals an empty editable input; OFF clears the field.
-    clearField(f);
+    if (on) {
+      populateField(f);
+    } else {
+      clearField(f);
+    }
   };
 
   const applyDefaults = () => {
