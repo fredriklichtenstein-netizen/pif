@@ -112,15 +112,77 @@ export function PostImageTrimDialog({
   const { t } = useTranslation();
   const imgRef = useRef<HTMLImageElement>(null);
   const cropWrapperRef = useRef<HTMLDivElement>(null);
+  const naturalSizeRef = useRef<{ width: number; height: number } | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [trimConfirmOpen, setTrimConfirmOpen] = useState(false);
+  const [imgBox, setImgBox] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     setCrop(undefined);
     setCompletedCrop(undefined);
     setTrimConfirmOpen(false);
+    setImgBox(null);
+    naturalSizeRef.current = null;
   }, [image]);
+
+  /** Round 14: rounds 12-13 tried a fixed-envelope max-w/max-h for the
+   *  image (round 13 even added a responsive sm: tier) -- structurally
+   *  can't avoid wasting space, since ANY single box sized to comfortably
+   *  fit one orientation necessarily leaves slack on the other axis for
+   *  the opposite orientation. Confirmed via real user screenshots: a
+   *  landscape photo used only a sliver of a tall envelope sized to also
+   *  work for portrait images, leaving a large dead gray area below it.
+   *
+   *  Fixed by computing the crop stage's size directly from the ACTUAL
+   *  loaded image's aspect ratio and the ACTUAL available space -- MEASURED
+   *  live via the wrapper's parent (not guessed from assumed dialog
+   *  padding/breakpoint math, which round 13 got wrong once already and
+   *  caught only via the reproduction harness), so the stage always hugs
+   *  whichever image is loaded: wide-short for landscape, narrow-tall for
+   *  portrait, while still guaranteeing CROP_STAGE_MARGIN_PX of real space
+   *  around it on every side for the resize handles. This also makes the
+   *  separate mobile/desktop breakpoint tiers unnecessary -- measuring the
+   *  real available width already adapts to any viewport, more accurately
+   *  than a hand-picked breakpoint number. Recomputes on resize/orientation
+   *  change too, so rotating the device while the dialog stays open (the
+   *  other half of "use the full screen in horizontal mode" the user asked
+   *  for) adapts live instead of needing the dialog reopened. */
+  const CROP_STAGE_MARGIN_PX = 40;
+
+  const recomputeImgBox = () => {
+    const natural = naturalSizeRef.current;
+    const wrapper = cropWrapperRef.current;
+    const parent = wrapper?.parentElement;
+    if (!natural || !parent) return;
+
+    const availableWidth = parent.clientWidth;
+    // Height has no equivalent ancestor to measure against -- the dialog's
+    // own height is driven BY this content, not the other way around.
+    // Derived from the viewport instead; round 10's max-h-90dvh +
+    // overflow-y-auto on the Dialog is still the real safety net if this
+    // runs long on an unusually short screen.
+    const availableHeight = Math.max(240, Math.min(window.innerHeight * 0.55, 560));
+
+    const contentW = Math.max(80, availableWidth - 2 * CROP_STAGE_MARGIN_PX);
+    const contentH = Math.max(80, availableHeight - 2 * CROP_STAGE_MARGIN_PX);
+    const scale = Math.min(contentW / natural.width, contentH / natural.height);
+
+    setImgBox({
+      width: Math.round(natural.width * scale),
+      height: Math.round(natural.height * scale),
+    });
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", recomputeImgBox);
+    window.addEventListener("orientationchange", recomputeImgBox);
+    return () => {
+      window.removeEventListener("resize", recomputeImgBox);
+      window.removeEventListener("orientationchange", recomputeImgBox);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Round 11: rounds 8-10 fixed the handles' CSS visibility, the library's
    *  own resize math (minWidth/minHeight removal), and the dialog's own
@@ -175,6 +237,8 @@ export function PostImageTrimDialog({
    *  draws one from scratch. */
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
+    naturalSizeRef.current = { width: img.naturalWidth, height: img.naturalHeight };
+    recomputeImgBox();
     setCrop({ unit: '%', x: 0, y: 0, width: 100, height: 100 });
     setCompletedCrop({ unit: 'px', x: 0, y: 0, width: img.width, height: img.height });
   };
@@ -285,104 +349,33 @@ export function PostImageTrimDialog({
 
           {image && (
             <div className="space-y-4">
-              {/* p-8 (round 8, up from round 6's p-4): a user report
-                  ("unable to pull the crop handles for rectangle shaped
-                  image") plus a fresh adversarial pass found the round-6
-                  buffer left only a ~2px safety margin on whichever axis
-                  the image is bound (height via the <img>'s own max-h, or
-                  width via max-w-full) -- worked out with real numbers for
-                  several aspect ratios, that margin turned out to be
-                  IDENTICAL regardless of image shape (not thinner for
-                  rectangles specifically -- that part of the original
-                  round-6 reasoning didn't hold up), but it's still a real,
-                  needlessly thin margin that sub-pixel/DPR rounding could
-                  plausibly eat into on some devices. Bumped to 32px per
-                  side for real headroom (18px margin instead of 2px).
-                  Deliberately did NOT grow the container's own
-                  max-h-[392px] to compensate this time (round 6's
-                  max-h-[360->392] approach): a second review flagged that
-                  this dialog has no scroll fallback (plain shadcn
-                  DialogContent) -- fixed properly in round 10 below. The
-                  <img>'s own size cap (originally shrunk 360->328 here to
-                  keep the total footprint at 392) was superseded in round
-                  12 below by a fixed, format-independent size -- see that
-                  comment for the current numbers; this p-8 outer buffer
-                  is unchanged and still applies on top of it. */}
-              {/* Round 12: rounds 8-11 fixed the handles' CSS visibility,
-                  the library's own resize math, the dialog's height/scroll,
-                  and added a WebKit touch-gesture workaround -- all
-                  individually verified correct (round 8/10 CSS confirmed
-                  byte-exact live, round 9/11 confirmed via a real headless-
-                  engine reproduction), yet the user's real iOS Safari device
-                  still reports the exact same symptom, unchanged. Rather
-                  than keep chasing theories that verify correct in
-                  isolation but don't resolve the actual on-device behavior,
-                  switched to a format-independent structural guarantee
-                  instead: previously the image could butt right up against
-                  the wrapper's padding edge on whichever axis it was
-                  "bound" on (max-h-[328px] exactly matched the vertical
-                  content budget for a height-bound/portrait image, same gap
-                  as the horizontal one only by coincidence of the specific
-                  numbers chosen in round 8).
-
-                  First attempt here used percentage max-h/max-w on the
-                  <img> (82% of the wrapper's content box) -- verified
-                  BROKEN before shipping via a real headless-engine
-                  reproduction of this exact DOM, not just reasoned about:
-                  react-image-crop's own .ReactCrop/.ReactCrop__child-wrapper
-                  are shrink-to-fit boxes with no definite height, so a
-                  percentage max-height on the <img> silently resolves to
-                  `none` (ignored) per spec -- and worse, a percentage
-                  max-WIDTH also broke horizontal centering, because
-                  .ReactCrop's own shrink-to-fit width computation used the
-                  full available width rather than narrowing to match the
-                  now-smaller image, leaving the image flush against the
-                  left padding edge with all the slack dumped on the right
-                  (measured live: 32px left vs 82px right, not the
-                  symmetric split centering is supposed to produce).
-
-                  Fixed version below uses FIXED PIXEL dimensions instead
-                  (same proven mechanism round 8 already used for the
-                  height axis alone, now applied to both the wrapper and
-                  the image on both axes) -- sidesteps the percentage-
-                  resolution circularity entirely.
-
-                  Round 13: the 260x392/160x260 numbers above shipped and
-                  fixed the original bug (user-confirmed working), but
-                  Lovable's own automated monitoring immediately flagged a
-                  real regression: "photo trim view is now tiny... a normal
-                  landscape photo sees a postage-stamp preview (roughly
-                  160x90)... on phones and desktop alike." The user
-                  clarified the real trigger is specifically HORIZONTAL
-                  (landscape) images, not mobile-vs-desktop -- correct: a
-                  fixed max-w-[160px] forces any width-bound (landscape)
-                  image's rendered height down proportionally regardless of
-                  device, and round 12 additionally had NO responsive tier
-                  at all, so desktop was stuck with the same mobile-safe
-                  160x260 cap despite having far more room to work with.
-
-                  Rebalanced with two goals verified via the same
-                  reproduction harness: (1) meaningfully bigger on both
-                  axes, especially width (directly grows landscape images),
-                  and (2) never let the TRUE extra margin -- content-box
-                  slack beyond the existing p-8 padding, i.e. what round 12
-                  actually added on top of round 8's already-insufficient
-                  32px -- drop back near zero on any axis; an early attempt
-                  at bigger numbers accidentally reduced this to ~2px on
-                  the landscape width axis, which is the same "flush to the
-                  padding edge" shape as the original bug, just at a
-                  different size. Final numbers keep 14-43px of true extra
-                  margin on every axis across portrait/landscape at every
-                  tested viewport, confirmed to still not overflow a 360px
-                  viewport, with a much larger sm: (>=640px) tier for
-                  desktop/tablet sized against the dialog's actual content
-                  width (480 outer max-width minus its own p-6 padding =
-                  432px available -- confirmed via the same harness that
-                  an earlier attempt at this got that arithmetic wrong and
-                  overflowed the dialog). */}
+              {/* History of the crop-area sizing (rounds 6-13, condensed --
+                  see the CROP_STAGE_MARGIN_PX/recomputeImgBox comment above
+                  for the CURRENT round-14 mechanism, which superseded all
+                  of this): round 6 bumped padding after finding a ~2px
+                  safety margin around the handles; round 8 bumped it again
+                  (32px) after a user couldn't reach handles on a
+                  "rectangle shaped image". Rounds 9-11 fixed unrelated
+                  causes of the same-looking symptom (upstream library
+                  resize-math bug, missing dialog scroll fallback, a WebKit
+                  touch-gesture workaround). Round 12 tried a percentage-
+                  based margin first -- verified BROKEN before shipping via
+                  a headless-engine reproduction (react-image-crop's
+                  .ReactCrop/.ReactCrop__child-wrapper are shrink-to-fit
+                  boxes with no definite height, so percentage max-height
+                  silently resolves to `none`, and percentage max-width
+                  broke horizontal centering too) -- then shipped a FIXED
+                  PIXEL, single static envelope instead, which fixed the
+                  original bug (user-confirmed) but wasted a lot of space
+                  for any image whose aspect ratio didn't match that one
+                  envelope. Round 13 added a responsive sm: tier for that,
+                  still a fixed envelope. Round 14 (current, see above)
+                  replaced the fixed-envelope approach entirely with a
+                  JS-computed size that adapts to each image's actual
+                  aspect ratio and the actual measured available space. */}
               <div
                 ref={cropWrapperRef}
-                className="pif-trim-crop mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden w-[296px] h-[420px] sm:w-[420px] sm:h-[520px] p-8"
+                className="pif-trim-crop w-fit mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden p-[40px]"
               >
                 <ReactCrop
                   crop={crop}
@@ -399,7 +392,13 @@ export function PostImageTrimDialog({
                     ref={imgRef}
                     src={image}
                     alt=""
-                    className="max-h-[310px] max-w-[205px] sm:max-h-[420px] sm:max-w-[320px]"
+                    // Fallback sizing for the brief window before onLoad
+                    // fires and recomputeImgBox() sets the precise size
+                    // (imgBox) below -- once set, the inline style takes
+                    // over completely (width/height, not max-, since the
+                    // scale math already fits it exactly).
+                    className="max-h-[70vh] max-w-full"
+                    style={imgBox ? { width: `${imgBox.width}px`, height: `${imgBox.height}px` } : undefined}
                     onLoad={handleImageLoad}
                   />
                 </ReactCrop>
