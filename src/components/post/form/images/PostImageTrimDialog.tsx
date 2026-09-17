@@ -159,10 +159,24 @@ export function PostImageTrimDialog({
     const availableWidth = parent.clientWidth;
     // Height has no equivalent ancestor to measure against -- the dialog's
     // own height is driven BY this content, not the other way around.
-    // Derived from the viewport instead; round 10's max-h-90dvh +
-    // overflow-y-auto on the Dialog is still the real safety net if this
-    // runs long on an unusually short screen.
-    const availableHeight = Math.max(240, Math.min(window.innerHeight * 0.55, 560));
+    //
+    // Round 16: the previous window.innerHeight*0.55 formula (capped at
+    // 560) turned out to under-count real available height -- confirmed
+    // live: after round 15 widened the dialog, a roughly landscape/square
+    // photo's rendered size didn't grow AT ALL, because height was already
+    // the binding constraint under the old formula and that formula had
+    // no relationship to the dialog's own actual height ceiling. Derived
+    // from that SAME ceiling instead of an unrelated guess: the dialog is
+    // already capped at 90% of the viewport height (round 10's
+    // max-h-90dvh), so subtract a fixed estimate for the surrounding
+    // chrome (title + description + rotate row + footer + the dialog's
+    // own p-6 padding, roughly 260px) from that same 90% figure, rather
+    // than an arbitrary percentage of the full viewport. Round 10's
+    // overflow-y-auto is still the real safety net if this estimate runs
+    // a bit short on an unusually tall description or narrow width that
+    // wraps to more lines.
+    const DIALOG_CHROME_HEIGHT_PX = 260;
+    const availableHeight = Math.max(220, window.innerHeight * 0.9 - DIALOG_CHROME_HEIGHT_PX);
 
     const contentW = Math.max(80, availableWidth - 2 * CROP_STAGE_MARGIN_PX);
     const contentH = Math.max(80, availableHeight - 2 * CROP_STAGE_MARGIN_PX);
