@@ -117,18 +117,6 @@ export function PostImageTrimDialog({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [trimConfirmOpen, setTrimConfirmOpen] = useState(false);
   const [imgBox, setImgBox] = useState<{ width: number; height: number } | null>(null);
-  // Round 17 (TEMPORARY diagnostic, remove once resolved): rounds 14-16
-  // are all confirmed correctly deployed (byte-exact live bundle checks)
-  // and independently verified via a real headless-engine reproduction,
-  // yet the user reports literally zero visible change across all three
-  // rounds, even in a fresh private window (ruling out caching). Since
-  // the code is confirmed correct in isolation but the real environment
-  // shows different behavior, the fastest way forward is direct data from
-  // that real environment instead of another guess -- this overlay prints
-  // the actual computed values (measured width, computed height budget,
-  // resulting image size) directly on the page so a screenshot shows
-  // exactly what recomputeImgBox() saw, without needing devtools.
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   useEffect(() => {
     setCrop(undefined);
@@ -159,8 +147,26 @@ export function PostImageTrimDialog({
    *  than a hand-picked breakpoint number. Recomputes on resize/orientation
    *  change too, so rotating the device while the dialog stays open (the
    *  other half of "use the full screen in horizontal mode" the user asked
-   *  for) adapts live instead of needing the dialog reopened. */
-  const CROP_STAGE_MARGIN_PX = 40;
+   *  for) adapts live instead of needing the dialog reopened.
+   *
+   *  Round 18: the round-17 diagnostic overlay (now removed) showed the
+   *  actual mechanism working exactly as designed -- but the real test
+   *  photo's natural resolution was 5712x3213 (18 megapixels). Against
+   *  that, ANY reasonable on-screen budget produces such a tiny relative
+   *  size that rounds 12-16's real, measurable improvements (e.g.
+   *  160px->263px, a genuine 64% increase) weren't visually distinct
+   *  enough to register as "different" -- not a bug, just the physical
+   *  scale mismatch between an 18MP photo and a few hundred px of dialog.
+   *  Separately, the diagnostic also caught a real environment quirk (not
+   *  a code bug): one test had window.innerHeight=393, well under a
+   *  normal desktop window, which correctly triggered the height budget's
+   *  safety floor -- that test wasn't representative of typical usage.
+   *  Given the user's clear preference for a visibly larger crop area,
+   *  reclaimed some real space by trimming the margin from 40px to 24px
+   *  (still comfortably more than the ~14-18px round 12 originally proved
+   *  sufficient for the handles, which is all this value actually needs
+   *  to guarantee). */
+  const CROP_STAGE_MARGIN_PX = 24;
 
   const recomputeImgBox = () => {
     const natural = naturalSizeRef.current;
@@ -194,15 +200,10 @@ export function PostImageTrimDialog({
     const contentH = Math.max(80, availableHeight - 2 * CROP_STAGE_MARGIN_PX);
     const scale = Math.min(contentW / natural.width, contentH / natural.height);
 
-    const finalW = Math.round(natural.width * scale);
-    const finalH = Math.round(natural.height * scale);
-    setImgBox({ width: finalW, height: finalH });
-    setDebugInfo(
-      `natural=${natural.width}x${natural.height} | parentClientWidth=${availableWidth} | ` +
-      `innerHeight=${window.innerHeight} | availH=${Math.round(availableHeight)} | ` +
-      `contentW/H=${Math.round(contentW)}/${Math.round(contentH)} | scale=${scale.toFixed(3)} | ` +
-      `imgBox=${finalW}x${finalH} | dpr=${window.devicePixelRatio}`
-    );
+    setImgBox({
+      width: Math.round(natural.width * scale),
+      height: Math.round(natural.height * scale),
+    });
   };
 
   useEffect(() => {
@@ -447,14 +448,6 @@ export function PostImageTrimDialog({
                   />
                 </ReactCrop>
               </div>
-              {/* TEMPORARY (round 17) diagnostic overlay -- see debugInfo
-                  comment above. Remove once the real-environment mystery
-                  is resolved. */}
-              {debugInfo && (
-                <div className="text-[10px] leading-tight font-mono text-muted-foreground bg-muted/50 rounded p-2 break-all">
-                  {debugInfo}
-                </div>
-              )}
               {/* Scoped to this dialog's own wrapper class, not a global
                   override. Confirmed live: .ReactCrop__drag-handle/-bar
                   (the corner/edge resize handles) turned out to be
