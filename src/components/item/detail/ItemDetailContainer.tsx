@@ -39,6 +39,7 @@ export function ItemDetailContainer({
         condition={displayItem.condition}
         measurements={measurements}
         postedBy={postedBy}
+        createdAt={displayItem.created_at}
         archived_at={displayItem.archived_at}
         archived_reason={displayItem.archived_reason}
         stale_reminder_stage={displayItem.stale_reminder_stage}

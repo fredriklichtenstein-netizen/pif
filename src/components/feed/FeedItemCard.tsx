@@ -64,6 +64,7 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
             name: 'Anonymous',
             avatar: '',
           }}
+          createdAt={post.createdAt}
           archived_at={post.archived_at}
           archived_reason={post.archived_reason}
           likesCount={post.likesCount}

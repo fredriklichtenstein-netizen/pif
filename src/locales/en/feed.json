@@ -26,6 +26,10 @@
     "location_banner_cta": "Enable location",
     "my_posts": "My posts",
     "completed": "Completed",
-    "archived_badge": "Archived"
+    "archived_badge": "Archived",
+    "sort_label": "Sort",
+    "sort_recent": "Most recently published",
+    "sort_distance": "Closest to me",
+    "sort_distance_needs_location": "Enable location to sort by distance"
   }
 }

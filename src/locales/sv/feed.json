@@ -26,6 +26,10 @@
     "location_banner_cta": "Aktivera plats",
     "my_posts": "Mina inlägg",
     "completed": "Genomförd",
-    "archived_badge": "Arkiverad"
+    "archived_badge": "Arkiverad",
+    "sort_label": "Sortera",
+    "sort_recent": "Senast publicerad",
+    "sort_distance": "Närmast mig",
+    "sort_distance_needs_location": "Aktivera plats för att sortera efter avstånd"
   }
 }

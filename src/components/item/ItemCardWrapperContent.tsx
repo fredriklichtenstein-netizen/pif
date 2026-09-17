@@ -20,6 +20,7 @@ export function ItemCardWrapperContent({
   item_type,
   measurements,
   postedBy,
+  createdAt,
   isOwner,
   showOwnerTint,
   isItemArchived,
@@ -75,10 +76,11 @@ export function ItemCardWrapperContent({
       refreshItemData={handleRefresh}
       statusBanner={isItemArchived ? <ItemArchivedBanner reason={archived_reason} archivedAt={archived_at} /> : undefined}
       header={
-        <ItemCardHeader 
+        <ItemCardHeader
           itemId={id}
           itemTitle={title}
-          postedBy={postedBy} 
+          postedBy={postedBy}
+          createdAt={createdAt}
           distanceText={distanceText}
           location={location}
           coordinates={parsedCoordinates}
