@@ -12,7 +12,8 @@ export function ItemDetailError({ onRetry }: ItemDetailErrorProps) {
   const { t } = useTranslation();
   
   return (
-    <div className="container mx-auto px-4 py-8">
+    // Matches ItemDetailContainer's max-w-3xl width standard.
+    <div className="max-w-3xl mx-auto px-4 py-8">
       <Alert variant="destructive" className="mb-4">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>{t('interactions.error_label')}</AlertTitle>

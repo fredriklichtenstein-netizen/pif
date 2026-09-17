@@ -235,7 +235,11 @@ const Messages = () => {
 
   return (
     <>
-      <div className="container mx-auto px-4 pb-20 pt-4">
+      {/* App-wide width sweep: was bare `container` (Tailwind's container
+          only caps at the 2xl breakpoint, 1400px -- effectively full width
+          below that), now matches Profile/AccountSettings's max-w-3xl
+          standard. See Feed.tsx for the full sweep's rationale. */}
+      <div className="max-w-3xl mx-auto px-4 pb-20 pt-4">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-4 w-full flex justify-center border rounded-lg bg-background">
             <TabsTrigger

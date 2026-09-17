@@ -31,7 +31,9 @@ const Post = () => {
       <MainHeader />
       <div className="flex-1">
         <Suspense fallback={
-          <div className="container mx-auto px-4 pt-4">
+          // Matches PostFormContainer's max-w-3xl so the skeleton doesn't
+          // visibly jump in width once PostForm finishes lazy-loading.
+          <div className="container max-w-3xl mx-auto px-4 pt-4">
             <Skeleton className="h-[70vh] w-full rounded-lg" />
           </div>
         }>

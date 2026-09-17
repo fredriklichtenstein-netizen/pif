@@ -123,7 +123,9 @@ export default function ItemDetail() {
   if ((error && !displayItem) || loadFailed) {
     console.error('Error loading item:', error);
     return (
-      <div className="container mx-auto px-4 py-8">
+      // App-wide width sweep: matches Profile/AccountSettings's max-w-3xl
+      // standard (was bare `container`, only caps at 1400px). See Feed.tsx.
+      <div className="max-w-3xl mx-auto px-4 py-8">
         {fromShare && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />

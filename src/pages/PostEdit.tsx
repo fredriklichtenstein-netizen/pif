@@ -88,7 +88,7 @@ function PostEdit() {
     return (
       <div className="min-h-screen flex flex-col">
         <MainHeader />
-        <div className="container max-w-2xl mx-auto py-8 px-4 flex justify-center">
+        <div className="container max-w-3xl mx-auto py-8 px-4 flex justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
@@ -99,7 +99,7 @@ function PostEdit() {
     return (
       <div className="min-h-screen flex flex-col">
         <MainHeader />
-        <div className="container max-w-2xl mx-auto py-8 px-4">
+        <div className="container max-w-3xl mx-auto py-8 px-4">
           <Card className="p-8 flex flex-col items-center">
             <AlertCircle className="text-destructive h-10 w-10 mb-4" />
             <h2 className="text-xl font-semibold mb-2">{t('common.error')}</h2>
@@ -114,7 +114,7 @@ function PostEdit() {
   return (
     <div className="min-h-screen flex flex-col">
       <MainHeader />
-      <div className="container max-w-2xl mx-auto py-8 px-4 pb-20">
+      <div className="container max-w-3xl mx-auto py-8 px-4 pb-20">
         <h1 className="text-2xl font-bold mb-6">{t('profile.edit_pif')}</h1>
         <PostForm initialData={item} />
       </div>

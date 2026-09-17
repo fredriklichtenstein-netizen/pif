@@ -83,7 +83,11 @@ export default function Home() {
     <div className="min-h-screen-dvh bg-gradient-to-br from-green-50 via-background to-blue-50">
       <MainHeader />
       <InstallInstructionsBanner />
-      <div className="container max-w-md sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 py-[30px]">
+      {/* App-wide width sweep: was an escalating max-w chain that reached
+          xl:max-w-6xl (1152px) on large screens -- much wider than the
+          rest of the app. Now matches Profile/AccountSettings's max-w-3xl
+          standard. See Feed.tsx for the full sweep's rationale. */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 py-[30px]">
         <div className="flex justify-end mb-2">
           <LanguageSelector />
         </div>
