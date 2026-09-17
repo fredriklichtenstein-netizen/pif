@@ -420,7 +420,7 @@ export function PostImageTrimDialog({
                   aspect ratio and the actual measured available space. */}
               <div
                 ref={cropWrapperRef}
-                className="pif-trim-crop w-fit mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden p-[40px]"
+                className="pif-trim-crop w-fit mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden p-[24px]"
               >
                 <ReactCrop
                   crop={crop}
