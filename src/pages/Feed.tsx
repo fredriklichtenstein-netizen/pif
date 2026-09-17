@@ -37,7 +37,17 @@ export default function Feed() {
         role="main"
         aria-label={t('feed.announcement')}
       >
-        <div className="w-full pt-1">
+        {/* Trello backlog: feed stretched full viewport width on desktop,
+            making post images huge and the feed hard to scan. Map is
+            deliberately full-width elsewhere (it needs the space) but the
+            feed doesn't -- matched to the SAME container convention
+            Messages.tsx and Post.tsx already use (Tailwind's `container`,
+            configured in tailwind.config.ts: centered, 2rem padding,
+            capped at 1400px past the 2xl breakpoint, otherwise full width)
+            rather than inventing a new bespoke width rule -- keeps the
+            feed visually consistent with the rest of the app instead of
+            introducing a third convention. */}
+        <div className="container mx-auto px-4 pt-1">
           <InstallInstructionsBanner />
           <LocationPermissionBanner />
           {/* Compact action bar */}
