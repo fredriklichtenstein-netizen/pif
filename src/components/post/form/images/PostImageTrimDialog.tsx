@@ -165,8 +165,22 @@ export function PostImageTrimDialog({
    *  reclaimed some real space by trimming the margin from 40px to 24px
    *  (still comfortably more than the ~14-18px round 12 originally proved
    *  sufficient for the handles, which is all this value actually needs
-   *  to guarantee). */
-  const CROP_STAGE_MARGIN_PX = 24;
+   *  to guarantee).
+   *
+   *  Round 20: explicitly asked to trim further, to 5px. Held at 15px
+   *  instead (user confirmed) -- 5px is LESS than the handles' own 14px
+   *  physical overshoot beyond the crop edge (28px mobile handle,
+   *  centered via transform:translate(+-50%)), which would clip part of
+   *  every handle under this wrapper's overflow-hidden -- the same
+   *  failure mode this whole thread exists to fix, just reintroduced on
+   *  purpose. 15px is the smallest value that still fully clears that
+   *  14px overshoot with a hair of margin. NOTE: this constant and the
+   *  wrapper's own p-[15px] className below are two independent values
+   *  that must be changed together -- round 18 changed only this constant
+   *  and missed the className, which would have overflowed the wrapper by
+   *  the difference (caught before shipping via the deploy verification,
+   *  fixed in round 19). */
+  const CROP_STAGE_MARGIN_PX = 15;
 
   const recomputeImgBox = () => {
     const natural = naturalSizeRef.current;
@@ -420,7 +434,7 @@ export function PostImageTrimDialog({
                   aspect ratio and the actual measured available space. */}
               <div
                 ref={cropWrapperRef}
-                className="pif-trim-crop w-fit mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden p-[24px]"
+                className="pif-trim-crop w-fit mx-auto flex items-center justify-center bg-muted rounded-md overflow-hidden p-[15px]"
               >
                 <ReactCrop
                   crop={crop}
