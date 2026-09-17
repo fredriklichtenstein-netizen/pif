@@ -277,7 +277,20 @@ export function PostImageTrimDialog({
         }}
       >
         <DialogContent
-          className="sm:max-w-[480px] max-h-90dvh overflow-y-auto"
+          className="sm:max-w-[min(92vw,680px)] max-h-90dvh overflow-y-auto"
+          // Round 15: a flat sm:max-w-[480px] caps the dialog at 480px on
+          // ANY viewport >=640px -- including a phone rotated to landscape
+          // (typically 700-900px wide), where it left most of the extra
+          // width unused instead of giving the round-14 crop stage more
+          // room to work with (that logic already measures its available
+          // space live via the wrapper's parent, so widening the dialog
+          // here is the only change needed -- the crop stage benefits
+          // automatically). Replaced with a fluid min(92vw, 680px): still
+          // full-width below the sm: breakpoint (portrait mobile,
+          // unchanged), uses most of the actual width on wider phones/
+          // tablets in landscape, and caps at a comfortable 680px on true
+          // desktop so it doesn't stretch absurdly wide on a large monitor.
+          //
           // Round 10: rounds 8/9 fixed the mid-edge handles' own CSS/JS and
           // both were confirmed byte-exact in the live bundle, yet the user
           // still couldn't reach the north/south handles on mobile -- while
