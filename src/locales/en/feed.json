@@ -30,6 +30,7 @@
     "sort_label": "Sort",
     "sort_recent": "Most recently published",
     "sort_distance": "Closest to me",
-    "sort_distance_needs_location": "Enable location to sort by distance"
+    "sort_distance_needs_location": "Enable location to sort by distance",
+    "posted_time": "Posted {{time}}"
   }
 }

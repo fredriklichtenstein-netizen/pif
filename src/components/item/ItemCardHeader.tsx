@@ -231,7 +231,7 @@ export function ItemCardHeader({
                         {distanceText}
                       </span>
                     )}
-                    {timeText && <span>{timeText}</span>}
+                    {timeText && <span>{t('feed.posted_time', { time: timeText })}</span>}
                   </div>
                 )}
               </div>
@@ -255,7 +255,7 @@ export function ItemCardHeader({
                         {distanceText}
                       </button>
                     )}
-                    {timeText && <span>{timeText}</span>}
+                    {timeText && <span>{t('feed.posted_time', { time: timeText })}</span>}
                   </div>
                 )}
               </div>

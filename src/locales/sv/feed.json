@@ -30,6 +30,7 @@
     "sort_label": "Sortera",
     "sort_recent": "Senast publicerad",
     "sort_distance": "Närmast mig",
-    "sort_distance_needs_location": "Aktivera plats för att sortera efter avstånd"
+    "sort_distance_needs_location": "Aktivera plats för att sortera efter avstånd",
+    "posted_time": "Publicerad {{time}}"
   }
 }
