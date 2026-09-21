@@ -191,17 +191,43 @@ export function FeedbackTab() {
     <div
       ref={panelRef}
       data-feedback-panel
-      className="fixed bottom-40 right-0 z-40 flex items-center"
+      // Trello: "Feedback button/component does not appear properly on
+      // mobile landscape screen." Root cause: this used to be
+      // `bottom-40 right-0` with only `bottom` set, so per CSS fixed-
+      // positioning rules the container had no height ceiling -- it grew
+      // upward from the 160px-from-bottom anchor to whatever height the
+      // open form needed (~450-500px: textarea + mode buttons + screenshot
+      // row + submit row), unconstrained by the actual viewport. On a
+      // short landscape phone viewport (often well under 400px tall) that
+      // pushed most of the form above y=0 with no way to scroll it into
+      // view -- not "missing", just rendered off-screen.
+      // Setting BOTH `top-4` and `bottom-40` gives the container a real,
+      // bounded computed height (100dvh - 1rem - 10rem) that percentage
+      // heights below can resolve against. `items-end` keeps children
+      // flush against the bottom of that box, so on any normal (tall)
+      // viewport this is visually identical to the old bottom-anchored
+      // position -- the bound only ever kicks in when there truly isn't
+      // room, at which point the panel scrolls internally (see below)
+      // instead of spilling off-screen.
+      className="fixed right-0 top-4 bottom-40 z-40 flex items-end"
     >
       <div
         className={cn(
-          "overflow-hidden rounded-l-xl bg-background transition-[width] duration-300 ease-out",
+          // overflow-x-hidden (not overflow-hidden) so the width
+          // transition still clips horizontally, but overflow-y-auto lets
+          // content taller than the bounded container scroll internally
+          // instead of being invisibly cut off or spilling past `top-4`.
+          "overflow-x-hidden overflow-y-auto max-h-full rounded-l-xl bg-background transition-[width] duration-300 ease-out",
           open
             ? "w-[min(360px,calc(100vw-3.5rem))] shadow-lg ring-1 ring-black/5"
             : "w-0",
         )}
       >
-        <div className="flex h-full w-[min(360px,calc(100vw-3.5rem))] flex-col gap-3 p-4">
+        {/* h-full dropped: the content needs its natural (intrinsic)
+            height so it can exceed the scroll container's max-h-full and
+            actually trigger the scrollbar above, rather than being
+            squashed to fit. */}
+        <div className="flex w-[min(360px,calc(100vw-3.5rem))] flex-col gap-3 p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">
               {t("interactions.feedback.dialog_title")}
