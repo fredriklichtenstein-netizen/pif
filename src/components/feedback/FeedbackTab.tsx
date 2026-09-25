@@ -36,6 +36,24 @@ export function FeedbackTab() {
   const [capturing, setCapturing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Mobile landscape (short height, e.g. a phone rotated) needs a different
+  // layout than tall portrait/desktop: the right-edge flyout used everywhere
+  // else is width-capped at 360px and height-bounded by top-4/bottom-40, so
+  // on a viewport that's wide but short it renders as a narrow column
+  // squeezed into a corner with most of its content only reachable by
+  // scrolling -- it never uses the extra width landscape actually offers.
+  // 500px is comfortably above real phone landscape heights (iPhone: ~375-
+  // 430px) and below real desktop/tablet landscape heights, so this doesn't
+  // affect the desktop flyout, which works fine as-is.
+  const [mobileLandscape, setMobileLandscape] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+    const update = () => setMobileLandscape(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   const reset = () => {
     setMode("issue");
     setText("");
@@ -63,7 +81,11 @@ export function FeedbackTab() {
   useEffect(() => {
     if (!open) return;
     const handlePointerDown = (e: PointerEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+      // closest(), not panelRef.contains(): the mobile-landscape layout
+      // renders the trigger button and the panel as separate fixed-position
+      // siblings (not nested), so a single ref can't cover both -- every
+      // element that's part of the widget carries data-feedback-panel.
+      if (!(e.target as HTMLElement).closest("[data-feedback-panel]")) {
         close();
       }
     };
@@ -187,6 +209,178 @@ export function FeedbackTab() {
       ? t("interactions.feedback.placeholder_issue")
       : t("interactions.feedback.placeholder_feedback");
 
+  const modeToggle = (
+    <div className="grid grid-cols-2 gap-2">
+      <button
+        type="button"
+        onClick={() => setMode("issue")}
+        className={cn(
+          "min-h-[44px] rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+          mode === "issue"
+            ? "border-primary bg-primary text-white"
+            : "border-input bg-background hover:bg-accent",
+        )}
+      >
+        {t("interactions.feedback.mode_issue")}
+      </button>
+      <button
+        type="button"
+        onClick={() => setMode("feedback")}
+        className={cn(
+          "min-h-[44px] rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+          mode === "feedback"
+            ? "border-primary bg-primary text-white"
+            : "border-input bg-background hover:bg-accent",
+        )}
+      >
+        {t("interactions.feedback.mode_feedback")}
+      </button>
+    </div>
+  );
+
+  const screenshotArea = (
+    <div className="space-y-2">
+      {screenshot ? (
+        <div className="flex items-start gap-3 rounded-md border border-input p-2">
+          <img
+            src={screenshot}
+            alt="Screenshot preview"
+            className="h-16 w-16 rounded object-cover"
+          />
+          <div className="flex-1 text-sm">
+            <div className="font-medium">
+              {t("interactions.feedback.screenshot_attached")}
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setScreenshot(null)}
+            aria-label={t("interactions.feedback.remove_screenshot")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCapture}
+            disabled={capturing}
+            className="w-full"
+          >
+            {capturing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Camera className="h-4 w-4" />
+            )}
+            {t("interactions.feedback.capture_button")}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {t("interactions.feedback.capture_hint")}
+          </p>
+        </>
+      )}
+    </div>
+  );
+
+  const footerActions = (
+    <div className="flex justify-end gap-2 pt-1">
+      <Button type="button" variant="outline" onClick={close} disabled={submitting}>
+        {t("interactions.feedback.cancel")}
+      </Button>
+      <Button type="button" onClick={handleSubmit} disabled={!text.trim() || submitting}>
+        {submitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("interactions.feedback.sending")}
+          </>
+        ) : (
+          t("interactions.feedback.submit")
+        )}
+      </Button>
+    </div>
+  );
+
+  // Mobile landscape: a centered dialog that spans the available width
+  // instead of the edge-anchored flyout below. Two side-by-side columns
+  // (mode + text on the left, screenshot on the right) mean the form fits
+  // without the scrolling the cramped single-column version needed on a
+  // short viewport. The trigger tab is a separate fixed element (not nested
+  // in the dialog) so it stays reachable while the dialog is closed, offset
+  // by env(safe-area-inset-right) so it doesn't sit behind the sensor-
+  // housing cutout when the phone is rotated with the camera on that edge.
+  if (mobileLandscape) {
+    return (
+      <>
+        <button
+          type="button"
+          data-feedback-panel
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-label={t("interactions.feedback.fab_aria")}
+          style={{ right: "env(safe-area-inset-right)" }}
+          className="fixed top-1/2 z-40 flex w-9 -translate-y-1/2 flex-col items-center justify-center gap-2 rounded-l-md bg-primary py-4 text-white shadow-lg transition-colors hover:bg-primary-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <MessageCircle className="h-5 w-5 shrink-0" />
+          <span className="text-xs font-medium tracking-wide [writing-mode:vertical-rl] rotate-180">
+            {t("interactions.feedback.tab_label")}
+          </span>
+        </button>
+
+        {open && (
+          // z-[60]: above MainNav's z-50. Unlike the edge-anchored flyout
+          // below (which intentionally stays under the nav since it never
+          // covers it), this is a full-screen backdrop meant to block
+          // interaction with the rest of the app while open -- at z-40 the
+          // nav pill would render on top of it and stay tappable through
+          // the "modal".
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-3">
+            <div
+              ref={panelRef}
+              data-feedback-panel
+              className="flex max-h-full w-full max-w-2xl flex-col overflow-y-auto rounded-xl bg-background p-4 shadow-lg ring-1 ring-black/10"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">
+                  {t("interactions.feedback.dialog_title")}
+                </h2>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={close}
+                  aria-label={t("interactions.feedback.cancel")}
+                  className="h-7 w-7"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  {modeToggle}
+                  <Textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder={placeholder}
+                    className="min-h-[90px] flex-1 resize-none"
+                    maxLength={8000}
+                  />
+                </div>
+                {screenshotArea}
+              </div>
+
+              <div className="pt-3">{footerActions}</div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <div
       ref={panelRef}
@@ -209,7 +403,11 @@ export function FeedbackTab() {
       // position -- the bound only ever kicks in when there truly isn't
       // room, at which point the panel scrolls internally (see below)
       // instead of spilling off-screen.
-      className="fixed right-0 top-4 bottom-40 z-40 flex items-end"
+      // The really cramped landscape case (short height) is now handled
+      // above by mobileLandscape instead -- this bound is a fallback for
+      // any other narrow-but-not-quite-mobileLandscape viewport.
+      style={{ right: "env(safe-area-inset-right)" }}
+      className="fixed top-4 bottom-40 z-40 flex items-end"
     >
       <div
         className={cn(
@@ -244,32 +442,7 @@ export function FeedbackTab() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setMode("issue")}
-              className={cn(
-                "min-h-[44px] rounded-md border px-3 py-2 text-sm font-medium transition-colors",
-                mode === "issue"
-                  ? "border-primary bg-primary text-white"
-                  : "border-input bg-background hover:bg-accent",
-              )}
-            >
-              {t("interactions.feedback.mode_issue")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("feedback")}
-              className={cn(
-                "min-h-[44px] rounded-md border px-3 py-2 text-sm font-medium transition-colors",
-                mode === "feedback"
-                  ? "border-primary bg-primary text-white"
-                  : "border-input bg-background hover:bg-accent",
-              )}
-            >
-              {t("interactions.feedback.mode_feedback")}
-            </button>
-          </div>
+          {modeToggle}
 
           <Textarea
             value={text}
@@ -279,67 +452,8 @@ export function FeedbackTab() {
             maxLength={8000}
           />
 
-          <div className="space-y-2">
-            {screenshot ? (
-              <div className="flex items-start gap-3 rounded-md border border-input p-2">
-                <img
-                  src={screenshot}
-                  alt="Screenshot preview"
-                  className="h-16 w-16 rounded object-cover"
-                />
-                <div className="flex-1 text-sm">
-                  <div className="font-medium">
-                    {t("interactions.feedback.screenshot_attached")}
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setScreenshot(null)}
-                  aria-label={t("interactions.feedback.remove_screenshot")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCapture}
-                  disabled={capturing}
-                  className="w-full"
-                >
-                  {capturing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                  {t("interactions.feedback.capture_button")}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  {t("interactions.feedback.capture_hint")}
-                </p>
-              </>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="outline" onClick={close} disabled={submitting}>
-              {t("interactions.feedback.cancel")}
-            </Button>
-            <Button type="button" onClick={handleSubmit} disabled={!text.trim() || submitting}>
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("interactions.feedback.sending")}
-                </>
-              ) : (
-                t("interactions.feedback.submit")
-              )}
-            </Button>
-          </div>
+          {screenshotArea}
+          {footerActions}
         </div>
       </div>
 
