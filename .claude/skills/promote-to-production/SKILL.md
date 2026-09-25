@@ -141,3 +141,24 @@ Same as step 3: use the **verify-deploy** skill against `pif.today`, project
 Move the relevant card to Done (or the appropriate list) and leave a short comment noting what
 shipped and the production commit SHA. Check the Trello Inbox for anything urgent that surfaced
 while you were heads-down on the deploy.
+
+### 9. Evaluate whether it's worth a feature announcement
+
+If what just shipped is a significant, user-visible feature — not a small copy/UX tweak or bug fix
+like the mobile-landscape feedback-panel fix that prompted this skill — proactively evaluate and
+report back whether it's worth announcing to users. Don't wait to be asked, and don't just pose a
+bare yes/no question: give a short recommendation (worth announcing / not, and why) covering both
+channels:
+
+- **Popup**: `feature_announcements` table + `src/components/announcements/AnnouncementModal.tsx`.
+- **Email**: `notify_feature_announcement()` → `send-notification-email` edge function's
+  `feature_announcement_broadcast` mode (sends to every profile sequentially in one process — never
+  loop `net.http_post` per recipient; see `CLAUDE.md`'s pg_net throttling incident).
+
+Verify both mechanisms still exist and match this description before relying on it — things drift.
+If the user confirms wording, authoring is direct: insert a row into `feature_announcements`
+(bilingual `title_sv`/`title_en`/`body_sv`/`body_en`, `published_at` null for draft or a timestamp
+to publish) via `execute_sql`/`apply_migration` against production; the email sends separately via
+the edge function's broadcast mode. No admin UI exists for either. Watch out for the backfilled-
+watermark trap documented in `CLAUDE.md` if the announcement was authored before this promotion —
+`last_seen_announcement_at` defaults can silently hide it from existing users.
