@@ -36,6 +36,7 @@ export function EmailPasswordSettings() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [pendingEmailChange, setPendingEmailChange] = useState<PendingEmailChange | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   // Password changes go through the same email-confirmation flow as a reset:
   // we never apply the change from here. Tapping the button sends a link, and
@@ -103,6 +104,32 @@ export function EmailPasswordSettings() {
     }
   };
 
+  const withdrawEmailChange = async () => {
+    setWithdrawing(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)('withdraw_pending_email_change');
+      if (error) throw error;
+      if (data) {
+        setPendingEmailChange(null);
+        setEmail(currentEmail);
+        toast({ title: t('settings.email_change_withdrawn') });
+      } else {
+        // Nothing left to withdraw (e.g. it was already confirmed/expired
+        // between page load and the click) -- just resync the UI state
+        // rather than claiming success for something that didn't happen.
+        refreshPendingEmailChange();
+      }
+    } catch (error: any) {
+      toast({
+        title: t('settings.email_change_withdraw_failed'),
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   // Trim only -- a stray leading/trailing space shouldn't count as "changed".
   // Deliberately NOT case-folding: checked against GoTrue's actual UserUpdate
   // handler and production's users_email_partial_key index, and email-change
@@ -148,15 +175,28 @@ export function EmailPasswordSettings() {
         {pendingEmailChange && (
           <Alert className="bg-muted/50 border-border">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <AlertDescription className="text-muted-foreground">
-              {!pendingEmailChange.current_confirmed && !pendingEmailChange.new_confirmed
-                ? t('settings.email_change_pending_both', {
-                    current: pendingEmailChange.current_email,
-                    new: pendingEmailChange.new_email,
-                  })
-                : !pendingEmailChange.current_confirmed
-                  ? t('settings.email_change_pending_one', { email: pendingEmailChange.current_email })
-                  : t('settings.email_change_pending_one', { email: pendingEmailChange.new_email })}
+            <AlertDescription className="text-muted-foreground space-y-2">
+              <p>
+                {!pendingEmailChange.current_confirmed && !pendingEmailChange.new_confirmed
+                  ? t('settings.email_change_pending_both', {
+                      current: pendingEmailChange.current_email,
+                      new: pendingEmailChange.new_email,
+                    })
+                  : !pendingEmailChange.current_confirmed
+                    ? t('settings.email_change_pending_one', { email: pendingEmailChange.current_email })
+                    : t('settings.email_change_pending_one', { email: pendingEmailChange.new_email })}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={withdrawEmailChange}
+                disabled={withdrawing}
+              >
+                {withdrawing
+                  ? t('settings.email_change_withdrawing')
+                  : t('settings.email_change_withdraw')}
+              </Button>
             </AlertDescription>
           </Alert>
         )}
