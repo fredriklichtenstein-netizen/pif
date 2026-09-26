@@ -6,6 +6,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { validateAuthForm } from "./FormValidation";
 
@@ -130,10 +131,9 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
 
           <div>
             <Label htmlFor="signup-password">{t("auth.password_label")}</Label>
-            <Input
+            <PasswordInput
               id="signup-password"
               name="password"
-              type="password"
               autoComplete="new-password"
               required
               value={password}

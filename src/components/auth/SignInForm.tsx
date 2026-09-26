@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 import { validateAuthForm } from "./FormValidation";
@@ -149,10 +150,9 @@ export function SignInForm({
 
           <div>
             <Label htmlFor="signin-password">{t("auth.password_label")}</Label>
-            <Input
+            <PasswordInput
               id="signin-password"
               name="password"
-              type="password"
               autoComplete="current-password"
               required
               value={password}
