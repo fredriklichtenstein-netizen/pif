@@ -35,6 +35,14 @@ export function useEmailConfirmation() {
   // Set when an email_change link was confirmed but the *other* address still
   // has an outstanding confirmation (secure email change sends one to each).
   const [emailChangePendingFor, setEmailChangePendingFor] = useState<string | null>(null);
+  // Set when a token_hash link fails verification (expired, already used, or
+  // -- since the withdraw-pending-email-change feature -- invalidated by the
+  // user themselves). verifyTokenHashIfPresent used to just log this and
+  // fall through to the default post-signup "check your email" screen,
+  // which is actively misleading: it implies the user should go check their
+  // inbox again for a link that will never arrive, when the real problem is
+  // the one they just clicked is dead.
+  const [linkInvalid, setLinkInvalid] = useState(false);
   // True while an inbound confirmation link is still being verified. Without
   // this the page briefly renders its default post-signup "check your email"
   // state — with a blank address and a Resend button that can only error —
@@ -109,7 +117,8 @@ export function useEmailConfirmation() {
       });
       if (error) {
         console.error("Email confirmation verification failed:", error);
-        return false;
+        setLinkInvalid(true);
+        return true;
       }
 
       // Secure email change needs BOTH addresses confirmed. After the first
@@ -218,6 +227,7 @@ export function useEmailConfirmation() {
     resendCooldown,
     userEmail,
     emailChangePendingFor,
+    linkInvalid,
     verifying,
     handleResendConfirmation,
   };

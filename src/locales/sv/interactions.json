@@ -676,7 +676,9 @@
     "email_change_one_left_title": "Ett steg kvar",
     "email_change_one_left_body": "Tack! Nu återstår bara att klicka på bekräftelselänken vi skickade till {{email}}. Kolla även skräpposten om mejlet inte dyker upp i inkorgen.",
     "back_to_app": "Tillbaka till appen",
-    "verifying": "Bekräftar..."
+    "verifying": "Bekräftar...",
+    "link_invalid_title": "Länken är inte längre giltig",
+    "link_invalid_body": "Den här bekräftelselänken har antingen redan använts, gått ut, eller så avbröts ändringen innan du hann klicka på den. Om du fortfarande vill göra ändringen, gör om den från kontoinställningarna."
   },
   "share": {
     "validating_item": "Validerar objekt...",
