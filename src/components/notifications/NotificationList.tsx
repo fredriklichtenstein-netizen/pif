@@ -2,7 +2,7 @@
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, ArrowRight } from "lucide-react";
+import { MessageSquare, ArrowRight, MailOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,6 +26,7 @@ export function NotificationList() {
     fetchError,
     markAllAsRead,
     markAsRead,
+    markAsUnread,
     unreadCount,
   } = useNotifications();
 
@@ -264,7 +265,23 @@ export function NotificationList() {
                         </Link>
                       )}
 
-                      {!notif.is_read && (
+                      {notif.is_read ? (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title={t('interactions.mark_as_unread')}
+                          aria-label={t('interactions.mark_as_unread')}
+                          onClick={(e) => {
+                            // Don't let this bubble to the row's own onClick
+                            // (which marks read) -- that would immediately
+                            // undo what this button just did.
+                            e.stopPropagation();
+                            markAsUnread(notif.id);
+                          }}
+                        >
+                          <MailOpen className="h-4 w-4" />
+                        </Button>
+                      ) : (
                         <Badge variant="outline" className="bg-primary text-primary-foreground border-primary text-xs">{t('interactions.new_badge')}</Badge>
                       )}
                     </div>
