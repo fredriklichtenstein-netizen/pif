@@ -22,7 +22,10 @@ import { debugLog } from "@/utils/authDebug";
 const NOTIF_SYNC_EVENT = "pif:notifications:read-sync";
 const NOTIF_NEW_EVENT = "pif:notifications:new";
 const NOTIF_BC_NAME = "pif:notifications";
-type NotifSyncDetail = { ids?: string[]; all?: boolean };
+// `read` defaults to true when omitted -- every existing emitter only ever
+// marked things read, so this keeps old call sites (and messages already
+// in flight across a BroadcastChannel during a deploy) working unchanged.
+type NotifSyncDetail = { ids?: string[]; all?: boolean; read?: boolean };
 type NotifBcMessage =
   | { kind: "sync"; detail: NotifSyncDetail }
   | { kind: "new"; detail: Notification };
@@ -332,22 +335,16 @@ export function useNotifications() {
 
     const onSync = (e: Event) => {
       const detail = (e as CustomEvent<NotifSyncDetail>).detail || {};
+      const nextRead = detail.read !== false;
       if (detail.all) {
         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-        
+
         return;
       }
       const ids = new Set(detail.ids || []);
       if (ids.size === 0) return;
-      let cleared = 0;
       setNotifications((prev) =>
-        prev.map((n) => {
-          if (ids.has(n.id) && !n.is_read) {
-            cleared += 1;
-            return { ...n, is_read: true };
-          }
-          return n;
-        })
+        prev.map((n) => (ids.has(n.id) ? { ...n, is_read: nextRead } : n))
       );
       // unreadCount derives from notifications; no separate setter needed
     };
@@ -452,6 +449,40 @@ export function useNotifications() {
     }
   }, [user?.id, fetchNotifications]);
 
+  // The "I'll deal with this later" counterpart to markAsRead -- puts a
+  // notification back into the unread state (and count) after it's already
+  // been seen, mirroring markAsRead's optimistic-update + sync shape.
+  const markAsUnread = useCallback(async (notificationId: string) => {
+    if (!user?.id || !notificationId) return;
+
+    let wasRead = false;
+    setNotifications((prev) =>
+      prev.map((n) => {
+        if (n.id === notificationId) {
+          if (n.is_read) wasRead = true;
+          return { ...n, is_read: false };
+        }
+        return n;
+      })
+    );
+    if (wasRead) {
+      emitNotifSync({ ids: [notificationId], read: false });
+    }
+
+    if (DEMO_MODE) return;
+
+    const { error } = await (supabase
+      .from("notifications") as any)
+      .update({ read: false })
+      .eq("id", notificationId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      if (maybeRecoverFromAuthError(error, "mark_notification_unread")) return;
+      fetchNotifications();
+    }
+  }, [user?.id, fetchNotifications]);
+
   return {
     notifications,
     isLoading,
@@ -459,6 +490,7 @@ export function useNotifications() {
     unreadCount,
     markAllAsRead,
     markAsRead,
+    markAsUnread,
     fetchNotifications,
   };
 }
