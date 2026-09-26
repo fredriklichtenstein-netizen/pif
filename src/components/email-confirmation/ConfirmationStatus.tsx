@@ -1,4 +1,4 @@
-import { Mail, CheckCircle, Loader2 } from "lucide-react";
+import { Mail, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,9 @@ interface ConfirmationStatusProps {
   /** Set when one side of a secure email change is confirmed but the other
    * address still needs a click — shows which inbox to check next. */
   emailChangePendingFor?: string | null;
+  /** True when the link's token failed verification -- expired, already
+   * used, or invalidated (e.g. the pending email change was withdrawn). */
+  linkInvalid?: boolean;
   /** True while an inbound confirmation link is still being verified. */
   verifying?: boolean;
 }
@@ -21,6 +24,7 @@ export function ConfirmationStatus({
   loading,
   onResend,
   emailChangePendingFor,
+  linkInvalid,
   verifying,
 }: ConfirmationStatusProps) {
   const { t } = useTranslation();
@@ -34,6 +38,25 @@ export function ConfirmationStatus({
         <h2 className="text-2xl font-bold text-foreground">
           {t('email_confirmation.verifying')}
         </h2>
+      </div>
+    );
+  }
+
+  if (linkInvalid) {
+    return (
+      <div className="max-w-md w-full space-y-8 text-center">
+        <div className="mx-auto w-fit p-4 bg-destructive/10 rounded-full">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+        </div>
+        <h2 className="text-3xl font-bold text-foreground">
+          {t('email_confirmation.link_invalid_title')}
+        </h2>
+        <p className="text-muted-foreground">
+          {t('email_confirmation.link_invalid_body')}
+        </p>
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/feed">{t('email_confirmation.back_to_app')}</Link>
+        </Button>
       </div>
     );
   }
