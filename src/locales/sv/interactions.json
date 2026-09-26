@@ -447,6 +447,7 @@
     "withdraw_offer_description": "Önskaren kommer inte längre se ditt erbjudande att uppfylla önskan.",
     "withdraw_offer_cancel": "Avbryt",
     "withdraw_offer_confirm": "Dra tillbaka erbjudandet",
+    "withdraw_comment_placeholder": "Valfri kommentar (visas för den andra parten)…",
     "add_pif_button": "Lägg till pif",
     "add_wish_button": "Lägg till önskan",
     "add_pif_short": "Pif",

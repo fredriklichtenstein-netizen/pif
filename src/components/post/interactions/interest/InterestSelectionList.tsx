@@ -710,7 +710,7 @@ export function InterestSelectionList({
   //   - not selected (pending/null) → mere candidate. Route through the
   //     shared pre-selection helper instead — withdraw_receiver would
   //     reject these with 403 "Not the selected receiver".
-  const handleWithdrawOwnOffer = async () => {
+  const handleWithdrawOwnOffer = async (comment?: string) => {
     if (!currentUserId) return;
     try {
       if (DEMO_MODE) {
@@ -731,7 +731,7 @@ export function InterestSelectionList({
         // the explicit ERRCODE; the code is the primary signal.
         const { error } = await (supabase.rpc as any)("withdraw_receiver", {
           p_item_id: numericItemId,
-          p_comment: null,
+          p_comment: comment ?? null,
         });
         if (error) {
           const code = (error as any)?.code;
@@ -739,7 +739,7 @@ export function InterestSelectionList({
           const isNotSelected =
             code === "42501" || /not the selected receiver/i.test(msg);
           if (isNotSelected) {
-            await withdrawPreSelectionInterest(numericItemId, currentUserId);
+            await withdrawPreSelectionInterest(numericItemId, currentUserId, comment);
           } else {
             throw error;
           }
@@ -1085,9 +1085,9 @@ export function InterestSelectionList({
       <WithdrawInterestDialog
         open={confirmSelfWithdrawOpen}
         onOpenChange={setConfirmSelfWithdrawOpen}
-        onConfirm={() => {
+        onConfirm={(comment) => {
           setConfirmSelfWithdrawOpen(false);
-          handleWithdrawOwnOffer();
+          handleWithdrawOwnOffer(comment);
         }}
         copy={selfWithdrawCopy}
       />

@@ -447,6 +447,7 @@
     "withdraw_offer_description": "The wisher will no longer see your offer to fulfill their wish.",
     "withdraw_offer_cancel": "Cancel",
     "withdraw_offer_confirm": "Withdraw offer",
+    "withdraw_comment_placeholder": "Optional comment (shown to the other party)…",
     "add_pif_button": "Add pif",
     "add_wish_button": "Add wish",
     "add_pif_short": "Pif",

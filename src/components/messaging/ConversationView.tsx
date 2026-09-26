@@ -71,6 +71,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const [reportOpen, setReportOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawReceiverOpen, setWithdrawReceiverOpen] = useState(false);
+  const [withdrawReceiverComment, setWithdrawReceiverComment] = useState("");
   const [reopenDialogOpen, setReopenDialogOpen] = useState(false);
   const [reopenComment, setReopenComment] = useState("");
   const [reopenBusy, setReopenBusy] = useState(false);
@@ -361,6 +362,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   // guards against deleting a still-selected row.
   const handleWithdrawReceiverInterest = () => {
     setWithdrawReceiverOpen(false);
+    const comment = withdrawReceiverComment;
+    setWithdrawReceiverComment("");
     // setTimeout, not requestAnimationFrame -- see handleWithdraw above.
     setTimeout(async () => {
       if (!item?.id || !currentUserId) return;
@@ -369,7 +372,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       try {
         const { error } = await (supabase.rpc as any)("withdraw_receiver", {
           p_item_id: numericItemId,
-          p_comment: null,
+          p_comment: comment || null,
         });
         if (error) {
           const code = (error as any)?.code;
@@ -377,7 +380,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           const isNotSelected =
             code === "42501" || /not the selected receiver/i.test(msg);
           if (isNotSelected) {
-            await withdrawPreSelectionInterest(numericItemId, currentUserId);
+            await withdrawPreSelectionInterest(numericItemId, currentUserId, comment);
           } else {
             throw error;
           }
@@ -509,7 +512,10 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
               {role === "receiver" && !isClosed && (
                 <>
                   <DropdownMenuItem
-                    onClick={() => setWithdrawReceiverOpen(true)}
+                    onClick={() => {
+                      setWithdrawReceiverComment("");
+                      setWithdrawReceiverOpen(true);
+                    }}
                     className="text-destructive focus:text-destructive"
                   >
                     <UserMinus className="h-4 w-4 mr-2" />
@@ -797,6 +803,13 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
             <AlertDialogTitle>{withdrawReceiverCopy.title}</AlertDialogTitle>
             <AlertDialogDescription>{withdrawReceiverCopy.description}</AlertDialogDescription>
           </AlertDialogHeader>
+          <Textarea
+            value={withdrawReceiverComment}
+            onChange={(e) => setWithdrawReceiverComment(e.target.value)}
+            placeholder={t("interactions.withdraw_comment_placeholder")}
+            maxLength={500}
+            rows={3}
+          />
           <AlertDialogFooter>
             <AlertDialogCancel>{withdrawReceiverCopy.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleWithdrawReceiverInterest}>

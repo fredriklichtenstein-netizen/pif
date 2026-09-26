@@ -39,10 +39,13 @@ export function useWithdrawInterestConfirm({
     [showInterest, handleShowInterest]
   );
 
-  const confirmWithdrawInterest = useCallback(() => {
-    setWithdrawConfirmOpen(false);
-    handleShowInterest();
-  }, [handleShowInterest]);
+  const confirmWithdrawInterest = useCallback(
+    (comment?: string) => {
+      setWithdrawConfirmOpen(false);
+      handleShowInterest(comment);
+    },
+    [handleShowInterest],
+  );
 
   const keyPrefix =
     itemType === "request" ? "interactions.withdraw_offer" : "interactions.withdraw_interest";
