@@ -29,6 +29,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 export const withdrawPreSelectionInterest = async (
   itemId: number,
   userId: string,
+  comment?: string,
 ): Promise<void> => {
   // 1. Look up item metadata first — once the interests row is deleted
   // there's no harm, but we want the notification copy ready regardless.
@@ -65,7 +66,7 @@ export const withdrawPreSelectionInterest = async (
   if ((ownRow as any)?.status === "selected") {
     const { error: rpcError } = await (supabase.rpc as any)("withdraw_receiver", {
       p_item_id: itemId,
-      p_comment: null,
+      p_comment: comment ?? null,
     });
     if (rpcError) throw rpcError;
     return;
@@ -96,9 +97,13 @@ export const withdrawPreSelectionInterest = async (
   const title = isWish
     ? `Någon har dragit tillbaka sitt erbjudande för "${itemTitle}".`
     : `Någon har dragit tillbaka sitt intresse för "${itemTitle}".`;
-  const content = isWish
+  let content = isWish
     ? "Önskan är fortfarande aktiv för andra som vill hjälpa."
     : "Piffen är fortfarande öppen för andra att visa intresse.";
+  const cleanComment = comment?.trim();
+  if (cleanComment) {
+    content += `\n\nMeddelande: ${cleanComment}`;
+  }
 
   try {
     await (supabase.rpc as any)("create_notification", {

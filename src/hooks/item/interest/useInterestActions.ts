@@ -53,7 +53,7 @@ export const useInterestActions = (
       if (nextInterested) {
         await addInterest(numericId, userId, note);
       } else {
-        await removeInterest(numericId, userId);
+        await removeInterest(numericId, userId, note);
       }
       // Refresh the interested users list in the background — don't block the UI on it.
       fetchInterestedUsersInternal(numericId).catch((err) => {
@@ -77,7 +77,7 @@ export const useInterestActions = (
   return { handleShowInterest };
 };
 
-const removeInterest = async (itemId: number, userId: string) => {
+const removeInterest = async (itemId: number, userId: string, comment?: string) => {
   // If the user is the currently-selected receiver/fulfiller, route
   // through withdraw_receiver so the RPC emits system messages + a
   // notification to the owner and closes the conversation. Otherwise
@@ -96,7 +96,7 @@ const removeInterest = async (itemId: number, userId: string) => {
   if (isSelected) {
     const { error } = await (supabase.rpc as any)('withdraw_receiver', {
       p_item_id: itemId,
-      p_comment: null,
+      p_comment: comment ?? null,
     });
     if (error) throw error;
     try {
@@ -109,7 +109,7 @@ const removeInterest = async (itemId: number, userId: string) => {
   // Pre-selection withdraw: delegate to the shared helper so this path
   // and the popup's "Ångra" candidate action stay in lockstep on copy,
   // ordering, and DEMO_MODE gating.
-  await withdrawPreSelectionInterest(itemId, userId);
+  await withdrawPreSelectionInterest(itemId, userId, comment);
 };
 
 const addInterest = async (itemId: number, userId: string, note?: string) => {
