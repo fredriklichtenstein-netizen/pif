@@ -8,6 +8,7 @@ import {
   isAuthRequestCircuitOpen,
 } from "@/hooks/auth/sessionRecovery";
 import { safeParseJSON } from "@/utils/safeStorage";
+import { useAuthStore } from "@/hooks/auth/authStore";
 
 
 /**
@@ -218,7 +219,7 @@ export const releaseProfileChannel = (userId: string) => {
 };
 
 
-const fetchProfileOnce = (userId: string): Promise<any | null> => {
+const fetchProfileOnce = (userId: string, isAuthenticated: boolean): Promise<any | null> => {
   const existing = inFlight.get(userId);
   if (existing) return existing;
 
@@ -228,17 +229,17 @@ const fetchProfileOnce = (userId: string): Promise<any | null> => {
       // Takes an arbitrary user id, so public columns only. Reading your own
       // private fields is fetchMyProfile(); other people's are not readable at
       // all — the database refuses them, it is not merely a convention here.
-      // This is a module-level cache shared across every component asking
-      // for this userId, keyed only by userId -- not by the current
-      // viewer's auth state -- so the column list is resolved fresh here
-      // against the live session rather than threaded through as a param
-      // (which would need a cache key per viewer-auth-state to stay
-      // correct). getSession() reads from localStorage in practice, no
-      // network round trip in the common case.
-      const { data: { session } } = await supabase.auth.getSession();
+      // isAuthenticated is the CALLER's reactive auth state (useAuthStore),
+      // not a fresh getSession() call made here -- that raced Supabase's own
+      // session restore on first mount and returned null for an actually-
+      // logged-in user, confirmed live (feed cached first-name-only for an
+      // authenticated viewer with no self-correction; same root cause
+      // applies here). The caller re-invokes this once auth resolves
+      // (isAuthenticated is in its effect deps), which overwrites this
+      // module cache with the corrected result.
       const { data, error } = await supabase
         .from("profiles")
-        .select(getProfilePublicColumns(!!session))
+        .select(getProfilePublicColumns(isAuthenticated))
         .eq("id", userId)
         .maybeSingle();
 
@@ -285,6 +286,12 @@ export const useCachedProfile = (
   options: Options = {},
 ) => {
   const { revalidate = true, staleTtlMs } = options;
+  // Reactive viewer auth state -- see fetchProfileOnce's comment. Included
+  // in the revalidation effect's deps so a transition (e.g. session
+  // restoring shortly after mount) triggers a corrected re-fetch instead
+  // of leaving an early anon-shaped cache entry stuck.
+  const authUserId = useAuthStore((s) => s.user?.id) ?? null;
+  const isAuthenticated = !!authUserId;
   const [profile, setProfile] = useState<any | null>(() =>
     userId ? readCache(userId) : null,
   );
@@ -314,7 +321,7 @@ export const useCachedProfile = (
     if (!revalidate && cached && !stale) return;
 
     setIsRevalidating(true);
-    fetchProfileOnce(userId).then((fresh) => {
+    fetchProfileOnce(userId, isAuthenticated).then((fresh) => {
       if (cancelled) return;
       if (fresh) setProfile(fresh);
       setIsRevalidating(false);
@@ -323,7 +330,7 @@ export const useCachedProfile = (
     return () => {
       cancelled = true;
     };
-  }, [userId, revalidate, staleTtlMs]);
+  }, [userId, revalidate, staleTtlMs, authUserId]);
 
   // Periodic + visibility-driven TTL revalidation: while the hook is
   // mounted, check every minute whether the cache has gone stale and
@@ -337,7 +344,7 @@ export const useCachedProfile = (
       const ttl = staleTtlMs ?? STALE_TTL_MS;
       const entry = readEntry(userId);
       if (entry && Date.now() - entry.cachedAt <= ttl) return;
-      fetchProfileOnce(userId).then((fresh) => {
+      fetchProfileOnce(userId, isAuthenticated).then((fresh) => {
         if (fresh) setProfile(fresh);
       });
     };
@@ -352,7 +359,7 @@ export const useCachedProfile = (
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [userId, staleTtlMs]);
+  }, [userId, staleTtlMs, authUserId]);
 
   // Listen for realtime profile updates. Merge changed fields into the
   // existing cached profile instead of replacing the whole object so the
@@ -383,7 +390,7 @@ export const useCachedProfile = (
   const refresh = async () => {
     if (!userId) return null;
     setIsRevalidating(true);
-    const fresh = await fetchProfileOnce(userId);
+    const fresh = await fetchProfileOnce(userId, isAuthenticated);
     if (fresh) setProfile(fresh);
     setIsRevalidating(false);
     return fresh;

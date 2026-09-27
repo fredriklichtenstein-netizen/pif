@@ -16,6 +16,20 @@ export class OptimizedQueries {
     categories?: string[];
     coordinates?: { lat: number; lng: number; radius?: number };
     includeArchived?: boolean;
+    /**
+     * Reactive auth state from the caller (e.g. useAuthStore), not a fresh
+     * supabase.auth.getSession() call made here. This function fires from
+     * useOptimizedFeed with no auth-readiness gate -- on the very first
+     * feed load, Supabase's own session restore can still be in flight,
+     * so a getSession() call made at this point can race it and return
+     * null for an actually-logged-in user. Confirmed live: the feed
+     * cached a first-name-only result for an authenticated viewer with
+     * no self-correction, since nothing here was keyed on auth state.
+     * Pass the already-resolved store value instead so the caller's own
+     * cache key (which includes this flag) naturally separates an early
+     * anon-shaped fetch from the corrected one once auth resolves.
+     */
+    isAuthenticated?: boolean;
   }) {
     return monitorQuery('getPosts', () =>
       withRetry(async () => {
@@ -81,10 +95,9 @@ export class OptimizedQueries {
 
         let profilesById = new Map<string, any>();
         if (uniqueUserIds.length > 0) {
-          const { data: { session } } = await supabase.auth.getSession();
           const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
-            .select(getProfileEmbedColumns(!!session, ['username']))
+            .select(getProfileEmbedColumns(!!options.isAuthenticated, ['username']))
             .in('id', uniqueUserIds);
           if (profilesError) {
             console.warn('Profiles fetch failed (non-fatal):', profilesError);
