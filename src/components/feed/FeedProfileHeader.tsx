@@ -43,7 +43,7 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const { data, error } = await supabase
+        const { data: rawData, error } = await supabase
           .from("profiles")
           // coordinates_public, not location_json: this is ANOTHER user's home
           // location, and only the coarse point may be shown. Use the shared
@@ -54,6 +54,10 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
           .select(getProfilePublicColumns(!!user))
           .eq("id", userId)
           .single();
+        // The select string is runtime-computed (auth-dependent), so the
+        // generated types can't statically parse it and type the result as
+        // an error type — cast to the row shape we actually requested.
+        const data = rawData as any;
         if (error || !data || cancelled) return;
         const name =
           [data.first_name, data.last_name || ""]

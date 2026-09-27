@@ -30,7 +30,7 @@ export const getPosts = async (): Promise<Post[]> => {
     
     // Fetch base post data
     const { data: { session } } = await supabase.auth.getSession();
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('items')
       .select(`*, ${getItemOwnerProfileEmbed(!!session)}`)
       .order('created_at', { ascending: false })
@@ -41,7 +41,11 @@ export const getPosts = async (): Promise<Post[]> => {
       throw error;
     }
 
-    if (!data || data.length === 0) {
+    // The select string embeds a runtime-computed profile embed, so the
+    // generated types can't statically parse it — cast to the row shape.
+    const data = (rawData ?? []) as any[];
+
+    if (data.length === 0) {
       return [];
     }
 
