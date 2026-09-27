@@ -18,6 +18,7 @@ import { readCachedItem, writeCachedItem } from "@/hooks/cache/itemCache";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
 import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
+import { getItemOwnerProfileEmbed } from "@/services/items/publicColumns";
 
 type PostModalProps = {
   postId: number | string | null;
@@ -109,7 +110,7 @@ export function PostModal({ postId, open, onOpenChange, onStatusChange }: PostMo
     // Background refresh.
     supabase
       .from("items")
-      .select("*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)")
+      .select(`*, ${getItemOwnerProfileEmbed(!!user)}`)
       .eq("id", typeof postId === 'string' ? parseInt(postId, 10) : postId)
       .single()
       .then(({ data, error }) => {

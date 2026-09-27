@@ -4,6 +4,7 @@ import type { CreatePostInput, Post } from "@/types/post";
 import { getPostsFromCache, cachePostsData } from "./cache";
 import { fetchInteractionCounts, fetchMissingCounts } from "./interactions";
 import { transformPostData } from "./transform";
+import { getItemOwnerProfileEmbed } from "@/services/items/publicColumns";
 
 export const addPost = async (postData: CreatePostInput) => {
   const { data, error } = await (supabase
@@ -28,9 +29,10 @@ export const getPosts = async (): Promise<Post[]> => {
     }
     
     // Fetch base post data
+    const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase
       .from('items')
-      .select('*, profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)')
+      .select(`*, ${getItemOwnerProfileEmbed(!!session)}`)
       .order('created_at', { ascending: false })
       .limit(20);
 

@@ -9,6 +9,8 @@ import { ProfileLocationMap } from "@/components/profile/map/ProfileLocationMap"
 import { ImageLightbox } from "@/components/item/ImageLightbox";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
+import { getProfilePublicColumns } from "@/services/profile/publicColumns";
+import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import {
   useUserFilterProfileStore,
   type UserFilterStub,
@@ -29,6 +31,7 @@ function extractArea(address?: string | null): string | undefined {
 
 export function FeedProfileHeader({ userId, onClear }: Props) {
   const { t } = useTranslation();
+  const { user } = useGlobalAuth();
   const stub = useUserFilterProfileStore((s) => s.profiles[userId]);
   const setProfile = useUserFilterProfileStore((s) => s.setProfile);
   const [enriched, setEnriched] = useState<UserFilterStub | null>(stub ?? null);
@@ -43,8 +46,12 @@ export function FeedProfileHeader({ userId, onClear }: Props) {
         const { data, error } = await supabase
           .from("profiles")
           // coordinates_public, not location_json: this is ANOTHER user's home
-            // location, and only the coarse point may be shown.
-            .select("id, first_name, last_name, avatar_url, city, coordinates_public")
+          // location, and only the coarse point may be shown. Use the shared
+          // public-columns allowlist (not an ad-hoc list) so this stays in
+          // sync with what anon may request -- last_name is only included
+          // when authenticated; the anon role's grant on it was revoked, so
+          // requesting it while logged out would fail the whole query.
+          .select(getProfilePublicColumns(!!user))
           .eq("id", userId)
           .single();
         if (error || !data || cancelled) return;

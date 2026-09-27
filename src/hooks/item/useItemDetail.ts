@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { withRetry } from '@/utils/connectionRetryUtils';
 import { useTranslation } from 'react-i18next';
-import { ITEM_PUBLIC_SELECT } from '@/services/items/publicColumns';
+import { getItemPublicSelect } from '@/services/items/publicColumns';
 
 /**
  * Local "auth ready" signal that does NOT depend on the global auth store.
@@ -23,6 +23,11 @@ import { ITEM_PUBLIC_SELECT } from '@/services/items/publicColumns';
  */
 function useAuthReady() {
   const [ready, setReady] = useState(false);
+  // Tracks whether there's a session, not just whether the check finished --
+  // getItemPublicSelect needs this to know if last_name may be requested.
+  // Defaults to false (the safe/anon column set) if the check never
+  // resolves before the hard fallback below fires.
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,6 +41,9 @@ function useAuthReady() {
 
     supabase.auth
       .getSession()
+      .then((res) => {
+        if (!cancelled) setIsAuthenticated(!!res.data.session);
+      })
       .catch(() => null)
       .finally(() => {
         if (!cancelled) {
@@ -44,8 +52,11 @@ function useAuthReady() {
         }
       });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      if (!cancelled) setReady(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!cancelled) {
+        setIsAuthenticated(!!session);
+        setReady(true);
+      }
     });
 
     return () => {
@@ -55,13 +66,13 @@ function useAuthReady() {
     };
   }, []);
 
-  return ready;
+  return { ready, isAuthenticated };
 }
 
 export function useItemDetail(id: string) {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const authReady = useAuthReady();
+  const { ready: authReady, isAuthenticated } = useAuthReady();
 
   const query = useQuery({
     queryKey: ['item', id],
@@ -78,7 +89,7 @@ export function useItemDetail(id: string) {
           async () => {
             return await supabase
               .from('items')
-              .select(ITEM_PUBLIC_SELECT)
+              .select(getItemPublicSelect(isAuthenticated))
               .eq('id', numericId)
               .single();
           },

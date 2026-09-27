@@ -7,7 +7,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { MOCK_POSTS } from "@/data/mockPosts";
 import { useTranslation } from "react-i18next";
 import { extractCoordinates } from "@/utils/coordinates/coordinateExtractor";
-import { ITEM_PUBLIC_SELECT } from "@/services/items/publicColumns";
+import { getItemPublicSelect } from "@/services/items/publicColumns";
 import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useAuthStore } from "@/hooks/auth/authStore";
 import {
@@ -72,6 +72,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
   const fetchSeqRef = useRef(0);
   const countsFetchKeyRef = useRef<string | null>(null);
   const authInitialized = useAuthStore((s) => s.initialized);
+  const authUser = useAuthStore((s) => s.user);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -119,11 +120,12 @@ export function useFetchPosts(options = { includeArchived: false }) {
 
 
     try {
-      // Explicit column list, never select('*') — see ITEM_PUBLIC_SELECT. The
-      // feed is public, so it must not request columns the owner alone may read.
+      // Explicit column list, never select('*') — see getItemPublicSelect.
+      // The feed is public, so it must not request columns the owner alone
+      // may read, and last_name only when this viewer is authenticated.
       let query = supabase
         .from('items')
-        .select(ITEM_PUBLIC_SELECT);
+        .select(getItemPublicSelect(!!authUser));
       
       if (options.includeArchived) {
         query = query
@@ -212,7 +214,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
       setIsLoading(false);
       setIsFetching(false);
     }
-  }, [toast, t, options.includeArchived, cacheKey]);
+  }, [toast, t, options.includeArchived, cacheKey, authUser]);
 
   useEffect(() => {
     if (DEMO_MODE) return;

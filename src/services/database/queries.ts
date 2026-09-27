@@ -1,5 +1,5 @@
 
-import { PROFILE_PUBLIC_COLUMNS } from "@/services/profile/publicColumns";
+import { getProfilePublicColumns, getProfileEmbedColumns } from "@/services/profile/publicColumns";
 import { supabase } from "@/integrations/supabase/client";
 import { withRetry, DatabaseError } from "./connection";
 import { monitorQuery } from "./monitor";
@@ -81,9 +81,10 @@ export class OptimizedQueries {
 
         let profilesById = new Map<string, any>();
         if (uniqueUserIds.length > 0) {
+          const { data: { session } } = await supabase.auth.getSession();
           const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
-            .select('id, first_name, last_name, username, avatar_url')
+            .select(getProfileEmbedColumns(!!session, ['username']))
             .in('id', uniqueUserIds);
           if (profilesError) {
             console.warn('Profiles fetch failed (non-fatal):', profilesError);
@@ -194,10 +195,12 @@ export class OptimizedQueries {
   static async getUserProfile(userId: string) {
     return monitorQuery('getUserProfile', () =>
       withRetry(async () => {
+        // Arbitrary user id — public columns only, last_name gated on the
+        // current viewer's own auth state.
+        const { data: { session } } = await supabase.auth.getSession();
         const { data, error } = await supabase
           .from('profiles')
-          // Arbitrary user id — public columns only.
-          .select(PROFILE_PUBLIC_COLUMNS)
+          .select(getProfilePublicColumns(!!session))
           .eq('id', userId)
           .single();
           
@@ -214,11 +217,12 @@ export class OptimizedQueries {
   static async getComments(itemId: number, limit = 20, offset = 0) {
     return monitorQuery('getComments', () =>
       withRetry(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
         const { data, error } = await supabase
           .from('comments')
           .select(`
             id, content, created_at, parent_id,
-            profiles!comments_user_id_fkey(id, first_name, last_name, username, avatar_url)
+            profiles!comments_user_id_fkey(${getProfileEmbedColumns(!!session, ['username'])})
           `)
           .eq('item_id', itemId)
           .order('created_at', { ascending: false })

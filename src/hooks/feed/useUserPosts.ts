@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { extractUserFromProfile } from '@/hooks/item/utils/userUtils';
 import { useGlobalAuth } from '../useGlobalAuth';
 import { extractCoordinates } from '@/utils/coordinates/coordinateExtractor';
-import { ITEM_PUBLIC_SELECT } from '@/services/items/publicColumns';
+import { getItemPublicSelect } from '@/services/items/publicColumns';
 
 interface UseUserPostsOptions {
   includeArchived?: boolean;
@@ -90,7 +90,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
 
       let query = supabase
         .from('items')
-        .select(ITEM_PUBLIC_SELECT)
+        .select(getItemPublicSelect(!!currentUser))
         .in('id', itemIds)
         .order('created_at', { ascending: false })
         .abortSignal(signal);
@@ -138,7 +138,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       let query = supabase
         .from('items')
-        .select(ITEM_PUBLIC_SELECT)
+        .select(getItemPublicSelect(!!currentUser))
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
         .abortSignal(signal);
@@ -186,7 +186,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       const { data: items, error: itemsError } = await supabase
         .from('items')
-        .select(ITEM_PUBLIC_SELECT)
+        .select(getItemPublicSelect(!!currentUser))
         .eq('user_id', currentUser.id)
         .in('pif_status', ['archived', 'completed'])
         .order('archived_at', { ascending: false, nullsFirst: false })
@@ -244,7 +244,7 @@ export function useUserPosts(options: UseUserPostsOptions = {}) {
       
       let query = supabase
         .from('items')
-        .select(ITEM_PUBLIC_SELECT)
+        .select(getItemPublicSelect(!!currentUser))
         .in('id', itemIds)
         .order('created_at', { ascending: false })
         .abortSignal(signal);

@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
+import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
 
 export function useInterestUsers(itemId: number) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const authInitialized = useAuthStore((s) => s.initialized);
+  const authUser = useAuthStore((s) => s.user);
 
   const fetchInterests = async () => {
     if (isAuthRequestCircuitOpen()) {
@@ -20,7 +22,7 @@ export function useInterestUsers(itemId: number) {
       const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
       const { data, error } = await supabase
         .from("interests")
-        .select("*, profiles:user_id(id, first_name, last_name, avatar_url)")
+        .select(`*, profiles:user_id(${getProfileEmbedColumns(!!authUser)})`)
         .eq("item_id", numericItemId)
         .order("created_at", { ascending: false });
         
@@ -38,7 +40,7 @@ export function useInterestUsers(itemId: number) {
     if (!authInitialized) return;
     if (!itemId) return;
     fetchInterests();
-  }, [itemId, authInitialized]);
+  }, [itemId, authInitialized, authUser]);
 
   return {
     users,
