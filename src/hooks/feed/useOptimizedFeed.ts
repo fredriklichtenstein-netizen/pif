@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getOptimizedPosts, prefetchNextPage, clearPostsCache } from '@/services/posts/optimized';
 import { supabase } from '@/integrations/supabase/client';
 import { DEMO_MODE } from '@/config/demoMode';
+import { useAuthStore } from '@/hooks/auth/authStore';
 import { MOCK_POSTS } from '@/data/mockPosts';
 import { useInitialCountsStore } from '@/stores/initialCountsStore';
 import type { Post } from '@/types/post';
@@ -73,6 +74,17 @@ export const invalidateOptimizedFeedQueries = (
 
 export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   const includeArchived = !!options.includeArchived;
+  // Reactive, not a fresh getSession() call inside the query function --
+  // this hook fires immediately on mount with no auth-readiness gate, so
+  // an async session check made at fetch time can race Supabase's own
+  // session restore and return null for an actually-logged-in user.
+  // Confirmed live: the feed cached a first-name-only result for an
+  // authenticated viewer with no self-correction. Including this in the
+  // query key means once the store updates (session resolves), React
+  // Query automatically issues a corrected fetch instead of serving the
+  // stale early one indefinitely.
+  const authUserId = useAuthStore((s) => s.user?.id) ?? null;
+  const isAuthenticated = !!authUserId;
   const [page, setPage] = useState(0);
   // Bumped for every archive/restore realtime event. This makes React Query
   // create a fresh feed query instead of relying on invalidating an older key,
@@ -253,8 +265,8 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     error,
     refetch
   } = useQuery({
-    queryKey: ['posts', 'optimized', page, includeArchived, feedVersion],
-    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived),
+    queryKey: ['posts', 'optimized', page, includeArchived, feedVersion, authUserId],
+    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived, isAuthenticated),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -284,7 +296,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     if (DEMO_MODE) return [];
     const posts: Post[] = [];
     for (let i = 0; i <= page; i++) {
-      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeArchived, feedVersion]);
+      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeArchived, feedVersion, authUserId]);
       if (pageData) {
         posts.push(...pageData);
       }
@@ -306,7 +318,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       if (!includeArchived && activeArchivedIds.has(id)) return false;
       return true;
     });
-  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeArchived, feedVersion]);
+  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeArchived, feedVersion, authUserId]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -328,11 +340,11 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     setPage((prev) => {
       const nextPage = prev + 1;
       setTimeout(() => {
-        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1), includeArchived);
+        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1), includeArchived, isAuthenticated);
       }, 100);
       return nextPage;
     });
-  }, [includeArchived]);
+  }, [includeArchived, isAuthenticated]);
 
   // Release the in-flight guard once the new page has finished loading
   // so the next intersection can trigger the page after it.
@@ -365,11 +377,11 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   useEffect(() => {
     if (DEMO_MODE) return;
     const timer = setTimeout(() => {
-      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1), includeArchived);
+      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1), includeArchived, isAuthenticated);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [page, includeArchived]);
+  }, [page, includeArchived, isAuthenticated]);
 
   // Feed-level realtime only: one shared channel for new items and visible
   // interaction-count changes. Item cards must never open per-card channels.

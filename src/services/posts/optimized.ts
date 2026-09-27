@@ -34,11 +34,18 @@ export const getOptimizedPosts = async (
   offset = 0,
   _retryAfterRecovery = false,
   includeArchived = false,
+  isAuthenticated = false,
 ): Promise<Post[]> => {
   const start = performance.now();
   const generationAtStart = postsCacheGeneration;
   const archivedSuffix = includeArchived ? '-arch' : '';
-  const cacheKey = `posts-v2-${limit}-${offset}${archivedSuffix}`;
+  // isAuthenticated is part of the key, not just passed through to the
+  // query -- this cache has its own 5-minute TTL independent of React
+  // Query's, so without this an early anon-shaped fetch (this hook fires
+  // with no auth-readiness gate) would keep being served to a since-
+  // authenticated viewer regardless of any fix upstream.
+  const authSuffix = isAuthenticated ? '-auth' : '-anon';
+  const cacheKey = `posts-v2-${limit}-${offset}${archivedSuffix}${authSuffix}`;
 
   // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
@@ -49,7 +56,7 @@ export const getOptimizedPosts = async (
   try {
     // ---- Stage 1: items + profiles join ----
     const itemsStart = performance.now();
-    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived });
+    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived, isAuthenticated });
     const itemsMs = performance.now() - itemsStart;
     performanceMetrics.recordStage('items-query', itemsMs, {
       count: String(Array.isArray(data) ? data.length : 0),
@@ -182,7 +189,7 @@ export const getOptimizedPosts = async (
       // Give the recovery a tick to wipe tokens before retrying.
       await new Promise((r) => setTimeout(r, 50));
       try {
-        return await getOptimizedPosts(limit, offset, true, includeArchived);
+        return await getOptimizedPosts(limit, offset, true, includeArchived, isAuthenticated);
       } catch {
         return [];
       }
@@ -197,14 +204,16 @@ export const prefetchNextPage = (
   currentLimit: number,
   currentOffset: number,
   includeArchived = false,
+  isAuthenticated = false,
 ) => {
   const nextOffset = currentOffset + currentLimit;
   const archivedSuffix = includeArchived ? '-arch' : '';
-  const prefetchKey = `posts-${currentLimit}-${nextOffset}${archivedSuffix}`;
+  const authSuffix = isAuthenticated ? '-auth' : '-anon';
+  const prefetchKey = `posts-${currentLimit}-${nextOffset}${archivedSuffix}${authSuffix}`;
 
   // Only prefetch if not already cached
   if (!DatabaseCache.has(prefetchKey)) {
-    getOptimizedPosts(currentLimit, nextOffset, false, includeArchived).catch(() => {
+    getOptimizedPosts(currentLimit, nextOffset, false, includeArchived, isAuthenticated).catch(() => {
       // Ignore prefetch errors
     });
   }
