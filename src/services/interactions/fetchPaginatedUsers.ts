@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@/hooks/item/utils/userUtils";
 import { resolveDisplayName } from "@/utils/displayName";
+import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
 
 /**
  * Paginated fetchers for the like / interest / commenter popovers.
@@ -26,9 +27,13 @@ const parseId = (itemId: string | number): number | null => {
 
 const fetchProfiles = async (userIds: string[]): Promise<User[]> => {
   if (userIds.length === 0) return [];
+  // Backs the like/interest/commenter popovers on the public item detail
+  // page — reachable while logged out, so check the live session rather
+  // than assume a caller-supplied auth flag.
+  const { data: { session } } = await supabase.auth.getSession();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, avatar_url")
+    .select(getProfileEmbedColumns(!!session))
     .in("id", userIds);
   if (error || !data) return [];
   const byId = new Map<string, User>();

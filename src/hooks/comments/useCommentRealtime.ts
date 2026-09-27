@@ -10,6 +10,7 @@ import {
   subscribeItemTable,
   subscribeItemStatus,
 } from '@/services/realtime/itemRealtimeManager';
+import { getProfileEmbedColumns } from '@/services/profile/publicColumns';
 
 // Realtime postgres_changes payloads only ever carry raw table columns —
 // never a joined `profiles` relation — so any comment arriving via realtime
@@ -18,9 +19,13 @@ import {
 // plain REST fetch, with its join, resolves correctly).
 const withProfile = async (row: any) => {
   if (row.profiles) return row;
+  // Realtime callbacks run for every subscriber, including logged-out
+  // viewers (comments are public) — check the current session directly
+  // rather than threading auth state through, same as useCachedProfile.
+  const { data: { session } } = await supabase.auth.getSession();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, first_name, last_name, avatar_url')
+    .select(getProfileEmbedColumns(!!session))
     .eq('id', row.user_id)
     .maybeSingle();
   return { ...row, profiles: profile ?? null };

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { PROFILE_PUBLIC_COLUMNS } from "@/services/profile/publicColumns";
+import { getProfilePublicColumns } from "@/services/profile/publicColumns";
 import { supabase } from "@/integrations/supabase/client";
 import {
   isAuthInvalidError,
@@ -228,9 +228,17 @@ const fetchProfileOnce = (userId: string): Promise<any | null> => {
       // Takes an arbitrary user id, so public columns only. Reading your own
       // private fields is fetchMyProfile(); other people's are not readable at
       // all — the database refuses them, it is not merely a convention here.
+      // This is a module-level cache shared across every component asking
+      // for this userId, keyed only by userId -- not by the current
+      // viewer's auth state -- so the column list is resolved fresh here
+      // against the live session rather than threaded through as a param
+      // (which would need a cache key per viewer-auth-state to stay
+      // correct). getSession() reads from localStorage in practice, no
+      // network round trip in the common case.
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase
         .from("profiles")
-        .select(PROFILE_PUBLIC_COLUMNS)
+        .select(getProfilePublicColumns(!!session))
         .eq("id", userId)
         .maybeSingle();
 

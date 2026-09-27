@@ -13,6 +13,7 @@ import { useMyLikedStore } from "@/stores/myLikedStore";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
 import { resolveDisplayName } from "@/utils/displayName";
+import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -31,6 +32,7 @@ export const useLikes = (id: string, userId?: string | null) => {
   const { checkAuth } = useAuthCheck();
   const { t } = useTranslation();
   const authInitialized = useAuthStore((s) => s.initialized);
+  const authUser = useAuthStore((s) => s.user);
 
   useEffect(() => {
     if (DEMO_MODE) {
@@ -156,7 +158,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url')
+        .select(getProfileEmbedColumns(!!authUser))
         .in('id', userIds);
       
       if (cancelled()) return [];

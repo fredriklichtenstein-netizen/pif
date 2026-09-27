@@ -1,15 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import { formatCommentFromDB } from "../utils/commentFormatters";
 import { Comment } from "@/types/comment";
+import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
 
 export async function runCommentQuery(
   numericItemId: number,
   userId?: string,
   _controller?: AbortController
 ): Promise<Comment[]> {
+  // Comments are public (item detail has no auth gate); userId is only
+  // passed when the caller has a session, so it doubles as the auth signal
+  // for which columns this query may request.
   const { data, error } = await supabase
     .from('comments')
-    .select('*, profiles:user_id(id, first_name, last_name, avatar_url)')
+    .select(`*, profiles:user_id(${getProfileEmbedColumns(!!userId)})`)
     .eq('item_id', numericItemId)
     .order('created_at', { ascending: true });
 

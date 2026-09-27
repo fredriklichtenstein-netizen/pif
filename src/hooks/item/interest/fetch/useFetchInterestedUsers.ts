@@ -3,8 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "../../utils/userUtils";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { resolveDisplayName } from "@/utils/displayName";
+import { useAuthStore } from "@/hooks/auth/authStore";
+import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
 
 export const useFetchInterestedUsers = () => {
+  const authUser = useAuthStore((s) => s.user);
+
   const fetchInterestedUsersCore = async (numericId: number): Promise<User[]> => {
     if (isAuthRequestCircuitOpen()) return [];
 
@@ -13,7 +17,7 @@ export const useFetchInterestedUsers = () => {
       // return an empty list when interests exist but a follow-up profile fetch fails.
       const { data, error } = await supabase
         .from('interests')
-        .select('id, user_id, status, created_at, profiles:user_id(id, first_name, last_name, avatar_url)')
+        .select(`id, user_id, status, created_at, profiles:user_id(${getProfileEmbedColumns(!!authUser)})`)
         .eq('item_id', numericId);
 
       if (error) {

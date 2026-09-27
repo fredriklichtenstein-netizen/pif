@@ -33,6 +33,7 @@ import { AwaitingConfirmationPopover } from "@/components/post/completion/Awaiti
 import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreSelection";
 import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
 import type { WithdrawCopy } from "@/hooks/item/useWithdrawInterestConfirm";
+import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -197,7 +198,7 @@ export function InterestSelectionList({
         const queryPromise = (supabase
           .from("interests") as any)
           .select(
-            "id, user_id, status, created_at, note, profiles:user_id(id, first_name, last_name, avatar_url, reliability_score, completed_pifs, no_shows)"
+            `id, user_id, status, created_at, note, profiles:user_id(${getProfileEmbedColumns(!!currentUserId, ["reliability_score", "completed_pifs", "no_shows"])})`
           )
           .eq("item_id", numericItemId)
           .order("created_at", { ascending: false })

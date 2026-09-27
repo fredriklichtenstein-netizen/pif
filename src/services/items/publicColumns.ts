@@ -49,8 +49,25 @@ export const ITEM_PUBLIC_COLUMNS = [
   "location_public",
 ].join(", ");
 
-/** The profile embed the feed and item views use alongside the item columns. */
-export const ITEM_OWNER_PROFILE_EMBED =
+/**
+ * The profile embed the feed and item views use alongside the item columns.
+ * `last_name` is only requested when the viewer is authenticated — the `anon`
+ * role's SELECT grant on profiles.last_name was revoked (see the
+ * only-first-names-when-logged-out migration), so a query that asks for it
+ * anonymously now fails outright with 42501 instead of quietly succeeding.
+ * Every anon-reachable caller must pass isAuthenticated=false.
+ */
+const ITEM_OWNER_PROFILE_EMBED_BASE =
+  "profiles!items_user_id_fkey(id, first_name, username, avatar_url)";
+const ITEM_OWNER_PROFILE_EMBED_WITH_LAST_NAME =
   "profiles!items_user_id_fkey(id, first_name, last_name, username, avatar_url)";
 
-export const ITEM_PUBLIC_SELECT = `${ITEM_PUBLIC_COLUMNS}, ${ITEM_OWNER_PROFILE_EMBED}`;
+export function getItemOwnerProfileEmbed(isAuthenticated: boolean): string {
+  return isAuthenticated
+    ? ITEM_OWNER_PROFILE_EMBED_WITH_LAST_NAME
+    : ITEM_OWNER_PROFILE_EMBED_BASE;
+}
+
+export function getItemPublicSelect(isAuthenticated: boolean): string {
+  return `${ITEM_PUBLIC_COLUMNS}, ${getItemOwnerProfileEmbed(isAuthenticated)}`;
+}
