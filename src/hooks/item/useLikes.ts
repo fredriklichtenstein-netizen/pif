@@ -173,7 +173,9 @@ export const useLikes = (id: string, userId?: string | null) => {
         return [];
       }
       
-      const users = profilesData.map(profile => ({
+      // Dynamic select string (auth-dependent) — the generated types can't
+      // statically parse it, so cast to the profile shape we requested.
+      const users = (profilesData as any[]).map(profile => ({
         id: profile.id,
         name: resolveDisplayName(profile as any, 'User'),
         avatar: profile.avatar_url || undefined,
