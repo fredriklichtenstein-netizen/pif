@@ -36,7 +36,7 @@ export function LanguageSelector() {
   };
 
   const getCurrentFlag = () => {
-    return i18n.language === 'sv' ? '🇸🇪' : '🇺🇸';
+    return i18n.language === 'sv' ? '🇸🇪' : '🇬🇧';
   };
 
   return (
@@ -51,7 +51,7 @@ export function LanguageSelector() {
           🇸🇪 {t('language.swedish')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => changeLanguage('en')} disabled={i18n.language === 'en'}>
-          🇺🇸 {t('language.english')}
+          🇬🇧 {t('language.english')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
