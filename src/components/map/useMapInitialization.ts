@@ -220,13 +220,12 @@ export const useMapInitialization = (mapboxToken: string) => {
 
       newMap.on('load', () => {
         try {
-          // Add controls. Zoom buttons are reported broken on this native
-          // control (click has no effect, cause unreachable without live
-          // device repro) -- showZoom: false here, and MapContainer renders
-          // its own React-driven +/- buttons using the same floating-button
-          // pattern already confirmed working for the "my location" button.
-          // Compass is unaffected and stays on the native control.
-          newMap.addControl(new mapboxgl.NavigationControl({ showZoom: false }), "top-right");
+          // No NavigationControl: its zoom buttons were reported broken
+          // (click had no effect, cause unreachable without live device
+          // repro), and its separate top-right placement also scattered
+          // controls across the screen -- reported live. MapContainer
+          // renders its own React-driven zoom/compass/locate buttons,
+          // all grouped in one bottom-left stack instead.
           newMap.addControl(
             new mapboxgl.ScaleControl({
               maxWidth: 150,
