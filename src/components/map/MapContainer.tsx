@@ -4,7 +4,7 @@ import { useMapInitialization } from "./useMapInitialization";
 import { MapMarkersLayer } from "./MapMarkersLayer";
 import { MapFiltersSheet } from "./MapFiltersSheet";
 import { Button } from "@/components/ui/button";
-import { Locate, AlertCircle, RefreshCw } from "lucide-react";
+import { Locate, AlertCircle, RefreshCw, Plus, Minus } from "lucide-react";
 import { useEffect, useMemo, useState, memo } from "react";
 import { useLocationTracking } from "./useLocationTracking";
 import { DistanceRings } from "./distance/DistanceRings";
@@ -337,6 +337,33 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
               location" option but the floating button itself was
               invisible on mobile at bottom-4. */}
           <div className="absolute bottom-28 right-4 flex flex-col gap-2 z-10">
+            {/* Custom +/- buttons: reported broken on Mapbox's native
+                NavigationControl (click had no effect, root cause not
+                reproducible without a live device). These are plain React
+                buttons calling map.zoomIn()/zoomOut() directly, mirroring
+                the floating "my location" button below which is already
+                confirmed working on real devices -- avoids whatever was
+                swallowing clicks on the native DOM-injected control. */}
+            <Button
+              onClick={guarded(() => map.zoomIn())}
+              className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
+              size="icon"
+              variant="outline"
+              title={t('map.zoom_in')}
+              aria-label={t('map.zoom_in')}
+            >
+              <Plus className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
+            <Button
+              onClick={guarded(() => map.zoomOut())}
+              className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
+              size="icon"
+              variant="outline"
+              title={t('map.zoom_out')}
+              aria-label={t('map.zoom_out')}
+            >
+              <Minus className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
             <Button
               onClick={guarded(() => {
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
