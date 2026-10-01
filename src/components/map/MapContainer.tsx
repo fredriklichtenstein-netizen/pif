@@ -323,27 +323,23 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             currentUserId={user?.id ?? null}
           />
 
-          {/* bottom-28 (112px). MainNav is a fixed, near-full-width pill
-              on narrow viewports (w-[calc(100%-1rem)]) with a higher
-              z-index (z-50 vs this button's z-10), so at the original
-              bottom-4 it was completely hidden behind the nav on mobile
-              while appearing fine on desktop, where MainNav's max-w-md
-              keeps it clear of the bottom-right corner. bottom-20 (80px,
-              matching the map's own "MainNav + Mapbox scale/logo strip"
-              padding reservation above) cleared the overlap but left the
-              button crowding the nav pill with almost no gap on mobile --
-              confirmed live -- so bumped further for comfortable spacing.
-              Reported live: button worked via the filter menu's "current
-              location" option but the floating button itself was
-              invisible on mobile at bottom-4. */}
-          <div className="absolute bottom-28 right-4 flex flex-col gap-2 z-10">
+          {/* Zoom +/- buttons live on the bottom-LEFT, not alongside the
+              other bottom-right floating buttons: the feedback flyout tab
+              (FeedbackTab.tsx) is a fixed element at top-1/2 on the right
+              edge, and on mobile its vertical band sits directly over the
+              bottom-right corner, hiding/blocking these buttons -- reported
+              and confirmed live via screenshot. Bottom-left has no other
+              fixed UI (filter pills are top-only, ScaleControl sits much
+              lower at bottom-8px), so it's clear. */}
+          <div className="absolute bottom-28 left-4 flex flex-col gap-2 z-10">
             {/* Custom +/- buttons: reported broken on Mapbox's native
                 NavigationControl (click had no effect, root cause not
                 reproducible without a live device). These are plain React
                 buttons calling map.zoomIn()/zoomOut() directly, mirroring
-                the floating "my location" button below which is already
-                confirmed working on real devices -- avoids whatever was
-                swallowing clicks on the native DOM-injected control. */}
+                the floating "my location" button (bottom-right) which is
+                already confirmed working on real devices -- avoids
+                whatever was swallowing clicks on the native DOM-injected
+                control. */}
             <Button
               onClick={guarded(() => map.zoomIn())}
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"
@@ -364,6 +360,22 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
             >
               <Minus className="h-4 w-4" strokeWidth={1.5} />
             </Button>
+          </div>
+
+          {/* bottom-28 (112px). MainNav is a fixed, near-full-width pill
+              on narrow viewports (w-[calc(100%-1rem)]) with a higher
+              z-index (z-50 vs this button's z-10), so at the original
+              bottom-4 it was completely hidden behind the nav on mobile
+              while appearing fine on desktop, where MainNav's max-w-md
+              keeps it clear of the bottom-right corner. bottom-20 (80px,
+              matching the map's own "MainNav + Mapbox scale/logo strip"
+              padding reservation above) cleared the overlap but left the
+              button crowding the nav pill with almost no gap on mobile --
+              confirmed live -- so bumped further for comfortable spacing.
+              Reported live: button worked via the filter menu's "current
+              location" option but the floating button itself was
+              invisible on mobile at bottom-4. */}
+          <div className="absolute bottom-28 right-4 flex flex-col gap-2 z-10">
             <Button
               onClick={guarded(() => {
                 try { sessionStorage.setItem('map_location_mode', 'current'); } catch {}
