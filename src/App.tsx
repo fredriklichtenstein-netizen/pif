@@ -20,6 +20,7 @@ import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessi
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { useCityBackfill } from "@/hooks/profile/useCityBackfill";
+import { useLanguageSeed } from "@/hooks/profile/useLanguageSeed";
 import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
 import { StagingBadge } from "@/components/debug/StagingBadge";
@@ -63,6 +64,7 @@ function App() {
 
   useVersionCheck();
   useCityBackfill();
+  useLanguageSeed();
 
 
 

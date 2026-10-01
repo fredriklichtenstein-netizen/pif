@@ -1,6 +1,8 @@
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuthStore } from '@/hooks/auth/authStore';
 
 // Import English translations
 import enNavigation from '../locales/en/navigation.json';
@@ -117,6 +119,23 @@ i18n
     }
   });
 
+// Persist an explicit language choice to the signed-in user's profile so
+// server-side code (e.g. the feature-announcement broadcast email) can pick
+// the right language without relying on client-only state. Best-effort and
+// silent -- a failed write here must never block the language switch itself.
+const persistLanguagePreference = (lng: string) => {
+  if (lng !== 'sv' && lng !== 'en') return;
+  const userId = useAuthStore.getState().user?.id;
+  if (!userId) return;
+  supabase
+    .from('profiles')
+    .update({ language: lng } as any)
+    .eq('id', userId)
+    .then(({ error }) => {
+      if (error) console.error('Failed to persist language preference:', error);
+    });
+};
+
 // Listen for language changes and force app refresh
 i18n.on('languageChanged', (lng) => {
   try {
@@ -124,6 +143,7 @@ i18n.on('languageChanged', (lng) => {
   } catch {
     /* ignore */
   }
+  persistLanguagePreference(lng);
   // Force a slight delay to ensure all components re-render
   setTimeout(() => {
     window.dispatchEvent(new Event('languageChanged'));
