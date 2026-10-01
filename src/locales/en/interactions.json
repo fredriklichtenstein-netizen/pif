@@ -666,7 +666,9 @@
     "interactive_map": "Interactive map",
     "only_my_interest": "Interests I've shown",
     "hide_own_posts": "Hide my own posts",
-    "open_post": "Open"
+    "open_post": "Open",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out"
   },
   "email_confirmation": {
     "check_email": "Check your email",

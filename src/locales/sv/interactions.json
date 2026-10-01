@@ -666,7 +666,9 @@
     "interactive_map": "Interaktiv karta",
     "only_my_interest": "Mina visade intressen",
     "hide_own_posts": "Dölj mina egna inlägg",
-    "open_post": "Öppna"
+    "open_post": "Öppna",
+    "zoom_in": "Zooma in",
+    "zoom_out": "Zooma ut"
   },
   "email_confirmation": {
     "check_email": "Kolla din e-post",
