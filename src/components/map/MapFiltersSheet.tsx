@@ -123,7 +123,11 @@ export function MapFiltersSheet({
         <Button
           variant="outline"
           size="sm"
-          className="bg-background shadow-md hover:bg-accent relative h-9"
+          // h-11 to match the quick-filter pill bar's rendered height: that
+          // bar wraps its own h-9 buttons in a p-1 (4px) padded container,
+          // so its visible height is 36px + 8px = 44px (h-11), not the
+          // buttons' own h-9.
+          className="bg-background shadow-md hover:bg-accent relative h-11"
         >
           <SlidersHorizontal className="h-4 w-4 mr-2" />
           {t("interactions.filter_label", "Filtrera")}
