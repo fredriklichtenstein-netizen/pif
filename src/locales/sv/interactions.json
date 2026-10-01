@@ -668,7 +668,8 @@
     "hide_own_posts": "Dölj mina egna inlägg",
     "open_post": "Öppna",
     "zoom_in": "Zooma in",
-    "zoom_out": "Zooma ut"
+    "zoom_out": "Zooma ut",
+    "reset_north": "Återställ norrriktning"
   },
   "email_confirmation": {
     "check_email": "Kolla din e-post",
