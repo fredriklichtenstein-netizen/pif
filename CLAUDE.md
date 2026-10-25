@@ -302,8 +302,9 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   since minifier variable names are not stable across separate build invocations even for
   identical source), then fetch that exact same pattern from the live bundle and diff the two
   fragments by structure (presence/absence of `!`/`&&`/other operators), not by exact text.
-- **The user has a Lovable feature enabled that auto-fixes build errors on BOTH projects every
-  morning at 6am — including production.** Confirmed 2026-08-30: a scoped, sync-only `send_message`
+- **Lovable has a feature that auto-fixes build errors every morning at 6am. It is now OFF on
+  production and ON only on staging (user confirmed in the Lovable dashboard, 2026-10-25).** It
+  was on for BOTH projects when this was found. Confirmed 2026-08-30: a scoped, sync-only `send_message`
   to the **production** project ("pull commit X, make no code changes") triggered the agent to also
   fix unrelated Deno typecheck errors in `delete-account`/`send-notification-email`, and its
   two-way sync pushed the result **straight to `origin/main`** — no staging, no review, before
@@ -320,9 +321,15 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   already differ for unrelated reasons (see the `get-mapbox-token` gap above), and a "fix" can turn
   out to just be the tracked file catching up to reality. Get the user's explicit confirmation
   before folding anything auth/data-deletion-adjacent into a promotion regardless of assessed risk.
-  Recommended fix (not yet done, needs the user in the Lovable dashboard): disable the auto-fix
-  job on the **production** project specifically; it's low-stakes left on staging since anything
-  it does there still passes through this same review before promotion.
+  The auto-fix job has since been disabled on the **production** project; it's low-stakes left on
+  staging since anything it does there still passes through this same review before promotion.
+  The "diff `origin/main` after any `send_message`" rule above still applies as a cheap safeguard
+  (the 2026-10-01 sync-only messages to production did stay sync-only, with no code changes).
+- **`supabase/migrations/` in the repo is not a complete record.** Most migrations are applied
+  straight to production via `apply_migration` and never committed (~70 live vs a handful of files).
+  The authoritative history is `supabase_migrations.schema_migrations` on production. The four
+  migrations from 2026-09-26 → 10-01 were back-filled into the repo on 2026-10-25; if more have
+  accumulated since, compare `list_migrations` against the folder before relying on it.
 - **Trap: backfilled watermark/timestamp columns can race against pre-curated content.** The
   `feature_announcements` table's `add_feature_announcements` migration gave existing rows
   `last_seen_announcement_at DEFAULT now()` so nobody sees a historical backlog on rollout — but
