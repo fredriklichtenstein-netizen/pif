@@ -3,14 +3,17 @@
 
 import { writeFileSync } from "fs";
 import { resolve } from "path";
+import { loadEnv } from "vite";
+import { resolveSupabaseConfig } from "../src/integrations/supabase/config";
 
 const BASE_URL = "https://app.pif.community";
 
-// STAGING: points at the staging Supabase branch, not production. Keep in
-// sync with src/integrations/supabase/client.ts; do not carry into main.
-const SUPABASE_URL = "https://epxqddygoarwxmbshvvx.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc";
+// Which project to list items from follows the same VITE_SUPABASE_* variables
+// as the app (shell env, or .env files as in a production vite build).
+const { url: SUPABASE_URL, publishableKey: SUPABASE_ANON_KEY } = resolveSupabaseConfig({
+  ...loadEnv("production", process.cwd(), "VITE_"),
+  ...process.env,
+});
 
 interface SitemapEntry {
   path: string;
