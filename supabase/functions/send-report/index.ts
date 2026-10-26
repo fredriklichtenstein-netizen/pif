@@ -9,7 +9,9 @@ const corsHeaders = {
 };
 
 const REPORT_TO = "fredrik.lichtenstein@gmail.com";
-const REPORT_FROM = "PIF Reports <reports@alwaysremember.se>";
+// pif.today is the verified sending domain (same as send-feedback and
+// send-notification-email); it can only send, it has no MX record.
+const REPORT_FROM = "PIF Reports <reports@pif.today>";
 const APP_URL = "https://app.pif.community";
 
 const json = (status: number, body: unknown) =>
