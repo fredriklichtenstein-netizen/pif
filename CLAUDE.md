@@ -145,9 +145,11 @@ arrive at all**; it's 5s now, and that call gets a 25s client timeout vs 15s els
 
 Tracked in repo (`supabase/functions/`): `analyze-image`, `delete-account`, `prewarm-og`,
 `send-report`, `send-feedback`, `get-mapbox-token`. Deployment to Supabase is a distinct step from
-writing the code — always deploy after editing. Production also has `og-preview` deployed, which
-isn't tracked in this repo; conversely `analyze-image` is tracked but not currently deployed to
-production. Don't assume the repo and what's actually live match — check with
+writing the code — always deploy after editing. `og-preview` is deployed to production and, as of
+2026-10-26, tracked here too (copied from live v16); also `unsubscribe-notification` is tracked.
+`analyze-image` is tracked but not currently deployed to production. The tracked `send-report`
+differs from what's live (live v12 is an older, more compact version) — reconcile deliberately
+before the next deploy of it. Don't assume the repo and what's actually live match — check with
 `mcp__claude_ai_Supabase__list_edge_functions` / `get_edge_function` before assuming a tracked
 file reflects reality (`get-mapbox-token` was a real example of this: the tracked version called
 `supabase.auth.getClaims()`, a method that doesn't exist on the pinned SDK version, so it could
