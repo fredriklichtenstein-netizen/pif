@@ -107,8 +107,14 @@ paths as fallbacks for already-sent emails.
 
 **PWA deep-linking depends on origin/scope agreement, not on anything in the email itself.**
 `pif.today` and `app.pif.community` are two separate origins both serving the app, and
-`app.pif.community/manifest.json` 302-redirects cross-origin to `pif.today/manifest.json` (Lovable/DNS
-level, not changeable from the repo). Since a PWA's scope derives from its *manifest URL*, installs
+`app.pif.community/manifest.json` 302-redirects cross-origin to `pif.today/manifest.json`. **That
+redirect is not Lovable or DNS: `app.pif.community` (A 137.66.32.95, Fly.io/Caddy, DNS-only in
+Cloudflare) is the third-party "Hado" prerender service** (user owns the plan). It 302s browsers to
+`pif.today` and serves crawlers a prerendered page with item-specific OG tags, which is what makes
+shared `app.pif.community/item/<id>` links preview correctly; `pif.today` itself serves only generic
+OG tags to crawlers. Only `pif.today` actually hosts the app (Lovable origin, A 185.158.133.1). Not
+changeable from the repo — it is Hado configuration. Anything that moves hosting must keep Hado
+pointed at the new origin. Since a PWA's scope derives from its *manifest URL*, installs
 from either domain end up scoped to `pif.today`. So `site_url` **must stay `https://pif.today`** —
 pointing it at `app.pif.community` puts every email link outside the installed app's scope and macOS
 hands them to Safari (this was the actual bug). `public/manifest.json` declares `id`/`scope`/
