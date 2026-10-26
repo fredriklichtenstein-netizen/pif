@@ -147,9 +147,15 @@ Tracked in repo (`supabase/functions/`): `analyze-image`, `delete-account`, `pre
 `send-report`, `send-feedback`, `get-mapbox-token`. Deployment to Supabase is a distinct step from
 writing the code — always deploy after editing. `og-preview` is deployed to production and, as of
 2026-10-26, tracked here too (copied from live v16); also `unsubscribe-notification` is tracked.
-`analyze-image` is tracked but not currently deployed to production. The tracked `send-report`
-differs from what's live (live v12 is an older, more compact version) — reconcile deliberately
-before the next deploy of it. Don't assume the repo and what's actually live match — check with
+`analyze-image` is tracked but not currently deployed to production. `send-report` was reconciled
+with live on 2026-10-26 (production v13 == repo). That pass found two traps: the old tracked
+version selected `profiles.full_name`/`email`, which don't exist (every report would have shown
+"Okänd användare"), and it sent from `alwaysremember.se`, which staging's Resend key isn't
+authorized for (403). **The function still returned 200 and the app showed success, because the
+`reports` row saved — a report email can fail completely silently.** It now sends from
+`reports@pif.today` like every other function. If report mail seems missing, read the function's
+logs (`query_logs`, source `function_logs`, look for `Resend email failed`) — not just whether the
+report was stored. Don't assume the repo and what's actually live match — check with
 `mcp__claude_ai_Supabase__list_edge_functions` / `get_edge_function` before assuming a tracked
 file reflects reality (`get-mapbox-token` was a real example of this: the tracked version called
 `supabase.auth.getClaims()`, a method that doesn't exist on the pinned SDK version, so it could
