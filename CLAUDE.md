@@ -230,26 +230,23 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   editor preview did with a `.env.production`-only pin, and Lovable flagged it.
 - **Staging = `https://staging.pif.today`** (Cloudflare Pages project `pif-staging`, also
   `pif-staging.pages.dev`), deployed by `.github/workflows/deploy-staging.yml` on every push to
-  `staging` in the `pif-staging` repo: typecheck → build the exact commit with the staging
+  `staging` in the `pif` repo: typecheck → build the exact commit with the staging
   `VITE_SUPABASE_*` set in the workflow → **guard step that refuses to deploy unless the bundle
   references the staging project** → `bunx wrangler pages deploy` (not `cloudflare/wrangler-action`,
-  which npm-installs wrangler and dies on the app's `date-fns` peer deps). Secrets
-  `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit only, no DNS) and
-  `CLOUDFLARE_ACCOUNT_ID` live in `pif-staging`; set them with `pbpaste | gh secret set NAME -R ...`
+  which npm-installs wrangler and dies on the app's `date-fns` peer deps). All three deploy
+  workflows share the `pif` repo's secrets `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit
+  + Account → Workers Scripts → Edit, no DNS/zone permissions — dashboard changes are the user's)
+  and `CLOUDFLARE_ACCOUNT_ID`; set them with `pbpaste | gh secret set NAME -R ...`
   (a `!`-prefixed `gh secret set NAME` has no TTY and silently stores an empty value). Verify a
-  deploy with `gh run list -R fredriklichtenstein-netizen/pif-staging` and
+  deploy with `gh run list -R fredriklichtenstein-netizen/pif` and
   `curl https://staging.pif.today/version.json` — no Lovable sync dance needed.
 - **The Supabase branch ref is `epxqddygoarwxmbshvvx`, and it changes every time the branch is
   deleted/recreated** (Supabase assigns a new one each time). When that happens, update the URL/key
   in the workflow's Build step and the ref in its guard step, plus staging's `site_url`/allow-list.
-- **Two GitHub repos, not one.** `fredriklichtenstein-netizen/pif` (production, tracks `main`) and
-  `fredriklichtenstein-netizen/pif-staging` (created when the Lovable project was remixed — a fully
-  independent repo, NOT a fork). Push `staging` to both (`git push pif-staging staging:staging`
-  and `git push origin staging`); the deploy job only runs in `pif-staging`.
-- **The "PIF staging" Lovable project is disconnected from GitHub** (2026-10-27) and its
-  `give-and-get-local.lovable.app` site is frozen on an old build — don't test there. It is kept
-  only until H6 (retire Lovable); its URL is still in staging's auth redirect allow-list and the
-  Mapbox token.
+- **One GitHub repo** (`fredriklichtenstein-netizen/pif`, branches `main` and `staging`, which share
+  no history — always cherry-pick explicit SHAs). Until 2026-10-27 staging lived in a second repo,
+  `pif-staging`, created by a Lovable remix; it's archived. Both Lovable projects were deleted and
+  their `*.lovable.app` URLs removed from Mapbox, the auth allow-list and DNS (H6).
 - **`IS_STAGING` export** in `client.ts` (`true` whenever `SUPABASE_URL` isn't production's) drives
   a small "STAGING" pill (`src/components/debug/StagingBadge.tsx`, mounted in `App.tsx`) — a
   permanent visual guard against mistaking one environment's preview for the other's (this
@@ -308,11 +305,8 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   bundle marker for specific changes (verify-deploy skill). Any new DB migration gets promoted
   separately, directly via `mcp__claude_ai_Supabase__execute_sql`/`apply_migration` against the
   production project ID. Rollback: re-run an older green run, or `git revert` + push.
-- **Lovable history (production was published via Lovable until 2026-10-27).** The Lovable
-  production project (`14386dc1-ec27-45d6-a49e-cf90acbe718a`) still has two-way GitHub sync with
-  `main` until H6 retires it — **anything its agent commits now deploys automatically**, so don't
-  `send_message` it, and diff `origin/main` (`git fetch && git log <expected-tip>..origin/main`)
-  before cherry-picking onto it. Lessons from that era, in case Lovable is ever used again: its
+- **Lovable history (production was published via Lovable until 2026-10-27).** Both Lovable
+  projects were disconnected from GitHub and deleted on 2026-10-27 (H6). Lessons from that era, in case Lovable is ever used again: its
   agent keeps an internal editor branch that only syncs with GitHub when invoked via chat, so
   `deploy_project`/"Publish" could ship stale code while `latest_commit_sha` looked right; the agent
   ignored "make no code changes" instructions and pushed unrequested edits; and its 6am auto-fix
@@ -336,17 +330,10 @@ A parallel staging pipeline exists so changes can be tested before touching prod
 - **Mapbox token**: swapped from the account's unrestricted default public token to a
   URL-restricted one. Mapbox tokens don't support wildcards, but subdomains are auto-authorized
   (adding `example.com` also covers `anything.example.com`), so the allowed list is just root
-  domains: `pif.today`, `app.pif.community`, `give-and-get-local.lovable.app`,
-  `pif-pay-it-forward.lovable.app`, plus (2026-10-27) `staging.pif.today` and
+  domains: `pif.today`, `app.pif.community`, plus (2026-10-27) `staging.pif.today` and
   `pif-staging.pages.dev` (which also covers per-deploy `<hash>.pif-staging.pages.dev` previews)
-  and `pif-333.pages.dev` (production's Pages project).
-  Lovable's dynamic in-editor preview URLs
-  (`id-preview--*.lovable.app`) are intentionally NOT covered — they're siblings of the two
-  published domains above, not subdomains, so covering them would require the bare `lovable.app`
-  domain, which would authorize every other project on Lovable's shared domain too. Trade-off
-  accepted: maps may 403 in the Lovable in-editor preview while building, but work fine on the
-  real published staging/production URLs (which is what the deploy-verification workflow above
-  actually checks). Set via `supabase secrets set MAPBOX_TOKEN=... --project-ref <ref>` on both
+  and `pif-333.pages.dev` (production's Pages project). The Lovable URLs were removed in H6.
+  Never add a shared parent domain (e.g. `pages.dev`) — it would authorize everyone's sites. Set via `supabase secrets set MAPBOX_TOKEN=... --project-ref <ref>` on both
   projects — the `get-mapbox-token` edge function picks up a changed secret immediately, no
   redeploy needed.
 

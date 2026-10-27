@@ -12,9 +12,8 @@ concurrency:
 
 jobs:
   deploy:
-    # The staging branch is also pushed to the production repo (pif), which
-    # has no Cloudflare secrets; only deploy from pif-staging.
-    if: github.repository == 'fredriklichtenstein-netizen/pif-staging'
+    # Runs in the pif repo (pif-staging was merged into it 2026-10-27).
+    if: github.repository == 'fredriklichtenstein-netizen/pif'
     runs-on: ubuntu-latest
     permissions:
       contents: read

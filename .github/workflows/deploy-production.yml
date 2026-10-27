@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   deploy:
-    # Only the production repo (pif) has the production Pages secrets.
+    # Never deploy production from a fork or copy of the repo.
     if: github.repository == 'fredriklichtenstein-netizen/pif'
     runs-on: ubuntu-latest
     permissions:

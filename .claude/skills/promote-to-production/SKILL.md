@@ -16,20 +16,18 @@ Real incidents on this project, all documented in `CLAUDE.md`, motivate every no
    variables = production). Cherry-picking still keeps unconfirmed staging experiments off `main`.
    The two branches have no shared history, so **name commits explicitly** — a path-filtered
    `git log main..staging -- <path>` lists years of unrelated staging commits.
-3. **Pushing `main` deploys production** (since 2026-10-27; Lovable is out of the publish path).
-   The Lovable production project still has two-way sync with `main` until H6, so anything its
-   agent commits would deploy too — never `send_message` it, and check `origin/main` for unexpected
-   commits before cherry-picking.
+3. **Pushing `main` deploys production** (since 2026-10-27; Lovable was retired in H6). There is
+   no manual publish step — so never push `main` before the user has confirmed on staging.
 
 ## Known targets
 
 | Environment | Branch | Git remote(s) | Deployed by | Live domain |
 |---|---|---|---|---|
-| Staging | `staging` | `pif-staging` (deploys) + `origin` | GitHub Actions `deploy-staging.yml` in `pif-staging` → Cloudflare Pages `pif-staging` | `https://staging.pif.today/` |
+| Staging | `staging` | `origin` | GitHub Actions `deploy-staging.yml` in `pif` → Cloudflare Pages `pif-staging` | `https://staging.pif.today/` |
 | Production | `main` | `origin` | GitHub Actions `deploy-production.yml` in `pif` → Cloudflare Pages `pif` | `https://pif.today/` |
 
-The old "PIF staging" Lovable project (`give-and-get-local.lovable.app`) is disconnected from
-GitHub and frozen — never test or verify there. Share-link Worker changes (`workers/share`) deploy
+Everything lives in one repo, `fredriklichtenstein-netizen/pif` (the old `pif-staging` repo is
+archived). Share-link Worker changes (`workers/share`) deploy
 separately: staging automatically, production only via manual dispatch (see CLAUDE.md).
 
 ## Procedure
@@ -38,20 +36,19 @@ separately: staging automatically, production only via manual dispatch (see CLAU
 
 Work happens on the `staging` branch. Commit with a real message.
 
-### 2. Push to both staging remotes
+### 2. Push staging
 
 ```bash
-git fetch pif-staging staging
-git log --oneline HEAD..pif-staging/staging   # should be empty; if not, merge first, never force-push
-git push pif-staging staging:staging
+git fetch origin staging
+git log --oneline HEAD..origin/staging   # should be empty; if not, merge first, never force-push
 git push origin staging
 ```
 
 ### 3. Watch the staging deploy and verify it
 
 ```bash
-gh run list -R fredriklichtenstein-netizen/pif-staging -L 2
-gh run watch <run-id> -R fredriklichtenstein-netizen/pif-staging --exit-status
+gh run list -R fredriklichtenstein-netizen/pif -w "Deploy staging (Cloudflare Pages)" -L 1
+gh run watch <run-id> -R fredriklichtenstein-netizen/pif --exit-status
 curl -s https://staging.pif.today/version.json   # builtAt should be just now
 ```
 
