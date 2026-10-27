@@ -1,0 +1,30 @@
+# Share-link Worker (see src/index.ts). Deployed by
+# .github/workflows/deploy-share-worker.yml. Hostnames are attached as
+# Custom Domains in the Cloudflare dashboard (the CI token has no zone/DNS
+# permissions); wrangler leaves dashboard-attached domains alone because no
+# routes are declared here.
+name = "pif-share"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[observability]
+enabled = true
+
+# Production: app.pif.community (cut-over replaces Hado's DNS record).
+[vars]
+SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldXJwZWhjd2Job2h3a2xxbmlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1Mjg1OTAsImV4cCI6MjA4OTEwNDU5MH0.53GF3SNG4gmwUGKNdaZx5i8PVy4f73FN7x53jna_l9w"
+APP_ORIGIN = "https://pif.today"
+SHARE_ORIGIN = "https://app.pif.community"
+
+# Staging: share-staging.pif.today -> staging.pif.today.
+[env.staging]
+name = "pif-share-staging"
+workers_dev = true
+
+[env.staging.vars]
+SUPABASE_URL = "https://epxqddygoarwxmbshvvx.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc"
+APP_ORIGIN = "https://staging.pif.today"
+SHARE_ORIGIN = "https://share-staging.pif.today"

@@ -25,3 +25,6 @@ dist-ssr
 
 # Supabase CLI local state (machine-specific, not meant to be tracked)
 supabase/.temp/
+
+# Wrangler local dev state
+.wrangler/

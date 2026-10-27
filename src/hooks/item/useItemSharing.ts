@@ -2,8 +2,7 @@
 import { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-
-const SHARE_BASE_URL = 'https://app.pif.community';
+import { SHARE_ORIGIN } from '@/lib/shareOrigin';
 
 export const useItemSharing = (itemId: string) => {
   const { toast } = useToast();
@@ -16,7 +15,7 @@ export const useItemSharing = (itemId: string) => {
       e.stopPropagation();
     }
 
-    const shareUrl = `${SHARE_BASE_URL}/item/${itemId}`;
+    const shareUrl = `${SHARE_ORIGIN}/item/${itemId}`;
     setIsSharing(true);
 
     try {

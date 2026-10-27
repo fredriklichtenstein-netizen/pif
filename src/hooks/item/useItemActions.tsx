@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuthCheck } from "../item/utils/authCheck";
 import { useTranslation } from "react-i18next";
+import { SHARE_ORIGIN } from "@/lib/shareOrigin";
 
 export const useItemActions = () => {
   const { toast } = useToast();
@@ -21,7 +22,7 @@ export const useItemActions = () => {
   const handleShare = async (itemId?: string) => {
     if (!await checkAuth("share this item")) return;
     const url = itemId
-      ? `https://app.pif.community/item/${itemId}`
+      ? `${SHARE_ORIGIN}/item/${itemId}`
       : window.location.href;
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {

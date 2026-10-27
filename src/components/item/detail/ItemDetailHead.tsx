@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { SHARE_ORIGIN } from "@/lib/shareOrigin";
 
 interface ItemDetailHeadProps {
   id: string | number;
@@ -8,7 +9,7 @@ interface ItemDetailHeadProps {
   itemType?: string;
 }
 
-const FALLBACK_IMAGE = "https://app.pif.community/pif-og-image.png";
+const FALLBACK_IMAGE = `${SHARE_ORIGIN}/pif-og-image.png`;
 
 export function ItemDetailHead({ id, title, description, images, itemType }: ItemDetailHeadProps) {
   const normalizedType = String(itemType || "offer").toLowerCase();
@@ -20,7 +21,7 @@ export function ItemDetailHead({ id, title, description, images, itemType }: Ite
     : "PIF — Pay It Forward";
   const ogDescription = description?.trim() ?? "";
   const ogImage = images && images.length > 0 ? images[0] : FALLBACK_IMAGE;
-  const ogUrl = `https://app.pif.community/item/${id}`;
+  const ogUrl = `${SHARE_ORIGIN}/item/${id}`;
 
   return (
     <Helmet>

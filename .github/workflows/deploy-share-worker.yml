@@ -1,0 +1,56 @@
+name: Deploy share-link Worker
+
+# Staging deploys automatically when the Worker changes on the staging branch.
+# Production (app.pif.community) is deployed only by hand, via "Run workflow"
+# with environment=production.
+on:
+  push:
+    branches: [staging]
+    paths:
+      - "workers/share/**"
+      - ".github/workflows/deploy-share-worker.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "staging or production"
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+
+concurrency:
+  group: deploy-share-worker-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Only pif-staging has the Cloudflare secrets.
+    if: github.repository == 'fredriklichtenstein-netizen/pif-staging'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bunx vitest run workers
+
+      - name: Deploy
+        working-directory: workers/share
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TARGET: ${{ inputs.environment || 'staging' }}
+        run: |
+          if [ "$TARGET" = production ]; then
+            bunx wrangler deploy
+          else
+            bunx wrangler deploy --env staging
+          fi
