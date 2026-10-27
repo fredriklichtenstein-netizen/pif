@@ -1,6 +1,6 @@
 ---
 name: promote-to-production
-description: The PIF staging-to-production workflow — implement on the `staging` branch, push (GitHub Actions deploys it to staging.pif.today on Cloudflare Pages), get the user's explicit confirmation from testing there, then cherry-pick (never merge) onto `main` and publish production to pif.today via Lovable. Use this whenever making or shipping a code change to the PIF app, when the user says things like "push this to staging", "ship it", "promote to production", "deploy this", or when they confirm a staging test passed ("looks good", "confirmed", "that's fixed", "works now") after a staging fix — that confirmation is the trigger to start the promotion half of this skill. Also covers the Lovable internal-branch sync trap for the production publish and required live-bundle verification, both of which have caused real silent failures on this project.
+description: The PIF staging-to-production workflow — implement on the `staging` branch, push (GitHub Actions deploys it to staging.pif.today on Cloudflare Pages), get the user's explicit confirmation from testing there, then cherry-pick (never merge) onto `main` and push, which deploys production to pif.today via GitHub Actions → Cloudflare Pages. Use this whenever making or shipping a code change to the PIF app, when the user says things like "push this to staging", "ship it", "promote to production", "deploy this", or when they confirm a staging test passed ("looks good", "confirmed", "that's fixed", "works now") after a staging fix — that confirmation is the trigger to start the promotion half of this skill. Also covers required live-bundle verification, which has caught real silent failures on this project.
 ---
 
 # PIF staging → production promotion
@@ -16,17 +16,17 @@ Real incidents on this project, all documented in `CLAUDE.md`, motivate every no
    variables = production). Cherry-picking still keeps unconfirmed staging experiments off `main`.
    The two branches have no shared history, so **name commits explicitly** — a path-filtered
    `git log main..staging -- <path>` lists years of unrelated staging commits.
-3. **Production still publishes through Lovable** (until the "Replace Lovable publishing" epic's
-   H5 moves `pif.today` to Cloudflare Pages). Lovable keeps its own internal editor branch that only
-   reconciles with GitHub when its AI agent is invoked via chat; `deploy_project` alone can publish
-   stale code while `latest_commit_sha` looks correct. Always sync via `send_message` first.
+3. **Pushing `main` deploys production** (since 2026-10-27; Lovable is out of the publish path).
+   The Lovable production project still has two-way sync with `main` until H6, so anything its
+   agent commits would deploy too — never `send_message` it, and check `origin/main` for unexpected
+   commits before cherry-picking.
 
 ## Known targets
 
 | Environment | Branch | Git remote(s) | Deployed by | Live domain |
 |---|---|---|---|---|
 | Staging | `staging` | `pif-staging` (deploys) + `origin` | GitHub Actions `deploy-staging.yml` in `pif-staging` → Cloudflare Pages `pif-staging` | `https://staging.pif.today/` |
-| Production | `main` | `origin` | Lovable project `14386dc1-ec27-45d6-a49e-cf90acbe718a` | `https://pif.today/` |
+| Production | `main` | `origin` | GitHub Actions `deploy-production.yml` in `pif` → Cloudflare Pages `pif` | `https://pif.today/` |
 
 The old "PIF staging" Lovable project (`give-and-get-local.lovable.app`) is disconnected from
 GitHub and frozen — never test or verify there. Share-link Worker changes (`workers/share`) deploy
@@ -82,37 +82,29 @@ A DB migration is promoted separately and directly against production
 `CLAUDE.md`'s "Staging environment" section for the idempotency requirements. Edge functions are
 deployed separately too (`deploy_edge_function` per project).
 
-### 6. Push and publish production
+### 6. Push main (this deploys production)
 
-```bash
-git push origin main
-```
-
-Per-user standing authorization: once the user has confirmed the staging fix, publishing production
+Per-user standing authorization: once the user has confirmed the staging fix, deploying production
 does not need a separate ask each time.
 
-1. Record a baseline: `curl -s https://pif.today/version.json` and the main `assets/index-*.js` name.
-   Check what the publish will ship — everything on `main` since that `builtAt`, not just your
-   commits.
-2. Send a sync-only `mcp__claude_ai_Lovable__send_message` to project
-   `14386dc1-ec27-45d6-a49e-cf90acbe718a`: "Please pull the latest code from the connected GitHub
-   repo's `main` branch, commit `<sha>`, and rebuild. Do NOT make any code changes yourself — this
-   is sync-only." It can run long; if it times out, check with `get_project`/`get_message` rather
-   than retrying blind.
-3. **Diff before trusting it** — the agent has ignored "sync-only" before:
+1. Record a baseline: `curl -s https://pif.today/version.json`. Check what the push will ship —
+   everything on `main` since that `builtAt`, not just your commits.
+2. `git push origin main`.
+3. Watch the run:
    ```bash
-   git fetch origin main && git log --oneline <expected-tip>..origin/main
+   gh run list -R fredriklichtenstein-netizen/pif -w "Deploy production (Cloudflare Pages)" -L 1
+   gh run watch <run-id> -R fredriklichtenstein-netizen/pif --exit-status
    ```
-   If unexpected commits appear, read the actual diff and cross-check real logic changes against
-   what's deployed live. Get the user's explicit confirmation before folding anything auth- or
-   data-deletion-adjacent into the promotion.
-4. `mcp__claude_ai_Lovable__deploy_project` on the same project.
+   The workflow typechecks, builds with no `VITE_SUPABASE_*` (= production), and its guard refuses
+   to deploy if the bundle lacks the production ref or contains the staging ref /
+   `share-staging.pif.today`. A red run means production is unchanged — read `--log-failed`.
 
 ### 7. Verify production is actually live
 
-Use the **verify-deploy** skill against `pif.today`: the `version.json` `builtAt` moves, and a
-marker string from the change is in the served bundle (or a removed string is gone from every
-chunk). Don't report done on the API response alone.
+`curl -s https://pif.today/version.json` — `builtAt` should be the run's build time. For a specific
+change, use the **verify-deploy** skill to find a marker string in the served bundle (or confirm a
+removed string is gone from every chunk). Rollback: `gh run rerun` an older green run, or
+`git revert` + push.
 
 ### 8. Update Trello
 

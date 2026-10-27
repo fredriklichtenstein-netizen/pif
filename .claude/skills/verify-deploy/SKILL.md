@@ -1,28 +1,25 @@
 ---
 name: verify-deploy
-description: Confirm a Lovable publish for PIF actually landed on the live domain, not just that the API says it did
+description: Confirm a PIF deploy (production pif.today or staging.pif.today, both GitHub Actions → Cloudflare Pages) actually serves the expected code, by checking the live bundle
 ---
 
 ## Why this exists
 
-`mcp__claude_ai_Lovable__get_project` reporting `status: "ready"`, `agentFinished: true`, and the
-correct `latest_commit_sha` does **not** mean the public domain is serving that build. This has
-been confirmed wrong twice: once for up to ~9 minutes (documented in the main CLAUDE.md), and once
-for a full ~24 hours, where the build had genuinely completed (proven by a freshly rendered
-screenshot at the exact target commit) but the publish/promote step to the public domain never
-ran. The only trustworthy signal is fetching the live bundle directly.
+A deploy reporting success doesn't prove the change you care about is what's served. In the Lovable
+era (until 2026-10-27) API signals were wrong for up to ~24 hours; with GitHub Actions → Cloudflare
+Pages a green run is far more reliable, but a marker check in the live bundle is still the only
+proof that a specific change shipped (route code lives in lazy chunks, and other commits may have
+landed between checks).
 
 ## Known targets
 
 | Environment | Public domain | Deployed by |
 |---|---|---|
-| Production | `https://pif.today/` | Lovable project `14386dc1-ec27-45d6-a49e-cf90acbe718a` |
-| Staging | `https://staging.pif.today/` | GitHub Actions → Cloudflare Pages (since 2026-10-27) |
+| Production | `https://pif.today/` | `deploy-production.yml` in `fredriklichtenstein-netizen/pif` (push to `main`) → Pages `pif` |
+| Staging | `https://staging.pif.today/` | `deploy-staging.yml` in `fredriklichtenstein-netizen/pif-staging` (push to `staging`) → Pages `pif-staging` |
 
-Staging no longer goes through Lovable: a green `deploy-staging.yml` run in `pif-staging` means the
-commit is live, and `https://staging.pif.today/version.json` shows when it was built. The
-procedure below still applies when checking that a specific change landed. Both domains serve
-`/version.json` (`buildId`, `builtAt`) — a quick first check that a new build is out.
+Both serve `/version.json` (`buildId`, `builtAt`, never cached) — the quick first check that a new
+build is out.
 
 ## Inputs needed from context (ask if not already known)
 
@@ -58,12 +55,9 @@ procedure below still applies when checking that a specific change landed. Both 
 
 ## If it's stuck
 
-- Re-triggering `deploy_project` is the only forcing mechanism available (there's no separate
-  cache-purge or force-publish API). It's safe to retry — it's the same action as clicking
-  "Publish" in the Lovable UI — but don't loop it. A normal propagation delay is well under 10
-  minutes; if a retrigger doesn't resolve it within ~5 minutes, that points to a platform-side
-  issue rather than something fixable by retrying again immediately.
-- If it has been stuck for an extended period (this happened once for ~24h), tell the user plainly
-  rather than continuing to poll silently — it may need a Lovable support ticket.
-- Never invent a workaround (manual file upload, CDN purge guesses, etc.) — this project has no
-  access path to the live domain other than the Lovable publish pipeline.
+- Check the workflow run first (`gh run list -R <repo>`, `gh run view <id> --log-failed`) — a red
+  run (typecheck, guard, or wrangler failure) means nothing was deployed.
+- If the run is green but `version.json` hasn't moved, the HTML may be cached somewhere in between;
+  re-fetch with a cache-busting query (`/version.json?t=$(date +%s)`) before concluding anything.
+- Never invent a workaround (manual uploads, guessing at cache purges) — re-run the workflow or
+  ask the user.
