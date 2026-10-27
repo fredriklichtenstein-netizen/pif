@@ -111,7 +111,8 @@ function SwedishPolicy() {
       </p>
       <p className={p}>
         För att förstå hur tjänsten används mäter vi besök med Cloudflare Web Analytics. Det sätter
-        inga cookies, sparar ingen IP-adress och följer dig inte mellan webbplatser — vi ser bara
+        inga cookies, använder inte din IP-adress för att spåra dig och följer dig inte mellan
+        webbplatser — vi ser bara
         sammanlagd statistik, till exempel antal besök per sida.
       </p>
 
@@ -244,7 +245,8 @@ function EnglishPolicy() {
       </p>
       <p className={p}>
         To understand how the service is used, we measure visits with Cloudflare Web Analytics. It
-        sets no cookies, stores no IP addresses and does not follow you across websites — we only
+        sets no cookies, does not use your IP address to track you and does not follow you across
+        websites — we only
         see aggregated statistics, such as the number of visits per page.
       </p>
 
