@@ -1,0 +1,13 @@
+# Cloudflare Pages response headers (mirrors what Lovable's hosting sent).
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+
+# Polled by the app to detect a newer build; must never be cached.
+/version.json
+  Cache-Control: no-store
+
+# Content-hashed by Vite.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -1,0 +1,82 @@
+name: Deploy production (Cloudflare Pages)
+
+# Pushes to main are promotions the user has already confirmed on staging.
+# The daily run rebuilds the same commit so sitemap.xml lists new items.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Only the production repo (pif) has the production Pages secrets.
+    if: github.repository == 'fredriklichtenstein-netizen/pif'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Fail fast, with a clear message, if a secret is empty or wrong, and
+      # create the Pages project on the first run.
+      - name: Check Cloudflare credentials / ensure Pages project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -e
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID secret is empty."
+            exit 1
+          fi
+          if ! bunx wrangler pages project list > projects.txt; then
+            echo "::error::Cloudflare rejected the credentials (token needs Account > Cloudflare Pages > Edit)."
+            exit 1
+          fi
+          grep -qw pif projects.txt \
+            || bunx wrangler pages project create pif --production-branch=main
+
+      - name: TypeScript check
+        run: bunx tsc --noEmit
+
+      # No VITE_SUPABASE_* / VITE_SHARE_ORIGIN: the defaults are production.
+      - name: Build
+        run: bun run build
+
+      # Production must talk to the production project only. The production
+      # URL is in every build (STAGING badge comparison), so the real check is
+      # that no staging ref leaked in, e.g. via a stray .env file.
+      - name: Guard - build must target production
+        run: |
+          set -e
+          if ! grep -rqF "https://heurpehcwbhohwklqnir.supabase.co" dist/assets; then
+            echo "::error::Build does not reference the production Supabase project."
+            exit 1
+          fi
+          if grep -rqF "epxqddygoarwxmbshvvx" dist; then
+            echo "::error::Build references the staging Supabase project."
+            exit 1
+          fi
+          if grep -rqF "share-staging.pif.today" dist/assets; then
+            echo "::error::Build uses the staging share-link origin."
+            exit 1
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bunx wrangler pages deploy dist --project-name=pif --branch=main --commit-hash=${{ github.sha }} --commit-dirty=true
