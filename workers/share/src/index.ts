@@ -68,6 +68,8 @@ export interface Item {
 }
 
 // Mirrors ItemDetailHead.tsx so crawlers see what the app's <head> says.
+// No <meta http-equiv="refresh">: Facebook follows it and scrapes the app's
+// generic tags instead. Only crawlers ever get this page (browsers get a 302).
 export function renderPreview(item: Item, env: Env): string {
   const isRequest = item.item_type === "request" || item.item_type === "wish";
   const title = item.title?.trim();
@@ -100,7 +102,6 @@ export function renderPreview(item: Item, env: Env): string {
 <meta name="twitter:title" content="${t}">
 <meta name="twitter:description" content="${d}">
 <meta name="twitter:image" content="${i}">
-<meta http-equiv="refresh" content="0;url=${appUrl}">
 </head>
 <body><p><a href="${appUrl}">${t}</a></p></body>
 </html>`;
