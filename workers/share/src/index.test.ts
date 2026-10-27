@@ -45,7 +45,8 @@ describe("share worker helpers", () => {
     expect(html).toContain('content="Hämtas &amp; lämnas"');
     expect(html).toContain('<meta property="og:image" content="https://app.pif.community/pif-og-image.png">');
     expect(html).toContain('<meta property="og:url" content="https://app.pif.community/item/5">');
-    expect(html).toContain('url=https://pif.today/item/5"');
+    expect(html).toContain('<a href="https://pif.today/item/5">');
+    expect(html).not.toContain("http-equiv");
     expect(html).not.toContain("<b>");
   });
 });
