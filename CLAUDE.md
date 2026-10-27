@@ -6,7 +6,9 @@ No experimental changes to auth, payments-adjacent flows, or data deletion witho
 
 ## Stack
 
-- Frontend: React + TypeScript, Vite, deployed via Lovable's publish pipeline
+- Frontend: React + TypeScript, Vite. Production is still deployed via Lovable's publish pipeline;
+  staging deploys via GitHub Actions → Cloudflare Pages (see "Staging environment"). Moving
+  production off Lovable too is the "Replace Lovable publishing" epic on Trello (H0–H6).
 - Backend: Supabase, production domains pif.today / app.pif.community
 - Maps: Mapbox GL JS
 - Email: Resend (custom SMTP for Supabase Auth, plus transactional emails via Edge Functions)
@@ -120,8 +122,9 @@ pointing it at `app.pif.community` puts every email link outside the installed a
 hands them to Safari (this was the actual bug). `public/manifest.json` declares `id`/`scope`/
 `handle_links` explicitly so identity doesn't depend on which domain served the install. Changing
 `id`/`scope` can make Safari treat it as a new app — an existing Dock install may need re-adding.
-Staging's `site_url` is `https://give-and-get-local.lovable.app` (it also wrongly pointed at
-production's domain until this was found).
+Staging's `site_url` is `https://staging.pif.today` since 2026-10-27 (before that the Lovable
+staging URL; it also once wrongly pointed at production's domain). Staging's `APP_URL` edge
+function secret (link base for notification emails) matches it.
 
 **That origin/scope fix only covers hand-off *within* the browser (a link opened by the browser
 itself lands in the right scope). It does NOT make another app — Mail, Gmail — hand a tapped link
@@ -185,22 +188,39 @@ same per-profile-loop pattern still failed 129/149 even with the sleep in place.
 triggers **one** edge function invocation that loops every profile and sends sequentially with an
 awaited delay in a single continuous Deno process — throttling only works when it happens inside
 one process, not spread across many independently-dispatched async calls from Postgres.
-## Staging environment (Supabase branch + Lovable remix)
+## Staging environment (Supabase branch + Cloudflare Pages)
 
 A parallel staging pipeline exists so changes can be tested before touching production. Pieces:
 
+- **Which Supabase project a build talks to is an env var, not code** (since 2026-10-27).
+  `src/integrations/supabase/config.ts` reads `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`
+  and **defaults to production** when neither is set (setting only one throws); `client.ts` and
+  `scripts/generate-sitemap.ts` both use it, so `main` and `staging` carry identical code. The
+  flip side: **any build that doesn't set the variables talks to the production database.** Never
+  add a build path for staging (or a preview) that doesn't set them — that's exactly what Lovable's
+  editor preview did with a `.env.production`-only pin, and Lovable flagged it.
+- **Staging = `https://staging.pif.today`** (Cloudflare Pages project `pif-staging`, also
+  `pif-staging.pages.dev`), deployed by `.github/workflows/deploy-staging.yml` on every push to
+  `staging` in the `pif-staging` repo: typecheck → build the exact commit with the staging
+  `VITE_SUPABASE_*` set in the workflow → **guard step that refuses to deploy unless the bundle
+  references the staging project** → `bunx wrangler pages deploy` (not `cloudflare/wrangler-action`,
+  which npm-installs wrangler and dies on the app's `date-fns` peer deps). Secrets
+  `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit only, no DNS) and
+  `CLOUDFLARE_ACCOUNT_ID` live in `pif-staging`; set them with `pbpaste | gh secret set NAME -R ...`
+  (a `!`-prefixed `gh secret set NAME` has no TTY and silently stores an empty value). Verify a
+  deploy with `gh run list -R fredriklichtenstein-netizen/pif-staging` and
+  `curl https://staging.pif.today/version.json` — no Lovable sync dance needed.
+- **The Supabase branch ref is `epxqddygoarwxmbshvvx`, and it changes every time the branch is
+  deleted/recreated** (Supabase assigns a new one each time). When that happens, update the URL/key
+  in the workflow's Build step and the ref in its guard step, plus staging's `site_url`/allow-list.
 - **Two GitHub repos, not one.** `fredriklichtenstein-netizen/pif` (production, tracks `main`) and
-  `fredriklichtenstein-netizen/pif-staging` (created automatically when the Lovable project was
-  remixed — a fully independent repo, NOT a fork, with no shared git history). Both need the
-  `staging` branch pushed to them for the pipeline to work; a local `pif-staging` git remote is
-  the easiest way (`git push pif-staging staging:staging`). Lovable's own two-way sync pushes
-  commits directly to `pif-staging`'s `staging` branch sometimes (small UI edits) — always
-  `git fetch`/merge before pushing there, never force-push.
-- **"PIF staging" Lovable project** (a remix of the production project) is wired to
-  `pif-staging`'s `staging` branch, and its `client.ts` / `generate-sitemap.ts` point at a
-  dedicated Supabase branch (currently project ref `epxqddygoarwxmbshvvx` — **this ref changes
-  every time the branch is deleted/recreated**, since Supabase assigns a new one each time; both
-  files need updating whenever that happens).
+  `fredriklichtenstein-netizen/pif-staging` (created when the Lovable project was remixed — a fully
+  independent repo, NOT a fork). Push `staging` to both (`git push pif-staging staging:staging`
+  and `git push origin staging`); the deploy job only runs in `pif-staging`.
+- **The "PIF staging" Lovable project is disconnected from GitHub** (2026-10-27) and its
+  `give-and-get-local.lovable.app` site is frozen on an old build — don't test there. It is kept
+  only until H6 (retire Lovable); its URL is still in staging's auth redirect allow-list and the
+  Mapbox token.
 - **`IS_STAGING` export** in `client.ts` (`true` whenever `SUPABASE_URL` isn't production's) drives
   a small "STAGING" pill (`src/components/debug/StagingBadge.tsx`, mounted in `App.tsx`) — a
   permanent visual guard against mistaking one environment's preview for the other's (this
@@ -243,10 +263,10 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   IPv6-only by default) plus the actual DB password, which is only shown once and must be reset if
   forgotten (safe to do — the app never uses the DB password directly, only the anon/publishable
   key over the REST API).
-- **Promotion workflow**: implement on `staging`, user tests in "PIF staging", confirm, then
-  cherry-pick (never a full `git merge`) the relevant commits onto `main` — a full merge would try
-  to pull `staging`'s `client.ts`/`generate-sitemap.ts` (pointed at the staging Supabase project)
-  into production. Any new DB migration gets promoted separately, directly via
+- **Promotion workflow**: implement on `staging`, user tests on `staging.pif.today`, confirm, then
+  cherry-pick (never a full `git merge`) the relevant commits onto `main` — the code no longer
+  diverges per environment, but cherry-picking keeps unreviewed staging experiments and Lovable/CI
+  noise off `main`. Any new DB migration gets promoted separately, directly via
   `mcp__claude_ai_Supabase__execute_sql`/`apply_migration` against the production project ID. Once
   the user has confirmed a fix works, publishing production via
   `mcp__claude_ai_Lovable__deploy_project` (project `14386dc1-ec27-45d6-a49e-cf90acbe718a`) is
@@ -357,9 +377,11 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   likely land after it and need a manual correction pass.
 - **Mapbox token**: swapped from the account's unrestricted default public token to a
   URL-restricted one. Mapbox tokens don't support wildcards, but subdomains are auto-authorized
-  (adding `example.com` also covers `anything.example.com`), so the allowed list is just the four
-  root domains: `pif.today`, `app.pif.community`, `give-and-get-local.lovable.app`,
-  `pif-pay-it-forward.lovable.app`. Lovable's dynamic in-editor preview URLs
+  (adding `example.com` also covers `anything.example.com`), so the allowed list is just root
+  domains: `pif.today`, `app.pif.community`, `give-and-get-local.lovable.app`,
+  `pif-pay-it-forward.lovable.app`, plus (2026-10-27) `staging.pif.today` and
+  `pif-staging.pages.dev` (which also covers per-deploy `<hash>.pif-staging.pages.dev` previews).
+  Lovable's dynamic in-editor preview URLs
   (`id-preview--*.lovable.app`) are intentionally NOT covered — they're siblings of the two
   published domains above, not subdomains, so covering them would require the bare `lovable.app`
   domain, which would authorize every other project on Lovable's shared domain too. Trade-off
