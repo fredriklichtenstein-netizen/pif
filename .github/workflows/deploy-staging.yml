@@ -1,0 +1,83 @@
+name: Deploy staging (Cloudflare Pages)
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+# One deploy at a time per branch; a newer push supersedes an older one.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # The staging branch is also pushed to the production repo (pif), which
+    # has no Cloudflare secrets; only deploy from pif-staging.
+    if: github.repository == 'fredriklichtenstein-netizen/pif-staging'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Fail fast, with a clear message, if a secret is empty or wrong, and
+      # create the Pages project on the first run.
+      - name: Check Cloudflare credentials / ensure Pages project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -e
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID secret is empty."
+            exit 1
+          fi
+          if ! bunx wrangler pages project list > projects.txt; then
+            echo "::error::Cloudflare rejected the credentials (token needs Account > Cloudflare Pages > Edit)."
+            exit 1
+          fi
+          grep -qw pif-staging projects.txt \
+            || bunx wrangler pages project create pif-staging --production-branch=staging
+
+      - name: TypeScript check
+        run: bunx tsc --noEmit
+
+      # Builds exactly the pushed commit against the staging Supabase project.
+      # Variables set here take precedence over .env files. (.env stays on the
+      # staging branch only while Lovable's staging project still builds it;
+      # the branch ref changes if the Supabase branch is recreated.)
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: https://epxqddygoarwxmbshvvx.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc
+        run: bun run build
+
+      # A staging site that quietly talks to the production database is the
+      # failure we must never ship: refuse to deploy unless the bundle points
+      # at the staging project and the production URL is only the constant
+      # used for the STAGING badge comparison.
+      - name: Guard - build must target staging
+        env:
+          STAGING_URL: https://epxqddygoarwxmbshvvx.supabase.co
+        run: |
+          set -e
+          if ! grep -rqF "$STAGING_URL" dist/assets; then
+            echo "::error::Build does not reference the staging Supabase project ($STAGING_URL). Is .env missing?"
+            exit 1
+          fi
+
+      # bunx rather than cloudflare/wrangler-action: the action npm-installs
+      # wrangler into the project, which fails on the app's date-fns peer deps.
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bunx wrangler pages deploy dist --project-name=pif-staging --branch=staging --commit-hash=${{ github.sha }} --commit-dirty=true
