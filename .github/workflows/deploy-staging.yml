@@ -58,6 +58,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://epxqddygoarwxmbshvvx.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc
+          VITE_SHARE_ORIGIN: https://share-staging.pif.today
         run: bun run build
 
       # A staging site that quietly talks to the production database is the
