@@ -46,8 +46,17 @@ jobs:
             echo "::error::Cloudflare rejected the credentials (token needs Account > Cloudflare Pages > Edit)."
             exit 1
           fi
-          grep -qE '(^|[^[:alnum:]-])pif([^[:alnum:]-]|$)' projects.txt \
-            || bunx wrangler pages project create pif --production-branch=main
+          # Ask the API for this exact project (text-matching the list also hit
+          # "pif-staging" and "staging.pif.today").
+          status=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/pif")
+          if [ "$status" = "404" ]; then
+            bunx wrangler pages project create pif --production-branch=main
+          elif [ "$status" != "200" ]; then
+            echo "::error::Unexpected HTTP $status looking up Pages project pif."
+            exit 1
+          fi
 
       - name: TypeScript check
         run: bunx tsc --noEmit
