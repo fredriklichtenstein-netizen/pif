@@ -6,9 +6,9 @@ No experimental changes to auth, payments-adjacent flows, or data deletion witho
 
 ## Stack
 
-- Frontend: React + TypeScript, Vite. Production is still deployed via Lovable's publish pipeline;
-  staging deploys via GitHub Actions → Cloudflare Pages (see "Staging environment"). Moving
-  production off Lovable too is the "Replace Lovable publishing" epic on Trello (H0–H6).
+- Frontend: React + TypeScript, Vite. Both environments deploy via GitHub Actions → Cloudflare
+  Pages (production since 2026-10-27; see "Staging environment" → Promotion workflow). Lovable is
+  no longer in the publish path; retiring it fully is H6 of the "Replace Lovable publishing" epic.
 - Backend: Supabase, production domains pif.today / app.pif.community
 - Maps: Mapbox GL JS
 - Email: Resend (custom SMTP for Supabase Auth, plus transactional emails via Edge Functions)
@@ -294,100 +294,29 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   key over the REST API).
 - **Promotion workflow**: implement on `staging`, user tests on `staging.pif.today`, confirm, then
   cherry-pick (never a full `git merge`) the relevant commits onto `main` — the code no longer
-  diverges per environment, but cherry-picking keeps unreviewed staging experiments and Lovable/CI
-  noise off `main`. Any new DB migration gets promoted separately, directly via
-  `mcp__claude_ai_Supabase__execute_sql`/`apply_migration` against the production project ID. Once
-  the user has confirmed a fix works, publishing production via
-  `mcp__claude_ai_Lovable__deploy_project` (project `14386dc1-ec27-45d6-a49e-cf90acbe718a`) is
-  pre-authorized — no need to ask each time. **Don't wait for the editor-preview build
-  (`id-preview-*.lovable.app`) to catch up before calling `deploy_project`** — that preview
-  pipeline is separate from what `deploy_project` actually builds/publishes, and can lag the
-  pushed commit by many minutes for no reason connected to publish-readiness. Just push, then call
-  `deploy_project` directly; verify success afterward via `get_project`'s `latest_commit_sha` (it
-  will match promptly) and by grepping the real domain's served bundle for a marker string from the
-  change — checking only the main `index-*.js` chunk can give a false "missing" since route-level
-  code lives in separate lazy-loaded chunks.
-  **Trap confirmed on staging too, and there `latest_commit_sha`/screenshot are NOT sufficient on
-  their own** — both updated (commit sha matched, screenshot timestamp fresh) while the actual JS
-  served from `give-and-get-local.lovable.app` was still running code from ~4 commits earlier;
-  took ~40s longer than the API signals suggested before the real bundle caught up. The only
-  reliable check is fetching the live served bundle directly and grepping for a marker string from
-  the change, same as the production advice above — do this for staging `deploy_project` calls too,
-  don't stop at the API response. Concretely: `fetch('<staging-url>/')` → regex out
-  `assets/index-*.js` → fetch that → regex out the specific lazy chunk name (e.g.
-  `ItemCardWrapper-*.js`) → fetch that → search its text for the marker. Poll (re-fetch from
-  scratch, chunk hashes change each build) until the marker appears; don't trust one stale check.
-  **Confirmed once (2026-08-28) this can go further: a genuinely stuck publish, not just slow.**
-  On staging, `deploy_project` and even a manual click of "Publish" in the Lovable dashboard both
-  reported success (`status: ready`, `updated_at` moved) while `get_project`'s `latest_commit_sha`
-  stayed on the previous commit through 3 retriggers and ~25+ minutes — neither path was pulling
-  the newest GitHub commit into the project at all. Root cause: **Lovable maintains its own
-  internal editor branch, separate from the connected GitHub repo, that only reconciles with
-  GitHub when the project's AI agent is actively invoked via chat (`send_message`) — `deploy_project`
-  and the dashboard "Publish" button both just (re)build/publish whatever Lovable's *internal*
-  branch currently holds, they do not force a git pull first.** If retriggering a normal publish
-  doesn't clear a stale `latest_commit_sha` within a few minutes, sending an actual chat message to
-  the project (e.g. "sync the latest code from GitHub branch X commit Y and rebuild — do not make
-  code changes") is the forcing function that actually works. **But that request can still be
-  overridden**: even with an explicit "do NOT make any code changes yourself" instruction, the
-  agent went ahead and modified 4 unrelated files anyway ("Cast 4 Supabase query results to any",
-  commit `21c9d26d`/`267c2f3c`), citing some internal directive that took precedence over the
-  explicit instruction. The changes happened to be reviewed as harmless (pure type-level casts,
-  no runtime difference) and were kept, but **always diff every file the agent touches against what
-  was actually requested before trusting or promoting it** — do not assume "don't touch code" will
-  be honored. Lovable's own two-way sync then pushes whatever its internal branch has (including
-  any such unrequested edits) back to `pif-staging`'s `staging` branch — reconcile that back into
-  the canonical git history with `git fetch` + merge/cherry-pick, don't just leave it diverged.
-  **Confirmed again 2026-09-08, and worse than the above: `latest_commit_sha` can report the
-  CORRECT commit while the actual build still used stale code, with no eventual catch-up.** A
-  plain `git push` immediately followed by `deploy_project` (no intervening `send_message` in
-  between) shipped a build that was functionally one commit behind — `get_project`'s
-  `latest_commit_sha` matched the new commit immediately, the bundle hash changed on every poll,
-  and status was `ready`/`agentFinished: true` throughout, yet the actual deployed logic still
-  matched the *previous* commit, indefinitely (not just briefly lagging — repeated re-deploys and
-  waits produced the same stale result). Root cause, consistent with the internal-editor-branch
-  finding above: `latest_commit_sha` reflects GitHub's branch tip directly (always accurate,
-  since it's just reading the connected repo) -- it is **not** a report of what Lovable's internal
-  editor branch actually pulled or what `deploy_project` actually built from. The two can be
-  silently decoupled for an unbounded time until something (only ever observed to be a
-  `send_message` call) forces the internal branch to reconcile with GitHub. **Practical rule:
-  don't trust a bare `git push` + `deploy_project` sequence at all -- always route through
-  `send_message` with an explicit sync-only instruction (as in the existing forcing-function
-  advice above) before or as part of every `deploy_project` call, even the very first one for a
-  given round of changes, not just as a fallback once polling looks stuck.**
-  Caught this only because the change (removing one boolean condition, `!ownerViewMode &&`) had
-  no distinctive string for the usual "grep the bundle for a marker" check to catch -- both the
-  correct and stale version of the file share 100% of their static strings/classNames, differing
-  only in compiled JS logic. When a change has no grep-able marker, verify structurally instead:
-  build the exact target commit locally (`bun run build`), find the relevant compiled fragment in
-  the local `dist/` output via a distinctive but variable-name-agnostic pattern (e.g. search for a
-  literal JSX-compiled marker like `children:["(",` rather than a specific minified identifier,
-  since minifier variable names are not stable across separate build invocations even for
-  identical source), then fetch that exact same pattern from the live bundle and diff the two
-  fragments by structure (presence/absence of `!`/`&&`/other operators), not by exact text.
-- **Lovable has a feature that auto-fixes build errors every morning at 6am. It is now OFF on
-  production and ON only on staging (user confirmed in the Lovable dashboard, 2026-10-25).** It
-  was on for BOTH projects when this was found. Confirmed 2026-08-30: a scoped, sync-only `send_message`
-  to the **production** project ("pull commit X, make no code changes") triggered the agent to also
-  fix unrelated Deno typecheck errors in `delete-account`/`send-notification-email`, and its
-  two-way sync pushed the result **straight to `origin/main`** — no staging, no review, before
-  `deploy_project` was ever called. This is a different mechanism from the instruction-override
-  above (that was the agent ignoring a direct request; this is a legitimate standing feature the
-  agent was right to act on) but has the same practical effect: unreviewed commits can land on
-  production's `main` between one turn and the next. **After ANY `send_message` to a project
-  (even a "just sync" one), diff `origin/main` against what you expect before calling
-  `deploy_project`** — `git fetch origin main && git log --oneline <expected-tip>..origin/main`.
-  Don't assume a sync-only request stayed sync-only. If unexpected commits appear: read the actual
-  diff (`git diff <expected-tip> origin/main`) rather than trusting the agent's self-reported
-  summary, cross-check any real (non-type-only) logic change against what's *actually deployed*
-  live (`mcp__claude_ai_Supabase__get_edge_function`) before judging risk — the repo and live can
-  already differ for unrelated reasons (see the `get-mapbox-token` gap above), and a "fix" can turn
-  out to just be the tracked file catching up to reality. Get the user's explicit confirmation
-  before folding anything auth/data-deletion-adjacent into a promotion regardless of assessed risk.
-  The auto-fix job has since been disabled on the **production** project; it's low-stakes left on
-  staging since anything it does there still passes through this same review before promotion.
-  The "diff `origin/main` after any `send_message`" rule above still applies as a cheap safeguard
-  (the 2026-10-01 sync-only messages to production did stay sync-only, with no code changes).
+  diverges per environment, but cherry-picking keeps unreviewed staging experiments and CI noise
+  off `main`. **Pushing `main` to `origin` deploys production** (since 2026-10-27, H5):
+  `.github/workflows/deploy-production.yml` in the `pif` repo typechecks, builds with no
+  `VITE_SUPABASE_*` (= production), runs a guard that refuses to deploy if the bundle lacks the
+  production ref or contains the staging ref / `share-staging.pif.today`, and runs
+  `bunx wrangler pages deploy` to Cloudflare Pages project `pif` (`pif-333.pages.dev` — `pif.pages.dev`
+  belonged to someone else — with custom domains `pif.today` + `www.pif.today`). It also runs daily
+  (03:17 UTC) so `public/sitemap.xml` picks up new items. Its secrets live in the `pif` repo (a
+  separate token from staging's, Account → Cloudflare Pages → Edit only). Once the user has
+  confirmed a fix on staging, pushing `main` is pre-authorized. Verify with
+  `gh run list -R fredriklichtenstein-netizen/pif` and `curl https://pif.today/version.json`, plus a
+  bundle marker for specific changes (verify-deploy skill). Any new DB migration gets promoted
+  separately, directly via `mcp__claude_ai_Supabase__execute_sql`/`apply_migration` against the
+  production project ID. Rollback: re-run an older green run, or `git revert` + push.
+- **Lovable history (production was published via Lovable until 2026-10-27).** The Lovable
+  production project (`14386dc1-ec27-45d6-a49e-cf90acbe718a`) still has two-way GitHub sync with
+  `main` until H6 retires it — **anything its agent commits now deploys automatically**, so don't
+  `send_message` it, and diff `origin/main` (`git fetch && git log <expected-tip>..origin/main`)
+  before cherry-picking onto it. Lessons from that era, in case Lovable is ever used again: its
+  agent keeps an internal editor branch that only syncs with GitHub when invoked via chat, so
+  `deploy_project`/"Publish" could ship stale code while `latest_commit_sha` looked right; the agent
+  ignored "make no code changes" instructions and pushed unrequested edits; and its 6am auto-fix
+  job pushed straight to `main`. Only fetching the live bundle ever proved what was deployed.
 - **`supabase/migrations/` in the repo is not a complete record.** Most migrations are applied
   straight to production via `apply_migration` and never committed (~70 live vs a handful of files).
   The authoritative history is `supabase_migrations.schema_migrations` on production. The four
@@ -409,7 +338,8 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   (adding `example.com` also covers `anything.example.com`), so the allowed list is just root
   domains: `pif.today`, `app.pif.community`, `give-and-get-local.lovable.app`,
   `pif-pay-it-forward.lovable.app`, plus (2026-10-27) `staging.pif.today` and
-  `pif-staging.pages.dev` (which also covers per-deploy `<hash>.pif-staging.pages.dev` previews).
+  `pif-staging.pages.dev` (which also covers per-deploy `<hash>.pif-staging.pages.dev` previews)
+  and `pif-333.pages.dev` (production's Pages project).
   Lovable's dynamic in-editor preview URLs
   (`id-preview--*.lovable.app`) are intentionally NOT covered — they're siblings of the two
   published domains above, not subdomains, so covering them would require the bare `lovable.app`
@@ -422,9 +352,10 @@ A parallel staging pipeline exists so changes can be tested before touching prod
 
 ## Git / deployment workflow
 
-- Lovable has two-way GitHub sync with this repo and is used only for its "Publish" button to push
-  the repo's current state live. Do not rely on Lovable to write code — it has reconstructed code/SQL
-  from stale internal state before, causing real bugs.
+- Production deploys from `main` via GitHub Actions → Cloudflare Pages (see Promotion workflow).
+  Lovable still has two-way GitHub sync with this repo until H6 but is no longer used to publish.
+  Do not rely on Lovable to write code — it has reconstructed code/SQL from stale internal state
+  before, causing real bugs.
 - Repo: `fredriklichtenstein-netizen/pif`. Push access from a cloud/web Claude Code session may be
   blocked (proxy/GitHub App write scope issue, unresolved as of this writing) — a local Claude Code
   session authenticated via `gh auth login` has confirmed working push access instead.
