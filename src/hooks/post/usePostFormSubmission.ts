@@ -135,7 +135,6 @@ export function usePostFormSubmission(initialData?: any) {
         phone: formData.phone?.trim() || null,
       } as any;
       let result;
-      let savedItemId: string | number | null = initialData?.id ?? null;
       if (initialData?.id) {
         result = await supabase
           .from("items")
@@ -144,12 +143,7 @@ export function usePostFormSubmission(initialData?: any) {
       } else {
         result = await (supabase
           .from("items") as any)
-          .insert([insertData])
-          .select("id")
-          .single();
-        if (!result.error && result.data?.id != null) {
-          savedItemId = result.data.id;
-        }
+          .insert([insertData]);
       }
       if (result.error) {
         console.error("Supabase error details:", {
@@ -165,15 +159,6 @@ export function usePostFormSubmission(initialData?: any) {
       // before the INSERT realtime event is observed there.
       clearPostsCache();
       await queryClient.invalidateQueries({ queryKey: ['posts'] });
-
-      // Fire-and-forget: prewarm Hado's OG prerender cache so the very first
-      // share on Facebook/etc. gets a rich preview instead of the bare domain
-      // fallback. Not awaited — must not block the publish UX.
-      if (savedItemId != null) {
-        supabase.functions
-          .invoke('prewarm-og', { body: { itemId: String(savedItemId) } })
-          .catch(() => { /* best-effort, silent */ });
-      }
 
       toast({
         title: initialData?.id ? t('post.pif_updated') : 
