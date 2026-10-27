@@ -16,7 +16,7 @@ landed between checks).
 | Environment | Public domain | Deployed by |
 |---|---|---|
 | Production | `https://pif.today/` | `deploy-production.yml` in `fredriklichtenstein-netizen/pif` (push to `main`) → Pages `pif` |
-| Staging | `https://staging.pif.today/` | `deploy-staging.yml` in `fredriklichtenstein-netizen/pif-staging` (push to `staging`) → Pages `pif-staging` |
+| Staging | `https://staging.pif.today/` | `deploy-staging.yml` in `fredriklichtenstein-netizen/pif` (push to `staging`) → Pages `pif-staging` |
 
 Both serve `/version.json` (`buildId`, `builtAt`, never cached) — the quick first check that a new
 build is out.

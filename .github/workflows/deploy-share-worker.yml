@@ -24,8 +24,8 @@ concurrency:
 
 jobs:
   deploy:
-    # Only pif-staging has the Cloudflare secrets.
-    if: github.repository == 'fredriklichtenstein-netizen/pif-staging'
+    # Runs in the pif repo (pif-staging was merged into it 2026-10-27).
+    if: github.repository == 'fredriklichtenstein-netizen/pif'
     runs-on: ubuntu-latest
     permissions:
       contents: read
