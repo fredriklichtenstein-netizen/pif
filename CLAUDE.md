@@ -14,6 +14,12 @@ No experimental changes to auth, payments-adjacent flows, or data deletion witho
 - Email: Resend (custom SMTP for Supabase Auth, plus transactional emails via Edge Functions)
 - Mobile: Capacitor is in the project for an eventual native iOS/Android build (not started)
 - i18n: react-i18next, Swedish + English (`src/locales/{sv,en}/*.json`)
+- Analytics: Cloudflare Web Analytics (cookieless), enabled on the `pif` Pages project only — Pages
+  injects the beacon into HTML on deploy, so there's no code for it. The privacy policy
+  (`src/pages/Privacy.tsx`, section 3 + 6) describes it; keep the two in step if this changes.
+- Domains: `pif.community` and `www.pif.community` 301 to `https://pif.today` via a zone Redirect
+  Rule on proxied `AAAA 100::` placeholders (the old Wix site was removed 2026-10-27). Its MX/SPF/
+  DKIM/DMARC records are Google Workspace mail — leave them alone.
 
 ## Supabase project ID
 
