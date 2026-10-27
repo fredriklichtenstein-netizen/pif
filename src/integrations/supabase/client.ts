@@ -2,16 +2,21 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-const SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldXJwZWhjd2Job2h3a2xxbmlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1Mjg1OTAsImV4cCI6MjA4OTEwNDU5MH0.53GF3SNG4gmwUGKNdaZx5i8PVy4f73FN7x53jna_l9w";
-const SUPABASE_STORAGE_KEY = "sb-heurpehcwbhohwklqnir-auth-token";
+import { resolveSupabaseConfig } from "./config";
+
+// Which project this build talks to comes from VITE_SUPABASE_URL /
+// VITE_SUPABASE_PUBLISHABLE_KEY (defaults to production) -- see ./config.ts.
+const {
+  url: SUPABASE_URL,
+  publishableKey: SUPABASE_PUBLISHABLE_KEY,
+  storageKey: SUPABASE_STORAGE_KEY,
+  isStaging,
+} = resolveSupabaseConfig(import.meta.env);
 
 // True whenever this build is pointed at anything other than the production
-// Supabase project (e.g. the staging branch's own project ref) — lets the UI
-// show a staging indicator so it's never mistaken for production again.
-const PRODUCTION_SUPABASE_URL = "https://heurpehcwbhohwklqnir.supabase.co";
-export const IS_STAGING = SUPABASE_URL !== PRODUCTION_SUPABASE_URL;
+// Supabase project -- lets the UI show a staging indicator so it's never
+// mistaken for production.
+export const IS_STAGING = isStaging;
 
 const authStorage = typeof window !== "undefined"
   ? {
