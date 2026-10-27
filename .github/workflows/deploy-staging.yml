@@ -50,10 +50,8 @@ jobs:
       - name: TypeScript check
         run: bunx tsc --noEmit
 
-      # Builds exactly the pushed commit against the staging Supabase project.
-      # Variables set here take precedence over .env files. (.env stays on the
-      # staging branch only while Lovable's staging project still builds it;
-      # the branch ref changes if the Supabase branch is recreated.)
+      # Builds exactly the pushed commit against the staging Supabase project
+      # (the branch ref changes if the Supabase branch is recreated).
       - name: Build
         env:
           VITE_SUPABASE_URL: https://epxqddygoarwxmbshvvx.supabase.co
@@ -71,7 +69,7 @@ jobs:
         run: |
           set -e
           if ! grep -rqF "$STAGING_URL" dist/assets; then
-            echo "::error::Build does not reference the staging Supabase project ($STAGING_URL). Is .env missing?"
+            echo "::error::Build does not reference the staging Supabase project ($STAGING_URL)."
             exit 1
           fi
 
