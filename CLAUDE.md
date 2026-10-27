@@ -110,13 +110,12 @@ paths as fallbacks for already-sent emails.
 **PWA deep-linking depends on origin/scope agreement, not on anything in the email itself.**
 `pif.today` and `app.pif.community` are two separate origins both serving the app, and
 `app.pif.community/manifest.json` 302-redirects cross-origin to `pif.today/manifest.json`. **That
-redirect is not Lovable or DNS: `app.pif.community` (A 137.66.32.95, Fly.io/Caddy, DNS-only in
-Cloudflare) is the third-party "Hado" prerender service** (user owns the plan). It 302s browsers to
-`pif.today` and serves crawlers a prerendered page with item-specific OG tags, which is what makes
-shared `app.pif.community/item/<id>` links preview correctly; `pif.today` itself serves only generic
-OG tags to crawlers. Only `pif.today` actually hosts the app (Lovable origin, A 185.158.133.1). Not
-changeable from the repo — it is Hado configuration. Anything that moves hosting must keep Hado
-pointed at the new origin. Since a PWA's scope derives from its *manifest URL*, installs
+redirect comes from our share-link Worker, `workers/share`** (Cloudflare Worker `pif-share`, route
+`app.pif.community/*`, record `AAAA app 100::` proxied — since 2026-10-27; before that it was the
+third-party "Hado" prerender service at A 137.66.32.95, DNS-only). The Worker 302s browsers to the
+same path on `pif.today` and gives link-preview crawlers an HTML page with item-specific OG tags
+for `/item/<id>` (see "Share links / link previews" below). Only `pif.today` actually hosts the app.
+Since a PWA's scope derives from its *manifest URL*, installs
 from either domain end up scoped to `pif.today`. So `site_url` **must stay `https://pif.today`** —
 pointing it at `app.pif.community` puts every email link outside the installed app's scope and macOS
 hands them to Safari (this was the actual bug). `public/manifest.json` declares `id`/`scope`/
@@ -188,6 +187,36 @@ same per-profile-loop pattern still failed 129/149 even with the sleep in place.
 triggers **one** edge function invocation that loops every profile and sends sequentially with an
 awaited delay in a single continuous Deno process — throttling only works when it happens inside
 one process, not spread across many independently-dispatched async calls from Postgres.
+## Share links / link previews (`workers/share`)
+
+Shared item links are `<SHARE_ORIGIN>/item/<id>` (`src/lib/shareOrigin.ts`, `VITE_SHARE_ORIGIN`,
+default `https://app.pif.community`; staging builds use `https://share-staging.pif.today`). Both
+hostnames are served by the Worker in `workers/share` (production `pif-share`, staging
+`pif-share-staging`, config in `wrangler.toml`), deployed by `.github/workflows/deploy-share-worker.yml`
+— staging automatically on push, **production only via manual "Run workflow" with
+environment=production**. Crawlers on `/item/<id>` get OG tags built from Supabase REST with the
+anon key; other crawler requests are proxied from the app; browsers get a 302 to the app origin.
+Unit tests: `bunx vitest run workers`. Hostnames are attached as **routes** in the dashboard (the
+Custom Domain dialog couldn't find the zones), on a proxied `AAAA <name> 100::` placeholder
+record; CI deploys leave dashboard routes alone. Traps hit while building it:
+
+- **Facebook fetches with `meta-externalagent` / `meta-externalfetcher`**, not only
+  `facebookexternalhit`. Miss them and Facebook posts show the generic card.
+- **No `<meta http-equiv="refresh">` in the crawler page** — Facebook follows it and scrapes the
+  app's generic tags instead.
+- **Don't route crawlers to a Supabase edge function for HTML.** `*.supabase.co` serves function
+  HTML as `text/plain` with a sandbox CSP, which crawlers ignore. That's why the old `og-preview`
+  function + `pif-og-preview` Worker never worked.
+- **Proxying a hostname wakes up dormant Cloudflare config.** While `app.pif.community` was
+  DNS-only (Hado), Cloudflare never saw its traffic; flipping it to proxied activated a forgotten
+  zone Redirect Rule (`/item/*` → `og-preview`, now disabled) and the old Worker's more specific
+  `app.pif.community/item/*` route (deleted) — rules run before Workers, and the most specific
+  route wins. Item links broke for ~5 minutes. **Before proxying any hostname, list the zone's
+  Rules (Redirect/Page/Bulk) and every Worker's routes.**
+- Facebook caches previews: after a fix, re-scrape in the Sharing Debugger
+  (developers.facebook.com/tools/debug). Encrypted Messenger chats show no preview for any link
+  (the sender's device fetches it) — not a bug.
+
 ## Staging environment (Supabase branch + Cloudflare Pages)
 
 A parallel staging pipeline exists so changes can be tested before touching production. Pieces:
