@@ -14,10 +14,15 @@ ran. The only trustworthy signal is fetching the live bundle directly.
 
 ## Known targets
 
-| Environment | Public domain | Lovable project_id |
+| Environment | Public domain | Deployed by |
 |---|---|---|
-| Production | `https://pif.today/` | `14386dc1-ec27-45d6-a49e-cf90acbe718a` |
-| Staging | `https://give-and-get-local.lovable.app/` | `553e8288-bdae-4ac5-bcda-f80a4bba2a74` |
+| Production | `https://pif.today/` | Lovable project `14386dc1-ec27-45d6-a49e-cf90acbe718a` |
+| Staging | `https://staging.pif.today/` | GitHub Actions → Cloudflare Pages (since 2026-10-27) |
+
+Staging no longer goes through Lovable: a green `deploy-staging.yml` run in `pif-staging` means the
+commit is live, and `https://staging.pif.today/version.json` shows when it was built. The
+procedure below still applies when checking that a specific change landed. Both domains serve
+`/version.json` (`buildId`, `builtAt`) — a quick first check that a new build is out.
 
 ## Inputs needed from context (ask if not already known)
 
