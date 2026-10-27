@@ -50,9 +50,14 @@ jobs:
       - name: TypeScript check
         run: bunx tsc --noEmit
 
-      # Builds exactly the pushed commit. The Supabase project comes from the
-      # VITE_SUPABASE_* variables in .env (staging branch only, see H1).
+      # Builds exactly the pushed commit against the staging Supabase project.
+      # Variables set here take precedence over .env files. (.env stays on the
+      # staging branch only while Lovable's staging project still builds it;
+      # the branch ref changes if the Supabase branch is recreated.)
       - name: Build
+        env:
+          VITE_SUPABASE_URL: https://epxqddygoarwxmbshvvx.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVweHFkZHlnb2Fyd3htYnNodnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MDU3NjgsImV4cCI6MjA5OTk4MTc2OH0.-8u_OfZfcglaVCC5zuVMg4jljEgW1AG8DLNiymuCTsc
         run: bun run build
 
       # A staging site that quietly talks to the production database is the
