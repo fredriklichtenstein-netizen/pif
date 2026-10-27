@@ -21,6 +21,8 @@ describe("share worker helpers", () => {
     expect(isCrawler("facebookexternalhit/1.1")).toBe(true);
     expect(isCrawler(WHATSAPP)).toBe(true);
     expect(isCrawler("Slackbot-LinkExpanding 1.0")).toBe(true);
+    expect(isCrawler("meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)")).toBe(true);
+    expect(isCrawler("meta-externalfetcher/1.1")).toBe(true);
     expect(isCrawler(BROWSER)).toBe(false);
     expect(isCrawler("Googlebot/2.1")).toBe(false);
     expect(isCrawler(null)).toBe(false);

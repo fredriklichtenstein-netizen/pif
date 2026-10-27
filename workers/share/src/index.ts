@@ -23,6 +23,8 @@ export interface Env {
 // they render JS and should follow the redirect like a browser.
 const CRAWLERS = [
   "facebookexternalhit",
+  "meta-externalagent", // Meta's newer preview fetchers (Facebook posts)
+  "meta-externalfetcher",
   "facebot",
   "twitterbot",
   "whatsapp",
@@ -37,6 +39,10 @@ const CRAWLERS = [
   "vkshare",
   "mastodon",
   "signal",
+  "cardyb", // Bluesky
+  "iframely",
+  "snapchat",
+  "viber",
 ];
 
 export function isCrawler(userAgent: string | null): boolean {
