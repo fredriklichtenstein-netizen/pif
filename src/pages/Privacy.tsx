@@ -72,7 +72,7 @@ function SwedishPolicy() {
         <li><strong>Supabase Ireland Ltd</strong> — databaslagring och autentisering (EU-server)</li>
         <li><strong>Mapbox Inc</strong> — karttjänst för att visa ungefärliga platser</li>
         <li><strong>Resend Inc</strong> — e-postutskick för aviseringar och rapporter</li>
-        <li><strong>Hado SEO</strong> — sökmotoroptimering på DNS-nivå</li>
+        <li><strong>Cloudflare Inc</strong> — drift av webbplatsen, länkförhandsvisningar och anonym besöksstatistik</li>
         <li><strong>GitHub Inc</strong> — versionshantering av applikationskod</li>
       </ul>
       <p className={p}>
@@ -109,6 +109,11 @@ function SwedishPolicy() {
         PIF använder enbart funktionella cookies och sessionscookies som är nödvändiga för att
         tjänsten ska fungera. Vi använder inga spårnings- eller reklamcookies.
       </p>
+      <p className={p}>
+        För att förstå hur tjänsten används mäter vi besök med Cloudflare Web Analytics. Det sätter
+        inga cookies, sparar ingen IP-adress och följer dig inte mellan webbplatser — vi ser bara
+        sammanlagd statistik, till exempel antal besök per sida.
+      </p>
 
       <h2 className={h2}>7. Åldersgräns</h2>
       <p className={p}>
@@ -138,7 +143,7 @@ function SwedishPolicy() {
         <br />Kontakta oss på: hej@pif.community
         <br />PIF App AB, Kristinebergs slottsväg 3, 112 14 Stockholm
       </div>
-      <p className="text-sm text-muted-foreground italic mt-8">Senast uppdaterad: juli 2026</p>
+      <p className="text-sm text-muted-foreground italic mt-8">Senast uppdaterad: oktober 2026</p>
     </article>
   );
 }
@@ -200,7 +205,7 @@ function EnglishPolicy() {
         <li><strong>Supabase Ireland Ltd</strong> — database storage and authentication (EU servers)</li>
         <li><strong>Mapbox Inc</strong> — map service for displaying approximate locations</li>
         <li><strong>Resend Inc</strong> — email delivery for notifications and reports</li>
-        <li><strong>Hado SEO</strong> — DNS-level search engine optimisation</li>
+        <li><strong>Cloudflare Inc</strong> — website hosting, link previews and anonymous visitor statistics</li>
         <li><strong>GitHub Inc</strong> — version control for application code</li>
       </ul>
       <p className={p}>
@@ -237,6 +242,11 @@ function EnglishPolicy() {
         PIF uses only functional cookies and session cookies that are necessary for the service
         to work. We do not use tracking or advertising cookies.
       </p>
+      <p className={p}>
+        To understand how the service is used, we measure visits with Cloudflare Web Analytics. It
+        sets no cookies, stores no IP addresses and does not follow you across websites — we only
+        see aggregated statistics, such as the number of visits per page.
+      </p>
 
       <h2 className={h2}>7. Age Restriction</h2>
       <p className={p}>
@@ -265,7 +275,7 @@ function EnglishPolicy() {
         <br />Contact us at: hej@pif.community
         <br />PIF App AB, Kristinebergs slottsväg 3, 112 14 Stockholm, Sweden
       </div>
-      <p className="text-sm text-muted-foreground italic mt-8">Last updated: July 2026</p>
+      <p className="text-sm text-muted-foreground italic mt-8">Last updated: October 2026</p>
     </article>
   );
 }
