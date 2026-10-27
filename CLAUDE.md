@@ -154,7 +154,7 @@ arrive at all**; it's 5s now, and that call gets a 25s client timeout vs 15s els
 Tracked in repo (`supabase/functions/`): `analyze-image`, `delete-account`,
 `send-report`, `send-feedback`, `get-mapbox-token`. Deployment to Supabase is a distinct step from
 writing the code — always deploy after editing. `og-preview` and `prewarm-og` were removed from
-the repo on 2026-10-27 (superseded by `workers/share`); also `unsubscribe-notification` is tracked.
+the repo and deleted from both Supabase projects on 2026-10-27 (superseded by `workers/share`); also `unsubscribe-notification` is tracked.
 `analyze-image` is tracked but not currently deployed to production. `send-report` was reconciled
 with live on 2026-10-26 (production v13 == repo). That pass found two traps: the old tracked
 version selected `profiles.full_name`/`email`, which don't exist (every report would have shown
