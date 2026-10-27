@@ -1,0 +1,59 @@
+name: Deploy staging (Cloudflare Pages)
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+# One deploy at a time per branch; a newer push supersedes an older one.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript check
+        run: bunx tsc --noEmit
+
+      # Builds exactly the pushed commit. The Supabase project comes from the
+      # VITE_SUPABASE_* variables in .env (staging branch only, see H1).
+      - name: Build
+        run: bun run build
+
+      # A staging site that quietly talks to the production database is the
+      # failure we must never ship: refuse to deploy unless the bundle points
+      # at the staging project and the production URL is only the constant
+      # used for the STAGING badge comparison.
+      - name: Guard - build must target staging
+        env:
+          STAGING_URL: https://epxqddygoarwxmbshvvx.supabase.co
+        run: |
+          set -e
+          if ! grep -rqF "$STAGING_URL" dist/assets; then
+            echo "::error::Build does not reference the staging Supabase project ($STAGING_URL). Is .env missing?"
+            exit 1
+          fi
+          if ! grep -rqF 'sb-epxqddygoarwxmbshvvx-auth-token' dist/assets; then
+            echo "::error::Staging auth storage key not found in build."
+            exit 1
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=pif-staging --branch=staging --commit-hash=${{ github.sha }}
