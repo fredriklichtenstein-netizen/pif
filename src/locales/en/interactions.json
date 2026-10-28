@@ -781,7 +781,8 @@
     "change_password_description": "For security, you change your password via a confirmation link. We'll email you the link — your password only changes once you've clicked it.",
     "change_password_button": "Change password",
     "change_password_sending": "Sending link...",
-    "change_password_email_sent": "We've sent a link to {{email}}. Click it to choose a new password. Check your spam folder if it doesn't show up in your inbox."
+    "change_password_email_sent": "We've sent a link to {{email}}. Click it to choose a new password. Check your spam folder if it doesn't show up in your inbox.",
+    "scheduled_published": "Scheduled post published"
   },
   "notifications": {
     "is_interested_in_your_pif": "is interested in your pif",

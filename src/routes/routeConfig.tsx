@@ -40,6 +40,8 @@ const Map = enhancedLazy(() => import("@/pages/Map"));
 const Messages = enhancedLazy(() => import("@/pages/Messages"));
 const Post = enhancedLazy(() => import("@/pages/Post"));
 const PostEdit = enhancedLazy(() => import("@/pages/PostEdit"));
+const DraftEdit = enhancedLazy(() => import("@/pages/DraftEdit"));
+const Drafts = enhancedLazy(() => import("@/pages/Drafts"));
 const Profile = enhancedLazy(() => import("@/pages/Profile"));
 const Feed = enhancedLazy(() => import("@/pages/Feed"));
 const AccountSettings = enhancedLazy(() => import("@/pages/AccountSettings"));
@@ -86,6 +88,14 @@ export const privateRoutes = [
   { 
     path: "/post/edit/:id", 
     element: <PrivateRoute>{withSuspense(PostEdit)}</PrivateRoute>
+  },
+  {
+    path: "/post/draft/:id",
+    element: <PrivateRoute>{withSuspense(DraftEdit)}</PrivateRoute>
+  },
+  {
+    path: "/drafts",
+    element: <PrivateRoute>{withSuspense(Drafts)}</PrivateRoute>
   },
   { 
     path: "/profile", 

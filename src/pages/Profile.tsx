@@ -12,6 +12,8 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { DEMO_PROFILE } from "@/data/mockProfiles";
 import { useTranslation } from "react-i18next";
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
+import { useMyDrafts } from "@/hooks/drafts/useMyDrafts";
+import { ChevronRight, FileText } from "lucide-react";
 
 // Mirror PrivateRoute: never let an unresolved auth state spin forever.
 const PROFILE_AUTH_TIMEOUT_MS = 5000;
@@ -25,6 +27,8 @@ function formatPublicName(profile: any) {
 const Profile = () => {
   const { user, isLoading: authLoading } = useGlobalAuth();
   const { t } = useTranslation();
+  const { data: drafts } = useMyDrafts();
+  const scheduledCount = drafts?.filter((d) => d.scheduled_at).length ?? 0;
 
   const { profile: liveProfile, isLoading: profileLoading } = useCachedProfile(user?.id);
   const profileData = DEMO_MODE ? DEMO_PROFILE : liveProfile;
@@ -95,6 +99,22 @@ const Profile = () => {
               coordinates={coordinates}
             />
           </Card>
+          {!DEMO_MODE && (
+            <Link to="/drafts" className="block">
+              <Card className="p-4 flex items-center gap-3 shadow rounded-xl hover:bg-muted/40 transition-colors">
+                <FileText className="h-5 w-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium">{t('drafts.page_title')}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {drafts && drafts.length > 0
+                      ? t('drafts.profile_summary', { count: drafts.length, scheduled: scheduledCount })
+                      : t('drafts.profile_empty')}
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </Card>
+            </Link>
+          )}
         </div>
       </div>
       <MainNav />
