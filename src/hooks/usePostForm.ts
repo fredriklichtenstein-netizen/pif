@@ -15,7 +15,7 @@ export function usePostForm(initialData?: any) {
     handleMeasurementChange,
   } = usePostFormState(initialData);
 
-  const { isSubmitting, handleSubmit: submitForm } = usePostFormSubmission(initialData);
+  const { isSubmitting, handleSubmit: submitForm, saveAsDraft } = usePostFormSubmission(initialData);
   const { validateForm } = usePostFormValidation();
 
   const { handleImageUpload: uploadHandler, isAnalyzing } = usePostImageUpload({
@@ -40,6 +40,10 @@ export function usePostForm(initialData?: any) {
   const isFormValid = validateForm(formData);
 
   const isEditMode = Boolean(initialData?.id);
+  const isDraftMode = Boolean(initialData?.draftId);
+
+  const handleSaveDraft = () => saveAsDraft(formData);
+  const handleSchedule = (scheduledAt: Date) => saveAsDraft(formData, scheduledAt);
 
   return {
     formData,
@@ -47,6 +51,7 @@ export function usePostForm(initialData?: any) {
     isAnalyzing,
     isFormValid,
     isEditMode,
+    isDraftMode,
     profileDefaults,
     setFormData,
     handleImageUpload,
@@ -54,5 +59,7 @@ export function usePostForm(initialData?: any) {
     handleImageCropsChange,
     handleMeasurementChange,
     handleSubmit,
+    handleSaveDraft,
+    handleSchedule,
   };
 }

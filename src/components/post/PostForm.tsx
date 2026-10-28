@@ -25,6 +25,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     isSubmitting,
     isAnalyzing,
     isEditMode,
+    isDraftMode,
     profileDefaults,
     setFormData,
     handleImageUpload,
@@ -32,6 +33,8 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     handleImageCropsChange,
     handleMeasurementChange,
     handleSubmit,
+    handleSaveDraft,
+    handleSchedule,
   } = usePostForm(initialData);
 
   const { handleAddressSelect } = usePostLocation(formData, setFormData);
@@ -112,7 +115,11 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
         isSubmitting={isSubmitting}
         isAnalyzing={isAnalyzing}
         isEditMode={isEditMode}
+        isDraftMode={isDraftMode}
+        scheduledAt={initialData?.scheduled_at ? new Date(initialData.scheduled_at) : null}
         onFormSubmit={handleSubmit}
+        onSaveDraft={DEMO_MODE ? undefined : handleSaveDraft}
+        onSchedule={DEMO_MODE ? undefined : handleSchedule}
         onImageUpload={handleImageUpload}
         onImagesChange={handleImagesChange}
         onImageCropsChange={handleImageCropsChange}

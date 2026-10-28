@@ -781,7 +781,8 @@
     "change_password_description": "Av säkerhetsskäl byter du lösenord via en bekräftelselänk. Vi skickar länken till din e-postadress — ditt lösenord ändras först när du klickat på den.",
     "change_password_button": "Byt lösenord",
     "change_password_sending": "Skickar länk...",
-    "change_password_email_sent": "Vi har skickat en länk till {{email}}. Klicka på den för att välja ett nytt lösenord. Kolla även skräpposten om mejlet inte dyker upp i inkorgen."
+    "change_password_email_sent": "Vi har skickat en länk till {{email}}. Klicka på den för att välja ett nytt lösenord. Kolla även skräpposten om mejlet inte dyker upp i inkorgen.",
+    "scheduled_published": "Schemalagt inlägg publicerat"
   },
   "notifications": {
     "is_interested_in_your_pif": "är intresserad av din pif",

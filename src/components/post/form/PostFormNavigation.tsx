@@ -11,6 +11,7 @@ interface PostFormNavigationProps {
   isSubmitting: boolean;
   isRequest: boolean;
   isEditMode?: boolean;
+  isDraftMode?: boolean;
   onPrevStep: () => void;
   onNextStep: () => void;
   onCancel?: () => void;
@@ -24,6 +25,7 @@ export function PostFormNavigation({
   isSubmitting,
   isRequest,
   isEditMode = false,
+  isDraftMode = false,
   onPrevStep,
   onNextStep,
   onCancel,
@@ -34,6 +36,8 @@ export function PostFormNavigation({
     ? (isEditMode ? t('post.updating') : t('post.creating'))
     : isEditMode
       ? t('post.update_button')
+      : isDraftMode
+        ? t('drafts.publish_now')
       : isRequest
         ? t('post.create_request_final')
         : t('post.create_offer_final');

@@ -35,6 +35,13 @@ export function PushNotifications({ preferences, onToggle }: PushNotificationsPr
           checked={preferences.push_item_updates}
           onToggle={() => onToggle("push_item_updates")}
         />
+
+        <NotificationToggle
+          id="push_scheduled_published"
+          label={t('settings.scheduled_published')}
+          checked={preferences.push_scheduled_published}
+          onToggle={() => onToggle("push_scheduled_published")}
+        />
       </div>
     </div>
   );

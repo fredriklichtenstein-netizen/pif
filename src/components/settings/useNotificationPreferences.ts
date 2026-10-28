@@ -15,9 +15,11 @@ export function useNotificationPreferences() {
     email_mentions: true,
     email_item_updates: true,
     email_announcements: true,
+    email_scheduled_published: true,
     push_messages: true,
     push_mentions: true,
     push_item_updates: true,
+    push_scheduled_published: true,
   });
 
   const fetchNotificationPreferences = async () => {
@@ -47,9 +49,11 @@ export function useNotificationPreferences() {
           email_mentions: withDefault('email_mentions'),
           email_item_updates: withDefault('email_item_updates'),
           email_announcements: withDefault('email_announcements'),
+          email_scheduled_published: withDefault('email_scheduled_published'),
           push_messages: withDefault('push_messages'),
           push_mentions: withDefault('push_mentions'),
           push_item_updates: withDefault('push_item_updates'),
+          push_scheduled_published: withDefault('push_scheduled_published'),
         };
 
         setPreferences(typedPreferences);

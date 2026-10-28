@@ -11,7 +11,11 @@ import { PostFormNavigation } from "./PostFormNavigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { X, AlertCircle } from "lucide-react";
+import { X, AlertCircle, CalendarClock, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ScheduleDialog } from "@/components/drafts/ScheduleDialog";
+import { useMyDrafts } from "@/hooks/drafts/useMyDrafts";
+import { formatScheduleTime } from "@/lib/schedule";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +36,13 @@ interface PostFormContainerProps {
   isSubmitting: boolean;
   isAnalyzing: boolean;
   isEditMode?: boolean;
+  /** Editing a saved draft (item_drafts), not a published item. */
+  isDraftMode?: boolean;
+  scheduledAt?: Date | null;
   onFormSubmit: (e: React.FormEvent) => void;
+  /** Omitted when drafts aren't available (editing a live item, demo mode). */
+  onSaveDraft?: () => Promise<boolean>;
+  onSchedule?: (scheduledAt: Date) => Promise<boolean>;
   onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void;
   onImagesChange: (images: string[]) => void;
   onImageCropsChange: (crops: (ImageCrop | null)[]) => void;
@@ -48,7 +58,11 @@ export function PostFormContainer({
   isSubmitting,
   isAnalyzing,
   isEditMode = false,
+  isDraftMode = false,
+  scheduledAt = null,
   onFormSubmit,
+  onSaveDraft,
+  onSchedule,
   onImageUpload,
   onImagesChange,
   onImageCropsChange,
@@ -58,10 +72,16 @@ export function PostFormContainer({
   isFormValid,
   profileDefaults,
 }: PostFormContainerProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const canUseDrafts = !isEditMode && !!onSaveDraft;
+  const hasContent =
+    !!formData.title?.trim() || !!formData.description?.trim() || (formData.images?.length ?? 0) > 0;
+  const { data: myDrafts } = useMyDrafts();
+  const draftCount = canUseDrafts && !isDraftMode ? (myDrafts?.length ?? 0) : 0;
   const isRequest = formData.item_type === 'request';
   // When the user deep-links from the feed buttons with ?type=offer|request,
   // skip the type-picker step entirely so they land directly on images.
@@ -219,8 +239,32 @@ export function PostFormContainer({
 
   const handleConfirmCancel = () => {
     setCancelDialogOpen(false);
-    navigate("/feed");
+    navigate(isDraftMode ? "/drafts" : "/feed");
   };
+
+  const handleSaveDraftFromCancel = async () => {
+    setCancelDialogOpen(false);
+    await onSaveDraft?.();
+  };
+
+  /** Scheduling needs everything publishing needs, so validate like submit. */
+  const handleScheduleClick = () => {
+    if (goToFirstProblem()) return;
+    if (!isFormValid) {
+      setSummaryError(t('post.validation.incomplete_summary'));
+      setShowErrors(true);
+      scrollToFirstError();
+      return;
+    }
+    setScheduleDialogOpen(true);
+  };
+
+  const handleScheduleConfirm = async (date: Date) => {
+    const ok = await onSchedule?.(date);
+    if (ok) setScheduleDialogOpen(false);
+  };
+
+  const offerToSaveDraft = canUseDrafts && hasContent;
 
   const errorsForStep = showErrors ? fieldErrors : {};
 
@@ -291,7 +335,7 @@ export function PostFormContainer({
     <div className="container max-w-3xl mx-auto py-8 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="relative">
         <PostFormHeader
-          title={isRequest ? t('post.create_request') : t('post.create_offer')}
+          title={isDraftMode ? t('drafts.edit_title') : isRequest ? t('post.create_request') : t('post.create_offer')}
           subtitle={isRequest ? t('post.request_subtitle') : t('post.offer_subtitle')}
         />
         <Button
@@ -305,6 +349,25 @@ export function PostFormContainer({
           <X className="h-5 w-5" />
         </Button>
       </div>
+
+      {draftCount > 0 && (
+        <Link
+          to="/drafts"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        >
+          <FileText className="h-4 w-4" />
+          {t('drafts.my_drafts_link', { count: draftCount })}
+        </Link>
+      )}
+
+      {isDraftMode && scheduledAt && (
+        <Alert className="mb-4">
+          <CalendarClock className="h-4 w-4" />
+          <AlertDescription>
+            {t('drafts.scheduled_for', { when: formatScheduleTime(scheduledAt, i18n.language) })}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <PostFormProgress
         steps={steps}
@@ -333,26 +396,77 @@ export function PostFormContainer({
           isSubmitting={isSubmitting}
           isRequest={isRequest}
           isEditMode={isEditMode}
+          isDraftMode={isDraftMode}
           onPrevStep={finalPrevStep}
           onNextStep={attemptNext}
           onCancel={() => setCancelDialogOpen(true)}
         />
+        {canUseDrafts && (
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onSaveDraft?.()}
+              disabled={isSubmitting || !hasContent}
+            >
+              <FileText className="h-4 w-4 mr-1.5" />
+              {isDraftMode ? t('drafts.save_changes') : t('drafts.save_draft')}
+            </Button>
+            {finalIsOnFinalStep && onSchedule && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleScheduleClick}
+                disabled={isSubmitting}
+              >
+                <CalendarClock className="h-4 w-4 mr-1.5" />
+                {scheduledAt ? t('drafts.change_schedule') : t('drafts.schedule_button')}
+              </Button>
+            )}
+          </div>
+        )}
       </form>
+
+      {onSchedule && (
+        <ScheduleDialog
+          open={scheduleDialogOpen}
+          onOpenChange={setScheduleDialogOpen}
+          initial={scheduledAt}
+          isSubmitting={isSubmitting}
+          onConfirm={handleScheduleConfirm}
+        />
+      )}
 
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('post.cancel_confirm_title')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {offerToSaveDraft ? t('drafts.cancel_save_title') : t('post.cancel_confirm_title')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('post.cancel_confirm_message')}
+              {offerToSaveDraft
+                ? isDraftMode
+                  ? t('drafts.cancel_save_changes_message')
+                  : t('drafts.cancel_save_message')
+                : t('post.cancel_confirm_message')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
             <AlertDialogCancel>{t('post.cancel_keep_editing')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCancel}>
-              {t('post.cancel_discard')}
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              className={offerToSaveDraft ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" : undefined}
+            >
+              {offerToSaveDraft && isDraftMode ? t('drafts.discard_changes') : t('post.cancel_discard')}
             </AlertDialogAction>
+            {offerToSaveDraft && (
+              <AlertDialogAction onClick={handleSaveDraftFromCancel}>
+                {isDraftMode ? t('drafts.save_changes') : t('drafts.save_draft')}
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

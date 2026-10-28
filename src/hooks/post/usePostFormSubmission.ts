@@ -10,6 +10,9 @@ import { useDemoPostsStore } from "@/stores/demoPostsStore";
 import { DEMO_USER } from "@/data/mockUser";
 import { useTranslation } from "react-i18next";
 import { clearPostsCache } from "@/services/posts/optimized";
+import { buildItemFields } from "@/services/items/itemFields";
+import { formatScheduleTime } from "@/lib/schedule";
+import { DRAFTS_QUERY_KEY, draftErrorKey, publishDraft, saveDraft } from "@/services/drafts";
 
 export function usePostFormSubmission(initialData?: any) {
   const { toast } = useToast();
@@ -18,7 +21,7 @@ export function usePostFormSubmission(initialData?: any) {
   const queryClient = useQueryClient();
   const addDemoPost = useDemoPostsStore((state) => state.addPost);
   const updateDemoPost = useDemoPostsStore((state) => state.updatePost);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const handleSubmit = async (formData: PostFormData) => {
     if (DEMO_MODE) {
@@ -94,48 +97,24 @@ export function usePostFormSubmission(initialData?: any) {
     setIsSubmitting(true);
 
     try {
-      let coordinatesJsonForDB: { lng: number; lat: number } | null = null;
-      if (formData.coordinates && formData.coordinates.lat !== null && formData.coordinates.lng !== null) {
-        coordinatesJsonForDB = {
-          lng: formData.coordinates.lng,
-          lat: formData.coordinates.lat,
-        };
-      }
-
       const insertData = {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        condition: formData.condition,
-        item_type: formData.item_type,
+        ...buildItemFields(formData),
         pif_status: 'active',
         user_id: user.id,
-        coordinates_json: coordinatesJsonForDB,
-        location: formData.location,
-        images: formData.images,
-        image_crops: formData.imageCrops || [],
-        measurements: formData.measurements,
-        visibility_radius_km: formData.visibilityRadiusKm ?? null,
-        // Defensive guard: only forward values the DB check constraint accepts
-        // (meetup | leave_at_door | flexible). Anything else — including legacy
-        // in-flight form state — is coerced to NULL so the insert/update never
-        // fails on items_pickup_preference_check.
-        pickup_preference: (['meetup', 'leave_at_door', 'flexible'] as const).includes(
-          formData.pickup_preference as any,
-        )
-          ? formData.pickup_preference
-          : null,
-        pickup_door_code: formData.pickup_door_code?.trim() || null,
-        pickup_floor: formData.pickup_floor && formData.pickup_floor.trim() !== ''
-          ? parseInt(formData.pickup_floor, 10)
-          : null,
-        pickup_instructions: formData.pickup_instructions?.trim() || null,
-        preferred_time_window: formData.preferred_time_window?.trim() || null,
-        pickup_address: formData.pickup_address?.trim() || null,
-        phone: formData.phone?.trim() || null,
       } as any;
       let result;
-      if (initialData?.id) {
+      if (initialData?.draftId) {
+        // Publishing an existing draft: save the latest form state (clearing
+        // any schedule), then let publish_draft move it into items.
+        try {
+          await saveDraft(formData, initialData.draftId, null);
+          await publishDraft(initialData.draftId);
+          result = { error: null };
+        } catch (draftError) {
+          result = { error: draftError as any };
+        }
+        queryClient.invalidateQueries({ queryKey: DRAFTS_QUERY_KEY });
+      } else if (initialData?.id) {
         result = await supabase
           .from("items")
           .update(insertData)
@@ -179,7 +158,10 @@ export function usePostFormSubmission(initialData?: any) {
       
       let errorMessage = t('post.error_saving');
       
-      if (error.message?.includes('invalid input syntax for type point')) {
+      const draftKey = draftErrorKey(error);
+      if (draftKey) {
+        errorMessage = t(draftKey);
+      } else if (error.message?.includes('invalid input syntax for type point')) {
         errorMessage = t('post.error_location');
       } else if (error.message) {
         errorMessage = error.message;
@@ -195,8 +177,49 @@ export function usePostFormSubmission(initialData?: any) {
     }
   };
 
+  /**
+   * Saves the form as a draft (new or existing). With `scheduledAt`, the
+   * draft is also scheduled; the database rejects a schedule unless the
+   * draft is complete and the time is within the allowed window.
+   */
+  const saveAsDraft = async (formData: PostFormData, scheduledAt?: Date | null): Promise<boolean> => {
+    if (DEMO_MODE) return false;
+    const hasContent =
+      formData.title.trim() !== "" || formData.description.trim() !== "" || formData.images.length > 0;
+    if (!hasContent) {
+      toast({ title: t('drafts.nothing_to_save'), variant: "destructive" });
+      return false;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await saveDraft(formData, initialData?.draftId ?? null, scheduledAt);
+      await queryClient.invalidateQueries({ queryKey: DRAFTS_QUERY_KEY });
+      toast({
+        title: scheduledAt ? t('drafts.scheduled_toast') : t('drafts.saved_toast'),
+        description: scheduledAt
+          ? t('drafts.scheduled_toast_description', { when: formatScheduleTime(scheduledAt, i18n.language) })
+          : undefined,
+      });
+      navigate("/drafts");
+      return true;
+    } catch (error: any) {
+      console.error("Error saving draft:", error);
+      const key = draftErrorKey(error);
+      toast({
+        title: t('post.error'),
+        description: key ? t(key) : t('drafts.error_saving'),
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     isSubmitting,
     handleSubmit,
+    saveAsDraft,
   };
 }
