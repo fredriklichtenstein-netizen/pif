@@ -32,6 +32,7 @@ const PREF_LABELS: Record<string, string> = {
   email_mentions: "omnämnanden",
   email_item_updates: "uppdateringar om dina inlägg",
   email_announcements: "nyheter i PIF",
+  email_scheduled_published: "publicerade schemalagda inlägg",
 };
 
 async function verifySig(userId: string, prefKey: string, sig: string, secret: string): Promise<boolean> {

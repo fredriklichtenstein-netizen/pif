@@ -28,14 +28,16 @@ type NotificationType =
   | "stale_item_reminder"
   | "item_force_archived"
   | "conversation_reopen_requested"
-  | "conversation_reopen_responded";
+  | "conversation_reopen_responded"
+  | "scheduled_item_published"
+  | "scheduled_item_failed";
 
 // Which notification_preferences key gates each email type. Comment
 // notifications reuse the existing "mentions" (someone replied to/near you)
 // vs "item_updates" (someone commented on your own post) split that the
 // in-app notification types (comment_reply/thread_comment vs
 // post_commented) already encode.
-// item_force_archived has no entry here on purpose -- it's mandatory,
+// item_force_archived and scheduled_item_failed have no entry here on purpose -- they're mandatory,
 // reporting something that already happened to the user's content, not an
 // opt-out-able nudge.
 const PREFERENCE_KEY: Record<string, string> = {
@@ -47,6 +49,7 @@ const PREFERENCE_KEY: Record<string, string> = {
   stale_item_reminder: "email_item_updates",
   conversation_reopen_requested: "email_messages",
   conversation_reopen_responded: "email_messages",
+  scheduled_item_published: "email_scheduled_published",
 };
 
 // Copy per stale-item CTA kind, keyed by what _process_stale_items() (in
@@ -144,7 +147,25 @@ async function buildUnsubscribeUrl(userId: string, prefKey: string, secret: stri
   return `${base}/functions/v1/unsubscribe-notification?${params.toString()}`;
 }
 
-function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string, unsubscribeUrl?: string): string {
+// Every email type except feature_announcement is still Swedish-hardcoded
+// (see the card note on scope) -- lang defaults to 'sv' so none of those
+// call sites change behavior. feature_announcement is the one type that
+// already resolves a real per-recipient language, so it's the one call
+// site that passes 'en' through.
+function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string, unsubscribeUrl?: string, lang: "sv" | "en" = "sv"): string {
+  const footer = lang === "en"
+    ? `You're receiving this email because you're a member of PIF. Manage your email notifications under
+        <a href="${APP_URL}/account-settings?tab=notifications" style="color: #9ca3af;">notifications</a>${
+          unsubscribeUrl
+            ? ` — or <a href="${unsubscribeUrl}" style="color: #9ca3af;">unsubscribe from this type of email</a>`
+            : ""
+        }.`
+    : `Du får det här mejlet för att du är medlem i PIF. Hantera dina mejlaviseringar under
+        <a href="${APP_URL}/account-settings?tab=notifications" style="color: #9ca3af;">mejlaviseringar</a>${
+          unsubscribeUrl
+            ? ` — eller <a href="${unsubscribeUrl}" style="color: #9ca3af;">avregistrera dig från den här typen av mejl</a>`
+            : ""
+        }.`;
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; color: #1f2937;">
       <div style="text-align: center; margin-bottom: 24px;">
@@ -155,12 +176,7 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string, unsubscri
         <a href="${ctaUrl}" style="display: inline-block; background: ${BRAND_TURQUOISE}; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">${escape(ctaLabel)}</a>
       </div>
       <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 32px;">
-        Du får det här mejlet för att du är medlem i PIF. Hantera dina mejlaviseringar under
-        <a href="${APP_URL}/account-settings?tab=notifications" style="color: #9ca3af;">mejlaviseringar</a>${
-          unsubscribeUrl
-            ? ` — eller <a href="${unsubscribeUrl}" style="color: #9ca3af;">avregistrera dig från den här typen av mejl</a>`
-            : ""
-        }.
+        ${footer}
       </p>
     </div>
   `;
@@ -221,7 +237,7 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
     return {
       subject: heading,
       html: wrapEmail(
-        `<h2 style="font-size: 18px;">${escape(heading)}</h2><p>${escape(copy.body(daysOpen))}</p>`,
+        `<h2 style="font-size: 18px;">${escape(heading)}</h2><p>${escape(copy.body(daysOpen))}</p><p style="color:#6b7280; font-size: 14px;">Piffar och önskningar som inte avslutas arkiveras automatiskt efter 30 dagar.</p>`,
         itemUrl,
         copy.ctaLabel,
         unsubscribeUrl,
@@ -290,18 +306,53 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
   }
 
   if (type === "feature_announcement") {
-    const title = String(data.title ?? "Nyheter i PIF");
+    const lang = data.lang === "en" ? "en" : "sv";
+    const title = String(data.title ?? (lang === "en" ? "News from PIF" : "Nyheter i PIF"));
     const bodyText = String(data.body ?? "");
     const actionUrl = data.actionUrl ? String(data.actionUrl) : "";
-    const actionLabel = data.actionLabel ? String(data.actionLabel) : "Öppna PIF";
+    const actionLabel = data.actionLabel ? String(data.actionLabel) : (lang === "en" ? "Open PIF" : "Öppna PIF");
     return {
-      subject: `Nytt i PIF: ${title}`,
+      subject: lang === "en" ? `New in PIF: ${title}` : `Nytt i PIF: ${title}`,
       html: wrapEmail(
         `<h2 style="font-size: 18px;">${escape(title)}</h2>
          <p>${escape(bodyText).replace(/\n/g, "<br>")}</p>`,
         actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`,
         actionLabel,
         unsubscribeUrl,
+        lang,
+      ),
+    };
+  }
+
+  if (type === "scheduled_item_published") {
+    const itemId = String(data.itemId ?? "");
+    const itemTitle = String(data.itemTitle ?? "ditt inlägg");
+    const noun = String(data.itemType ?? "offer") === "offer" ? "piff" : "önskan";
+    const heading = `Din schemalagda ${noun} "${itemTitle}" är nu publicerad`;
+    return {
+      subject: heading,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${escape(heading)}</h2>
+         <p>Den syns nu för dina grannar i flödet och på kartan.</p>`,
+        `${APP_URL}/item/${encodeURIComponent(itemId)}`,
+        "Visa inlägget",
+        unsubscribeUrl,
+      ),
+    };
+  }
+
+  if (type === "scheduled_item_failed") {
+    const itemTitle = String(data.itemTitle ?? "ditt inlägg");
+    const noun = String(data.itemType ?? "offer") === "offer" ? "piff" : "önskan";
+    const heading = `Din schemalagda ${noun} "${itemTitle}" kunde inte publiceras`;
+    return {
+      subject: heading,
+      html: wrapEmail(
+        `<h2 style="font-size: 18px;">${escape(heading)}</h2>
+         <p>Den finns kvar bland dina utkast. Öppna utkastet, kontrollera uppgifterna och publicera eller schemalägg igen.</p>`,
+        `${APP_URL}/drafts`,
+        "Öppna utkast",
+        // No unsubscribeUrl -- mandatory, like item_force_archived.
       ),
     };
   }
@@ -434,27 +485,40 @@ serve(async (req) => {
       const announcementId = body.announcementId;
       const { data: announcement, error: announcementErr } = await admin
         .from("feature_announcements")
-        .select("title_sv, body_sv, action_url, action_label_sv")
+        .select("title_sv, body_sv, action_url, action_label_sv, title_en, body_en, action_label_en")
         .eq("id", announcementId)
         .maybeSingle();
       if (announcementErr || !announcement) {
         return json(404, { error: "Announcement not found" });
       }
 
-      const { data: profiles, error: profilesErr } = await admin.from("profiles").select("id");
+      // language: 'sv' | 'en' | null -- null means never explicitly set
+      // (pre-migration rows, or a user who's never touched the language
+      // switcher) and is treated the same as 'sv' everywhere else in the
+      // app (see src/i18n/index.ts detectLanguage's own 'sv' fallback).
+      const { data: profiles, error: profilesErr } = await admin.from("profiles").select("id, language");
       if (profilesErr || !profiles) {
         return json(500, { error: "Failed to list profiles" });
       }
 
-      const data = {
-        title: announcement.title_sv,
-        body: announcement.body_sv,
-        actionUrl: announcement.action_url,
-        actionLabel: announcement.action_label_sv,
-      };
-
       const results: string[] = [];
       for (const profile of profiles) {
+        const isEnglish = (profile as any).language === "en";
+        const data = isEnglish
+          ? {
+              lang: "en",
+              title: announcement.title_en || announcement.title_sv,
+              body: announcement.body_en || announcement.body_sv,
+              actionUrl: announcement.action_url,
+              actionLabel: announcement.action_label_en || announcement.action_label_sv,
+            }
+          : {
+              lang: "sv",
+              title: announcement.title_sv,
+              body: announcement.body_sv,
+              actionUrl: announcement.action_url,
+              actionLabel: announcement.action_label_sv,
+            };
         const { result } = await sendOne(admin, resendKey, profile.id, "feature_announcement", data);
         results.push(result);
         await sleep(120);
@@ -465,10 +529,11 @@ serve(async (req) => {
     }
 
     // Same single-invocation throttling pattern as the announcement
-    // broadcast above, but for a mixed batch collected by
-    // _process_stale_items() -- each entry carries its own `type`
-    // ("stale_item_reminder" or "item_force_archived") and data.
-    if (type === "stale_item_reminders_batch") {
+    // broadcast above, but for a mixed batch collected by a cron function --
+    // each entry carries its own `type` and data. _process_stale_items()
+    // sends "stale_item_reminders_batch"; _publish_scheduled_drafts() sends
+    // the generic "notification_batch".
+    if (type === "stale_item_reminders_batch" || type === "notification_batch") {
       const items = Array.isArray(body.items) ? body.items : [];
       const results: string[] = [];
       for (const entry of items) {
