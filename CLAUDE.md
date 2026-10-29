@@ -158,7 +158,7 @@ arrive at all**; it's 5s now, and that call gets a 25s client timeout vs 15s els
 ## Edge Functions
 
 Tracked in repo (`supabase/functions/`): `analyze-image`, `delete-account`,
-`send-report`, `send-feedback`, `get-mapbox-token`. Deployment to Supabase is a distinct step from
+`send-report`, `send-feedback`, `get-mapbox-token`, `send-notification-email`, `purge-draft-images`. Deployment to Supabase is a distinct step from
 writing the code — always deploy after editing. `og-preview` and `prewarm-og` were removed from
 the repo and deleted from both Supabase projects on 2026-10-27 (superseded by `workers/share`); also `unsubscribe-notification` is tracked.
 `analyze-image` is tracked but not currently deployed to production. `send-report` was reconciled
@@ -177,6 +177,22 @@ never have worked if deployed — production has been running a much simpler, in
 unauthenticated version all along, reading a secret literally named `MAPBOX_TOKEN`, not
 `MAPBOX_PUBLIC_TOKEN`. Fixed in the repo as of commit `4ad996c1`. Map/feed browsing is
 intentionally public — do not add an auth check back to this function).
+
+`purge-draft-images` (2026-10-28) removes Storage images of drafts deleted by the daily
+`_cleanup_stale_drafts()` job (same `x-internal-secret` pattern; owner-folder-only, skips URLs an
+item still uses). `send-notification-email` was found **behind live** on 2026-10-28 (live v16 had
+per-recipient announcement language + a 30-day line in stale reminders that git lacked) — synced.
+Deploy functions with the Management API (`POST /v1/projects/<ref>/functions/deploy?slug=<name>`,
+multipart `metadata` + `file`) — the local `supabase functions deploy/download` CLI exits silently
+here.
+
+**Drafts & scheduled posts** live in `item_drafts` (owner-only RLS), never in `items` — `items`
+is public-read and every "active" filter would leak a new status. `publish_draft()` copies a draft
+into `items` (created_at/stale clock = publish time) and deletes it; cron
+`publish-scheduled-drafts` (*/5) does the same for due drafts and notifies (prefs
+`push_scheduled_published` / `email_scheduled_published`, opt-out); `cleanup-stale-drafts`
+(daily) deletes unscheduled drafts untouched for 90 days. Account deletion covers drafts via the
+profiles cascade + the `images/<uid>` purge.
 
 `send-notification-email` (added for the email-notifications feature) sends real email via Resend
 for new messages, comments, and feature announcements, triggered from Postgres via `pg_net` using
