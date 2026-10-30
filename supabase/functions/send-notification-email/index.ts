@@ -18,6 +18,13 @@ const NOTIFICATIONS_FROM = "PIF <notifications@pif.today>";
 // conversation email links landing on pif.today/404 with zero React
 // Router state.
 const APP_URL = Deno.env.get("APP_URL") ?? "https://pif.today";
+
+/** A post where it sits in the feed (the app falls back to /item/<id> when
+ *  it can't be shown there). Mirrors src/lib/feedLinks.ts. */
+function feedPostUrl(itemId: string, extra: Record<string, string> = {}): string {
+  const params = new URLSearchParams({ post: itemId, ...extra });
+  return `${APP_URL}/feed?${params.toString()}`;
+}
 const LOGO_URL = "https://pif.today/pif-logo-long.png";
 const BRAND_TURQUOISE = "#00CC99";
 
@@ -213,13 +220,12 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
           ? `${commenterName} kommenterade i en tråd du är med i`
           : `${commenterName} kommenterade "${itemTitle}"`;
 
-    const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
     return {
       subject: headline,
       html: wrapEmail(
         `<h2 style="font-size: 18px;">${escape(headline)}</h2>
          ${commentContent ? `<p style="background:#f9fafb; border-radius:8px; padding:12px 16px; font-style:italic;">"${escape(commentContent)}"</p>` : ""}`,
-        commentId ? `${itemUrl}?comment=${encodeURIComponent(commentId)}` : itemUrl,
+        feedPostUrl(itemId, commentId ? { comment: commentId } : {}),
         "Visa inlägget",
         unsubscribeUrl,
       ),
@@ -232,7 +238,11 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
     const daysOpen = Number(data.daysOpen ?? 7);
     const ctaKind = String(data.ctaKind ?? "no_interest");
     const copy = STALE_CTA_COPY[ctaKind] ?? STALE_CTA_COPY.no_interest;
-    const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
+    // "Välj mottagare/hjälpare" opens the selection popup on the post.
+    const itemUrl = feedPostUrl(
+      itemId,
+      ctaKind === "select_receiver" || ctaKind === "select_fulfiller" ? { selectReceiver: "true" } : {},
+    );
     const heading = copy.heading(itemTitle, daysOpen);
     return {
       subject: heading,
@@ -250,7 +260,7 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
     const itemTitle = String(data.itemTitle ?? "ditt inlägg");
     const itemType = String(data.itemType ?? "offer");
     const noun = itemType === "offer" ? "Piffen" : "Önskan";
-    const itemUrl = `${APP_URL}/item/${encodeURIComponent(itemId)}`;
+    const itemUrl = feedPostUrl(itemId);
     return {
       subject: `${noun} "${itemTitle}" har arkiverats automatiskt`,
       html: wrapEmail(
@@ -334,7 +344,7 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
       html: wrapEmail(
         `<h2 style="font-size: 18px;">${escape(heading)}</h2>
          <p>Den syns nu för dina grannar i flödet och på kartan.</p>`,
-        `${APP_URL}/item/${encodeURIComponent(itemId)}`,
+        feedPostUrl(itemId),
         "Visa inlägget",
         unsubscribeUrl,
       ),
@@ -350,7 +360,7 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
       html: wrapEmail(
         `<h2 style="font-size: 18px;">${escape(heading)}</h2>
          <p>Den finns kvar bland dina utkast. Öppna utkastet, kontrollera uppgifterna och publicera eller schemalägg igen.</p>`,
-        `${APP_URL}/drafts`,
+        `${APP_URL}/feed?view=drafts`,
         "Öppna utkast",
         // No unsubscribeUrl -- mandatory, like item_force_archived.
       ),

@@ -13,6 +13,7 @@ import { clearPostsCache } from "@/services/posts/optimized";
 import { buildItemFields } from "@/services/items/itemFields";
 import { formatScheduleTime } from "@/lib/schedule";
 import { DRAFTS_QUERY_KEY, draftErrorKey, publishDraft, saveDraft } from "@/services/drafts";
+import { DRAFTS_FEED_PATH, feedPostPath } from "@/lib/feedLinks";
 
 export function usePostFormSubmission(initialData?: any) {
   const { toast } = useToast();
@@ -103,12 +104,14 @@ export function usePostFormSubmission(initialData?: any) {
         user_id: user.id,
       } as any;
       let result;
+      // The post's id, so the publisher lands on it in the feed.
+      let itemId: number | string | null = null;
       if (initialData?.draftId) {
         // Publishing an existing draft: save the latest form state (clearing
         // any schedule), then let publish_draft move it into items.
         try {
           await saveDraft(formData, initialData.draftId, null);
-          await publishDraft(initialData.draftId);
+          itemId = await publishDraft(initialData.draftId);
           result = { error: null };
         } catch (draftError) {
           result = { error: draftError as any };
@@ -119,10 +122,14 @@ export function usePostFormSubmission(initialData?: any) {
           .from("items")
           .update(insertData)
           .eq("id", initialData.id);
+        itemId = initialData.id;
       } else {
         result = await (supabase
           .from("items") as any)
-          .insert([insertData]);
+          .insert([insertData])
+          .select("id")
+          .single();
+        itemId = result.data?.id ?? null;
       }
       if (result.error) {
         console.error("Supabase error details:", {
@@ -146,7 +153,7 @@ export function usePostFormSubmission(initialData?: any) {
                      formData.item_type === 'request' ? t('post.request_created_description') : t('post.pif_created_description'),
       });
 
-      navigate("/feed");
+      navigate(itemId != null ? feedPostPath(itemId) : "/feed");
     } catch (error: any) {
       console.error("Error in handleSubmit:", {
         message: error.message,
@@ -182,7 +189,11 @@ export function usePostFormSubmission(initialData?: any) {
    * draft is also scheduled; the database rejects a schedule unless the
    * draft is complete and the time is within the allowed window.
    */
-  const saveAsDraft = async (formData: PostFormData, scheduledAt?: Date | null): Promise<boolean> => {
+  const saveAsDraft = async (
+    formData: PostFormData,
+    scheduledAt?: Date | null,
+    navigateTo: string = DRAFTS_FEED_PATH,
+  ): Promise<boolean> => {
     if (DEMO_MODE) return false;
     const hasContent =
       formData.title.trim() !== "" || formData.description.trim() !== "" || formData.images.length > 0;
@@ -201,7 +212,7 @@ export function usePostFormSubmission(initialData?: any) {
           ? t('drafts.scheduled_toast_description', { when: formatScheduleTime(scheduledAt, i18n.language) })
           : undefined,
       });
-      navigate("/drafts");
+      navigate(navigateTo);
       return true;
     } catch (error: any) {
       console.error("Error saving draft:", error);

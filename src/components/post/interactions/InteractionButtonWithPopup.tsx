@@ -73,7 +73,7 @@ export function InteractionButtonWithPopup({
   }, [users]);
 
   // Auto-open the receiver-selection popup when the piffer lands on the
-  // item-detail URL with ?selectReceiver=true (set by the "Review interest"
+  // item-detail URL (or the feed, targeting this item) with ?selectReceiver=true (set by the "Review interest"
   // CTA in the notifications inbox). Only fires for the interest button on
   // the matching item, and only when the current user owns the item.
   const location = useLocation();
@@ -83,6 +83,9 @@ export function InteractionButtonWithPopup({
     if (!itemId) return false;
     const params = new URLSearchParams(location.search);
     if (params.get("selectReceiver") !== "true") return false;
+    // Feed deep link (/feed?post=<id>&selectReceiver=true): only the
+    // targeted card opens its popup.
+    if (location.pathname === "/feed") return params.get("post") === String(itemId);
     const escapedItemId = String(itemId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`/(item|post|pif)/${escapedItemId}(?:/|$)`).test(location.pathname);
   })();

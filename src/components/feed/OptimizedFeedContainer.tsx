@@ -1,5 +1,5 @@
 
-import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FeedProfileHeader } from './FeedProfileHeader';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
@@ -44,9 +44,16 @@ import { useMyCommentedStore } from '@/stores/myCommentedStore';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
+import { useMyDrafts } from '@/hooks/drafts/useMyDrafts';
+import { DraftsList } from '@/components/drafts/DraftsList';
+import { supabase } from '@/integrations/supabase/client';
 import type { Post } from '@/types/post';
 
 const FEED_SORT_STORAGE_KEY = 'feed_sort_mode';
+/** How many extra pages a /feed?post=<id> link may load looking for its post. */
+const MAX_DEEP_LINK_PAGES = 10;
+
+type DeepLinkBucket = 'active' | 'archived';
 
 export function OptimizedFeedContainer() {
   const { user } = useGlobalAuth();
@@ -67,9 +74,92 @@ export function OptimizedFeedContainer() {
     }
   }, [isLoggedIn, searchParams, setSearchParams, navigate]);
 
-  const [includeArchived, setIncludeArchived] = useState(false);
+  const [includeArchived, setIncludeArchivedState] = useState(false);
   // Archived view only makes sense on own feed (own or no user filter).
   const effectiveIncludeArchived = isLoggedIn && includeArchived && !viewingOtherUser;
+
+  // Drafts view (?view=drafts) -- in the URL so emails, notifications and
+  // the old /drafts route can link straight to it. Drafts and archived are
+  // separate buckets, so turning one on turns the other off.
+  const showDrafts = isLoggedIn && !viewingOtherUser && searchParams.get('view') === 'drafts';
+  const setShowDrafts = useCallback((value: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) {
+      next.set('view', 'drafts');
+      next.delete('post');
+      setIncludeArchivedState(false);
+    } else {
+      next.delete('view');
+    }
+    setSearchParams(next, { replace: false });
+  }, [searchParams, setSearchParams]);
+  const setIncludeArchived = useCallback((value: boolean) => {
+    setIncludeArchivedState(value);
+    if (value && searchParams.get('view') === 'drafts') {
+      const next = new URLSearchParams(searchParams);
+      next.delete('view');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  // /feed?post=<id> (notification/email links, after publishing): look up
+  // which bucket the post is in first, so an archived or completed post
+  // opens the archived view instead of being searched for in vain. Posts
+  // that don't exist (or can't be shown) fall back to /item/<id>, which
+  // has its own not-found handling.
+  const targetPostId = DEMO_MODE ? null : searchParams.get('post');
+  const [deepLinkBucket, setDeepLinkBucket] = useState<{ id: string; bucket: DeepLinkBucket } | null>(null);
+  const fallBackToItemPage = useCallback((id: string) => {
+    const rest = new URLSearchParams(searchParams);
+    rest.delete('post');
+    const query = rest.toString();
+    navigate(`/item/${encodeURIComponent(id)}${query ? `?${query}` : ''}`, { replace: true });
+  }, [searchParams, navigate]);
+
+  useEffect(() => {
+    if (!targetPostId) {
+      setDeepLinkBucket(null);
+      return;
+    }
+    if (!/^\d+$/.test(targetPostId)) {
+      fallBackToItemPage(targetPostId);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from('items')
+      .select('pif_status, archived_at')
+      .eq('id', Number(targetPostId))
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          fallBackToItemPage(targetPostId);
+          return;
+        }
+        const status = String(data.pif_status ?? '');
+        const terminal = status === 'archived' || status === 'completed' || !!data.archived_at;
+        if (terminal && !isLoggedIn) {
+          // The archived view needs an account.
+          fallBackToItemPage(targetPostId);
+          return;
+        }
+        setIncludeArchivedState(terminal);
+        setDeepLinkBucket({ id: targetPostId, bucket: terminal ? 'archived' : 'active' });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // fallBackToItemPage changes with every searchParams update; the lookup
+    // only needs to rerun for a new target.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetPostId, isLoggedIn]);
+
+  const bodyBucket: DeepLinkBucket = effectiveIncludeArchived ? 'archived' : 'active';
+  const bodyTargetPostId =
+    deepLinkBucket && deepLinkBucket.id === targetPostId && deepLinkBucket.bucket === bodyBucket
+      ? targetPostId
+      : null;
 
   const clearUserFilter = useCallback(() => {
     const next = new URLSearchParams(searchParams);
@@ -92,6 +182,10 @@ export function OptimizedFeedContainer() {
       effectiveIncludeArchived={effectiveIncludeArchived}
       onIncludeArchivedChange={setIncludeArchived}
       onClearUserFilter={clearUserFilter}
+      showDrafts={showDrafts}
+      onShowDraftsChange={setShowDrafts}
+      targetPostId={bodyTargetPostId}
+      onTargetPostMissing={fallBackToItemPage}
     />
   );
 }
@@ -104,6 +198,11 @@ interface OptimizedFeedBodyProps {
   effectiveIncludeArchived: boolean;
   onIncludeArchivedChange: (value: boolean) => void;
   onClearUserFilter: () => void;
+  showDrafts: boolean;
+  onShowDraftsChange: (value: boolean) => void;
+  /** Deep-linked post, set once it's known to belong in this body's bucket. */
+  targetPostId: string | null;
+  onTargetPostMissing: (id: string) => void;
 }
 
 function OptimizedFeedBody({
@@ -114,6 +213,10 @@ function OptimizedFeedBody({
   effectiveIncludeArchived,
   onIncludeArchivedChange,
   onClearUserFilter,
+  showDrafts,
+  onShowDraftsChange,
+  targetPostId,
+  onTargetPostMissing,
 }: OptimizedFeedBodyProps) {
   const { user: currentUser } = useGlobalAuth();
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
@@ -298,6 +401,60 @@ function OptimizedFeedBody({
     setSelectedDistance(null);
   }, [clearAllFilters, setSelectedDistance]);
 
+  const { data: myDrafts } = useMyDrafts();
+  const draftCount = myDrafts?.length ?? 0;
+
+  // Deep link: keep loading pages until the post is loaded, clear the
+  // filters once if they're what hides it, and give up (-> /item/<id>)
+  // when it can't be found within MAX_DEEP_LINK_PAGES.
+  const [deepLinkPagesLoaded, setDeepLinkPagesLoaded] = useState(0);
+  const [scrollToPostId, setScrollToPostId] = useState<string | null>(null);
+  const deepLinkResolvedRef = useRef<string | null>(null);
+  const filtersClearedForRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!targetPostId || deepLinkResolvedRef.current === targetPostId) return;
+    if (isLoading || isLoadingMore || isRefreshing) return;
+    const matches = (p: Post) => String(p.id) === targetPostId;
+    if (sortedPosts.some(matches)) {
+      deepLinkResolvedRef.current = targetPostId;
+      setScrollToPostId(targetPostId);
+      return;
+    }
+    if (posts.some(matches)) {
+      if (filtersClearedForRef.current !== targetPostId) {
+        filtersClearedForRef.current = targetPostId;
+        handleClearAll();
+        setOnlyInterested(false);
+        setOnlyOwnPosts(false);
+        if (filteredUserId) onClearUserFilter();
+        return;
+      }
+    } else if (hasMore && deepLinkPagesLoaded < MAX_DEEP_LINK_PAGES) {
+      setDeepLinkPagesLoaded((n) => n + 1);
+      loadMore();
+      return;
+    }
+    deepLinkResolvedRef.current = targetPostId;
+    onTargetPostMissing(targetPostId);
+  }, [
+    targetPostId,
+    isLoading,
+    isLoadingMore,
+    isRefreshing,
+    sortedPosts,
+    posts,
+    hasMore,
+    deepLinkPagesLoaded,
+    loadMore,
+    handleClearAll,
+    setOnlyInterested,
+    setOnlyOwnPosts,
+    filteredUserId,
+    onClearUserFilter,
+    onTargetPostMissing,
+  ]);
+
   if (DEMO_MODE) {
     return (
       <div className="space-y-4">
@@ -338,6 +495,8 @@ function OptimizedFeedBody({
         onCategoryChange={setCategories}
         includeArchived={includeArchived}
         onIncludeArchivedChange={onIncludeArchivedChange}
+        showDrafts={showDrafts}
+        onShowDraftsChange={onShowDraftsChange}
         onlyInterested={onlyInterested}
         onOnlyInterestedChange={setOnlyInterested}
         viewingOtherUser={viewingOtherUser}
@@ -346,6 +505,7 @@ function OptimizedFeedBody({
           handleClearAll();
           setUserLocation(null);
           onIncludeArchivedChange(false);
+          onShowDraftsChange(false);
           setOnlyInterested(false);
           setOnlyOwnPosts(false);
           onClearUserFilter();
@@ -398,11 +558,45 @@ function OptimizedFeedBody({
           {t("feed.my_posts", "Mina inlägg")}
         </button>
       )}
+      {isLoggedIn && !viewingOtherUser && (
+        <button
+          type="button"
+          onClick={() => onShowDraftsChange(!showDrafts)}
+          aria-pressed={showDrafts}
+          className={`h-9 px-3 rounded-md border text-sm font-medium inline-flex items-center gap-1.5 transition-colors ${
+            showDrafts
+              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+              : "bg-background hover:bg-accent"
+          }`}
+        >
+          <span aria-hidden>🗂️</span>
+          {t("feed.drafts", "Utkast")}
+          {draftCount > 0 && (
+            <span
+              className={`ml-0.5 rounded-full px-1.5 text-xs leading-5 ${
+                showDrafts ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {draftCount}
+            </span>
+          )}
+        </button>
+      )}
     </div>
     <HowItWorksBanner />
     </>
   );
 
+
+  if (showDrafts) {
+    return (
+      <div className="space-y-4">
+        {profileHeader}
+        {filtersPanel}
+        <DraftsList />
+      </div>
+    );
+  }
 
   // Initial cold-load skeleton — only when we have literally nothing to show
   // AND no panel state worth preserving yet (panel hasn't been used).
@@ -464,6 +658,7 @@ function OptimizedFeedBody({
               clearFilters={handleClearAll}
               viewMode="all"
               isLoading={false}
+              scrollToPostId={scrollToPostId}
               onItemOperationSuccess={(_id, op) => {
                 if (op === 'archive' || op === 'delete' || op === 'restore') return;
                 handleRefresh();

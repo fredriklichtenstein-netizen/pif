@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { OnboardingGate } from "@/components/auth/OnboardingGate";
 import i18n from "@/i18n";
+import { DRAFTS_FEED_PATH } from "@/lib/feedLinks";
 
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -41,7 +42,6 @@ const Messages = enhancedLazy(() => import("@/pages/Messages"));
 const Post = enhancedLazy(() => import("@/pages/Post"));
 const PostEdit = enhancedLazy(() => import("@/pages/PostEdit"));
 const DraftEdit = enhancedLazy(() => import("@/pages/DraftEdit"));
-const Drafts = enhancedLazy(() => import("@/pages/Drafts"));
 const Profile = enhancedLazy(() => import("@/pages/Profile"));
 const Feed = enhancedLazy(() => import("@/pages/Feed"));
 const AccountSettings = enhancedLazy(() => import("@/pages/AccountSettings"));
@@ -94,8 +94,9 @@ export const privateRoutes = [
     element: <PrivateRoute>{withSuspense(DraftEdit)}</PrivateRoute>
   },
   {
+    // Old drafts page, still the target of earlier emails/notifications.
     path: "/drafts",
-    element: <PrivateRoute>{withSuspense(Drafts)}</PrivateRoute>
+    element: <Navigate to={DRAFTS_FEED_PATH} replace />
   },
   { 
     path: "/profile", 

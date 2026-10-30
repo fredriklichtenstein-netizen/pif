@@ -116,6 +116,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
         isAnalyzing={isAnalyzing}
         isEditMode={isEditMode}
         isDraftMode={isDraftMode}
+        currentDraftId={initialData?.draftId ?? null}
         scheduledAt={initialData?.scheduled_at ? new Date(initialData.scheduled_at) : null}
         onFormSubmit={handleSubmit}
         onSaveDraft={DEMO_MODE ? undefined : handleSaveDraft}

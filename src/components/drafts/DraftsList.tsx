@@ -3,8 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, CalendarClock, FileText, Loader2, Pencil, Send, Trash2, X } from "lucide-react";
-import { MainHeader } from "@/components/layout/MainHeader";
-import { MainNav } from "@/components/MainNav";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,8 +31,14 @@ import {
   setDraftSchedule,
   type ItemDraft,
 } from "@/services/drafts";
+import { feedPostPath } from "@/lib/feedLinks";
 
-function Drafts() {
+/**
+ * The user's drafts and scheduled posts. Rendered as the feed's drafts view
+ * (/feed?view=drafts) -- drafts live in item_drafts, not items, so they
+ * get their own cards rather than FeedItemCard.
+ */
+export function DraftsList() {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -78,7 +82,7 @@ function Drafts() {
       },
       draft.item_type === "request" ? t("post.request_created") : t("post.pif_created"),
     );
-    if (ok && itemId) navigate(`/item/${itemId}`);
+    if (ok && itemId) navigate(feedPostPath(itemId));
   };
 
   const handleSchedule = async (date: Date) => {
@@ -103,13 +107,13 @@ function Drafts() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <MainHeader />
-      <div className="container max-w-3xl mx-auto py-8 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
-        <h1 className="text-2xl font-bold mb-1">{t("drafts.page_title")}</h1>
-        <p className="text-sm text-muted-foreground mb-6">
+    <div>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold">{t("drafts.page_title")}</h2>
+        <p className="text-sm text-muted-foreground">
           {t("drafts.retention_note", { days: DRAFT_RETENTION_DAYS })}
         </p>
+      </div>
 
         {isLoading ? (
           <div className="flex justify-center py-12">
@@ -120,7 +124,7 @@ function Drafts() {
         ) : !drafts || drafts.length === 0 ? (
           <Card className="p-8 flex flex-col items-center text-center">
             <FileText className="h-12 w-12 mb-4 text-muted-foreground opacity-50" />
-            <h2 className="text-lg font-semibold mb-2">{t("drafts.empty_title")}</h2>
+            <h3 className="text-lg font-semibold mb-2">{t("drafts.empty_title")}</h3>
             <p className="text-sm text-muted-foreground mb-4">{t("drafts.empty_description")}</p>
             <div className="flex flex-wrap justify-center gap-2">
               <Button asChild>
@@ -239,7 +243,6 @@ function Drafts() {
             })}
           </div>
         )}
-      </div>
 
       <ScheduleDialog
         open={!!scheduling}
@@ -266,10 +269,6 @@ function Drafts() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <MainNav />
     </div>
   );
 }
-
-export default Drafts;

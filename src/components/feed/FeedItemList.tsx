@@ -6,7 +6,6 @@ import { FeedEmptyState } from "./FeedEmptyState";
 import { FeedErrorState } from "./FeedErrorState";
 import { FeedLoadingState } from "./FeedLoadingState";
 import { FeedErrorBoundary } from "./FeedErrorBoundary";
-import { useSearchParams } from "react-router-dom";
 import type { OperationType } from "@/hooks/feed/useOptimisticFeedUpdates";
 import { useTranslation } from "react-i18next";
 import { LazyMount } from "./LazyMount";
@@ -23,6 +22,8 @@ interface FeedItemListProps {
   fadingIds?: Set<string>;
   /** IDs of items animating back in (fade-in applied briefly after undo). */
   restoringIds?: Set<string>;
+  /** Deep-linked post (/feed?post=<id>): scrolled into view and briefly highlighted once rendered. */
+  scrollToPostId?: string | null;
 }
 
 // Helper function to validate post data
@@ -69,6 +70,7 @@ export function FeedItemList({
   isShowingMockData = false,
   fadingIds,
   restoringIds,
+  scrollToPostId,
 }: FeedItemListProps) {
   const [refreshKey, setRefreshKey] = useState(Date.now());
   const [errorState, setErrorState] = useState<{ hasError: boolean, errorMessage: string }>({ 
@@ -79,8 +81,9 @@ export function FeedItemList({
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
-  const targetPostId = searchParams.get('post');
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const scrolledForRef = useRef<string | null>(null);
+  const scrollTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Validate and filter posts
   const validPosts = posts?.filter(validatePostData) || [];
@@ -98,23 +101,25 @@ export function FeedItemList({
   useEffect(() => {
   }, [posts, validPosts.length, viewMode]);
 
-  // Scroll to target post when available
+  // Scroll to the deep-linked post once its card is in the DOM, then
+  // re-center after the lazily mounted cards above it have settled (their
+  // real height differs from LazyMount's placeholder).
   useEffect(() => {
-    if (targetPostId && validPosts && validPosts.length > 0) {
-      const timer = setTimeout(() => {
-        const targetElement = document.getElementById(`post-${targetPostId}`);
-        if (targetElement) {
-          targetElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-        } else {
-        }
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [targetPostId, validPosts]);
+    if (!scrollToPostId || scrolledForRef.current === scrollToPostId) return;
+    const el = document.getElementById(`post-${scrollToPostId}`);
+    if (!el) return;
+    scrolledForRef.current = scrollToPostId;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedId(scrollToPostId);
+    scrollTimersRef.current.push(
+      setTimeout(() => {
+        document.getElementById(`post-${scrollToPostId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 900),
+      setTimeout(() => setHighlightedId(null), 4000),
+    );
+  }, [scrollToPostId, validPosts.length]);
+
+  useEffect(() => () => scrollTimersRef.current.forEach(clearTimeout), []);
 
   // Enhanced recovery function with debouncing and complete refresh
   const handleRecoveryAction = useCallback(() => {
@@ -237,6 +242,9 @@ export function FeedItemList({
               className={[
                 animationClass,
                 isTerminal ? 'opacity-75 relative' : '',
+                highlightedId === String(post.id)
+                  ? 'rounded-lg ring-2 ring-primary ring-offset-2 transition-shadow'
+                  : '',
               ].filter(Boolean).join(' ') || undefined}
               aria-hidden={isFading || undefined}
             >
@@ -250,7 +258,7 @@ export function FeedItemList({
                   {t('feed.archived_badge', 'Arkiverad')}
                 </div>
               )}
-              {index < 3 ? card : <LazyMount>{card}</LazyMount>}
+              {index < 3 || String(post.id) === scrollToPostId ? card : <LazyMount>{card}</LazyMount>}
             </div>
           );
         })}

@@ -8,6 +8,7 @@ import { MainNav } from "@/components/MainNav";
 import { MainHeader } from "@/components/layout/MainHeader";
 import { useTranslation } from "react-i18next";
 import { draftToInitialData, fetchDraft } from "@/services/drafts";
+import { DRAFTS_FEED_PATH } from "@/lib/feedLinks";
 
 function DraftEdit() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,10 @@ function DraftEdit() {
       setLoading(false);
       return;
     }
+    // Switching drafts from the form's drafts menu reuses this page.
+    setLoading(true);
+    setNotFound(false);
+    setInitialData(null);
     let cancelled = false;
     // RLS returns nothing for someone else's draft, so "not yours" and
     // "doesn't exist" look the same -- intentionally.
@@ -59,12 +64,12 @@ function DraftEdit() {
               <h2 className="text-xl font-semibold mb-2">{t("drafts.not_found_title")}</h2>
               <p className="text-muted-foreground mb-4">{t("drafts.error_not_found")}</p>
               <Button asChild>
-                <Link to="/drafts">{t("drafts.back_to_drafts")}</Link>
+                <Link to={DRAFTS_FEED_PATH}>{t("drafts.back_to_drafts")}</Link>
               </Button>
             </Card>
           </div>
         ) : (
-          <PostForm initialData={initialData} />
+          <PostForm key={id} initialData={initialData} />
         )}
       </div>
       <MainNav />
