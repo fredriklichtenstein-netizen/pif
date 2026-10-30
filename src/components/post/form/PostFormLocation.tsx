@@ -13,7 +13,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Handshake, DoorOpen, Sparkles, Map, MapPin, Wand2 } from "lucide-react";
+import { ChevronDown, Handshake, DoorOpen, Sparkles, Map, Wand2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { PostFormData, PickupProfileDefaults } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
@@ -44,7 +45,7 @@ interface PostFormLocationProps {
   isEditMode?: boolean;
 }
 
-type PickupOption = 'meetup' | 'leave_at_door' | 'meet_elsewhere' | 'flexible';
+type PickupOption = 'meetup' | 'leave_at_door' | 'flexible';
 
 type PickupField = 'address' | 'door_code' | 'floor' | 'instructions' | 'phone';
 
@@ -72,7 +73,6 @@ export function PostFormLocation({
   const pickupOptions: { value: PickupOption; label: string; icon: React.ElementType }[] = [
     { value: 'meetup', label: t('post.pickup_meetup'), icon: Handshake },
     { value: 'leave_at_door', label: t('post.pickup_leave_at_door'), icon: DoorOpen },
-    { value: 'meet_elsewhere', label: t('post.pickup_meet_elsewhere'), icon: MapPin },
     { value: 'flexible', label: t('post.pickup_flexible'), icon: Sparkles },
   ];
 
@@ -184,6 +184,7 @@ export function PostFormLocation({
     setFormData((prev) => ({
       ...prev,
       pickup_preference: '',
+      can_meet_elsewhere: false,
       pickup_address: '',
       pickup_address_mode: 'primary',
       pickup_door_code: '',
@@ -273,7 +274,7 @@ export function PostFormLocation({
         </div>
 
         {!isRequest && (
-          <Collapsible defaultOpen={!!formData.pickup_preference} className="border rounded-lg">
+          <Collapsible defaultOpen={!!formData.pickup_preference || !!formData.can_meet_elsewhere} className="border rounded-lg">
             <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
               <span>{t('post.pickup_details_optional')}</span>
               <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
@@ -313,7 +314,7 @@ export function PostFormLocation({
               </div>
 
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {pickupOptions.map(({ value, label, icon: Icon }) => {
                   const active = selectedPref === value;
                   return (
@@ -332,6 +333,22 @@ export function PostFormLocation({
                     </Button>
                   );
                 })}
+              </div>
+
+              {/* Independent of the option above: shows "Kan mötas upp" on the card. */}
+              <div className="flex items-start gap-3 rounded-lg border p-3">
+                <Checkbox
+                  id="can-meet-elsewhere"
+                  checked={!!formData.can_meet_elsewhere}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, can_meet_elsewhere: checked === true }))
+                  }
+                  className="mt-0.5"
+                />
+                <Label htmlFor="can-meet-elsewhere" className="cursor-pointer space-y-1">
+                  <span className="block text-sm font-medium">{t('post.can_meet_elsewhere')}</span>
+                  <span className="block text-xs font-normal text-muted-foreground">{t('post.can_meet_elsewhere_hint')}</span>
+                </Label>
               </div>
 
               <PickupFieldRow

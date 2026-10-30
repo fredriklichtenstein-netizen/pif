@@ -25,7 +25,7 @@ export function ItemCardWrapper({
   createdAt,
   archived_at,
   archived_reason,
-  pickup_preference,
+  can_meet_elsewhere,
   stale_reminder_stage,
   onOperationSuccess,
   showOwnerTint = false,
@@ -134,7 +134,7 @@ export function ItemCardWrapper({
         isItemArchived={isItemArchived}
         archived_at={archived_at}
         archived_reason={archived_reason}
-        pickup_preference={pickup_preference}
+        can_meet_elsewhere={can_meet_elsewhere}
         stale_reminder_stage={stale_reminder_stage}
         realtimeError={realtimeError}
         handleRefresh={handleRefresh}

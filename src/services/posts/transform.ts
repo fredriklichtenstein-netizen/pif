@@ -65,7 +65,7 @@ export const transformPostData = (
     status: item.pif_status || item.status || '',
     archived_at: item.archived_at ?? null,
     archived_reason: item.archived_reason ?? null,
-    pickup_preference: item.pickup_preference ?? null,
+    can_meet_elsewhere: !!item.can_meet_elsewhere,
     likesCount: interactionCounts.likesCount,
     interestsCount: interactionCounts.interestsCount,
     commentsCount: interactionCounts.commentsCount

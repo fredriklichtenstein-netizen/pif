@@ -52,7 +52,7 @@ export class OptimizedQueries {
             id, title, description, images, location_public, coordinates_public,
             category, condition, user_id, pif_status, item_type,
             created_at, archived_at, archived_reason, measurements, image_crops,
-            visibility_radius_km, pickup_preference
+            visibility_radius_km, can_meet_elsewhere
           `);
 
         if (options.itemId != null) {

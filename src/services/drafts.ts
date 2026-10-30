@@ -25,6 +25,7 @@ export interface ItemDraft {
   measurements: Record<string, string> | null;
   visibility_radius_km: number | null;
   pickup_preference: string | null;
+  can_meet_elsewhere: boolean;
   pickup_address: string | null;
   pickup_door_code: string | null;
   pickup_instructions: string | null;
@@ -151,6 +152,7 @@ export function draftToInitialData(draft: ItemDraft) {
     measurements: draft.measurements ?? {},
     visibility_radius_km: draft.visibility_radius_km,
     pickup_preference: draft.pickup_preference ?? "",
+    can_meet_elsewhere: !!draft.can_meet_elsewhere,
     pickup_address: draft.pickup_address ?? "",
     pickup_door_code: draft.pickup_door_code ?? "",
     pickup_floor: draft.pickup_floor,

@@ -7,7 +7,7 @@ import { Map } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export interface PickupPreferencesData {
-  pickupPreference?: 'meetup' | 'leave_at_door' | 'meet_elsewhere' | '';
+  pickupPreference?: 'meetup' | 'leave_at_door' | '';
   pickupAddress?: string;
   pickupAddressMode?: 'primary' | 'custom';
   pickupDoorCode?: string;
@@ -41,7 +41,7 @@ export function PickupPreferencesFields({ primaryAddress, formData, onChange }: 
         <RadioGroup
           value={formData.pickupPreference || ''}
           onValueChange={(value) =>
-            handleChange({ pickupPreference: value as 'meetup' | 'leave_at_door' | 'meet_elsewhere' })
+            handleChange({ pickupPreference: value as 'meetup' | 'leave_at_door' })
           }
           className="flex flex-col gap-2"
         >
@@ -55,12 +55,6 @@ export function PickupPreferencesFields({ primaryAddress, formData, onChange }: 
             <RadioGroupItem value="leave_at_door" id="pp-leave" />
             <Label htmlFor="pp-leave" className="font-normal cursor-pointer">
               {t('profile.pickup_leave_at_door')}
-            </Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="meet_elsewhere" id="pp-elsewhere" />
-            <Label htmlFor="pp-elsewhere" className="font-normal cursor-pointer">
-              {t('profile.pickup_meet_elsewhere')}
             </Label>
           </div>
         </RadioGroup>
