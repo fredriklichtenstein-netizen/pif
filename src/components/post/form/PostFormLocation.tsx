@@ -13,7 +13,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Handshake, DoorOpen, Sparkles, Map, Wand2 } from "lucide-react";
+import { ChevronDown, Handshake, DoorOpen, Sparkles, Map, MapPin, Wand2 } from "lucide-react";
 import type { PostFormData, PickupProfileDefaults } from "@/types/post";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ interface PostFormLocationProps {
   isEditMode?: boolean;
 }
 
-type PickupOption = 'meetup' | 'leave_at_door' | 'flexible';
+type PickupOption = 'meetup' | 'leave_at_door' | 'meet_elsewhere' | 'flexible';
 
 type PickupField = 'address' | 'door_code' | 'floor' | 'instructions' | 'phone';
 
@@ -72,6 +72,7 @@ export function PostFormLocation({
   const pickupOptions: { value: PickupOption; label: string; icon: React.ElementType }[] = [
     { value: 'meetup', label: t('post.pickup_meetup'), icon: Handshake },
     { value: 'leave_at_door', label: t('post.pickup_leave_at_door'), icon: DoorOpen },
+    { value: 'meet_elsewhere', label: t('post.pickup_meet_elsewhere'), icon: MapPin },
     { value: 'flexible', label: t('post.pickup_flexible'), icon: Sparkles },
   ];
 
@@ -312,7 +313,7 @@ export function PostFormLocation({
               </div>
 
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {pickupOptions.map(({ value, label, icon: Icon }) => {
                   const active = selectedPref === value;
                   return (

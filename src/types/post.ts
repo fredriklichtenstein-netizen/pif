@@ -47,7 +47,7 @@ export interface PostFormData {
   measurements: Record<string, string>;
   /** Max distance (km) from this item's location at which it's visible to other users. null = unlimited. */
   visibilityRadiusKm?: number | null;
-  pickup_preference?: 'meetup' | 'leave_at_door' | 'flexible' | '';
+  pickup_preference?: 'meetup' | 'leave_at_door' | 'flexible' | 'meet_elsewhere' | '';
   pickup_door_code?: string;
   pickup_floor?: string;
   pickup_instructions?: string;
@@ -100,6 +100,8 @@ export interface Post {
   status: string;
   archived_at?: string | null;
   archived_reason?: string | null;
+  /** 'meet_elsewhere' shows the "Kan mötas upp" badge on the card. */
+  pickup_preference?: string | null;
   likesCount: number;
   interestsCount: number;
   commentsCount: number;

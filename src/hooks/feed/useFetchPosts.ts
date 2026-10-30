@@ -175,6 +175,7 @@ export function useFetchPosts(options = { includeArchived: false }) {
           status: item.pif_status, 
           archived_at: item.archived_at,
           archived_reason: item.archived_reason,
+          pickup_preference: item.pickup_preference ?? null,
           user_name: user.name,
           user_avatar: user.avatar || ''
         };

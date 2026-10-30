@@ -31,6 +31,8 @@ export interface ItemCardProps {
   createdAt?: string;
   archived_at?: string;
   archived_reason?: string;
+  /** 'meet_elsewhere' shows the "Kan mötas upp" badge. */
+  pickup_preference?: string | null;
   /** Set once the stale-item reminder cron has sent at least one nudge; shows the "keep open" action. */
   stale_reminder_stage?: number;
   onOperationSuccess?: () => void;

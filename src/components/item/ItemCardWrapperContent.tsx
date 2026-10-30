@@ -26,6 +26,7 @@ export function ItemCardWrapperContent({
   isItemArchived,
   archived_at,
   archived_reason,
+  pickup_preference,
   stale_reminder_stage,
   realtimeError,
   handleRefresh,
@@ -103,6 +104,7 @@ export function ItemCardWrapperContent({
           title={title}
           category={category}
           item_type={item_type}
+          canMeetUp={pickup_preference === 'meet_elsewhere'}
         />
       }
       actions={
