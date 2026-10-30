@@ -30,6 +30,11 @@ interface Props {
   hideInactive: boolean;
   onHideInactiveChange: (v: boolean) => void;
   onResetAll: () => void;
+  /** Controlled open state. Owned by the feed body because picking "Mina
+   *  utkast" swaps the feed for the drafts list, which remounts this
+   *  component -- local state would close the sheet mid-choice. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   /** When true, hide private filters (scope, status) — viewing another user. */
   viewingOtherUser?: boolean;
   /** When true, increment the active filter badge by one. */
@@ -60,12 +65,13 @@ export function FeedFiltersPanel({
   hideInactive,
   onHideInactiveChange,
   onResetAll,
+  open,
+  onOpenChange: setOpen,
   viewingOtherUser = false,
   userFilterActive = false,
 }: Props) {
   const { t } = useTranslation();
   const { user } = useGlobalAuth();
-  const [open, setOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
 
   // Prefer the true, server-fetched totals (typeCounts) over counting only

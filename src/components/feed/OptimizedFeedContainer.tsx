@@ -1,5 +1,5 @@
 
-import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FeedProfileHeader } from './FeedProfileHeader';
 import { useOptimizedFeed } from '@/hooks/feed/useOptimizedFeed';
@@ -436,6 +436,7 @@ function OptimizedFeedBody({
   // Deep link: keep loading pages until the post is loaded, clear the
   // filters once if they're what hides it, and give up (-> pinned above
   // the feed) when it can't be found within MAX_DEEP_LINK_PAGES.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [deepLinkPagesLoaded, setDeepLinkPagesLoaded] = useState(0);
   const [scrollToPostId, setScrollToPostId] = useState<string | null>(null);
   const deepLinkResolvedRef = useRef<string | null>(null);
@@ -558,6 +559,8 @@ function OptimizedFeedBody({
           viewingOtherUser={viewingOtherUser}
           userFilterActive={!!filteredUserId}
           onResetAll={resetAll}
+          open={filtersOpen}
+          onOpenChange={setFiltersOpen}
         />
         {/* Sort stays outside the sheet: it never narrows the result set. */}
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as FeedSortMode)}>
@@ -577,109 +580,93 @@ function OptimizedFeedBody({
     </div>
   );
 
-  if (showDrafts) {
-    return (
-      <div className="space-y-4">
-        {profileHeader}
-        {filtersPanel}
-        <DraftsList />
-      </div>
-    );
-  }
+  // One tree for every state so the toolbar (and an open Filtrera sheet)
+  // keeps its place -- switching to the drafts list or a loading state
+  // must not remount it.
+  const showingList = !showDrafts && !(isLoading && posts.length === 0) && !error && posts.length > 0;
+  const refreshingList = showingList && isRefreshing;
 
-  // Initial cold-load skeleton — only when we have literally nothing to show
-  // AND no panel state worth preserving yet (panel hasn't been used).
-  if (isLoading && posts.length === 0) {
-    return (
-      <div className="space-y-4" role="status" aria-label={t('interactions.loading_feed')} aria-busy="true">
-        {profileHeader}
-        {filtersPanel}
+  let content: ReactNode;
+  if (showDrafts) {
+    content = <DraftsList />;
+  } else if (isLoading && posts.length === 0) {
+    content = (
+      <div role="status" aria-label={t('interactions.loading_feed')} aria-busy="true">
         <FeedSkeleton count={4} />
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        {profileHeader}
-        {filtersPanel}
-        <FeedErrorState
-          errorMessage={error.message || t('interactions.error_label')}
-          onRetry={handleRefresh}
-        />
-      </div>
+  } else if (error) {
+    content = (
+      <FeedErrorState
+        errorMessage={error.message || t('interactions.error_label')}
+        onRetry={handleRefresh}
+      />
     );
-  }
+  } else if (posts.length === 0) {
+    content = <FeedEmptyState viewMode="all" selectedCategories={[]} clearFilters={() => {}} />;
+  } else {
+    content = (
+      <>
+          <section role="feed" aria-label={t('interactions.community_posts')}>
+            {isRefreshing ? (
+              <FeedSkeleton count={Math.min(3, Math.max(1, sortedPosts.length))} />
+            ) : (
+              <FeedItemList
+                posts={sortedPosts}
+                fadingIds={fadingIds}
+                restoringIds={restoringIds}
+                selectedCategories={selectedCategories}
+                clearFilters={handleClearAll}
+                viewMode="all"
+                isLoading={false}
+                scrollToPostId={scrollToPostId}
+                onItemOperationSuccess={(_id, op) => {
+                  if (op === 'archive' || op === 'delete' || op === 'restore') return;
+                  handleRefresh();
+                }}
+              />
+            )}
+          </section>
 
-  if (posts.length === 0) {
-    return (
-      <div className="space-y-4">
-        {profileHeader}
-        {filtersPanel}
-        <FeedEmptyState viewMode="all" selectedCategories={[]} clearFilters={() => {}} />
-      </div>
+          {isLoadingMore && !isRefreshing && (
+            <div aria-label={t('interactions.loading_more')} role="status">
+              <FeedSkeleton count={2} />
+            </div>
+          )}
+
+          <InfiniteScrollSentinel
+            hasMore={!!hasMore}
+            isLoading={isLoadingMore || isRefreshing}
+            onLoadMore={handleLoadMore}
+          />
+
+          {hasMore && (
+            <div className="flex justify-center" role="navigation" aria-label={t('interactions.load_more_posts')}>
+              <button
+                onClick={handleLoadMore}
+                disabled={isLoadingMore || isRefreshing}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                aria-label={isLoadingMore ? t('interactions.loading_more') : t('interactions.load_more_posts')}
+              >
+                {isLoadingMore ? <EnhancedLoading size="sm" text={t('interactions.loading_more')} /> : t('interactions.load_more')}
+              </button>
+            </div>
+          )}
+      </>
     );
   }
 
   return (
     <>
-      <RefreshOverlay show={isRefreshing} />
+      <RefreshOverlay show={refreshingList} />
       <div
-        className={isRefreshing ? "space-y-4 opacity-60 pointer-events-none select-none" : "space-y-4"}
-        aria-busy={isRefreshing}
-        {...(isRefreshing ? { inert: "" as unknown as boolean } : {})}
+        className={refreshingList ? "space-y-4 opacity-60 pointer-events-none select-none" : "space-y-4"}
+        aria-busy={refreshingList}
+        {...(refreshingList ? { inert: "" as unknown as boolean } : {})}
       >
         {profileHeader}
         {filtersPanel}
-
-
-
-        <section role="feed" aria-label={t('interactions.community_posts')}>
-          {isRefreshing ? (
-            <FeedSkeleton count={Math.min(3, Math.max(1, sortedPosts.length))} />
-          ) : (
-            <FeedItemList
-              posts={sortedPosts}
-              fadingIds={fadingIds}
-              restoringIds={restoringIds}
-              selectedCategories={selectedCategories}
-              clearFilters={handleClearAll}
-              viewMode="all"
-              isLoading={false}
-              scrollToPostId={scrollToPostId}
-              onItemOperationSuccess={(_id, op) => {
-                if (op === 'archive' || op === 'delete' || op === 'restore') return;
-                handleRefresh();
-              }}
-            />
-          )}
-        </section>
-
-        {isLoadingMore && !isRefreshing && (
-          <div aria-label={t('interactions.loading_more')} role="status">
-            <FeedSkeleton count={2} />
-          </div>
-        )}
-
-        <InfiniteScrollSentinel
-          hasMore={!!hasMore}
-          isLoading={isLoadingMore || isRefreshing}
-          onLoadMore={handleLoadMore}
-        />
-
-        {hasMore && (
-          <div className="flex justify-center" role="navigation" aria-label={t('interactions.load_more_posts')}>
-            <button
-              onClick={handleLoadMore}
-              disabled={isLoadingMore || isRefreshing}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              aria-label={isLoadingMore ? t('interactions.loading_more') : t('interactions.load_more_posts')}
-            >
-              {isLoadingMore ? <EnhancedLoading size="sm" text={t('interactions.loading_more')} /> : t('interactions.load_more')}
-            </button>
-          </div>
-        )}
+        {content}
       </div>
     </>
   );
