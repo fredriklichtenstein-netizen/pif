@@ -205,7 +205,7 @@
     "load_error": "Kunde inte ladda dina utkast.",
     "empty_title": "Inga utkast",
     "empty_description": "Spara ett inlägg som utkast när du skapar det, så hamnar det här.",
-    "type_offer": "Piff",
+    "type_offer": "Pif",
     "type_request": "Önskan",
     "badge_draft": "Utkast",
     "badge_scheduled": "Schemalagd {{when}}",

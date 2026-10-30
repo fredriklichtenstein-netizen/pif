@@ -261,8 +261,14 @@ export function PostFormContainer({
 
   /** Opening another draft would drop what's in the form, so ask first. */
   const handleOpenDraft = (draftId: number) => {
-    if (hasContent) setSwitchToDraftId(draftId);
-    else navigate(`/post/draft/${draftId}`);
+    if (!hasContent) {
+      navigate(`/post/draft/${draftId}`);
+      return;
+    }
+    // Open the confirm dialog only after the menu has finished closing --
+    // a Radix dialog opened from a menu item can leave pointer-events: none
+    // on <body>, freezing the page.
+    setTimeout(() => setSwitchToDraftId(draftId), 0);
   };
 
   const handleSwitchDraft = async (save: boolean) => {
@@ -437,7 +443,7 @@ export function PostFormContainer({
                 {isDraftMode ? t('drafts.save_changes') : t('drafts.save_draft')}
               </Button>
               {otherDrafts.length > 0 && (
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button
                       type="button"

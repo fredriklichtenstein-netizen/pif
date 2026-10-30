@@ -70,6 +70,16 @@ export interface Item {
 // Mirrors ItemDetailHead.tsx so crawlers see what the app's <head> says.
 // No <meta http-equiv="refresh">: Facebook follows it and scrapes the app's
 // generic tags instead. Only crawlers ever get this page (browsers get a 302).
+// Browsers open a shared post where it sits in the feed (public, like the
+// item page); the app falls back to /item/<id> when it can't show it there.
+// Mirrors src/lib/feedLinks.ts.
+export function feedPostUrl(id: string, search: URLSearchParams, env: Env): string {
+  const params = new URLSearchParams(search);
+  params.delete("post");
+  const rest = params.toString();
+  return `${env.APP_ORIGIN}/feed?post=${id}${rest ? `&${rest}` : ""}`;
+}
+
 export function renderPreview(item: Item, env: Env): string {
   const isRequest = item.item_type === "request" || item.item_type === "wish";
   const title = item.title?.trim();
@@ -79,7 +89,7 @@ export function renderPreview(item: Item, env: Env): string {
     rawDescription.length > 300 ? `${rawDescription.slice(0, 297)}…` : rawDescription;
   const image = item.images?.[0] || `${env.SHARE_ORIGIN}/pif-og-image.png`;
   const shareUrl = `${env.SHARE_ORIGIN}/item/${item.id}`;
-  const appUrl = `${env.APP_ORIGIN}/item/${item.id}`;
+  const appUrl = `${env.APP_ORIGIN}/feed?post=${item.id}`;
 
   const t = escapeHtml(ogTitle);
   const d = escapeHtml(description);
@@ -124,12 +134,12 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const target = `${env.APP_ORIGIN}${url.pathname}${url.search}`;
+    const id = itemIdFromPath(url.pathname);
 
     if (!isCrawler(request.headers.get("User-Agent"))) {
-      return Response.redirect(target, 302);
+      return Response.redirect(id ? feedPostUrl(id, url.searchParams, env) : target, 302);
     }
 
-    const id = itemIdFromPath(url.pathname);
     if (id && (request.method === "GET" || request.method === "HEAD")) {
       try {
         const item = await fetchItem(id, env);
