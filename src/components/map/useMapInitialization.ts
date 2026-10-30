@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { registerCaptureMap } from "@/lib/mapCapture";
 import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { safeParseJSON, safeSetItem } from "@/utils/safeStorage";
@@ -177,7 +176,10 @@ export const useMapInitialization = (mapboxToken: string) => {
         minZoom: 9,
         maxZoom: 16,
         attributionControl: false,
-        preserveDrawingBuffer: false,
+        // true so the feedback panel's screenshot (html2canvas) can copy the
+        // map: it reads a WebGL canvas as blank unless its drawing buffer is
+        // preserved between frames. Costs a little GPU memory.
+        preserveDrawingBuffer: true,
         renderWorldCopies: false,
         antialias: true,
         failIfMajorPerformanceCaveat: false,
@@ -185,7 +187,6 @@ export const useMapInitialization = (mapboxToken: string) => {
         trackResize: true
       };
       const newMap = new mapboxgl.Map(mapConfig);
-      registerCaptureMap(newMap);
       // Progressive timeout system instead of single timeout
       const createProgressiveTimeout = (phase: string, delay: number) => {
         return setTimeout(() => {

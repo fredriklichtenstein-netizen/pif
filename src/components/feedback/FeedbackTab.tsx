@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { resolveDisplayName } from "@/utils/displayName";
 import { cn } from "@/lib/utils";
-import { snapshotMaps } from "@/lib/mapCapture";
 
 type FeedbackMode = "issue" | "feedback";
 
@@ -169,16 +168,8 @@ export function FeedbackTab() {
         if (r.width === 0 && r.height === 0) return false;
         return r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw;
       };
-      // Maps are WebGL canvases html2canvas reads as blank -- snapshot
-      // them first and swap the images into the clone (see mapCapture).
-      const mapShots = await snapshotMaps();
-      const shotIds = new Map<string, string>();
-      let shotIndex = 0;
-      mapShots.forEach((dataUrl, canvas) => {
-        const id = String(shotIndex++);
-        canvas.setAttribute("data-capture-map", id);
-        shotIds.set(id, dataUrl);
-      });
+      // Maps are WebGL canvases; html2canvas can only copy them because
+      // they're created with preserveDrawingBuffer: true.
       const capture = html2canvas(document.body, {
         useCORS: true,
         logging: false,
@@ -192,23 +183,7 @@ export function FeedbackTab() {
         ignoreElements: (el) =>
           (el instanceof HTMLElement && el.closest("[data-feedback-panel]") !== null) ||
           isOffscreen(el),
-        onclone: (doc) => {
-          doc.querySelectorAll<HTMLCanvasElement>("canvas[data-capture-map]").forEach((clone) => {
-            const dataUrl = shotIds.get(clone.getAttribute("data-capture-map") ?? "");
-            if (!dataUrl) return;
-            const img = doc.createElement("img");
-            img.src = dataUrl;
-            img.style.cssText = clone.style.cssText;
-            img.className = clone.className;
-            img.width = clone.clientWidth || clone.width;
-            img.height = clone.clientHeight || clone.height;
-            clone.replaceWith(img);
-          });
-        },
       });
-      capture.finally(() => {
-        document.querySelectorAll("canvas[data-capture-map]").forEach((c) => c.removeAttribute("data-capture-map"));
-      }).catch(() => {});
       const canvas = await Promise.race([
         capture,
         new Promise<never>((_, reject) =>

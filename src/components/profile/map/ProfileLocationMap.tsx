@@ -32,6 +32,8 @@ export function ProfileLocationMap({ coordinates }: ProfileLocationMapProps) {
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
       style: "mapbox://styles/mapbox/streets-v12",
+      // Lets feedback screenshots copy the map (see useMapInitialization).
+      preserveDrawingBuffer: true,
       center: [center.lng, center.lat],
       zoom: 13,
       interactive: false,
