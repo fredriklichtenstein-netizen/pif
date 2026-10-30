@@ -96,6 +96,8 @@ export function AddressMap({
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
+      // Lets feedback screenshots copy the map (see useMapInitialization).
+      preserveDrawingBuffer: true,
       center: [coordinates.lng, coordinates.lat],
       zoom: hasSelectionRef.current ? 15 : 11,
       accessToken: mapToken,

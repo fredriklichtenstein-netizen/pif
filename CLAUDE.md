@@ -206,9 +206,8 @@ more. The toolbar is just Filtrera + sort, with removable chips for active filte
 (alla / mina / visat intresse / utkast) in Filtrera is one choice over `onlyOwnPosts`/
 `onlyInterested` (shared with the map) and the drafts view.
 
-Feedback screenshots: Mapbox's WebGL canvas reads as blank outside a render frame, so maps
-register with `src/lib/mapCapture.ts` and `FeedbackTab` swaps a fresh snapshot into
-html2canvas's clone.
+Feedback screenshots: html2canvas copies a WebGL canvas (Mapbox) as blank unless it was created
+with `preserveDrawingBuffer: true` — all three maps set it; keep it on any new map.
 
 **Drafts & scheduled posts** live in `item_drafts` (owner-only RLS), never in `items` — `items`
 is public-read and every "active" filter would leak a new status. `publish_draft()` copies a draft
