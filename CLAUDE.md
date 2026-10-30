@@ -214,7 +214,9 @@ is public-read and every "active" filter would leak a new status. `publish_draft
 into `items` (created_at/stale clock = publish time) and deletes it; cron
 `publish-scheduled-drafts` (*/5) does the same for due drafts and notifies (prefs
 `push_scheduled_published` / `email_scheduled_published`, opt-out); `cleanup-stale-drafts`
-(daily) deletes unscheduled drafts untouched for 90 days. Account deletion covers drafts via the
+(daily) deletes unscheduled drafts untouched for 90 days. Promoted 2026-10-30; production recorded
+the two migrations as `20261030122618` (drafts) / `20261030122619` (own-folder storage policies) —
+the repo files carry staging's versions. Account deletion covers drafts via the
 profiles cascade + the `images/<uid>` purge.
 
 `send-notification-email` (added for the email-notifications feature) sends real email via Resend
