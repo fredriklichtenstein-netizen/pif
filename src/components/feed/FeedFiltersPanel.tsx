@@ -8,6 +8,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { FeedDistanceFilter } from "./FeedDistanceFilter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { MIXED_CATEGORY_KEYS, REST_CATEGORY_KEYS, CATEGORY_KEYS } from "@/utils/categories";
 import type { Post } from "@/types/post";
 
@@ -23,21 +24,25 @@ interface Props {
   onItemTypeChange: (t: string[]) => void;
   selectedCategories: string[];
   onCategoryChange: (c: string[]) => void;
-  includeArchived: boolean;
-  onIncludeArchivedChange: (v: boolean) => void;
-  /** Drafts view (own drafts & scheduled posts instead of the feed). */
-  showDrafts?: boolean;
-  onShowDraftsChange?: (v: boolean) => void;
-  onlyInterested: boolean;
-  onOnlyInterestedChange: (v: boolean) => void;
+  /** Whose posts to show (or the drafts view) — one choice, see PostScope. */
+  postScope: PostScope;
+  onPostScopeChange: (scope: PostScope) => void;
+  hideInactive: boolean;
+  onHideInactiveChange: (v: boolean) => void;
   onResetAll: () => void;
-  /** When true, hide private filters (archived) — viewing another user. */
+  /** When true, hide private filters (scope, status) — viewing another user. */
   viewingOtherUser?: boolean;
   /** When true, increment the active filter badge by one. */
   userFilterActive?: boolean;
 }
 
-const DEFAULT_DISTANCE = 3;
+/** Default distance -- not counted as an active filter (see activeCount). */
+export const DEFAULT_DISTANCE = 3;
+
+/** "Inlägg" in Filtrera. Mutually exclusive in practice: you can't show
+ *  interest in your own posts, and drafts are a separate list. */
+export type PostScope = "all" | "mine" | "interested" | "drafts";
+export const POST_SCOPES: PostScope[] = ["all", "mine", "interested", "drafts"];
 
 export function FeedFiltersPanel({
   posts,
@@ -50,12 +55,10 @@ export function FeedFiltersPanel({
   onItemTypeChange,
   selectedCategories,
   onCategoryChange,
-  includeArchived,
-  onIncludeArchivedChange,
-  showDrafts = false,
-  onShowDraftsChange,
-  onlyInterested,
-  onOnlyInterestedChange,
+  postScope,
+  onPostScopeChange,
+  hideInactive,
+  onHideInactiveChange,
   onResetAll,
   viewingOtherUser = false,
   userFilterActive = false,
@@ -99,9 +102,8 @@ export function FeedFiltersPanel({
     // !distanceIsDefault (a real radius selection implies a location is
     // known too) -- so that's the only term counted here.
     (!distanceIsDefault ? 1 : 0) +
-    (includeArchived ? 1 : 0) +
-    (showDrafts ? 1 : 0) +
-    (onlyInterested ? 1 : 0) +
+    (postScope !== "all" ? 1 : 0) +
+    (hideInactive ? 1 : 0) +
     (userFilterActive ? 1 : 0);
 
   const hasNonDefault = activeCount > 0;
@@ -155,19 +157,6 @@ export function FeedFiltersPanel({
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto space-y-6 py-4">
-          {/* Location + distance */}
-          <section className="space-y-2">
-            <h3 className="text-sm font-semibold">
-              {t("interactions.filter_location", "Plats")}
-            </h3>
-            <FeedDistanceFilter
-              selectedDistance={selectedDistance}
-              onDistanceChange={onDistanceChange}
-              userLocation={userLocation}
-              onUserLocationChange={onUserLocationChange}
-            />
-          </section>
-
           {/* Type pills */}
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">
@@ -199,6 +188,44 @@ export function FeedFiltersPanel({
                 ✨ {t("map_filters.wishes")} ({counts.wishes})
               </Button>
             </div>
+          </section>
+
+          {/* Whose posts (authenticated, own-feed only) */}
+          {user && !viewingOtherUser && (
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold">{t("feed.filter_scope", "Inlägg")}</h3>
+              <div className="grid grid-cols-2 gap-2" role="radiogroup">
+                {POST_SCOPES.map((scope) => (
+                  <button
+                    key={scope}
+                    type="button"
+                    role="radio"
+                    aria-checked={postScope === scope}
+                    onClick={() => onPostScopeChange(scope)}
+                    className={`min-h-[40px] rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                      postScope === scope
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "bg-background hover:bg-accent"
+                    }`}
+                  >
+                    {t(`feed.scope_${scope}`)}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Location + distance */}
+          <section className="space-y-2">
+            <h3 className="text-sm font-semibold">
+              {t("interactions.filter_location", "Plats")}
+            </h3>
+            <FeedDistanceFilter
+              selectedDistance={selectedDistance}
+              onDistanceChange={onDistanceChange}
+              userLocation={userLocation}
+              onUserLocationChange={onUserLocationChange}
+            />
           </section>
 
           {/* Categories */}
@@ -278,87 +305,39 @@ export function FeedFiltersPanel({
             </Collapsible>
           </section>
 
-          {/* My interest toggle (authenticated, own-feed only) */}
+          {/* Status (authenticated, own-feed only) */}
           {user && !viewingOtherUser && (
             <section className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold">
-                {t("feed.my_interest", "Visat intresse")}
-              </h3>
-              <button
-                type="button"
-                onClick={() => onOnlyInterestedChange(!onlyInterested)}
-                aria-pressed={onlyInterested}
-                className={`relative inline-flex shrink-0 h-6 w-11 rounded-full transition-colors ${
-                  onlyInterested ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
-                    onlyInterested ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
+              <div>
+                <h3 className="text-sm font-semibold">{t("feed.hide_inactive", "Dölj ej aktiva")}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {t("feed.hide_inactive_hint", "Arkiverade och genomförda inlägg")}
+                </p>
+              </div>
+              <Switch
+                checked={hideInactive}
+                onCheckedChange={onHideInactiveChange}
+                aria-label={t("feed.hide_inactive", "Dölj ej aktiva")}
+              />
             </section>
           )}
+        </div>
 
-          {/* Archived toggle (authenticated, own-feed only) */}
-          {user && !viewingOtherUser && (
-            <section className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold">
-                {t("feed.show_archived", "Visa endast arkiverade")}
-              </h3>
-              <button
-                type="button"
-                onClick={() => onIncludeArchivedChange(!includeArchived)}
-                aria-pressed={includeArchived}
-                className={`relative inline-flex shrink-0 h-6 w-11 rounded-full transition-colors ${
-                  includeArchived ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
-                    includeArchived ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </section>
-          )}
-
-          {/* Drafts toggle (authenticated, own-feed only) */}
-          {user && !viewingOtherUser && onShowDraftsChange && (
-            <section className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold">
-                {t("feed.show_drafts", "Visa utkast & schemalagda")}
-              </h3>
-              <button
-                type="button"
-                onClick={() => onShowDraftsChange(!showDrafts)}
-                aria-pressed={showDrafts}
-                className={`relative inline-flex shrink-0 h-6 w-11 rounded-full transition-colors ${
-                  showDrafts ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
-                    showDrafts ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </section>
-          )}
-
-          {/* Reset */}
-          {hasNonDefault && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onResetAll}
-              className="w-full"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {t("interactions.reset_filters", "Återställ filter")}
-            </Button>
-          )}
+        {/* Sticky footer: filters apply live, so this is just a clear way
+            out plus reset. */}
+        <div className="flex gap-2 border-t pt-3">
+          <Button
+            variant="outline"
+            onClick={onResetAll}
+            disabled={!hasNonDefault}
+            className="flex-1"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {t("interactions.reset_filters", "Återställ filter")}
+          </Button>
+          <Button onClick={() => setOpen(false)} className="flex-1">
+            {t("feed.show_results", "Visa inlägg")}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

@@ -194,8 +194,21 @@ then scrolls to and highlights it — or pins it above the feed (`DeepLinkedPost
 placed (too far down, archived for a logged-out viewer) or says it's gone. Build links with
 `src/lib/feedLinks.ts` (`feedPostPath`); in-app notification `action_url`s are still stored as
 `/item/<id>` and rewritten at render time by `toFeedLink`, and `send-notification-email` builds
-`/feed?post=` links itself. Map pins open a popup whose "Öppna i flödet" button is the only way
-off the map. Drafts are the feed's `?view=drafts` view (`/drafts` redirects there).
+`/feed?post=` links itself. Map pins open a thumbnail popup; tapping it (or the pin again)
+opens the full card over the map (`MapPostCard`), whose "Visa i flödet" is the way off the map.
+Drafts are the feed's `?view=drafts` view (`/drafts` redirects there).
+
+The feed shows active and non-active (archived/completed) posts together by default for
+logged-in users; "Dölj ej aktiva" in Filtrera hides the non-active ones. In the feed data path
+(`useOptimizedFeed`, `getOptimizedPosts`, `getPosts`, `fetchFeedTypeCounts`) the flag is
+`includeInactive` = "include non-active alongside active" — there is no archived-only mode any
+more. The toolbar is just Filtrera + sort, with removable chips for active filters; "Inlägg"
+(alla / mina / visat intresse / utkast) in Filtrera is one choice over `onlyOwnPosts`/
+`onlyInterested` (shared with the map) and the drafts view.
+
+Feedback screenshots: Mapbox's WebGL canvas reads as blank outside a render frame, so maps
+register with `src/lib/mapCapture.ts` and `FeedbackTab` swaps a fresh snapshot into
+html2canvas's clone.
 
 **Drafts & scheduled posts** live in `item_drafts` (owner-only RLS), never in `items` — `items`
 is public-read and every "active" filter would leak a new status. `publish_draft()` copies a draft

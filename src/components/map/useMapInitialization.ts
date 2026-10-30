@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { registerCaptureMap } from "@/lib/mapCapture";
 import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { safeParseJSON, safeSetItem } from "@/utils/safeStorage";
@@ -184,6 +185,7 @@ export const useMapInitialization = (mapboxToken: string) => {
         trackResize: true
       };
       const newMap = new mapboxgl.Map(mapConfig);
+      registerCaptureMap(newMap);
       // Progressive timeout system instead of single timeout
       const createProgressiveTimeout = (phase: string, delay: number) => {
         return setTimeout(() => {

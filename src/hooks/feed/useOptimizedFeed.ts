@@ -39,21 +39,6 @@ const removePostFromActiveCache = (
   );
 };
 
-const removePostFromArchivedCache = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  itemId: string,
-) => {
-  queryClient.setQueriesData<Post[]>(
-    {
-      predicate: (query) =>
-        query.queryKey[0] === 'posts' &&
-        query.queryKey[1] === 'optimized' &&
-        query.queryKey[3] === true,
-    },
-    (old) => old?.filter((post) => String(post.id) !== itemId) ?? old,
-  );
-};
-
 /**
  * Exported so any code path that can move an item off the active feed --
  * not just this hook's own realtime/event listeners, which only run while
@@ -72,8 +57,8 @@ export const invalidateOptimizedFeedQueries = (
   });
 };
 
-export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
-  const includeArchived = !!options.includeArchived;
+export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
+  const includeInactive = !!options.includeInactive;
   // Reactive, not a fresh getSession() call inside the query function --
   // this hook fires immediately on mount with no auth-readiness gate, so
   // an async session check made at fetch time can race Supabase's own
@@ -111,7 +96,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       if (!detail || !detail.itemId) return;
       const idStr = String(detail.itemId);
 
-      if (detail.operationType === 'delete' || (detail.operationType === 'archive' && !includeArchived)) {
+      if (detail.operationType === 'delete' || (detail.operationType === 'archive' && !includeInactive)) {
         // Mark as fading so the card animates out, then promote to removed.
         setFadingIds(prev => {
           if (prev.has(idStr)) return prev;
@@ -144,10 +129,18 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
 
         // Also wipe the secondary in-memory/session DatabaseCache used by getOptimizedPosts.
         clearPostsCache();
-        if (detail.operationType === 'archive' && !includeArchived) {
+        if (detail.operationType === 'archive' && !includeInactive) {
           removePostFromActiveCache(queryClient, idStr);
         }
         setPage(0);
+        setFeedVersion((version) => version + 1);
+        invalidateOptimizedFeedQueries(queryClient);
+      }
+
+      if (detail.operationType === 'archive' && includeInactive) {
+        // Archived items stay in this scope -- refetch so the card picks up
+        // its new status (badge, actions) instead of keeping the old one.
+        clearPostsCache();
         setFeedVersion((version) => version + 1);
         invalidateOptimizedFeedQueries(queryClient);
       }
@@ -237,7 +230,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
       restoreTimersRef.current.forEach(t => clearTimeout(t));
       restoreTimersRef.current.clear();
     };
-  }, [queryClient, includeArchived]);
+  }, [queryClient, includeInactive]);
 
 
 
@@ -265,8 +258,8 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     error,
     refetch
   } = useQuery({
-    queryKey: ['posts', 'optimized', page, includeArchived, feedVersion, authUserId],
-    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeArchived, isAuthenticated),
+    queryKey: ['posts', 'optimized', page, includeInactive, feedVersion, authUserId],
+    queryFn: () => getOptimizedPosts(pageSize(page), offsetForPage(page), false, includeInactive, isAuthenticated),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -277,7 +270,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   // On unmount, purge the React Query cache entries for THIS scope so a
   // future mount of the opposite scope can never render stale rows from a
   // prior session before its own fresh fetch completes. Entries are scoped
-  // by `includeArchived` in the query key; removing them is safe because
+  // by `includeInactive` in the query key; removing them is safe because
   // the surviving scope's cache is untouched.
   useEffect(() => {
     return () => {
@@ -286,17 +279,17 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
           Array.isArray(q.queryKey) &&
           q.queryKey[0] === 'posts' &&
           q.queryKey[1] === 'optimized' &&
-          q.queryKey[3] === includeArchived,
+          q.queryKey[3] === includeInactive,
       });
     };
-  }, [queryClient, includeArchived]);
+  }, [queryClient, includeInactive]);
 
   // Aggregate all pages of posts, then strip optimistically-removed items.
   const allPosts = useMemo(() => {
     if (DEMO_MODE) return [];
     const posts: Post[] = [];
     for (let i = 0; i <= page; i++) {
-      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeArchived, feedVersion, authUserId]);
+      const pageData = queryClient.getQueryData<Post[]>(['posts', 'optimized', i, includeInactive, feedVersion, authUserId]);
       if (pageData) {
         posts.push(...pageData);
       }
@@ -313,12 +306,13 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         isTerminal((p as any).status) ||
         isTerminal((p as any).pif_status) ||
         !!p.archived_at;
-      if (includeArchived) return isArchivedPost;
+      // Include-inactive scope shows every status side by side.
+      if (includeInactive) return true;
       if (isArchivedPost) return false;
-      if (!includeArchived && activeArchivedIds.has(id)) return false;
+      if (activeArchivedIds.has(id)) return false;
       return true;
     });
-  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeArchived, feedVersion, authUserId]);
+  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeInactive, feedVersion, authUserId]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -340,11 +334,11 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     setPage((prev) => {
       const nextPage = prev + 1;
       setTimeout(() => {
-        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1), includeArchived, isAuthenticated);
+        prefetchNextPage(pageSize(nextPage + 1), offsetForPage(nextPage + 1), includeInactive, isAuthenticated);
       }, 100);
       return nextPage;
     });
-  }, [includeArchived, isAuthenticated]);
+  }, [includeInactive, isAuthenticated]);
 
   // Release the in-flight guard once the new page has finished loading
   // so the next intersection can trigger the page after it.
@@ -377,11 +371,11 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
   useEffect(() => {
     if (DEMO_MODE) return;
     const timer = setTimeout(() => {
-      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1), includeArchived, isAuthenticated);
+      prefetchNextPage(pageSize(page + 1), offsetForPage(page + 1), includeInactive, isAuthenticated);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [page, includeArchived, isAuthenticated]);
+  }, [page, includeInactive, isAuthenticated]);
 
   // Feed-level realtime only: one shared channel for new items and visible
   // interaction-count changes. Item cards must never open per-card channels.
@@ -442,7 +436,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
     };
 
     const channel = supabase
-      .channel(`feed-shared-realtime-${includeArchived ? 'arch' : 'active'}`)
+      .channel(`feed-shared-realtime-${includeInactive ? 'all' : 'active'}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'items' },
@@ -477,7 +471,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
             const idStr = String(itemId);
             if (isTerminal(newStatus)) {
               removePostFromActiveCache(queryClient, idStr);
-              if (!includeArchived) {
+              if (!includeInactive) {
                 setActiveArchivedIds((prev) => {
                   if (prev.has(idStr)) return prev;
                   const next = new Set(prev);
@@ -486,7 +480,6 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
                 });
               }
             } else {
-              removePostFromArchivedCache(queryClient, idStr);
               setRemovedIds((prev) => {
                 if (!prev.has(idStr)) return prev;
                 const next = new Set(prev);
@@ -526,7 +519,7 @@ export function useOptimizedFeed(options: { includeArchived?: boolean } = {}) {
         /* noop */
       }
     };
-  }, [queryClient, includeArchived]);
+  }, [queryClient, includeInactive]);
 
   // Return demo data if in demo mode
   if (demoData) {

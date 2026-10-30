@@ -11,7 +11,7 @@ const EMPTY: FeedTypeCounts = { all: 0, pifs: 0, wishes: 0 };
  * a debounced refetch on any items INSERT/UPDATE (covers new posts and
  * archive/restore transitions moving items between buckets).
  */
-export const useFeedTypeCounts = (includeArchived: boolean, userId?: string) => {
+export const useFeedTypeCounts = (includeInactive: boolean, userId?: string) => {
   const [counts, setCounts] = useState<FeedTypeCounts>(EMPTY);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -21,14 +21,14 @@ export const useFeedTypeCounts = (includeArchived: boolean, userId?: string) => 
       return;
     }
     try {
-      const next = await fetchFeedTypeCounts(includeArchived, userId);
+      const next = await fetchFeedTypeCounts(includeInactive, userId);
       setCounts(next);
     } catch (err) {
       console.warn("[useFeedTypeCounts] fetch failed", err);
     } finally {
       setIsLoaded(true);
     }
-  }, [includeArchived, userId]);
+  }, [includeInactive, userId]);
 
   useEffect(() => {
     setIsLoaded(false);
@@ -43,7 +43,7 @@ export const useFeedTypeCounts = (includeArchived: boolean, userId?: string) => 
       debounceRef.current = setTimeout(refetch, 300);
     };
     const channel = supabase
-      .channel(`feed-type-counts-${includeArchived ? 'arch' : 'active'}-${userId ?? 'all'}`)
+      .channel(`feed-type-counts-${includeInactive ? 'all' : 'active'}-${userId ?? 'all'}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'items' }, scheduleRefetch)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'items' }, scheduleRefetch)
       .subscribe();
@@ -55,7 +55,7 @@ export const useFeedTypeCounts = (includeArchived: boolean, userId?: string) => 
         /* noop */
       }
     };
-  }, [includeArchived, userId, refetch]);
+  }, [includeInactive, userId, refetch]);
 
   return { counts, isLoaded };
 };

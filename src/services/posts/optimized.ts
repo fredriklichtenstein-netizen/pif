@@ -24,21 +24,19 @@ const isTerminalStatus = (s: any) => s === 'archived' || s === 'completed';
 const isArchivedPost = (post: Post) =>
   isTerminalStatus((post as any).status) || isTerminalStatus((post as any).pif_status) || !!post.archived_at;
 
-const applyArchiveBoundary = (posts: Post[], includeArchived: boolean) =>
-  includeArchived
-    ? posts.filter(isArchivedPost)
-    : posts.filter((post) => !isArchivedPost(post));
+const applyArchiveBoundary = (posts: Post[], includeInactive: boolean) =>
+  includeInactive ? posts : posts.filter((post) => !isArchivedPost(post));
 
 export const getOptimizedPosts = async (
   limit = 20,
   offset = 0,
   _retryAfterRecovery = false,
-  includeArchived = false,
+  includeInactive = false,
   isAuthenticated = false,
 ): Promise<Post[]> => {
   const start = performance.now();
   const generationAtStart = postsCacheGeneration;
-  const archivedSuffix = includeArchived ? '-arch' : '';
+  const archivedSuffix = includeInactive ? '-all' : '';
   // isAuthenticated is part of the key, not just passed through to the
   // query -- this cache has its own 5-minute TTL independent of React
   // Query's, so without this an early anon-shaped fetch (this hook fires
@@ -50,13 +48,13 @@ export const getOptimizedPosts = async (
   // 1) In-memory cache (fastest path, valid within current session).
   const cached = DatabaseCache.get<Post[]>(cacheKey);
   if (cached) {
-    return applyArchiveBoundary(cached, includeArchived);
+    return applyArchiveBoundary(cached, includeInactive);
   }
 
   try {
     // ---- Stage 1: items + profiles join ----
     const itemsStart = performance.now();
-    const data = await OptimizedQueries.getPosts({ limit, offset, includeArchived, isAuthenticated });
+    const data = await OptimizedQueries.getPosts({ limit, offset, includeInactive, isAuthenticated });
     const itemsMs = performance.now() - itemsStart;
     performanceMetrics.recordStage('items-query', itemsMs, {
       count: String(Array.isArray(data) ? data.length : 0),
@@ -96,7 +94,7 @@ export const getOptimizedPosts = async (
 
       transformCache.set(cacheKey, transformed);
       return transformed;
-    }), includeArchived);
+    }), includeInactive);
     const transformMs = performance.now() - transformStart;
     performanceMetrics.recordStage('transform', transformMs, {
       posts: String(transformedPosts.length),
@@ -189,7 +187,7 @@ export const getOptimizedPosts = async (
       // Give the recovery a tick to wipe tokens before retrying.
       await new Promise((r) => setTimeout(r, 50));
       try {
-        return await getOptimizedPosts(limit, offset, true, includeArchived, isAuthenticated);
+        return await getOptimizedPosts(limit, offset, true, includeInactive, isAuthenticated);
       } catch {
         return [];
       }
@@ -203,17 +201,17 @@ export const getOptimizedPosts = async (
 export const prefetchNextPage = (
   currentLimit: number,
   currentOffset: number,
-  includeArchived = false,
+  includeInactive = false,
   isAuthenticated = false,
 ) => {
   const nextOffset = currentOffset + currentLimit;
-  const archivedSuffix = includeArchived ? '-arch' : '';
+  const archivedSuffix = includeInactive ? '-all' : '';
   const authSuffix = isAuthenticated ? '-auth' : '-anon';
   const prefetchKey = `posts-${currentLimit}-${nextOffset}${archivedSuffix}${authSuffix}`;
 
   // Only prefetch if not already cached
   if (!DatabaseCache.has(prefetchKey)) {
-    getOptimizedPosts(currentLimit, nextOffset, false, includeArchived, isAuthenticated).catch(() => {
+    getOptimizedPosts(currentLimit, nextOffset, false, includeInactive, isAuthenticated).catch(() => {
       // Ignore prefetch errors
     });
   }
@@ -229,12 +227,12 @@ export const clearPostsCache = () => {
 };
 
 // Background revalidation used by the stale-while-revalidate path.
-function revalidateInBackground(limit: number, offset: number, includeArchived = false) {
-  const archivedSuffix = includeArchived ? '-arch' : '';
+function revalidateInBackground(limit: number, offset: number, includeInactive = false) {
+  const archivedSuffix = includeInactive ? '-all' : '';
   // Drop the in-memory entry so the next call performs the real fetch,
   // then trigger it without awaiting the result.
   DatabaseCache.delete(`posts-v2-${limit}-${offset}${archivedSuffix}`);
-  getOptimizedPosts(limit, offset, true, includeArchived).catch(() => {
+  getOptimizedPosts(limit, offset, true, includeInactive).catch(() => {
     // ignore — we already returned stale data to the caller
   });
 }

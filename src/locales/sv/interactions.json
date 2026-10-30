@@ -641,7 +641,8 @@
     "completed_badge": "Avslutad"
   },
   "map": {
-    "open_in_feed": "Öppna i flödet",
+    "show_in_feed": "Visa i flödet",
+    "close_post_card": "Stäng",
     "error_initializing": "Fel vid initiering av karta",
     "initializing": "Initierar karta...",
     "token_loaded": "Token laddad, sätter upp karta...",

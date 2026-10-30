@@ -15,8 +15,10 @@ export class OptimizedQueries {
     userId?: string;
     categories?: string[];
     coordinates?: { lat: number; lng: number; radius?: number };
-    includeArchived?: boolean;
-    /** One specific item, whatever its status (ignores includeArchived). */
+    /** Include archived/completed items alongside active ones (the feed's
+     *  default since "Dölj ej aktiva" replaced "Visa endast arkiverade"). */
+    includeInactive?: boolean;
+    /** One specific item, whatever its status (ignores includeInactive). */
     itemId?: number;
     /**
      * Reactive auth state from the caller (e.g. useAuthStore), not a fresh
@@ -55,10 +57,8 @@ export class OptimizedQueries {
 
         if (options.itemId != null) {
           query = query.eq('id', options.itemId);
-        } else if (options.includeArchived) {
-          query = query
-            .in('pif_status', ['archived', 'completed'])
-            .order('archived_at', { ascending: false, nullsFirst: false });
+        } else if (options.includeInactive) {
+          query = query.order('created_at', { ascending: false });
         } else {
           query = query
             .or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)')
