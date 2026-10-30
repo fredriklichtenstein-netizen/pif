@@ -50,6 +50,7 @@ export function usePostFormState(initialData?: any) {
     measurements: initialData?.measurements || {},
     visibilityRadiusKm: initialData?.visibility_radius_km ?? null,
     pickup_preference: initialData?.pickup_preference || "",
+    can_meet_elsewhere: !!initialData?.can_meet_elsewhere,
     pickup_door_code: initialData?.pickup_door_code || "",
     pickup_floor: initialData?.pickup_floor != null ? String(initialData.pickup_floor) : "",
     pickup_instructions: initialData?.pickup_instructions || "",

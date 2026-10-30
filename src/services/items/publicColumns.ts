@@ -36,6 +36,7 @@ export const ITEM_PUBLIC_COLUMNS = [
   "archived_reason",
   "created_at",
   "pickup_preference",
+  "can_meet_elsewhere",
   "preferred_time_window",
   "piffer_confirmed_handoff",
   "receiver_confirmed_receipt",
