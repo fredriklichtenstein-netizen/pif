@@ -56,6 +56,7 @@ interface PostFormContainerProps {
   onSaveDraft?: (navigateTo?: string) => Promise<boolean>;
   onSchedule?: (scheduledAt: Date) => Promise<boolean>;
   onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void;
+  onImageReplace: (index: number, file: File | null, crop: ImageCrop | null) => void;
   onImagesChange: (images: string[]) => void;
   onImageCropsChange: (crops: (ImageCrop | null)[]) => void;
   onMeasurementChange: (field: string, value: string) => void;
@@ -77,6 +78,7 @@ export function PostFormContainer({
   onSaveDraft,
   onSchedule,
   onImageUpload,
+  onImageReplace,
   onImagesChange,
   onImageCropsChange,
   onMeasurementChange,
@@ -322,6 +324,7 @@ export function PostFormContainer({
             imageCrops={formData.imageCrops || []}
             isAnalyzing={isAnalyzing}
             onImageUpload={onImageUpload}
+            onImageReplace={onImageReplace}
             onImagesChange={onImagesChange}
             onImageCropsChange={onImageCropsChange}
             itemType={formData.item_type}

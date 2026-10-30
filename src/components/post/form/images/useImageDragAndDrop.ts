@@ -47,9 +47,9 @@ export function useImageDragAndDrop({
         return;
       }
 
-      // Create a new DataTransfer object and add the file
+      // Pifs take every dropped image; a wish has a single reference image.
       const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(imageFiles[0]);
+      (isRequest ? imageFiles.slice(0, 1) : imageFiles).forEach((f) => dataTransfer.items.add(f));
       
       // Set the files on the input element
       fileInputRef.current.files = dataTransfer.files;

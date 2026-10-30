@@ -46,6 +46,7 @@ import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
 import { useMyDrafts } from '@/hooks/drafts/useMyDrafts';
 import { DraftsList } from '@/components/drafts/DraftsList';
+import { DeepLinkedPost } from './DeepLinkedPost';
 import { supabase } from '@/integrations/supabase/client';
 import type { Post } from '@/types/post';
 
@@ -102,27 +103,30 @@ export function OptimizedFeedContainer() {
     }
   }, [searchParams, setSearchParams]);
 
-  // /feed?post=<id> (notification/email links, after publishing): look up
-  // which bucket the post is in first, so an archived or completed post
-  // opens the archived view instead of being searched for in vain. Posts
-  // that don't exist (or can't be shown) fall back to /item/<id>, which
-  // has its own not-found handling.
+  // /feed?post=<id> (notification/email/share links, after publishing):
+  // look up which bucket the post is in first, so an archived or completed
+  // post opens the archived view instead of being searched for in vain.
+  // A post that can't be shown in place is pinned above the feed instead
+  // (DeepLinkedPost), which also says so when it no longer exists.
   const targetPostId = DEMO_MODE ? null : searchParams.get('post');
   const [deepLinkBucket, setDeepLinkBucket] = useState<{ id: string; bucket: DeepLinkBucket } | null>(null);
-  const fallBackToItemPage = useCallback((id: string) => {
-    const rest = new URLSearchParams(searchParams);
-    rest.delete('post');
-    const query = rest.toString();
-    navigate(`/item/${encodeURIComponent(id)}${query ? `?${query}` : ''}`, { replace: true });
-  }, [searchParams, navigate]);
+  const [pinnedPostId, setPinnedPostId] = useState<string | null>(null);
+  const pinPost = useCallback((id: string) => setPinnedPostId(id), []);
+  const dismissPinnedPost = useCallback(() => {
+    setPinnedPostId(null);
+    const next = new URLSearchParams(searchParams);
+    ['post', 'comment', 'selectReceiver'].forEach((k) => next.delete(k));
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
+    setPinnedPostId(null);
     if (!targetPostId) {
       setDeepLinkBucket(null);
       return;
     }
     if (!/^\d+$/.test(targetPostId)) {
-      fallBackToItemPage(targetPostId);
+      pinPost(targetPostId);
       return;
     }
     let cancelled = false;
@@ -134,14 +138,14 @@ export function OptimizedFeedContainer() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error || !data) {
-          fallBackToItemPage(targetPostId);
+          pinPost(targetPostId);
           return;
         }
         const status = String(data.pif_status ?? '');
         const terminal = status === 'archived' || status === 'completed' || !!data.archived_at;
         if (terminal && !isLoggedIn) {
           // The archived view needs an account.
-          fallBackToItemPage(targetPostId);
+          pinPost(targetPostId);
           return;
         }
         setIncludeArchivedState(terminal);
@@ -150,10 +154,7 @@ export function OptimizedFeedContainer() {
     return () => {
       cancelled = true;
     };
-    // fallBackToItemPage changes with every searchParams update; the lookup
-    // only needs to rerun for a new target.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetPostId, isLoggedIn]);
+  }, [targetPostId, isLoggedIn, pinPost]);
 
   const bodyBucket: DeepLinkBucket = effectiveIncludeArchived ? 'archived' : 'active';
   const bodyTargetPostId =
@@ -172,7 +173,13 @@ export function OptimizedFeedContainer() {
   // in-flight timers) BEFORE the new-scope body mounts and subscribes. This
   // guarantees only one feed instance is ever active, so the network log
   // never shows an active + archived request racing side-by-side.
+  const pinned = pinnedPostId && pinnedPostId === targetPostId ? (
+    <DeepLinkedPost postId={pinnedPostId} isLoggedIn={isLoggedIn} onDismiss={dismissPinnedPost} />
+  ) : null;
+
   return (
+    <>
+    {pinned && <div className="mb-4">{pinned}</div>}
     <OptimizedFeedBody
       key={effectiveIncludeArchived ? 'feed-archived' : 'feed-active'}
       isLoggedIn={isLoggedIn}
@@ -184,9 +191,10 @@ export function OptimizedFeedContainer() {
       onClearUserFilter={clearUserFilter}
       showDrafts={showDrafts}
       onShowDraftsChange={setShowDrafts}
-      targetPostId={bodyTargetPostId}
-      onTargetPostMissing={fallBackToItemPage}
+      targetPostId={pinned ? null : bodyTargetPostId}
+      onTargetPostMissing={pinPost}
     />
+    </>
   );
 }
 
@@ -405,8 +413,8 @@ function OptimizedFeedBody({
   const draftCount = myDrafts?.length ?? 0;
 
   // Deep link: keep loading pages until the post is loaded, clear the
-  // filters once if they're what hides it, and give up (-> /item/<id>)
-  // when it can't be found within MAX_DEEP_LINK_PAGES.
+  // filters once if they're what hides it, and give up (-> pinned above
+  // the feed) when it can't be found within MAX_DEEP_LINK_PAGES.
   const [deepLinkPagesLoaded, setDeepLinkPagesLoaded] = useState(0);
   const [scrollToPostId, setScrollToPostId] = useState<string | null>(null);
   const deepLinkResolvedRef = useRef<string | null>(null);

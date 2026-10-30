@@ -147,6 +147,7 @@
     "rotate_left": "Rotate left",
     "rotate_right": "Rotate right",
     "rotate_error": "Failed to rotate image. Please try again.",
+    "edit_image_error": "Couldn't open the image. Please try again.",
     "trim_step_title": "Rotate and crop (optional)",
     "trim_step_description": "Straighten the image if it's crooked, and drag the corners to crop it to any shape. Both are permanent changes. Skip if you don't want to change the image.",
     "skip_trim": "Skip",

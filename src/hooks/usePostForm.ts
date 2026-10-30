@@ -18,7 +18,7 @@ export function usePostForm(initialData?: any) {
   const { isSubmitting, handleSubmit: submitForm, saveAsDraft } = usePostFormSubmission(initialData);
   const { validateForm } = usePostFormValidation();
 
-  const { handleImageUpload: uploadHandler, isAnalyzing } = usePostImageUpload({
+  const { handleImageUpload: uploadHandler, uploadFiles, isAnalyzing } = usePostImageUpload({
     onImagesUploaded: (uploaded) => {
       setFormData(prev => ({
         ...prev,
@@ -30,6 +30,26 @@ export function usePostForm(initialData?: any) {
 
   const handleImageUpload = async (files: File[], crops: (ImageCrop | null)[] = []) => {
     await uploadHandler(files, crops);
+  };
+
+  /** An already-added image was edited: `file` is the rotated/trimmed
+   *  replacement (null when only its preview area changed). */
+  const handleImageReplace = async (index: number, file: File | null, crop: ImageCrop | null) => {
+    let url: string | null = null;
+    if (file) {
+      const [uploaded] = await uploadFiles([file], [crop]);
+      if (!uploaded) return;
+      url = uploaded.url;
+    }
+    setFormData(prev => {
+      if (index >= prev.images.length) return prev;
+      const images = [...prev.images];
+      if (url) images[index] = url;
+      const imageCrops = [...(prev.imageCrops || [])];
+      while (imageCrops.length < images.length) imageCrops.push(null);
+      imageCrops[index] = crop;
+      return { ...prev, images, imageCrops };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,6 +75,7 @@ export function usePostForm(initialData?: any) {
     profileDefaults,
     setFormData,
     handleImageUpload,
+    handleImageReplace,
     handleImagesChange,
     handleImageCropsChange,
     handleMeasurementChange,

@@ -38,9 +38,16 @@ import type { ImageCrop } from "@/types/post";
  *
  * After the queue is drained, the final files and their parallel crop
  * array are forwarded to `onImageUpload` together, in their original order.
+ *
+ * Only a SINGLE selected file goes through the dialogs. Several files at
+ * once are added straight away with the default preview area; any added
+ * image can then be run through the same two phases via `editExisting`,
+ * which reports back through `onImageReplace` (with a null file when
+ * only the preview area changed, so nothing is re-uploaded).
  */
 export function useImageCropQueue(
-  onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void
+  onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void,
+  onImageReplace?: (index: number, file: File | null, crop: ImageCrop | null) => void,
 ) {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -53,6 +60,9 @@ export function useImageCropQueue(
   const resultsRef = useRef<File[]>([]);
   const cropsRef = useRef<(ImageCrop | null)[]>([]);
   const objectUrlsRef = useRef<string[]>([]);
+  // Set while editing an already-added image rather than adding new ones.
+  const [editTarget, setEditTarget] = useState<{ index: number; crop: ImageCrop | null } | null>(null);
+  const editModifiedRef = useRef(false);
 
   const cleanup = useCallback(() => {
     objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
@@ -63,16 +73,26 @@ export function useImageCropQueue(
     setCurrentIndex(0);
     setCurrentUrl(null);
     setPhase('trim');
+    setEditTarget(null);
+    editModifiedRef.current = false;
   }, []);
 
   const flush = useCallback(() => {
     const finalFiles = resultsRef.current;
     const finalCrops = cropsRef.current;
-    if (finalFiles.length > 0) {
+    if (editTarget) {
+      if (finalFiles.length > 0) {
+        onImageReplace?.(
+          editTarget.index,
+          editModifiedRef.current ? finalFiles[0] : null,
+          finalCrops[0] ?? null,
+        );
+      }
+    } else if (finalFiles.length > 0) {
       onImageUpload(finalFiles, finalCrops);
     }
     cleanup();
-  }, [onImageUpload, cleanup]);
+  }, [onImageUpload, onImageReplace, editTarget, cleanup]);
 
   const advance = useCallback(
     (nextIndex: number, files: File[]) => {
@@ -104,13 +124,49 @@ export function useImageCropQueue(
       // Normalize EXIF orientation up-front — once here, not again later —
       // so the preview-frame picker and the eventually-uploaded file agree
       // on orientation, and it isn't redundantly re-encoded a second time.
+      // Several at once: added as-is with the default preview area
+      // (usePostImageUpload normalizes orientation itself).
+      if (rawFiles.length > 1) {
+        onImageUpload(rawFiles, rawFiles.map(() => null));
+        return;
+      }
       const files = await Promise.all(rawFiles.map(normalizeImageOrientation));
       resultsRef.current = [];
       cropsRef.current = [];
+      setEditTarget(null);
       setQueue(files);
       advance(0, files);
     },
-    [advance]
+    [advance, onImageUpload]
+  );
+
+  /** Opens an already-added image (by its uploaded URL) in the same
+   *  rotate/trim -> preview-area phases. */
+  const editExisting = useCallback(
+    async (index: number, url: string, crop: ImageCrop | null) => {
+      if (!onImageReplace) return;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const name = url.split("/").pop()?.split("?")[0] || "image";
+        const file = new File([blob], name, { type: blob.type || "image/webp" });
+        resultsRef.current = [];
+        cropsRef.current = [];
+        editModifiedRef.current = false;
+        setEditTarget({ index, crop });
+        setQueue([file]);
+        advance(0, [file]);
+      } catch (err) {
+        console.error("Could not open image for editing:", err);
+        toast({
+          title: t("post.error", { defaultValue: "Fel" }),
+          description: t("post.edit_image_error", { defaultValue: "Kunde inte öppna bilden. Försök igen." }),
+          variant: "destructive",
+        });
+      }
+    },
+    [advance, onImageReplace, t, toast]
   );
 
   const handleCropSave = useCallback(
@@ -145,6 +201,7 @@ export function useImageCropQueue(
       setIsRotating(true);
       try {
         const rotated = await rotateImage(current, direction > 0 ? 90 : -90);
+        editModifiedRef.current = true;
         setQueue((q) => {
           const next = [...q];
           next[currentIndex] = rotated;
@@ -180,6 +237,7 @@ export function useImageCropQueue(
       try {
         const trimmed = await getCroppedImg(source, pixelCrop);
         if (!trimmed) throw new Error("getCroppedImg returned null");
+        editModifiedRef.current = true;
         setQueue((q) => {
           const next = [...q];
           next[currentIndex] = trimmed;
@@ -221,5 +279,9 @@ export function useImageCropQueue(
     handleCropSave,
     handleCropSkip,
     handleCancelAll,
+    editExisting,
+    // The saved preview area is only meaningful while the image itself is
+    // unchanged; after a rotate/trim the picker starts from the default.
+    initialCrop: editTarget && !editModifiedRef.current ? editTarget.crop : null,
   };
 }

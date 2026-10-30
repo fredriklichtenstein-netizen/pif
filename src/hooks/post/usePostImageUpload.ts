@@ -27,13 +27,16 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (im
   const { user } = useGlobalAuth();
   const { t } = useTranslation();
 
-  const handleImageUpload = async (files: File[], crops: (ImageCrop | null)[] = []) => {
+  /** Uploads and returns the results (in order, failures dropped)
+   *  without adding them to the form -- used directly when an existing
+   *  image is replaced after a rotate/trim. */
+  const uploadFiles = async (files: File[], crops: (ImageCrop | null)[] = []): Promise<UploadedImage[]> => {
     setIsAnalyzing(true);
     setUploadProgress(0);
 
     if (!files || files.length === 0) {
       setIsAnalyzing(false);
-      return;
+      return [];
     }
 
     try {
@@ -90,15 +93,14 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (im
       const uploaded = (await Promise.all(uploadPromises)).filter(
         (u): u is UploadedImage => u !== null
       );
-      if (uploaded.length > 0) {
-        onImagesUploaded(uploaded);
-      } else if (files.length > 0 && uploaded.length === 0) {
+      if (uploaded.length === 0) {
         toast({
           title: t('interactions.upload_failed'),
           description: t('interactions.upload_none_succeeded'),
           variant: "destructive",
         });
       }
+      return uploaded;
     } catch (error) {
       console.error("Unexpected error in image upload process:", error);
       toast({
@@ -110,7 +112,13 @@ export function usePostImageUpload({ onImagesUploaded }: { onImagesUploaded: (im
       setIsAnalyzing(false);
       setUploadProgress(0);
     }
+    return [];
   };
 
-  return { handleImageUpload, isAnalyzing, uploadProgress };
+  const handleImageUpload = async (files: File[], crops: (ImageCrop | null)[] = []) => {
+    const uploaded = await uploadFiles(files, crops);
+    if (uploaded.length > 0) onImagesUploaded(uploaded);
+  };
+
+  return { handleImageUpload, uploadFiles, isAnalyzing, uploadProgress };
 }

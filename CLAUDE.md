@@ -186,6 +186,17 @@ Deploy functions with the Management API (`POST /v1/projects/<ref>/functions/dep
 multipart `metadata` + `file`) — the local `supabase functions deploy/download` CLI exits silently
 here.
 
+**Posts open in the feed, not on a page of their own** (since 2026-10-30). The standalone item
+page is gone; `/item/<id>` and `/share/<id>` are redirects (`src/pages/PostRedirect.tsx`) to
+`/feed?post=<id>` (query params like `comment`/`selectReceiver` kept), which looks up the post's
+bucket (archived/completed → archived view), pages until it's loaded, clears filters hiding it,
+then scrolls to and highlights it — or pins it above the feed (`DeepLinkedPost`) when it can't be
+placed (too far down, archived for a logged-out viewer) or says it's gone. Build links with
+`src/lib/feedLinks.ts` (`feedPostPath`); in-app notification `action_url`s are still stored as
+`/item/<id>` and rewritten at render time by `toFeedLink`, and `send-notification-email` builds
+`/feed?post=` links itself. Map pins open a popup whose "Öppna i flödet" button is the only way
+off the map. Drafts are the feed's `?view=drafts` view (`/drafts` redirects there).
+
 **Drafts & scheduled posts** live in `item_drafts` (owner-only RLS), never in `items` — `items`
 is public-read and every "active" filter would leak a new status. `publish_draft()` copies a draft
 into `items` (created_at/stale clock = publish time) and deletes it; cron
@@ -217,7 +228,8 @@ hostnames are served by the Worker in `workers/share` (production `pif-share`, s
 `pif-share-staging`, config in `wrangler.toml`), deployed by `.github/workflows/deploy-share-worker.yml`
 — staging automatically on push, **production only via manual "Run workflow" with
 environment=production**. Crawlers on `/item/<id>` get OG tags built from Supabase REST with the
-anon key; other crawler requests are proxied from the app; browsers get a 302 to the app origin.
+anon key; other crawler requests are proxied from the app; browsers get a 302 to the app origin
+(`/item/<id>` → `/feed?post=<id>`, everything else to the same path).
 Unit tests: `bunx vitest run workers`. Hostnames are attached as **routes** in the dashboard (the
 Custom Domain dialog couldn't find the zones), on a proxied `AAAA <name> 100::` placeholder
 record; CI deploys leave dashboard routes alone. Traps hit while building it:

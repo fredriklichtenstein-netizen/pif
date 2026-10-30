@@ -16,6 +16,7 @@ import { DEMO_MODE } from "@/config/demoMode";
 import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { RefreshOverlay } from "@/components/common/RefreshOverlay";
+import { feedPostPath } from "@/lib/feedLinks";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ export default function Map() {
   }, [announce, refreshPosts, t]);
 
   const handlePostClick = (postId: string) => {
-    navigate(`/item/${postId}`);
+    navigate(feedPostPath(postId));
   };
 
   const handleTokenSubmit = () => {
