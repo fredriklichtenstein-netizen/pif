@@ -3,11 +3,11 @@ import { useTranslation } from "react-i18next";
 import { formatRelativeTime } from "@/utils/formatDate";
 
 interface ItemArchivedBannerProps {
-  /** Only passed for the item's owner -- why it was archived is theirs. */
   reason?: string;
   archivedAt?: string | null;
 }
 
+/** Shown to the item's owner only (see ItemCardWrapperContent). */
 export function ItemArchivedBanner({ reason, archivedAt }: ItemArchivedBannerProps) {
   const { t } = useTranslation();
   const timeAgo = archivedAt ? formatRelativeTime(new Date(archivedAt)) : null;
