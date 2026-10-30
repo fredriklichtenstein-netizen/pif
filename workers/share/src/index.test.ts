@@ -45,17 +45,23 @@ describe("share worker helpers", () => {
     expect(html).toContain('content="Hämtas &amp; lämnas"');
     expect(html).toContain('<meta property="og:image" content="https://app.pif.community/pif-og-image.png">');
     expect(html).toContain('<meta property="og:url" content="https://app.pif.community/item/5">');
-    expect(html).toContain('<a href="https://pif.today/item/5">');
+    expect(html).toContain('<a href="https://pif.today/feed?post=5">');
     expect(html).not.toContain("http-equiv");
     expect(html).not.toContain("<b>");
   });
 });
 
 describe("share worker fetch", () => {
-  it("redirects browsers to the same path on the app origin", async () => {
+  it("redirects browsers to the post in the app's feed", async () => {
     const res = await worker.fetch(req("/item/68?x=1", BROWSER), env);
     expect(res.status).toBe(302);
-    expect(res.headers.get("Location")).toBe("https://pif.today/item/68?x=1");
+    expect(res.headers.get("Location")).toBe("https://pif.today/feed?post=68&x=1");
+  });
+
+  it("redirects other browser paths unchanged", async () => {
+    const res = await worker.fetch(req("/map?x=1", BROWSER), env);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("https://pif.today/map?x=1");
   });
 
   it("serves crawlers item-specific OG HTML", async () => {

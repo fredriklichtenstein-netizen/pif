@@ -337,7 +337,7 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
   if (type === "scheduled_item_published") {
     const itemId = String(data.itemId ?? "");
     const itemTitle = String(data.itemTitle ?? "ditt inlägg");
-    const noun = String(data.itemType ?? "offer") === "offer" ? "piff" : "önskan";
+    const noun = String(data.itemType ?? "offer") === "offer" ? "pif" : "önskan";
     const heading = `Din schemalagda ${noun} "${itemTitle}" är nu publicerad`;
     return {
       subject: heading,
@@ -353,7 +353,7 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
 
   if (type === "scheduled_item_failed") {
     const itemTitle = String(data.itemTitle ?? "ditt inlägg");
-    const noun = String(data.itemType ?? "offer") === "offer" ? "piff" : "önskan";
+    const noun = String(data.itemType ?? "offer") === "offer" ? "pif" : "önskan";
     const heading = `Din schemalagda ${noun} "${itemTitle}" kunde inte publiceras`;
     return {
       subject: heading,
