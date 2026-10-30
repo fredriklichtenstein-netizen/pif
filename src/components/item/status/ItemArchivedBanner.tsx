@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { formatRelativeTime } from "@/utils/formatDate";
 
 interface ItemArchivedBannerProps {
+  /** Only passed for the item's owner -- why it was archived is theirs. */
   reason?: string;
   archivedAt?: string | null;
 }
