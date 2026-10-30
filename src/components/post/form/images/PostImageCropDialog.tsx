@@ -7,6 +7,7 @@ import Cropper from "react-easy-crop";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ImageCrop } from "@/types/post";
+import { useLayoutSettled } from "@/hooks/useLayoutSettled";
 
 interface PostImageCropDialogProps {
   image: string | null;
@@ -37,6 +38,8 @@ export function PostImageCropDialog({
   const [zoom, setZoom] = useState(1);
   const [pixels, setPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
+  const cropAreaRef = React.useRef<HTMLDivElement>(null);
+  const layoutSettled = useLayoutSettled(cropAreaRef, !!image);
 
   React.useEffect(() => {
     setCrop({ x: 0, y: 0 });
@@ -84,8 +87,8 @@ export function PostImageCropDialog({
 
         {image && (
           <div className="space-y-4">
-            <div className="relative h-[320px] w-full bg-muted rounded-md overflow-hidden">
-              <Cropper
+            <div ref={cropAreaRef} className="relative h-[320px] w-full bg-muted rounded-md overflow-hidden">
+              {layoutSettled && <Cropper
                 image={image}
                 crop={crop}
                 zoom={zoom}
@@ -96,7 +99,7 @@ export function PostImageCropDialog({
                 onZoomChange={setZoom}
                 onCropComplete={(_a, p) => setPixels(p)}
                 onMediaLoaded={(size) => setNaturalSize({ width: size.naturalWidth, height: size.naturalHeight })}
-              />
+              />}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">

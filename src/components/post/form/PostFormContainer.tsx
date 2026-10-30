@@ -11,9 +11,17 @@ import { PostFormNavigation } from "./PostFormNavigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { X, AlertCircle, CalendarClock, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { X, AlertCircle, CalendarClock, ChevronDown, FileText } from "lucide-react";
 import { ScheduleDialog } from "@/components/drafts/ScheduleDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { DRAFTS_FEED_PATH } from "@/lib/feedLinks";
 import { useMyDrafts } from "@/hooks/drafts/useMyDrafts";
 import { formatScheduleTime } from "@/lib/schedule";
 import {
@@ -31,6 +39,8 @@ import { usePostFormNavigation } from "@/hooks/post/usePostFormNavigation";
 import { useTranslation } from 'react-i18next';
 import type { ImageCrop } from "@/types/post";
 
+const DRAFTS_MENU_LIMIT = 5;
+
 interface PostFormContainerProps {
   formData: any;
   isSubmitting: boolean;
@@ -38,10 +48,12 @@ interface PostFormContainerProps {
   isEditMode?: boolean;
   /** Editing a saved draft (item_drafts), not a published item. */
   isDraftMode?: boolean;
+  currentDraftId?: number | null;
   scheduledAt?: Date | null;
   onFormSubmit: (e: React.FormEvent) => void;
   /** Omitted when drafts aren't available (editing a live item, demo mode). */
-  onSaveDraft?: () => Promise<boolean>;
+  /** Saves, then navigates to `navigateTo` (default: the feed's drafts view). */
+  onSaveDraft?: (navigateTo?: string) => Promise<boolean>;
   onSchedule?: (scheduledAt: Date) => Promise<boolean>;
   onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void;
   onImagesChange: (images: string[]) => void;
@@ -59,6 +71,7 @@ export function PostFormContainer({
   isAnalyzing,
   isEditMode = false,
   isDraftMode = false,
+  currentDraftId = null,
   scheduledAt = null,
   onFormSubmit,
   onSaveDraft,
@@ -81,7 +94,11 @@ export function PostFormContainer({
   const hasContent =
     !!formData.title?.trim() || !!formData.description?.trim() || (formData.images?.length ?? 0) > 0;
   const { data: myDrafts } = useMyDrafts();
-  const draftCount = canUseDrafts && !isDraftMode ? (myDrafts?.length ?? 0) : 0;
+  // The drafts menu next to "Spara utkast": other drafts, newest first
+  // (fetchMyDrafts' order), capped so the menu stays short.
+  const otherDrafts = canUseDrafts ? (myDrafts ?? []).filter((d) => d.id !== currentDraftId) : [];
+  const menuDrafts = otherDrafts.slice(0, DRAFTS_MENU_LIMIT);
+  const [switchToDraftId, setSwitchToDraftId] = useState<number | null>(null);
   const isRequest = formData.item_type === 'request';
   // When the user deep-links from the feed buttons with ?type=offer|request,
   // skip the type-picker step entirely so they land directly on images.
@@ -239,7 +256,21 @@ export function PostFormContainer({
 
   const handleConfirmCancel = () => {
     setCancelDialogOpen(false);
-    navigate(isDraftMode ? "/drafts" : "/feed");
+    navigate(isDraftMode ? DRAFTS_FEED_PATH : "/feed");
+  };
+
+  /** Opening another draft would drop what's in the form, so ask first. */
+  const handleOpenDraft = (draftId: number) => {
+    if (hasContent) setSwitchToDraftId(draftId);
+    else navigate(`/post/draft/${draftId}`);
+  };
+
+  const handleSwitchDraft = async (save: boolean) => {
+    const target = switchToDraftId;
+    setSwitchToDraftId(null);
+    if (target == null) return;
+    if (save) await onSaveDraft?.(`/post/draft/${target}`);
+    else navigate(`/post/draft/${target}`);
   };
 
   const handleSaveDraftFromCancel = async () => {
@@ -350,16 +381,6 @@ export function PostFormContainer({
         </Button>
       </div>
 
-      {draftCount > 0 && (
-        <Link
-          to="/drafts"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-        >
-          <FileText className="h-4 w-4" />
-          {t('drafts.my_drafts_link', { count: draftCount })}
-        </Link>
-      )}
-
       {isDraftMode && scheduledAt && (
         <Alert className="mb-4">
           <CalendarClock className="h-4 w-4" />
@@ -403,16 +424,53 @@ export function PostFormContainer({
         />
         {canUseDrafts && (
           <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onSaveDraft?.()}
-              disabled={isSubmitting || !hasContent}
-            >
-              <FileText className="h-4 w-4 mr-1.5" />
-              {isDraftMode ? t('drafts.save_changes') : t('drafts.save_draft')}
-            </Button>
+            <div className="inline-flex">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={otherDrafts.length > 0 ? "rounded-r-none" : undefined}
+                onClick={() => onSaveDraft?.()}
+                disabled={isSubmitting || !hasContent}
+              >
+                <FileText className="h-4 w-4 mr-1.5" />
+                {isDraftMode ? t('drafts.save_changes') : t('drafts.save_draft')}
+              </Button>
+              {otherDrafts.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-l-none border-l px-2"
+                      disabled={isSubmitting}
+                      aria-label={t('drafts.open_other_draft')}
+                    >
+                      <span className="text-xs text-muted-foreground mr-1">{otherDrafts.length}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>{t('drafts.open_other_draft')}</DropdownMenuLabel>
+                    {menuDrafts.map((d) => (
+                      <DropdownMenuItem key={d.id} onSelect={() => handleOpenDraft(d.id)} className="gap-2">
+                        {d.scheduled_at ? (
+                          <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
+                        ) : (
+                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="truncate">{d.title?.trim() || t('drafts.untitled')}</span>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => navigate(DRAFTS_FEED_PATH)}>
+                      {t('drafts.show_all_drafts', { count: otherDrafts.length + (isDraftMode ? 1 : 0) })}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
             {finalIsOnFinalStep && onSchedule && (
               <Button
                 type="button"
@@ -439,6 +497,29 @@ export function PostFormContainer({
         />
       )}
 
+
+      <AlertDialog open={switchToDraftId !== null} onOpenChange={(open) => !open && setSwitchToDraftId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('drafts.switch_title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isDraftMode ? t('drafts.switch_message_draft') : t('drafts.switch_message_new')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel>{t('post.cancel_keep_editing')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleSwitchDraft(false)}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              {t('drafts.switch_without_saving')}
+            </AlertDialogAction>
+            <AlertDialogAction onClick={() => handleSwitchDraft(true)}>
+              {t('drafts.switch_save_and_open')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>

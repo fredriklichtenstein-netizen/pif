@@ -31,6 +31,8 @@
     "sort_recent": "Most recently published",
     "sort_distance": "Closest to me",
     "sort_distance_needs_location": "Enable location to sort by distance",
-    "posted_time": "Posted {{time}}"
+    "posted_time": "Posted {{time}}",
+    "drafts": "Drafts",
+    "show_drafts": "Show drafts & scheduled"
   }
 }

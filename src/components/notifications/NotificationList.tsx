@@ -6,6 +6,7 @@ import { MessageSquare, ArrowRight, MailOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toFeedLink } from "@/lib/feedLinks";
 
 type NotificationFilter = "all" | "unread";
 
@@ -220,6 +221,9 @@ export function NotificationList() {
                     ctaLabel,
                   });
                 }
+
+                // Post links open the post where it sits in the feed.
+                if (ctaUrl) ctaUrl = toFeedLink(ctaUrl);
 
                 return (
                   <div

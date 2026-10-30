@@ -198,8 +198,6 @@
     "unscheduled_toast": "Schedule removed – the post is kept as a draft",
     "scheduled_for": "Scheduled to publish {{when}}. Changes you save are included.",
     "publish_now": "Publish now",
-    "my_drafts_link_one": "You have {{count}} draft",
-    "my_drafts_link_other": "You have {{count}} drafts",
     "cancel_save_title": "Save as draft?",
     "cancel_save_message": "Save what you've written as a draft and continue later, or discard it.",
     "cancel_save_changes_message": "You may have unsaved changes in this draft.",
@@ -212,6 +210,14 @@
     "badge_draft": "Draft",
     "badge_scheduled": "Scheduled {{when}}",
     "untitled": "(Untitled)",
+    "open_other_draft": "Open another draft",
+    "show_all_drafts_one": "Show all drafts ({{count}})",
+    "show_all_drafts_other": "Show all drafts ({{count}})",
+    "switch_title": "Open another draft?",
+    "switch_message_draft": "Changes you haven't saved in this draft will be lost unless you save first.",
+    "switch_message_new": "What you've filled in so far will be lost unless you save it as a draft first.",
+    "switch_without_saving": "Open without saving",
+    "switch_save_and_open": "Save and open",
     "last_edited": "Last edited {{when}}",
     "missing": "Needed to publish: {{fields}}",
     "field_title": "title",
@@ -224,9 +230,6 @@
     "delete": "Delete",
     "deleted_toast": "Draft deleted",
     "delete_confirm_title": "Delete this draft?",
-    "delete_confirm_message": "The draft and its images are deleted permanently.",
-    "profile_summary_one": "{{count}} draft, {{scheduled}} scheduled",
-    "profile_summary_other": "{{count}} drafts, {{scheduled}} scheduled",
-    "profile_empty": "No saved drafts"
+    "delete_confirm_message": "The draft and its images are deleted permanently."
   }
 }

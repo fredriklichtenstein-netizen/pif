@@ -27,7 +27,10 @@ export const useItemComments = (itemId: string) => {
   // ?comment=<id> — auto-open the section in that case instead of requiring
   // an extra tap.
   const [searchParams] = useSearchParams();
-  const hasDeepLinkedComment = !!searchParams.get("comment");
+  // In the feed (?post=<id>&comment=<id>) only the targeted card opens.
+  const deepLinkedPost = searchParams.get("post");
+  const hasDeepLinkedComment =
+    !!searchParams.get("comment") && (!deepLinkedPost || deepLinkedPost === String(itemId));
   const [showComments, setShowComments] = useState(hasDeepLinkedComment);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);

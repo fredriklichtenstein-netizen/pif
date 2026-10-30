@@ -198,8 +198,6 @@
     "unscheduled_toast": "Schemaläggningen är borttagen – inlägget finns kvar som utkast",
     "scheduled_for": "Schemalagd att publiceras {{when}}. Ändringar du sparar följer med.",
     "publish_now": "Publicera nu",
-    "my_drafts_link_one": "Du har {{count}} utkast",
-    "my_drafts_link_other": "Du har {{count}} utkast",
     "cancel_save_title": "Spara som utkast?",
     "cancel_save_message": "Spara det du har skrivit som ett utkast och fortsätt senare, eller kasta det.",
     "cancel_save_changes_message": "Du har kanske osparade ändringar i utkastet.",
@@ -212,6 +210,14 @@
     "badge_draft": "Utkast",
     "badge_scheduled": "Schemalagd {{when}}",
     "untitled": "(Utan rubrik)",
+    "open_other_draft": "Öppna ett annat utkast",
+    "show_all_drafts_one": "Visa alla utkast ({{count}})",
+    "show_all_drafts_other": "Visa alla utkast ({{count}})",
+    "switch_title": "Öppna ett annat utkast?",
+    "switch_message_draft": "Ändringar du inte har sparat i det här utkastet försvinner om du inte sparar först.",
+    "switch_message_new": "Det du har fyllt i hittills försvinner om du inte sparar det som utkast först.",
+    "switch_without_saving": "Öppna utan att spara",
+    "switch_save_and_open": "Spara och öppna",
     "last_edited": "Senast ändrad {{when}}",
     "missing": "Saknas för att publicera: {{fields}}",
     "field_title": "rubrik",
@@ -224,9 +230,6 @@
     "delete": "Ta bort",
     "deleted_toast": "Utkastet har tagits bort",
     "delete_confirm_title": "Ta bort utkastet?",
-    "delete_confirm_message": "Utkastet och dess bilder tas bort permanent.",
-    "profile_summary_one": "{{count}} utkast, varav {{scheduled}} schemalagda",
-    "profile_summary_other": "{{count}} utkast, varav {{scheduled}} schemalagda",
-    "profile_empty": "Inga sparade utkast"
+    "delete_confirm_message": "Utkastet och dess bilder tas bort permanent."
   }
 }

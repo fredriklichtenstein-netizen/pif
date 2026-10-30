@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Cropper from 'react-easy-crop';
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import { useLayoutSettled } from "@/hooks/useLayoutSettled";
 
 interface ImageCropperProps {
   image: string;
@@ -21,6 +22,8 @@ export function ImageCropper({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const cropAreaRef = useRef<HTMLDivElement>(null);
+  const layoutSettled = useLayoutSettled(cropAreaRef);
 
   const onCropComplete = async (_croppedArea: any, pixels: any) => {
     setCroppedAreaPixels(pixels);
@@ -34,8 +37,8 @@ export function ImageCropper({
 
   return (
     <div className="space-y-4">
-      <div className="relative h-[300px] w-full">
-        <Cropper
+      <div ref={cropAreaRef} className="relative h-[300px] w-full">
+        {layoutSettled && <Cropper
           image={image}
           crop={crop}
           zoom={zoom}
@@ -45,7 +48,7 @@ export function ImageCropper({
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={onCropComplete}
-        />
+        />}
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">Zoom</label>

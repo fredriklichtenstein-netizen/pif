@@ -42,7 +42,7 @@ export function usePostForm(initialData?: any) {
   const isEditMode = Boolean(initialData?.id);
   const isDraftMode = Boolean(initialData?.draftId);
 
-  const handleSaveDraft = () => saveAsDraft(formData);
+  const handleSaveDraft = (navigateTo?: string) => saveAsDraft(formData, undefined, navigateTo);
   const handleSchedule = (scheduledAt: Date) => saveAsDraft(formData, scheduledAt);
 
   return {

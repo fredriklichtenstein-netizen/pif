@@ -25,6 +25,9 @@ interface Props {
   onCategoryChange: (c: string[]) => void;
   includeArchived: boolean;
   onIncludeArchivedChange: (v: boolean) => void;
+  /** Drafts view (own drafts & scheduled posts instead of the feed). */
+  showDrafts?: boolean;
+  onShowDraftsChange?: (v: boolean) => void;
   onlyInterested: boolean;
   onOnlyInterestedChange: (v: boolean) => void;
   onResetAll: () => void;
@@ -49,6 +52,8 @@ export function FeedFiltersPanel({
   onCategoryChange,
   includeArchived,
   onIncludeArchivedChange,
+  showDrafts = false,
+  onShowDraftsChange,
   onlyInterested,
   onOnlyInterestedChange,
   onResetAll,
@@ -95,6 +100,7 @@ export function FeedFiltersPanel({
     // known too) -- so that's the only term counted here.
     (!distanceIsDefault ? 1 : 0) +
     (includeArchived ? 1 : 0) +
+    (showDrafts ? 1 : 0) +
     (onlyInterested ? 1 : 0) +
     (userFilterActive ? 1 : 0);
 
@@ -312,6 +318,29 @@ export function FeedFiltersPanel({
                 <span
                   className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
                     includeArchived ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </section>
+          )}
+
+          {/* Drafts toggle (authenticated, own-feed only) */}
+          {user && !viewingOtherUser && onShowDraftsChange && (
+            <section className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold">
+                {t("feed.show_drafts", "Visa utkast & schemalagda")}
+              </h3>
+              <button
+                type="button"
+                onClick={() => onShowDraftsChange(!showDrafts)}
+                aria-pressed={showDrafts}
+                className={`relative inline-flex shrink-0 h-6 w-11 rounded-full transition-colors ${
+                  showDrafts ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
+                    showDrafts ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
               </button>
