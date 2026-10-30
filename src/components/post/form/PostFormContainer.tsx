@@ -315,6 +315,12 @@ export function PostFormContainer({
             formData={formData}
             setFormData={setFormData}
             fieldErrors={errorsForStep}
+            onSelectType={(type) => {
+              setFormData({ ...formData, item_type: type });
+              setShowErrors(false);
+              setSummaryError(null);
+              finalNextStep();
+            }}
           />
         );
       case "images":
