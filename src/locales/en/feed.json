@@ -33,6 +33,10 @@
     "sort_distance_needs_location": "Enable location to sort by distance",
     "posted_time": "Posted {{time}}",
     "drafts": "Drafts",
-    "show_drafts": "Show drafts & scheduled"
+    "show_drafts": "Show drafts & scheduled",
+    "linked_post_pinned": "The post you opened is shown here at the top.",
+    "linked_post_missing": "This post is no longer available — it may have been removed.",
+    "linked_post_dismiss": "Close",
+    "linked_post_label": "Linked post"
   }
 }

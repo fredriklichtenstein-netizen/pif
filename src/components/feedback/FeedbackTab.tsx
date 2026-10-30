@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { useTranslation } from "react-i18next";
-import { MessageCircle, X, Loader2, Camera } from "lucide-react";
+import { MessageCircle, X, Loader2, Camera, ImagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,39 @@ import { resolveDisplayName } from "@/utils/displayName";
 import { cn } from "@/lib/utils";
 
 type FeedbackMode = "issue" | "feedback";
+
+interface FeedbackImage {
+  id: string;
+  kind: "screenshot" | "upload";
+  dataUrl: string;
+  filename: string;
+}
+
+/** Matches send-feedback's MAX_ATTACHMENTS. */
+const MAX_IMAGES = 3;
+/** html2canvas can't be cancelled, but we stop waiting for it after this. */
+const CAPTURE_TIMEOUT_MS = 12_000;
+/** Attached photos are downsized to this longest side before sending. */
+const UPLOAD_MAX_DIMENSION = 1600;
+
+/** Re-encodes a picked photo as a reasonably sized JPEG data URL. */
+async function fileToJpegDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, UPLOAD_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } finally {
+    bitmap.close();
+  }
+}
 
 /**
  * Global feedback entry point. Mounted once at the App root.
@@ -32,8 +65,10 @@ export function FeedbackTab() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<FeedbackMode>("issue");
   const [text, setText] = useState("");
-  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [images, setImages] = useState<FeedbackImage[]>([]);
   const [capturing, setCapturing] = useState(false);
+  const [attaching, setAttaching] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Mobile landscape (short height, e.g. a phone rotated) needs a different
@@ -57,8 +92,9 @@ export function FeedbackTab() {
   const reset = () => {
     setMode("issue");
     setText("");
-    setScreenshot(null);
+    setImages([]);
     setCapturing(false);
+    setAttaching(false);
     setSubmitting(false);
   };
 
@@ -102,6 +138,7 @@ export function FeedbackTab() {
   }, [open, submitting]);
 
   const handleCapture = async () => {
+    if (images.length >= MAX_IMAGES) return;
     setCapturing(true);
     try {
       // x/y/width/height constrain html2canvas to exactly the current
@@ -116,19 +153,47 @@ export function FeedbackTab() {
       // that clone. Capturing only the actual viewport avoids the
       // multi-page clone entirely, since there's exactly one viewport's
       // worth of content to render.
-      const canvas = await html2canvas(document.body, {
+      //
+      // The capture used to hang ("stuck loading"): html2canvas still
+      // clones and waits on EVERY element of the page, including each
+      // off-screen feed image (lazy ones never load in the clone, and each
+      // waits out imageTimeout -- 15 s by default), at full device pixel
+      // ratio. Now off-screen elements are skipped, image waits are capped,
+      // it renders at scale 1 (also keeps the email attachment small), and
+      // we give up after CAPTURE_TIMEOUT_MS instead of spinning forever.
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const isOffscreen = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) return false;
+        return r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw;
+      };
+      const capture = html2canvas(document.body, {
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
+        scale: 1,
+        imageTimeout: 4000,
         x: window.scrollX,
         y: window.scrollY,
-        width: window.innerWidth,
-        height: window.innerHeight,
+        width: vw,
+        height: vh,
         ignoreElements: (el) =>
-          el instanceof HTMLElement && el.closest("[data-feedback-panel]") !== null,
+          (el instanceof HTMLElement && el.closest("[data-feedback-panel]") !== null) ||
+          isOffscreen(el),
       });
+      const canvas = await Promise.race([
+        capture,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Screenshot timed out")), CAPTURE_TIMEOUT_MS),
+        ),
+      ]);
       const dataUrl = canvas.toDataURL("image/png");
-      setScreenshot(dataUrl);
+      setImages((prev) =>
+        prev.length >= MAX_IMAGES
+          ? prev
+          : [...prev, { id: crypto.randomUUID(), kind: "screenshot", dataUrl, filename: `skarmbild-${prev.length + 1}.png` }],
+      );
     } catch (err) {
       console.warn("html2canvas failed", err);
       toast({
@@ -137,6 +202,40 @@ export function FeedbackTab() {
       });
     } finally {
       setCapturing(false);
+    }
+  };
+
+  const handleAttach = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setAttaching(true);
+    try {
+      const room = MAX_IMAGES - images.length;
+      const picked = Array.from(files).filter((f) => f.type.startsWith("image/"));
+      if (picked.length > room) {
+        toast({ title: t("interactions.feedback.images_limit", { max: MAX_IMAGES }) });
+      }
+      const added: FeedbackImage[] = [];
+      for (const file of picked.slice(0, Math.max(0, room))) {
+        try {
+          added.push({
+            id: crypto.randomUUID(),
+            kind: "upload",
+            dataUrl: await fileToJpegDataUrl(file),
+            filename: "",
+          });
+        } catch (err) {
+          console.warn("Could not read attached image", err);
+          toast({ title: t("interactions.feedback.attach_failed"), variant: "destructive" });
+        }
+      }
+      setImages((prev) =>
+        [...prev, ...added].slice(0, MAX_IMAGES).map((img, i) =>
+          img.kind === "upload" ? { ...img, filename: `bild-${i + 1}.jpg` } : img,
+        ),
+      );
+    } finally {
+      setAttaching(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -166,9 +265,10 @@ export function FeedbackTab() {
         }
       }
 
-      const screenshotBase64 = screenshot
-        ? screenshot.replace(/^data:image\/png;base64,/, "")
-        : undefined;
+      const attachments = images.map((img) => ({
+        filename: img.filename,
+        content: img.dataUrl.replace(/^data:image\/[a-z]+;base64,/, ""),
+      }));
 
       const { error } = await supabase.functions.invoke("send-feedback", {
         body: {
@@ -176,7 +276,7 @@ export function FeedbackTab() {
           feedback_type: mode,
           sender_name: senderName,
           sender_email: senderEmail,
-          screenshot_base64: screenshotBase64,
+          attachments,
         },
       });
 
@@ -238,51 +338,63 @@ export function FeedbackTab() {
     </div>
   );
 
+  const busy = capturing || attaching;
+  const full = images.length >= MAX_IMAGES;
   const screenshotArea = (
     <div className="space-y-2">
-      {screenshot ? (
-        <div className="flex items-start gap-3 rounded-md border border-input p-2">
-          <img
-            src={screenshot}
-            alt="Screenshot preview"
-            className="h-16 w-16 rounded object-cover"
-          />
-          <div className="flex-1 text-sm">
-            <div className="font-medium">
-              {t("interactions.feedback.screenshot_attached")}
+      {images.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {images.map((img) => (
+            <div key={img.id} className="relative">
+              <img
+                src={img.dataUrl}
+                alt={
+                  img.kind === "screenshot"
+                    ? t("interactions.feedback.screenshot_attached")
+                    : t("interactions.feedback.image_attached")
+                }
+                className="h-16 w-16 rounded border border-input object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => setImages((prev) => prev.filter((i) => i.id !== img.id))}
+                aria-label={t("interactions.feedback.remove_image")}
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background shadow"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </div>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setScreenshot(null)}
-            aria-label={t("interactions.feedback.remove_screenshot")}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          ))}
         </div>
-      ) : (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCapture}
-            disabled={capturing}
-            className="w-full"
-          >
-            {capturing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Camera className="h-4 w-4" />
-            )}
-            {t("interactions.feedback.capture_button")}
-          </Button>
-          <p className="text-xs text-muted-foreground">
-            {t("interactions.feedback.capture_hint")}
-          </p>
-        </>
       )}
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" variant="outline" onClick={handleCapture} disabled={busy || full}>
+          {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+          {t("interactions.feedback.capture_button")}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={busy || full}
+        >
+          {attaching ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+          {t("interactions.feedback.attach_button")}
+        </Button>
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => handleAttach(e.target.files)}
+      />
+      <p className="text-xs text-muted-foreground">
+        {full
+          ? t("interactions.feedback.images_limit", { max: MAX_IMAGES })
+          : t("interactions.feedback.capture_hint")}
+      </p>
     </div>
   );
 

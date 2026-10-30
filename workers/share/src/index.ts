@@ -67,7 +67,7 @@ export interface Item {
   item_type: string | null;
 }
 
-// Mirrors ItemDetailHead.tsx so crawlers see what the app's <head> says.
+// Item-specific OG tags (the app itself only has generic ones in index.html).
 // No <meta http-equiv="refresh">: Facebook follows it and scrapes the app's
 // generic tags instead. Only crawlers ever get this page (browsers get a 302).
 // Browsers open a shared post where it sits in the feed (public, like the

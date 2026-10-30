@@ -17,6 +17,8 @@ interface PostFormImagesProps {
   imageCrops?: (ImageCrop | null)[];
   isAnalyzing: boolean;
   onImageUpload: (files: File[], crops: (ImageCrop | null)[]) => void;
+  /** An added image was edited; `file` is null when only its preview area changed. */
+  onImageReplace: (index: number, file: File | null, crop: ImageCrop | null) => void;
   onImagesChange: (images: string[]) => void;
   onImageCropsChange: (crops: (ImageCrop | null)[]) => void;
   itemType?: 'offer' | 'request';
@@ -28,6 +30,7 @@ export function PostFormImages({
   imageCrops = [],
   isAnalyzing,
   onImageUpload,
+  onImageReplace,
   onImagesChange,
   onImageCropsChange,
   itemType = 'offer',
@@ -36,11 +39,12 @@ export function PostFormImages({
   const { t } = useTranslation();
   const isRequest = itemType === 'request';
 
-  // Route every newly selected file through an optional rotate/trim step
-  // (PostImageTrimDialog) THEN a preview-area picker (PostImageCropDialog),
-  // Trello C4 -- see useImageCropQueue for which of those actually alter
-  // the file vs. just record metadata, and why they're two sequential
-  // steps rather than one.
+  // Route a single newly selected file through an optional rotate/trim
+  // step (PostImageTrimDialog) THEN a preview-area picker
+  // (PostImageCropDialog), Trello C4 -- see useImageCropQueue for which of
+  // those actually alter the file vs. just record metadata, and why
+  // they're two sequential steps rather than one. Several files at once
+  // are added as-is; each can then be edited from the list.
   const {
     handleImageUpload: wrappedOnImageUpload,
     cropImage,
@@ -54,7 +58,9 @@ export function PostFormImages({
     handleCropSave,
     handleCropSkip,
     handleCancelAll,
-  } = useImageCropQueue(onImageUpload);
+    editExisting,
+    initialCrop,
+  } = useImageCropQueue(onImageUpload, onImageReplace);
 
   const {
     isDragOver,
@@ -130,6 +136,7 @@ export function PostFormImages({
         onDragEnd={handleImageDragEnd}
         onMoveImage={moveImage}
         onRemoveImage={removeImage}
+        onEditImage={(index) => editExisting(index, images[index], imageCrops[index] ?? null)}
       />
 
       <ImageFormTips isRequest={isRequest} hasImages={images.length > 0} />
@@ -171,6 +178,7 @@ export function PostFormImages({
       <PostImageCropDialog
         image={phase === 'preview' ? cropImage : null}
         progress={cropProgress}
+        initialCrop={initialCrop}
         onSave={handleCropSave}
         onSkip={handleCropSkip}
         onCancel={handleCancelAll}

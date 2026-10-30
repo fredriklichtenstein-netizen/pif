@@ -33,6 +33,10 @@
     "sort_distance_needs_location": "Aktivera plats för att sortera efter avstånd",
     "posted_time": "Publicerad {{time}}",
     "drafts": "Utkast",
-    "show_drafts": "Visa utkast & schemalagda"
+    "show_drafts": "Visa utkast & schemalagda",
+    "linked_post_pinned": "Inlägget du öppnade visas här överst.",
+    "linked_post_missing": "Inlägget finns inte längre — det kan ha tagits bort.",
+    "linked_post_dismiss": "Stäng",
+    "linked_post_label": "Länkat inlägg"
   }
 }

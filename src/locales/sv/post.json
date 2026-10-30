@@ -147,6 +147,7 @@
     "rotate_left": "Rotera moturs",
     "rotate_right": "Rotera medurs",
     "rotate_error": "Kunde inte rotera bilden. Försök igen.",
+    "edit_image_error": "Kunde inte öppna bilden. Försök igen.",
     "trim_step_title": "Rotera och beskär (valfritt)",
     "trim_step_description": "Räta upp bilden om den är sned, och dra i hörnen för att beskära den i valfritt format. Båda är permanenta ändringar. Hoppa över om du inte vill ändra bilden.",
     "skip_trim": "Hoppa över",

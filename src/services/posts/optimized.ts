@@ -251,3 +251,23 @@ memoryOptimizer.addMemoryPressureHandler(() => {
   // Aggressive cleanup under memory pressure
   clearPostsCache();
 });
+
+/**
+ * One post in feed shape, whatever its status -- for a /feed?post=<id>
+ * link the feed couldn't show in place (archived for a logged-out viewer,
+ * or too far down). Null when it doesn't exist.
+ */
+export const getPostById = async (id: string, isAuthenticated = false): Promise<Post | null> => {
+  if (!/^\d+$/.test(id)) return null;
+  const data = await OptimizedQueries.getPosts({ itemId: Number(id), isAuthenticated });
+  const item = Array.isArray(data) ? (data as any[])[0] : null;
+  if (!item) return null;
+  const interactionsMap = await OptimizedQueries.getInteractionCounts([item.id]);
+  const counts = interactionsMap.get(item.id) || { likesCount: 0, interestsCount: 0, commentsCount: 0 };
+  try {
+    useInitialCountsStore.getState().setBulkCounts([{ itemId: item.id, ...counts }]);
+  } catch {
+    // Non-fatal — counts load lazily.
+  }
+  return transformPostData(item, counts);
+};

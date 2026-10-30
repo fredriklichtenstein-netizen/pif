@@ -121,6 +121,30 @@ const escapeHtml = (s: string) =>
       })[c]!,
   );
 
+const MAX_ATTACHMENTS = 3;
+// Base64 length cap per image (~6 MB decoded); the client downsizes photos
+// well below this.
+const MAX_ATTACHMENT_BASE64 = 8_000_000;
+const ATTACHMENT_NAME = /^[a-z0-9_-]{1,40}\.(png|jpe?g|webp)$/i;
+
+function parseAttachments(body: Record<string, unknown>): { filename: string; content: string }[] {
+  const out: { filename: string; content: string }[] = [];
+  const list = Array.isArray(body.attachments) ? body.attachments : [];
+  for (const raw of list) {
+    if (out.length >= MAX_ATTACHMENTS) break;
+    const a = raw as { filename?: unknown; content?: unknown };
+    const filename = String(a?.filename ?? "");
+    const content = String(a?.content ?? "");
+    if (!ATTACHMENT_NAME.test(filename) || !content || content.length > MAX_ATTACHMENT_BASE64) continue;
+    out.push({ filename, content });
+  }
+  if (!out.length && body.screenshot_base64) {
+    const content = String(body.screenshot_base64);
+    if (content.length <= MAX_ATTACHMENT_BASE64) out.push({ filename: "skarmbild.png", content });
+  }
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -155,9 +179,11 @@ serve(async (req) => {
     const senderEmail = body.sender_email
       ? String(body.sender_email).slice(0, 320)
       : "";
-    const screenshotBase64 = body.screenshot_base64
-      ? String(body.screenshot_base64)
-      : "";
+    // Up to MAX_ATTACHMENTS images (a screenshot and/or attached photos),
+    // as `attachments: [{ filename, content }]` with base64 content.
+    // `screenshot_base64` is the older single-screenshot field, still
+    // accepted from clients that haven't reloaded.
+    const attachments = parseAttachments(body);
 
     if (!feedbackText) return json(400, { error: "Missing feedback_text" });
 
@@ -178,8 +204,8 @@ serve(async (req) => {
     // bloats the entire email's payload (explains "loads slowly on
     // mobile"). A real attachment is universally supported and keeps the
     // HTML body itself small.
-    const screenshotNote = screenshotBase64
-      ? `<p>📎 En skärmbild är bifogad mejlet.</p>`
+    const screenshotNote = attachments.length
+      ? `<p>📎 ${attachments.length === 1 ? "En bild är bifogad" : `${attachments.length} bilder är bifogade`} mejlet.</p>`
       : "";
 
     const html = `
@@ -206,9 +232,7 @@ serve(async (req) => {
         subject,
         html,
         reply_to: senderEmail || undefined,
-        ...(screenshotBase64
-          ? { attachments: [{ filename: "skarmbild.png", content: screenshotBase64 }] }
-          : {}),
+        ...(attachments.length ? { attachments } : {}),
       }),
     });
 

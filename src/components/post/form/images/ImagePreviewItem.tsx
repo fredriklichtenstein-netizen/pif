@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { X, GripVertical, ChevronUp, ChevronDown, Crop } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface ImagePreviewItemProps {
@@ -19,6 +19,8 @@ interface ImagePreviewItemProps {
   onDragEnd: (e: React.DragEvent) => void;
   onMoveImage: (fromIndex: number, toIndex: number) => void;
   onRemoveImage: (index: number) => void;
+  /** Rotate/trim + choose the preview area for this image. */
+  onEditImage: (index: number) => void;
 }
 
 export function ImagePreviewItem({
@@ -36,6 +38,7 @@ export function ImagePreviewItem({
   onDragEnd,
   onMoveImage,
   onRemoveImage,
+  onEditImage,
 }: ImagePreviewItemProps) {
   const { t } = useTranslation();
   const canDrag = !isRequest && totalImages > 1;
@@ -80,11 +83,18 @@ export function ImagePreviewItem({
       )}
 
       <div className="flex">
-        <img
-          src={image}
-          alt={imageLabel}
-          className="w-24 h-24 object-cover"
-        />
+        <button
+          type="button"
+          onClick={() => onEditImage(index)}
+          className="shrink-0"
+          aria-label={t('interactions.edit_image')}
+        >
+          <img
+            src={image}
+            alt={imageLabel}
+            className="w-24 h-24 object-cover"
+          />
+        </button>
         <div className="flex-1 p-3 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">
@@ -96,6 +106,17 @@ export function ImagePreviewItem({
           </div>
           
           <div className="flex items-center space-x-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => onEditImage(index)}
+              aria-label={t('interactions.edit_image')}
+              title={t('interactions.edit_image')}
+            >
+              <Crop className="h-4 w-4" />
+            </Button>
             {canDrag && (
               <>
                 <Button

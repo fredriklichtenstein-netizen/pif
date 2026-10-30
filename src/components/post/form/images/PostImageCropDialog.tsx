@@ -12,6 +12,8 @@ import { useLayoutSettled } from "@/hooks/useLayoutSettled";
 interface PostImageCropDialogProps {
   image: string | null;
   progress: { current: number; total: number } | null;
+  /** Existing preview area (editing an added image) to start from. */
+  initialCrop?: ImageCrop | null;
   /** Fractions (0-1) of the image's own dimensions — never a re-encoded file. */
   onSave: (crop: ImageCrop) => void;
   onSkip: () => void;
@@ -29,6 +31,7 @@ interface PostImageCropDialogProps {
 export function PostImageCropDialog({
   image,
   progress,
+  initialCrop = null,
   onSave,
   onSkip,
   onCancel,
@@ -98,6 +101,16 @@ export function PostImageCropDialog({
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={(_a, p) => setPixels(p)}
+                initialCroppedAreaPercentages={
+                  initialCrop
+                    ? {
+                        x: initialCrop.x * 100,
+                        y: initialCrop.y * 100,
+                        width: initialCrop.width * 100,
+                        height: initialCrop.height * 100,
+                      }
+                    : undefined
+                }
                 onMediaLoaded={(size) => setNaturalSize({ width: size.naturalWidth, height: size.naturalHeight })}
               />}
             </div>

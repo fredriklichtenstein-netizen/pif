@@ -29,6 +29,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
     profileDefaults,
     setFormData,
     handleImageUpload,
+    handleImageReplace,
     handleImagesChange,
     handleImageCropsChange,
     handleMeasurementChange,
@@ -122,6 +123,7 @@ const PostForm = ({ initialData }: PostFormProps = {}) => {
         onSaveDraft={DEMO_MODE ? undefined : handleSaveDraft}
         onSchedule={DEMO_MODE ? undefined : handleSchedule}
         onImageUpload={handleImageUpload}
+        onImageReplace={handleImageReplace}
         onImagesChange={handleImagesChange}
         onImageCropsChange={handleImageCropsChange}
         onMeasurementChange={handleMeasurementChange}

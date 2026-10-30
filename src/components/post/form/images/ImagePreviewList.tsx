@@ -16,6 +16,7 @@ interface ImagePreviewListProps {
   onDragEnd: (e: React.DragEvent) => void;
   onMoveImage: (fromIndex: number, toIndex: number) => void;
   onRemoveImage: (index: number) => void;
+  onEditImage: (index: number) => void;
 }
 
 export function ImagePreviewList({
@@ -31,6 +32,7 @@ export function ImagePreviewList({
   onDragEnd,
   onMoveImage,
   onRemoveImage,
+  onEditImage,
 }: ImagePreviewListProps) {
   if (images.length === 0) {
     return null;
@@ -57,6 +59,7 @@ export function ImagePreviewList({
             index={index}
             isRequest={isRequest}
             totalImages={images.length}
+            onEditImage={onEditImage}
             draggedIndex={draggedIndex}
             dropTargetIndex={dropTargetIndex}
             onDragStart={onDragStart}

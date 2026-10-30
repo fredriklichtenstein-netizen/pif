@@ -89,6 +89,7 @@ export function ImageUploadArea({
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple={!isRequest}
           onChange={onImageUpload}
           className="hidden"
         />

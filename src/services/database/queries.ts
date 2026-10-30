@@ -16,6 +16,8 @@ export class OptimizedQueries {
     categories?: string[];
     coordinates?: { lat: number; lng: number; radius?: number };
     includeArchived?: boolean;
+    /** One specific item, whatever its status (ignores includeArchived). */
+    itemId?: number;
     /**
      * Reactive auth state from the caller (e.g. useAuthStore), not a fresh
      * supabase.auth.getSession() call made here. This function fires from
@@ -51,7 +53,9 @@ export class OptimizedQueries {
             visibility_radius_km
           `);
 
-        if (options.includeArchived) {
+        if (options.itemId != null) {
+          query = query.eq('id', options.itemId);
+        } else if (options.includeArchived) {
           query = query
             .in('pif_status', ['archived', 'completed'])
             .order('archived_at', { ascending: false, nullsFirst: false });

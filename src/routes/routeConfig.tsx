@@ -51,8 +51,7 @@ const ResetPassword = enhancedLazy(() => import("@/pages/ResetPassword"));
 const CreateProfile = enhancedLazy(() => import("@/pages/CreateProfile"));
 const ProfileEdit = enhancedLazy(() => import("@/pages/ProfileEdit"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
-const ItemDetail = enhancedLazy(() => import("@/pages/ItemDetail"));
-const ShareRedirect = enhancedLazy(() => import("@/pages/ShareRedirect"));
+const PostRedirect = enhancedLazy(() => import("@/pages/PostRedirect"));
 const Privacy = enhancedLazy(() => import("@/pages/Privacy"));
 
 const withSuspense = (Component: React.ComponentType) => (
@@ -70,8 +69,8 @@ export const publicRoutes = [
   { path: "/auth", element: withSuspense(Auth) },
   { path: "/email-confirmation", element: withSuspense(EmailConfirmation) },
   { path: "/reset-password", element: withSuspense(ResetPassword) },
-  { path: "/item/:id", element: gated(withSuspense(ItemDetail)) },
-  { path: "/share/:id", element: withSuspense(ShareRedirect) },
+  { path: "/item/:id", element: withSuspense(PostRedirect) },
+  { path: "/share/:id", element: withSuspense(PostRedirect) },
   { path: "/privacy", element: withSuspense(Privacy) },
   { path: "*", element: withSuspense(NotFound) },
 ];
