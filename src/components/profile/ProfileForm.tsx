@@ -15,7 +15,7 @@ interface ProfileFormData {
   address: string;
   dateOfBirth?: Date;
   countryCode: string;
-  pickupPreference?: 'meetup' | 'leave_at_door' | '';
+  pickupPreference?: 'meetup' | 'leave_at_door' | 'meet_elsewhere' | '';
   pickupAddress?: string;
   pickupAddressMode?: 'primary' | 'custom';
   pickupDoorCode?: string;

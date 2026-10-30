@@ -67,6 +67,7 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           createdAt={post.createdAt}
           archived_at={post.archived_at}
           archived_reason={post.archived_reason}
+          pickup_preference={post.pickup_preference}
           likesCount={post.likesCount}
           commentsCount={post.commentsCount}
           interestsCount={post.interestsCount}

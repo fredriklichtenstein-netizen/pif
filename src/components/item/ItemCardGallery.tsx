@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { optimizeImageUrl, preloadImages } from "@/utils/image";
 import { getCropPreviewStyle } from "@/utils/image/cropPreview";
 import { useCategoryTranslations } from "@/utils/translations/categories";
@@ -9,6 +9,7 @@ import type { ImageCrop } from "@/types/post";
 import { useTranslation } from "react-i18next";
 import { ImageLightbox } from "./ImageLightbox";
 import { ItemTypeBadge } from "./ItemTypeBadge";
+import { Badge } from "@/components/ui/badge";
 
 interface ItemCardGalleryProps {
   images: string[];
@@ -17,11 +18,13 @@ interface ItemCardGalleryProps {
   title: string;
   category: string;
   item_type?: ItemType;
+  /** The piffer can hand over somewhere other than the pif's address. */
+  canMeetUp?: boolean;
 }
 
 const SWIPE_THRESHOLD = 50;
 
-export function ItemCardGallery({ images, imageCrops = [], title, category, item_type }: ItemCardGalleryProps) {
+export function ItemCardGallery({ images, imageCrops = [], title, category, item_type, canMeetUp = false }: ItemCardGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -132,6 +135,15 @@ export function ItemCardGallery({ images, imageCrops = [], title, category, item
       
       {/* Type Badge */}
       <ItemTypeBadge item_type={item_type} />
+
+      {canMeetUp && (
+        <div className="absolute top-3 right-3 z-10">
+          <Badge className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium shadow-lg bg-white/90 text-foreground hover:bg-white/90">
+            <MapPin className="h-3.5 w-3.5" />
+            {t('post.badge_can_meet_up')}
+          </Badge>
+        </div>
+      )}
       
       
       {/* Title and Category Overlay */}
