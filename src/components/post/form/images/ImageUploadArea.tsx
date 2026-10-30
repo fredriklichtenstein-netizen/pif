@@ -42,7 +42,11 @@ export function ImageUploadArea({
         isDragOver 
           ? "border-primary bg-primary/5" 
           : "border-muted-foreground/25 hover:border-primary/50"
-      }`}
+      } cursor-pointer`}
+      // The whole box opens the picker, as its "klicka för att välja" says --
+      // not only the button. The buttons stop propagation so one tap opens
+      // one picker.
+      onClick={onClick}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -65,7 +69,7 @@ export function ImageUploadArea({
           <Button 
             type="button" 
             variant="outline" 
-            onClick={onClick}
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
             className="flex items-center space-x-2"
           >
             <Upload className="h-4 w-4" />
@@ -76,7 +80,7 @@ export function ImageUploadArea({
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={(e) => { e.stopPropagation(); cameraInputRef.current?.click(); }}
               className="flex items-center space-x-2"
             >
               <Camera className="h-4 w-4" />
@@ -90,6 +94,9 @@ export function ImageUploadArea({
           type="file"
           accept="image/*"
           multiple={!isRequest}
+          // .click() on a hidden input bubbles to the box's onClick and
+          // would open the picker a second time.
+          onClick={(e) => e.stopPropagation()}
           onChange={onImageUpload}
           className="hidden"
         />
@@ -98,7 +105,7 @@ export function ImageUploadArea({
           type="file"
           accept="image/*"
           capture="environment"
-          onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
+          onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).value = ''; }}
           onChange={onImageUpload}
           className="hidden"
         />

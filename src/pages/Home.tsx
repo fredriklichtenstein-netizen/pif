@@ -109,12 +109,20 @@ export default function Home() {
           {/* Content over background */}
           <div className="relative text-center py-8 sm:py-12 lg:py-16">
             {/* PiF Logo */}
+            {/* Tapping the logo starts a post (tester feedback) */}
             <div className="flex justify-center mb-6">
-              <img 
-                src="/lovable-uploads/a139121f-d6c7-4487-bd2e-4f530bea4e21.png"
-                alt="Pay it Forward Logo"
-                className="h-28 sm:h-36 lg:h-44 w-auto object-contain"
-              />
+              <button
+                type="button"
+                onClick={() => navigate("/post")}
+                aria-label={t('nav.post')}
+                className="rounded-3xl transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <img
+                  src="/lovable-uploads/a139121f-d6c7-4487-bd2e-4f530bea4e21.png"
+                  alt="Pay it Forward Logo"
+                  className="h-28 sm:h-36 lg:h-44 w-auto object-contain"
+                />
+              </button>
             </div>
             <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 max-w-sm sm:max-w-xl lg:max-w-2xl mx-auto leading-relaxed px-[10px]">
               {t('home.hero_description')}
@@ -135,20 +143,29 @@ export default function Home() {
             {t('home.concepts_intro')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-100 shadow-sm">
+            {/* The concept cards start a post of that type (skips the type step) */}
+            <button
+              type="button"
+              onClick={() => navigate("/post?type=offer")}
+              className="text-left bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-100 shadow-sm transition-colors hover:border-green-300 active:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
+            >
               <div className="flex items-center space-x-3 mb-2">
                 <span className="text-2xl">🎁</span>
                 <h3 className="font-semibold text-green-700">{t('home.concept_pif_title')}</h3>
               </div>
               <p className="text-sm text-gray-600">{t('home.concept_pif_description')}</p>
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-amber-100 shadow-sm">
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/post?type=request")}
+              className="text-left bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-amber-100 shadow-sm transition-colors hover:border-amber-300 active:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
               <div className="flex items-center space-x-3 mb-2">
                 <span className="text-2xl">✨</span>
                 <h3 className="font-semibold text-amber-700">{t('home.concept_wish_title')}</h3>
               </div>
               <p className="text-sm text-gray-600">{t('home.concept_wish_description')}</p>
-            </div>
+            </button>
           </div>
         </div>
         
