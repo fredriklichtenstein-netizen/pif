@@ -13,7 +13,7 @@ export function HowItWorksBanner() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-white/80 backdrop-blur-sm border border-green-100 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-white transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground shadow-md ring-2 ring-primary/20 hover:bg-primary/90 transition-colors"
       >
         <Sparkles className="h-4 w-4" />
         {t("home.how_it_works_banner")}

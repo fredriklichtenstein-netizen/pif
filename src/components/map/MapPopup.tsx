@@ -3,22 +3,20 @@ import type { Post } from "@/types/post";
 
 interface MapPopupProps {
   post: Post;
-  /** Label of the button that opens the post in the feed. */
-  ctaLabel: string;
   displayCoordinates: {
     lng: number;
     lat: number;
   };
 }
 
-export const createMapPopup = ({ post, ctaLabel, displayCoordinates }: MapPopupProps): mapboxgl.Popup => {
+export const createMapPopup = ({ post, displayCoordinates }: MapPopupProps): mapboxgl.Popup => {
   const popup = new mapboxgl.Popup({
     offset: 20,
     closeButton: false,
     closeOnClick: true,
     closeOnMove: false,
     anchor: 'bottom',
-    maxWidth: '200px',
+    maxWidth: '180px',
     className: 'map-item-popup enhanced-popup',
   });
 
@@ -59,20 +57,17 @@ export const createMapPopup = ({ post, ctaLabel, displayCoordinates }: MapPopupP
     : `<div style="width:100%;height:100%;background:${fallbackBg};"></div>`;
 
   const safeTitle = escapeHtml(post.title || '');
-  const safeCta = escapeHtml(ctaLabel);
 
   popup.setHTML(`
-    <div style="
+    <div class="map-popup-tap" style="
       width:160px;
+      height:160px;
+      position:relative;
       border-radius:16px;
       overflow:hidden;
       box-shadow:0 8px 32px rgba(0,0,0,0.18);
       background:white;
-    ">
-    <div style="
-      width:160px;
-      height:160px;
-      position:relative;
+      cursor:pointer;
     ">
       ${innerContent}
       <div style="
@@ -115,19 +110,6 @@ export const createMapPopup = ({ post, ctaLabel, displayCoordinates }: MapPopupP
           text-shadow:0 1px 2px rgba(0,0,0,0.4);
         ">${safeTitle}</span>
       </div>
-    </div>
-    <button type="button" class="map-popup-cta" style="
-      display:block;
-      width:100%;
-      min-height:40px;
-      padding:8px 10px;
-      border:0;
-      background:${typeColor};
-      color:white;
-      font-size:13px;
-      font-weight:600;
-      cursor:pointer;
-    ">${safeCta} →</button>
     </div>
   `);
 

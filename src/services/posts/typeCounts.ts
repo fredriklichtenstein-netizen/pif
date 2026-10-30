@@ -7,12 +7,12 @@ export interface FeedTypeCounts {
   wishes: number;
 }
 
-const applyBaseFilter = (query: any, includeArchived: boolean, userId?: string) => {
-  query = includeArchived
-    ? query.in('pif_status', ['archived', 'completed'])
-    : query
-        .or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)')
-        .is('archived_at', null);
+const applyBaseFilter = (query: any, includeInactive: boolean, userId?: string) => {
+  if (!includeInactive) {
+    query = query
+      .or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)')
+      .is('archived_at', null);
+  }
   if (userId) query = query.eq('user_id', userId);
   return query;
 };
@@ -28,19 +28,19 @@ const applyBaseFilter = (query: any, includeArchived: boolean, userId?: string) 
  * totals for the current archived/owner scope.
  */
 export const fetchFeedTypeCounts = async (
-  includeArchived: boolean,
+  includeInactive: boolean,
   userId?: string,
 ): Promise<FeedTypeCounts> => {
   const [{ count: all, error: allError }, { count: wishes, error: wishesError }] =
     await Promise.all([
       applyBaseFilter(
         (supabase.from('items') as any).select('id', { count: 'exact', head: true }),
-        includeArchived,
+        includeInactive,
         userId,
       ),
       applyBaseFilter(
         (supabase.from('items') as any).select('id', { count: 'exact', head: true }),
-        includeArchived,
+        includeInactive,
         userId,
       ).eq('item_type', 'request'),
     ]);

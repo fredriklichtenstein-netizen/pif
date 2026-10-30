@@ -6,7 +6,6 @@ import { createMarkerElement } from "../MapMarkerElement";
 import { createClusterElement } from "../ClusterMarkerElement";
 import { useRefreshSyncStore } from "@/stores/refreshSyncStore";
 import type { EnhancedPost } from "./types";
-import i18n from "@/i18n";
 
 /** True while a feed/map refresh is in flight. Read synchronously
  *  inside Mapbox event callbacks (which live outside React). */
@@ -31,9 +30,9 @@ export function useMarkerFactory({
   currentUserId,
 }: UseMarkerFactoryArgs) {
   // Track the currently-open preview popup and which post it belongs
-  // to: a second tap on the same marker closes it, a tap on a different
-  // marker replaces it. Only the popup's "Öppna i flödet" button leaves
-  // the map.
+  // to: a second tap on the same marker (or a tap on the thumbnail)
+  // expands it into the post card overlay (Map.tsx), a tap on a
+  // different marker replaces it.
   const openPopupRef = useRef<{
     popup: mapboxgl.Popup;
     postId: string;
@@ -82,9 +81,10 @@ export function useMarkerFactory({
           if (isRefreshNow()) return;
 
           const current = openPopupRef.current;
-          // Second tap on the marker whose popup is already open → close it.
+          // Second tap on the marker whose popup is already open → expand.
           if (current && current.postId === post.id) {
             closeOpenPopup();
+            onPostClick(post.id);
             return;
           }
 
@@ -93,19 +93,15 @@ export function useMarkerFactory({
           closeOpenPopup();
           const popup = createMapPopup({
             post,
-            ctaLabel: i18n.t("map.open_in_feed"),
             displayCoordinates: privacyCoordinates,
           });
           popup.addTo(map);
           openPopupRef.current = { popup, postId: post.id };
 
-          // The CTA opens the post in the feed; tapping the rest of the
-          // popup does nothing (it mustn't fall through to the map and
-          // close the popup either).
+          // Tapping the thumbnail expands it into the post card overlay.
           const popupEl = popup.getElement();
-          popupEl?.addEventListener("click", (e) => e.stopPropagation());
-          const cta = popupEl?.querySelector(".map-popup-cta") as HTMLElement | null;
-          cta?.addEventListener("click", (e) => {
+          const tapTarget = popupEl?.querySelector(".map-popup-tap") as HTMLElement | null;
+          tapTarget?.addEventListener("click", (e) => {
             e.stopPropagation();
             if (isRefreshNow()) return;
             closeOpenPopup();

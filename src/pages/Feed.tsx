@@ -2,8 +2,7 @@ import { OptimizedFeedContainer } from "@/components/feed/OptimizedFeedContainer
 import { MainNav } from "@/components/MainNav";
 import { InstallInstructionsBanner } from "@/components/pwa/InstallInstructionsBanner";
 import { LocationPermissionBanner } from "@/components/feed/LocationPermissionBanner";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { HowItWorksBanner } from "@/components/home/HowItWorksBanner";
 
 import { useEffect } from "react";
 import { FadeIn } from "@/components/animation/FadeIn";
@@ -13,7 +12,6 @@ import { useTranslation } from "react-i18next";
 export default function Feed() {
   const { announce } = useAnnouncement();
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     announce(t('feed.announcement'));
@@ -52,28 +50,13 @@ export default function Feed() {
             see Messages/Home/ItemDetail/PostFormContainer/PostEdit/
             ProfileEdit/Privacy for the matching changes. */}
         <div className="max-w-3xl mx-auto px-4 pt-1">
+          {/* Creating a pif/wish lives in MainNav's "+" -- the feed's own
+              shortcut buttons were removed with the toolbar cleanup. */}
+          <div className="flex justify-end mb-2">
+            <HowItWorksBanner />
+          </div>
           <InstallInstructionsBanner />
           <LocationPermissionBanner />
-          {/* Compact action bar */}
-          <div className="grid grid-cols-2 gap-2 mb-3 px-2">
-            <Button
-              type="button"
-              onClick={() => navigate("/post?type=offer")}
-              className="bg-pif-offer text-pif-offer-foreground hover:bg-pif-offer/90 h-9 px-2 text-sm font-medium"
-              aria-label={t('interactions.add_pif_button')}
-            >
-              + {t('interactions.add_pif_short')} 🎁
-            </Button>
-            <Button
-              type="button"
-              onClick={() => navigate("/post?type=request")}
-              className="bg-pif-wish text-pif-wish-foreground hover:bg-pif-wish/90 h-9 px-2 text-sm font-medium"
-              aria-label={t('interactions.add_wish_button')}
-            >
-              + {t('interactions.add_wish_short')} ✨
-            </Button>
-          </div>
-
           <FadeIn>
             <OptimizedFeedContainer />
           </FadeIn>

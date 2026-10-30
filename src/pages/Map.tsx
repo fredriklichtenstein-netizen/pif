@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { MainNav } from "@/components/MainNav";
 import { RefreshOverlay } from "@/components/common/RefreshOverlay";
 import { feedPostPath } from "@/lib/feedLinks";
+import { MapPostCard } from "@/components/map/MapPostCard";
 
 export default function Map() {
   const navigate = useNavigate();
@@ -41,8 +42,14 @@ export default function Map() {
     refreshPosts();
   }, [announce, refreshPosts, t]);
 
+  // A pin's thumbnail (or a second tap on the pin) opens the post card
+  // over the map; "Visa i flödet" there is what leaves the map.
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+  const expandedPost = expandedPostId
+    ? posts.find((p) => String(p.id) === expandedPostId) ?? null
+    : null;
   const handlePostClick = (postId: string) => {
-    navigate(feedPostPath(postId));
+    setExpandedPostId(postId);
   };
 
   const handleTokenSubmit = () => {
@@ -165,6 +172,14 @@ export default function Map() {
               </p>
             </div>
           </div>
+        )}
+
+        {expandedPost && (
+          <MapPostCard
+            post={expandedPost}
+            onClose={() => setExpandedPostId(null)}
+            onShowInFeed={() => navigate(feedPostPath(expandedPost.id))}
+          />
         )}
 
         <RefreshOverlay show={isLoading} label={t('map.loading_posts')} className="!fixed" />

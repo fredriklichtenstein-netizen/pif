@@ -7,8 +7,8 @@ import { FeedItemList } from './FeedItemList';
 import { FeedErrorState } from './FeedErrorState';
 import { FeedEmptyState } from './FeedEmptyState';
 import { DemoModeBanner } from './DemoModeBanner';
-import { FeedFiltersPanel } from './FeedFiltersPanel';
-import { HowItWorksBanner } from '@/components/home/HowItWorksBanner';
+import { DEFAULT_DISTANCE, FeedFiltersPanel, type PostScope } from './FeedFiltersPanel';
+import { FeedActiveFilterChips, type ActiveFilterChip } from './FeedActiveFilterChips';
 
 
 import { usePerformanceMonitor } from '@/hooks/feed/usePerformanceMonitor';
@@ -44,17 +44,15 @@ import { useMyCommentedStore } from '@/stores/myCommentedStore';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
 
 import { useSharedRefresh } from '@/hooks/useSharedRefresh';
-import { useMyDrafts } from '@/hooks/drafts/useMyDrafts';
 import { DraftsList } from '@/components/drafts/DraftsList';
 import { DeepLinkedPost } from './DeepLinkedPost';
 import { supabase } from '@/integrations/supabase/client';
 import type { Post } from '@/types/post';
 
 const FEED_SORT_STORAGE_KEY = 'feed_sort_mode';
+const FEED_HIDE_INACTIVE_STORAGE_KEY = 'feed_hide_inactive';
 /** How many extra pages a /feed?post=<id> link may load looking for its post. */
 const MAX_DEEP_LINK_PAGES = 10;
-
-type DeepLinkBucket = 'active' | 'archived';
 
 export function OptimizedFeedContainer() {
   const { user } = useGlobalAuth();
@@ -75,41 +73,46 @@ export function OptimizedFeedContainer() {
     }
   }, [isLoggedIn, searchParams, setSearchParams, navigate]);
 
-  const [includeArchived, setIncludeArchivedState] = useState(false);
-  // Archived view only makes sense on own feed (own or no user filter).
-  const effectiveIncludeArchived = isLoggedIn && includeArchived && !viewingOtherUser;
+  // "Dölj ej aktiva": the feed shows active and non-active (archived/
+  // completed) posts side by side unless the user hides the non-active
+  // ones -- this replaced the old "Visa endast arkiverade" view. Non-active
+  // posts are only shown to logged-in users. Session-persisted like sort.
+  const [hideInactive, setHideInactiveState] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(FEED_HIDE_INACTIVE_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setHideInactive = useCallback((value: boolean) => {
+    setHideInactiveState(value);
+    try {
+      sessionStorage.setItem(FEED_HIDE_INACTIVE_STORAGE_KEY, value ? '1' : '0');
+    } catch { /* best-effort */ }
+  }, []);
+  const includeInactive = isLoggedIn && !hideInactive;
 
   // Drafts view (?view=drafts) -- in the URL so emails, notifications and
-  // the old /drafts route can link straight to it. Drafts and archived are
-  // separate buckets, so turning one on turns the other off.
+  // the old /drafts route can link straight to it.
   const showDrafts = isLoggedIn && !viewingOtherUser && searchParams.get('view') === 'drafts';
   const setShowDrafts = useCallback((value: boolean) => {
     const next = new URLSearchParams(searchParams);
     if (value) {
       next.set('view', 'drafts');
       next.delete('post');
-      setIncludeArchivedState(false);
     } else {
       next.delete('view');
     }
     setSearchParams(next, { replace: false });
   }, [searchParams, setSearchParams]);
-  const setIncludeArchived = useCallback((value: boolean) => {
-    setIncludeArchivedState(value);
-    if (value && searchParams.get('view') === 'drafts') {
-      const next = new URLSearchParams(searchParams);
-      next.delete('view');
-      setSearchParams(next, { replace: true });
-    }
-  }, [searchParams, setSearchParams]);
 
   // /feed?post=<id> (notification/email/share links, after publishing):
-  // look up which bucket the post is in first, so an archived or completed
-  // post opens the archived view instead of being searched for in vain.
+  // look up the post's status first -- a non-active post needs the
+  // include-inactive scope, so "Dölj ej aktiva" is switched off for it.
   // A post that can't be shown in place is pinned above the feed instead
   // (DeepLinkedPost), which also says so when it no longer exists.
   const targetPostId = DEMO_MODE ? null : searchParams.get('post');
-  const [deepLinkBucket, setDeepLinkBucket] = useState<{ id: string; bucket: DeepLinkBucket } | null>(null);
+  const [deepLinkTarget, setDeepLinkTarget] = useState<{ id: string; inactive: boolean } | null>(null);
   const [pinnedPostId, setPinnedPostId] = useState<string | null>(null);
   const pinPost = useCallback((id: string) => setPinnedPostId(id), []);
   const dismissPinnedPost = useCallback(() => {
@@ -122,7 +125,7 @@ export function OptimizedFeedContainer() {
   useEffect(() => {
     setPinnedPostId(null);
     if (!targetPostId) {
-      setDeepLinkBucket(null);
+      setDeepLinkTarget(null);
       return;
     }
     if (!/^\d+$/.test(targetPostId)) {
@@ -142,23 +145,22 @@ export function OptimizedFeedContainer() {
           return;
         }
         const status = String(data.pif_status ?? '');
-        const terminal = status === 'archived' || status === 'completed' || !!data.archived_at;
-        if (terminal && !isLoggedIn) {
-          // The archived view needs an account.
+        const inactive = status === 'archived' || status === 'completed' || !!data.archived_at;
+        if (inactive && !isLoggedIn) {
+          // Non-active posts aren't in a logged-out visitor's feed.
           pinPost(targetPostId);
           return;
         }
-        setIncludeArchivedState(terminal);
-        setDeepLinkBucket({ id: targetPostId, bucket: terminal ? 'archived' : 'active' });
+        if (inactive) setHideInactive(false);
+        setDeepLinkTarget({ id: targetPostId, inactive });
       });
     return () => {
       cancelled = true;
     };
-  }, [targetPostId, isLoggedIn, pinPost]);
+  }, [targetPostId, isLoggedIn, pinPost, setHideInactive]);
 
-  const bodyBucket: DeepLinkBucket = effectiveIncludeArchived ? 'archived' : 'active';
   const bodyTargetPostId =
-    deepLinkBucket && deepLinkBucket.id === targetPostId && deepLinkBucket.bucket === bodyBucket
+    deepLinkTarget && deepLinkTarget.id === targetPostId && (!deepLinkTarget.inactive || includeInactive)
       ? targetPostId
       : null;
 
@@ -168,26 +170,26 @@ export function OptimizedFeedContainer() {
     setSearchParams(next, { replace: false });
   }, [searchParams, setSearchParams]);
 
-  // Key the inner body on the archived-scope so toggling the filter fully
-  // unmounts `useOptimizedFeed` (its React Query observer, realtime channel,
-  // in-flight timers) BEFORE the new-scope body mounts and subscribes. This
-  // guarantees only one feed instance is ever active, so the network log
-  // never shows an active + archived request racing side-by-side.
   const pinned = pinnedPostId && pinnedPostId === targetPostId ? (
     <DeepLinkedPost postId={pinnedPostId} isLoggedIn={isLoggedIn} onDismiss={dismissPinnedPost} />
   ) : null;
 
+  // Key the inner body on the scope so toggling it fully unmounts
+  // `useOptimizedFeed` (its React Query observer, realtime channel,
+  // in-flight timers) BEFORE the new-scope body mounts and subscribes. This
+  // guarantees only one feed instance is ever active, so the network log
+  // never shows two scopes' requests racing side-by-side.
   return (
     <>
     {pinned && <div className="mb-4">{pinned}</div>}
     <OptimizedFeedBody
-      key={effectiveIncludeArchived ? 'feed-archived' : 'feed-active'}
+      key={includeInactive ? 'feed-all' : 'feed-active'}
       isLoggedIn={isLoggedIn}
       viewingOtherUser={viewingOtherUser}
       filteredUserId={filteredUserId}
-      includeArchived={includeArchived}
-      effectiveIncludeArchived={effectiveIncludeArchived}
-      onIncludeArchivedChange={setIncludeArchived}
+      includeInactive={includeInactive}
+      hideInactive={hideInactive}
+      onHideInactiveChange={setHideInactive}
       onClearUserFilter={clearUserFilter}
       showDrafts={showDrafts}
       onShowDraftsChange={setShowDrafts}
@@ -202,9 +204,10 @@ interface OptimizedFeedBodyProps {
   isLoggedIn: boolean;
   viewingOtherUser: boolean;
   filteredUserId: string | null;
-  includeArchived: boolean;
-  effectiveIncludeArchived: boolean;
-  onIncludeArchivedChange: (value: boolean) => void;
+  /** Non-active posts are fetched and shown alongside active ones. */
+  includeInactive: boolean;
+  hideInactive: boolean;
+  onHideInactiveChange: (value: boolean) => void;
   onClearUserFilter: () => void;
   showDrafts: boolean;
   onShowDraftsChange: (value: boolean) => void;
@@ -217,9 +220,9 @@ function OptimizedFeedBody({
   isLoggedIn,
   viewingOtherUser,
   filteredUserId,
-  includeArchived,
-  effectiveIncludeArchived,
-  onIncludeArchivedChange,
+  includeInactive,
+  hideInactive,
+  onHideInactiveChange,
   onClearUserFilter,
   showDrafts,
   onShowDraftsChange,
@@ -228,12 +231,12 @@ function OptimizedFeedBody({
 }: OptimizedFeedBodyProps) {
   const { user: currentUser } = useGlobalAuth();
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
-    useOptimizedFeed({ includeArchived: effectiveIncludeArchived });
+    useOptimizedFeed({ includeInactive });
 
   // True all/pifs/wishes counts, independent of how many pages have been
   // paginated in locally — see useFeedTypeCounts.
   const { counts: feedTypeCounts } = useFeedTypeCounts(
-    effectiveIncludeArchived,
+    includeInactive,
     filteredUserId ?? undefined,
   );
 
@@ -334,9 +337,7 @@ function OptimizedFeedBody({
       const s = String((p as any).status ?? '');
       return s === 'archived' || s === 'completed' || !!p.archived_at;
     };
-    const bucketed = effectiveIncludeArchived
-      ? base.filter(isTerminal)
-      : base.filter((p) => !isTerminal(p));
+    const bucketed = includeInactive ? base : base.filter((p) => !isTerminal(p));
     return filteredUserId
       ? bucketed.filter((p) => p.postedBy?.id === filteredUserId)
       : bucketed;
@@ -351,7 +352,7 @@ function OptimizedFeedBody({
     myInterestedIds,
     filteredUserId,
     viewingOtherUser,
-    effectiveIncludeArchived,
+    includeInactive,
   ]);
 
   // Trello: "Sort the feed on distance and/or on published time." A no-op
@@ -409,8 +410,28 @@ function OptimizedFeedBody({
     setSelectedDistance(null);
   }, [clearAllFilters, setSelectedDistance]);
 
-  const { data: myDrafts } = useMyDrafts();
-  const draftCount = myDrafts?.length ?? 0;
+  // "Inlägg" in Filtrera: one choice over the own-posts / interested
+  // filters (shared with the map) and the drafts view.
+  const postScope: PostScope = showDrafts
+    ? 'drafts'
+    : onlyOwnPosts
+      ? 'mine'
+      : onlyInterested
+        ? 'interested'
+        : 'all';
+  const setPostScope = useCallback((scope: PostScope) => {
+    setOnlyOwnPosts(scope === 'mine');
+    setOnlyInterested(scope === 'interested');
+    if ((scope === 'drafts') !== showDrafts) onShowDraftsChange(scope === 'drafts');
+  }, [setOnlyOwnPosts, setOnlyInterested, showDrafts, onShowDraftsChange]);
+
+  const resetAll = useCallback(() => {
+    handleClearAll();
+    setUserLocation(null);
+    onHideInactiveChange(false);
+    setPostScope('all');
+    onClearUserFilter();
+  }, [handleClearAll, onHideInactiveChange, setPostScope, onClearUserFilter]);
 
   // Deep link: keep loading pages until the post is loaded, clear the
   // filters once if they're what hides it, and give up (-> pinned above
@@ -487,114 +508,74 @@ function OptimizedFeedBody({
     <FeedProfileHeader userId={filteredUserId} onClear={onClearUserFilter} />
   ) : null;
 
-  const filtersPanel = (
-    <>
-    <div className="flex items-center gap-2 flex-wrap">
-      <FeedFiltersPanel
-        posts={filteredPosts}
-        typeCounts={feedTypeCounts}
-        selectedDistance={selectedDistance}
-        onDistanceChange={setSelectedDistance}
-        userLocation={userLocation}
-        onUserLocationChange={setUserLocation}
-        selectedItemTypes={selectedItemTypes}
-        onItemTypeChange={setItemTypes}
-        selectedCategories={selectedCategories}
-        onCategoryChange={setCategories}
-        includeArchived={includeArchived}
-        onIncludeArchivedChange={onIncludeArchivedChange}
-        showDrafts={showDrafts}
-        onShowDraftsChange={onShowDraftsChange}
-        onlyInterested={onlyInterested}
-        onOnlyInterestedChange={setOnlyInterested}
-        viewingOtherUser={viewingOtherUser}
-        userFilterActive={!!filteredUserId}
-        onResetAll={() => {
-          handleClearAll();
-          setUserLocation(null);
-          onIncludeArchivedChange(false);
-          onShowDraftsChange(false);
-          setOnlyInterested(false);
-          setOnlyOwnPosts(false);
-          onClearUserFilter();
-        }}
-      />
-      {/* Trello: "Sort the feed on distance and/or on published time."
-          A plain always-visible control (not buried in the Filtrera
-          sheet) since sort, unlike the filters in there, never narrows
-          the result set -- matches the visibility of the "Visat
-          intresse"/"Mina inlägg" toggle buttons right beside it. */}
-      <Select value={sortBy} onValueChange={(v) => setSortBy(v as FeedSortMode)}>
-        <SelectTrigger
-          className="h-9 w-auto gap-1.5 bg-background text-sm"
-          aria-label={t('feed.sort_label', 'Sortera')}
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="recent">{t('feed.sort_recent', 'Senast publicerad')}</SelectItem>
-          <SelectItem value="distance">{t('feed.sort_distance', 'Närmast mig')}</SelectItem>
-        </SelectContent>
-      </Select>
-      {isLoggedIn && !viewingOtherUser && (
-        <button
-          type="button"
-          onClick={() => setOnlyInterested(!onlyInterested)}
-          aria-pressed={onlyInterested}
-          className={`h-9 px-3 rounded-md border text-sm font-medium inline-flex items-center gap-1.5 transition-colors ${
-            onlyInterested
-              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-              : "bg-background hover:bg-accent"
-          }`}
-        >
-          <span aria-hidden>♥</span>
-          {t("feed.my_interest", "Visat intresse")}
-        </button>
-      )}
-      {isLoggedIn && !viewingOtherUser && (
-        <button
-          type="button"
-          onClick={() => setOnlyOwnPosts(!onlyOwnPosts)}
-          aria-pressed={onlyOwnPosts}
-          className={`h-9 px-3 rounded-md border text-sm font-medium inline-flex items-center gap-1.5 transition-colors ${
-            onlyOwnPosts
-              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-              : "bg-background hover:bg-accent"
-          }`}
-        >
-          <span aria-hidden>📝</span>
-          {t("feed.my_posts", "Mina inlägg")}
-        </button>
-      )}
-      {isLoggedIn && !viewingOtherUser && (
-        <button
-          type="button"
-          onClick={() => onShowDraftsChange(!showDrafts)}
-          aria-pressed={showDrafts}
-          className={`h-9 px-3 rounded-md border text-sm font-medium inline-flex items-center gap-1.5 transition-colors ${
-            showDrafts
-              ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-              : "bg-background hover:bg-accent"
-          }`}
-        >
-          <span aria-hidden>🗂️</span>
-          {t("feed.drafts", "Utkast")}
-          {draftCount > 0 && (
-            <span
-              className={`ml-0.5 rounded-full px-1.5 text-xs leading-5 ${
-                showDrafts ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {draftCount}
-            </span>
-          )}
-        </button>
-      )}
-    </div>
-    <HowItWorksBanner />
-    </>
-  );
+  const scopeIsPrivate = isLoggedIn && !viewingOtherUser;
+  const filterChips: ActiveFilterChip[] = [
+    ...(scopeIsPrivate && postScope !== 'all'
+      ? [{ key: 'scope', label: t(`feed.scope_${postScope}`), onRemove: () => setPostScope('all') }]
+      : []),
+    ...(selectedItemTypes.length === 1
+      ? [{
+          key: 'type',
+          label: selectedItemTypes[0] === 'offer' ? t('map_filters.pifs') : t('map_filters.wishes'),
+          onRemove: () => setItemTypes([]),
+        }]
+      : []),
+    ...selectedCategories.map((key) => ({
+      key: `cat-${key}`,
+      label: t(`categories.${key}`),
+      onRemove: () => setCategories(selectedCategories.filter((c) => c !== key)),
+    })),
+    ...(selectedDistance !== null && selectedDistance !== DEFAULT_DISTANCE
+      ? [{
+          key: 'distance',
+          label: t('feed.within_km', { km: selectedDistance, defaultValue: `Inom ${selectedDistance} km` }),
+          onRemove: () => setSelectedDistance(null),
+        }]
+      : []),
+    ...(scopeIsPrivate && hideInactive
+      ? [{ key: 'inactive', label: t('feed.hide_inactive', 'Dölj ej aktiva'), onRemove: () => onHideInactiveChange(false) }]
+      : []),
+  ];
 
+  const filtersPanel = (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <FeedFiltersPanel
+          posts={filteredPosts}
+          typeCounts={feedTypeCounts}
+          selectedDistance={selectedDistance}
+          onDistanceChange={setSelectedDistance}
+          userLocation={userLocation}
+          onUserLocationChange={setUserLocation}
+          selectedItemTypes={selectedItemTypes}
+          onItemTypeChange={setItemTypes}
+          selectedCategories={selectedCategories}
+          onCategoryChange={setCategories}
+          postScope={postScope}
+          onPostScopeChange={setPostScope}
+          hideInactive={hideInactive}
+          onHideInactiveChange={onHideInactiveChange}
+          viewingOtherUser={viewingOtherUser}
+          userFilterActive={!!filteredUserId}
+          onResetAll={resetAll}
+        />
+        {/* Sort stays outside the sheet: it never narrows the result set. */}
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as FeedSortMode)}>
+          <SelectTrigger
+            className="h-9 w-auto gap-1.5 bg-background text-sm"
+            aria-label={t('feed.sort_label', 'Sortera')}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">{t('feed.sort_recent', 'Senast publicerad')}</SelectItem>
+            <SelectItem value="distance">{t('feed.sort_distance', 'Närmast mig')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <FeedActiveFilterChips chips={filterChips} onClearAll={resetAll} />
+    </div>
+  );
 
   if (showDrafts) {
     return (
