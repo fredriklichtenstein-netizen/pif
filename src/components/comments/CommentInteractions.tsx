@@ -7,8 +7,6 @@ interface CommentInteractionsProps {
   isLiked: boolean;
   onLike: () => void;
   onReply: () => void;
-  maxReplyLevel: number;
-  level: number;
 }
 
 export function CommentInteractions({
@@ -16,8 +14,6 @@ export function CommentInteractions({
   isLiked,
   onLike,
   onReply,
-  maxReplyLevel,
-  level
 }: CommentInteractionsProps) {
   const { t } = useTranslation();
 
@@ -32,15 +28,13 @@ export function CommentInteractions({
         <ThumbsUp size={14} />
         {likes > 0 && <span>{likes}</span>}
       </button>
-      {level < maxReplyLevel && (
-        <button
-          onClick={onReply}
-          className="text-sm flex items-center gap-1 text-gray-500"
-        >
-          <Reply size={14} />
-          {t('comments.reply')}
-        </button>
-      )}
+      <button
+        onClick={onReply}
+        className="text-sm flex items-center gap-1 text-gray-500"
+      >
+        <Reply size={14} />
+        {t('comments.reply')}
+      </button>
     </div>
   );
 }
