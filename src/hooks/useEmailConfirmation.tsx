@@ -171,13 +171,8 @@ export function useEmailConfirmation() {
       return;
     }
 
-    if (resendCooldown > 0) {
-      toast({
-        title: t('interactions.please_wait_resend'),
-        description: t('interactions.resend_cooldown', { seconds: resendCooldown }),
-      });
-      return;
-    }
+    // The resend button is disabled and shows the countdown meanwhile.
+    if (resendCooldown > 0) return;
 
     setLoading(true);
     try {

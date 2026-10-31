@@ -12,7 +12,7 @@ import { useNetworkMonitor } from "./auth/useNetworkMonitor";
 export function useAuth() {
   const { isSignUp, toggleMode } = useAuthModeToggle();
   const { session, isLoading: authStateLoading, initialized } = useGlobalAuth();
-  const { handleSignUp, loading: signUpLoading } = useSignUp();
+  const { handleSignUp, loading: signUpLoading, error: signUpError } = useSignUp();
   const { handleSignIn, handlePasswordReset, loading: signInLoading, error: signInError } = useSignIn();
   const { networkError, clearNetworkError, connectionStatus } = useNetworkMonitor();
   const [authTimeout, setAuthTimeout] = useState(false);
@@ -62,7 +62,7 @@ export function useAuth() {
   
   // CRITICAL FIX: Only use networkError if there's no specific auth error AND we have a confirmed network issue
   // This ensures specific auth errors (like wrong password) take precedence over generic network errors
-  const error = signInError || (connectionStatus === false ? networkError : null);
+  const error = (isSignUp ? signUpError : signInError) || (connectionStatus === false ? networkError : null);
   return {
     loading,
     isSignUp,

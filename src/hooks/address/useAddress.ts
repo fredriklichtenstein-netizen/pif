@@ -109,14 +109,8 @@ export const useAddress = (
   };
 
   const handleShowMap = async (address: string): Promise<{ lat: number; lng: number } | undefined> => {
-    if (!address) {
-      toast({
-        title: t('post.error'),
-        description: t('post.enter_address_first'),
-        variant: "destructive",
-      });
-      return undefined;
-    }
+    // Callers only pass a non-empty address.
+    if (!address) return undefined;
 
     try {
       const response = await fetch(

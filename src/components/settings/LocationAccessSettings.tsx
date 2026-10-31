@@ -25,6 +25,7 @@ export function LocationAccessSettings() {
   const storedLocation = useLiveLocationStore((s) => s.location);
   const { setStoredLocation } = useLocationStorage();
   const [requesting, setRequesting] = useState(false);
+  const [cleared, setCleared] = useState(false);
 
   const busy = requesting || storeStatus === "checking";
 
@@ -68,15 +69,9 @@ export function LocationAccessSettings() {
     // otherwise, when "On" was showing only because of an in-memory fix
     // rather than a granted permission, this button appeared to do nothing.
     useLiveLocationStore.setState({ location: null, fetchedAt: null });
-    toast({
-      title: t("settings.location_cleared_toast", {
-        defaultValue: "Sparad plats rensad",
-      }),
-      description: t("settings.location_revoke_hint", {
-        defaultValue:
-          "Appen använder inte längre din sparade plats. För att återkalla åtkomsten helt, ändra platsinställningarna för den här sidan i webbläsaren.",
-      }),
-    });
+    // With a granted permission the pill stays "På", so say what happened
+    // here rather than in a toast.
+    setCleared(true);
   };
 
   const description = (
@@ -133,6 +128,11 @@ export function LocationAccessSettings() {
           <Button variant="outline" size="sm" onClick={handleStopUsing}>
             {t("settings.location_stop_using", { defaultValue: "Sluta använda min plats" })}
           </Button>
+          {cleared && !storedLocation && (
+            <p role="status" className="text-sm text-foreground">
+              {t("settings.location_cleared_toast", { defaultValue: "Sparad plats rensad" })}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             {t("settings.location_revoke_note", {
               defaultValue:

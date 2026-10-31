@@ -213,9 +213,7 @@ export function FeedbackTab() {
     try {
       const room = MAX_IMAGES - images.length;
       const picked = Array.from(files).filter((f) => f.type.startsWith("image/"));
-      if (picked.length > room) {
-        toast({ title: t("interactions.feedback.images_limit", { max: MAX_IMAGES }) });
-      }
+      // Extra images are dropped; the hint under the buttons states the limit.
       const added: FeedbackImage[] = [];
       for (const file of picked.slice(0, Math.max(0, room))) {
         try {
