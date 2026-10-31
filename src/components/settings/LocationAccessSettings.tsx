@@ -34,11 +34,6 @@ export function LocationAccessSettings() {
     try {
       const outcome = await requestLocation();
       if (outcome === "granted") {
-        toast({
-          title: t("settings.location_enabled_toast", {
-            defaultValue: "Platsåtkomst aktiverad",
-          }),
-        });
       } else if (outcome === "denied") {
         toast({
           variant: "destructive",

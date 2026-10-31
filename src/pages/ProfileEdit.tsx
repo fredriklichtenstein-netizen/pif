@@ -178,10 +178,6 @@ if (location) {
 
       clearPifAddressCache();
 
-      toast({
-        title: t('common.save_changes'),
-        description: t('profile.profile_updated'),
-      });
 
       navigate("/profile");
     } catch (error) {

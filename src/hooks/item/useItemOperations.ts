@@ -49,7 +49,6 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         toast({ title: t('interactions.failed_archive'), description: errorMsg, variant: "destructive" });
         return false;
       }
-      toast({ title: t('interactions.item_archived'), description: t('interactions.item_archived_description') });
       // Notify ALL interested users that this pif/wish was archived.
       try {
         const { data: itemRow } = await (supabase.from('items') as any)
@@ -108,7 +107,6 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         toast({ title: t('interactions.failed_delete'), description: errorMsg, variant: "destructive" });
         return false;
       }
-      toast({ title: t('interactions.item_deleted'), description: t('interactions.item_deleted_description') });
       try {
         clearPostsCache();
         invalidateOptimizedFeedQueries(queryClient);
@@ -144,7 +142,6 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
         toast({ title: t('interactions.failed_restore'), description: error.message, variant: "destructive" });
         return false;
       }
-      toast({ title: t('interactions.item_restored_op'), description: t('interactions.item_restored_op_description') });
       try {
         clearPostsCache();
         invalidateOptimizedFeedQueries(queryClient);

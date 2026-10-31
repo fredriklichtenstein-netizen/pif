@@ -88,10 +88,6 @@ export function useNotificationPreferences() {
         throw error;
       }
 
-      toast({
-        title: t('interactions.preferences_updated'),
-        description: t('interactions.preferences_updated_description'),
-      });
     } catch (error: any) {
       toast({
         title: t('post.error'),

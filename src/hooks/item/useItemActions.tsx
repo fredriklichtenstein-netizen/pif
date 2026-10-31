@@ -48,10 +48,6 @@ export const useItemActions = () => {
 
   const handleReport = async () => {
     if (!await checkAuth("report this item")) return;
-    toast({
-      title: t('interactions.item_reported'),
-      description: t('interactions.item_reported_description'),
-    });
   };
 
   return { handleMessage, handleShare, handleReport };

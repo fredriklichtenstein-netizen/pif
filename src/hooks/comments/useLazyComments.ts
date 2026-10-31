@@ -2,13 +2,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Comment } from '@/types/comment';
 import { useComments } from '@/hooks/item/useComments';
-import { useToast } from '@/hooks/use-toast';
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
 import { resolveDisplayName } from "@/utils/displayName";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoInteractionsStore } from "@/stores/demoInteractionsStore";
-import { useTranslation } from "react-i18next";
 import { safeParseJSON } from "@/utils/safeStorage";
 
 
@@ -21,10 +19,8 @@ export function useLazyComments(itemId: string) {
   const [retryCount, setRetryCount] = useState(0);
   const [retryTimer, setRetryTimer] = useState<NodeJS.Timeout | null>(null);
   const [useFallbackMode, setUseFallbackMode] = useState(false);
-  const { toast } = useToast();
   const { user } = useGlobalAuth();
   const { profile: cachedProfile } = useCachedProfile(user?.id);
-  const { t } = useTranslation();
 
   const { fetchComments, useFallbackMode: fetchFallbackMode } = useComments(itemId);
   const getComments = useDemoInteractionsStore(state => state.getComments);
@@ -94,10 +90,6 @@ export function useLazyComments(itemId: string) {
         
         if (fetchFallbackMode) {
           setUseFallbackMode(true);
-          toast({ title: t('interactions.limited_connection'), description: t('interactions.limited_connection_description'), variant: "default" });
-        }
-        if (retryCount > 0 && !fetchFallbackMode) {
-          toast({ title: t('interactions.comments_loaded'), description: t('interactions.comments_loaded_description'), variant: "default" });
         }
       } else {
         throw new Error("Failed to fetch comments: Invalid response format");
@@ -119,7 +111,6 @@ export function useLazyComments(itemId: string) {
         setIsLoading(false);
         const fallbackComments = await fetchComments();
         if (Array.isArray(fallbackComments)) setComments(fallbackComments);
-        toast({ title: t('interactions.comments_unavailable'), description: t('interactions.comments_unavailable_description'), variant: "default" });
       } else if (retryCount < 2) {
         const nextRetryCount = retryCount + 1;
         const delay = Math.min(1000 * Math.pow(2, nextRetryCount), 8000);
@@ -131,10 +122,9 @@ export function useLazyComments(itemId: string) {
         setIsLoading(false);
         const fallbackComments = await fetchComments();
         if (Array.isArray(fallbackComments)) setComments(fallbackComments);
-        toast({ title: t('interactions.offline_comments'), description: t('interactions.offline_comments_description'), variant: "default" });
       }
     }
-  }, [fetchComments, isInitialized, itemId, retryCount, toast, fetchFallbackMode, getComments, t]);
+  }, [fetchComments, isInitialized, itemId, retryCount, fetchFallbackMode, getComments]);
 
   const refreshComments = useCallback(() => {
     setRetryCount(0);

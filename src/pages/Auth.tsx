@@ -71,14 +71,6 @@ export default function Auth() {
         const isConnected = await checkNetworkConnection();
         if (isMounted) {
           setConnectionStatus(isConnected);
-          
-          if (!isConnected) {
-            toast({
-              title: t('auth.check_connection_toast_title'),
-              description: t('auth.check_connection_toast_description'),
-              variant: "destructive",
-            });
-          }
         }
       } catch (error) {
         console.error("Error checking network connection:", error);

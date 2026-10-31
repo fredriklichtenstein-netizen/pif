@@ -81,16 +81,8 @@ export function useEmailConfirmation() {
         const profile = await fetchProfileWithRetry(userId);
 
         if (profile?.onboarding_completed) {
-          toast({
-            title: t('interactions.welcome_back'),
-            description: t('interactions.welcome_back_description'),
-          });
           navigate("/feed");
         } else {
-          toast({
-            title: t('interactions.complete_profile'),
-            description: t('interactions.complete_profile_description'),
-          });
           navigate("/create-profile");
         }
       } catch (err) {

@@ -35,22 +35,12 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
 
       if (error) {
         console.error('Error checking interested users:', error);
-        toast({
-          variant: "destructive",
-          title: t('interactions.error_title'),
-          description: t('interactions.error_check_interested')
-        });
         return 0;
       }
       return count || 0;
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.error('Interested users check timed out');
-        toast({
-          variant: "destructive",
-          title: t('interactions.operation_timed_out'),
-          description: t('interactions.check_interested_timeout')
-        });
       } else {
         console.error('Error checking interested users:', error);
       }
@@ -66,11 +56,6 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
     if (deleteActionPending.current) return;
 
     if (!isOwner) {
-      toast({
-        variant: "destructive",
-        title: t('interactions.permission_denied'),
-        description: t('interactions.only_delete_own')
-      });
       return;
     }
 
@@ -84,11 +69,6 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
 
   const handleEdit = () => {
     if (!isOwner) {
-      toast({
-        variant: "destructive",
-        title: t('interactions.permission_denied'),
-        description: t('interactions.only_edit_own')
-      });
       return;
     }
     

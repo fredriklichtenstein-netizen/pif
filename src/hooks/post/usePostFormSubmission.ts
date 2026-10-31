@@ -27,11 +27,6 @@ export function usePostFormSubmission(initialData?: any) {
   const handleSubmit = async (formData: PostFormData) => {
     if (DEMO_MODE) {
       if (!formData.title || !formData.category || !formData.coordinates || formData.images.length === 0) {
-        toast({
-          title: t('post.required_fields_missing'),
-          description: t('post.required_fields_description'),
-          variant: "destructive",
-        });
         return;
       }
 
@@ -42,10 +37,6 @@ export function usePostFormSubmission(initialData?: any) {
         
         if (initialData?.id) {
           updateDemoPost(initialData.id, formData);
-          toast({
-            title: t('post.pif_updated'),
-            description: t('post.pif_updated_demo_description'),
-          });
         } else {
           addDemoPost(formData, {
             id: DEMO_USER.id,
@@ -53,22 +44,11 @@ export function usePostFormSubmission(initialData?: any) {
             avatar: DEMO_USER.user_metadata?.avatar_url || "",
           });
           
-          toast({
-            title: formData.item_type === 'request' ? t('post.request_created') : t('post.pif_created'),
-            description: formData.item_type === 'request' 
-              ? t('post.request_created_demo_description')
-              : t('post.pif_created_demo_description'),
-          });
         }
         
         navigate("/feed");
       } catch (error) {
         console.error("Error in demo submission:", error);
-        toast({
-          title: t('post.error'),
-          description: t('post.error_demo'),
-          variant: "destructive",
-        });
       } finally {
         setIsSubmitting(false);
       }
@@ -146,12 +126,6 @@ export function usePostFormSubmission(initialData?: any) {
       clearPostsCache();
       await queryClient.invalidateQueries({ queryKey: ['posts'] });
 
-      toast({
-        title: initialData?.id ? t('post.pif_updated') : 
-               formData.item_type === 'request' ? t('post.request_created') : t('post.pif_created'),
-        description: initialData?.id ? t('post.pif_updated_description') : 
-                     formData.item_type === 'request' ? t('post.request_created_description') : t('post.pif_created_description'),
-      });
 
       navigate(itemId != null ? feedPostPath(itemId) : "/feed");
     } catch (error: any) {

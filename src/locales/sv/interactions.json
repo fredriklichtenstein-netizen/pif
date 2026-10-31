@@ -621,6 +621,7 @@
     "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."
   },
   "messages": {
+    "delete_message_failed": "Kunde inte ta bort meddelandet",
     "title": "Meddelanden",
     "loading_conversation": "Laddar konversation...",
     "failed_load_conversation": "Misslyckades att ladda konversation",
