@@ -102,15 +102,7 @@ export function DangerZone() {
             <Button
               variant="destructive"
               onClick={() => {
-                if (matches) {
-                  handleDeleteAccount();
-                } else {
-                  toast({
-                    title: t('settings.confirmation_mismatch'),
-                    description: t('settings.confirmation_mismatch_description'),
-                    variant: "destructive",
-                  });
-                }
+                if (matches) handleDeleteAccount();
               }}
               disabled={loading || !matches}
             >

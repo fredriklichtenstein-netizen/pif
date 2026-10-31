@@ -171,10 +171,8 @@ export function usePostFormSubmission(initialData?: any) {
     if (DEMO_MODE) return false;
     const hasContent =
       formData.title.trim() !== "" || formData.description.trim() !== "" || formData.images.length > 0;
-    if (!hasContent) {
-      toast({ title: t('drafts.nothing_to_save'), variant: "destructive" });
-      return false;
-    }
+    // The form only offers saving a draft once it has content.
+    if (!hasContent) return false;
 
     setIsSubmitting(true);
     try {

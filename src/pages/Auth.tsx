@@ -4,7 +4,6 @@ import { AuthForm } from "@/components/auth/AuthForm";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalAuth, initializeAuth } from "@/hooks/useGlobalAuth";
-import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,26 +30,20 @@ export default function Auth() {
     return SAFE_REDIRECT_PATHS.some((safe) => pathnameOnly === safe || pathnameOnly.startsWith(safe + "/"));
   };
   const fromPath = isSafeRedirect(rawFromPath) ? rawFromPath : null;
-  const { toast } = useToast();
   const { t } = useTranslation();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(true);
+  // Landed here via the auto-recovery flow (stale session cleared after a
+  // deploy): explain it above the form instead of in a toast.
+  const [sessionExpired] = useState(() => new URLSearchParams(location.search).get("recovered") === "1");
   
   useEffect(() => {
     initializeAuth();
   }, []);
 
-  // Show a toast when the user landed here via the auto-recovery flow
-  // (stale/expired session was cleared after a deploy).
+  // Drop the ?recovered=1 marker from the URL once read.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("recovered") === "1") {
-      toast({
-        title: t("auth.session_expired_title", "Session expired"),
-        description: t(
-          "auth.session_expired_description",
-          "Your session expired. Please sign in again to continue."
-        ),
-      });
       params.delete("recovered");
       const qs = params.toString();
       navigate(
@@ -87,7 +80,7 @@ export default function Auth() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [toast, t]);
+  }, [t]);
   
   useEffect(() => {
     if (user) {
@@ -113,6 +106,15 @@ export default function Auth() {
         <div className="flex justify-end mb-2">
           <LanguageSelector />
         </div>
+        {sessionExpired && !showNetworkAlert && (
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("auth.session_expired_title", "Session expired")}</AlertTitle>
+            <AlertDescription>
+              {t("auth.session_expired_description", "Your session expired. Please sign in again to continue.")}
+            </AlertDescription>
+          </Alert>
+        )}
         {showNetworkAlert && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
