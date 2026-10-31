@@ -288,6 +288,7 @@
     "error_title": "Fel",
     "refresh": "Uppdatera",
     "write_reply": "Skriv ett svar...",
+    "write_reply_to": "Svara {{name}}...",
     "failed_load_conversations": "Kunde inte ladda konversationer",
     "image_tips_request": "Din referensbild hjälper andra att förstå vad du söker, även om de inte har exakt samma sak.",
     "image_tips_offer": "Bilden märkt med stjärna (★) visas först i flödet. Dra bilderna för att ändra ordning.",

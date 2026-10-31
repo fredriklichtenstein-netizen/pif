@@ -18,18 +18,21 @@ interface CommentCardProps {
   onReport: (commentId: string) => void;
   currentUser?: string;
   level?: number;
+  /** Top-level comment of this thread; replies to a reply are posted under it. */
+  threadRootId?: string;
   highlightedCommentId?: string | null;
 }
 
 export function CommentCard({
   comment, onLike, onDelete, onEdit, onReply, onReport, currentUser = "", level = 0,
-  highlightedCommentId,
+  threadRootId, highlightedCommentId,
 }: CommentCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(comment.text);
   const [showReplyInput, setShowReplyInput] = useState(false);
-  // Two-level threading only: top-level comments and one level of replies.
-  const maxReplyLevel = 1;
+  // Two-level threading: a reply to a reply joins the same thread (it's
+  // posted under the top-level comment) instead of nesting deeper.
+  const rootId = threadRootId ?? comment.id;
   const { toast } = useToast();
   const { t } = useTranslation();
   
@@ -38,7 +41,7 @@ export function CommentCard({
   const handleSaveEdit = () => { onEdit(comment.id, editedText); setIsEditing(false); };
 
   const handleReply = (text: string) => {
-    onReply(comment.id, text);
+    onReply(rootId, text);
     setShowReplyInput(false);
   };
 
@@ -68,21 +71,21 @@ export function CommentCard({
               <p className="text-sm mt-1 text-left">{comment.text}</p>
             )}
 
-            <CommentInteractions likes={comment.likes} isLiked={comment.isLiked} onLike={() => onLike(comment.id)} onReply={() => setShowReplyInput(!showReplyInput)} maxReplyLevel={maxReplyLevel} level={level} />
+            <CommentInteractions likes={comment.likes} isLiked={comment.isLiked} onLike={() => onLike(comment.id)} onReply={() => setShowReplyInput(!showReplyInput)} />
           </div>
         </div>
       </div>
 
       {showReplyInput && (
         <div className="ml-8">
-          <CommentInput onSubmit={handleReply} placeholder={t('interactions.write_reply')} draftKey={`reply:${comment.id}`} />
+          <CommentInput onSubmit={handleReply} placeholder={level > 0 ? t('interactions.write_reply_to', { name: authorName }) : t('interactions.write_reply')} draftKey={`reply:${comment.id}`} />
         </div>
       )}
 
       {comment.replies?.length > 0 && (
         <div className="space-y-4">
           {comment.replies.map((reply) => (
-            <CommentCard key={reply.id} comment={reply} onLike={onLike} onDelete={onDelete} onEdit={onEdit} onReply={onReply} onReport={onReport} currentUser={currentUser} level={level + 1} highlightedCommentId={highlightedCommentId} />
+            <CommentCard key={reply.id} comment={reply} onLike={onLike} onDelete={onDelete} onEdit={onEdit} onReply={onReply} onReport={onReport} currentUser={currentUser} level={level + 1} threadRootId={rootId} highlightedCommentId={highlightedCommentId} />
           ))}
         </div>
       )}

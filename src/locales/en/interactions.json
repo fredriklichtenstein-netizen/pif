@@ -288,6 +288,7 @@
     "error_title": "Error",
     "refresh": "Refresh",
     "write_reply": "Write a reply...",
+    "write_reply_to": "Reply to {{name}}...",
     "failed_load_conversations": "Failed to load conversations",
     "image_tips_request": "Your reference image helps others understand what you're looking for, even if they don't have the exact same thing.",
     "image_tips_offer": "The image marked with a star (★) is shown first in the feed. Drag images to change order.",
