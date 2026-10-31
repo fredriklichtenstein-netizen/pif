@@ -67,13 +67,6 @@ export function PifferRatingDialog({
       return;
     }
 
-    toast({
-      title: t("interactions.rating_thanks_title"),
-      description:
-        outcome === "positive"
-          ? t("interactions.rating_thanks_positive")
-          : t("interactions.rating_thanks_no_show"),
-    });
     onOpenChange(false);
     onSubmitted?.();
   };

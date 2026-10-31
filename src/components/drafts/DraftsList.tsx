@@ -50,11 +50,10 @@ export function DraftsList() {
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: DRAFTS_QUERY_KEY });
 
-  const run = async (draft: ItemDraft, action: () => Promise<void>, successTitle: string) => {
+  const run = async (draft: ItemDraft, action: () => Promise<void>) => {
     setBusyId(draft.id);
     try {
       await action();
-      toast({ title: successTitle });
       await refresh();
       return true;
     } catch (err) {
@@ -80,7 +79,6 @@ export function DraftsList() {
         clearPostsCache();
         await queryClient.invalidateQueries({ queryKey: ["posts"] });
       },
-      draft.item_type === "request" ? t("post.request_created") : t("post.pif_created"),
     );
     if (ok && itemId) navigate(feedPostPath(itemId));
   };
@@ -88,22 +86,18 @@ export function DraftsList() {
   const handleSchedule = async (date: Date) => {
     if (!scheduling) return;
     const draft = scheduling;
-    const ok = await run(
-      draft,
-      () => setDraftSchedule(draft.id, date),
-      t("drafts.scheduled_toast"),
-    );
+    const ok = await run(draft, () => setDraftSchedule(draft.id, date));
     if (ok) setScheduling(null);
   };
 
   const handleUnschedule = (draft: ItemDraft) =>
-    run(draft, () => setDraftSchedule(draft.id, null), t("drafts.unscheduled_toast"));
+    run(draft, () => setDraftSchedule(draft.id, null));
 
   const handleDelete = async () => {
     if (!deleting) return;
     const draft = deleting;
     setDeleting(null);
-    await run(draft, () => deleteDraft(draft), t("drafts.deleted_toast"));
+    await run(draft, () => deleteDraft(draft));
   };
 
   return (

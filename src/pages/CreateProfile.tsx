@@ -256,10 +256,6 @@ export default function CreateProfile() {
 
       useAuthStore.getState().setProfileCompleted(true);
 
-      toast({
-        title: t("profile.created"),
-        description: t("profile.created_description"),
-      });
 
       navigate("/", { replace: true });
     } catch (error: any) {

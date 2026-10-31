@@ -100,10 +100,6 @@ export const useProfileAvatar = () => {
         .eq('id', user.id);
 
       if (updateError) throw updateError;
-      toast({
-        title: t('interactions.avatar_updated'),
-        description: t('interactions.avatar_updated_description'),
-      });
     } catch (error: any) {
       console.error("Error updating profile picture:", error);
       toast({

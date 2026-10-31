@@ -361,12 +361,6 @@ export function InterestSelectionList({
     if (DEMO_MODE) {
       demoSelections.selectUser(itemId, row.user_id);
       reload();
-      toast({
-        title: t("interactions.receiver_selected"),
-        description: t("interactions.receiver_selected_with_name", {
-          name: displayName(row),
-        }),
-      });
       setBusyId(null);
       return;
     }
@@ -440,20 +434,6 @@ export function InterestSelectionList({
       // never insert duplicates. We intentionally do NOT insert from
       // the client here anymore — that path created a duplicate seed
       // every time the wisher re-clicked "Select".
-      toast({
-        title: isWish
-          ? t("interactions.helper_selected", "Helper added")
-          : t("interactions.receiver_selected"),
-        description: isWish
-          ? t(
-              "interactions.helper_selected_keep_choosing",
-              "{{name}} can now message you. You can keep choosing more helpers.",
-              { name: displayName(row) }
-            )
-          : t("interactions.receiver_selected_with_name", {
-              name: displayName(row),
-            }),
-      });
       // Pifs are single-receiver: close + jump to the unlocked thread.
       // Wishes can have many helpers, so we keep the popup open so the
       // wisher can keep selecting. They can open the conversation from
@@ -636,10 +616,6 @@ export function InterestSelectionList({
     if (DEMO_MODE) {
       demoSelections.unselectUser(itemId);
       reload();
-      toast({
-        title: t("interactions.selection_withdrawn"),
-        description: t("interactions.selection_withdrawn_description"),
-      });
       return;
     }
     try {
@@ -669,10 +645,6 @@ export function InterestSelectionList({
       reload();
       window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
       window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
-      toast({
-        title: t("interactions.selection_withdrawn"),
-        description: t("interactions.selection_withdrawn_description"),
-      });
     } catch (e) {
       console.error("[InterestSelectionList] withdraw failed", e);
       toast({
@@ -748,9 +720,6 @@ export function InterestSelectionList({
       }
       window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
       window.dispatchEvent(new CustomEvent('pif:conversations-refresh'));
-      toast({
-        title: t("interactions.selection_withdrawn"),
-      });
       setShowPopup(false);
     } catch (e) {
       console.error("[InterestSelectionList] withdraw own offer failed", e);

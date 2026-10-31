@@ -76,10 +76,6 @@ export function ReceiverConfirmation({
         console.warn("receiver rating not recorded", ratingRes.error);
       }
 
-      toast({
-        title: t('interactions.confirmed_toast'),
-        description: t('interactions.confirmed_description'),
-      });
 
       onOpenChange(false);
       onConfirmed?.();

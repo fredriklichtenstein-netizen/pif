@@ -112,7 +112,6 @@ export function EmailPasswordSettings() {
       if (data) {
         setPendingEmailChange(null);
         setEmail(currentEmail);
-        toast({ title: t('settings.email_change_withdrawn') });
       } else {
         // Nothing left to withdraw (e.g. it was already confirmed/expired
         // between page load and the click) -- just resync the UI state

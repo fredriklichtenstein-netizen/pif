@@ -3,8 +3,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Comment } from '@/types/comment';
 import { formatCommentFromDB } from '@/hooks/item/utils/commentFormatters';
 import { useGlobalAuth } from '@/hooks/useGlobalAuth';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import {
   subscribeItemTable,
@@ -86,8 +84,6 @@ export const useCommentRealtime = (
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const { user } = useGlobalAuth();
-  const { toast } = useToast();
-  const { t } = useTranslation();
 
   // Stable refs so the manager callbacks always see latest values without
   // re-subscribing (which would defeat the shared-channel purpose).
@@ -116,10 +112,6 @@ export const useCommentRealtime = (
       ));
 
       if (commentWithProfile.user_id !== myId) {
-        toast({
-          title: t('interactions.new_comment'),
-          description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
-        });
       }
       return;
     }
@@ -128,13 +120,9 @@ export const useCommentRealtime = (
       setList([...list, formattedComment]);
 
       if (commentWithProfile.user_id !== myId) {
-        toast({
-          title: t('interactions.new_comment'),
-          description: t('interactions.new_comment_description', { name: formattedComment.author.name }),
-        });
       }
     }
-  }, [toast, t]);
+  }, []);
 
   const handleCommentUpdate = useCallback(async (updatedComment: any) => {
     const myId = userIdRef.current;

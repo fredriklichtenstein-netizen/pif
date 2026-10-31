@@ -387,7 +387,6 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         }
         window.dispatchEvent(new CustomEvent("pif:conversation-refetch"));
         window.dispatchEvent(new CustomEvent("pif:conversations-refresh"));
-        toast({ title: t("interactions.selection_withdrawn") });
         if (isRequest) {
           // Wish: the item itself stays active, only this single
           // conversation closes. Stay on the thread; refetch flips UI.

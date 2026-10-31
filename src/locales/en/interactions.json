@@ -621,6 +621,7 @@
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."
   },
   "messages": {
+    "delete_message_failed": "Could not delete the message",
     "title": "Messages",
     "loading_conversation": "Loading conversation...",
     "failed_load_conversation": "Failed to load conversation",

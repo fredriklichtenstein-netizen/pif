@@ -110,10 +110,6 @@ export function useSignIn() {
       const profile = await fetchProfileWithRetry(userId);
 
       if (!profile || !profile.onboarding_completed) {
-        toast({
-          title: t('auth.complete_profile'),
-          description: t('auth.complete_profile_description'),
-        });
         navigate("/create-profile");
         setSigningIn(false);
         return true;
