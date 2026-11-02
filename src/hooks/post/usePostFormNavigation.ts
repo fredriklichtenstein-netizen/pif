@@ -9,11 +9,15 @@ interface PostFormNavigationProps {
    * worked around by creating two, and validation was wired to the throwaway
    * one that never advanced past step 0. */
   canProceed: (stepIndex: number) => boolean;
+  /** Every step is reachable from the start, e.g. when editing an existing
+   * post or draft whose steps were already filled in. */
+  allStepsReachable?: boolean;
 }
 
-export function usePostFormNavigation({ steps, canProceed }: PostFormNavigationProps) {
+export function usePostFormNavigation({ steps, canProceed, allStepsReachable = false }: PostFormNavigationProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [maxVisitedStep, setMaxVisitedStep] = useState(0);
+  const [visitedStep, setMaxVisitedStep] = useState(0);
+  const maxVisitedStep = allStepsReachable ? steps.length - 1 : visitedStep;
 
   const nextStep = useCallback(() => {
     setTimeout(() => {
