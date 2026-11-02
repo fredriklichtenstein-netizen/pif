@@ -106,8 +106,7 @@ removed string is gone from every chunk). Rollback: `gh run rerun` an older gree
 ### 8. Update Trello
 
 Move the relevant card to Done (or the appropriate list) and leave a short comment noting what
-shipped and the production commit SHA. Check the Trello Inbox for anything urgent that surfaced
-while you were heads-down on the deploy. If the Trello MCP is unreachable, say so and keep a list of
+shipped and the production commit SHA. If the Trello MCP is unreachable, say so and keep a list of
 pending card updates to post once it's back.
 
 ### 9. Evaluate whether it's worth a feature announcement
@@ -129,3 +128,17 @@ to publish) via `execute_sql`/`apply_migration` against production; the email se
 the edge function's broadcast mode. No admin UI exists for either. Watch out for the backfilled-
 watermark trap documented in `CLAUDE.md` if the announcement was authored before this promotion —
 `last_seen_announcement_at` defaults can silently hide it from existing users.
+
+### 10. Final step: triage the board's Inbox column
+
+Always the last step of every promotion, unprompted. Check the **Inbox list on the PIF Backlog
+board** (https://trello.com/b/Fs4TDO6L), not Trello's personal Inbox. `mcp__trello__trelloReadInbox`
+reads that other, unrelated quick-capture surface and has reported "empty" while real cards sat in
+the board's Inbox column, so never use it for this.
+
+Read the column with `mcp__trello__trelloReadCard`, action `list_by_list`, listId
+`ari:cloud:trello::list/workspace/6233259b075d4b61607d4269/6a789ba356a85081c2421fec` (if that fails,
+find the list named "Inbox" via `trelloReadList` `list_by_board`). For each card: judge bug vs.
+feature vs. polish and rough size, move it to Up Next if urgent or high-value, otherwise Backlog,
+and say what you found in the report to the user — including when the column is empty. Flag
+anything too vague to act on rather than filing it silently.
