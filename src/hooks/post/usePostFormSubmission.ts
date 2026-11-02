@@ -11,7 +11,6 @@ import { DEMO_USER } from "@/data/mockUser";
 import { useTranslation } from "react-i18next";
 import { clearPostsCache } from "@/services/posts/optimized";
 import { buildItemFields } from "@/services/items/itemFields";
-import { formatScheduleTime } from "@/lib/schedule";
 import { DRAFTS_QUERY_KEY, draftErrorKey, publishDraft, saveDraft } from "@/services/drafts";
 import { DRAFTS_FEED_PATH, feedPostPath } from "@/lib/feedLinks";
 
@@ -22,7 +21,7 @@ export function usePostFormSubmission(initialData?: any) {
   const queryClient = useQueryClient();
   const addDemoPost = useDemoPostsStore((state) => state.addPost);
   const updateDemoPost = useDemoPostsStore((state) => state.updatePost);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const handleSubmit = async (formData: PostFormData) => {
     if (DEMO_MODE) {
@@ -178,12 +177,7 @@ export function usePostFormSubmission(initialData?: any) {
     try {
       await saveDraft(formData, initialData?.draftId ?? null, scheduledAt);
       await queryClient.invalidateQueries({ queryKey: DRAFTS_QUERY_KEY });
-      toast({
-        title: scheduledAt ? t('drafts.scheduled_toast') : t('drafts.saved_toast'),
-        description: scheduledAt
-          ? t('drafts.scheduled_toast_description', { when: formatScheduleTime(scheduledAt, i18n.language) })
-          : undefined,
-      });
+      // No toast: the drafts view shows the draft and its schedule badge.
       navigate(navigateTo);
       return true;
     } catch (error: any) {
