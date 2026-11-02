@@ -128,6 +128,10 @@ export function PostFormContainer({
   } = usePostFormNavigation({
     steps,
     canProceed: (idx) => validation.validateCurrentStep(formData, idx, steps),
+    // Editing a post or a draft: its steps are already filled in, so the
+    // step numbers jump straight to any of them. handleStepClick still
+    // stops at the first earlier step with an error.
+    allStepsReachable: isEditMode || isDraftMode,
   });
 
 
