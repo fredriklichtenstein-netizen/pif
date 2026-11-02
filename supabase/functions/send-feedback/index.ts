@@ -35,6 +35,7 @@ const FEEDBACK_FROM = "PIF <hej@pif.today>";
 // https://trello.com/b/Fs4TDO6L/pif-backlog-mvp-2026 if the board is recreated.
 const TRELLO_INBOX_LIST_ID = "6a789ba356a85081c2421fec"; // "Inbox"
 const TRELLO_BUG_LABEL_ID = "6a789ba356a85081c24220d1"; // red "Bug"
+const PRODUCTION_REF = "heurpehcwbhohwklqnir";
 
 /**
  * Mirror a submission to Trello. Best-effort by design: feedback reaching the
@@ -50,9 +51,12 @@ async function mirrorToTrello(
 ): Promise<void> {
   const key = Deno.env.get("TRELLO_KEY");
   const token = Deno.env.get("TRELLO_TOKEN");
-  if (!key || !token) return; // not configured (e.g. staging) — skip quietly
+  if (!key || !token) return; // not configured — skip quietly
 
   const typeLabel = feedbackType === "issue" ? "Problem" : "Feedback";
+  // Staging files onto the same board, marked so test noise is easy to spot
+  // and real requests sent from staging still reach triage.
+  const isStaging = !(Deno.env.get("SUPABASE_URL") ?? "").includes(PRODUCTION_REF);
 
   // Local time for a human reading the board; ISO kept in the body so the exact
   // instant is unambiguous regardless of who reads it from where.
@@ -63,12 +67,13 @@ async function mirrorToTrello(
   }).format(submittedAt);
 
   const firstLine = feedbackText.replace(/\s+/g, " ").trim();
-  const title = `[${typeLabel}] ${
+  const title = `${isStaging ? "[Staging] " : ""}[${typeLabel}] ${
     firstLine.length > 80 ? `${firstLine.slice(0, 80)}…` : firstLine
   }`;
 
   const desc = [
     `**Kategori:** ${typeLabel}`,
+    ...(isStaging ? ["**Miljö:** staging (staging.pif.today)"] : []),
     `**Inskickat:** ${local} (${submittedAt.toISOString()})`,
     "",
     "---",
