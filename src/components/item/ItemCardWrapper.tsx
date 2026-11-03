@@ -24,6 +24,7 @@ export function ItemCardWrapper({
   postedBy,
   createdAt,
   archived_at,
+  pif_status,
   archived_reason,
   can_meet_elsewhere,
   stale_reminder_stage,
@@ -133,6 +134,7 @@ export function ItemCardWrapper({
         showOwnerTint={showOwnerTint}
         isItemArchived={isItemArchived}
         archived_at={archived_at}
+        pif_status={pif_status}
         archived_reason={archived_reason}
         can_meet_elsewhere={can_meet_elsewhere}
         stale_reminder_stage={stale_reminder_stage}

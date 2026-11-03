@@ -30,6 +30,8 @@ export interface ItemCardProps {
    *  the `items.created_at` column / Post.createdAt. */
   createdAt?: string;
   archived_at?: string;
+  /** items.pif_status; completed/archived/piffed posts take no new interest. */
+  pif_status?: string;
   archived_reason?: string;
   /** Shows the "Kan mötas upp" badge. */
   can_meet_elsewhere?: boolean;
@@ -45,6 +47,8 @@ export interface ItemCardProps {
 }
 
 export interface ItemInteractionsProps {
+  /** The post is no longer active: the interest button is disabled. */
+  interestClosed?: boolean;
   id: string;
   postedBy: {
     id?: string;

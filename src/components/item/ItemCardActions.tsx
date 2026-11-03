@@ -17,6 +17,7 @@ interface ItemCardActionsProps {
   showComments: boolean;
   isBookmarked: boolean;
   showInterest: boolean;
+  interestClosed?: boolean;
   itemType?: ItemType;
   itemTitle?: string;
   commentsCount: number;
@@ -54,6 +55,7 @@ export function ItemCardActions({
   showComments,
   isBookmarked,
   showInterest,
+  interestClosed,
   itemType,
   itemTitle,
   commentsCount,
@@ -94,6 +96,7 @@ export function ItemCardActions({
         showComments={showComments}
         isBookmarked={isBookmarked}
         showInterest={showInterest}
+        interestClosed={interestClosed}
         isOwner={isOwner}
         itemType={itemType}
         itemTitle={itemTitle}

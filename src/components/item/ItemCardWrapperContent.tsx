@@ -7,6 +7,9 @@ import { ItemCardLayout } from "./layout/ItemCardLayout";
 import { ItemArchivedBanner } from "./status/ItemArchivedBanner";
 import { useDistanceCalculation } from "@/hooks/useDistanceCalculation";
 
+// No new interest once a post is no longer active (enforced in RLS too).
+const CLOSED_STATUSES = new Set(["archived", "completed", "piffed"]);
+
 export function ItemCardWrapperContent({
   id,
   title,
@@ -25,6 +28,7 @@ export function ItemCardWrapperContent({
   showOwnerTint,
   isItemArchived,
   archived_at,
+  pif_status,
   archived_reason,
   can_meet_elsewhere,
   stale_reminder_stage,
@@ -116,6 +120,7 @@ export function ItemCardWrapperContent({
           showComments={showComments} 
           isBookmarked={isBookmarked} 
           showInterest={showInterest} 
+          interestClosed={isItemArchived || CLOSED_STATUSES.has(pif_status ?? "")}
           itemType={item_type}
           itemTitle={title}
           commentsCount={commentsCount}

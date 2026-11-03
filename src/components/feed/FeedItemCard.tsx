@@ -66,6 +66,7 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           }}
           createdAt={post.createdAt}
           archived_at={post.archived_at}
+          pif_status={post.status}
           archived_reason={post.archived_reason}
           can_meet_elsewhere={post.can_meet_elsewhere}
           likesCount={post.likesCount}

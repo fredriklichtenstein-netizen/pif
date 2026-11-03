@@ -8,6 +8,7 @@ interface ItemInteractionButtonsProps {
   isLiked: boolean;
   showComments: boolean;
   showInterest: boolean;
+  interestClosed?: boolean;
   isOwner: boolean;
   itemType?: ItemType;
   itemTitle?: string;
@@ -33,6 +34,7 @@ export const ItemInteractionButtons = ({
   isLiked,
   showComments,
   showInterest,
+  interestClosed,
   isOwner,
   itemType,
   itemTitle,
@@ -57,6 +59,7 @@ export const ItemInteractionButtons = ({
       isLiked={isLiked}
       showComments={showComments}
       showInterest={showInterest}
+      interestClosed={interestClosed}
       isOwner={isOwner}
       itemId={id}
       itemOwnerId={itemOwnerId}

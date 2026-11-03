@@ -35,6 +35,8 @@ interface InteractionButtonWithPopupProps {
   currentUserId?: string;
   /** When 'request', activating opens a Grant Wish dialog that captures a required note. */
   itemType?: 'offer' | 'request';
+  /** Post is completed/archived: non-owners can no longer show interest. */
+  interestClosed?: boolean;
   /** Surfaced inside the Grant Wish dialog as context. */
   itemTitle?: string;
 }
@@ -57,6 +59,7 @@ export function InteractionButtonWithPopup({
   currentUserId,
   itemType,
   itemTitle,
+  interestClosed = false,
 }: InteractionButtonWithPopupProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -137,6 +140,11 @@ export function InteractionButtonWithPopup({
       // Non-selected users may freely toggle interest until the pif is
       // completed/archived. Single-selection is enforced server-side in
       // select_receiver.
+    }
+    // A completed/archived post takes no new interest (RLS enforces it too).
+    if (interestClosed && !perspectiveDisabled) {
+      perspectiveDisabled = true;
+      perspectiveDim = true;
     }
   }
 
