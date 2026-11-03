@@ -181,7 +181,12 @@ export function FeedbackTab() {
         y: window.scrollY,
         width: vw,
         height: vh,
+        // Only stylesheet <link>s are needed to render. Safari never finishes
+        // loading the others (modulepreload, manifest, preconnect) inside the
+        // cloned iframe, so its load event never fires and html2canvas waits
+        // forever -- the clone sat at readyState "interactive".
         ignoreElements: (el) =>
+          (el instanceof HTMLLinkElement && el.rel !== "stylesheet") ||
           (el instanceof HTMLElement && el.closest("[data-feedback-panel]") !== null) ||
           isOffscreen(el),
       });
