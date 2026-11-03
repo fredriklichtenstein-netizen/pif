@@ -13,6 +13,7 @@ export function ItemInteractions({
   showComments,
   isBookmarked,
   showInterest,
+  interestClosed = false,
   isOwner = false,
   itemType,
   itemTitle,
@@ -71,6 +72,7 @@ export function ItemInteractions({
               isLiked={isLiked}
               showComments={showComments}
               showInterest={showInterest}
+              interestClosed={interestClosed}
               isOwner={isOwner}
               itemType={itemType}
               itemTitle={itemTitle}

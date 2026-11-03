@@ -13,6 +13,7 @@ interface PrimaryActionsProps {
   isLiked: boolean;
   showComments: boolean;
   showInterest: boolean;
+  interestClosed?: boolean;
   isOwner: boolean;
   itemId: string;
   itemOwnerId?: string;
@@ -38,6 +39,7 @@ export function PrimaryActions({
   isLiked,
   showComments,
   showInterest,
+  interestClosed = false,
   isOwner,
   itemId,
   itemOwnerId,
@@ -122,6 +124,7 @@ export function PrimaryActions({
         <InteractionButtonWithPopup
           type="interest"
           isActive={showInterest}
+          interestClosed={interestClosed}
           count={interestsCount}
           users={interestedUsers}
           onClick={onShowInterest}
