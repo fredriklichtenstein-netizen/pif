@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, Image as ImageIcon, Camera } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from "@/hooks/use-mobile";
+import { nudgeViewportAfterCamera } from "@/utils/pwa/platform";
 
 interface ImageUploadAreaProps {
   isRequest: boolean;
@@ -106,7 +107,7 @@ export function ImageUploadArea({
           accept="image/*"
           capture="environment"
           onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).value = ''; }}
-          onChange={onImageUpload}
+          onChange={(e) => { nudgeViewportAfterCamera(); onImageUpload(e); }}
           className="hidden"
         />
       </div>

@@ -52,3 +52,26 @@ export function isDesktopChromium(): boolean {
   if (!isChromiumUA) return false;
   return true;
 }
+
+/**
+ * iOS installed web app (standalone): coming back from the camera
+ * (`<input capture>`) can leave position:fixed bars drawn at the wrong
+ * height until the app reloads -- the bottom nav was reported stuck
+ * mid-screen (Trello: nav bar between uploaded images). Nudge the layout a
+ * few times while the viewport settles: a 1px scroll round-trip plus a
+ * re-layout of elements marked `data-fixed-bottom`. No-op elsewhere.
+ */
+export function nudgeViewportAfterCamera(): void {
+  if (!isIOS() || !isStandalone()) return;
+  const nudge = () => {
+    const { scrollX, scrollY } = window;
+    window.scrollTo(scrollX, scrollY + 1);
+    window.scrollTo(scrollX, scrollY);
+    document.querySelectorAll<HTMLElement>("[data-fixed-bottom]").forEach((el) => {
+      el.style.display = "none";
+      void el.offsetHeight;
+      el.style.display = "";
+    });
+  };
+  [0, 350, 1000].forEach((ms) => window.setTimeout(nudge, ms));
+}

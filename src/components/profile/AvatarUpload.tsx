@@ -8,6 +8,7 @@ import { ImageCropper } from "./ImageCropper";
 import { UploadOptions } from "./UploadOptions";
 import { getCroppedImg, normalizeImageOrientation } from "@/utils/image";
 import { compressImage } from "@/utils/image/compress";
+import { nudgeViewportAfterCamera } from "@/utils/pwa/platform";
 import { Button } from "../ui/button";
 import { useTranslation } from "react-i18next";
 
@@ -202,7 +203,7 @@ export function AvatarUpload({ avatarUrl, onFileChange }: AvatarUploadProps) {
         capture="user"
         className="hidden"
         onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
-        onChange={handleFileChange}
+        onChange={(e) => { nudgeViewportAfterCamera(); handleFileChange(e); }}
       />
     </div>
   );
