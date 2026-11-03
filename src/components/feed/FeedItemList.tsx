@@ -27,6 +27,10 @@ interface FeedItemListProps {
 }
 
 // Helper function to validate post data
+// Any of these means the user took over scrolling: stop anchoring the
+// deep-linked post.
+const USER_SCROLL_EVENTS = ["wheel", "touchstart", "keydown", "mousedown"] as const;
+
 const validatePostData = (post: any): boolean => {
   try {
     // Basic validation
@@ -101,25 +105,50 @@ export function FeedItemList({
   useEffect(() => {
   }, [posts, validPosts.length, viewMode]);
 
-  // Scroll to the deep-linked post once its card is in the DOM, then
-  // re-center after the lazily mounted cards above it have settled (their
-  // real height differs from LazyMount's placeholder).
+  // Scroll to the deep-linked post once its card is in the DOM, and keep it
+  // centred while the page settles: cards above it mount lazily (their real
+  // height differs from LazyMount's placeholder) and their images load
+  // later, so a single scroll -- or a smooth one that mounts cards on the
+  // way -- left a neighbouring post on screen. Re-centre instantly on every
+  // layout change for ANCHOR_MS, until the user scrolls or touches.
+  const anchorCleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!scrollToPostId || scrolledForRef.current === scrollToPostId) return;
     const el = document.getElementById(`post-${scrollToPostId}`);
     if (!el) return;
     scrolledForRef.current = scrollToPostId;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    anchorCleanupRef.current?.();
+
+    const ANCHOR_MS = 5000;
+    const center = () =>
+      document.getElementById(`post-${scrollToPostId}`)?.scrollIntoView({ behavior: 'auto', block: 'center' });
+    center();
     setHighlightedId(scrollToPostId);
-    scrollTimersRef.current.push(
-      setTimeout(() => {
-        document.getElementById(`post-${scrollToPostId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 900),
-      setTimeout(() => setHighlightedId(null), 4000),
-    );
+
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(center);
+    });
+    observer.observe(document.body);
+    const stop = () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      USER_SCROLL_EVENTS.forEach((type) => window.removeEventListener(type, stop));
+      anchorCleanupRef.current = null;
+    };
+    const timer = window.setTimeout(stop, ANCHOR_MS);
+    USER_SCROLL_EVENTS.forEach((type) => window.addEventListener(type, stop, { passive: true }));
+    anchorCleanupRef.current = stop;
+
+    scrollTimersRef.current.push(setTimeout(() => setHighlightedId(null), 4000));
   }, [scrollToPostId, validPosts.length]);
 
-  useEffect(() => () => scrollTimersRef.current.forEach(clearTimeout), []);
+  useEffect(() => () => {
+    scrollTimersRef.current.forEach(clearTimeout);
+    anchorCleanupRef.current?.();
+  }, []);
 
   // Enhanced recovery function with debouncing and complete refresh
   const handleRecoveryAction = useCallback(() => {
