@@ -24,6 +24,7 @@ interface FeedbackImage {
 const MAX_IMAGES = 3;
 /** html2canvas can't be cancelled, but we stop waiting for it after this. */
 const CAPTURE_TIMEOUT_MS = 12_000;
+const CLONE_LOAD_GRACE_MS = 1_500;
 /** Attached photos are downsized to this longest side before sending. */
 const UPLOAD_MAX_DIMENSION = 1600;
 
@@ -181,15 +182,36 @@ export function FeedbackTab() {
         y: window.scrollY,
         width: vw,
         height: vh,
-        // Only stylesheet <link>s are needed to render. Safari never finishes
-        // loading the others (modulepreload, manifest, preconnect) inside the
-        // cloned iframe, so its load event never fires and html2canvas waits
-        // forever -- the clone sat at readyState "interactive".
+        // Only stylesheet <link>s are needed to render; skip the rest
+        // (modulepreload, manifest, preconnect) so the clone loads less.
         ignoreElements: (el) =>
           (el instanceof HTMLLinkElement && el.rel !== "stylesheet") ||
           (el instanceof HTMLElement && el.closest("[data-feedback-panel]") !== null) ||
           isOffscreen(el),
       });
+      // html2canvas waits, with no timeout, for its cloned iframe to fire
+      // load and reach readyState "complete". In Safari on the feed the clone
+      // stays "interactive" for good (no pending image or font to blame), so
+      // the capture hung. Once the clone is built, give it CLONE_LOAD_GRACE_MS,
+      // then stop its loading and let html2canvas carry on; images still get
+      // their own imageTimeout.
+      let settled = false;
+      const markSettled = () => { settled = true; };
+      capture.then(markSettled, markSettled);
+      const started = performance.now();
+      const watchdog = window.setInterval(() => {
+        if (settled) { window.clearInterval(watchdog); return; }
+        if (performance.now() - started < CLONE_LOAD_GRACE_MS) return;
+        const frame = document.querySelector<HTMLIFrameElement>("iframe.html2canvas-container");
+        const doc = frame?.contentDocument;
+        if (!frame || !doc?.body?.childNodes.length || doc.readyState === "complete") return;
+        window.clearInterval(watchdog);
+        if (IS_STAGING) console.warn(`html2canvas clone stuck at "${doc.readyState}", forcing it on`);
+        try { frame.contentWindow?.stop(); } catch { /* ignore */ }
+        Object.defineProperty(doc, "readyState", { configurable: true, get: () => "complete" });
+        // html2canvas's handler starts its readyState poll; it's cleared if load did fire.
+        frame.onload?.call(frame, new Event("load"));
+      }, 250);
       if (IS_STAGING) {
         const started = performance.now();
         capture.then(
