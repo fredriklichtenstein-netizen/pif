@@ -215,7 +215,18 @@ export function FeedbackTab() {
           const stuck = Array.from(doc.images)
             .filter((img) => !img.complete)
             .map((img) => `${img.loading || "auto"} ${img.currentSrc || img.src}`.slice(0, 160));
-          console.warn("html2canvas stuck", { fonts: doc.fonts?.status, images: doc.images.length, stuck });
+          // Elements that can hold back the clone's load event besides images.
+          const blockers = (d: Document) =>
+            Array.from(d.querySelectorAll("iframe, video, audio, object, embed, link[href]"))
+              .map((el) => `${el.tagName.toLowerCase()} ${(el as HTMLLinkElement).rel || ""} ${el.getAttribute("src") || el.getAttribute("href") || ""}`.slice(0, 160));
+          console.warn("html2canvas stuck", {
+            readyState: doc.readyState,
+            fonts: doc.fonts?.status,
+            images: doc.images.length,
+            stuck,
+            cloneBlockers: blockers(doc),
+            pageBlockers: blockers(document),
+          });
         }
         frame.remove();
       });
