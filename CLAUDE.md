@@ -332,7 +332,12 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   `DROP FUNCTION IF EXISTS` pattern already used for functions.
 - **Edge Functions and their secrets are not automatically synced** to a new Supabase branch —
   deploy each function and `supabase secrets set` (CLI, linked via `--project-ref`, no DB password
-  needed — Management-API-based auth) separately. Direct Postgres connections (e.g. for
+  needed — Management-API-based auth) separately. **On this machine `supabase secrets set` can exit
+  silently without saving anything** (hit 2026-11-03) — set secrets with
+  `POST /v1/projects/<ref>/secrets` (body `[{"name","value"}]`, value piped from `pbpaste`) and
+  confirm with `GET .../secrets` (names only). Staging's `TRELLO_KEY`/`TRELLO_TOKEN` (same "PIF
+  feedback form" Trello app as production, separate token) were set this way; staging feedback
+  cards are titled `[Staging] …`. Direct Postgres connections (e.g. for
   `pg_dump`/`psql`) require the project's IPv4 add-on enabled (Supabase direct/pooler hosts are
   IPv6-only by default) plus the actual DB password, which is only shown once and must be reset if
   forgotten (safe to do — the app never uses the DB password directly, only the anon/publishable
