@@ -17,7 +17,6 @@ interface PostFormSizeSelectorProps {
   category: string;
   measurements: Record<string, string>;
   onSizeChange: (size: string) => void;
-  onCustomSizeChange: (customSize: string) => void;
   itemType?: 'offer' | 'request';
 }
 
@@ -25,7 +24,6 @@ export function PostFormSizeSelector({
   category,
   measurements,
   onSizeChange,
-  onCustomSizeChange,
   itemType = 'offer',
 }: PostFormSizeSelectorProps) {
   const { t } = useTranslation();
@@ -34,9 +32,13 @@ export function PostFormSizeSelector({
   const offerJeans = kind === 'adult_clothing';
   const size = measurements.size || "";
   const jeansMatch = offerJeans ? JEANS_SIZE.exec(size) : null;
-  // "jeans" is picked but neither W nor L chosen yet: nothing to store.
+  // "jeans"/"custom" is picked but nothing chosen or typed yet: nothing to store.
   const [jeansPicked, setJeansPicked] = useState(false);
-  const isJeans = !!jeansMatch || (jeansPicked && size === "");
+  const [customPicked, setCustomPicked] = useState(false);
+  // A size that isn't one of the options (typed earlier, or a legacy literal
+  // "custom") is a custom size, so the text box stays open while typing.
+  const isCustom = customPicked || (size !== "" && !sizes.includes(size) && !jeansMatch);
+  const isJeans = !isCustom && (!!jeansMatch || (jeansPicked && size === ""));
   const waist = jeansMatch?.[1] ?? "";
   const length = jeansMatch?.[2] ?? "";
 
@@ -44,13 +46,9 @@ export function PostFormSizeSelector({
     onSizeChange([w && `W${w}`, l && `L${l}`].filter(Boolean).join(" "));
 
   const handleSelect = (value: string) => {
-    if (value === "jeans") {
-      setJeansPicked(true);
-      onSizeChange("");
-      return;
-    }
-    setJeansPicked(false);
-    onSizeChange(value);
+    setJeansPicked(value === "jeans");
+    setCustomPicked(value === "custom");
+    onSizeChange(value === "jeans" || value === "custom" ? "" : value);
   };
 
   let placeholder = isRequest ? t('interactions.desired_size') : t('interactions.select_size');
@@ -68,7 +66,7 @@ export function PostFormSizeSelector({
           {isRequest ? t('interactions.size_desired') : t('interactions.size_label')}
         </Label>
         <Select 
-          value={isJeans ? "jeans" : size}
+          value={isCustom ? "custom" : isJeans ? "jeans" : size}
           onValueChange={handleSelect}
         >
           <SelectTrigger>
@@ -122,14 +120,14 @@ export function PostFormSizeSelector({
         </div>
       )}
 
-      {measurements.size === "custom" && (
+      {isCustom && (
         <div className="space-y-2">
           <Label className="text-sm font-medium">
             {isRequest ? t('interactions.describe_desired_size') : t('interactions.enter_size')}
           </Label>
           <Input
-            value={measurements.customSize || ""}
-            onChange={(e) => onCustomSizeChange(e.target.value)}
+            value={size === "custom" ? "" : size}
+            onChange={(e) => onSizeChange(e.target.value)}
             placeholder={isRequest ? t('interactions.size_placeholder_request') : t('interactions.size_placeholder_offer')}
           />
         </div>

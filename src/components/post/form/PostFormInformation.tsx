@@ -67,18 +67,6 @@ export function PostFormInformation({
     onMeasurementChange("size", size === "none" ? "" : size);
   };
   
-  const handleCustomSizeChange = (customSize: string) => {
-    onMeasurementChange("customSize", customSize);
-
-    // Selecting "custom" from the dropdown already sets measurements.size to
-    // the literal string "custom" (to reveal this input) — include that case
-    // here too, otherwise `size` never gets replaced by the typed value and
-    // stays as the raw marker "custom" everywhere the post is displayed.
-    if (customSize && (!measurements.size || measurements.size === "none" || measurements.size === "custom")) {
-      onMeasurementChange("size", customSize);
-    }
-  };
-
   const showWeightField = !isRequest;
 
   return (
@@ -221,7 +209,6 @@ export function PostFormInformation({
                 category={formData.category}
                 measurements={measurements}
                 onSizeChange={handleSizeChange}
-                onCustomSizeChange={handleCustomSizeChange}
                 itemType={formData.item_type}
               />
             )}
