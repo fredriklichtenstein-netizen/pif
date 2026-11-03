@@ -6,7 +6,7 @@ import { MessageCircle, X, Loader2, Camera, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, IS_STAGING } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { resolveDisplayName } from "@/utils/displayName";
 import { cn } from "@/lib/utils";
@@ -173,8 +173,7 @@ export function FeedbackTab() {
       // they're created with preserveDrawingBuffer: true.
       const capture = html2canvas(document.body, {
         useCORS: true,
-        // Staging logs html2canvas's own step timings (Trello: Safari timeout).
-        logging: IS_STAGING,
+        logging: false,
         backgroundColor: "#ffffff",
         scale: 1,
         imageTimeout: 4000,
@@ -206,19 +205,11 @@ export function FeedbackTab() {
         const doc = frame?.contentDocument;
         if (!frame || !doc?.body?.childNodes.length || doc.readyState === "complete") return;
         window.clearInterval(watchdog);
-        if (IS_STAGING) console.warn(`html2canvas clone stuck at "${doc.readyState}", forcing it on`);
         try { frame.contentWindow?.stop(); } catch { /* ignore */ }
         Object.defineProperty(doc, "readyState", { configurable: true, get: () => "complete" });
         // html2canvas's handler starts its readyState poll; it's cleared if load did fire.
         frame.onload?.call(frame, new Event("load"));
       }, 250);
-      if (IS_STAGING) {
-        const started = performance.now();
-        capture.then(
-          () => console.warn(`html2canvas finished after ${Math.round(performance.now() - started)} ms`),
-          (e) => console.warn(`html2canvas failed after ${Math.round(performance.now() - started)} ms`, e),
-        );
-      }
       const canvas = await Promise.race([
         capture,
         new Promise<never>((_, reject) =>
@@ -233,30 +224,8 @@ export function FeedbackTab() {
       );
     } catch (err) {
       console.warn("html2canvas failed", err);
-      // On WebKit html2canvas waits, with no timeout, for every image in its
-      // cloned iframe; one that never settles hangs the capture. Log which
-      // ones were stuck, then remove the iframe it leaves behind.
-      document.querySelectorAll<HTMLIFrameElement>("iframe.html2canvas-container").forEach((frame) => {
-        const doc = frame.contentDocument;
-        if (doc) {
-          const stuck = Array.from(doc.images)
-            .filter((img) => !img.complete)
-            .map((img) => `${img.loading || "auto"} ${img.currentSrc || img.src}`.slice(0, 160));
-          // Elements that can hold back the clone's load event besides images.
-          const blockers = (d: Document) =>
-            Array.from(d.querySelectorAll("iframe, video, audio, object, embed, link[href]"))
-              .map((el) => `${el.tagName.toLowerCase()} ${(el as HTMLLinkElement).rel || ""} ${el.getAttribute("src") || el.getAttribute("href") || ""}`.slice(0, 160));
-          console.warn("html2canvas stuck", {
-            readyState: doc.readyState,
-            fonts: doc.fonts?.status,
-            images: doc.images.length,
-            stuck,
-            cloneBlockers: blockers(doc),
-            pageBlockers: blockers(document),
-          });
-        }
-        frame.remove();
-      });
+      // A capture that never settled leaves html2canvas's cloned iframe behind.
+      document.querySelectorAll("iframe.html2canvas-container").forEach((frame) => frame.remove());
       toast({
         title: t("interactions.feedback.capture_failed"),
         variant: "destructive",
