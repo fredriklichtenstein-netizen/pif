@@ -6,7 +6,7 @@ import { MessageCircle, X, Loader2, Camera, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, IS_STAGING } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { resolveDisplayName } from "@/utils/displayName";
 import { cn } from "@/lib/utils";
@@ -172,7 +172,8 @@ export function FeedbackTab() {
       // they're created with preserveDrawingBuffer: true.
       const capture = html2canvas(document.body, {
         useCORS: true,
-        logging: false,
+        // Staging logs html2canvas's own step timings (Trello: Safari timeout).
+        logging: IS_STAGING,
         backgroundColor: "#ffffff",
         scale: 1,
         imageTimeout: 4000,
@@ -184,6 +185,13 @@ export function FeedbackTab() {
           (el instanceof HTMLElement && el.closest("[data-feedback-panel]") !== null) ||
           isOffscreen(el),
       });
+      if (IS_STAGING) {
+        const started = performance.now();
+        capture.then(
+          () => console.warn(`html2canvas finished after ${Math.round(performance.now() - started)} ms`),
+          (e) => console.warn(`html2canvas failed after ${Math.round(performance.now() - started)} ms`, e),
+        );
+      }
       const canvas = await Promise.race([
         capture,
         new Promise<never>((_, reject) =>
