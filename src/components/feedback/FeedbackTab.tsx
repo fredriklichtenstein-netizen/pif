@@ -198,6 +198,19 @@ export function FeedbackTab() {
       );
     } catch (err) {
       console.warn("html2canvas failed", err);
+      // On WebKit html2canvas waits, with no timeout, for every image in its
+      // cloned iframe; one that never settles hangs the capture. Log which
+      // ones were stuck, then remove the iframe it leaves behind.
+      document.querySelectorAll<HTMLIFrameElement>("iframe.html2canvas-container").forEach((frame) => {
+        const doc = frame.contentDocument;
+        if (doc) {
+          const stuck = Array.from(doc.images)
+            .filter((img) => !img.complete)
+            .map((img) => `${img.loading || "auto"} ${img.currentSrc || img.src}`.slice(0, 160));
+          console.warn("html2canvas stuck", { fonts: doc.fonts?.status, images: doc.images.length, stuck });
+        }
+        frame.remove();
+      });
       toast({
         title: t("interactions.feedback.capture_failed"),
         variant: "destructive",
