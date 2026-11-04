@@ -261,6 +261,13 @@ record; CI deploys leave dashboard routes alone. Traps hit while building it:
   `app.pif.community/item/*` route (deleted) — rules run before Workers, and the most specific
   route wins. Item links broke for ~5 minutes. **Before proxying any hostname, list the zone's
   Rules (Redirect/Page/Bulk) and every Worker's routes.**
+- **og:image is `/og/<id>.webp`, served by the Worker** (since 2026-11-04): a 1200×630 cover crop
+  of the post's first Storage photo via Supabase's `/storage/v1/render/image/`, with
+  `og:image:width/height` declared — without a landscape image of declared size, apps show the
+  small side-by-side card. The render endpoint returns a ~1.3 MB PNG unless the request sends
+  `Accept: image/webp` (`format=origin` doesn't help), so the Worker fetches it with that header.
+  The crop is always centred. `?v=` is a hash of the photo URL, so a changed photo gets a new
+  preview URL instead of a cached one.
 - Facebook caches previews: after a fix, re-scrape in the Sharing Debugger
   (developers.facebook.com/tools/debug). Encrypted Messenger chats show no preview for any link
   (the sender's device fetches it) — not a bug.
