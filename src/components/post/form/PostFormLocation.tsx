@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { AddressInput } from "@/components/profile/address/AddressInput";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Handshake, DoorOpen, Sparkles, Map, Wand2 } from "lucide-react";
+import { ChevronDown, Handshake, DoorOpen, Sparkles, Wand2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PostFormData, PickupProfileDefaults } from "@/types/post";
 import { useTranslation } from 'react-i18next';
@@ -47,15 +46,13 @@ interface PostFormLocationProps {
 
 type PickupOption = 'meetup' | 'leave_at_door' | 'flexible';
 
-type PickupField = 'address' | 'door_code' | 'floor' | 'instructions' | 'phone';
+type PickupField = 'door_code' | 'floor' | 'instructions' | 'phone';
 
 const EMPTY_DEFAULTS: PickupProfileDefaults = {
-  pickup_address: "",
   pickup_door_code: "",
   pickup_floor: "",
   pickup_instructions: "",
   phone: "",
-  primary_address: "",
   pickup_preference: "",
 };
 
@@ -88,7 +85,6 @@ export function PostFormLocation({
   // Per-field opt-in toggles. In edit mode we auto-enable any field that
   // already has a saved value on the item so nothing appears cleared.
   const [enabledFields, setEnabledFields] = useState<Record<PickupField, boolean>>(() => ({
-    address: isEditMode && !!(formData.pickup_address && formData.pickup_address.length > 0),
     door_code: isEditMode && !!(formData.pickup_door_code && formData.pickup_door_code.length > 0),
     floor: isEditMode && !!(formData.pickup_floor && formData.pickup_floor.length > 0),
     instructions: isEditMode && !!(formData.pickup_instructions && formData.pickup_instructions.length > 0),
@@ -98,7 +94,6 @@ export function PostFormLocation({
   // The default value we'd populate for each field when the toggle flips on
   // (or the "use my defaults" button is tapped).
   const defaultsMap: Record<PickupField, string> = {
-    address: profileDefaults.pickup_address || profileDefaults.primary_address || '',
     door_code: profileDefaults.pickup_door_code || '',
     floor: profileDefaults.pickup_floor || '',
     instructions: profileDefaults.pickup_instructions || '',
@@ -110,7 +105,6 @@ export function PostFormLocation({
   const clearField = (f: PickupField) => {
     setFormData((prev) => {
       switch (f) {
-        case 'address': return { ...prev, pickup_address: '' };
         case 'door_code': return { ...prev, pickup_door_code: '' };
         case 'floor': return { ...prev, pickup_floor: '' };
         case 'instructions': return { ...prev, pickup_instructions: '' };
@@ -124,13 +118,6 @@ export function PostFormLocation({
     if (!val) return;
     setFormData((prev) => {
       switch (f) {
-        case 'address': {
-          // If the profile has a distinct saved pickup_address, mark mode as custom.
-          const savedPickup = profileDefaults.pickup_address;
-          const primary = profileDefaults.primary_address;
-          const mode = savedPickup && savedPickup !== primary ? 'custom' : 'primary';
-          return { ...prev, pickup_address: val, pickup_address_mode: mode };
-        }
         case 'door_code': return { ...prev, pickup_door_code: val };
         case 'floor': return { ...prev, pickup_floor: val };
         case 'instructions': return { ...prev, pickup_instructions: val };
@@ -179,14 +166,11 @@ export function PostFormLocation({
 
   const clearAll = () => {
     setEnabledFields({
-      address: false, door_code: false, floor: false, instructions: false, phone: false,
+      door_code: false, floor: false, instructions: false, phone: false,
     });
     setFormData((prev) => ({
       ...prev,
       pickup_preference: '',
-      can_meet_elsewhere: false,
-      pickup_address: '',
-      pickup_address_mode: 'primary',
       pickup_door_code: '',
       pickup_floor: '',
       pickup_instructions: '',
@@ -273,8 +257,27 @@ export function PostFormLocation({
           </div>
         </div>
 
+        {/* Outside the collapsed pickup details so it can be ticked without
+            opening them. Shows "Kan mötas upp" on the card. */}
         {!isRequest && (
-          <Collapsible defaultOpen={!!formData.pickup_preference || !!formData.can_meet_elsewhere} className="border rounded-lg">
+          <div className="flex items-start gap-3 rounded-lg border p-3">
+            <Checkbox
+              id="can-meet-elsewhere"
+              checked={!!formData.can_meet_elsewhere}
+              onCheckedChange={(checked) =>
+                setFormData((prev) => ({ ...prev, can_meet_elsewhere: checked === true }))
+              }
+              className="mt-0.5"
+            />
+            <Label htmlFor="can-meet-elsewhere" className="cursor-pointer space-y-1">
+              <span className="block text-sm font-medium">{t('post.can_meet_elsewhere')}</span>
+              <span className="block text-xs font-normal text-muted-foreground">{t('post.can_meet_elsewhere_hint')}</span>
+            </Label>
+          </div>
+        )}
+
+        {!isRequest && (
+          <Collapsible defaultOpen={!!formData.pickup_preference} className="border rounded-lg">
             <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
               <span>{t('post.pickup_details_optional')}</span>
               <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
@@ -334,48 +337,6 @@ export function PostFormLocation({
                   );
                 })}
               </div>
-
-              {/* Independent of the option above: shows "Kan mötas upp" on the card. */}
-              <div className="flex items-start gap-3 rounded-lg border p-3">
-                <Checkbox
-                  id="can-meet-elsewhere"
-                  checked={!!formData.can_meet_elsewhere}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({ ...prev, can_meet_elsewhere: checked === true }))
-                  }
-                  className="mt-0.5"
-                />
-                <Label htmlFor="can-meet-elsewhere" className="cursor-pointer space-y-1">
-                  <span className="block text-sm font-medium">{t('post.can_meet_elsewhere')}</span>
-                  <span className="block text-xs font-normal text-muted-foreground">{t('post.can_meet_elsewhere_hint')}</span>
-                </Label>
-              </div>
-
-              <PickupFieldRow
-                label={t('profile.pickup_address')}
-                enabled={enabledFields.address}
-                hasDefault={hasDefault('address')}
-                onToggle={(on) => toggleField('address', on)}
-              >
-                <PostPickupAddressSection
-                  primaryAddress={formData.primary_address || profileDefaults.primary_address || ''}
-                  mode={(formData.pickup_address_mode as 'primary' | 'custom') || 'primary'}
-                  customAddress={formData.pickup_address || ''}
-                  onModeChange={(mode) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      pickup_address_mode: mode,
-                      pickup_address:
-                        mode === 'primary'
-                          ? prev.primary_address || ''
-                          : prev.pickup_address || '',
-                    }))
-                  }
-                  onCustomAddressChange={(addr) =>
-                    setFormData((prev) => ({ ...prev, pickup_address: addr }))
-                  }
-                />
-              </PickupFieldRow>
 
               <PickupFieldRow
                 label={t('post.pickup_door_code')}
@@ -478,75 +439,3 @@ function PickupFieldRow({ label, enabled, onToggle, children }: PickupFieldRowPr
     </div>
   );
 }
-
-
-interface PostPickupAddressSectionProps {
-  primaryAddress: string;
-  mode: 'primary' | 'custom';
-  customAddress: string;
-  onModeChange: (mode: 'primary' | 'custom') => void;
-  onCustomAddressChange: (address: string) => void;
-}
-
-function PostPickupAddressSection({
-  primaryAddress,
-  mode,
-  customAddress,
-  onModeChange,
-  onCustomAddressChange,
-}: PostPickupAddressSectionProps) {
-  const { t } = useTranslation();
-  const hasPrimary = !!primaryAddress;
-  const effectiveMode = hasPrimary ? mode : 'custom';
-  const resolved = effectiveMode === 'primary' ? primaryAddress : customAddress;
-
-  return (
-    <div className="space-y-3">
-      {hasPrimary && (
-        <RadioGroup
-          value={mode}
-          onValueChange={(v) => onModeChange(v as 'primary' | 'custom')}
-          className="flex flex-col gap-2"
-        >
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="primary" id="post-pa-primary" />
-            <Label htmlFor="post-pa-primary" className="font-normal cursor-pointer">
-              {t('profile.pickup_use_primary')}
-            </Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="custom" id="post-pa-custom" />
-            <Label htmlFor="post-pa-custom" className="font-normal cursor-pointer">
-              {t('profile.pickup_use_other')}
-            </Label>
-          </div>
-        </RadioGroup>
-      )}
-
-      {effectiveMode === 'primary' ? (
-        <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-          {primaryAddress || t('profile.pickup_no_primary')}
-        </div>
-      ) : (
-        // alwaysShowMap: same fix as onboarding's StepAddressPhone --
-        // without it the map only renders after an address has already
-        // been picked.
-        <AddressInput
-          value={customAddress}
-          onChange={(addr) => onCustomAddressChange(addr)}
-          mapButtonLabel={<Map className="w-4 h-4" />}
-          hideSearch
-          alwaysShowMap
-        />
-      )}
-
-      <p className="text-xs text-muted-foreground">
-        {t('profile.pickup_address_in_use')}:{' '}
-        <span className="font-medium text-foreground">
-          {resolved || t('profile.pickup_no_address_set')}
-        </span>
-      </p>
-    </div>
-  );
-}
-

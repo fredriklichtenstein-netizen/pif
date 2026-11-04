@@ -83,18 +83,35 @@ export function ImagePreviewItem({
       )}
 
       <div className="flex">
-        <button
-          type="button"
-          onClick={() => onEditImage(index)}
-          className="shrink-0"
-          aria-label={t('interactions.edit_image')}
-        >
-          <img
-            src={image}
-            alt={imageLabel}
-            className="w-24 h-24 object-cover"
-          />
-        </button>
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => onEditImage(index)}
+            aria-label={t('interactions.edit_image')}
+          >
+            <img
+              src={image}
+              alt={imageLabel}
+              className="w-24 h-24 object-cover"
+            />
+          </button>
+          {/* On the thumbnail, not at the row's right edge: there it sat in
+              the same column as "Nästa", and a lagging tap removed the image. */}
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="absolute bottom-1 right-1 h-7 w-7 p-0 rounded-full shadow"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveImage(index);
+            }}
+            aria-label={t('interactions.remove_image')}
+            title={t('interactions.remove_image')}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="flex-1 p-3 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">
@@ -141,18 +158,6 @@ export function ImagePreviewItem({
                 </Button>
               </>
             )}
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemoveImage(index);
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>

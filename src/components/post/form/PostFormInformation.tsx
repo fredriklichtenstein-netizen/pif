@@ -81,11 +81,8 @@ export function PostFormInformation({
         </p>
       </div>
 
-      {/* Grundläggande information */}
       <div className="space-y-6">
         <div className="space-y-4">
-          <h4 className="font-medium text-foreground">{t('post.basic_information')}</h4>
-          
           {/* Titel */}
           <div className="space-y-2">
             <Label htmlFor="title">
@@ -171,8 +168,6 @@ export function PostFormInformation({
 
         {/* Beskrivning (valfri) */}
         <div className="space-y-4">
-          <h4 className="font-medium text-foreground">{t('post.description')}</h4>
-
           <div className="space-y-2">
             <Label htmlFor="description">
               {isRequest ? t('post.description_request') : t('post.description')}

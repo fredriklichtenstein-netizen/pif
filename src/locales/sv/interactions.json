@@ -255,6 +255,7 @@
     "edit_current_photo": "Redigera nuvarande foto",
     "take_photo": "Ta foto",
     "edit_image": "Beskär och välj översiktsområde",
+    "remove_image": "Ta bort bild",
     "location_permission_denied": "Platsbehörighet nekad",
     "location_permission_description": "Aktivera platsbehörigheter i dina webbläsarinställningar och uppdatera sidan.",
     "location_unavailable": "Plats otillgänglig",
