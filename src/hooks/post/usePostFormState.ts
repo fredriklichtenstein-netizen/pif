@@ -5,14 +5,13 @@ import type { PostFormData, PickupProfileDefaults } from "@/types/post";
 import { fetchMyProfile } from '@/services/profile/myProfile';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { parseCoordinates } from "@/utils/post/parseCoordinates";
 
 const EMPTY_DEFAULTS: PickupProfileDefaults = {
-  pickup_address: "",
   pickup_door_code: "",
   pickup_floor: "",
   pickup_instructions: "",
   phone: "",
-  primary_address: "",
   pickup_preference: "",
 };
 
@@ -56,8 +55,6 @@ export function usePostFormState(initialData?: any) {
     pickup_instructions: initialData?.pickup_instructions || "",
     preferred_time_window: initialData?.preferred_time_window || "",
     pickup_address: initialData?.pickup_address || "",
-    pickup_address_mode: initialData?.pickup_address_mode || "primary",
-    primary_address: initialData?.primary_address || "",
     phone: initialData?.phone || "",
   });
 
@@ -74,26 +71,24 @@ export function usePostFormState(initialData?: any) {
         const { data } = await fetchMyProfile();
         if (cancelled || !data) return;
         const d = data as any;
-        const primary = d?.address || "";
         const defaults: PickupProfileDefaults = {
-          pickup_address: d?.pickup_address || "",
           pickup_door_code: d?.pickup_door_code || "",
           pickup_floor: d?.pickup_floor != null ? String(d.pickup_floor) : "",
           pickup_instructions: d?.pickup_instructions || "",
           phone: d?.phone || "",
-          primary_address: primary,
           pickup_preference: d?.pickup_preference || "",
         };
         setProfileDefaults(defaults);
 
-        // ONLY populate the primary_address bootstrap field on new posts so the
-        // address radio can offer the "primary" option. pickup_preference and
-        // sensitive fields stay empty until the user opts in via the toggles
-        // or taps "Använd mina standardinställningar".
-        if (initialData?.id) return;
+        // A new post starts at the user's own address (the "PIF-adress"), so
+        // most people never have to pick it. Edits and drafts keep theirs,
+        // and nothing is overwritten once the user has chosen a location.
+        if (initialData?.id || initialData?.draftId) return;
+        const coords = parseCoordinates(d?.location_json);
+        if (!d?.address || !coords) return;
         setFormData((prev) => {
-          if (prev.primary_address) return prev;
-          return { ...prev, primary_address: primary };
+          if (prev.location || prev.coordinates) return prev;
+          return { ...prev, location: d.address, coordinates: coords };
         });
       } catch {
         // ignore

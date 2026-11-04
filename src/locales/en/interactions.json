@@ -255,6 +255,7 @@
     "edit_current_photo": "Edit current photo",
     "take_photo": "Take photo",
     "edit_image": "Crop and choose preview area",
+    "remove_image": "Remove image",
     "location_permission_denied": "Location Permission Denied",
     "location_permission_description": "Please enable location permissions in your browser settings and refresh the page.",
     "location_unavailable": "Location Unavailable",

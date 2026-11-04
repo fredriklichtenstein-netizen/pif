@@ -127,7 +127,9 @@ export function AddressInputContainer({
           <AddressMap
             mapToken={mapToken}
             coordinates={coordinates ?? defaultCenter ?? DEFAULT_MAP_CENTER}
-            hasSelection={!!coordinates}
+            // A value that arrived from outside (a draft, an edit, or the
+            // preselected PIF address) still gets its marker.
+            hasSelection={!!coordinates || (!!value && !!defaultCenter)}
             onAddressChange={handleAddressInput}
             onLocationPick={(address, coords) => {
               setSuggestions([]);
