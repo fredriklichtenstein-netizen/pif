@@ -80,17 +80,28 @@ export const getOptimizedPosts = async (
     let imageCount = 0;
     const transformedPosts = applyArchiveBoundary((data as any[]).map((item: any) => {
       imageCount += Array.isArray(item.images) ? item.images.length : 0;
-      const cacheKey = `transform-v2-${item.id}-${item.created_at}-${item.pif_status || ''}-${item.archived_at || ''}`;
-      const cached = transformCache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
-      const transformed = transformPostData(item, interactionsMap.get(item.id) || {
+      const counts = interactionsMap.get(item.id) || {
         likesCount: 0,
         interestsCount: 0,
         commentsCount: 0
-      });
+      };
+      const cacheKey = `transform-v2-${item.id}-${item.created_at}-${item.pif_status || ''}-${item.archived_at || ''}`;
+      const cached = transformCache.get(cacheKey);
+      if (cached) {
+        // The key doesn't change when someone likes, comments or shows
+        // interest, so the cached post carries the counts from when it was
+        // first transformed. FeedItemCard seeds the counts store from the
+        // post, so stale counts here would overwrite the fresh ones (a post
+        // cached right after publishing showed no badges until reload).
+        return {
+          ...cached,
+          likesCount: counts.likesCount,
+          interestsCount: counts.interestsCount,
+          commentsCount: counts.commentsCount,
+        };
+      }
+
+      const transformed = transformPostData(item, counts);
 
       transformCache.set(cacheKey, transformed);
       return transformed;
