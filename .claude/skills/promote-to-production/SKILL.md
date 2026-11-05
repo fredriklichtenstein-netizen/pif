@@ -122,10 +122,12 @@ not, and why) covering both channels:
   loop `net.http_post` per recipient; see `CLAUDE.md`'s pg_net throttling incident).
 
 Verify both mechanisms still exist and match this description before relying on it — things drift.
-If the user confirms wording, authoring is direct: insert a row into `feature_announcements`
-(bilingual `title_sv`/`title_en`/`body_sv`/`body_en`, `published_at` null for draft or a timestamp
-to publish) via `execute_sql`/`apply_migration` against production; the email sends separately via
-the edge function's broadcast mode. No admin UI exists for either. Watch out for the backfilled-
+If the user confirms wording, authoring is direct: insert into `feature_announcements` (bilingual
+`title_sv`/`title_en`/`body_sv`/`body_en`) via `execute_sql` against production. **One row per
+feature, all with the same `published_at`, in one INSERT** — the popup shows them as a carousel
+and the email goes out once, listing them all (see CLAUDE.md, "Feature announcements"). Each line
+of a body is one paragraph. The email is sent by the AFTER INSERT trigger, so the INSERT itself
+emails everyone. No admin UI exists for either. Watch out for the backfilled-
 watermark trap documented in `CLAUDE.md` if the announcement was authored before this promotion —
 `last_seen_announcement_at` defaults can silently hide it from existing users.
 

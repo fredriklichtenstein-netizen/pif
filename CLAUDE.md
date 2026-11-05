@@ -234,6 +234,21 @@ same per-profile-loop pattern still failed 129/149 even with the sleep in place.
 triggers **one** edge function invocation that loops every profile and sends sequentially with an
 awaited delay in a single continuous Deno process — throttling only works when it happens inside
 one process, not spread across many independently-dispatched async calls from Postgres.
+
+**Feature announcements** (since 2026-11-05): one `feature_announcements` row per feature. Rows
+with the same `published_at` are one batch: one popup carousel (ordered by `id`) and **one** email
+listing every feature. `trg_notify_feature_announcement` fires AFTER INSERT for each row, so the
+broadcast skips every row except the batch's lowest `id`. Insert a batch in one statement with one
+shared timestamp. Each line of a body (`\n`) renders as its own paragraph in both popup and email.
+Traps:
+- The INSERT is what emails everyone. There's no "publish later": a NULL `published_at` matches no
+  batch, so its broadcast errors out and sends nothing, and setting `published_at` later
+  (an UPDATE) never sends one.
+- To change or add rows without emailing anyone (e.g. #7 was split into 7/8/9 on 2026-11-05, with
+  #7's timestamp so people who'd dismissed it didn't see it again), wrap the INSERT in
+  `ALTER TABLE ... DISABLE TRIGGER trg_notify_feature_announcement` / `ENABLE TRIGGER` in the same
+  DO block, then check `tgenabled = 'O'`.
+
 ## Share links / link previews (`workers/share`)
 
 Shared item links are `<SHARE_ORIGIN>/item/<id>` (`src/lib/shareOrigin.ts`, `VITE_SHARE_ORIGIN`,
