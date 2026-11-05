@@ -152,6 +152,8 @@ export function PostFormContainer({
     }
     setShowErrors(false);
     setSummaryError(null);
+    // A new step starts at its top, not at the scroll height of the last one.
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [finalCurrentStep]);
 
   const stepErrors = validation.getStepErrors(formData, finalCurrentStep, steps);
