@@ -30,9 +30,9 @@ interface Props {
   hideInactive: boolean;
   onHideInactiveChange: (v: boolean) => void;
   onResetAll: () => void;
-  /** Controlled open state. Owned by the feed body because picking "Mina
-   *  utkast" swaps the feed for the drafts list, which remounts this
-   *  component -- local state would close the sheet mid-choice. */
+  /** Controlled open state, owned by OptimizedFeedContainer: picking "Mina
+   *  utkast" remounts this component and "Dölj ej aktiva" remounts the
+   *  whole feed body, so state any lower would close the sheet mid-choice. */
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** When true, hide private filters (scope, status) — viewing another user. */
