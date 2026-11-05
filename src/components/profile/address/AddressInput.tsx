@@ -9,6 +9,8 @@ interface AddressInputProps {
   hideSearch?: boolean;
   alwaysShowMap?: boolean;
   defaultCenter?: { lat: number; lng: number };
+  /** Rendered between the address field and the map. */
+  belowSearch?: React.ReactNode;
 }
 
 export function AddressInput(props: AddressInputProps) {

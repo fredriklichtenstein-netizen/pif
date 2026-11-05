@@ -42,10 +42,14 @@ export function buildItemFields(formData: PostFormData) {
       : null,
     pickup_instructions: formData.pickup_instructions?.trim() || null,
     preferred_time_window: formData.preferred_time_window?.trim() || null,
-    // The form no longer has a separate pickup address: a pif is picked up
-    // where it is, so this mirrors the location. The receiver's "Adress:"
-    // line in _insert_pif_system_messages() reads this column.
-    pickup_address: formData.item_type === 'offer' ? formData.location?.trim() || null : null,
+    // Not a separate address: when the owner shares it, it's the pif's
+    // location, so changing the location changes it too. The receiver's
+    // "Adress:" line in _insert_pif_system_messages() reads this column and
+    // has no profile fallback, so null means the address isn't shared.
+    pickup_address:
+      formData.item_type === 'offer' && formData.share_pickup_address
+        ? formData.location?.trim() || null
+        : null,
     phone: formData.phone?.trim() || null,
   };
 }

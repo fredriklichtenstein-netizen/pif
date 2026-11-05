@@ -4,13 +4,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { usePifAddress } from "@/hooks/usePifAddress";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { cn } from "@/lib/utils";
 
 interface UsePifAddressButtonProps {
   onSelect: (address: string, coordinates: { lat: number; lng: number }) => void;
+  /** The field currently holds the PIF address -- show the button as selected. */
+  active?: boolean;
   className?: string;
 }
 
-export function UsePifAddressButton({ onSelect, className }: UsePifAddressButtonProps) {
+export function UsePifAddressButton({ onSelect, active = false, className }: UsePifAddressButtonProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useGlobalAuth();
@@ -42,14 +45,16 @@ export function UsePifAddressButton({ onSelect, className }: UsePifAddressButton
   return (
     <Button
       type="button"
-      variant="outline"
-      size="sm"
+      variant={active ? "default" : "outline"}
+      size="icon"
       onClick={handleClick}
       disabled={isLoading}
-      className={className}
+      aria-pressed={active}
+      aria-label={t("interactions.use_pif_address")}
+      title={t("interactions.use_pif_address")}
+      className={cn("shrink-0", active && "shadow-sm", className)}
     >
-      <Home className="h-3.5 w-3.5 mr-1.5" />
-      {t("interactions.use_pif_address")}
+      <Home className="h-4 w-4" />
     </Button>
   );
 }
