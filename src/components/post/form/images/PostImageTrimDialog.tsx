@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, RotateCw, Crop as CropIcon, Loader2 } from "lucide-react";
+import { RotateCcw, RotateCw, Check, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface PostImageTrimDialogProps {
@@ -278,7 +278,7 @@ export function PostImageTrimDialog({
 
   /** Seeds the crop box to cover the whole rendered image as soon as it
    *  loads, in both the percent form ReactCrop wants for its `crop` prop
-   *  and the pixel form completedCrop needs -- without this, "Beskär"
+   *  and the pixel form completedCrop needs -- without this, "Klar"
    *  stays disabled and the box starts as nothing until the user first
    *  draws one from scratch. */
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -287,6 +287,25 @@ export function PostImageTrimDialog({
     recomputeImgBox();
     setCrop({ unit: '%', x: 0, y: 0, width: 100, height: 100 });
     setCompletedCrop({ unit: 'px', x: 0, y: 0, width: img.width, height: img.height });
+  };
+
+  /** "Klar" confirms rotation and the crop together. With the box still
+   *  covering the whole image nothing would be cut, so go straight on
+   *  without the permanent-crop confirmation. */
+  const handleDone = () => {
+    const img = imgRef.current;
+    const untouched =
+      !!completedCrop &&
+      !!img &&
+      completedCrop.x <= 1 &&
+      completedCrop.y <= 1 &&
+      completedCrop.width >= img.width - 1 &&
+      completedCrop.height >= img.height - 1;
+    if (untouched) {
+      onSkip();
+      return;
+    }
+    setTrimConfirmOpen(true);
   };
 
   const handleTrimConfirm = () => {
@@ -612,7 +631,7 @@ export function PostImageTrimDialog({
             </Button>
             <Button
               type="button"
-              onClick={() => setTrimConfirmOpen(true)}
+              onClick={handleDone}
               disabled={
                 !completedCrop?.width ||
                 completedCrop.width < MIN_CROP_SIZE_PX ||
@@ -623,9 +642,9 @@ export function PostImageTrimDialog({
               {isApplying ? (
                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
               ) : (
-                <CropIcon className="h-4 w-4 mr-1" />
+                <Check className="h-4 w-4 mr-1" />
               )}
-              {t("post.trim_image", { defaultValue: "Beskär" })}
+              {t("post.trim_image", { defaultValue: "Klar" })}
             </Button>
           </DialogFooter>
         </DialogContent>
