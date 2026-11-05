@@ -293,14 +293,16 @@ export function PostImageTrimDialog({
    *  covering the whole image nothing would be cut, so go straight on
    *  without the permanent-crop confirmation. */
   const handleDone = () => {
-    const img = imgRef.current;
+    // Checked on the percent crop: the pixel one is in rendered size, which
+    // changes when the stage is re-measured after load, so a seeded
+    // full-image box no longer matched the image's width.
     const untouched =
-      !!completedCrop &&
-      !!img &&
-      completedCrop.x <= 1 &&
-      completedCrop.y <= 1 &&
-      completedCrop.width >= img.width - 1 &&
-      completedCrop.height >= img.height - 1;
+      !crop ||
+      (crop.unit === '%' &&
+        crop.x <= 0.5 &&
+        crop.y <= 0.5 &&
+        crop.width >= 99.5 &&
+        crop.height >= 99.5);
     if (untouched) {
       onSkip();
       return;
