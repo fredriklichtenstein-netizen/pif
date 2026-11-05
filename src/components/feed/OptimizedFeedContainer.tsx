@@ -91,9 +91,6 @@ export function OptimizedFeedContainer() {
     } catch { /* best-effort */ }
   }, []);
   const includeInactive = isLoggedIn && !hideInactive;
-  // Lives here, above the keyed body: "Dölj ej aktiva" changes the key and
-  // remounts the body, which closed the Filtrera sheet mid-choice.
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Drafts view (?view=drafts) -- in the URL so emails, notifications and
   // the old /drafts route can link straight to it.
@@ -177,16 +174,13 @@ export function OptimizedFeedContainer() {
     <DeepLinkedPost postId={pinnedPostId} isLoggedIn={isLoggedIn} onDismiss={dismissPinnedPost} />
   ) : null;
 
-  // Key the inner body on the scope so toggling it fully unmounts
-  // `useOptimizedFeed` (its React Query observer, realtime channel,
-  // in-flight timers) BEFORE the new-scope body mounts and subscribes. This
-  // guarantees only one feed instance is ever active, so the network log
-  // never shows two scopes' requests racing side-by-side.
+  // Not keyed on the scope: remounting the body on "Dölj ej aktiva" also
+  // remounted the open Filtrera sheet. useOptimizedFeed handles the switch
+  // itself (scope in the query key, old scope's cache purged, page reset).
   return (
     <>
     {pinned && <div className="mb-4">{pinned}</div>}
     <OptimizedFeedBody
-      key={includeInactive ? 'feed-all' : 'feed-active'}
       isLoggedIn={isLoggedIn}
       viewingOtherUser={viewingOtherUser}
       filteredUserId={filteredUserId}
@@ -198,8 +192,6 @@ export function OptimizedFeedContainer() {
       onShowDraftsChange={setShowDrafts}
       targetPostId={pinned ? null : bodyTargetPostId}
       onTargetPostMissing={pinPost}
-      filtersOpen={filtersOpen}
-      onFiltersOpenChange={setFiltersOpen}
     />
     </>
   );
@@ -219,10 +211,6 @@ interface OptimizedFeedBodyProps {
   /** Deep-linked post, set once it's known to belong in this body's bucket. */
   targetPostId: string | null;
   onTargetPostMissing: (id: string) => void;
-  /** The Filtrera sheet's open state, owned by the container so it survives
-   *  the body remounting. */
-  filtersOpen: boolean;
-  onFiltersOpenChange: (open: boolean) => void;
 }
 
 function OptimizedFeedBody({
@@ -237,8 +225,6 @@ function OptimizedFeedBody({
   onShowDraftsChange,
   targetPostId,
   onTargetPostMissing,
-  filtersOpen,
-  onFiltersOpenChange: setFiltersOpen,
 }: OptimizedFeedBodyProps) {
   const { user: currentUser } = useGlobalAuth();
   const { posts, fadingIds, restoringIds, isLoading, isLoadingMore, error, hasMore, loadMore, refresh } =
@@ -447,6 +433,7 @@ function OptimizedFeedBody({
   // Deep link: keep loading pages until the post is loaded, clear the
   // filters once if they're what hides it, and give up (-> pinned above
   // the feed) when it can't be found within MAX_DEEP_LINK_PAGES.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [deepLinkPagesLoaded, setDeepLinkPagesLoaded] = useState(0);
   const [scrollToPostId, setScrollToPostId] = useState<string | null>(null);
   const deepLinkResolvedRef = useRef<string | null>(null);
