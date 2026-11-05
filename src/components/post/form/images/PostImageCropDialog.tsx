@@ -51,7 +51,15 @@ export function PostImageCropDialog({
     setNaturalSize(null);
   }, [image]);
 
+  const isPristine = zoom === 1 && crop.x === 0 && crop.y === 0;
+
   const handleSave = () => {
+    // Untouched: save no preview area, so the feed uses its default view
+    // (what the removed "Använd standardvy" button did).
+    if (isPristine && !initialCrop) {
+      onSkip();
+      return;
+    }
     if (!pixels || !naturalSize || !naturalSize.width || !naturalSize.height) return;
     onSave({
       x: pixels.x / naturalSize.width,
@@ -65,8 +73,6 @@ export function PostImageCropDialog({
     setCrop({ x: 0, y: 0 });
     setZoom(1);
   };
-
-  const isPristine = zoom === 1 && crop.x === 0 && crop.y === 0;
 
   return (
     <Dialog open={!!image} onOpenChange={(open) => { if (!open) onCancel(); }}>
@@ -145,9 +151,6 @@ export function PostImageCropDialog({
         <DialogFooter className="gap-2 sm:gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
             {t("common.cancel", { defaultValue: "Avbryt" })}
-          </Button>
-          <Button type="button" variant="outline" onClick={onSkip}>
-            {t("post.use_default_preview_area", { defaultValue: "Använd standardvy" })}
           </Button>
           <Button type="button" onClick={handleSave} disabled={!pixels}>
             {t("post.apply_crop", { defaultValue: "Spara" })}

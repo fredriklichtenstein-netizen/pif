@@ -1,5 +1,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
+import { buildItemFields } from "@/services/items/itemFields";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PostFormSteps } from "./PostFormSteps";
 import { PostFormHeader } from "./PostFormHeader";
@@ -95,6 +96,12 @@ export function PostFormContainer({
   const canUseDrafts = !isEditMode && !!onSaveDraft;
   const hasContent =
     !!formData.title?.trim() || !!formData.description?.trim() || (formData.images?.length ?? 0) > 0;
+  // An opened draft always has content, so compare it with the draft as it
+  // was loaded instead -- in the shape that would be saved, so form-only
+  // details don't count as changes.
+  const savedShape = JSON.stringify(buildItemFields(formData));
+  const loadedDraftShapeRef = useRef(savedShape);
+  const hasUnsavedChanges = isDraftMode ? savedShape !== loadedDraftShapeRef.current : hasContent;
   const { data: myDrafts } = useMyDrafts();
   // The drafts menu next to "Spara utkast": other drafts, newest first
   // (fetchMyDrafts' order), capped so the menu stays short.
@@ -267,9 +274,18 @@ export function PostFormContainer({
     navigate(isDraftMode ? DRAFTS_FEED_PATH : "/feed");
   };
 
+  /** Leaving a draft that wasn't changed has nothing to lose, so no prompt. */
+  const handleCancelClick = () => {
+    if (isDraftMode && !hasUnsavedChanges) {
+      handleConfirmCancel();
+      return;
+    }
+    setCancelDialogOpen(true);
+  };
+
   /** Opening another draft would drop what's in the form, so ask first. */
   const handleOpenDraft = (draftId: number) => {
-    if (!hasContent) {
+    if (!hasUnsavedChanges) {
       navigate(`/post/draft/${draftId}`);
       return;
     }
@@ -309,7 +325,7 @@ export function PostFormContainer({
     if (ok) setScheduleDialogOpen(false);
   };
 
-  const offerToSaveDraft = canUseDrafts && hasContent;
+  const offerToSaveDraft = canUseDrafts && hasUnsavedChanges;
 
   const errorsForStep = showErrors ? fieldErrors : {};
 
@@ -394,7 +410,7 @@ export function PostFormContainer({
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => setCancelDialogOpen(true)}
+          onClick={handleCancelClick}
           aria-label={t('post.cancel_button_aria')}
           className="absolute right-0 top-0 h-9 w-9 rounded-full bg-white/80 text-foreground shadow-[0_1px_4px_rgba(0,0,0,0.2)] ring-1 ring-black/10 backdrop-blur-sm hover:bg-white"
         >
@@ -441,7 +457,7 @@ export function PostFormContainer({
           isDraftMode={isDraftMode}
           onPrevStep={finalPrevStep}
           onNextStep={attemptNext}
-          onCancel={() => setCancelDialogOpen(true)}
+          onCancel={handleCancelClick}
         />
         {canUseDrafts && (
           <div className="flex flex-wrap justify-end gap-2">
