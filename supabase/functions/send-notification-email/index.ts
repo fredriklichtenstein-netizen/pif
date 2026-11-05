@@ -189,6 +189,17 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string, unsubscri
   `;
 }
 
+/** Each line of an announcement body is its own paragraph, with spacing
+ *  between them (a bare <br> ran them together). */
+function announcementParagraphs(body: string): string {
+  return body
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p style="margin: 0 0 12px; line-height: 1.5;">${escape(line)}</p>`)
+    .join("");
+}
+
 function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?: string): { subject: string; html: string } | null {
   if (type === "new_message_digest") {
     const otherName = String(data.otherUserName ?? "din granne");
@@ -318,14 +329,29 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
   if (type === "feature_announcement") {
     const lang = data.lang === "en" ? "en" : "sv";
     const title = String(data.title ?? (lang === "en" ? "News from PIF" : "Nyheter i PIF"));
-    const bodyText = String(data.body ?? "");
     const actionUrl = data.actionUrl ? String(data.actionUrl) : "";
     const actionLabel = data.actionLabel ? String(data.actionLabel) : (lang === "en" ? "Open PIF" : "Öppna PIF");
+    // Several announcements published together arrive as `sections` and go
+    // out as one email; a single one is just `title` + `body`.
+    const sections = Array.isArray(data.sections) && data.sections.length > 0
+      ? (data.sections as Array<{ title?: unknown; body?: unknown }>).map((s) => ({
+          title: String(s.title ?? ""),
+          body: String(s.body ?? ""),
+        }))
+      : [{ title, body: String(data.body ?? "") }];
+    const subject = sections.length > 1
+      ? (lang === "en" ? "New in PIF" : "Nytt i PIF")
+      : (lang === "en" ? `New in PIF: ${title}` : `Nytt i PIF: ${title}`);
+    const bodyHtml = sections
+      .map(
+        (s, i) =>
+          `<h2 style="font-size: 18px; margin: ${i === 0 ? "0" : "28px"} 0 8px;">${escape(s.title)}</h2>${announcementParagraphs(s.body)}`,
+      )
+      .join("");
     return {
-      subject: lang === "en" ? `New in PIF: ${title}` : `Nytt i PIF: ${title}`,
+      subject,
       html: wrapEmail(
-        `<h2 style="font-size: 18px;">${escape(title)}</h2>
-         <p>${escape(bodyText).replace(/\n/g, "<br>")}</p>`,
+        bodyHtml,
         actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`,
         actionLabel,
         unsubscribeUrl,
@@ -492,15 +518,30 @@ serve(async (req) => {
     // spaced out in SQL, so throttling has to happen inside one continuous
     // process instead.
     if (type === "feature_announcement_broadcast") {
-      const announcementId = body.announcementId;
+      const announcementId = Number(body.announcementId);
       const { data: announcement, error: announcementErr } = await admin
         .from("feature_announcements")
-        .select("title_sv, body_sv, action_url, action_label_sv, title_en, body_en, action_label_en")
+        .select("id, published_at")
         .eq("id", announcementId)
         .maybeSingle();
       if (announcementErr || !announcement) {
         return json(404, { error: "Announcement not found" });
       }
+      // Rows published together (same published_at -- one popup carousel)
+      // go out as one email. The insert trigger fires once per row, so only
+      // the batch's first row sends; the others stop here.
+      const { data: batch, error: batchErr } = await admin
+        .from("feature_announcements")
+        .select("id, title_sv, body_sv, action_url, action_label_sv, title_en, body_en, action_label_en")
+        .eq("published_at", announcement.published_at)
+        .order("id", { ascending: true });
+      if (batchErr || !batch || batch.length === 0) {
+        return json(500, { error: "Failed to load announcement batch" });
+      }
+      if (batch[0].id !== announcementId) {
+        return json(200, { ok: true, skipped: "sent_with_batch", batchFirstId: batch[0].id });
+      }
+      const withAction = batch.find((a: any) => a.action_url) ?? batch[0];
 
       // language: 'sv' | 'en' | null -- null means never explicitly set
       // (pre-migration rows, or a user who's never touched the language
@@ -514,21 +555,20 @@ serve(async (req) => {
       const results: string[] = [];
       for (const profile of profiles) {
         const isEnglish = (profile as any).language === "en";
-        const data = isEnglish
-          ? {
-              lang: "en",
-              title: announcement.title_en || announcement.title_sv,
-              body: announcement.body_en || announcement.body_sv,
-              actionUrl: announcement.action_url,
-              actionLabel: announcement.action_label_en || announcement.action_label_sv,
-            }
-          : {
-              lang: "sv",
-              title: announcement.title_sv,
-              body: announcement.body_sv,
-              actionUrl: announcement.action_url,
-              actionLabel: announcement.action_label_sv,
-            };
+        const sections = batch.map((a: any) =>
+          isEnglish
+            ? { title: a.title_en || a.title_sv, body: a.body_en || a.body_sv }
+            : { title: a.title_sv, body: a.body_sv },
+        );
+        const data = {
+          lang: isEnglish ? "en" : "sv",
+          title: sections[0].title,
+          sections,
+          actionUrl: withAction.action_url,
+          actionLabel: isEnglish
+            ? withAction.action_label_en || withAction.action_label_sv
+            : withAction.action_label_sv,
+        };
         const { result } = await sendOne(admin, resendKey, profile.id, "feature_announcement", data);
         results.push(result);
         await sleep(120);
