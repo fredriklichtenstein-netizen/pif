@@ -1,4 +1,5 @@
 
+import { useRef, useState } from "react";
 import { Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { AddressSuggestions } from "./AddressSuggestions";
 import { AddressMap } from "./AddressMap";
 import { AddressSearchBar } from "./AddressSearchBar";
 import { UsePifAddressButton } from "./UsePifAddressButton";
+import { usePifAddress } from "@/hooks/usePifAddress";
 import { useTranslation } from "react-i18next";
 
 /** Fallback map centre when nothing has been picked yet (central Stockholm). */
@@ -27,6 +29,8 @@ interface AddressInputProps {
   alwaysShowMap?: boolean;
   /** Where to centre the map before anything is picked. */
   defaultCenter?: { lat: number; lng: number };
+  /** Rendered between the address field and the map. */
+  belowSearch?: React.ReactNode;
 }
 
 export function AddressInputContainer({
@@ -37,9 +41,24 @@ export function AddressInputContainer({
   hideSearch,
   alwaysShowMap,
   defaultCenter,
+  belowSearch,
 }: AddressInputProps) {
   const { t } = useTranslation();
   const { mapToken } = useMapbox();
+  const { address: pifAddress } = usePifAddress();
+  // Which shortcut button filled the field, so it can show as selected.
+  // Typing, a suggestion or a map tap clears it.
+  const [source, setSource] = useState<'current' | 'pif' | null>(null);
+  const awaitingCurrentRef = useRef(false);
+  const handleHookChange = (address: string, coords?: { lat: number; lng: number }) => {
+    if (awaitingCurrentRef.current && coords) {
+      setSource('current');
+    } else if (!coords) {
+      setSource(null);
+    }
+    awaitingCurrentRef.current = false;
+    onChange(address, coords);
+  };
   const {
     suggestions,
     showMap,
@@ -50,13 +69,21 @@ export function AddressInputContainer({
     handleAddressChange,
     handleUseCurrentLocation,
     handleShowMap,
-  } = useAddress(mapToken, onChange);
+  } = useAddress(mapToken, handleHookChange);
+
+  const pickCurrentLocation = () => {
+    awaitingCurrentRef.current = true;
+    handleUseCurrentLocation();
+  };
+  // A preselected PIF address (e.g. a new post) counts as chosen with the button.
+  const pifActive = source === 'pif' || (source === null && !!pifAddress && value === pifAddress);
 
   const handleAddressInput = (input: string) => {
     handleAddressChange(input);
   };
 
   const handleSuggestionSelect = async (suggestion: string) => {
+    setSource(null);
     setSuggestions([]);
     const coords = await handleShowMap(suggestion);
     onChange(suggestion, coords);
@@ -74,6 +101,7 @@ export function AddressInputContainer({
   };
 
   const handlePifAddressSelect = async (address: string, coordinates: { lat: number; lng: number }) => {
+    setSource('pif');
     setSuggestions([]);
     onChange(address, coordinates);
     // Trigger the map preview using the saved coordinates by also asking handleShowMap to show
@@ -84,15 +112,14 @@ export function AddressInputContainer({
     <div className="space-y-4 relative">
       {!hideSearch && (
         <>
-          <AddressSearchBar 
+          <AddressSearchBar
             value={value}
             onAddressChange={handleAddressInput}
-            onLocationClick={handleUseCurrentLocation}
+            onLocationClick={pickCurrentLocation}
             locationButtonLabel={locationButtonLabel}
+            locationActive={source === 'current'}
+            trailing={<UsePifAddressButton onSelect={handlePifAddressSelect} active={pifActive} />}
           />
-          <div className="-mt-2">
-            <UsePifAddressButton onSelect={handlePifAddressSelect} />
-          </div>
         </>
       )}
 
@@ -122,6 +149,8 @@ export function AddressInputContainer({
         />
       )}
 
+      {belowSearch}
+
       {(alwaysShowMap ? !!mapToken : showMap && !!coordinates) && (
         <div className="space-y-1.5">
           <AddressMap
@@ -132,6 +161,7 @@ export function AddressInputContainer({
             hasSelection={!!coordinates || (!!value && !!defaultCenter)}
             onAddressChange={handleAddressInput}
             onLocationPick={(address, coords) => {
+              setSource(null);
               setSuggestions([]);
               onChange(address, coords);
             }}

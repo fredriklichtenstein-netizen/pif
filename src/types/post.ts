@@ -55,10 +55,14 @@ export interface PostFormData {
   pickup_instructions?: string;
   preferred_time_window?: string;
   pickup_address?: string;
+  /** Share the pif's location with the selected receiver as its pickup address. */
+  share_pickup_address?: boolean;
   phone?: string;
 }
 
 export interface PickupProfileDefaults {
+  /** The profile has a saved address, so "use my defaults" turns sharing on. */
+  has_address: boolean;
   pickup_door_code: string;
   pickup_floor: string;
   pickup_instructions: string;

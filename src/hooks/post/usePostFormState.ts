@@ -8,6 +8,7 @@ import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { parseCoordinates } from "@/utils/post/parseCoordinates";
 
 const EMPTY_DEFAULTS: PickupProfileDefaults = {
+  has_address: false,
   pickup_door_code: "",
   pickup_floor: "",
   pickup_instructions: "",
@@ -55,6 +56,7 @@ export function usePostFormState(initialData?: any) {
     pickup_instructions: initialData?.pickup_instructions || "",
     preferred_time_window: initialData?.preferred_time_window || "",
     pickup_address: initialData?.pickup_address || "",
+    share_pickup_address: !!initialData?.pickup_address,
     phone: initialData?.phone || "",
   });
 
@@ -72,6 +74,7 @@ export function usePostFormState(initialData?: any) {
         if (cancelled || !data) return;
         const d = data as any;
         const defaults: PickupProfileDefaults = {
+          has_address: !!(d?.pickup_address || d?.address),
           pickup_door_code: d?.pickup_door_code || "",
           pickup_floor: d?.pickup_floor != null ? String(d.pickup_floor) : "",
           pickup_instructions: d?.pickup_instructions || "",

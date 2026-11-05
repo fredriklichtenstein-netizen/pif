@@ -49,6 +49,7 @@ type PickupOption = 'meetup' | 'leave_at_door' | 'flexible';
 type PickupField = 'door_code' | 'floor' | 'instructions' | 'phone';
 
 const EMPTY_DEFAULTS: PickupProfileDefaults = {
+  has_address: false,
   pickup_door_code: "",
   pickup_floor: "",
   pickup_instructions: "",
@@ -100,7 +101,7 @@ export function PostFormLocation({
     phone: profileDefaults.phone || '',
   };
   const hasDefault = (f: PickupField) => defaultsMap[f].length > 0;
-  const anyDefault = (Object.keys(defaultsMap) as PickupField[]).some(hasDefault);
+  const anyDefault = profileDefaults.has_address || (Object.keys(defaultsMap) as PickupField[]).some(hasDefault);
 
   const clearField = (f: PickupField) => {
     setFormData((prev) => {
@@ -158,6 +159,9 @@ export function PostFormLocation({
       }
     });
     setEnabledFields(next);
+    if (profileDefaults.has_address) {
+      setFormData((prev) => ({ ...prev, share_pickup_address: true }));
+    }
     const pref = profileDefaults.pickup_preference;
     if (pref) {
       setFormData((prev) => ({ ...prev, pickup_preference: pref as PostFormData['pickup_preference'] }));
@@ -171,6 +175,7 @@ export function PostFormLocation({
     setFormData((prev) => ({
       ...prev,
       pickup_preference: '',
+      share_pickup_address: false,
       pickup_door_code: '',
       pickup_floor: '',
       pickup_instructions: '',
@@ -212,28 +217,47 @@ export function PostFormLocation({
                 onAddressSelect(address, coordinates);
               }
             }}
+            belowSearch={
+              <div className="space-y-3">
+                <PostFieldError message={fieldErrors.location} />
+                <div
+                  className={cn(
+                    "text-sm p-3 rounded-lg border",
+                    isRequest
+                      ? "text-blue-600 bg-blue-50 border-blue-200"
+                      : "text-green-600 bg-green-50 border-green-200"
+                  )}
+                >
+                  <strong>🔒 {t('post.privacy_notice').split(':')[0]}:</strong> {t('post.privacy_notice').split(':')[1]}
+                </div>
+                {/* Above the map, outside the collapsed pickup details, so it
+                    can be ticked without opening them. Shows "Kan mötas upp"
+                    on the card. */}
+                {!isRequest && (
+                  <div className="flex items-start gap-3 rounded-lg border p-3">
+                    <Checkbox
+                      id="can-meet-elsewhere"
+                      checked={!!formData.can_meet_elsewhere}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, can_meet_elsewhere: checked === true }))
+                      }
+                      className="mt-0.5"
+                    />
+                    <Label htmlFor="can-meet-elsewhere" className="cursor-pointer space-y-1">
+                      <span className="block text-sm font-medium">{t('post.can_meet_elsewhere')}</span>
+                      <span className="block text-xs font-normal text-muted-foreground">{t('post.can_meet_elsewhere_hint')}</span>
+                    </Label>
+                  </div>
+                )}
+              </div>
+            }
           />
-          <PostFieldError message={fieldErrors.location} />
         </div>
 
-        {isRequest ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              {t('post.search_area_description')}
-            </p>
-            <div className="text-sm text-blue-600 bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <strong>🔒 {t('post.privacy_notice').split(':')[0]}:</strong> {t('post.privacy_notice').split(':')[1]}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
-              <p><strong>💡 {t('post.location_tip').split(':')[0]}:</strong> {t('post.location_tip').split(':')[1]}</p>
-            </div>
-            <div className="text-sm text-green-600 bg-green-50 p-4 rounded-lg border border-green-200">
-              <strong>🔒 {t('post.privacy_notice').split(':')[0]}:</strong> {t('post.privacy_notice').split(':')[1]}
-            </div>
-          </div>
+        {isRequest && (
+          <p className="text-sm text-muted-foreground">
+            {t('post.search_area_description')}
+          </p>
         )}
 
         <div className="space-y-2">
@@ -257,27 +281,8 @@ export function PostFormLocation({
           </div>
         </div>
 
-        {/* Outside the collapsed pickup details so it can be ticked without
-            opening them. Shows "Kan mötas upp" on the card. */}
         {!isRequest && (
-          <div className="flex items-start gap-3 rounded-lg border p-3">
-            <Checkbox
-              id="can-meet-elsewhere"
-              checked={!!formData.can_meet_elsewhere}
-              onCheckedChange={(checked) =>
-                setFormData((prev) => ({ ...prev, can_meet_elsewhere: checked === true }))
-              }
-              className="mt-0.5"
-            />
-            <Label htmlFor="can-meet-elsewhere" className="cursor-pointer space-y-1">
-              <span className="block text-sm font-medium">{t('post.can_meet_elsewhere')}</span>
-              <span className="block text-xs font-normal text-muted-foreground">{t('post.can_meet_elsewhere_hint')}</span>
-            </Label>
-          </div>
-        )}
-
-        {!isRequest && (
-          <Collapsible defaultOpen={!!formData.pickup_preference} className="border rounded-lg">
+          <Collapsible defaultOpen={!!formData.pickup_preference || !!formData.share_pickup_address} className="border rounded-lg">
             <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors">
               <span>{t('post.pickup_details_optional')}</span>
               <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
@@ -337,6 +342,21 @@ export function PostFormLocation({
                   );
                 })}
               </div>
+
+              <PickupFieldRow
+                label={t('profile.pickup_address')}
+                enabled={!!formData.share_pickup_address}
+                onToggle={(on) => setFormData((prev) => ({ ...prev, share_pickup_address: on }))}
+              >
+                <div className="space-y-1.5">
+                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                    {formData.location || (
+                      <span className="text-muted-foreground">{t('post.pickup_address_choose_location')}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t('post.pickup_address_follows_location')}</p>
+                </div>
+              </PickupFieldRow>
 
               <PickupFieldRow
                 label={t('post.pickup_door_code')}
