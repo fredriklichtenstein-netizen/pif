@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { validateAuthForm } from "./FormValidation";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 interface SignUpFormProps {
   loading: boolean;
@@ -92,6 +93,8 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
           {t("auth.sign_up_subtitle")}
         </p>
       </div>
+
+      <GoogleSignInButton />
 
       {displayError && (
         <Alert variant={timeoutWarning ? "default" : "destructive"}>

@@ -99,8 +99,12 @@ export default function CreateProfile() {
           return;
         }
 
-        const fName = (profile?.first_name || "").trim();
-        const lName = (profile?.last_name || "").trim();
+        // A Google sign-up has no profile name yet; start from the one on
+        // the Google account (still editable in the name step).
+        const meta = (user as any)?.user_metadata || {};
+        const [metaFirst = "", ...metaRest] = String(meta.full_name || meta.name || "").trim().split(/\s+/);
+        const fName = (profile?.first_name || meta.given_name || metaFirst || "").trim();
+        const lName = (profile?.last_name || meta.family_name || metaRest.join(" ") || "").trim();
         const avUrl = profile?.avatar_url || null;
         const addr = (profile?.address || "").trim();
         const coords = parseLocation((profile as any)?.location_json);
