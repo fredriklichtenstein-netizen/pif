@@ -63,8 +63,17 @@ export function AnnouncementModal() {
             {announcements.map((a) => (
               <CarouselItem key={a.id} className="min-w-0">
                 <DialogTitle>{isSwedish ? a.title_sv : a.title_en}</DialogTitle>
-                <DialogDescription className="whitespace-pre-wrap text-foreground pt-2 break-words">
-                  {isSwedish ? a.body_sv : a.body_en}
+                {/* One paragraph per line of the body, with space between. */}
+                <DialogDescription asChild>
+                  <div className="space-y-3 pt-2 text-foreground break-words">
+                    {(isSwedish ? a.body_sv : a.body_en)
+                      .split(/\n+/)
+                      .map((line) => line.trim())
+                      .filter(Boolean)
+                      .map((line, i) => (
+                        <p key={i}>{line}</p>
+                      ))}
+                  </div>
                 </DialogDescription>
                 {a.action_url && (
                   <Link

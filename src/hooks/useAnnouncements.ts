@@ -52,6 +52,7 @@ export function useAnnouncements() {
             .from("feature_announcements")
             .select("id, title_sv, title_en, body_sv, body_en, published_at, action_url, action_label_sv, action_label_en")
             .order("published_at", { ascending: false })
+            .order("id", { ascending: false })
             .limit(NEW_USER_ANNOUNCEMENT_CAP);
 
           if (!cancelled && !error && data) {
@@ -64,7 +65,10 @@ export function useAnnouncements() {
           .from("feature_announcements")
           .select("id, title_sv, title_en, body_sv, body_en, published_at, action_url, action_label_sv, action_label_en")
           .gt("published_at", watermark)
-          .order("published_at", { ascending: true });
+          // Announcements published together share published_at; keep them
+          // in the order they were written.
+          .order("published_at", { ascending: true })
+          .order("id", { ascending: true });
 
         if (!cancelled && !error && data) {
           setAnnouncements(data as Announcement[]);
