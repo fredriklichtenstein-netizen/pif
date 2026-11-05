@@ -89,6 +89,28 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
   // Pending fade-in timers so we can clear the class once the animation finishes.
   const restoreTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
+  // Switching scope ("Dölj ej aktiva") starts over from the first page.
+  // The feed body used to be remounted for this, which also remounted the
+  // open Filtrera sheet and replayed its slide-in. Reset during render
+  // (not in an effect) so no frame renders the new scope at the old page.
+  const [scope, setScope] = useState(includeInactive);
+  if (scope !== includeInactive) {
+    setScope(includeInactive);
+    setPage(0);
+    setFadingIds(new Set());
+    setRestoringIds(new Set());
+  }
+  useEffect(() => {
+    const fadeTimers = fadeTimersRef.current;
+    const restoreTimers = restoreTimersRef.current;
+    return () => {
+      fadeTimers.forEach(clearTimeout);
+      fadeTimers.clear();
+      restoreTimers.forEach(clearTimeout);
+      restoreTimers.clear();
+    };
+  }, [includeInactive]);
+
   // Listen for global delete/archive success events and animate items out locally.
   useEffect(() => {
     const handler = (event: Event) => {
