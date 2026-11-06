@@ -797,6 +797,9 @@
     "change_password_button": "Byt lösenord",
     "change_password_sending": "Skickar länk...",
     "change_password_email_sent": "Vi har skickat en länk till {{email}}. Klicka på den för att välja ett nytt lösenord. Kolla även skräpposten om mejlet inte dyker upp i inkorgen.",
+    "create_password_description": "Du loggar in med Google och har inget lösenord hos PIF. Vill du även kunna logga in med e-post och lösenord kan du skapa ett — vi skickar en länk till {{email}}.",
+    "create_password_button": "Skapa lösenord",
+    "also_google_sign_in": "Du kan också logga in med Google.",
     "scheduled_published": "Schemalagt inlägg publicerat"
   },
   "notifications": {
