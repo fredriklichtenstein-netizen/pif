@@ -45,6 +45,11 @@ export function EmailPasswordSettings() {
   // would mean storing the plaintext password until then, which we won't do.
   const { handlePasswordReset, loading: passwordLoading } = usePasswordReset();
   const [passwordLinkSentTo, setPasswordLinkSentTo] = useState<string | null>(null);
+  // A Google sign-up has no password; the same link then *creates* one, so
+  // the account can also sign in with email. Null = unknown, which keeps
+  // the ordinary "change password" wording.
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [hasGoogle, setHasGoogle] = useState(false);
 
   const refreshPendingEmailChange = async () => {
     const { data, error } = await (supabase.rpc as any)('get_pending_email_change');
@@ -60,7 +65,10 @@ export function EmailPasswordSettings() {
       if (!cancelled && data.user) {
         setEmail(data.user.email || "");
         setCurrentEmail(data.user.email || "");
+        setHasGoogle(!!data.user.identities?.some((i) => i.provider === "google"));
       }
+      const { data: pw, error: pwError } = await (supabase.rpc as any)('has_password');
+      if (!cancelled && !pwError && typeof pw === "boolean") setHasPassword(pw);
     })();
     refreshPendingEmailChange();
     return () => {
@@ -145,6 +153,8 @@ export function EmailPasswordSettings() {
     if (ok) setPasswordLinkSentTo(email);
   };
 
+  const noPassword = hasPassword === false;
+
   return (
     <div className="space-y-8">
       <form onSubmit={updateEmail} className="space-y-4">
@@ -210,8 +220,13 @@ export function EmailPasswordSettings() {
         <div className="space-y-1">
           <h3 className="font-medium">{t('settings.change_password_title')}</h3>
           <p className="text-sm text-muted-foreground">
-            {t('settings.change_password_description')}
+            {noPassword
+              ? t('settings.create_password_description', { email: currentEmail })
+              : t('settings.change_password_description')}
           </p>
+          {hasGoogle && !noPassword && (
+            <p className="text-sm text-muted-foreground">{t('settings.also_google_sign_in')}</p>
+          )}
         </div>
 
         {passwordLinkSentTo && (
@@ -231,7 +246,9 @@ export function EmailPasswordSettings() {
         >
           {passwordLoading
             ? t('settings.change_password_sending')
-            : t('settings.change_password_button')}
+            : noPassword
+              ? t('settings.create_password_button')
+              : t('settings.change_password_button')}
         </Button>
       </div>
     </div>
