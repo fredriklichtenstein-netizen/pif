@@ -17,6 +17,13 @@ No experimental changes to auth, payments-adjacent flows, or data deletion witho
 - Analytics: Cloudflare Web Analytics (cookieless), enabled on the `pif` Pages project only — Pages
   injects the beacon into HTML on deploy, so there's no code for it. The privacy policy
   (`src/pages/Privacy.tsx`, section 3 + 6) describes it; keep the two in step if this changes.
+- Sign in with Google (since 2026-11): Google Identity Services button + `signInWithIdToken`
+  (`src/components/auth/GoogleSignInButton.tsx`), **not** `signInWithOAuth` — a redirect makes an
+  installed iOS PWA finish the sign-in in Safari, whose storage is separate. One OAuth client
+  (Google Cloud project pif-community) serves staging and production; its *Authorized JavaScript
+  origins* must list every app origin, or the button fails with an origin error. Google-only
+  accounts have no password (`has_password()` RPC); Settings offers "Skapa lösenord" via the
+  recovery link. Privacy policy sections 1, 3 and 6 describe it.
 - Domains: `pif.community` and `www.pif.community` 301 to `https://pif.today` via a zone Redirect
   Rule on proxied `AAAA 100::` placeholders (the old Wix site was removed 2026-10-27). Its MX/SPF/
   DKIM/DMARC records are Google Workspace mail — leave them alone.
