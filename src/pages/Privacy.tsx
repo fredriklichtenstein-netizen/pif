@@ -42,6 +42,10 @@ function SwedishPolicy() {
         <li>Meddelanden du skickar till andra användare</li>
         <li>Betyg och kommentarer du lämnar efter genomförda utbyten</li>
       </ul>
+      <p className={p}>
+        Om du loggar in med Google får vi ditt namn, din e-postadress och din profilbild från ditt
+        Google-konto. Vi får inte ditt Google-lösenord eller tillgång till något annat i kontot.
+      </p>
       <p className={p}><strong>Uppgifter vi samlar in automatiskt:</strong></p>
       <ul className={ul}>
         <li>Ungefärlig plats (du väljer om exakt adress ska delas — den visas alltid fördold för andra användare)</li>
@@ -74,6 +78,7 @@ function SwedishPolicy() {
         <li><strong>Resend Inc</strong> — e-postutskick för aviseringar och rapporter</li>
         <li><strong>Cloudflare Inc</strong> — drift av webbplatsen, länkförhandsvisningar och anonym besöksstatistik</li>
         <li><strong>GitHub Inc</strong> — versionshantering av applikationskod</li>
+        <li><strong>Google Ireland Ltd</strong> — inloggning med Google, om du väljer det. Google hanterar själva inloggningen enligt sin egen integritetspolicy</li>
       </ul>
       <p className={p}>
         Alla leverantörer behandlar uppgifter enligt gällande dataskyddslagstiftning. Våra
@@ -115,6 +120,11 @@ function SwedishPolicy() {
         webbplatser — vi ser bara
         sammanlagd statistik, till exempel antal besök per sida.
       </p>
+      <p className={p}>
+        Inloggningssidan visar Googles knapp för inloggning med Google. Den laddas från Google, som
+        kan använda sina egna cookies för att visa vilket Google-konto du är inloggad med. PIF får
+        inga uppgifter från Google förrän du själv väljer att logga in med Google.
+      </p>
 
       <h2 className={h2}>7. Åldersgräns</h2>
       <p className={p}>
@@ -144,7 +154,7 @@ function SwedishPolicy() {
         <br />Kontakta oss på: hej@pif.community
         <br />PIF App AB, Kristinebergs slottsväg 3, 112 14 Stockholm
       </div>
-      <p className="text-sm text-muted-foreground italic mt-8">Senast uppdaterad: oktober 2026</p>
+      <p className="text-sm text-muted-foreground italic mt-8">Senast uppdaterad: november 2026</p>
     </article>
   );
 }
@@ -176,6 +186,10 @@ function EnglishPolicy() {
         <li>Messages you send to other users</li>
         <li>Ratings and comments you leave after completed exchanges</li>
       </ul>
+      <p className={p}>
+        If you sign in with Google, we receive your name, email address and profile photo from your
+        Google account. We don't receive your Google password or access to anything else in the account.
+      </p>
       <p className={p}><strong>Data we collect automatically:</strong></p>
       <ul className={ul}>
         <li>Approximate location (you choose whether to share your exact address — it is always shown in a privacy-distorted form to other users)</li>
@@ -208,6 +222,7 @@ function EnglishPolicy() {
         <li><strong>Resend Inc</strong> — email delivery for notifications and reports</li>
         <li><strong>Cloudflare Inc</strong> — website hosting, link previews and anonymous visitor statistics</li>
         <li><strong>GitHub Inc</strong> — version control for application code</li>
+        <li><strong>Google Ireland Ltd</strong> — sign-in with Google, if you choose it. Google handles the sign-in itself under its own privacy policy</li>
       </ul>
       <p className={p}>
         All providers process data in accordance with applicable data protection legislation.
@@ -249,6 +264,11 @@ function EnglishPolicy() {
         websites — we only
         see aggregated statistics, such as the number of visits per page.
       </p>
+      <p className={p}>
+        The sign-in page shows Google's "Sign in with Google" button. It is loaded from Google, which
+        may use its own cookies to show which Google account you are signed in with. PIF receives no
+        data from Google unless you choose to sign in with Google.
+      </p>
 
       <h2 className={h2}>7. Age Restriction</h2>
       <p className={p}>
@@ -277,7 +297,7 @@ function EnglishPolicy() {
         <br />Contact us at: hej@pif.community
         <br />PIF App AB, Kristinebergs slottsväg 3, 112 14 Stockholm, Sweden
       </div>
-      <p className="text-sm text-muted-foreground italic mt-8">Last updated: October 2026</p>
+      <p className="text-sm text-muted-foreground italic mt-8">Last updated: November 2026</p>
     </article>
   );
 }
