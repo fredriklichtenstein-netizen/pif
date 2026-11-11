@@ -45,6 +45,22 @@ function parseLocation(loc: any): Coordinates | null {
   return null;
 }
 
+/** Google's profile photo as a File, at a size fit for an avatar. Null if it can't be fetched. */
+async function fetchGooglePhoto(url: string): Promise<File | null> {
+  try {
+    // googleusercontent URLs end in a size directive like "=s96-c".
+    const sized = url.replace(/=s\d+(-c)?$/, "=s512-c");
+    const res = await fetch(sized);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    if (!blob.type.startsWith("image/")) return null;
+    const ext = blob.type.split("/")[1] || "jpg";
+    return new File([blob], `google-photo.${ext}`, { type: blob.type });
+  } catch {
+    return null;
+  }
+}
+
 export default function CreateProfile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -114,6 +130,17 @@ export default function CreateProfile() {
         setLastName(lName);
         setExistingAvatarUrl(avUrl);
         setAvatarPreview(avUrl);
+        // Start a Google sign-up from the Google profile photo. It's
+        // downloaded and uploaded like a picked file (on "Nästa"), so the
+        // avatar lives in our storage rather than hotlinking Google's.
+        const googlePhoto: string | undefined = meta.avatar_url || meta.picture;
+        if (!avUrl && googlePhoto) {
+          void fetchGooglePhoto(googlePhoto).then((file) => {
+            if (cancelled || !file) return;
+            setAvatarFile((prev) => prev ?? file);
+            setAvatarPreview((prev) => prev ?? URL.createObjectURL(file));
+          });
+        }
         setAddress(addr);
         setCoordinates(coords);
         setExistingCity(profile?.city || null);

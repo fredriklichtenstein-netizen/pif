@@ -1,8 +1,5 @@
 
 import { useRef, useState } from "react";
-import { Map } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useMapbox } from "@/hooks/useMapbox";
 import { useAddress } from "@/hooks/address/useAddress";
 import { AddressSuggestions } from "./AddressSuggestions";
@@ -19,12 +16,15 @@ interface AddressInputProps {
   value: string;
   onChange: (address: string, coordinates?: { lat: number; lng: number }) => void;
   locationButtonLabel?: React.ReactNode;
-  mapButtonLabel?: React.ReactNode;
-  hideSearch?: boolean;
+  /**
+   * Leave out the home ("use my PIF address") button -- for the fields that
+   * set the PIF address itself, or another address than it.
+   */
+  hidePifAddress?: boolean;
   /**
    * Render the map immediately instead of only after an address has been
    * geocoded, so the user can just tap a spot without typing anything.
-   * Opt-in, since most callers show the map behind the toggle button.
+   * Otherwise the map appears once an address has been picked.
    */
   alwaysShowMap?: boolean;
   /** Where to centre the map before anything is picked. */
@@ -37,8 +37,7 @@ export function AddressInputContainer({
   value,
   onChange,
   locationButtonLabel,
-  mapButtonLabel = <Map className="w-4 h-4" />,
-  hideSearch,
+  hidePifAddress,
   alwaysShowMap,
   defaultCenter,
   belowSearch,
@@ -65,7 +64,6 @@ export function AddressInputContainer({
     coordinates,
     isLoadingSuggestions,
     setSuggestions,
-    setShowMap,
     handleAddressChange,
     handleUseCurrentLocation,
     handleShowMap,
@@ -89,17 +87,6 @@ export function AddressInputContainer({
     onChange(suggestion, coords);
   };
 
-  const handleMapButtonClick = async () => {
-    if (showMap) {
-      setShowMap(false);
-      return;
-    }
-    if (value) {
-      const coords = await handleShowMap(value);
-      onChange(value, coords);
-    }
-  };
-
   const handlePifAddressSelect = async (address: string, coordinates: { lat: number; lng: number }) => {
     setSource('pif');
     setSuggestions([]);
@@ -110,37 +97,18 @@ export function AddressInputContainer({
 
   return (
     <div className="space-y-4 relative">
-      {!hideSearch && (
-        <>
-          <AddressSearchBar
-            value={value}
-            onAddressChange={handleAddressInput}
-            onLocationClick={pickCurrentLocation}
-            locationButtonLabel={locationButtonLabel}
-            locationActive={source === 'current'}
-            trailing={<UsePifAddressButton onSelect={handlePifAddressSelect} active={pifActive} />}
-          />
-        </>
-      )}
-
-      {hideSearch && (
-        <div className="flex gap-2">
-          <Input
-            value={value}
-            onChange={(e) => handleAddressInput(e.target.value)}
-            placeholder={t('interactions.enter_address')}
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleMapButtonClick}
-          >
-            {mapButtonLabel}
-          </Button>
-        </div>
-      )}
-
+      <AddressSearchBar
+        value={value}
+        onAddressChange={handleAddressInput}
+        onLocationClick={pickCurrentLocation}
+        locationButtonLabel={locationButtonLabel}
+        locationActive={source === 'current'}
+        trailing={
+          hidePifAddress ? undefined : (
+            <UsePifAddressButton onSelect={handlePifAddressSelect} active={pifActive} />
+          )
+        }
+      />
 
       {suggestions.length > 0 && !isLoadingSuggestions && (
         <AddressSuggestions

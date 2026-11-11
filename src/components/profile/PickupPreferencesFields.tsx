@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AddressInput } from "./address/AddressInput";
-import { Map } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export interface PickupPreferencesData {
@@ -166,8 +165,7 @@ function PickupAddressSection({
         <AddressInput
           value={customAddress}
           onChange={(addr) => onCustomAddressChange(addr)}
-          mapButtonLabel={<Map className="w-4 h-4" />}
-          hideSearch
+          hidePifAddress
           alwaysShowMap
         />
       )}
