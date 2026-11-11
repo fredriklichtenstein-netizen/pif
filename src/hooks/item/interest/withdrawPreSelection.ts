@@ -94,9 +94,26 @@ export const withdrawPreSelectionInterest = async (
   const isWish =
     String(itemType).toLowerCase() === "request" ||
     String(itemType).toLowerCase() === "wish";
+  // Name the person, like the other interest notifications do;
+  // "Någon" only if the profile can't be read.
+  let actorName = "Någon";
+  try {
+    const { data: actor } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", userId)
+      .maybeSingle();
+    const full = [(actor as any)?.first_name, (actor as any)?.last_name]
+      .map((p) => (p ?? "").trim())
+      .filter(Boolean)
+      .join(" ");
+    if (full) actorName = full;
+  } catch (nameErr) {
+    console.warn("withdrawPreSelectionInterest: name lookup failed", nameErr);
+  }
   const title = isWish
-    ? `Någon har dragit tillbaka sitt erbjudande för "${itemTitle}".`
-    : `Någon har dragit tillbaka sitt intresse för "${itemTitle}".`;
+    ? `${actorName} har dragit tillbaka sitt erbjudande för "${itemTitle}".`
+    : `${actorName} har dragit tillbaka sitt intresse för "${itemTitle}".`;
   let content = isWish
     ? "Önskan är fortfarande aktiv för andra som vill hjälpa."
     : "Piffen är fortfarande öppen för andra att visa intresse.";
