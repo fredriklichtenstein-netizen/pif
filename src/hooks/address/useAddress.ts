@@ -71,41 +71,64 @@ export const useAddress = (
   };
 
   const handleUseCurrentLocation = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const response = await fetch(
-              `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapToken}&language=${geocodeLang}`
-            );
-            const data = await response.json();
-            if (data.features && data.features.length > 0) {
-              const address = data.features[0].place_name;
-              setCoordinates({ lat: latitude, lng: longitude });
-              setShowMap(true);
-              onAddressChange(address, { lat: latitude, lng: longitude });
-              setSuggestions([]);
-            }
-          } catch (error) {
-            console.error("Error reverse geocoding:", error);
-            toast({
-              title: t('post.error'),
-              description: t('post.address_error'),
-              variant: "destructive",
-            });
-          }
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-          toast({
-            title: t('post.error'),
-            description: t('post.location_access_error'),
-            variant: "destructive",
-          });
+    if (!("geolocation" in navigator)) return;
+
+    const onPosition = async (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${mapToken}&language=${geocodeLang}`
+        );
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+          const address = data.features[0].place_name;
+          setCoordinates({ lat: latitude, lng: longitude });
+          setShowMap(true);
+          onAddressChange(address, { lat: latitude, lng: longitude });
+          setSuggestions([]);
         }
-      );
-    }
+      } catch (error) {
+        console.error("Error reverse geocoding:", error);
+        toast({
+          title: t('post.error'),
+          description: t('post.address_error'),
+          variant: "destructive",
+        });
+      }
+    };
+
+    const onFinalError = (error: GeolocationPositionError) => {
+      console.error("Geolocation error:", error);
+      toast({
+        title: t('post.error'),
+        // Blocked needs a different fix (site settings) than a position
+        // the device couldn't work out.
+        description:
+          error.code === error.PERMISSION_DENIED
+            ? t('settings.location_denied_help')
+            : t('post.location_access_error'),
+        variant: "destructive",
+      });
+    };
+
+    // Same as liveLocationStore: high accuracy first, then a retry with
+    // Wi-Fi/IP positioning. Desktops without GPS (a Mac, say) often fail
+    // the first with POSITION_UNAVAILABLE but answer the second.
+    navigator.geolocation.getCurrentPosition(
+      onPosition,
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          onFinalError(error);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(onPosition, onFinalError, {
+          enableHighAccuracy: false,
+          maximumAge: 60000,
+          timeout: 15000,
+        });
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
+    );
   };
 
   const handleShowMap = async (address: string): Promise<{ lat: number; lng: number } | undefined> => {
