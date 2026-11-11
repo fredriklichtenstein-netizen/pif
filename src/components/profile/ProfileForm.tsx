@@ -4,7 +4,6 @@ import { AddressInput } from "./address/AddressInput";
 import { PhoneInput } from "./PhoneInput";
 import { NameFields } from "@/components/forms/fields/NameFields";
 import { Label } from "@/components/ui/label";
-import { Map } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PickupPreferencesFields } from "./PickupPreferencesFields";
 
@@ -69,8 +68,7 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               <AddressInput
                 value={formData.address}
                 onChange={(address) => handleChange({ address })}
-                mapButtonLabel={<Map className="w-4 h-4" />}
-                hideSearch
+                hidePifAddress
                 alwaysShowMap
               />
             </div>

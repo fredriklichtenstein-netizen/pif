@@ -5,8 +5,7 @@ interface AddressInputProps {
   value: string;
   onChange: (address: string, coordinates?: { lat: number; lng: number }) => void;
   locationButtonLabel?: React.ReactNode;
-  mapButtonLabel?: React.ReactNode;
-  hideSearch?: boolean;
+  hidePifAddress?: boolean;
   alwaysShowMap?: boolean;
   defaultCenter?: { lat: number; lng: number };
   /** Rendered between the address field and the map. */

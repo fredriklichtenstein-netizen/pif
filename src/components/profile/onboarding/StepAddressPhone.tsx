@@ -79,7 +79,7 @@ export function StepAddressPhone({
             same fix the pif/wish creation flow already got (July 2026);
             reusing AddressMap here instead of patching a second
             implementation, per the original bug report. */}
-        <AddressInput value={address} onChange={onAddressChange} hideSearch alwaysShowMap />
+        <AddressInput value={address} onChange={onAddressChange} hidePifAddress alwaysShowMap />
         {!coordinates && address.trim().length > 0 && !geocoding && (
           <p className="text-sm text-muted-foreground">
             {t("profile.onboarding.address_required")}
