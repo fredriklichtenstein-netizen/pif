@@ -40,8 +40,14 @@ async function sha256Hex(input: string) {
  * returns the ID token to this page, so the session stays where it started.
  * The auth state listener picks up the new session; Auth.tsx then routes
  * to /create-profile or onward as for an email sign-in.
+ *
+ * `personalized={false}` (sign-up) keeps Google from showing "Continue as
+ * <name>" for an account that already has a PIF account. Google has no
+ * switch for that; size "medium" is one of the documented settings that
+ * suppress it. Either way a click opens Google's account chooser, which
+ * offers "Use another account".
  */
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ personalized = true }: { personalized?: boolean }) {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +85,7 @@ export function GoogleSignInButton() {
         gid.renderButton(containerRef.current, {
           type: "standard",
           theme: "outline",
-          size: "large",
+          size: personalized ? "large" : "medium",
           shape: "rectangular",
           text: "continue_with",
           logo_alignment: "center",
@@ -93,7 +99,7 @@ export function GoogleSignInButton() {
     return () => {
       cancelled = true;
     };
-  }, [i18n.language, t]);
+  }, [i18n.language, t, personalized]);
 
   return (
     <div className="space-y-2">

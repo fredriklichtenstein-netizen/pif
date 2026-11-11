@@ -94,7 +94,7 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
         </p>
       </div>
 
-      <GoogleSignInButton />
+      <GoogleSignInButton personalized={false} />
 
       {displayError && (
         <Alert variant={timeoutWarning ? "default" : "destructive"}>
