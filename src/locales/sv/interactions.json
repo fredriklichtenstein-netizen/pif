@@ -801,7 +801,7 @@
     "create_password_button": "Skapa lösenord",
     "also_google_sign_in": "Du kan också logga in med Google.",
     "scheduled_published": "Schemalagt inlägg publicerat",
-    "weekly_newsletter": "Veckobrev (tisdagar) – utvalda pifs och tips"
+    "newsletter": "Nyhetsbrev"
   },
   "notifications": {
     "is_interested_in_your_pif": "är intresserad av din pif",
