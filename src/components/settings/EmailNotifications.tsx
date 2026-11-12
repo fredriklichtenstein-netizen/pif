@@ -52,7 +52,7 @@ export function EmailNotifications({ preferences, onToggle }: EmailNotifications
 
         <NotificationToggle
           id="email_newsletter"
-          label={t('settings.weekly_newsletter')}
+          label={t('settings.newsletter')}
           checked={preferences.email_newsletter}
           onToggle={() => onToggle("email_newsletter")}
         />

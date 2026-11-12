@@ -1,4 +1,4 @@
--- Weekly newsletter: keep app users in step with the newsletter's contact
+-- Newsletter: keep app users in step with the newsletter's contact
 -- list in Resend (edge function newsletter-sync). Opt-out: everyone with a
 -- confirmed address is on it unless notification_preferences.email_newsletter
 -- is false. The triggers only enqueue a pg_net call; any error is swallowed
