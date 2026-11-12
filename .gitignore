@@ -28,3 +28,4 @@ supabase/.temp/
 
 # Wrangler local dev state
 .wrangler/
+newsletter/out/

@@ -1,0 +1,41 @@
+{
+  "subject": {
+    "sv": "Det här finns att hämta på PIF just nu",
+    "en": "Up for grabs on PIF right now"
+  },
+  "preview": {
+    "sv": "Tre utvalda pifs och tips om appen.",
+    "en": "Three featured pifs and tips for the app."
+  },
+  "intro": {
+    "sv": "Hej!\nHär är några av sakerna som just nu söker en ny ägare på PIF. Allt är gratis – det enda som krävs är att du hämtar det.",
+    "en": "Hi!\nHere are a few of the things looking for a new owner on PIF right now. Everything is free – all you need to do is pick it up."
+  },
+  "pifs": [135, 134, 127],
+  "tips": [
+    {
+      "title": {
+        "sv": "Önska det du behöver",
+        "en": "Wish for what you need"
+      },
+      "body": {
+        "sv": "Letar du efter något särskilt? Lägg upp en önskning, så kan grannar som har det över höra av sig.",
+        "en": "Looking for something specific? Post a wish, and neighbours who have one to spare can get in touch."
+      }
+    },
+    {
+      "title": {
+        "sv": "Schemalägg dina pifs",
+        "en": "Schedule your pifs"
+      },
+      "body": {
+        "sv": "Skriv inlägget när det passar dig och välj när det ska publiceras – utkast sparas automatiskt.",
+        "en": "Write your post when it suits you and choose when it goes live – drafts are saved automatically."
+      }
+    }
+  ],
+  "outro": {
+    "sv": "Har du själv något som står oanvänt? Ge det vidare – det tar en minut.",
+    "en": "Got something sitting unused? Pass it on – it takes a minute."
+  }
+}
