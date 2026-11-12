@@ -110,9 +110,10 @@ async function setLanguageSegment(email: string, lang: "sv" | "en") {
 }
 
 async function setTopic(email: string, subscribed: boolean) {
-  const res = await resend("PATCH", `/contacts/${enc(email)}/topics`, {
-    topics: [{ id: TOPIC_ID, subscription: subscribed ? "opt_in" : "opt_out" }],
-  });
+  // The REST body is a bare array (the SDKs wrap it as { topics }).
+  const res = await resend("PATCH", `/contacts/${enc(email)}/topics`, [
+    { id: TOPIC_ID, subscription: subscribed ? "opt_in" : "opt_out" },
+  ]);
   if (!res.ok) console.error("[newsletter-sync] topic update failed", { status: res.status, data: res.data });
 }
 
