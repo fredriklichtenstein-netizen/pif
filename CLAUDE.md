@@ -256,6 +256,37 @@ Traps:
   `ALTER TABLE ... DISABLE TRIGGER trg_notify_feature_announcement` / `ENABLE TRIGGER` in the same
   DO block, then check `tgenabled = 'O'`.
 
+## Newsletter ("Nyhetsbrev / Newsletter", since 2026-11-13)
+
+Resend broadcasts, one per language. Never call it "weekly" or name a weekday in copy or UI.
+- **Lists:** one Resend topic, *Nyhetsbrev / Newsletter* (default opt_in = everyone on it unless
+  they opt out), and two segments, *Nyhetsbrev – svenska* / *– English*. Staging has its own
+  `[Staging]` copies. Staging and production share **one Resend account with one contact per
+  email**, so staging never deletes contacts or writes properties. IDs live in
+  `supabase/functions/newsletter-sync/index.ts` (`LISTS`).
+- **Sync** (`newsletter-sync`, verify_jwt off): triggers on `profiles` (name, language,
+  `notification_preferences.email_newsletter`) and `auth.users` (email confirmed or changed,
+  delete) enqueue pg_net calls. They're off unless vault secret `newsletter_sync_function_url`
+  exists, and they swallow errors so auth can't break. Unconfirmed addresses are skipped. A deleted
+  account's contact is deleted. Contact property `source` (`app`/`external`) is set once and never
+  overwritten. Resend returns properties as `{value, type}`.
+- **Opt-out path:** Settings switch → topic opt_out. Resend's unsubscribe page → webhook
+  (`contact.topics.updated` + `contact.updated`, Svix-signed, `RESEND_WEBHOOK_SECRET`) →
+  `_newsletter_set_preference()`, which writes only on change, so there's no echo loop.
+  **Broadcasts must carry `topic_id`, or topic opt-outs still get the email.** The Resend MCP's
+  create-broadcast has no topic field, so create them through the function's `create_broadcast`
+  mode.
+- **Keys:** contacts need a **full-access** Resend key. The app's send-only keys get
+  `401 restricted_api_key`. Secret `RESEND_NEWSLETTER_API_KEY` (staging) /
+  `RESEND_NEWSLETTER_API_KEY_MAIN` (production). The topics PATCH body is a bare array.
+- **Issues:** `newsletter/issues/<date>.json` → `bun scripts/newsletter.ts <file>` →
+  `newsletter/out/*.{sv,en}.{html,txt}` (gitignored). Photos are the Worker's `/og/<id>.webp`.
+  Sender `PIF <nyhetsbrev@pif.today>`, reply-to hej@pif.community.
+- **External sign-ups** (107 from the old site's form, CSV) aren't imported yet. They get a welcome
+  email first. Importing puts them in the language segments, i.e. in the next broadcast.
+- **Language** is per device. `useLanguageSeed` writes the shown language to `profiles.language`
+  each session, so emails match what the user sees.
+
 ## Share links / link previews (`workers/share`)
 
 Shared item links are `<SHARE_ORIGIN>/item/<id>` (`src/lib/shareOrigin.ts`, `VITE_SHARE_ORIGIN`,

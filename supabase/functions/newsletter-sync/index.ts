@@ -55,7 +55,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function resend(method: string, path: string, body?: unknown) {
   // Contacts/topics/segments need a full-access key; a sending-only key gets 401.
-  const key = Deno.env.get("RESEND_NEWSLETTER_API_KEY") ?? Deno.env.get("RESEND_API_KEY");
+  // Production's secret is named RESEND_NEWSLETTER_API_KEY_MAIN.
+  const key =
+    Deno.env.get("RESEND_NEWSLETTER_API_KEY") ??
+    Deno.env.get("RESEND_NEWSLETTER_API_KEY_MAIN") ??
+    Deno.env.get("RESEND_API_KEY");
   if (!key) throw new Error("RESEND_NEWSLETTER_API_KEY not configured");
   for (let attempt = 0; ; attempt++) {
     await sleep(PACE_MS);
@@ -80,14 +84,22 @@ const enc = encodeURIComponent;
 /** Create the contact or update its name/link; returns false on failure. */
 async function ensureContact(email: string, first: string, last: string, userId: string, source = "app") {
   const fields: Record<string, unknown> = { first_name: first, last_name: last };
-  if (IS_PRODUCTION) fields.properties = { pif_user_id: userId };
-  const upd = await resend("PATCH", `/contacts/${enc(email)}`, fields);
-  if (upd.ok) return true;
-  if (upd.status !== 404) {
-    console.error("[newsletter-sync] update contact failed", { status: upd.status, data: upd.data });
+  const existing = await resend("GET", `/contacts/${enc(email)}`);
+  if (existing.ok) {
+    // `source` only when missing: an external contact keeps its origin.
+    if (IS_PRODUCTION) {
+      fields.properties = existing.data?.properties?.source
+        ? { pif_user_id: userId }
+        : { pif_user_id: userId, source };
+    }
+    const upd = await resend("PATCH", `/contacts/${enc(email)}`, fields);
+    if (!upd.ok) console.error("[newsletter-sync] update contact failed", { status: upd.status, data: upd.data });
+    return upd.ok;
+  }
+  if (existing.status !== 404) {
+    console.error("[newsletter-sync] get contact failed", { status: existing.status, data: existing.data });
     return false;
   }
-  // `source` only on create: an existing (external) contact keeps its origin.
   if (IS_PRODUCTION) fields.properties = { pif_user_id: userId, source };
   const created = await resend("POST", "/contacts", { email, ...fields });
   if (!created.ok) {
@@ -130,7 +142,9 @@ async function removeEmail(email: string): Promise<string | undefined> {
   }
   const got = await resend("GET", `/contacts/${enc(email)}`);
   if (got.status === 404) return undefined;
-  const source = got.data?.properties?.source ?? undefined;
+  // Properties come back as { value, type }.
+  const prop = got.data?.properties?.source;
+  const source: string | undefined = (typeof prop === "object" ? prop?.value : prop) ?? undefined;
   const del = await resend("DELETE", `/contacts/${enc(email)}`);
   if (!del.ok && del.status !== 404) {
     console.error("[newsletter-sync] delete contact failed", { status: del.status, data: del.data });
@@ -278,6 +292,28 @@ serve(async (req) => {
           bump(`imported_${lang}`);
         }
         return json(200, { counts });
+      }
+
+      case "create_broadcast": {
+        // One issue in one language: { lang, name, subject, preview, html, text,
+        // scheduled_at? }. Created here, not from a dashboard or MCP client,
+        // so it always carries topic_id -- that's what skips everyone who
+        // turned the newsletter off (a topic opt-out, not a global unsubscribe).
+        const lang = body.lang === "en" ? "en" : "sv";
+        const res = await resend("POST", "/broadcasts", {
+          segment_id: SEGMENT[lang],
+          topic_id: TOPIC_ID,
+          from: "PIF <nyhetsbrev@pif.today>",
+          reply_to: "hej@pif.community",
+          name: String(body.name ?? ""),
+          subject: String(body.subject),
+          preview_text: String(body.preview ?? ""),
+          html: String(body.html),
+          text: String(body.text),
+          ...(body.scheduled_at ? { send: true, scheduled_at: String(body.scheduled_at) } : {}),
+        });
+        if (!res.ok) console.error("[newsletter-sync] create broadcast failed", { status: res.status, data: res.data });
+        return json(res.ok ? 200 : 502, res.data);
       }
 
       case "backfill": {
