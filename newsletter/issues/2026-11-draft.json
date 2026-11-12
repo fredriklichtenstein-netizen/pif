@@ -4,28 +4,28 @@
     "en": "Up for grabs on PIF right now"
   },
   "preview": {
-    "sv": "Tre utvalda pifs och tips om appen.",
+    "sv": "Tre utvalda piffar och tips om appen.",
     "en": "Three featured pifs and tips for the app."
   },
   "intro": {
-    "sv": "Hej!\nHär är några av sakerna som just nu söker en ny ägare på PIF. Allt är gratis – det enda som krävs är att du hämtar det.",
-    "en": "Hi!\nHere are a few of the things looking for a new owner on PIF right now. Everything is free – all you need to do is pick it up."
+    "sv": "Hej!\nHar du tittat in i PIF-appen nyligen? Här är några av sakerna som just nu söker en ny ägare. Allt är gratis - det enda du behöver göra är att hämta upp det!",
+    "en": "Hi!\nHave you looked in the PIF app lately? Here are a few of the things looking for a new owner right now. Everything is free - all you need to do is pick it up!"
   },
-  "pifs": [135, 121, 118],
+  "pifs": [135, 121, 136],
   "tips": [
     {
       "title": {
-        "sv": "Önska det du behöver",
-        "en": "Wish for what you need"
+        "sv": "Mötas upp",
+        "en": "Meet up"
       },
       "body": {
-        "sv": "Letar du efter något särskilt? Lägg upp en önskning, så kan grannar som har det över höra av sig.",
-        "en": "Looking for something specific? Post a wish, and neighbours who have one to spare can get in touch."
+        "sv": "Nu kan du som piffar ange ifall du är öppen för att mötas upp för överlämning på en annan adress - piffen får då märkningen \"Kan mötas upp\" i flödet.",
+        "en": "When you pif something, you can now say whether you're open to meeting up somewhere else for the handover - the pif then gets the label \"Can meet up\" in the feed."
       }
     },
     {
       "title": {
-        "sv": "Schemalägg dina pifs",
+        "sv": "Schemalägg dina piffar",
         "en": "Schedule your pifs"
       },
       "body": {
@@ -35,7 +35,7 @@
     }
   ],
   "outro": {
-    "sv": "Har du själv något som står oanvänt? Ge det vidare – det tar en minut.",
-    "en": "Got something sitting unused? Pass it on – it takes a minute."
+    "sv": "Har du själv något som står oanvänt? Ge det vidare – det tar bara en minut att lägga upp!",
+    "en": "Got something sitting unused? Pass it on – it only takes a minute to post!"
   }
 }
