@@ -34,7 +34,6 @@ const UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
 const COPY = {
   sv: {
     lang: "sv",
-    see: "Se piffen",
     tips: "Tips",
     cta: "Öppna PIF",
     footer: `Du får det här mejlet för att du har ett konto på PIF eller har anmält dig till vårt nyhetsbrev.`,
@@ -42,7 +41,6 @@ const COPY = {
   },
   en: {
     lang: "en",
-    see: "See the pif",
     tips: "Tips",
     cta: "Open PIF",
     footer: `You're receiving this email because you have a PIF account or signed up for our newsletter.`,
@@ -76,15 +74,14 @@ async function fetchPifs(ids: number[]) {
   });
 }
 
-function pifCard(p: { id: number; title: string }, lang: Lang) {
+// Photo only, linking to the post (title kept as alt text).
+function pifCard(p: { id: number; title: string }) {
   const link = `${APP_URL}/feed?post=${p.id}`;
   return `
-    <tr><td style="padding: 0 0 20px;">
+    <tr><td style="padding: 0 0 16px;">
       <a href="${link}" style="text-decoration: none; color: inherit; display: block;">
         <img src="${IMAGE_ORIGIN}/og/${p.id}.webp" width="480" alt="${escape(p.title.trim())}"
              style="display: block; width: 100%; max-width: 480px; height: auto; border-radius: 12px; border: 0;" />
-        <p style="margin: 10px 0 2px; font-size: 17px; font-weight: 600; color: #1f2937;">${escape(p.title.trim())}</p>
-        <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${TURQUOISE};">${COPY[lang].see} →</p>
       </a>
     </td></tr>`;
 }
@@ -119,7 +116,7 @@ function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang)
       ${paragraphs(issue.intro[lang], "margin: 0 0 12px; font-size: 16px; line-height: 1.55;")}
     </td></tr>
     <tr><td style="padding: 12px 20px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${pifs.map((p) => pifCard(p, lang)).join("")}</table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${pifs.map((p) => pifCard(p)).join("")}</table>
     </td></tr>
     <tr><td style="padding: 0 20px;">
       <div style="background: #FFF7E6; border-left: 4px solid #FFCC66; border-radius: 8px; padding: 16px 16px 4px;">
