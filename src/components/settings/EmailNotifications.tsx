@@ -49,6 +49,13 @@ export function EmailNotifications({ preferences, onToggle }: EmailNotifications
           checked={preferences.email_scheduled_published}
           onToggle={() => onToggle("email_scheduled_published")}
         />
+
+        <NotificationToggle
+          id="email_newsletter"
+          label={t('settings.weekly_newsletter')}
+          checked={preferences.email_newsletter}
+          onToggle={() => onToggle("email_newsletter")}
+        />
       </div>
     </div>
   );

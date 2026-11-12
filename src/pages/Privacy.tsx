@@ -63,6 +63,7 @@ function SwedishPolicy() {
             <tr><td className={td}>Tillhandahålla och driva tjänsten</td><td className={td}>Fullgörande av avtal (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Matcha piffar och önskningar mellan användare</td><td className={td}>Fullgörande av avtal (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Skicka aviseringar om aktivitet som rör dig</td><td className={td}>Fullgörande av avtal (GDPR art. 6.1.b)</td></tr>
+            <tr><td className={td}>Skicka vårt veckobrev med utvalda pifs och tips (du kan avsluta det i varje utskick och under Inställningar)</td><td className={td}>Berättigat intresse (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Hantera rapporter och säkerhet</td><td className={td}>Berättigat intresse (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Förbättra tjänsten</td><td className={td}>Berättigat intresse (GDPR art. 6.1.f)</td></tr>
           </tbody>
@@ -75,7 +76,7 @@ function SwedishPolicy() {
       <ul className={ul}>
         <li><strong>Supabase Ireland Ltd</strong> — databaslagring och autentisering (EU-server)</li>
         <li><strong>Mapbox Inc</strong> — karttjänst för att visa ungefärliga platser</li>
-        <li><strong>Resend Inc</strong> — e-postutskick för aviseringar och rapporter</li>
+        <li><strong>Resend Inc</strong> — e-postutskick för aviseringar, rapporter och veckobrevet (för veckobrevet lagras din e-postadress, ditt namn och ditt språkval hos Resend)</li>
         <li><strong>Cloudflare Inc</strong> — drift av webbplatsen, länkförhandsvisningar och anonym besöksstatistik</li>
         <li><strong>GitHub Inc</strong> — versionshantering av applikationskod</li>
         <li><strong>Google Ireland Ltd</strong> — inloggning med Google, om du väljer det. Google hanterar själva inloggningen enligt sin egen integritetspolicy</li>
@@ -207,6 +208,7 @@ function EnglishPolicy() {
             <tr><td className={td}>Providing and operating the service</td><td className={td}>Performance of contract (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Matching pifs and wishes between users</td><td className={td}>Performance of contract (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Sending notifications about activity relevant to you</td><td className={td}>Performance of contract (GDPR art. 6.1.b)</td></tr>
+            <tr><td className={td}>Sending our weekly newsletter with featured pifs and tips (you can unsubscribe in every issue and under Settings)</td><td className={td}>Legitimate interest (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Managing reports and security</td><td className={td}>Legitimate interest (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Improving the service</td><td className={td}>Legitimate interest (GDPR art. 6.1.f)</td></tr>
           </tbody>
@@ -219,7 +221,7 @@ function EnglishPolicy() {
       <ul className={ul}>
         <li><strong>Supabase Ireland Ltd</strong> — database storage and authentication (EU servers)</li>
         <li><strong>Mapbox Inc</strong> — map service for displaying approximate locations</li>
-        <li><strong>Resend Inc</strong> — email delivery for notifications and reports</li>
+        <li><strong>Resend Inc</strong> — email delivery for notifications, reports and the weekly newsletter (for the newsletter, your email address, name and language are stored with Resend)</li>
         <li><strong>Cloudflare Inc</strong> — website hosting, link previews and anonymous visitor statistics</li>
         <li><strong>GitHub Inc</strong> — version control for application code</li>
         <li><strong>Google Ireland Ltd</strong> — sign-in with Google, if you choose it. Google handles the sign-in itself under its own privacy policy</li>
