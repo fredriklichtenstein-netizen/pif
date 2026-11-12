@@ -7,12 +7,13 @@ import { DEMO_MODE } from "@/config/demoMode";
 const attempted = new Set<string>();
 
 /**
- * Once per session per user: if the profile has never recorded an explicit
- * language (NULL -- treated as 'sv' everywhere server-side), seed it from
- * the client's currently active i18n language. Without this, a user whose
- * browser/app language is English but who never opens the language
- * switcher would stay on the NULL->sv fallback forever and keep getting
- * Swedish feature-announcement emails despite a correctly English in-app UI.
+ * Once per session per user: store the language the app is actually showing
+ * on this device in the profile, if it differs (or is NULL -- treated as
+ * 'sv' server-side). The UI language lives per device (localStorage /
+ * browser language), and the profile was only written on an explicit switch,
+ * so the two drifted: a profile saved as 'en' on one device kept sending
+ * English emails (announcements, newsletter list) to someone whose app shows
+ * Swedish. The device last opened wins.
  */
 export function useLanguageSeed() {
   const { user } = useGlobalAuth();
@@ -31,9 +32,9 @@ export function useLanguageSeed() {
           .from("profiles")
           .update({ language: lng } as any)
           .eq("id", userId)
-          .is("language", null);
+          .or(`language.is.null,language.neq.${lng}`);
       } catch {
-        /* silent -- seeding is best-effort */
+        /* silent -- best-effort */
       }
     })();
   }, [user?.id]);
