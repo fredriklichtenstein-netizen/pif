@@ -8,10 +8,14 @@
     "en": "Three featured pifs and tips for the app."
   },
   "intro": {
-    "sv": "Hej!\nHar du tittat in i PIF-appen nyligen? Här är några av sakerna som just nu söker en ny ägare. Allt är gratis - det enda du behöver göra är att hämta upp det!",
-    "en": "Hi!\nHave you looked in the PIF app lately? Here are a few of the things looking for a new owner right now. Everything is free - all you need to do is pick it up!"
+    "sv": "Hej!\nHar du tittat in i PIF-appen nyligen? Här är några av sakerna som just nu söker en ny ägare. Allt är gratis – det enda du behöver göra är att hämta upp det!",
+    "en": "Hi!\nHave you checked the PIF app lately? Here are a few of the things looking for a new owner right now. Everything is free – all you need to do is pick it up!"
   },
-  "pifs": [135, 121, 136],
+  "pifs": [
+    135,
+    121,
+    136
+  ],
   "tips": [
     {
       "title": {
@@ -19,8 +23,8 @@
         "en": "Meet up"
       },
       "body": {
-        "sv": "Nu kan du som piffar ange ifall du är öppen för att mötas upp för överlämning på en annan adress - piffen får då märkningen \"Kan mötas upp\" i flödet.",
-        "en": "When you pif something, you can now say whether you're open to meeting up somewhere else for the handover - the pif then gets the label \"Can meet up\" in the feed."
+        "sv": "Nu kan du som piffar ange ifall du är öppen för att mötas upp för överlämning på en annan adress – piffen får då märkningen \"Kan mötas upp\" i flödet.",
+        "en": "When you pif something, you can now say whether you're open to meeting up somewhere else for the handover – the pif then gets the label \"Can meet up\" in the feed."
       }
     },
     {
