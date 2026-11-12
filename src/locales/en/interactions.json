@@ -800,7 +800,8 @@
     "create_password_description": "You sign in with Google and have no PIF password. If you'd also like to sign in with email and password, you can create one — we'll send a link to {{email}}.",
     "create_password_button": "Create password",
     "also_google_sign_in": "You can also sign in with Google.",
-    "scheduled_published": "Scheduled post published"
+    "scheduled_published": "Scheduled post published",
+    "weekly_newsletter": "Weekly newsletter (Tuesdays) – featured pifs and tips"
   },
   "notifications": {
     "is_interested_in_your_pif": "is interested in your pif",
