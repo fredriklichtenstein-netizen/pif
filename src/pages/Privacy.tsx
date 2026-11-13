@@ -126,6 +126,12 @@ function SwedishPolicy() {
         kan använda sina egna cookies för att visa vilket Google-konto du är inloggad med. PIF får
         inga uppgifter från Google förrän du själv väljer att logga in med Google.
       </p>
+      <p className={p}>
+        I vårt nyhetsbrev mäter vi om det öppnas och vilka länkar som klickas, med en liten bild
+        och länkar som går via vår e-posttjänst Resend. Vi använder det bara för att förstå vad
+        som är intressant och göra nyhetsbrevet bättre. Övriga mejl från PIF, som aviseringar och
+        inloggningsmejl, mäts inte. Du kan när som helst avsluta nyhetsbrevet.
+      </p>
 
       <h2 className={h2}>7. Åldersgräns</h2>
       <p className={p}>
@@ -270,6 +276,12 @@ function EnglishPolicy() {
         The sign-in page shows Google's "Sign in with Google" button. It is loaded from Google, which
         may use its own cookies to show which Google account you are signed in with. PIF receives no
         data from Google unless you choose to sign in with Google.
+      </p>
+      <p className={p}>
+        In our newsletter we measure whether it is opened and which links are clicked, using a
+        small image and links that pass through our email service Resend. We use this only to
+        understand what is interesting and to improve the newsletter. Other emails from PIF, such
+        as notifications and sign-in emails, are not measured. You can unsubscribe at any time.
       </p>
 
       <h2 className={h2}>7. Age Restriction</h2>

@@ -281,7 +281,11 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
   `RESEND_NEWSLETTER_API_KEY_MAIN` (production). The topics PATCH body is a bare array.
 - **Issues:** `newsletter/issues/<date>.json` → `bun scripts/newsletter.ts <file>` →
   `newsletter/out/*.{sv,en}.{html,txt}` (gitignored). Photos are the Worker's `/og/<id>.webp`.
-  Sender `PIF <nyhetsbrev@pif.today>`, reply-to hej@pif.community.
+  Sender `PIF <hej@news.pif.today>` (since 2026-11-13), reply-to hej@pif.community. news.pif.today
+  is its own Resend domain with open and click tracking on (links via `links.news.pif.today`).
+  pif.today stays untracked: tracking is per domain, so it would also hit auth and notification
+  mail, and a tracked domain doesn't route through Resend Forge. The privacy policy (section 6)
+  says the newsletter is measured. Like pif.today, news.pif.today has no MX, so it can't receive.
 - **External sign-ups** (107 from the old site's form, CSV) aren't imported yet. They get a welcome
   email first. Importing puts them in the language segments, i.e. in the next broadcast.
 - **Language** is per device. `useLanguageSeed` writes the shown language to `profiles.language`

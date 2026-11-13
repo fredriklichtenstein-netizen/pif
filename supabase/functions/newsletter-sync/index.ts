@@ -303,7 +303,8 @@ serve(async (req) => {
         const res = await resend("POST", "/broadcasts", {
           segment_id: SEGMENT[lang],
           topic_id: TOPIC_ID,
-          from: "PIF <nyhetsbrev@pif.today>",
+          // news.pif.today has open/click tracking; pif.today (app mail) stays untracked.
+          from: "PIF <hej@news.pif.today>",
           reply_to: "hej@pif.community",
           name: String(body.name ?? ""),
           subject: String(body.subject),
