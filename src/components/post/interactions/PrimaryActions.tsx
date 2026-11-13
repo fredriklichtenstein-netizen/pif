@@ -81,6 +81,7 @@ export function PrimaryActions({
         <InteractionButtonWithPopup
           type="like"
           isActive={isLiked}
+          interestClosed={interestClosed}
           count={likesCount}
           users={likers}
           onClick={onLikeToggle}

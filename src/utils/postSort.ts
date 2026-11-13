@@ -3,11 +3,17 @@ import type { Post } from "@/types/post";
 
 export type FeedSortMode = "recent" | "distance";
 
+/** Archived or completed (the feed's non-active posts). */
+export function isInactivePost(post: Post): boolean {
+  const status = String((post as any).status ?? (post as any).pif_status ?? "");
+  return status === "archived" || status === "completed" || !!post.archived_at;
+}
+
 /**
  * Trello: "Sort the feed on distance and/or on published time."
  *
  * "recent" is a no-op -- getOptimizedPosts()/OptimizedQueries.getPosts()
- * already orders the server query by created_at DESC (see
+ * already orders the server query active-first, then created_at DESC (see
  * src/services/database/queries.ts), so the feed's natural/default order
  * already IS most-recent-first. This function only has real work to do
  * for "distance".
@@ -46,6 +52,9 @@ export function sortPosts(
   });
 
   withDistance.sort((a, b) => {
+    // Archived/completed posts stay below active ones, as in the default sort.
+    const inactiveDiff = Number(isInactivePost(a.post)) - Number(isInactivePost(b.post));
+    if (inactiveDiff !== 0) return inactiveDiff;
     if (a.distance === null && b.distance === null) return a.index - b.index;
     if (a.distance === null) return 1;
     if (b.distance === null) return -1;

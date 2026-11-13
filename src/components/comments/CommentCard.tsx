@@ -8,6 +8,7 @@ import { CommentInteractions } from "./CommentInteractions";
 import { CommentInput } from "./CommentInput";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useCommentsReadOnly } from "./CommentsReadOnly";
 
 interface CommentCardProps {
   comment: Comment;
@@ -35,6 +36,7 @@ export function CommentCard({
   const rootId = threadRootId ?? comment.id;
   const { toast } = useToast();
   const { t } = useTranslation();
+  const readOnly = useCommentsReadOnly();
   
   const isCurrentUserAuthor = currentUser === comment.author.id;
 
@@ -71,12 +73,12 @@ export function CommentCard({
               <p className="text-sm mt-1 text-left">{comment.text}</p>
             )}
 
-            <CommentInteractions likes={comment.likes} isLiked={comment.isLiked} onLike={() => onLike(comment.id)} onReply={() => setShowReplyInput(!showReplyInput)} />
+            <CommentInteractions likes={comment.likes} isLiked={comment.isLiked} onLike={() => onLike(comment.id)} onReply={() => setShowReplyInput(!showReplyInput)} readOnly={readOnly} />
           </div>
         </div>
       </div>
 
-      {showReplyInput && (
+      {showReplyInput && !readOnly && (
         <div className="ml-8">
           <CommentInput onSubmit={handleReply} placeholder={level > 0 ? t('interactions.write_reply_to', { name: authorName }) : t('interactions.write_reply')} draftKey={`reply:${comment.id}`} />
         </div>

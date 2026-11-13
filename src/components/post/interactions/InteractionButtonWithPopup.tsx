@@ -147,6 +147,11 @@ export function InteractionButtonWithPopup({
       perspectiveDim = true;
     }
   }
+  // ...nor new likes (interestClosed means "the post is closed").
+  if (type === "like" && interestClosed && !isOwner) {
+    perspectiveDisabled = true;
+    perspectiveDim = true;
+  }
 
   // Owner-view mode: on the owner's own item card (pif or wish), the
   // like/interest CTAs become entry points to the corresponding user list

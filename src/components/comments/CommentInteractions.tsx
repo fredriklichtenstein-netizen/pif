@@ -7,6 +7,8 @@ interface CommentInteractionsProps {
   isLiked: boolean;
   onLike: () => void;
   onReply: () => void;
+  /** Closed post: show the like count only, no like/reply buttons. */
+  readOnly?: boolean;
 }
 
 export function CommentInteractions({
@@ -14,8 +16,18 @@ export function CommentInteractions({
   isLiked,
   onLike,
   onReply,
+  readOnly = false,
 }: CommentInteractionsProps) {
   const { t } = useTranslation();
+
+  if (readOnly) {
+    return likes > 0 ? (
+      <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
+        <ThumbsUp size={14} />
+        <span>{likes}</span>
+      </div>
+    ) : null;
+  }
 
   return (
     <div className="flex items-center gap-4 mt-2">

@@ -545,6 +545,7 @@
     "follow": "Follow",
     "following_label": "Following",
     "write_comment": "Write a comment...",
+    "comments_closed": "This post is closed – it can no longer be commented on.",
     "no_comments_yet": "No comments yet. Be the first to comment!",
     "fallback_comments_notice": "Showing community conversation. You can still join the discussion!",
     "rate_receiver_title": "Did {{name}} receive your pif?",

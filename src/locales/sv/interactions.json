@@ -545,6 +545,7 @@
     "follow": "Följ",
     "following_label": "Följer",
     "write_comment": "Skriv en kommentar...",
+    "comments_closed": "Inlägget är avslutat – det går inte längre att kommentera.",
     "no_comments_yet": "Inga kommentarer än. Bli den första att kommentera!",
     "fallback_comments_notice": "Visar communitykonversation. Du kan fortfarande delta i diskussionen!",
     "rate_receiver_title": "Fick {{name}} din pif?",

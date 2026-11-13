@@ -581,12 +581,14 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       </div>
 
       {/* Completion banner — only while the pif/wish itself is still
-          unresolved. Gated on pifStatus rather than isClosed so that a
+          unresolved AND this conversation is open. pifStatus keeps a
           REOPENED conversation (pif already completed, only the thread was
-          reopened) shows just the message input, not a redundant "already
-          completed" celebration banner re-appearing above it. */}
+          reopened) to just the message input; isClosed hides it after the
+          piffer deselects the receiver (withdraw_pif closes the chat but
+          leaves the pif 'active'), where "mark as handed over" made no sense. */}
       {completion.pifStatus !== "completed" &&
         completion.pifStatus !== "archived" &&
+        !isClosed &&
         !completion.loading &&
         item && (
         <PifCompletionBanner

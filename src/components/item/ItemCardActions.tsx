@@ -130,6 +130,7 @@ export function ItemCardActions({
         isLoading={commentsLoading}
         error={commentsError}
         isVisible={showComments}
+        readOnly={!!interestClosed}
       />
     </div>
   );
