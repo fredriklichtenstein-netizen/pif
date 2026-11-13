@@ -93,6 +93,8 @@ export function ItemCardWrapperContent({
           isOwner={isOwner}
           isBookmarked={isBookmarked}
           isArchived={isItemArchived}
+          isCompleted={pif_status === "completed"}
+          itemType={item_type}
           staleReminderStage={stale_reminder_stage}
           handleBookmark={handleBookmark}
           handleShare={handleShare}

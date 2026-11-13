@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Comment } from "@/types/comment";
+import { useCommentsReadOnly } from "./CommentsReadOnly";
 
 interface CommentsPanelProps {
   user?: {
@@ -54,18 +55,22 @@ export function CommentsPanel({
 }: CommentsPanelProps) {
   const isReallyLoading = isLoading && !isInitialized;
   const { t } = useTranslation();
+  const readOnly = useCommentsReadOnly();
   
   useEffect(() => {
     if (currentUser) {
     }
   }, [comments, currentUser]);
   
-  const renderCommentInput = () => (
-    <CommentInput 
-      onSubmit={onAddComment} 
-      placeholder={t('interactions.write_comment')}
-    />
-  );
+  const renderCommentInput = () =>
+    readOnly ? (
+      <p className="text-sm text-muted-foreground">{t('interactions.comments_closed')}</p>
+    ) : (
+      <CommentInput
+        onSubmit={onAddComment}
+        placeholder={t('interactions.write_comment')}
+      />
+    );
 
   const renderContent = () => {
     if (isReallyLoading && !comments.length) {

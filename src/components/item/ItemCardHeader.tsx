@@ -9,7 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
-import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil, RotateCcw } from "lucide-react";
+import { MarkGivenAwayDialog } from "./MarkGivenAwayDialog";
+import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil, RotateCcw, CheckCircle2 } from "lucide-react";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,9 @@ interface ItemCardHeaderProps {
   isOwner: boolean;
   isBookmarked: boolean;
   isArchived?: boolean;
+  /** Completed (handed over, or given away outside the app). */
+  isCompleted?: boolean;
+  itemType?: "offer" | "request";
   /** Set once the stale-item reminder cron has sent at least one nudge; shows the "keep open" action. */
   staleReminderStage?: number;
   handleBookmark?: () => void;
@@ -60,6 +64,8 @@ export function ItemCardHeader({
   isOwner,
   isBookmarked,
   isArchived = false,
+  isCompleted = false,
+  itemType,
   staleReminderStage = 0,
   handleBookmark,
   handleShare,
@@ -73,6 +79,8 @@ export function ItemCardHeader({
   const { t } = useTranslation();
   const { session } = useGlobalAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showGivenAwayDialog, setShowGivenAwayDialog] = useState(false);
+  const isWish = itemType === "request";
   const [isRestoring, setIsRestoring] = useState(false);
   const [isKeepingOpen, setIsKeepingOpen] = useState(false);
   const { handleShare: shareItem } = useItemSharing(String(itemId));
@@ -296,6 +304,12 @@ export function ItemCardHeader({
                   </>
                 ) : (
                   <>
+                    {!isCompleted && (
+                      <DropdownMenuItem onClick={() => setShowGivenAwayDialog(true)} className="text-primary">
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        <span>{t(isWish ? 'ui.mark_given_away_wish' : 'ui.mark_given_away_pif')}</span>
+                      </DropdownMenuItem>
+                    )}
                     {staleReminderStage > 0 && (
                       <DropdownMenuItem
                         onClick={handleKeepOpenClick}
@@ -342,6 +356,15 @@ export function ItemCardHeader({
         onSuccess={onDeleteSuccess}
         isArchived={isArchived}
         archiveOnly={!isArchived}
+      />
+
+      <MarkGivenAwayDialog
+        itemId={itemId}
+        itemTitle={itemTitle}
+        isWish={isWish}
+        isOpen={showGivenAwayDialog}
+        onClose={() => setShowGivenAwayDialog(false)}
+        onSuccess={onDeleteSuccess}
       />
     </>
   );

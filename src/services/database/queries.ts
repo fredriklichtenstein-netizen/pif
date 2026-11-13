@@ -58,7 +58,12 @@ export class OptimizedQueries {
         if (options.itemId != null) {
           query = query.eq('id', options.itemId);
         } else if (options.includeInactive) {
-          query = query.order('created_at', { ascending: false });
+          // Active first, then archived/completed (items.is_inactive is a
+          // generated column), newest first within each -- done here, not
+          // client-side, so every page keeps the order.
+          query = query
+            .order('is_inactive', { ascending: true })
+            .order('created_at', { ascending: false });
         } else {
           query = query
             .or('pif_status.is.null,and(pif_status.neq.archived,pif_status.neq.completed)')
