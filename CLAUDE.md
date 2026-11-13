@@ -57,6 +57,12 @@ always use `heurpehcwbhohwklqnir` and verify against `src/integrations/supabase/
 - `storage.objects` cannot be deleted via direct SQL — blocked by a `protect_delete()` trigger.
   Deletion must go through the Storage API.
 - The `items` table uses `pif_status`, not `status`.
+- **`items` is readable column by column**: `anon` and `authenticated` hold a column-level SELECT
+  allowlist, not a table grant (see `src/services/items/publicColumns.ts`). **A new column on
+  `items` is unreadable until the migration adds `GRANT SELECT (<col>) ON public.items TO anon,
+  authenticated`.** If a query selects, filters or orders by it before then, it fails with 42501
+  and the feed breaks. `is_inactive` (generated: archived or completed) is what the feed orders
+  by: active first.
 - The `conversations` table has no participant columns — joined via `conversation_participants`.
 - PostgREST cannot auto-embed across the `auth.users` boundary — fetch `public.profiles` separately
   using `user_id`.

@@ -48,6 +48,8 @@ export const ITEM_PUBLIC_COLUMNS = [
   "stale_reminder_clock_start",
   "coordinates_public",
   "location_public",
+  "is_inactive",
+  "completed_outside_app",
 ].join(", ");
 
 /**
