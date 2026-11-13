@@ -23,6 +23,10 @@ ALTER TABLE public.items
 
 CREATE INDEX IF NOT EXISTS items_feed_order_idx ON public.items (is_inactive, created_at DESC);
 
+-- items is readable column by column (see src/services/items/publicColumns.ts);
+-- without this the feed's ORDER BY is_inactive fails with 42501.
+GRANT SELECT (is_inactive, completed_outside_app) ON public.items TO anon, authenticated;
+
 -- 2. Closed posts take no new likes/comments/comment likes.
 CREATE OR REPLACE FUNCTION public.item_is_open(p_item_id bigint)
 RETURNS boolean
