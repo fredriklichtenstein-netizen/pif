@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMessages } from "@/hooks/useMessages";
 import { MessageItem } from "./MessageItem";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +47,7 @@ import { usePifCompletion } from "@/hooks/usePifCompletion";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/utils/safeStorage";
+import { feedPostPath } from "@/lib/feedLinks";
 
 const REOPEN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -482,10 +483,32 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           </button>
           <div className="min-w-0 flex-1">
             <h3 className="font-medium truncate">{otherName}</h3>
-            {roleLabel && (
+            {/* "Du tar emot: <titel>" links to the post in the feed. */}
+            {roleLabel && item?.id != null ? (
+              <Link
+                to={feedPostPath(item.id)}
+                className="block text-xs text-primary hover:underline truncate"
+              >
+                {roleLabel}
+              </Link>
+            ) : roleLabel ? (
               <p className="text-xs text-muted-foreground truncate">{roleLabel}</p>
-            )}
+            ) : null}
           </div>
+          {item?.id != null && Array.isArray((item as any).images) && (item as any).images[0] && (
+            <Link
+              to={feedPostPath(item.id)}
+              className="flex-shrink-0"
+              aria-label={t("messages.open_post", { defaultValue: "Visa inlägget" })}
+            >
+              <img
+                src={(item as any).images[0]}
+                alt=""
+                className="h-10 w-10 rounded-md object-cover border"
+                loading="lazy"
+              />
+            </Link>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

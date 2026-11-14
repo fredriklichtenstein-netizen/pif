@@ -646,7 +646,8 @@
     "unknown_user": "Neighbor",
     "online": "Online",
     "last_seen": "Last seen {{time}}",
-    "completed_badge": "Completed"
+    "completed_badge": "Completed",
+    "open_post": "View the post"
   },
   "map": {
     "show_in_feed": "Show in feed",
