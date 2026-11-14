@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useLiveLocationStore } from "@/stores/liveLocationStore";
+import { clearLiveLocationCache, useLiveLocationStore } from "@/stores/liveLocationStore";
 import { useLocationStorage } from "@/components/map/location/useLocationStorage";
 import { useGeolocationPermission } from "@/hooks/useGeolocationPermission";
 
@@ -69,6 +69,7 @@ export function LocationAccessSettings() {
     // otherwise, when "On" was showing only because of an in-memory fix
     // rather than a granted permission, this button appeared to do nothing.
     useLiveLocationStore.setState({ location: null, fetchedAt: null });
+    clearLiveLocationCache();
     // With a granted permission the pill stays "På", so say what happened
     // here rather than in a toast.
     setCleared(true);
