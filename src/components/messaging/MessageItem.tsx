@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { MoreVertical, Flag, Trash2 } from "lucide-react";
 import type { Message, Profile } from "@/types/messaging";
 import { UserAvatar } from "./UserAvatar";
-import { ProfilePopup } from "./ProfilePopup";
+import { useProfileSheetStore } from "@/stores/profileSheetStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +45,7 @@ export function MessageItem({
 }: MessageItemProps) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
-  const [profileOpen, setProfileOpen] = useState(false);
+  const openProfile = useProfileSheetStore((s) => s.open);
   const [reportOpen, setReportOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -139,7 +139,14 @@ export function MessageItem({
       {!isOwnMessage && (
         <button
           type="button"
-          onClick={() => setProfileOpen(true)}
+          onClick={() =>
+            otherUserId &&
+            openProfile({
+              id: otherUserId,
+              name: otherDisplayName,
+              avatar: otherProfile?.avatar_url ?? undefined,
+            })
+          }
           className="flex-shrink-0 mb-5"
           aria-label={otherDisplayName}
         >
@@ -155,16 +162,6 @@ export function MessageItem({
       {isOwnMessage && menu}
       {bubble}
       {!isOwnMessage && menu}
-
-      {!isOwnMessage && (
-        <ProfilePopup
-          open={profileOpen}
-          onOpenChange={setProfileOpen}
-          profile={otherProfile}
-          userId={otherUserId}
-          displayName={otherDisplayName}
-        />
-      )}
 
       {!isOwnMessage && itemId != null && (
         <ReportPostDialog

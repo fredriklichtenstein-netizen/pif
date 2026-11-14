@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
+import { ProfileLink } from "@/components/profile/ProfileLink";
 import { formatDistanceToNow } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
 import { ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import type { Conversation } from "@/types/messaging";
-import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { resolveDisplayName } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
@@ -78,10 +78,11 @@ export function ConversationList({
       >
         <div className="flex items-start gap-3">
           {otherParticipant?.user_id ? (
-            <Link
-              to={`/feed?user=${otherParticipant.user_id}`}
+            <ProfileLink
+              userId={otherParticipant.user_id}
+              name={displayName}
+              avatar={otherParticipant?.profile?.avatar_url ?? undefined}
               className="flex-shrink-0"
-              onClick={(e) => e.stopPropagation()}
             >
               <UserAvatar
                 src={otherParticipant?.profile?.avatar_url}
@@ -89,7 +90,7 @@ export function ConversationList({
                 size={40}
                 className="h-10 w-10"
               />
-            </Link>
+            </ProfileLink>
           ) : (
             <UserAvatar
               src={otherParticipant?.profile?.avatar_url}

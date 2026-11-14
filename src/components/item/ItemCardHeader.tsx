@@ -3,7 +3,7 @@ import { MapPin, MoreVertical } from "lucide-react";
 import { AvatarImage } from "../ui/optimized-image";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../ui/dropdown-menu";
-import { useUserFilterProfileStore } from "@/stores/userFilterProfileStore";
+import { ProfileLink } from "@/components/profile/ProfileLink";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
@@ -195,23 +195,10 @@ export function ItemCardHeader({
               keyboard, an acceptable trade for a secondary affordance
               that was already inside a two-target row before this. */}
           {postedBy.id ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  navigate('/auth', { state: { from: '/feed' } });
-                  return;
-                }
-                useUserFilterProfileStore.getState().setProfile({
-                  id: postedBy.id!,
-                  name: postedBy.name,
-                  avatar: postedBy.avatar,
-                });
-                navigate(`/feed?user=${postedBy.id}`);
-                requestAnimationFrame(() => {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-              }}
+            <ProfileLink
+              userId={postedBy.id}
+              name={postedBy.name}
+              avatar={postedBy.avatar}
               className="flex items-center text-left min-w-0"
             >
               <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
@@ -243,7 +230,7 @@ export function ItemCardHeader({
                   </div>
                 )}
               </div>
-            </button>
+            </ProfileLink>
           ) : (
             <div className="flex items-center min-w-0">
               <div className="h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0">

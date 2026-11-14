@@ -5,9 +5,12 @@ import { fetchUserRatingSummary, type UserRatingSummary } from "@/services/ratin
 interface Props {
   userId: string;
   className?: string;
+  /** Already-fetched summary (e.g. from get_user_public_stats) -- skips the fetch. */
+  summary?: UserRatingSummary | null;
 }
 
-const MIN_RATINGS = 10;
+// Stars only once there are enough ratings to mean something.
+export const MIN_RATINGS = 5;
 
 function PartialStar({ fillPct }: { fillPct: number }) {
   // 5-star scale, supports fractional fill via clip-path inset.
@@ -46,13 +49,15 @@ function PartialStar({ fillPct }: { fillPct: number }) {
   );
 }
 
-export function ProfileRatingDisplay({ userId, className }: Props) {
+export function ProfileRatingDisplay({ userId, className, summary: givenSummary }: Props) {
   const { t } = useTranslation();
-  const [summary, setSummary] = useState<UserRatingSummary | null>(null);
+  const [fetchedSummary, setSummary] = useState<UserRatingSummary | null>(null);
+  const summary = givenSummary !== undefined ? givenSummary : fetchedSummary;
 
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (givenSummary !== undefined) return;
     let cancelled = false;
     setSummary(null);
     setFailed(false);
@@ -69,7 +74,7 @@ export function ProfileRatingDisplay({ userId, className }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, givenSummary]);
 
   if (failed) {
     return (

@@ -1,4 +1,3 @@
-
 {
   "rating_not_enough": "Inte tillräckligt med betyg ännu",
   "rating_reviews_count": "{{count}} recensioner",
@@ -9,7 +8,7 @@
     "interests_in_my_pifs": "Intresse för mina piffar",
     "no_pifs_title": "Inga piffar än",
     "no_pifs_description": "Du har inte piffat något än.",
-    "no_interests_title": "Inga intressen än", 
+    "no_interests_title": "Inga intressen än",
     "no_interests_description": "Du har inte visat intresse för några piffar än.",
     "loading_pifs": "Laddar dina piffar...",
     "loading_interests": "Laddar...",
@@ -20,7 +19,7 @@
     "users_interested": "användare har visat intresse",
     "no_interest_yet": "Ingen mottagare än.",
     "status_pending": "Väntar",
-    "status_selected": "Vald som mottagare", 
+    "status_selected": "Vald som mottagare",
     "status_not_selected": "Inte vald",
     "piffed": "Piffad",
     "edit_profile": "Redigera profil",
@@ -108,6 +107,18 @@
       "location_skip": "Hoppa över",
       "location_already_on": "Platsåtkomst är redan på.",
       "location_denied_hint": "Platsåtkomst är blockerad i webbläsaren. Du kan tillåta den senare via inställningarna och webbläsarens sidinställningar."
-    }
+    },
+    "popup_description": "Profil",
+    "member_since": "Medlem sedan {{date}}",
+    "stat_pifs_given": "piffar givna",
+    "stat_wishes_fulfilled": "önskningar uppfyllda",
+    "stat_active_posts": "aktiva inlägg",
+    "view_all_posts": "Visa alla {{name}} inlägg",
+    "view_all_posts_count": "Visa alla {{name}} inlägg ({{count}})",
+    "rating_not_enough": "Inte tillräckligt med betyg ännu",
+    "bio": "Om mig",
+    "bio_placeholder": "Berätta kort om dig själv – syns för andra inloggade.",
+    "bio_hint": "Syns i din profil för andra som är inloggade. Skriv inte din adress här.",
+    "approximate_location_note": "Ungefärlig plats – exakt adress visas aldrig."
   }
 }

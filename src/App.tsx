@@ -16,6 +16,7 @@ import { SkipToContent } from "@/components/accessibility/SkipToContent";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { ReceiverConfirmationWatcher } from "@/components/profile/completion/ReceiverConfirmationWatcher";
 import { FeedbackTab } from "@/components/feedback/FeedbackTab";
+import { UserProfileSheet } from "@/components/profile/UserProfileSheet";
 import { isAuthInvalidError, isAuthRequestCircuitOpen } from "@/hooks/auth/sessionRecovery";
 import { initializeAuth } from "@/hooks/useGlobalAuth";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
@@ -84,6 +85,7 @@ function App() {
               <ReceiverConfirmationWatcher />
               <AnnouncementModal />
               <FeedbackTab />
+              <UserProfileSheet />
               <Toaster />
               <Sonner />
               <AuthHydrationDebugPanel />

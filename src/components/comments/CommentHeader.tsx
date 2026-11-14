@@ -1,7 +1,7 @@
 
+import { ProfileLink } from "@/components/profile/ProfileLink";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { formatRelativeTime } from "@/utils/formatDate";
-import { Link } from "react-router-dom";
 
 interface CommentHeaderProps {
   author: {
@@ -30,9 +30,9 @@ export function CommentHeader({ author, createdAt }: CommentHeaderProps) {
   return (
     <div className="flex items-center gap-2 min-w-0">
       {author.id ? (
-        <Link to={`/feed?user=${author.id}`} className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity">
+        <ProfileLink userId={author.id} name={author.name} avatar={author.avatar} className="flex items-center gap-2 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity">
           {inner}
-        </Link>
+        </ProfileLink>
       ) : (
         <div className="flex items-center gap-2 min-w-0 flex-1">{inner}</div>
       )}

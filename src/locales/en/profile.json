@@ -1,4 +1,3 @@
-
 {
   "rating_not_enough": "Not enough ratings yet",
   "rating_reviews_count": "{{count}} reviews",
@@ -108,6 +107,18 @@
       "location_skip": "Skip",
       "location_already_on": "Location access is already on.",
       "location_denied_hint": "Location access is blocked in your browser. You can allow it later via settings and your browser's site permissions."
-    }
+    },
+    "popup_description": "Profile",
+    "member_since": "Member since {{date}}",
+    "stat_pifs_given": "pifs given",
+    "stat_wishes_fulfilled": "wishes fulfilled",
+    "stat_active_posts": "active posts",
+    "view_all_posts": "See all {{name}} posts",
+    "view_all_posts_count": "See all {{name}} posts ({{count}})",
+    "rating_not_enough": "Not enough ratings yet",
+    "bio": "About me",
+    "bio_placeholder": "Tell others a little about yourself – visible to signed-in users.",
+    "bio_hint": "Shown on your profile to other signed-in users. Don't write your address here.",
+    "approximate_location_note": "Approximate location – the exact address is never shown."
   }
 }

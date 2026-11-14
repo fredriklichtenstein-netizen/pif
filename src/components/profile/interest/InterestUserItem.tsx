@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { ProfileLink } from "@/components/profile/ProfileLink";
 import { format } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
@@ -35,11 +35,11 @@ export function InterestUserItem({ user, isOwner, onSelect }: InterestUserItemPr
 
   return (
     <div className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded-md transition-all">
-      <Link
-        to={`/feed?user=${userProfileId}`}
-        className="flex items-center gap-2 hover:underline"
-        target="_blank"
-        rel="noopener noreferrer"
+      <ProfileLink
+        userId={userProfileId}
+        name={[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
+        avatar={profile.avatar_url}
+        className="flex items-center gap-2 text-left hover:underline"
       >
         <AvatarImage
           src={profile.avatar_url}
@@ -54,7 +54,7 @@ export function InterestUserItem({ user, isOwner, onSelect }: InterestUserItemPr
             {format(new Date(user.created_at), "d MMM HH:mm", { locale })}
           </span>
         </div>
-      </Link>
+      </ProfileLink>
       <div className="ml-auto flex items-center gap-2">
         {user.status === "selected" && (
           <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs whitespace-nowrap">

@@ -1,8 +1,8 @@
 
+import { ProfileLink } from "@/components/profile/ProfileLink";
 import { Button } from "@/components/ui/button";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { useTranslation } from 'react-i18next';
-import { Link } from "react-router-dom";
 import type { User } from "@/hooks/item/useItemInteractions";
 
 interface UserPopoverContentProps {
@@ -64,17 +64,19 @@ export function UserPopoverContent({
       ) : (
         <div className="space-y-2">
           {users.map((user) => (
-            <Link
+            <ProfileLink
               key={user.id}
-              to={`/feed?user=${user.id}`}
-              onClick={() => setShowPopup(false)}
-              className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors min-w-0"
+              userId={user.id}
+              name={user.name}
+              avatar={user.avatar}
+              onOpen={() => setShowPopup(false)}
+              className="flex w-full items-center gap-2 p-2 text-left rounded hover:bg-gray-50 transition-colors min-w-0"
             >
               <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
                 <AvatarImage src={user.avatar} alt={user.name} size={32} className="w-full h-full object-cover" />
               </div>
               <span className="text-sm font-medium truncate">{user.name}</span>
-            </Link>
+            </ProfileLink>
           ))}
         </div>
       )}
