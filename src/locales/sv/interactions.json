@@ -646,7 +646,8 @@
     "unknown_user": "Granne",
     "online": "Online",
     "last_seen": "Senast aktiv {{time}}",
-    "completed_badge": "Avslutad"
+    "completed_badge": "Avslutad",
+    "open_post": "Visa inlägget"
   },
   "map": {
     "show_in_feed": "Visa i flödet",

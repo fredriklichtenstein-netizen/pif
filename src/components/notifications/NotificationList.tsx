@@ -2,8 +2,8 @@
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, ArrowRight, MailOpen } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MessageSquare, MailOpen } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toFeedLink } from "@/lib/feedLinks";
@@ -21,6 +21,7 @@ function loadStoredFilter(): NotificationFilter {
 
 export function NotificationList() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const {
     notifications,
     isLoading,
@@ -150,6 +151,8 @@ export function NotificationList() {
                       className="font-semibold text-primary hover:underline"
                       target="_blank"
                       rel="noopener noreferrer"
+                      // The row itself opens the post; the name opens their posts.
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {name}
                     </Link>
@@ -211,30 +214,30 @@ export function NotificationList() {
                       ? `/messages?item=${notif.item_id}`
                       : (notif.action_url ?? '/messages');
                   ctaLabel = t('interactions.start_conversation');
-                  console.debug('[notif-render]', {
-                    notifId: notif.id,
-                    type: notif.type,
-                    conversation_id: notif.conversation_id,
-                    item_id: notif.item_id,
-                    action_url: notif.action_url,
-                    computed_ctaUrl: ctaUrl,
-                    ctaLabel,
-                  });
                 }
 
                 // Post links open the post where it sits in the feed.
                 if (ctaUrl) ctaUrl = toFeedLink(ctaUrl);
 
+                // Tapping a notification marks it read and opens what it is
+                // about (the post, or the conversation). That is the one way
+                // to mark a single notification read; "Markera alla som lästa"
+                // does them all.
+                const openNotification = () => {
+                  if (!notif.is_read) markAsRead(notif.id);
+                  if (ctaUrl) navigate(ctaUrl);
+                };
+
                 return (
                   <div
                     key={notif.id}
-                    role="button"
+                    role={ctaUrl ? "link" : "button"}
                     tabIndex={0}
-                    onClick={() => { if (!notif.is_read) markAsRead(notif.id); }}
+                    onClick={openNotification}
                     onKeyDown={(e) => {
-                      if ((e.key === "Enter" || e.key === " ") && !notif.is_read) {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        markAsRead(notif.id);
+                        openNotification();
                       }
                     }}
                     className={`py-3 px-4 flex items-start cursor-pointer transition-colors ${notif.is_read ? "bg-background hover:bg-muted/40" : "bg-primary/5 hover:bg-primary/10"}`}
@@ -245,29 +248,14 @@ export function NotificationList() {
                         <div className="text-sm text-muted-foreground mt-0.5">{displayContent}</div>
                       )}
                       <div className="text-xs text-muted-foreground mt-1">{new Date(notif.created_at).toLocaleString()}</div>
+                      {/* What tapping the row does, for the types where it
+                          isn't simply "open the post". */}
                       {ctaUrl && ctaLabel && (
-                        <Link
-                          to={ctaUrl}
-                          onClick={() => {
-                            console.debug('[notif-cta] click →', ctaUrl);
-                            markAsRead(notif.id);
-                          }}
-                          className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline"
-                        >
-                          {ctaLabel}
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
+                        <div className="mt-2 text-sm font-medium text-primary">{ctaLabel}</div>
                       )}
                     </div>
 
                     <div className="flex items-center space-x-1">
-                      {!ctaLabel && ctaUrl && (
-                        <Link to={ctaUrl} onClick={() => markAsRead(notif.id)} className="ml-2">
-                          <Button size="icon" variant="ghost" title={t('interactions.view_details')}>
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      )}
 
                       {notif.is_read ? (
                         <Button
