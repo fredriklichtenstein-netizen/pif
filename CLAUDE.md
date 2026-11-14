@@ -4,6 +4,14 @@ Swedish-language neighborhood item-sharing PWA. Live at pif.today / app.pif.comm
 MVP just launched with real users — treat all changes with production-appropriate caution.
 No experimental changes to auth, payments-adjacent flows, or data deletion without explicit confirmation.
 
+**Hard rule: never show or expose anyone's exact address to other users.** Profiles and posts
+only ever show the area (`profiles.city`, `items.location_public`) and the offset point
+(`coordinates_public`, 150–500 m from the real spot). Never `location`, `location_json`,
+`coordinates_json`, `pickup_address`, door code, floor, phone or pickup instructions. The database
+enforces it with column-level grants; don't grant those columns, and don't return them from a
+SECURITY DEFINER function. The only exception is the selected receiver's own pickup details via
+`get_item_private_location`.
+
 ## Stack
 
 - Frontend: React + TypeScript, Vite. Both environments deploy via GitHub Actions → Cloudflare

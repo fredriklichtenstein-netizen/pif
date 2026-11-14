@@ -1,6 +1,6 @@
 
+import { ProfileLink } from "@/components/profile/ProfileLink";
 import { AvatarImage } from "@/components/ui/optimized-image";
-import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
@@ -56,10 +56,12 @@ export function InteractionsList({
   return (
     <div className="max-h-[300px] overflow-y-auto space-y-2 p-1">
       {users.map((user) => (
-        <Link
+        <ProfileLink
           key={user.id}
-          to={`/feed?user=${user.id}`}
-          className="flex items-center gap-3 p-2 hover:bg-accent rounded-md transition-colors min-w-0"
+          userId={user.id}
+          name={user.name}
+          avatar={user.avatar}
+          className="flex w-full items-center gap-3 p-2 text-left hover:bg-accent rounded-md transition-colors min-w-0"
         >
           <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
             <AvatarImage src={user.avatar} alt={user.name} size={32} className="w-full h-full object-cover" />
@@ -67,7 +69,7 @@ export function InteractionsList({
           <div className="min-w-0">
             <p className="text-sm font-medium leading-none truncate">{user.name}</p>
           </div>
-        </Link>
+        </ProfileLink>
       ))}
     </div>
   );

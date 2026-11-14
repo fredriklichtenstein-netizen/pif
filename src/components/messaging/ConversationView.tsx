@@ -9,7 +9,7 @@ import { EnhancedMessageInput } from "./EnhancedMessageInput";
 import { useTranslation } from "react-i18next";
 import { resolveDisplayName } from "@/utils/displayName";
 import { UserAvatar } from "./UserAvatar";
-import { ProfilePopup } from "./ProfilePopup";
+import { useProfileSheetStore } from "@/stores/profileSheetStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MoreVertical, Flag, RotateCcw, Archive, UserMinus } from "lucide-react";
 import {
@@ -66,7 +66,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const hasInitiallyScrolledRef = useRef(false);
   const [newMessage, setNewMessage] = useState(() => safeGetItem(messageDraftKey(conversationId)) ?? "");
-  const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
+  const openProfile = useProfileSheetStore((s) => s.open);
   const [ratingOpen, setRatingOpen] = useState(false);
   const [hasRated, setHasRated] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -470,7 +470,14 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           )}
           <button
             type="button"
-            onClick={() => setHeaderProfileOpen(true)}
+            onClick={() =>
+              otherParticipant?.user_id &&
+              openProfile({
+                id: otherParticipant.user_id,
+                name: otherName,
+                avatar: otherParticipant.profile?.avatar_url ?? undefined,
+              })
+            }
             className="flex-shrink-0"
             aria-label={otherName}
           >
@@ -556,14 +563,6 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           </DropdownMenu>
         </div>
       </div>
-
-      <ProfilePopup
-        open={headerProfileOpen}
-        onOpenChange={setHeaderProfileOpen}
-        profile={otherParticipant?.profile}
-        userId={otherParticipant?.user_id}
-        displayName={otherName}
-      />
 
       {/* Scrollable message list */}
       <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">

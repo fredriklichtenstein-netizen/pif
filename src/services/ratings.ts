@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_MODE } from "@/config/demoMode";
 import { useDemoRatingsStore, type RatingOutcome } from "@/stores/demoRatingsStore";
+import { fetchUserPublicStats } from "@/services/profile/publicStats";
 
 export type { RatingOutcome };
 
@@ -75,9 +76,9 @@ export interface UserRatingSummary {
 }
 
 /**
- * Fetches the aggregate receiver rating for a user: the average of all
- * `receiver_rating` values in the `interests` table where this user was
- * the selected receiver. Always hits the network — not cached client-side.
+ * The aggregate receiver rating for a user: the average of all
+ * `receiver_rating` values where this user was the selected receiver.
+ * Always hits the network — not cached client-side.
  */
 export async function fetchUserRatingSummary(
   userId: string,
@@ -95,20 +96,13 @@ export async function fetchUserRatingSummary(
     return { avg, count };
   }
 
-  const { data, error } = await (supabase.from("interests") as any)
-    .select("receiver_rating")
-    .eq("user_id", userId)
-    .not("receiver_rating", "is", null);
-
-  if (error) {
+  // Via get_user_public_stats(): other users' interests rows (where
+  // receiver_rating lives) aren't readable directly.
+  try {
+    const stats = await fetchUserPublicStats(userId);
+    return { avg: stats.ratingAvg ?? 0, count: stats.ratingCount };
+  } catch (error) {
     console.error("fetchUserRatingSummary failed", error);
     return { avg: 0, count: 0 };
   }
-  const rows = (data ?? []) as Array<{ receiver_rating: number | null }>;
-  const nums = rows
-    .map((r) => Number(r.receiver_rating))
-    .filter((n) => Number.isFinite(n) && n > 0);
-  const count = nums.length;
-  const avg = count > 0 ? nums.reduce((a, b) => a + b, 0) / count : 0;
-  return { avg, count };
 }

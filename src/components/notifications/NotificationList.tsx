@@ -3,7 +3,8 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, MailOpen } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ProfileLink } from "@/components/profile/ProfileLink";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toFeedLink } from "@/lib/feedLinks";
@@ -146,16 +147,14 @@ export function NotificationList() {
                 if (isInterestReceived) {
                   const name = notif.actor_name || t('someone');
                   const namePart = notif.actor_id ? (
-                    <Link
-                      to={`/feed?user=${notif.actor_id}`}
+                    // The row itself opens the post; the name opens their profile.
+                    <ProfileLink
+                      userId={notif.actor_id}
+                      name={name}
                       className="font-semibold text-primary hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      // The row itself opens the post; the name opens their posts.
-                      onClick={(e) => e.stopPropagation()}
                     >
                       {name}
-                    </Link>
+                    </ProfileLink>
                   ) : (
                     <span className="font-semibold">{name}</span>
                   );

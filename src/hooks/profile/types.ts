@@ -13,4 +13,5 @@ export interface ProfileFormData {
   pickupDoorCode?: string;
   pickupFloor?: string;
   pickupInstructions?: string;
+  bio?: string;
 }

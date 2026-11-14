@@ -84,6 +84,13 @@ function ProfileEdit() {
         if (data.avatar_url) {
           setAvatarUrl(data.avatar_url);
         }
+        // bio isn't in get_my_profile(); it's readable by signed-in users.
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: bioRow } = await (supabase.from("profiles") as any)
+          .select("bio")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (bioRow?.bio) setFormData((prev) => ({ ...prev, bio: bioRow.bio }));
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -144,6 +151,7 @@ function ProfileEdit() {
   pickup_door_code: formData.pickupDoorCode || null,
   pickup_floor: Number.isFinite(floorParsed as number) ? floorParsed : null,
   pickup_instructions: formData.pickupInstructions || null,
+  bio: formData.bio?.trim() ? formData.bio.trim() : null,
 };
 
 // Only update location if geocoding succeeded

@@ -6,6 +6,9 @@ import { NameFields } from "@/components/forms/fields/NameFields";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "react-i18next";
 import { PickupPreferencesFields } from "./PickupPreferencesFields";
+import { Textarea } from "@/components/ui/textarea";
+
+export const BIO_MAX_LENGTH = 300;
 
 interface ProfileFormData {
   firstName: string;
@@ -20,6 +23,7 @@ interface ProfileFormData {
   pickupDoorCode?: string;
   pickupFloor?: string;
   pickupInstructions?: string;
+  bio?: string;
 }
 
 interface ProfileFormProps {
@@ -47,6 +51,22 @@ export function ProfileForm({ formData, onChange }: ProfileFormProps) {
               onFirstNameChange={(firstName) => handleChange({ firstName })}
               onLastNameChange={(lastName) => handleChange({ lastName })}
             />
+
+            <div className="space-y-2">
+              <Label htmlFor="profile-bio">{t('profile.bio')}</Label>
+              <Textarea
+                id="profile-bio"
+                value={formData.bio ?? ""}
+                onChange={(e) => handleChange({ bio: e.target.value.slice(0, BIO_MAX_LENGTH) })}
+                placeholder={t('profile.bio_placeholder')}
+                maxLength={BIO_MAX_LENGTH}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground flex justify-between gap-2">
+                <span>{t('profile.bio_hint')}</span>
+                <span>{(formData.bio ?? "").length}/{BIO_MAX_LENGTH}</span>
+              </p>
+            </div>
 
             <div className="space-y-2">
               <Label>{t('profile.mobile_phone')}</Label>

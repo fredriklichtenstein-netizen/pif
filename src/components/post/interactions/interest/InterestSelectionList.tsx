@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { ProfileLink } from "@/components/profile/ProfileLink";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
 import { UserMinus, MessageCircle, Sparkles, CheckCircle2 } from "lucide-react";
@@ -781,11 +782,11 @@ export function InterestSelectionList({
               className="flex flex-col gap-1 p-2 rounded hover:bg-muted/50"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  to={`/feed?user=${r.user_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 min-w-0 flex-1 hover:underline"
+                <ProfileLink
+                  userId={r.user_id}
+                  name={displayName(r)}
+                  avatar={r.profile?.avatar_url || undefined}
+                  className="flex items-center gap-2 min-w-0 flex-1 text-left hover:underline"
                 >
                   <AvatarImage
                     src={r.profile?.avatar_url || ""}
@@ -802,7 +803,7 @@ export function InterestSelectionList({
                       })}
                     </span>
                   </div>
-                </Link>
+                </ProfileLink>
 
                 {isOwner && r.status === "pending" && (
                   <TrustIndicator
