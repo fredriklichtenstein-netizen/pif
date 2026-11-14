@@ -33,7 +33,8 @@ interface HandoverInfo {
 const PICKUP_LABEL_KEYS: Record<string, string> = {
   meetup: "post.pickup_meetup",
   leave_at_door: "post.pickup_leave_at_door",
-  flexible: "post.pickup_flexible",
+  // "Flexibelt" alone isn't self-explanatory out of the post form's context.
+  flexible: "interactions.show_interest_pickup_flexible",
 };
 
 /**
