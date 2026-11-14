@@ -117,7 +117,9 @@ export function PrimaryActions({
         <ShareButton
           itemId={itemId}
           onShareClick={handleShareClick}
-          disabled={false}
+          // A closed post's link leads nowhere for anyone outside the app
+          // (logged-out viewers don't see non-active posts).
+          disabled={interestClosed}
         />
       </div>
 
