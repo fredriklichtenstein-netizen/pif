@@ -165,15 +165,15 @@ export function UserProfileSheet() {
               summary={stats ? { avg: stats.ratingAvg ?? 0, count: stats.ratingCount } : null}
             />
 
+            {profile?.bio && (
+              <p className="mt-1 w-full text-sm text-center whitespace-pre-wrap">{profile.bio}</p>
+            )}
+
             <div className="mt-2 flex w-full gap-2">
               {statBox(stats?.pifsGiven, t("profile.stat_pifs_given", "piffar givna"))}
               {statBox(stats?.wishesFulfilled, t("profile.stat_wishes_fulfilled", "önskningar uppfyllda"))}
               {statBox(stats?.activePosts, t("profile.stat_active_posts", "aktiva inlägg"))}
             </div>
-
-            {profile?.bio && (
-              <p className="mt-2 w-full text-sm text-center whitespace-pre-wrap">{profile.bio}</p>
-            )}
 
             <div className="mt-3 flex w-full flex-col gap-2">
               {isOwn ? (
