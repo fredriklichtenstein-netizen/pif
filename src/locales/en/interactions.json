@@ -621,7 +621,17 @@
     "rate_modal_skip": "Skip",
     "rate_modal_submit": "Submit rating",
     "rate_modal_closes_conversation_note": "This marks the exchange as completed and closes the conversation. It can be reopened within 7 days by requesting it from the other party.",
-    "stars_aria": "{{count}} stars"
+    "stars_aria": "{{count}} stars",
+    "show_interest_confirm_title": "Show interest?",
+    "show_interest_distance": "About {{distance}} from you",
+    "show_interest_distance_unknown": "Turn on location to see how far away the pif is.",
+    "show_interest_enable_location": "Turn on location",
+    "show_interest_locating": "Getting location…",
+    "show_interest_can_meet": "Can meet somewhere else",
+    "show_interest_cannot_meet": "Can't meet somewhere else",
+    "show_interest_explainer": "The piffer chooses who gets the pif. If you're chosen, you'll get a notification and arrange pickup in the chat.",
+    "show_interest_confirm": "Show interest",
+    "show_interest_submitting": "Sending…"
   },
   "comments": {
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."
