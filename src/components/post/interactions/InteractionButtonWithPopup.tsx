@@ -8,6 +8,7 @@ import { UserPopoverContent } from "./button/UserPopoverContent";
 import { PaginatedUserList } from "./button/PaginatedUserList";
 import { InterestSelectionList } from "./interest/InterestSelectionList";
 import { GrantWishDialog } from "./GrantWishDialog";
+import { ShowInterestDialog } from "./ShowInterestDialog";
 import { useItemSelectedReceiver } from "@/hooks/item/useItemSelectedReceiver";
 import { useIgnoreToastOutsideClicks } from "@/hooks/useIgnoreToastOutsideClicks";
 import type { User } from "@/hooks/item/useItemInteractions";
@@ -180,6 +181,19 @@ export function InteractionButtonWithPopup({
   const [grantOpen, setGrantOpen] = useState(false);
   const [granting, setGranting] = useState(false);
 
+  // Pifs get a confirmation step too (distance, handover, "the piffer
+  // chooses"). Signed-in only: a visitor's tap goes straight to onClick,
+  // whose auth check sends them to sign in.
+  const usePifInterestFlow =
+    type === "interest" &&
+    itemType !== "request" &&
+    !isOwner &&
+    !isActive &&
+    !perspectiveDisabled &&
+    !!currentUserId;
+  const [interestConfirmOpen, setInterestConfirmOpen] = useState(false);
+  const [confirmingInterest, setConfirmingInterest] = useState(false);
+
   const handleToggleClick = async (e: React.MouseEvent | React.KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -195,6 +209,10 @@ export function InteractionButtonWithPopup({
     if (isToggleDisabled) return;
     if (useWishGrantFlow) {
       setGrantOpen(true);
+      return;
+    }
+    if (usePifInterestFlow) {
+      setInterestConfirmOpen(true);
       return;
     }
     try {
@@ -223,6 +241,23 @@ export function InteractionButtonWithPopup({
       });
     } finally {
       setGranting(false);
+    }
+  };
+
+  const handleInterestConfirm = async () => {
+    setConfirmingInterest(true);
+    try {
+      await onClick();
+      setInterestConfirmOpen(false);
+    } catch (error) {
+      console.error('show interest failed:', error);
+      toast({
+        title: t('common.action_failed'),
+        description: error instanceof Error ? error.message : t('common.unable_to_action'),
+        variant: "destructive",
+      });
+    } finally {
+      setConfirmingInterest(false);
     }
   };
 
@@ -388,6 +423,17 @@ export function InteractionButtonWithPopup({
           onConfirm={handleGrantConfirm}
           wishTitle={itemTitle}
           submitting={granting}
+        />
+      )}
+
+      {(usePifInterestFlow || interestConfirmOpen) && (
+        <ShowInterestDialog
+          open={interestConfirmOpen}
+          onOpenChange={(o) => !confirmingInterest && setInterestConfirmOpen(o)}
+          onConfirm={handleInterestConfirm}
+          itemId={itemId}
+          itemTitle={itemTitle}
+          submitting={confirmingInterest}
         />
       )}
     </div>

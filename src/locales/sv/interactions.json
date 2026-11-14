@@ -621,7 +621,17 @@
     "rate_modal_skip": "Hoppa över",
     "rate_modal_submit": "Skicka betyg",
     "rate_modal_closes_conversation_note": "Detta markerar bytet som genomfört och stänger konversationen. Den kan öppnas igen inom 7 dagar genom en förfrågan till den andra parten.",
-    "stars_aria": "{{count}} stjärnor"
+    "stars_aria": "{{count}} stjärnor",
+    "show_interest_confirm_title": "Visa intresse?",
+    "show_interest_distance": "Ca {{distance}} från dig",
+    "show_interest_distance_unknown": "Slå på plats för att se hur långt bort piffen är.",
+    "show_interest_enable_location": "Slå på plats",
+    "show_interest_locating": "Hämtar plats…",
+    "show_interest_can_meet": "Kan mötas upp på annan plats",
+    "show_interest_cannot_meet": "Kan inte mötas upp på annan plats",
+    "show_interest_explainer": "Piffaren väljer själv vem som får piffen. Blir du vald får du en notis och bestämmer upphämtningen i chatten.",
+    "show_interest_confirm": "Visa intresse",
+    "show_interest_submitting": "Skickar…"
   },
   "comments": {
     "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."

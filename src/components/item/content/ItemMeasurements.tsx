@@ -34,9 +34,11 @@ export function ItemMeasurements({ measurements }: ItemMeasurementsProps) {
       <h4 className="text-sm font-medium text-gray-700 mb-2">{t('common.size_measurements')}</h4>
       <div className="grid grid-cols-2 gap-2">
         {entries.map(([key, value]) => (
-          <div key={key} className="flex justify-between text-sm border-b border-gray-100 pb-1">
-            <span className="text-gray-600">{translateMeasurementKey(key)}:</span>
-            <span className="font-medium">{value}</span>
+          // gap + text-right: a long value ("Anpassad storlek", a typed
+          // custom size) used to run right up against the label.
+          <div key={key} className="flex justify-between gap-3 text-sm border-b border-gray-100 pb-1">
+            <span className="text-gray-600 shrink-0">{translateMeasurementKey(key)}:</span>
+            <span className="font-medium text-right min-w-0 break-words">{value}</span>
           </div>
         ))}
       </div>
