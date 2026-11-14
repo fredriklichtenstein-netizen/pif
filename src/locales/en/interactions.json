@@ -631,7 +631,8 @@
     "show_interest_cannot_meet": "Can't meet somewhere else",
     "show_interest_explainer": "The piffer chooses who gets the pif. If you're chosen, you'll get a notification and arrange pickup in the chat.",
     "show_interest_confirm": "Show interest",
-    "show_interest_submitting": "Sending…"
+    "show_interest_submitting": "Sending…",
+    "show_interest_pickup_flexible": "Flexible handover"
   },
   "comments": {
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."
