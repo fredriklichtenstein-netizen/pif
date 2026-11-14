@@ -42,8 +42,10 @@ export function PostFormNavigation({
         ? t('post.create_request_final')
         : t('post.create_offer_final');
 
+  // Centred, not pushed to the edges: the feedback tab is fixed to the right
+  // edge of the screen and used to cover "Nästa".
   return (
-    <div className="flex justify-between">
+    <div className="flex flex-wrap justify-center gap-3">
       <Button
         type="button"
         variant="outline"
