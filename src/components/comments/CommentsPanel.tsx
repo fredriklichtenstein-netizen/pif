@@ -139,6 +139,10 @@ export function CommentsPanel({
       );
     }
 
+    // A closed post already says it can't be commented on; "be the first
+    // to comment" would contradict it.
+    if (readOnly) return null;
+
     return (
       <div className="py-6 text-center text-muted-foreground">
         <p>{t('interactions.no_comments_yet')}</p>
