@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { safeStringify } from "@/utils/safeStorage";
+import { safeParseJSON, safeRemoveItem, safeStringify } from "@/utils/safeStorage";
 import { LOCATION_KEY } from "@/components/map/location/useLocationStorage";
 
 /**
@@ -32,7 +32,45 @@ import { LOCATION_KEY } from "@/components/map/location/useLocationStorage";
  * store so every card's distance badge picks up the result immediately.
  */
 
-const FRESH_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+/*
+ * The last fix is kept on the device (not just in memory) for FRESH_WINDOW_MS.
+ * An installed iOS web app often doesn't remember the location permission
+ * between launches, so a fresh getCurrentPosition() on every app open showed
+ * the system prompt every time (Trello: "Varje gång jag går in i appen
+ * behöver jag godkänna platsangivelse"). With the cached fix, reopening the
+ * app within the window asks for nothing; distance badges don't need a
+ * minute-fresh position. Explicit "current location" taps (requestLocation)
+ * always fetch.
+ */
+const FRESH_WINDOW_MS = 6 * 60 * 60 * 1000; // 6 hours
+const LIVE_LOCATION_KEY = "pif_live_location";
+
+interface CachedFix {
+  location: [number, number];
+  fetchedAt: number;
+}
+
+const isCachedFix = (v: unknown): v is CachedFix => {
+  const c = v as CachedFix;
+  return (
+    !!c &&
+    Array.isArray(c.location) &&
+    c.location.length === 2 &&
+    typeof c.location[0] === "number" &&
+    typeof c.location[1] === "number" &&
+    typeof c.fetchedAt === "number"
+  );
+};
+
+function loadCachedFix(): CachedFix | null {
+  const cached = safeParseJSON<CachedFix | null>(LIVE_LOCATION_KEY, null, (v): v is CachedFix | null => v === null || isCachedFix(v));
+  return cached && Date.now() - cached.fetchedAt < FRESH_WINDOW_MS ? cached : null;
+}
+
+/** For "Sluta använda min plats" in Settings. */
+export function clearLiveLocationCache() {
+  safeRemoveItem(LIVE_LOCATION_KEY);
+}
 
 interface LiveLocationState {
   location: [number, number] | null;
@@ -69,11 +107,12 @@ function fetchAndStore(
 
   return new Promise((resolve) => {
     const onSuccess = (position: GeolocationPosition) => {
-      set({
+      const fix: CachedFix = {
         location: [position.coords.longitude, position.coords.latitude],
         fetchedAt: Date.now(),
-        status: "idle",
-      });
+      };
+      set({ ...fix, status: "idle" });
+      safeStringify(LIVE_LOCATION_KEY, fix);
       resolve("granted");
     };
 
@@ -103,9 +142,11 @@ function fetchAndStore(
   });
 }
 
+const initialFix = loadCachedFix();
+
 export const useLiveLocationStore = create<LiveLocationState>((set, get) => ({
-  location: null,
-  fetchedAt: null,
+  location: initialFix?.location ?? null,
+  fetchedAt: initialFix?.fetchedAt ?? null,
   status: "idle",
 
   ensureFreshLocation: async () => {
