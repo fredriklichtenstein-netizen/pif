@@ -200,6 +200,14 @@ function announcementParagraphs(body: string): string {
     .join("");
 }
 
+/** Optional explanatory image under an announcement (feature_announcements
+ *  .image_url_sv / _en). Only https URLs; images are 2x, shown at the
+ *  email's 480px column width. */
+function announcementImage(url: string, alt: string): string {
+  if (!url || !/^https:\/\//.test(url)) return "";
+  return `<img src="${escape(url)}" alt="${escape(alt)}" width="480" style="display: block; width: 100%; max-width: 480px; height: auto; border: 0; border-radius: 12px; margin: 4px 0 8px;" />`;
+}
+
 function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?: string): { subject: string; html: string } | null {
   if (type === "new_message_digest") {
     const otherName = String(data.otherUserName ?? "din granne");
@@ -334,18 +342,19 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
     // Several announcements published together arrive as `sections` and go
     // out as one email; a single one is just `title` + `body`.
     const sections = Array.isArray(data.sections) && data.sections.length > 0
-      ? (data.sections as Array<{ title?: unknown; body?: unknown }>).map((s) => ({
+      ? (data.sections as Array<{ title?: unknown; body?: unknown; image?: unknown }>).map((s) => ({
           title: String(s.title ?? ""),
           body: String(s.body ?? ""),
+          image: s.image ? String(s.image) : "",
         }))
-      : [{ title, body: String(data.body ?? "") }];
+      : [{ title, body: String(data.body ?? ""), image: "" }];
     const subject = sections.length > 1
       ? (lang === "en" ? "New in PIF" : "Nytt i PIF")
       : (lang === "en" ? `New in PIF: ${title}` : `Nytt i PIF: ${title}`);
     const bodyHtml = sections
       .map(
         (s, i) =>
-          `<h2 style="font-size: 18px; margin: ${i === 0 ? "0" : "28px"} 0 8px;">${escape(s.title)}</h2>${announcementParagraphs(s.body)}`,
+          `<h2 style="font-size: 18px; margin: ${i === 0 ? "0" : "28px"} 0 8px;">${escape(s.title)}</h2>${announcementParagraphs(s.body)}${announcementImage(s.image, s.title)}`,
       )
       .join("");
     return {
@@ -532,7 +541,7 @@ serve(async (req) => {
       // the batch's first row sends; the others stop here.
       const { data: batch, error: batchErr } = await admin
         .from("feature_announcements")
-        .select("id, title_sv, body_sv, action_url, action_label_sv, title_en, body_en, action_label_en")
+        .select("id, title_sv, body_sv, action_url, action_label_sv, title_en, body_en, action_label_en, image_url_sv, image_url_en")
         .eq("published_at", announcement.published_at)
         .order("id", { ascending: true });
       if (batchErr || !batch || batch.length === 0) {
@@ -557,8 +566,8 @@ serve(async (req) => {
         const isEnglish = (profile as any).language === "en";
         const sections = batch.map((a: any) =>
           isEnglish
-            ? { title: a.title_en || a.title_sv, body: a.body_en || a.body_sv }
-            : { title: a.title_sv, body: a.body_sv },
+            ? { title: a.title_en || a.title_sv, body: a.body_en || a.body_sv, image: a.image_url_en || a.image_url_sv || null }
+            : { title: a.title_sv, body: a.body_sv, image: a.image_url_sv || null },
         );
         const data = {
           lang: isEnglish ? "en" : "sv",
