@@ -338,6 +338,9 @@ It is not a second product — no native-only features or UI.
 - **Status bar:** `capacitor.config.ts` sets `StatusBar.overlaysWebView: false` (white, dark
   text), so the web view starts below the status bar like the installed PWA. Without it the
   page draws under the clock. Don't solve this with CSS padding.
+- **iOS permission texts** live in `ios/App/App/Info.plist` (`NS…UsageDescription`, Swedish /
+  English in one string). Without the location one, `navigator.geolocation` in the app just
+  spins and never asks; without the camera one, opening the camera crashes the app.
 - **Icons and splash** are generated from `assets/` with `bunx @capacitor/assets generate --ios
   --android` (then `git checkout android/app/src/main/AndroidManifest.xml` — the tool reformats
   it). The current source is the 512 px web icon upscaled; replace `assets/icon-only.png` with

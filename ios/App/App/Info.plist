@@ -64,5 +64,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PIF använder din plats för att visa piffar och önskningar nära dig och avståndet till dem. / PIF uses your location to show pifs and wishes near you and how far away they are.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>PIF använder kameran när du tar ett foto till ett inlägg eller din profil. / PIF uses the camera when you take a photo for a post or your profile.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PIF behöver åtkomst till dina bilder när du väljer ett foto till ett inlägg eller din profil. / PIF needs access to your photos when you choose one for a post or your profile.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PIF sparar bara bilder i ditt bibliotek när du själv väljer det. / PIF only saves images to your library when you choose to.</string>
 </dict>
 </plist>
