@@ -4,10 +4,7 @@ import { InteractionButtonWithPopup } from "./InteractionButtonWithPopup";
 import { ShareButton } from "./button/ShareButton";
 import { useTranslation } from 'react-i18next';
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
-import {
-  fetchLikersPage,
-  fetchCommentersPage,
-} from "@/services/interactions/fetchPaginatedUsers";
+import { fetchCommentersPage } from "@/services/interactions/fetchPaginatedUsers";
 
 interface PrimaryActionsProps {
   isLiked: boolean;
@@ -68,10 +65,8 @@ export function PrimaryActions({
     onShare();
   };
 
-  // Per-type paginated fetchers used by the popovers. Each closure
-  // captures the item id so the popover can request page after page
-  // without ever loading the full list upfront.
-  const fetchLikersPageFn = (offset: number) => fetchLikersPage(itemId, offset);
+  // Paginated fetcher for the commenters popover. Saves ("Spara", the
+  // `likes` table) are private: there is no list of who saved a post.
   const fetchCommentersPageFn = (offset: number, seen?: Set<string>) =>
     fetchCommentersPage(itemId, offset, undefined, seen);
 
@@ -83,15 +78,12 @@ export function PrimaryActions({
           isActive={isLiked}
           interestClosed={interestClosed}
           count={likesCount}
-          users={likers}
           onClick={onLikeToggle}
-          onCounterClick={fetchLikers}
-          fetchPage={fetchLikersPageFn}
           isOwner={isOwner}
           labelPassive={t('interactions.like')}
           labelActive={t('interactions.liked')}
-          iconPassive="heart"
-          iconActive="heart"
+          iconPassive="bookmark"
+          iconActive="bookmark"
           itemId={itemId}
         />
       </div>

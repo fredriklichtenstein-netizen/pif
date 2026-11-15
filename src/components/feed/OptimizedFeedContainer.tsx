@@ -303,10 +303,12 @@ function OptimizedFeedBody({
   const selectedItemTypes = useFeedFiltersStore((s) => s.itemTypes);
   const onlyInterested = useFeedFiltersStore((s) => s.onlyInterested);
   const onlyOwnPosts = useFeedFiltersStore((s) => s.onlyOwnPosts);
+  const onlySaved = useFeedFiltersStore((s) => s.onlySaved);
   const setCategories = useFeedFiltersStore((s) => s.setCategories);
   const setItemTypes = useFeedFiltersStore((s) => s.setItemTypes);
   const setOnlyInterested = useFeedFiltersStore((s) => s.setOnlyInterested);
   const setOnlyOwnPosts = useFeedFiltersStore((s) => s.setOnlyOwnPosts);
+  const setOnlySaved = useFeedFiltersStore((s) => s.setOnlySaved);
   const clearAllFilters = useFeedFiltersStore((s) => s.clearAll);
 
   const { ids: myInterestedIds, isLoaded: interestedIdsLoaded } = useMyInterestedIds();
@@ -323,9 +325,11 @@ function OptimizedFeedBody({
         itemTypes: selectedItemTypes,
         onlyInterested: viewingOtherUser ? false : onlyInterested,
         onlyOwnPosts: viewingOtherUser ? false : onlyOwnPosts,
+        onlySaved: viewingOtherUser ? false : onlySaved,
         currentUserId: currentUser?.id,
       },
       myInterestedIds,
+      myLikedIds,
     );
     // Defense-in-depth: enforce the archive boundary at the render layer so
     // no stale cache, prefetch, or realtime race can leak the wrong bucket
@@ -345,8 +349,10 @@ function OptimizedFeedBody({
     selectedItemTypes,
     onlyInterested,
     onlyOwnPosts,
+    onlySaved,
     currentUser?.id,
     myInterestedIds,
+    myLikedIds,
     filteredUserId,
     viewingOtherUser,
     includeInactive,
@@ -415,12 +421,15 @@ function OptimizedFeedBody({
       ? 'mine'
       : onlyInterested
         ? 'interested'
-        : 'all';
+        : onlySaved
+          ? 'saved'
+          : 'all';
   const setPostScope = useCallback((scope: PostScope) => {
     setOnlyOwnPosts(scope === 'mine');
     setOnlyInterested(scope === 'interested');
+    setOnlySaved(scope === 'saved');
     if ((scope === 'drafts') !== showDrafts) onShowDraftsChange(scope === 'drafts');
-  }, [setOnlyOwnPosts, setOnlyInterested, showDrafts, onShowDraftsChange]);
+  }, [setOnlyOwnPosts, setOnlyInterested, setOnlySaved, showDrafts, onShowDraftsChange]);
 
   const resetAll = useCallback(() => {
     handleClearAll();

@@ -12,8 +12,6 @@ import { useInitialCountsStore } from "@/stores/initialCountsStore";
 import { useMyLikedStore } from "@/stores/myLikedStore";
 import { isAuthRequestCircuitOpen, maybeRecoverFromAuthError } from "@/hooks/auth/sessionRecovery";
 import { useAuthStore } from "@/hooks/auth/authStore";
-import { resolveDisplayName } from "@/utils/displayName";
-import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
 
 export const useLikes = (id: string, userId?: string | null) => {
   const demoStore = useDemoInteractionsStore();
@@ -32,7 +30,6 @@ export const useLikes = (id: string, userId?: string | null) => {
   const { checkAuth } = useAuthCheck();
   const { t } = useTranslation();
   const authInitialized = useAuthStore((s) => s.initialized);
-  const authUser = useAuthStore((s) => s.user);
 
   useEffect(() => {
     if (DEMO_MODE) {
@@ -129,60 +126,31 @@ export const useLikes = (id: string, userId?: string | null) => {
     };
   }, [id, userId, authInitialized, myLikedRealtime, setMyLiked]);
 
+  // Saves are private (2026-11-15): RLS only returns the viewer's own
+  // row, so the count comes from the SECURITY DEFINER counts RPC and there
+  // is never a list of who saved a post. `likers` stays empty.
   const fetchLikersInternal = async (numericId: number, isCancelled?: () => boolean): Promise<User[]> => {
     const cancelled = () => isCancelled?.() === true;
     if (!authInitialized) return [];
     if (isAuthRequestCircuitOpen()) return [];
 
     try {
-      const { data: likesData, error: likesError } = await supabase
-        .from('likes')
-        .select('user_id')
-        .eq('item_id', numericId);
-        
+      const { data, error } = await (supabase.rpc as any)('get_bulk_interaction_counts', {
+        p_item_ids: [numericId],
+      });
       if (cancelled()) return [];
-      if (likesError) {
-        if (maybeRecoverFromAuthError(likesError, "useLikes likers fetch")) throw likesError;
-        console.error('Error fetching likes data:', likesError);
+      if (error) {
+        if (maybeRecoverFromAuthError(error, "useLikes save count fetch")) throw error;
+        console.error('Error fetching save count:', error);
         return [];
       }
-      
-      if (!likesData || likesData.length === 0) {
-        if (!cancelled()) { setLikesCount(0); setLikers([]); }
-        return [];
-      }
-      
-      if (!cancelled()) setLikesCount(likesData.length);
-      
-      const userIds = [...new Set(likesData.map(like => like.user_id))];
-      
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select(getProfileEmbedColumns(!!authUser))
-        .in('id', userIds);
-      
-      if (cancelled()) return [];
-      if (profilesError) {
-        if (maybeRecoverFromAuthError(profilesError, "useLikes profiles fetch")) throw profilesError;
-        console.error('Error fetching profiles:', profilesError);
-        return [];
-      }
-      
-      if (!profilesData || profilesData.length === 0) {
-        if (!cancelled()) setLikers([]);
-        return [];
-      }
-      
-      // Dynamic select string (auth-dependent) — the generated types can't
-      // statically parse it, so cast to the profile shape we requested.
-      const users = (profilesData as any[]).map(profile => ({
-        id: profile.id,
-        name: resolveDisplayName(profile as any, 'User'),
-        avatar: profile.avatar_url || undefined,
-      }));
-      
-      if (!cancelled()) setLikers(users);
-      return users;
+      const row = Array.isArray(data) ? data[0] : null;
+      const count = Number(row?.likes_count ?? 0);
+      setLikesCount(count);
+      useInitialCountsStore
+        .getState()
+        .setBulkCounts([{ itemId: id, likesCount: count }]);
+      return [];
     } catch (error) {
       if (maybeRecoverFromAuthError(error, "useLikes fetchLikersInternal")) throw error;
       console.error('Error in fetchLikersInternal:', error);
@@ -244,7 +212,7 @@ export const useLikes = (id: string, userId?: string | null) => {
       
       // Background reconcile — don't block the UI.
       fetchLikersInternal(numericId).catch((err) => {
-        console.error('Background likers refresh failed:', err);
+        console.error('Background save count refresh failed:', err);
       });
     } catch (error) {
       console.error('Error toggling like:', error);

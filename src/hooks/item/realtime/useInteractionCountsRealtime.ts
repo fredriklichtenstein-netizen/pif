@@ -26,20 +26,23 @@ export const useInteractionCountsRealtime = (itemId: string) => {
     const numericId = parseInt(itemId);
     if (isNaN(numericId)) return;
 
+    // Saves are private (RLS: own row only), so a HEAD count on `likes`
+    // would only ever see the viewer's own save. The counts RPC is
+    // SECURITY DEFINER and returns the real total.
     const setLikes = async () => {
       if (isAuthRequestCircuitOpen()) return;
-      const { count, error } = await supabase
-        .from("likes")
-        .select("id", { count: "exact", head: true })
-        .eq("item_id", numericId);
+      const { data, error } = await (supabase.rpc as any)("get_bulk_interaction_counts", {
+        p_item_ids: [numericId],
+      });
       if (error) {
         maybeRecoverFromAuthError(error, "useInteractionCountsRealtime likes");
         return;
       }
-      if (typeof count === "number") {
+      const row = Array.isArray(data) ? data[0] : null;
+      if (row) {
         useInitialCountsStore
           .getState()
-          .setBulkCounts([{ itemId, likesCount: count }]);
+          .setBulkCounts([{ itemId, likesCount: Number(row.likes_count ?? 0) }]);
       }
     };
 

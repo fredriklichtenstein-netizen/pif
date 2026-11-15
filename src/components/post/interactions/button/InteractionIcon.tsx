@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Heart, MessageSquare, Star, Sparkles } from 'lucide-react';
+import { Bookmark, Heart, MessageSquare, Star, Sparkles } from 'lucide-react';
 
-type IconType = "heart" | "message-square" | "star" | "sparkles";
+type IconType = "heart" | "bookmark" | "message-square" | "star" | "sparkles";
 
 interface InteractionIconProps {
   type: IconType;
@@ -21,6 +21,9 @@ export function InteractionIcon({ type, isActive }: InteractionIconProps) {
   switch (type) {
     case "heart":
       IconComponent = Heart;
+      break;
+    case "bookmark":
+      IconComponent = Bookmark;
       break;
     case "message-square":
       IconComponent = MessageSquare;

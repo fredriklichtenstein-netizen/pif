@@ -15,7 +15,7 @@ import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
 type Type = "like" | "comment" | "interest";
-type Icon = "heart" | "message-square" | "star" | "sparkles";
+type Icon = "heart" | "bookmark" | "message-square" | "star" | "sparkles";
 
 interface InteractionButtonWithPopupProps {
   type: Type;
@@ -161,8 +161,10 @@ export function InteractionButtonWithPopup({
   // own wish left its like button fully disabled rather than opening the
   // "who liked" list, unlike every other case here. No reason for that
   // asymmetry, so wishes now get the same like-button treatment as pifs.
-  const ownerViewMode =
-    isOwner && (type === "like" || type === "interest");
+  // Saves ("Spara", type "like") are private since 2026-11-15: the owner
+  // sees how many saved the post but never who, so there is no list to
+  // open -- the owner's save button is a plain, inert counter.
+  const ownerViewMode = isOwner && type === "interest";
 
   const isToggleDisabled =
     !ownerViewMode &&
@@ -199,11 +201,7 @@ export function InteractionButtonWithPopup({
     e.stopPropagation();
     if (ownerViewMode) {
       setShowPopup(true);
-      // Likes use a prefetch; interest popover (InterestSelectionList)
-      // loads its own data, so no prefetch needed there.
-      if (type === "like" && onCounterClick) {
-        void handleCounterClick();
-      }
+      // The interest popover (InterestSelectionList) loads its own data.
       return;
     }
     if (isToggleDisabled) return;
@@ -300,18 +298,23 @@ export function InteractionButtonWithPopup({
   // the label text just never followed. Interest gets its own short noun
   // ("Intresserade") since the visitor-facing strings are either an
   // imperative ("Visa intresse") or, on wishes, "Uppfyll"/"Grant wish" --
-  // neither makes sense read back to the owner. Like reuses the existing
-  // "liked" string ("Gillar") rather than a new one: it already reads
-  // correctly both as "[you] liked" (the visitor active-state meaning) and
-  // as a plain heading over the list of people who liked this.
+  // neither makes sense read back to the owner. Saves (formerly "Gilla")
+  // show the owner a plain noun, "Sparningar (n)": how many saved it, never
+  // who (saves are private since 2026-11-15).
   const ownerLabel = ownerViewMode
-    ? (type === "like" ? t("interactions.liked") : t("interactions.owner_view_interested", "Intresserade"))
-    : null;
+    ? t("interactions.owner_view_interested", "Intresserade")
+    : isOwner && type === "like"
+      ? t("interactions.owner_view_saves", "Sparningar")
+      : null;
   const labelText = ownerLabel ?? perspectiveLabel ?? (isActive ? labelActive : labelPassive);
   const dimClass = perspectiveDim ? "opacity-40" : "";
-  const disabledClass = isToggleDisabled
-    ? "opacity-60 cursor-not-allowed"
-    : "cursor-pointer";
+  // The owner's save counter is read-only, not "unavailable": no dimming.
+  const ownerSaveCounter = isOwner && type === "like";
+  const disabledClass = ownerSaveCounter
+    ? "cursor-default"
+    : isToggleDisabled
+      ? "opacity-60 cursor-not-allowed"
+      : "cursor-pointer";
 
   // Trello B2, round 4: shown for everyone, owner included (2026-09-08
   // follow-up) -- the visual counter display should be consistent
