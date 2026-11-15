@@ -1,4 +1,3 @@
-
 {
   "common": {
     "loading": "Loading...",
@@ -10,7 +9,7 @@
     "hide_password": "Hide password",
     "cancel": "Cancel",
     "save": "Save",
-    "delete": "Delete", 
+    "delete": "Delete",
     "edit": "Edit",
     "ok": "OK",
     "yes": "Yes",
@@ -27,13 +26,13 @@
     "unable_to_action": "Unable to perform action",
     "failed_to_load_users": "Failed to load users",
     "unable_to_load_list": "Unable to load the list of users",
-    "no_likes_yet": "No likes yet",
+    "no_likes_yet": "No saves yet",
     "comment_singular": "comment",
     "comment_plural": "comments",
     "interested_users": "interested receivers",
     "width": "Width",
     "height": "Height",
-    "length": "Length", 
+    "length": "Length",
     "depth": "Depth",
     "weight": "Weight",
     "piffer": "Piffer",
@@ -49,7 +48,6 @@
     "try_again": "Try Again",
     "refresh_page": "Refresh Page",
     "error_details": "Error Details",
-    
     "user": "User",
     "conversation": "Conversation",
     "no_location_available": "No PIF location available.",

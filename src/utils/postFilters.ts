@@ -7,6 +7,8 @@ export interface PostFilterCriteria {
   onlyInterested: boolean;
   hideOwnPosts?: boolean;
   onlyOwnPosts?: boolean;
+  /** Only posts the viewer has saved. Needs `savedIds`; ignored without it. */
+  onlySaved?: boolean;
   currentUserId?: string | null;
 }
 
@@ -19,6 +21,7 @@ export function applyPostFilters(
   posts: Post[],
   filters: PostFilterCriteria,
   interestedIds: Set<string>,
+  savedIds?: Set<string>,
 ): Post[] {
   const {
     categories,
@@ -27,6 +30,7 @@ export function applyPostFilters(
     onlyInterested,
     hideOwnPosts,
     onlyOwnPosts,
+    onlySaved,
     currentUserId,
   } = filters;
   return posts.filter((post) => {
@@ -49,6 +53,9 @@ export function applyPostFilters(
       return false;
     }
     if (onlyInterested && !interestedIds.has(String(post.id))) {
+      return false;
+    }
+    if (onlySaved && savedIds && !savedIds.has(String(post.id))) {
       return false;
     }
     const ownerId = post.user_id ?? post.postedBy?.id;

@@ -1,4 +1,3 @@
-
 {
   "feed": {
     "title": "PIF Community",
@@ -37,6 +36,7 @@
     "scope_all": "Alla grannars",
     "scope_mine": "Mina inlägg",
     "scope_interested": "Visat intresse",
+    "scope_saved": "Sparade",
     "scope_drafts": "Mina utkast",
     "hide_inactive": "Dölj ej aktiva",
     "hide_inactive_hint": "Arkiverade och genomförda inlägg",

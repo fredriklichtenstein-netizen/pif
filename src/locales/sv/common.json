@@ -1,4 +1,3 @@
-
 {
   "common": {
     "loading": "Laddar...",
@@ -27,12 +26,12 @@
     "unable_to_action": "Kunde inte utföra åtgärd",
     "failed_to_load_users": "Misslyckades att ladda användare",
     "unable_to_load_list": "Kunde inte ladda lista över användare",
-    "no_likes_yet": "Inga gillningar än",
+    "no_likes_yet": "Ingen har sparat än",
     "comment_singular": "kommentar",
     "comment_plural": "kommentarer",
     "interested_users": "Intresserade mottagare",
     "width": "Bredd",
-    "height": "Höjd", 
+    "height": "Höjd",
     "length": "Längd",
     "depth": "Djup",
     "weight": "Vikt",
@@ -49,7 +48,6 @@
     "try_again": "Försök igen",
     "refresh_page": "Uppdatera sidan",
     "error_details": "Feldetaljer",
-    
     "user": "Användare",
     "conversation": "Konversation",
     "no_location_available": "Ingen PIF-plats tillgänglig.",

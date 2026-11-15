@@ -45,9 +45,10 @@ interface Props {
 export const DEFAULT_DISTANCE = 3;
 
 /** "Inlägg" in Filtrera. Mutually exclusive in practice: you can't show
- *  interest in your own posts, and drafts are a separate list. */
-export type PostScope = "all" | "mine" | "interested" | "drafts";
-export const POST_SCOPES: PostScope[] = ["all", "mine", "interested", "drafts"];
+ *  interest in your own posts, and drafts are a separate list. "saved" is
+ *  the posts you've saved ("Spara", the `likes` table). */
+export type PostScope = "all" | "mine" | "interested" | "saved" | "drafts";
+export const POST_SCOPES: PostScope[] = ["all", "mine", "interested", "saved", "drafts"];
 
 export function FeedFiltersPanel({
   posts,
@@ -201,7 +202,7 @@ export function FeedFiltersPanel({
             <section className="space-y-2">
               <h3 className="text-sm font-semibold">{t("feed.filter_scope", "Inlägg")}</h3>
               <div className="grid grid-cols-2 gap-2" role="radiogroup">
-                {POST_SCOPES.map((scope) => (
+                {POST_SCOPES.map((scope, i) => (
                   <button
                     key={scope}
                     type="button"
@@ -209,6 +210,9 @@ export function FeedFiltersPanel({
                     aria-checked={postScope === scope}
                     onClick={() => onPostScopeChange(scope)}
                     className={`min-h-[40px] rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                      // An odd last option fills the row.
+                      POST_SCOPES.length % 2 === 1 && i === POST_SCOPES.length - 1 ? "col-span-2 " : ""
+                    }${
                       postScope === scope
                         ? "border-primary bg-primary text-primary-foreground"
                         : "bg-background hover:bg-accent"

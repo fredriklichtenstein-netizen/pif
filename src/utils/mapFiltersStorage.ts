@@ -31,6 +31,8 @@ export interface MapFilterData {
   onlyInterested: boolean;
   hideOwnPosts: boolean;
   onlyOwnPosts: boolean;
+  /** Feed only ("Inlägg: Sparade"); the map ignores it. */
+  onlySaved: boolean;
 }
 
 interface VersionedFilterPayload {
@@ -49,6 +51,7 @@ const EMPTY: MapFilterData = {
   onlyInterested: false,
   hideOwnPosts: false,
   onlyOwnPosts: false,
+  onlySaved: false,
 };
 
 /**
@@ -75,6 +78,7 @@ const sanitiseData = (raw: any): MapFilterData => ({
   onlyInterested: typeof raw?.onlyInterested === "boolean" ? raw.onlyInterested : false,
   hideOwnPosts: typeof raw?.hideOwnPosts === "boolean" ? raw.hideOwnPosts : false,
   onlyOwnPosts: typeof raw?.onlyOwnPosts === "boolean" ? raw.onlyOwnPosts : false,
+  onlySaved: typeof raw?.onlySaved === "boolean" ? raw.onlySaved : false,
 });
 
 const readRaw = (): { version: number; data: MapFilterData } | null => {
@@ -117,6 +121,7 @@ const dropUnknown = (data: MapFilterData, allowed: AllowedValues): MapFilterData
   onlyInterested: data.onlyInterested,
   hideOwnPosts: data.hideOwnPosts,
   onlyOwnPosts: data.onlyOwnPosts,
+  onlySaved: data.onlySaved,
 });
 
 /**
