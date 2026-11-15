@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { appOrigin } from "@/lib/appOrigin";
 
 export function useSignUp() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export function useSignUp() {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin + '/email-confirmation',
+          emailRedirectTo: appOrigin() + '/email-confirmation',
         },
       });
 

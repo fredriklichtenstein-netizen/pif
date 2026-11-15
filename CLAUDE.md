@@ -316,6 +316,17 @@ It is not a second product — no native-only features or UI.
   from an earlier build; categories Shopping / Social Networking), which we reuse rather than
   create a second app — so it cannot change. Apple team: PIF App AB, organization, Team ID
   `JZS9N2HAC8`, membership renews 2027-09-27.
+- **Versions:** the old apps are iOS 1.1.9 ("Ready for Distribution" in App Store Connect) and
+  Android 1.2.1 (versionCode 37). The new apps start at **2.0.0** on both; Android versionCode
+  starts at 38 and only ever goes up.
+- **Build for the native shells with `scripts/native-build.sh staging|production`** (build +
+  database guard + `cap sync`). Use `staging` for all testing.
+- **Links that leave the device use `appOrigin()`** (`src/lib/appOrigin.ts`): page origin on the
+  web, `pif.today` / `staging.pif.today` in a native build. Used by sign-up and password reset.
+- **Icons and splash** are generated from `assets/` with `bunx @capacitor/assets generate --ios
+  --android` (then `git checkout android/app/src/main/AndroidManifest.xml` — the tool reformats
+  it). The current source is the 512 px web icon upscaled; replace `assets/icon-only.png` with
+  real 1024 px artwork before store submission.
 - **Bundled, never a remote URL.** `capacitor.config.ts` must not get a `server.url` (offline
   failure, Apple 4.2). Consequence: inside the app the origin is `capacitor://localhost` (iOS) /
   `https://localhost` (Android), not `pif.today`. Anything keyed on origin needs handling: the
@@ -348,12 +359,12 @@ It is not a second product — no native-only features or UI.
 - Capacitor packages are all on v8 (Node 22+). `cap add ios` and `cap add android` both run on
   Linux (iOS uses Swift Package Manager, no CocoaPods), but building, simulators and signing need
   a Mac with Xcode / Android Studio. `ios/` and `android/` are committed; the copied web bundle
-  inside them is gitignored. On the Mac: `bun install && bun run build && bunx cap sync`, then
-  `bunx cap open ios` / `bunx cap open android`. Run `cap sync` after every web build or plugin
-  change. **A plain `bun run build` targets production** — don't sign in with test accounts in a
-  native build until the staging variant (G3.3) exists. Both are portrait-only on phones.
+  inside them is gitignored. On the Mac: `bun install`, `scripts/native-build.sh staging`, then
+  `bunx cap open ios` / `bunx cap open android`. Re-run the script after every web or plugin
+  change. Both are portrait-only on phones.
 - Known gaps before store review: Sign in with Apple (Google sign-in is offered), user blocking
-  (Apple 1.2; none exists), a 1024×1024 opaque app icon (largest in repo is 512).
+  (Apple 1.2; none exists), real 1024 px icon artwork. Decided 2026-11-15: the apps get native
+  Google sign-in plus Sign in with Apple (not built yet).
 
 ## Share links / link previews (`workers/share`)
 

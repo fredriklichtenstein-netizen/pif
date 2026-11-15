@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { withAuthTimeout, AuthTimeoutError } from "@/utils/withAuthTimeout";
+import { appOrigin } from "@/lib/appOrigin";
 
 const AUTH_CALL_TIMEOUT_MS = 15000;
 
@@ -19,7 +20,7 @@ export function usePasswordReset() {
       setError(null);
 
       // Use absolute URL for reset password to ensure correct redirect
-      const siteUrl = window.location.origin;
+      const siteUrl = appOrigin();
       const resetRedirectUrl = new URL("/reset-password", siteUrl).toString();
       const { error } = await withAuthTimeout(
         supabase.auth.resetPasswordForEmail(email, { redirectTo: resetRedirectUrl }),
