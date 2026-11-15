@@ -1,19 +1,21 @@
+import type { CapacitorConfig } from '@capacitor/cli';
 
-import { CapacitorConfig } from '@capacitor/cli';
-
+// The native apps ship the built web app (dist/) inside the binary. There is
+// deliberately no `server.url`: a remote-URL wrapper fails offline and risks
+// App Store rejection (guideline 4.2). See CLAUDE.md, "Native apps".
 const config: CapacitorConfig = {
-  appId: 'app.lovable.afa641b49b2840d19e3f5a968badbb5f',
-  appName: 'pifapp',
+  appId: 'today.pif.app',
+  appName: 'PIF',
   webDir: 'dist',
-  server: {
-    url: 'https://afa641b4-9b28-40d1-9e3f-5a968badbb5f.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
+  backgroundColor: '#ffffff',
   plugins: {
-    Camera: {
-      permissions: true
-    }
-  }
+    SplashScreen: {
+      launchAutoHide: true,
+      launchShowDuration: 600,
+      backgroundColor: '#ffffff',
+      showSpinner: false,
+    },
+  },
 };
 
 export default config;
