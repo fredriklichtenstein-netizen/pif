@@ -341,6 +341,10 @@ It is not a second product — no native-only features or UI.
 - **iOS permission texts** live in `ios/App/App/Info.plist` (`NS…UsageDescription`, Swedish /
   English in one string). Without the location one, `navigator.geolocation` in the app just
   spins and never asks; without the camera one, opening the camera crashes the app.
+- **Location in the apps** goes through `@capacitor/geolocation`: `src/native/geolocationBridge.ts`
+  (installed in `main.tsx`, no-op on the web) replaces `navigator.geolocation.getCurrentPosition`
+  and the geolocation `navigator.permissions.query`, so call sites stay plain browser code.
+  Without it the web view prompts twice (app, then "localhost").
 - **Icons and splash** are generated from `assets/` with `bunx @capacitor/assets generate --ios
   --android` (then `git checkout android/app/src/main/AndroidManifest.xml` — the tool reformats
   it). The current source is the 512 px web icon upscaled; replace `assets/icon-only.png` with
