@@ -355,7 +355,11 @@ It is not a second product — no native-only features or UI.
   **restricted**: Google removed the profile and apps for failed/missed identity verification
   (2024-10-16, and again notified 2026-11-15 "Google couldn't verify your identity" after a
   resubmission). Nothing can be published on Android until that is resolved in the Play Console.
-  Still unknown: whether Play App Signing is on and whether the old upload key exists.
+  **Play App Signing is on** ("Releases signed by Play"): Google holds the app signing key, so a
+  lost upload key is not fatal — "Request reset" on the App signing page registers a new one.
+  App signing key SHA-256 (what `assetlinks.json` needs):
+  `C8:F6:5E:83:82:69:90:05:1A:29:6A:4A:01:07:DF:40:1D:60:53:AE:1F:B9:07:EF:F1:50:43:C8:12:E3:45:A4`.
+  Console path: app → Protected with Play → Play Store protection → Manage Play app signing.
 - Capacitor packages are all on v8 (Node 22+). `cap add ios` and `cap add android` both run on
   Linux (iOS uses Swift Package Manager, no CocoaPods), but building, simulators and signing need
   a Mac with Xcode / Android Studio. `ios/` and `android/` are committed; the copied web bundle
