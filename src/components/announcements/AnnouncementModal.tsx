@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
@@ -18,6 +18,31 @@ import {
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useAnnouncements } from "@/hooks/useAnnouncements";
+
+/** `[text](/path)` in a body line becomes an in-app link (same syntax as
+ *  the announcement email in send-notification-email). App paths only. */
+const LINK = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+
+function renderLinks(line: string, onNavigate: () => void) {
+  const parts: ReactNode[] = [];
+  let last = 0;
+  for (const m of line.matchAll(LINK)) {
+    parts.push(line.slice(last, m.index));
+    parts.push(
+      <Link
+        key={m.index}
+        to={m[2]}
+        onClick={onNavigate}
+        className="font-medium text-primary underline underline-offset-2"
+      >
+        {m[1]}
+      </Link>,
+    );
+    last = m.index! + m[0].length;
+  }
+  parts.push(line.slice(last));
+  return parts;
+}
 
 export function AnnouncementModal() {
   const { t, i18n } = useTranslation();
@@ -71,7 +96,7 @@ export function AnnouncementModal() {
                       .map((line) => line.trim())
                       .filter(Boolean)
                       .map((line, i) => (
-                        <p key={i}>{line}</p>
+                        <p key={i}>{renderLinks(line, dismiss)}</p>
                       ))}
                   </div>
                 </DialogDescription>
