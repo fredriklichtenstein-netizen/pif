@@ -10,6 +10,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { validateAuthForm } from "./FormValidation";
 import { GoogleSignInButton } from "./GoogleSignInButton";
+import { NativeSignInButtons } from "./NativeSignInButtons";
+import { Capacitor } from "@capacitor/core";
 
 interface SignUpFormProps {
   loading: boolean;
@@ -94,7 +96,7 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
         </p>
       </div>
 
-      <GoogleSignInButton personalized={false} />
+      {Capacitor.isNativePlatform() ? <NativeSignInButtons /> : <GoogleSignInButton personalized={false} />}
 
       {displayError && (
         <Alert variant={timeoutWarning ? "default" : "destructive"}>

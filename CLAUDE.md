@@ -341,6 +341,22 @@ It is not a second product — no native-only features or UI.
   (installed in `main.tsx`, no-op on the web) replaces `navigator.geolocation.getCurrentPosition`
   and the geolocation `navigator.permissions.query`, so call sites stay plain browser code.
   Without it the web view prompts twice (app, then "localhost").
+- **Sign-in in the apps** (`src/native/socialLogin.ts`, `NativeSignInButtons`, plugin
+  `@capgo/capacitor-social-login` pinned to an exact version): the forms render native buttons
+  instead of the web Google button when running natively. The system sheet returns an ID token,
+  which goes to `supabase.auth.signInWithIdToken` with a hashed-nonce / raw-nonce pair like the
+  web flow. Apple is offered on iOS only; Google on Android, and on iOS once
+  `GOOGLE_IOS_CLIENT_ID` is set. Facebook/Twitter are compiled out (`capacitor.config.ts`).
+  - Apple: entitlement `ios/App/App/App.entitlements`; Supabase Apple provider enabled with
+    client id `community.pif.pif` (the bundle id; no secret needed for native ID tokens).
+    Staging: done 2026-11-15. Production: not yet.
+  - Google on iOS needs an OAuth client of type "iOS" (bundle id `community.pif.pif`) in Google
+    Cloud project pif-community; its id goes in `GOOGLE_IOS_CLIENT_ID`, its reversed form as a
+    URL scheme in `Info.plist`, and in Supabase's Google "additional client ids".
+  - Still to do before release: privacy policy (sections 1, 3, 6) must name Apple; Apple's
+    private-relay email service must list our sending domain or mail to "Hide My Email"
+    addresses bounces; account deletion should revoke the Apple token.
+- The Xcode project carries `DEVELOPMENT_TEAM = JZS9N2HAC8`, so signing needs no manual step.
 - **Icons and splash** are generated from `assets/` with `bunx @capacitor/assets generate --ios
   --android` (then `git checkout android/app/src/main/AndroidManifest.xml` — the tool reformats
   it). The current source is the 512 px web icon upscaled; replace `assets/icon-only.png` with

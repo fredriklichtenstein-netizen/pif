@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 import { validateAuthForm } from "./FormValidation";
 import { GoogleSignInButton } from "./GoogleSignInButton";
+import { NativeSignInButtons } from "./NativeSignInButtons";
+import { Capacitor } from "@capacitor/core";
 
 interface SignInFormProps {
   loading: boolean;
@@ -113,7 +115,7 @@ export function SignInForm({
         </p>
       </div>
 
-      <GoogleSignInButton />
+      {Capacitor.isNativePlatform() ? <NativeSignInButtons /> : <GoogleSignInButton />}
 
       {displayError && (
         <Alert variant={timeoutWarning ? "default" : "destructive"}>
