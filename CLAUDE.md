@@ -20,7 +20,7 @@ SECURITY DEFINER function. The only exception is the selected receiver's own pic
 - Backend: Supabase, production domains pif.today / app.pif.community
 - Maps: Mapbox GL JS
 - Email: Resend (custom SMTP for Supabase Auth, plus transactional emails via Edge Functions)
-- Mobile: Capacitor is in the project for an eventual native iOS/Android build (not started)
+- Mobile: Capacitor 8 native iOS/Android apps are being built (Trello G3) — see "Native apps".
 - i18n: react-i18next, Swedish + English (`src/locales/{sv,en}/*.json`)
 - Analytics: Cloudflare Web Analytics (cookieless), enabled on the `pif` Pages project only — Pages
   injects the beacon into HTML on deploy, so there's no code for it. The privacy policy
@@ -308,6 +308,43 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
   email first. Importing puts them in the language segments, i.e. in the next broadcast.
 - **Language** is per device. `useLanguageSeed` writes the shown language to `profiles.language`
   each session, so emails match what the user sees.
+
+## Native apps (Capacitor, Trello G3 — decided 2026-11-15)
+
+A shell around the same web bundle. It exists for three things the PWA can't do: push
+notifications, email/share links that open the app on a phone (B13), and a store install path.
+It is not a second product — no native-only features or UI.
+
+- **App ID `today.pif.app`** on both platforms (staging build: `today.pif.app.staging`), display
+  name "PIF". Permanent once published. *Pending 2026-11-15: an older, inactive PIF app exists in
+  a store account; if its record is reused, its bundle ID wins — check before `cap add`.*
+- **Bundled, never a remote URL.** `capacitor.config.ts` must not get a `server.url` (offline
+  failure, Apple 4.2). Consequence: inside the app the origin is `capacitor://localhost` (iOS) /
+  `https://localhost` (Android), not `pif.today`. Anything keyed on origin needs handling: the
+  URL-restricted Mapbox token, Google sign-in's authorized origins (and Google blocks sign-in in
+  embedded web views anyway), and `window.location.origin` in `useSignUp` / `usePasswordReset`
+  (would put a localhost link in emails).
+- **Push is required for the public release**, not for the first TestFlight / Play internal builds.
+- **Store releases only — no live-update service.** Installed apps keep running old web code until
+  the user updates, so:
+  - **DB and edge-function changes are additive first.** Never drop or rename an `items` column,
+    change an RPC signature or change an edge function's request/response shape while a shipped
+    build still uses it. Add the new thing, ship the app, remove the old thing only when old
+    builds are gone.
+  - v1 must ship a minimum-version check (small JSON on `pif.today`) with an "update required"
+    screen — it can't be added to builds already installed.
+- **Link domain: `pif.today` is canonical** for Universal Links / App Links (`site_url` stays
+  `https://pif.today`). `app.pif.community` is a secondary associated domain; the share Worker
+  must then serve the two association files itself instead of redirecting. Staging app:
+  `staging.pif.today`.
+- **Store accounts: organization, as PIF App AB** (needs a D-U-N-S number). Enroll with a
+  `@pif.community` address.
+- Capacitor packages are all on v8 (Node 22+). `cap add ios` and `cap add android` both run on
+  Linux (iOS uses Swift Package Manager, no CocoaPods), but building, simulators and signing need
+  a Mac with Xcode / Android Studio. `ios/` and `android/` are not committed yet (see pending
+  note above).
+- Known gaps before store review: Sign in with Apple (Google sign-in is offered), user blocking
+  (Apple 1.2; none exists), a 1024×1024 opaque app icon (largest in repo is 512).
 
 ## Share links / link previews (`workers/share`)
 
