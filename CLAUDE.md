@@ -340,11 +340,13 @@ It is not a second product — no native-only features or UI.
   must then serve the two association files itself instead of redirecting. Staging app:
   `staging.pif.today`.
 - **Store accounts: organization, as PIF App AB.** Apple exists (above). Google Play: an
-  organization account ("PIF Community") exists with an old app, but Google removed the profile
-  and apps on 2024-10-16 for missed account verification. Verification was resubmitted
-  2026-11-15 and is being processed; Google says more issues may appear on the Console home page
-  before reinstatement. The old Android app's package name and signing setup are still unknown —
-  the Android project's `community.pif.pif` may have to change to match it.
+  organization account ("PIF Community") exists with the old app "PIF Pay it Forward", package
+  `community.pif.pif` — same ID as iOS, so the Android project matches. It only ever got as far
+  as closed-testing setup (last updated 2024-08-25), never a production release. The account is
+  **restricted**: Google removed the profile and apps for failed/missed identity verification
+  (2024-10-16, and again notified 2026-11-15 "Google couldn't verify your identity" after a
+  resubmission). Nothing can be published on Android until that is resolved in the Play Console.
+  Still unknown: whether Play App Signing is on and whether the old upload key exists.
 - Capacitor packages are all on v8 (Node 22+). `cap add ios` and `cap add android` both run on
   Linux (iOS uses Swift Package Manager, no CocoaPods), but building, simulators and signing need
   a Mac with Xcode / Android Studio. `ios/` and `android/` are committed; the copied web bundle
