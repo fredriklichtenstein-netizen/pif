@@ -341,8 +341,10 @@ It is not a second product — no native-only features or UI.
   `staging.pif.today`.
 - **Store accounts: organization, as PIF App AB.** Apple exists (above). Google Play: an
   organization account ("PIF Community") exists with the old app "PIF Pay it Forward", package
-  `community.pif.pif` — same ID as iOS, so the Android project matches. It only ever got as far
-  as closed-testing setup (last updated 2024-08-25), never a production release. The account is
+  `community.pif.pif` — same ID as iOS, so the Android project matches. It was live in
+  production: v1.2.1, versionCode 37, full rollout 2024-08-25 — so **new Android builds need
+  versionCode ≥ 38 and a versionName above 1.2.1**, and must be signed with a key Play accepts
+  for this package. The account is
   **restricted**: Google removed the profile and apps for failed/missed identity verification
   (2024-10-16, and again notified 2026-11-15 "Google couldn't verify your identity" after a
   resubmission). Nothing can be published on Android until that is resolved in the Play Console.
