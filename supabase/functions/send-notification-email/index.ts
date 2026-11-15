@@ -189,6 +189,22 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string, unsubscri
   `;
 }
 
+/** In-app links inside an announcement body: `[text](/path)`. Only app
+ *  paths (leading "/") -- the popup (AnnouncementModal) renders the same
+ *  syntax as a router Link. */
+const ANNOUNCEMENT_LINK = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+
+function announcementLine(line: string): string {
+  let html = "";
+  let last = 0;
+  for (const m of line.matchAll(ANNOUNCEMENT_LINK)) {
+    html += escape(line.slice(last, m.index));
+    html += `<a href="${escape(APP_URL + m[2])}" style="color: ${BRAND_TURQUOISE}; font-weight: 600;">${escape(m[1])}</a>`;
+    last = m.index! + m[0].length;
+  }
+  return html + escape(line.slice(last));
+}
+
 /** Each line of an announcement body is its own paragraph, with spacing
  *  between them (a bare <br> ran them together). */
 function announcementParagraphs(body: string): string {
@@ -196,7 +212,7 @@ function announcementParagraphs(body: string): string {
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => `<p style="margin: 0 0 12px; line-height: 1.5;">${escape(line)}</p>`)
+    .map((line) => `<p style="margin: 0 0 12px; line-height: 1.5;">${announcementLine(line)}</p>`)
     .join("");
 }
 

@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { usePifAddress } from "@/hooks/usePifAddress";
 function ProfileEdit() {
   const { user, isLoading } = useGlobalAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -40,6 +41,15 @@ function ProfileEdit() {
   
   useEffect(() => {
   }, [avatarUrl, user]);
+
+  // /profile/edit#bio (linked from announcements): bring "Om mig" into view.
+  useEffect(() => {
+    if (profileLoading || location.hash !== "#bio") return;
+    const el = document.getElementById("profile-bio");
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
+  }, [profileLoading, location.hash]);
 
   useEffect(() => {
     if (!isLoading && !user) {
