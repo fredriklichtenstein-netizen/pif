@@ -9,6 +9,13 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   backgroundColor: '#ffffff',
   plugins: {
+    // Keep the web view below the status bar, like the installed PWA: the
+    // page never has to pad for the notch and nothing scrolls under the clock.
+    StatusBar: {
+      overlaysWebView: false,
+      backgroundColor: '#ffffff',
+      style: 'LIGHT',
+    },
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 600,

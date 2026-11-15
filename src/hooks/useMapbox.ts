@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { mapboxTokenInvokeOptions } from "@/lib/mapboxToken";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { DEMO_MODE } from "@/config/demoMode";
@@ -35,7 +36,7 @@ export const useMapbox = () => {
         setIsLoading(false);
         return;
       }
-      const { data, error: functionError } = await supabase.functions.invoke('get-mapbox-token');
+      const { data, error: functionError } = await supabase.functions.invoke('get-mapbox-token', mapboxTokenInvokeOptions());
       
       if (functionError) {
         console.error("🚨 [Mapbox Hook] Edge function error:", functionError);

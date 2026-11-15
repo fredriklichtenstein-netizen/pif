@@ -323,6 +323,13 @@ It is not a second product — no native-only features or UI.
   database guard + `cap sync`). Use `staging` for all testing.
 - **Links that leave the device use `appOrigin()`** (`src/lib/appOrigin.ts`): page origin on the
   web, `pif.today` / `staging.pif.today` in a native build. Used by sign-up and password reset.
+- **Mapbox in the apps:** the web token's URL restriction can't match the app's origin (style
+  load fails; seen in the simulator 2026-11-15). Native callers invoke `get-mapbox-token` with
+  `{ platform: "native" }` (`src/lib/mapboxToken.ts`) and get secret `MAPBOX_TOKEN_NATIVE` — a
+  separate public token with no URL restriction — or the web token if that secret is unset.
+- **Status bar:** `capacitor.config.ts` sets `StatusBar.overlaysWebView: false` (white, dark
+  text), so the web view starts below the status bar like the installed PWA. Without it the
+  page draws under the clock. Don't solve this with CSS padding.
 - **Icons and splash** are generated from `assets/` with `bunx @capacitor/assets generate --ios
   --android` (then `git checkout android/app/src/main/AndroidManifest.xml` — the tool reformats
   it). The current source is the 512 px web icon upscaled; replace `assets/icon-only.png` with
