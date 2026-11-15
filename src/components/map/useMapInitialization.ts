@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { IS_STAGING } from "@/integrations/supabase/client";
 import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { safeParseJSON, safeSetItem } from "@/utils/safeStorage";
@@ -271,8 +272,14 @@ export const useMapInitialization = (mapboxToken: string) => {
       newMap.on('error', (e) => {
         console.error('🚨 [Map Init] Map error event:', e);
         const status = (e.error as { status?: number } | undefined)?.status;
-        const errorMessage =
+        let errorMessage =
           e.error?.message || (status ? `HTTP ${status}` : 'Unknown map error');
+        // Staging only: name the request that failed (token cut to its last
+        // six characters) so a refused map can be diagnosed from a screenshot.
+        const failedUrl = (e.error as { url?: string } | undefined)?.url;
+        if (IS_STAGING && failedUrl) {
+          errorMessage += ` — ${failedUrl.replace(/access_token=[^&]+/, (m) => `access_token=…${m.slice(-6)}`)}`;
+        }
         setError(new Error(`Map error: ${errorMessage}`));
         setIsMapReady(false);
         isInitializing.current = false;
