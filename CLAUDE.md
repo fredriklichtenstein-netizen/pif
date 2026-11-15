@@ -339,8 +339,12 @@ It is not a second product — no native-only features or UI.
   `https://pif.today`). `app.pif.community` is a secondary associated domain; the share Worker
   must then serve the two association files itself instead of redirecting. Staging app:
   `staging.pif.today`.
-- **Store accounts: organization, as PIF App AB.** Apple exists (above). Google Play: not checked
-  yet; enroll with a `@pif.community` address.
+- **Store accounts: organization, as PIF App AB.** Apple exists (above). Google Play: an
+  organization account ("PIF Community") exists with an old app, but Google removed the profile
+  and apps on 2024-10-16 for missed account verification. Verification was resubmitted
+  2026-11-15 and is being processed; Google says more issues may appear on the Console home page
+  before reinstatement. The old Android app's package name and signing setup are still unknown —
+  the Android project's `community.pif.pif` may have to change to match it.
 - Capacitor packages are all on v8 (Node 22+). `cap add ios` and `cap add android` both run on
   Linux (iOS uses Swift Package Manager, no CocoaPods), but building, simulators and signing need
   a Mac with Xcode / Android Studio. `ios/` and `android/` are committed; the copied web bundle
