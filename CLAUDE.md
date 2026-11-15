@@ -331,6 +331,10 @@ It is not a second product — no native-only features or UI.
   load fails; seen in the simulator 2026-11-15). Native callers invoke `get-mapbox-token` with
   `{ platform: "native" }` (`src/lib/mapboxToken.ts`) and get secret `MAPBOX_TOKEN_NATIVE` — a
   separate public token with no URL restriction — or the web token if that secret is unset.
+  Mapbox tokens: "PIF native apps" (URLs: 0) is the app token, "PIF production (restricted)"
+  the web one. **A `curl` of the styles endpoint returns 200 for the restricted token even with
+  the app's Origin/Referer — it proves nothing; only the map rendering in the app does.** On
+  staging builds the map error names the refused request and the token's last six characters.
 - **Status bar:** `capacitor.config.ts` sets `StatusBar.overlaysWebView: false` (white, dark
   text), so the web view starts below the status bar like the installed PWA. Without it the
   page draws under the clock. Don't solve this with CSS padding.
