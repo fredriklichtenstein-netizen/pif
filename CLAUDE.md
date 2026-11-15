@@ -360,6 +360,9 @@ It is not a second product — no native-only features or UI.
   App signing key SHA-256 (what `assetlinks.json` needs):
   `C8:F6:5E:83:82:69:90:05:1A:29:6A:4A:01:07:DF:40:1D:60:53:AE:1F:B9:07:EF:F1:50:43:C8:12:E3:45:A4`.
   Console path: app → Protected with Play → Play Store protection → Manage Play app signing.
+  The old upload key is lost (confirmed 2026-11-15): G3.3 creates a new upload keystore on the
+  Mac and registers it via "Request reset". Keep the keystore and its password out of the repo
+  and backed up.
 - Capacitor packages are all on v8 (Node 22+). `cap add ios` and `cap add android` both run on
   Linux (iOS uses Swift Package Manager, no CocoaPods), but building, simulators and signing need
   a Mac with Xcode / Android Studio. `ios/` and `android/` are committed; the copied web bundle
