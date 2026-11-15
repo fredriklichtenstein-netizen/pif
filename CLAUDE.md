@@ -261,6 +261,10 @@ with the same `published_at` are one batch: one popup carousel (ordered by `id`)
 listing every feature. `trg_notify_feature_announcement` fires AFTER INSERT for each row, so the
 broadcast skips every row except the batch's lowest `id`. Insert a batch in one statement with one
 shared timestamp. Each line of a body (`\n`) renders as its own paragraph in both popup and email.
+`[text](/path)` in a body is an in-app link in both (app paths only). Optional `image_url_sv`/`_en`
+(https, ~960px-wide 2x PNG under `public/announcements/<date>/`) shows under the feature in the email
+only. The email has one button (the first row with `action_url`). To send at a set time, use a one-off
+pg_cron job that does the INSERT and then unschedules itself (the INSERT is the send).
 Traps:
 - The INSERT is what emails everyone. There's no "publish later": a NULL `published_at` matches no
   batch, so its broadcast errors out and sends nothing, and setting `published_at` later
