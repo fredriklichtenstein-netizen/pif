@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PIF</string>
+    <string name="title_activity_main">PIF</string>
+    <string name="package_name">community.pif.pif</string>
+    <string name="custom_url_scheme">community.pif.pif</string>
+</resources>

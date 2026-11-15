@@ -311,9 +311,11 @@ A shell around the same web bundle. It exists for three things the PWA can't do:
 notifications, email/share links that open the app on a phone (B13), and a store install path.
 It is not a second product — no native-only features or UI.
 
-- **App ID `today.pif.app`** on both platforms (staging build: `today.pif.app.staging`), display
-  name "PIF". Permanent once published. *Pending 2026-11-15: an older, inactive PIF app exists in
-  a store account; if its record is reused, its bundle ID wins — check before `cap add`.*
+- **App ID `community.pif.pif`** on both platforms (staging build: `community.pif.pif.staging`),
+  display name "PIF". It is the bundle ID of the existing App Store record (Apple ID 6444768934,
+  from an earlier build; categories Shopping / Social Networking), which we reuse rather than
+  create a second app — so it cannot change. Apple team: PIF App AB, organization, Team ID
+  `JZS9N2HAC8`, membership renews 2027-09-27.
 - **Bundled, never a remote URL.** `capacitor.config.ts` must not get a `server.url` (offline
   failure, Apple 4.2). Consequence: inside the app the origin is `capacitor://localhost` (iOS) /
   `https://localhost` (Android), not `pif.today`. Anything keyed on origin needs handling: the
@@ -333,12 +335,15 @@ It is not a second product — no native-only features or UI.
   `https://pif.today`). `app.pif.community` is a secondary associated domain; the share Worker
   must then serve the two association files itself instead of redirecting. Staging app:
   `staging.pif.today`.
-- **Store accounts: organization, as PIF App AB** (needs a D-U-N-S number). Enroll with a
-  `@pif.community` address.
+- **Store accounts: organization, as PIF App AB.** Apple exists (above). Google Play: not checked
+  yet; enroll with a `@pif.community` address.
 - Capacitor packages are all on v8 (Node 22+). `cap add ios` and `cap add android` both run on
   Linux (iOS uses Swift Package Manager, no CocoaPods), but building, simulators and signing need
-  a Mac with Xcode / Android Studio. `ios/` and `android/` are not committed yet (see pending
-  note above).
+  a Mac with Xcode / Android Studio. `ios/` and `android/` are committed; the copied web bundle
+  inside them is gitignored. On the Mac: `bun install && bun run build && bunx cap sync`, then
+  `bunx cap open ios` / `bunx cap open android`. Run `cap sync` after every web build or plugin
+  change. **A plain `bun run build` targets production** — don't sign in with test accounts in a
+  native build until the staging variant (G3.3) exists. Both are portrait-only on phones.
 - Known gaps before store review: Sign in with Apple (Google sign-in is offered), user blocking
   (Apple 1.2; none exists), a 1024×1024 opaque app icon (largest in repo is 512).
 

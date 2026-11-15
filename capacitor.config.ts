@@ -4,7 +4,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // deliberately no `server.url`: a remote-URL wrapper fails offline and risks
 // App Store rejection (guideline 4.2). See CLAUDE.md, "Native apps".
 const config: CapacitorConfig = {
-  appId: 'today.pif.app',
+  appId: 'community.pif.pif',
   appName: 'PIF',
   webDir: 'dist',
   backgroundColor: '#ffffff',
