@@ -9,6 +9,12 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   backgroundColor: '#ffffff',
   plugins: {
+    // Native sign-in sheets. Only Apple and Google are built in; the
+    // Facebook SDK is left out of the binary entirely.
+    SocialLogin: {
+      providers: { google: true, apple: true, facebook: false, twitter: false },
+      logLevel: 1,
+    },
     // Keep the web view below the status bar, like the installed PWA: the
     // page never has to pad for the notch and nothing scrolls under the clock.
     StatusBar: {
