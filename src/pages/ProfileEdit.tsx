@@ -117,7 +117,8 @@ function ProfileEdit() {
     if (!address) return null;
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      const { data: tokenData } = await supabase.functions.invoke('get-mapbox-token');
+      const { mapboxTokenInvokeOptions } = await import("@/lib/mapboxToken");
+      const { data: tokenData } = await supabase.functions.invoke('get-mapbox-token', mapboxTokenInvokeOptions());
       if (!tokenData?.token) return null;
       const encoded = encodeURIComponent(address);
       const res = await fetch(

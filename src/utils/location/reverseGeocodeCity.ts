@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { mapboxTokenInvokeOptions } from "@/lib/mapboxToken";
 import i18n from "@/i18n";
 
 let cachedToken: string | null = null;
@@ -6,7 +7,7 @@ let cachedToken: string | null = null;
 async function getMapboxToken(): Promise<string | null> {
   if (cachedToken) return cachedToken;
   try {
-    const { data, error } = await supabase.functions.invoke("get-mapbox-token");
+    const { data, error } = await supabase.functions.invoke("get-mapbox-token", mapboxTokenInvokeOptions());
     if (error || !data?.token) return null;
     cachedToken = data.token as string;
     return cachedToken;

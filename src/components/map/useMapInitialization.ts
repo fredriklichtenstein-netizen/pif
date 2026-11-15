@@ -270,7 +270,9 @@ export const useMapInitialization = (mapboxToken: string) => {
 
       newMap.on('error', (e) => {
         console.error('🚨 [Map Init] Map error event:', e);
-        const errorMessage = e.error?.message || 'Unknown map error';
+        const status = (e.error as { status?: number } | undefined)?.status;
+        const errorMessage =
+          e.error?.message || (status ? `HTTP ${status}` : 'Unknown map error');
         setError(new Error(`Map error: ${errorMessage}`));
         setIsMapReady(false);
         isInitializing.current = false;
