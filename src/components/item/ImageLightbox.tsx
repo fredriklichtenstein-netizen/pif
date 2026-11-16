@@ -98,7 +98,7 @@ export function ImageLightbox({
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-4 right-4 z-10 rounded-full bg-white/90 hover:bg-white text-foreground p-2 shadow-[0_2px_6px_rgba(0,0,0,0.35)] ring-1 ring-black/10 transition-colors"
+        className="native-top-offset absolute top-4 right-4 z-10 rounded-full bg-white/90 hover:bg-white text-foreground p-2 shadow-[0_2px_6px_rgba(0,0,0,0.35)] ring-1 ring-black/10 transition-colors"
         aria-label={t("interactions.close", "Close")}
       >
         <X className="h-5 w-5" />
@@ -106,7 +106,7 @@ export function ImageLightbox({
 
       {/* Position indicator (e.g. "2/4") */}
       {images.length > 1 && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-white/10 px-3 py-1 text-sm text-white font-medium">
+        <div className="native-top-offset absolute top-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-white/10 px-3 py-1 text-sm text-white font-medium">
           {index + 1}/{images.length}
         </div>
       )}

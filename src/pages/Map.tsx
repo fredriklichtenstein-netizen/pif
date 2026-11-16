@@ -147,7 +147,7 @@ export default function Map() {
   }
 
   return (
-    <div className="min-h-screen-dvh bg-background">
+    <div className="min-h-screen-dvh bg-background native-full-bleed">
       <MainHeader />
       <Separator />
       <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>

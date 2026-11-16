@@ -335,9 +335,15 @@ It is not a second product — no native-only features or UI.
   the web one. **A `curl` of the styles endpoint returns 200 for the restricted token even with
   the app's Origin/Referer — it proves nothing; only the map rendering in the app does.** On
   staging builds the map error names the refused request and the token's last six characters.
-- **Status bar:** `capacitor.config.ts` sets `StatusBar.overlaysWebView: false` (white, dark
-  text), so the web view starts below the status bar like the installed PWA. Without it the
-  page draws under the clock. Don't solve this with CSS padding.
+- **Edge to edge (decided 2026-11-16):** content runs behind the clock, as in the installed
+  PWA; a white strip above the page is wrong. `StatusBar.overlaysWebView: true`, and
+  `main.tsx` adds `native-app` to `<html>` in the apps. The "Native app shell" block at the end
+  of `src/index.css` pads `body` by `env(safe-area-inset-top)` so pages start below the clock
+  and scroll up behind it; `native-full-bleed` (the map) cancels that and fills the screen;
+  `native-top-offset` / `native-sticky-top` keep top-pinned things (toasts, offline badge,
+  lightbox close, feed logo) clear of the clock. All of it is inert on the web.
+- **Bottom nav** sits at `max(0.5rem, env(safe-area-inset-bottom) - 1.25rem)`: 8 px like its
+  side margins, or just above the home indicator (web and apps alike).
 - **iOS permission texts** live in `ios/App/App/Info.plist` (`NS…UsageDescription`, Swedish /
   English in one string). Without the location one, `navigator.geolocation` in the app just
   spins and never asks; without the camera one, opening the camera crashes the app.

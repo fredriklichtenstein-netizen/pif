@@ -44,7 +44,9 @@ export function MainNav() {
     <nav
       data-fixed-bottom
       className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-md"
-      style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      // Half a rem, like the side margins, on screens without a home indicator;
+      // with one, just above it (the indicator occupies the bottom ~13pt).
+      style={{ bottom: "max(0.5rem, calc(env(safe-area-inset-bottom) - 1.25rem))" }}
       aria-label={t('nav.explore_more', 'Navigation')}
     >
       <div className="bg-background/95 backdrop-blur border border-border rounded-full shadow-lg px-2 py-1.5 flex items-center">
