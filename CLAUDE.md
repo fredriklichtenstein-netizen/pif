@@ -387,6 +387,14 @@ It is not a second product — no native-only features or UI.
     builds are gone.
   - v1 must ship a minimum-version check (small JSON on `pif.today`) with an "update required"
     screen — it can't be added to builds already installed.
+- **App links (2026-11-16, staging):** `public/.well-known/apple-app-site-association` (app id
+  `JZS9N2HAC8.community.pif.pif`, all paths) and `assetlinks.json` (Play signing key), served as
+  JSON via `public/_headers`; iOS entitlement `applinks:pif.today` + `applinks:staging.pif.today`;
+  Android `autoVerify` intent filter. `src/native/deepLinks.ts` (plugin `@capacitor/app`) turns an
+  incoming link into an in-app navigation. iOS fetches the association file through Apple's CDN
+  at install time and caches it — after changing the file, delete and reinstall the app, and
+  expect up to a day's delay. `app.pif.community` share links are not associated yet (the Worker
+  would have to serve the file itself).
 - **Link domain: `pif.today` is canonical** for Universal Links / App Links (`site_url` stays
   `https://pif.today`). `app.pif.community` is a secondary associated domain; the share Worker
   must then serve the two association files itself instead of redirecting. Staging app:

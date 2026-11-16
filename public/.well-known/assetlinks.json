@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "community.pif.pif",
+      "sha256_cert_fingerprints": [
+        "C8:F6:5E:83:82:69:90:05:1A:29:6A:4A:01:07:DF:40:1D:60:53:AE:1F:B9:07:EF:F1:50:43:C8:12:E3:45:A4"
+      ]
+    }
+  }
+]

@@ -11,3 +11,11 @@
 # Content-hashed by Vite.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# App link association files (iOS Universal Links / Android App Links). The
+# Apple file has no extension, so its type must be set here; both must be
+# served directly, never redirected.
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+/.well-known/assetlinks.json
+  Content-Type: application/json

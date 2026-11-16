@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["JZS9N2HAC8.community.pif.pif"],
+        "components": [{ "/": "/*" }]
+      }
+    ]
+  }
+}
