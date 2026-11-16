@@ -21,7 +21,7 @@ export default function Feed() {
   return (
     <div className="min-h-screen-dvh bg-background">
       {/* Sticky logo header — white halo follows the logo's own shape */}
-      <header className="sticky top-0 native-sticky-top z-40 w-full flex justify-center pt-2 pb-2 pointer-events-none bg-transparent">
+      <header className="sticky top-0 z-40 w-full flex justify-center pt-2 pb-2 pointer-events-none bg-transparent">
         <img
           src="/pif-logo-long.png"
           alt="Pay it Forward"

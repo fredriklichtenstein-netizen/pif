@@ -150,7 +150,10 @@ export default function Map() {
     <div className="min-h-screen-dvh bg-background native-full-bleed">
       <MainHeader />
       <Separator />
-      <main className="relative h-[calc(100vh-73px)]" role="main" aria-label={t('map.interactive_map')}>
+      {/* Full screen height: the map runs under the floating bottom nav (and,
+          in the apps, behind the clock). A definite height, never min-height
+          — Mapbox renders nothing in a container that resolves to 0. */}
+      <main className="relative map-full-height" role="main" aria-label={t('map.interactive_map')}>
         <FadeIn className="h-full">
           <div className="absolute inset-0 z-0">
             <SlideIn direction="up" className="h-full">

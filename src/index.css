@@ -256,6 +256,3 @@ html.native-app .native-full-bleed {
 html.native-app .native-top-offset {
   margin-top: env(safe-area-inset-top);
 }
-html.native-app .native-sticky-top {
-  top: env(safe-area-inset-top);
-}

@@ -336,10 +336,13 @@ It is not a second product — no native-only features or UI.
   `main.tsx` adds `native-app` to `<html>` in the apps. The "Native app shell" block at the end
   of `src/index.css` pads `body` by `env(safe-area-inset-top)` so pages start below the clock
   and scroll up behind it; `native-full-bleed` (the map) cancels that and fills the screen;
-  `native-top-offset` / `native-sticky-top` keep top-pinned things (toasts, offline badge,
-  lightbox close, feed logo) clear of the clock. All of it is inert on the web.
-- **Bottom nav** sits at `max(0.5rem, env(safe-area-inset-bottom) - 1.25rem)`: 8 px like its
-  side margins, or just above the home indicator (web and apps alike).
+  `native-top-offset` keeps top-pinned things (toasts, offline badge, lightbox close) clear of
+  the clock. Don't give the feed's sticky logo a `top` offset — it lands on top of the content. All of it is inert on the web.
+- **Bottom nav** sits `0.25rem` from the bottom edge on every device, web and apps (Fredrik's
+  call, 2026-11-16); it deliberately overlaps the home-indicator zone.
+- **The map is full screen** (`.map-full-height` = `100dvh`, a definite height): it runs under
+  the bottom nav and, in the apps, behind the clock. Mapbox's logo/scale and the zoom/locate
+  stack are lifted 73 px so they stay above the nav.
 - **iOS permission texts** live in `ios/App/App/Info.plist` (`NS…UsageDescription`, Swedish /
   English in one string). Without the location one, `navigator.geolocation` in the app just
   spins and never asks; without the camera one, opening the camera crashes the app.

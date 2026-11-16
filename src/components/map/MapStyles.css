@@ -24,13 +24,18 @@
   height: 100%;
 }
 
-/* The map container ends flush above the fixed MainNav (Map.tsx wraps
-   the map in <main h-[calc(100vh-73px)]> and MainNav is a sibling
-   below), so Mapbox's built-in bottom controls only need a small
-   internal breathing gap — not a full-nav offset. */
+/* The map fills the whole screen and runs under the floating MainNav
+   (Map.tsx: <main class="map-full-height">). 1px is the separator above it. */
+.map-full-height {
+  height: calc(100vh - 1px);
+  height: calc(100dvh - 1px);
+}
+
+/* Mapbox's built-in bottom controls (logo, scale) must stay visible above the
+   nav pill, which is ~56px tall and sits 4px from the bottom edge. */
 .map-container .mapboxgl-ctrl-bottom-left,
 .map-container .mapboxgl-ctrl-bottom-right {
-  bottom: 8px !important;
+  bottom: 81px !important;
 }
 
 /* Loading state for markers */
