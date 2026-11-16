@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { IS_STAGING } from "@/integrations/supabase/client";
 import {
   nativeProviders,
   signInNatively,
@@ -27,7 +28,14 @@ export function NativeSignInButtons() {
     } catch (err) {
       if (!(err instanceof NativeSignInCancelled)) {
         console.error(`[NativeSignIn] ${provider} failed:`, err);
-        setError(t(provider === "apple" ? "auth.apple_failed" : "auth.google_failed"));
+        let message = t(provider === "apple" ? "auth.apple_failed" : "auth.google_failed");
+        // Staging only: show the underlying error so a failed sign-in can be
+        // diagnosed from a screenshot.
+        if (IS_STAGING) {
+          const e = err as { code?: unknown; message?: string };
+          message += ` [${[e?.code, e?.message].filter(Boolean).join(" · ") || String(err)}]`;
+        }
+        setError(message);
       }
     } finally {
       setBusy(null);
