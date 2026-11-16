@@ -32,10 +32,10 @@
 }
 
 /* Mapbox's built-in bottom controls (logo, scale) must stay visible above the
-   nav pill, which is ~56px tall and sits 4px from the bottom edge. */
+   nav pill (~60px tall, up to 22px from the bottom edge). */
 .map-container .mapboxgl-ctrl-bottom-left,
 .map-container .mapboxgl-ctrl-bottom-right {
-  bottom: 81px !important;
+  bottom: 92px !important;
 }
 
 /* Loading state for markers */
