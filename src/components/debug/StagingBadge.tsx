@@ -6,7 +6,7 @@ export function StagingBadge() {
 
   return (
     <div
-      className="fixed bottom-2 left-2 z-50 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow pointer-events-none"
+      className="fixed bottom-24 left-2 z-50 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow pointer-events-none"
       aria-hidden="true"
     >
       STAGING

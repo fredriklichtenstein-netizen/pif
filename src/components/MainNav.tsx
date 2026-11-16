@@ -43,13 +43,15 @@ export function MainNav() {
   return (
     <nav
       data-fixed-bottom
-      className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-md"
-      // Close to the bottom edge on every device (Fredrik, 2026-11-16). On
-      // phones with a home indicator the pill sits over the indicator's zone.
-      style={{ bottom: "0.25rem" }}
+      // A floating pill inset equally from the sides and the bottom
+      // (Fredrik, 2026-11-16: shape and edge distances after Instagram's bar).
+      // 22px all round on phones with a home indicator, 12px from the bottom
+      // on screens without one.
+      className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2.75rem)] max-w-md"
+      style={{ bottom: "max(0.75rem, calc(env(safe-area-inset-bottom) - 0.75rem))" }}
       aria-label={t('nav.explore_more', 'Navigation')}
     >
-      <div className="bg-background/95 backdrop-blur border border-border rounded-full shadow-lg px-2 py-1.5 flex items-center">
+      <div className="bg-background/90 backdrop-blur-md border border-black/5 rounded-full shadow-[0_6px_24px_rgba(0,0,0,0.14)] px-2 py-2 flex items-center">
 
         <Link
           to="/feed"

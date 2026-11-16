@@ -3,10 +3,15 @@
  * All checks are guarded for SSR / non-browser environments.
  */
 
+import { Capacitor } from "@capacitor/core";
+
 const hasWindow = () => typeof window !== "undefined" && typeof navigator !== "undefined";
 
 export function isStandalone(): boolean {
   if (!hasWindow()) return false;
+  // The native iOS/Android apps are "installed" by definition: never show
+  // "add to home screen" hints there.
+  if (Capacitor.isNativePlatform()) return true;
   // iOS Safari exposes navigator.standalone; other browsers use display-mode.
   const iosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
   const displayModeStandalone =

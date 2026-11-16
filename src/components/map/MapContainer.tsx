@@ -336,7 +336,7 @@ export const MapContainer = memo(({ mapboxToken, posts, onPostClick, targetItemI
               Mapbox's native NavigationControl, whose zoom buttons were
               reported broken (click had no effect, cause unreachable
               without a live device repro). */}
-          <div className="absolute bottom-[calc(7rem+73px)] left-4 flex flex-col gap-2 z-10">
+          <div className="absolute bottom-[calc(7rem+84px)] left-4 flex flex-col gap-2 z-10">
             <Button
               onClick={guarded(() => map.zoomIn())}
               className="bg-white hover:bg-gray-100 text-gray-800 cursor-pointer"

@@ -390,7 +390,7 @@ export function PostFormContainer({
 
   return (
     // Bottom padding must clear the floating MainNav pill, which sits at
-    // bottom: 0.25rem and is ~56px tall — so on
+    // bottom: max(0.75rem, env(safe-area-inset-bottom) - 0.75rem) and is ~56px tall — so on
     // devices with a home indicator the previous pb-20 (80px) left the
     // Föregående/Nästa buttons partially underneath it at full scroll.
     //

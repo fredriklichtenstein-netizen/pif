@@ -342,11 +342,13 @@ It is not a second product — no native-only features or UI.
   and scroll up behind it; `native-full-bleed` (the map) cancels that and fills the screen;
   `native-top-offset` keeps top-pinned things (toasts, offline badge, lightbox close) clear of
   the clock. Don't give the feed's sticky logo a `top` offset — it lands on top of the content. All of it is inert on the web.
-- **Bottom nav** sits `0.25rem` from the bottom edge on every device, web and apps (Fredrik's
-  call, 2026-11-16); it deliberately overlaps the home-indicator zone.
+- **Bottom nav** is a floating pill inset 22 px from the sides and
+  `max(0.75rem, env(safe-area-inset-bottom) - 0.75rem)` from the bottom (22 px on phones with a
+  home indicator), modelled on Instagram's bar at Fredrik's request (2026-11-16). Web and apps.
+- `isStandalone()` is true in the native apps, so "add to home screen" hints never show there.
 - **The map is full screen** (`.map-full-height` = `100dvh`, a definite height): it runs under
   the bottom nav and, in the apps, behind the clock. Mapbox's logo/scale and the zoom/locate
-  stack are lifted 73 px so they stay above the nav.
+  stack are lifted (~90 px) so they stay above the nav.
 - **iOS permission texts** live in `ios/App/App/Info.plist` (`NS…UsageDescription`, Swedish /
   English in one string). Without the location one, `navigator.geolocation` in the app just
   spins and never asks; without the camera one, opening the camera crashes the app.
