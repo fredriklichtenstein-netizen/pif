@@ -15,11 +15,11 @@ const config: CapacitorConfig = {
       providers: { google: true, apple: true, facebook: false, twitter: false },
       logLevel: 1,
     },
-    // Keep the web view below the status bar, like the installed PWA: the
-    // page never has to pad for the notch and nothing scrolls under the clock.
+    // Edge to edge: the web view runs under the status bar so the feed and the
+    // map show through behind the clock. The page pads its own top with
+    // env(safe-area-inset-top) (see "Native app shell" in src/index.css).
     StatusBar: {
-      overlaysWebView: false,
-      backgroundColor: '#ffffff',
+      overlaysWebView: true,
       style: 'LIGHT',
     },
     SplashScreen: {

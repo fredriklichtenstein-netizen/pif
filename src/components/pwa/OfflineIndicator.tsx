@@ -19,7 +19,7 @@ export function OfflineIndicator() {
   if (isOnline) return null;
 
   return (
-    <Badge variant="destructive" className="fixed top-4 right-4 z-50">
+    <Badge variant="destructive" className="fixed top-4 right-4 z-50 native-top-offset">
       <WifiOff className="h-3 w-3 mr-1" />{t('interactions.offline')}
     </Badge>
   );
