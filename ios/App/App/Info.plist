@@ -6,6 +6,14 @@
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<!-- Languages the app supports. iOS shows its own screens (camera, photo
+	     picker, share sheet) in the best match for the phone's language;
+	     without "sv" here they appear in English on a Swedish phone. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>sv</string>
+		<string>en</string>
+	</array>
 	<key>CFBundleDisplayName</key>
         <string>PIF</string>
 	<key>CFBundleExecutable</key>
