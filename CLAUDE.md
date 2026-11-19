@@ -349,6 +349,9 @@ It is not a second product — no native-only features or UI.
 - **The map is full screen** (`.map-full-height` = `100dvh`, a definite height): it runs under
   the bottom nav and, in the apps, behind the clock. Mapbox's logo/scale and the zoom/locate
   stack are lifted (~90 px) so they stay above the nav.
+- **App languages:** `Info.plist` declares `CFBundleLocalizations` sv + en. iOS picks the
+  language of its own screens (camera, photo picker, share sheet) from that list; without `sv`
+  they were English on a Swedish phone (seen 2026-11-19).
 - **iOS permission texts** live in `ios/App/App/Info.plist` (`NS…UsageDescription`, Swedish /
   English in one string). Without the location one, `navigator.geolocation` in the app just
   spins and never asks; without the camera one, opening the camera crashes the app.
