@@ -46,6 +46,12 @@ function SwedishPolicy() {
         Om du loggar in med Google får vi ditt namn, din e-postadress och din profilbild från ditt
         Google-konto. Vi får inte ditt Google-lösenord eller tillgång till något annat i kontot.
       </p>
+      <p className={p}>
+        Om du loggar in med Apple i PIF-appen för iPhone får vi en identifierare för ditt konto och
+        den e-postadress du väljer att dela. Väljer du att dölja din e-postadress får vi en adress
+        från Apple som vidarebefordrar till din riktiga. Första gången kan Apple också dela ditt
+        namn. Vi får inte ditt Apple-lösenord eller tillgång till något annat i kontot.
+      </p>
       <p className={p}><strong>Uppgifter vi samlar in automatiskt:</strong></p>
       <ul className={ul}>
         <li>Ungefärlig plats (du väljer om exakt adress ska delas — den visas alltid fördold för andra användare)</li>
@@ -80,6 +86,7 @@ function SwedishPolicy() {
         <li><strong>Cloudflare Inc</strong> — drift av webbplatsen, länkförhandsvisningar och anonym besöksstatistik</li>
         <li><strong>GitHub Inc</strong> — versionshantering av applikationskod</li>
         <li><strong>Google Ireland Ltd</strong> — inloggning med Google, om du väljer det. Google hanterar själva inloggningen enligt sin egen integritetspolicy</li>
+        <li><strong>Apple Distribution International Ltd</strong> — inloggning med Apple i PIF-appen för iPhone, om du väljer det. Apple hanterar själva inloggningen enligt sin egen integritetspolicy</li>
       </ul>
       <p className={p}>
         Alla leverantörer behandlar uppgifter enligt gällande dataskyddslagstiftning. Våra
@@ -122,7 +129,7 @@ function SwedishPolicy() {
         sammanlagd statistik, till exempel antal besök per sida.
       </p>
       <p className={p}>
-        Inloggningssidan visar Googles knapp för inloggning med Google. Den laddas från Google, som
+        På webben visar inloggningssidan Googles knapp för inloggning med Google. Den laddas från Google, som
         kan använda sina egna cookies för att visa vilket Google-konto du är inloggad med. PIF får
         inga uppgifter från Google förrän du själv väljer att logga in med Google.
       </p>
@@ -197,6 +204,12 @@ function EnglishPolicy() {
         If you sign in with Google, we receive your name, email address and profile photo from your
         Google account. We don't receive your Google password or access to anything else in the account.
       </p>
+      <p className={p}>
+        If you sign in with Apple in the PIF app for iPhone, we receive an identifier for your account
+        and the email address you choose to share. If you choose to hide your email address, we
+        receive an address from Apple that forwards to your real one. The first time, Apple may also
+        share your name. We don't receive your Apple password or access to anything else in the account.
+      </p>
       <p className={p}><strong>Data we collect automatically:</strong></p>
       <ul className={ul}>
         <li>Approximate location (you choose whether to share your exact address — it is always shown in a privacy-distorted form to other users)</li>
@@ -231,6 +244,7 @@ function EnglishPolicy() {
         <li><strong>Cloudflare Inc</strong> — website hosting, link previews and anonymous visitor statistics</li>
         <li><strong>GitHub Inc</strong> — version control for application code</li>
         <li><strong>Google Ireland Ltd</strong> — sign-in with Google, if you choose it. Google handles the sign-in itself under its own privacy policy</li>
+        <li><strong>Apple Distribution International Ltd</strong> — sign-in with Apple in the PIF app for iPhone, if you choose it. Apple handles the sign-in itself under its own privacy policy</li>
       </ul>
       <p className={p}>
         All providers process data in accordance with applicable data protection legislation.
@@ -273,7 +287,7 @@ function EnglishPolicy() {
         see aggregated statistics, such as the number of visits per page.
       </p>
       <p className={p}>
-        The sign-in page shows Google's "Sign in with Google" button. It is loaded from Google, which
+        On the web, the sign-in page shows Google's "Sign in with Google" button. It is loaded from Google, which
         may use its own cookies to show which Google account you are signed in with. PIF receives no
         data from Google unless you choose to sign in with Google.
       </p>

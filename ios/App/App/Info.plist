@@ -9,6 +9,10 @@
 	<!-- Languages the app supports. iOS shows its own screens (camera, photo
 	     picker, share sheet) in the best match for the phone's language;
 	     without "sv" here they appear in English on a Swedish phone. -->
+	<!-- The app only uses standard HTTPS (exempt), so uploads skip Apple's
+	     export-compliance question. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>sv</string>
