@@ -10,10 +10,12 @@ import "./i18n";
 import { Capacitor } from "@capacitor/core";
 import { installNativeDeepLinks } from "./native/deepLinks";
 import { installNativeGeolocation } from "./native/geolocationBridge";
+import { installNativePush } from "./native/push";
 
 // Native apps only (no-op on the web): must run before anything asks for a position.
 installNativeGeolocation();
 installNativeDeepLinks();
+installNativePush();
 // Lets the stylesheet pad for the status bar in the apps only.
 if (Capacitor.isNativePlatform()) document.documentElement.classList.add("native-app");
 

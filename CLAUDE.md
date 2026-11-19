@@ -179,7 +179,7 @@ arrive at all**; it's 5s now, and that call gets a 25s client timeout vs 15s els
 ## Edge Functions
 
 Tracked in repo (`supabase/functions/`): `analyze-image`, `delete-account`,
-`send-report`, `send-feedback`, `get-mapbox-token`, `send-notification-email`, `purge-draft-images`. Deployment to Supabase is a distinct step from
+`send-report`, `send-feedback`, `get-mapbox-token`, `send-notification-email`, `purge-draft-images`, `send-push` (verify_jwt off). Deployment to Supabase is a distinct step from
 writing the code — always deploy after editing. `og-preview` and `prewarm-og` were removed from
 the repo and deleted from both Supabase projects on 2026-10-27 (superseded by `workers/share`); also `unsubscribe-notification` is tracked.
 `analyze-image` is tracked but not currently deployed to production. `send-report` was reconciled
@@ -385,6 +385,16 @@ It is not a second product — no native-only features or UI.
   embedded web views anyway), and `window.location.origin` in `useSignUp` / `usePasswordReset`
   (would put a localhost link in emails).
 - **Push is required for the public release**, not for the first TestFlight / Play internal builds.
+- **Push (iOS, staging since 2026-11-19):** `src/native/push.ts` asks for permission after
+  sign-in, registers with APNs and stores the token via `register_push_device()` (table
+  `push_devices`, migration `20261119120000_push_notifications`); sign-out calls
+  `unregister_push_device()` first. Triggers on `notifications` (every in-app notification, same
+  text) and `messages` call `_trigger_push()`, which honours the `push_*` preferences and posts to
+  edge function `send-push` (vault `push_function_url` + `x-internal-secret`). `send-push` talks to
+  APNs with a .p8 key (secrets `APNS_KEY_P8`, `APNS_KEY_ID`); without them it returns
+  `{skipped}`. Xcode builds get sandbox tokens, TestFlight/App Store production ones — it retries
+  the other APNs host on `BadDeviceToken` and deletes dead tokens. Android needs Firebase first:
+  never call `PushNotifications.register()` on Android without `google-services.json` (crash).
 - **Store releases only — no live-update service.** Installed apps keep running old web code until
   the user updates, so:
   - **DB and edge-function changes are additive first.** Never drop or rename an `items` column,

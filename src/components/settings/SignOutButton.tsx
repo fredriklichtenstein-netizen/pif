@@ -21,6 +21,10 @@ export function SignOutButton() {
       // never flashes stale profile/items from the previous account.
       clearAllUserCaches();
 
+      // Native apps: stop this phone getting the account's pushes.
+      const { unregisterNativePush } = await import("@/native/push");
+      await unregisterNativePush();
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       navigate("/auth");
