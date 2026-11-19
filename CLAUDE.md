@@ -371,7 +371,8 @@ It is not a second product — no native-only features or UI.
   - Google on iOS needs an OAuth client of type "iOS" (bundle id `community.pif.pif`) in Google
     Cloud project pif-community; its id goes in `GOOGLE_IOS_CLIENT_ID`, its reversed form as a
     URL scheme in `Info.plist`, and in Supabase's Google "additional client ids".
-  - Still to do before release: privacy policy (sections 1, 3, 6) must name Apple; Apple's
+  - Privacy policy names Apple (sections 1 and 3, drafted 2026-11-19, on staging pending Fredrik's
+    OK). Still to do before release: Apple's
     private-relay email service must list our sending domain or mail to "Hide My Email"
     addresses bounces; account deletion should revoke the Apple token.
 - The Xcode project carries `DEVELOPMENT_TEAM = JZS9N2HAC8`, so signing needs no manual step.
