@@ -76,6 +76,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- PIF only ever asks for "while using the app". Apple still requires
+	     this text because the location plugin contains code for "always"
+	     (App Store Connect warning ITMS-90683 on build 2.0.0 (1)). -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>PIF använder din plats bara medan du använder appen, för att visa piffar och önskningar nära dig. / PIF only uses your location while you use the app, to show pifs and wishes near you.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>PIF använder din plats för att visa piffar och önskningar nära dig och avståndet till dem. / PIF uses your location to show pifs and wishes near you and how far away they are.</string>
 	<key>NSCameraUsageDescription</key>

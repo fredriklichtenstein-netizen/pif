@@ -351,6 +351,8 @@ It is not a second product — no native-only features or UI.
 - **iOS permission texts** live in `ios/App/App/Info.plist` (`NS…UsageDescription`, Swedish /
   English in one string). Without the location one, `navigator.geolocation` in the app just
   spins and never asks; without the camera one, opening the camera crashes the app.
+  `NSLocationAlwaysAndWhenInUseUsageDescription` is there only because Apple flags its absence
+  (ITMS-90683) — the app never asks for "always".
 - **Location in the apps** goes through `@capacitor/geolocation`: `src/native/geolocationBridge.ts`
   (installed in `main.tsx`, no-op on the web) replaces `navigator.geolocation.getCurrentPosition`
   and the geolocation `navigator.permissions.query`, so call sites stay plain browser code.
