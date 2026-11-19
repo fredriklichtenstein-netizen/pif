@@ -1,16 +1,21 @@
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
+import { WEB_APP_ORIGIN } from "@/lib/appOrigin";
+import { SHARE_ORIGIN } from "@/lib/shareOrigin";
 
 // Links to these hosts open the native app (iOS Universal Links / Android App
 // Links, see public/.well-known/). When one arrives, show the same path inside
 // the app: the email routes (/reset-password, /email-confirmation), a shared
 // post (/item/<id>) or anything else the web app serves.
+//
+// Built from this build's own origins, never hard-coded: a production build
+// must not contain staging hostnames (the production deploy guard rejects
+// any bundle that mentions the staging share origin).
 const APP_LINK_HOSTS = new Set([
   "pif.today",
   "www.pif.today",
-  "staging.pif.today",
-  "app.pif.community",
-  "share-staging.pif.today",
+  new URL(WEB_APP_ORIGIN).hostname,
+  new URL(SHARE_ORIGIN).hostname,
 ]);
 
 /** The in-app location for an incoming link, or null if it isn't one of ours. */
