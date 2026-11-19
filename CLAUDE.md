@@ -367,12 +367,12 @@ It is not a second product — no native-only features or UI.
   `GOOGLE_IOS_CLIENT_ID` is set. Facebook/Twitter are compiled out (`capacitor.config.ts`).
   - Apple: entitlement `ios/App/App/App.entitlements`; Supabase Apple provider enabled with
     client id `community.pif.pif` (the bundle id; no secret needed for native ID tokens).
-    Staging: done 2026-11-15. Production: not yet.
+    Enabled on staging 2026-11-15 and on production 2026-11-19 (Fredrik's OK).
   - Google on iOS needs an OAuth client of type "iOS" (bundle id `community.pif.pif`) in Google
     Cloud project pif-community; its id goes in `GOOGLE_IOS_CLIENT_ID`, its reversed form as a
     URL scheme in `Info.plist`, and in Supabase's Google "additional client ids".
-  - Privacy policy names Apple (sections 1 and 3, drafted 2026-11-19, on staging pending Fredrik's
-    OK). Still to do before release: Apple's
+  - Privacy policy names Apple (sections 1 and 3; approved by Fredrik and live 2026-11-19).
+    Still to do before release: Apple's
     private-relay email service must list our sending domain or mail to "Hide My Email"
     addresses bounces; account deletion should revoke the Apple token.
 - The Xcode project carries `DEVELOPMENT_TEAM = JZS9N2HAC8`, so signing needs no manual step.
@@ -430,9 +430,13 @@ It is not a second product — no native-only features or UI.
   inside them is gitignored. On the Mac: `bun install`, `scripts/native-build.sh staging`, then
   `bunx cap open ios` / `bunx cap open android`. Re-run the script after every web or plugin
   change. Both are portrait-only on phones.
-- Known gaps before store review: Sign in with Apple (Google sign-in is offered), user blocking
-  (Apple 1.2; none exists), real 1024 px icon artwork. Decided 2026-11-15: the apps get native
-  Google sign-in plus Sign in with Apple (not built yet).
+- **TestFlight (decided 2026-11-19):** TestFlight builds are the production build
+  (`scripts/native-build.sh production` on `main`), uploaded from Xcode (Any iOS Device → Product
+  → Archive → Distribute App → App Store Connect). No side-by-side staging app yet; staging builds
+  go to a phone straight from Xcode and replace the TestFlight install (same app ID).
+- Known gaps before store review: user blocking (Apple 1.2; none exists), push notifications,
+  the minimum-version check, real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
+  OAuth client id). Sign in with Apple is built and live.
 
 ## Share links / link previews (`workers/share`)
 
