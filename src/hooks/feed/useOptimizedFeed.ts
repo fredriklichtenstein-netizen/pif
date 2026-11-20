@@ -11,6 +11,7 @@ import type { Post } from '@/types/post';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 import { isSafeMode } from '@/utils/safeMode';
 import { onAppResume } from '@/lib/onAppResume';
+import { OptimizedQueries } from '@/services/database';
 
 // Smaller first page = faster cold paint. Subsequent pages use a
 // larger size to reduce round-trips while scrolling.
@@ -406,8 +407,24 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
   useEffect(() => {
     if (DEMO_MODE) return;
     return onAppResume(() => {
+      console.info('[feed] app resumed: refreshing posts and counts');
       clearPostsCache();
       invalidateOptimizedFeedQueries(queryClient);
+      // The invalidation only refetches the page being observed; posts from
+      // earlier pages keep their old counts. Refresh every listed post's
+      // counts in one call.
+      const ids = [...visiblePostIdsRef.current]
+        .map((id) => parseInt(id, 10))
+        .filter((id) => !Number.isNaN(id));
+      if (ids.length === 0) return;
+      OptimizedQueries.getInteractionCounts(ids)
+        .then((map: Map<number, { likesCount: number; interestsCount: number; commentsCount: number }>) => {
+          const entries = [...map.entries()].map(([itemId, c]) => ({ itemId, ...c }));
+          if (entries.length > 0) useInitialCountsStore.getState().setBulkCounts(entries);
+        })
+        .catch(() => {
+          /* best-effort; the next fetch corrects it */
+        });
     });
   }, [queryClient]);
 
