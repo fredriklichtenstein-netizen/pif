@@ -8,9 +8,13 @@
 /version.json
   Cache-Control: no-store
 
-# Content-hashed by Vite.
+# Content-hashed by Vite, but NOT immutable: Cloudflare Pages answers a
+# missing /assets/ file with index.html (200, text/html), and this header
+# would make browsers keep that HTML for a year in place of the script
+# ("Kunde inte ladda sidan" on every reload, hit on staging 2026-11-20 after
+# a deploy). One hour bounds the damage; real files then revalidate (304).
 /assets/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=3600
 
 # App link association files (iOS Universal Links / Android App Links). The
 # Apple file has no extension, so its type must be set here; both must be
