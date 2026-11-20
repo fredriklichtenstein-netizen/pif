@@ -385,7 +385,7 @@ It is not a second product — no native-only features or UI.
   embedded web views anyway), and `window.location.origin` in `useSignUp` / `usePasswordReset`
   (would put a localhost link in emails).
 - **Push is required for the public release**, not for the first TestFlight / Play internal builds.
-- **Push (iOS, staging since 2026-11-19):** `src/native/push.ts` asks for permission after
+- **Push (iOS; staging 2026-11-19, production 2026-11-20, first TestFlight push confirmed):** `src/native/push.ts` asks for permission after
   sign-in, registers with APNs and stores the token via `register_push_device()` (table
   `push_devices`, migration `20261119120000_push_notifications`); sign-out calls
   `unregister_push_device()` first. Triggers on `notifications` (every in-app notification, same
@@ -395,6 +395,13 @@ It is not a second product — no native-only features or UI.
   `{skipped}`. Xcode builds get sandbox tokens, TestFlight/App Store production ones — it retries
   the other APNs host on `BadDeviceToken` and deletes dead tokens. Android needs Firebase first:
   never call `PushNotifications.register()` on Android without `google-services.json` (crash).
+  The APNs key is "PIF APNs 2026" (Sandbox & Production, team scoped), same `.p8` on both projects;
+  the 2023 key `SK7WG8KVQ6` had no surviving file and was revoked. Pushes show as a banner even
+  with the app open (`presentationOptions`). Turning off iOS's own "Tillåt notiser" makes iOS hold
+  pushes and show them when it's switched back on; the in-app switches stop them at the source.
+  Notification switches in Settings save on flip (no save button). The feed refetches posts and
+  active posts' counts when the app/tab returns after >=20 s (`src/lib/onAppResume.ts`), because
+  realtime is paused while iOS has the app in the background.
 - **Store releases only — no live-update service.** Installed apps keep running old web code until
   the user updates, so:
   - **DB and edge-function changes are additive first.** Never drop or rename an `items` column,
@@ -442,7 +449,7 @@ It is not a second product — no native-only features or UI.
   (`scripts/native-build.sh production` on `main`), uploaded from Xcode (Any iOS Device → Product
   → Archive → Distribute App → App Store Connect). No side-by-side staging app yet; staging builds
   go to a phone straight from Xcode and replace the TestFlight install (same app ID).
-- Known gaps before store review: user blocking (Apple 1.2; none exists), push notifications,
+- Known gaps before store review: user blocking (Apple 1.2; none exists), Android push (Firebase),
   the minimum-version check, real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
   OAuth client id). Sign in with Apple is built and live.
 
