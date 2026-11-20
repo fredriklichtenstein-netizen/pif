@@ -8,6 +8,7 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { DangerZone } from "@/components/settings/DangerZone";
 import { SignOutButton } from "@/components/settings/SignOutButton";
+import { BlockedUsersSettings } from "@/components/settings/BlockedUsersSettings";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,16 @@ export default function AccountSettings() {
               <Card>
                 <CardContent className="pt-6">
                   <LocationAccessSettings />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('blocking.settings_title')}</CardTitle>
+                  <CardDescription>{t('blocking.settings_hint')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BlockedUsersSettings />
                 </CardContent>
               </Card>
 

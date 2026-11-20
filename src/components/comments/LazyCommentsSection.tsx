@@ -43,19 +43,27 @@ export function LazyCommentsSection({
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(
     searchParams.get("comment"),
   );
-  const [reportTarget, setReportTarget] = useState<{ id: string; text: string } | null>(null);
+  const [reportTarget, setReportTarget] = useState<
+    { id: string; text: string; authorId?: string; authorName?: string } | null
+  >(null);
 
-  const findCommentText = (id: string): string => {
+  const findComment = (id: string): Comment | undefined => {
     for (const c of comments as Comment[]) {
-      if (c.id === id) return c.text;
+      if (c.id === id) return c;
       const r = c.replies?.find((r) => r.id === id);
-      if (r) return r.text;
+      if (r) return r;
     }
-    return "";
+    return undefined;
   };
 
   const handleReportCommentOpen = (commentId: string) => {
-    setReportTarget({ id: String(commentId), text: findCommentText(commentId) });
+    const c = findComment(String(commentId));
+    setReportTarget({
+      id: String(commentId),
+      text: c?.text ?? "",
+      authorId: c?.author?.id,
+      authorName: c?.author?.name,
+    });
   };
 
   useEffect(() => {
@@ -135,6 +143,8 @@ export function LazyCommentsSection({
         itemId={itemId}
         commentId={reportTarget?.id ?? null}
         commentText={reportTarget?.text ?? null}
+        reportedUserId={reportTarget?.authorId ?? null}
+        reportedUserName={reportTarget?.authorName ?? null}
       />
     </Card>
   );

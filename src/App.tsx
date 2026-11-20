@@ -25,6 +25,7 @@ import { useLanguageSeed } from "@/hooks/profile/useLanguageSeed";
 import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
 import { StagingBadge } from "@/components/debug/StagingBadge";
+import { BlockUserDialogHost } from "@/components/blocking/BlockUserDialogHost";
 import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
 import { debugLog } from "@/utils/authDebug";
 import "./App.css";
@@ -86,6 +87,7 @@ function App() {
               <AnnouncementModal />
               <FeedbackTab />
               <UserProfileSheet />
+              <BlockUserDialogHost />
               <Toaster />
               <Sonner />
               <AuthHydrationDebugPanel />

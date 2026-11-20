@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
+import { BlockUserMenuItem } from "@/components/blocking/BlockUserMenuItem";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -119,12 +120,15 @@ export function MessageItem({
             {t("messages.delete_message", { defaultValue: "Ta bort meddelande" })}
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem onClick={() => setReportOpen(true)}>
-            <Flag className="h-4 w-4 mr-2" />
-            {t("messages.report_message", {
-              defaultValue: "Rapportera meddelande",
-            })}
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem onClick={() => setReportOpen(true)}>
+              <Flag className="h-4 w-4 mr-2" />
+              {t("messages.report_message", {
+                defaultValue: "Rapportera meddelande",
+              })}
+            </DropdownMenuItem>
+            <BlockUserMenuItem userId={otherUserId} name={otherDisplayName} />
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -170,6 +174,8 @@ export function MessageItem({
           itemId={itemId}
           commentId={message.id}
           commentText={message.content}
+          reportedUserId={otherUserId ?? null}
+          reportedUserName={otherDisplayName || null}
         />
       )}
 

@@ -41,6 +41,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { PifCompletionBanner } from "./PifCompletionBanner";
 import { PifRatingModal } from "./PifRatingModal";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
+import { BlockUserMenuItem } from "@/components/blocking/BlockUserMenuItem";
+import { useBlockStore } from "@/stores/blockStore";
 import type { WithdrawCopy } from "@/hooks/item/useWithdrawInterestConfirm";
 import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreSelection";
 import { usePifCompletion } from "@/hooks/usePifCompletion";
@@ -95,6 +97,10 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
 
   const fallbackName = t("messages.unknown_user");
   const otherName = resolveDisplayName(otherParticipant?.profile, fallbackName);
+  // Either of us blocked the other: the chat stays readable, nobody can write.
+  const isBlockedConversation = useBlockStore((s) =>
+    !!otherParticipant?.user_id && s.hiddenIds.has(String(otherParticipant.user_id)),
+  );
 
   const itemOwnerId = item?.postedBy?.id;
   const isCurrentUserPiffer = !!itemOwnerId && itemOwnerId === currentUserId;
@@ -559,6 +565,9 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
                 <Flag className="h-4 w-4 mr-2" />
                 Rapportera problem med detta utbyte
               </DropdownMenuItem>
+              {!isBlockedConversation && (
+                <BlockUserMenuItem userId={otherParticipant?.user_id} name={otherName} />
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -626,7 +635,11 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
 
       {/* Message input OR read-only status */}
       <div className="flex-shrink-0">
-        {isClosed ? (
+        {isBlockedConversation ? (
+          <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
+            {t("blocking.chat_blocked")}
+          </div>
+        ) : isClosed ? (
           <div className="border-t bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground space-y-2">
             <p>
               {completion.pifStatus === "archived"
@@ -848,6 +861,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           open={reportOpen}
           onOpenChange={setReportOpen}
           itemId={item.id}
+          reportedUserId={otherParticipant?.user_id ?? null}
+          reportedUserName={otherName}
         />
       )}
     </div>

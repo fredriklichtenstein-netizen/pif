@@ -9,6 +9,7 @@ import { CommentInput } from "./CommentInput";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useCommentsReadOnly } from "./CommentsReadOnly";
+import { useBlockStore } from "@/stores/blockStore";
 
 interface CommentCardProps {
   comment: Comment;
@@ -39,6 +40,8 @@ export function CommentCard({
   const readOnly = useCommentsReadOnly();
   
   const isCurrentUserAuthor = currentUser === comment.author.id;
+  // Blocked users (either direction) don't see each other's comments.
+  const isHiddenAuthor = useBlockStore((s) => s.hiddenIds.has(String(comment.author.id)));
 
   const handleSaveEdit = () => { onEdit(comment.id, editedText); setIsEditing(false); };
 
@@ -55,6 +58,7 @@ export function CommentCard({
   };
   
   const authorName = comment.author.name || 'Anonymous';
+  if (isHiddenAuthor) return null;
   const isHighlighted = highlightedCommentId != null && String(comment.id) === String(highlightedCommentId);
 
   return (
@@ -64,7 +68,7 @@ export function CommentCard({
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <CommentHeader author={{ ...comment.author, name: authorName }} createdAt={new Date(comment.createdAt)} />
-              <CommentActions isCurrentUserAuthor={isCurrentUserAuthor} onEdit={() => setIsEditing(true)} onDelete={() => onDelete(comment.id)} onReport={handleReport} />
+              <CommentActions isCurrentUserAuthor={isCurrentUserAuthor} onEdit={() => setIsEditing(true)} onDelete={() => onDelete(comment.id)} onReport={handleReport} authorId={comment.author.id} authorName={authorName} />
             </div>
             
             {isEditing ? (

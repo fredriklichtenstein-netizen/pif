@@ -453,9 +453,35 @@ It is not a second product — no native-only features or UI.
   (`scripts/native-build.sh production` on `main`), uploaded from Xcode (Any iOS Device → Product
   → Archive → Distribute App → App Store Connect). No side-by-side staging app yet; staging builds
   go to a phone straight from Xcode and replace the TestFlight install (same app ID).
-- Known gaps before store review: user blocking (Apple 1.2; none exists), Android push (Firebase),
+- Known gaps before store review: Android push (Firebase),
   the minimum-version check, real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
   OAuth client id). Sign in with Apple is built and live.
+
+## Blocking and reports (Apple 1.2; staging 2026-11-20)
+
+- **A block works both ways** (decided by Fredrik 2026-11-20): neither person sees the other's
+  posts (feed + map) or comments, and neither can message, comment on the other's posts, reply to
+  the other's comments or show interest. The blocked person is not told. Table `user_blocks`
+  (owner-only RLS), RPCs `block_user` / `unblock_user` / `get_hidden_user_ids` (both directions,
+  ids only) / `get_my_blocked_users`; migration `20261120120000_user_blocking`.
+- **The database enforces it**: BEFORE INSERT guards on `messages`, `conversation_participants`,
+  `comments`, `interests` raise `user_blocked`; `trg_skip_blocked_notification` drops any
+  notification whose `payload.actor_id` is blocked with the recipient (so no push either), and
+  `notify_comment_activity` skips blocked recipients because it emails directly.
+- **App**: `src/stores/blockStore.ts` (hidden ids, loaded by `BlockUserDialogHost` in App, which
+  also owns the one confirmation dialog — a dialog inside a dropdown unmounts with the menu).
+  "Blockera" sits in the ⋯ menu of posts, comments, chat messages and the chat header, and on the
+  profile sheet; Settings → Konto → "Blockerade användare" unblocks. A chat with a blocked person
+  stays readable but has no input. An existing receiver selection is left alone (decision 2a);
+  the giver can undo it.
+- **Reports** go to **hej@pif.community** (since 2026-11-20; before that the address was
+  hard-coded to Fredrik's personal Gmail). `send-report` also takes `reportedUserId` (column
+  `reports.reported_user_id`), so a person can be reported from their profile sheet; after any
+  report the app offers to block the person.
+- **Moderation routine (Apple: act within 24 h):** hej@pif.community is checked daily. For each
+  report: look at the post/comment/message (links in the email), remove content that breaks the
+  rules (archive the post or delete the comment), and for serious or repeated cases delete the
+  account. Note the outcome in a reply to the report email so there's a trail.
 
 ## Share links / link previews (`workers/share`)
 

@@ -184,6 +184,8 @@ export function ItemCardWrapper({
         open={isReportDialogOpen}
         onOpenChange={setIsReportDialogOpen}
         itemId={id}
+        reportedUserId={postedBy?.id ?? null}
+        reportedUserName={postedBy?.name ?? null}
       />
     </>
   );

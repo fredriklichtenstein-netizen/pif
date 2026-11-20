@@ -1,9 +1,10 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useFetchPosts } from "./useFetchPosts";
 import { useUserPosts } from "./useUserPosts";
 import { usePostsFilter } from "./usePostsFilter";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { useBlockStore } from "@/stores/blockStore";
 
 export interface FeedPostsOptions {
   includeArchived?: boolean;
@@ -41,7 +42,20 @@ export function useFeedPosts(options: FeedPostsOptions = {}) {
   });
   
   // Set up filters with the current posts
-  const { filteredPosts, filterByCategories } = usePostsFilter(allPosts);
+  const { filteredPosts: categoryFiltered, filterByCategories } = usePostsFilter(allPosts);
+
+  // Blocked users (either direction) are hidden from each other, on the map too.
+  const hiddenUserIds = useBlockStore((s) => s.hiddenIds);
+  const filteredPosts = useMemo(
+    () =>
+      hiddenUserIds.size === 0
+        ? categoryFiltered
+        : categoryFiltered.filter((p: any) => {
+            const authorId = String(p?.user_id ?? p?.postedBy?.id ?? "");
+            return !authorId || !hiddenUserIds.has(authorId);
+          }),
+    [categoryFiltered, hiddenUserIds],
+  );
 
   // Update allPosts when fetchedPosts changes (in "all" mode)
   useEffect(() => {

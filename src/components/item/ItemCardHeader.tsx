@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearPostsCache } from "@/services/posts/optimized";
 import { formatRelativeTime } from "@/utils/formatDate";
+import { BlockUserMenuItem } from "@/components/blocking/BlockUserMenuItem";
 
 interface ItemCardHeaderProps {
   postedBy: {
@@ -324,6 +325,9 @@ export function ItemCardHeader({
                     <Flag className="mr-2 h-4 w-4" />
                     <span>{t('ui.report')}</span>
                   </DropdownMenuItem>
+                )}
+                {isAuthenticated && (
+                  <BlockUserMenuItem userId={postedBy.id} name={postedBy.name} />
                 )}
               </>
             )}

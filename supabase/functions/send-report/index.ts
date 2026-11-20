@@ -8,7 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const REPORT_TO = "fredrik.lichtenstein@gmail.com";
+// The team inbox (pif.community has MX; pif.today can't receive). Checked
+// daily: Apple expects reports to be acted on within 24 hours (guideline 1.2).
+const REPORT_TO = "hej@pif.community";
 // pif.today is the verified sending domain (same as send-feedback and
 // send-notification-email); it can only send, it has no MX record.
 const REPORT_FROM = "PIF Reports <reports@pif.today>";
@@ -76,9 +78,13 @@ serve(async (req) => {
     const comments = body.comments
       ? String(body.comments).slice(0, 2000)
       : null;
+    // Who the report is about (a post's author, a commenter, a chat partner,
+    // or a person reported from their profile). Optional for older clients.
+    const reportedUserRaw = String(body.reportedUserId ?? "").trim();
+    const reportedUserId = /^[0-9a-f-]{36}$/i.test(reportedUserRaw) ? reportedUserRaw : null;
 
-    if (!itemIdRaw || !reason) {
-      return json(400, { error: "Missing itemId or reason" });
+    if ((!itemIdRaw && !reportedUserId) || !reason) {
+      return json(400, { error: "Missing itemId/reportedUserId or reason" });
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
@@ -109,9 +115,23 @@ serve(async (req) => {
       // best-effort
     }
 
+    let reportedName = "";
+    if (reportedUserId) {
+      try {
+        const { data: p } = await admin
+          .from("profiles")
+          .select("first_name, last_name")
+          .eq("id", reportedUserId)
+          .maybeSingle();
+        reportedName = p ? [p.first_name, p.last_name].filter(Boolean).join(" ") : "";
+      } catch (_) {
+        // best-effort
+      }
+    }
+
     // Persist the report. If this fails we still email so the report isn't lost.
     let insertedId: string | null = null;
-    const itemIdNum = Number.isFinite(Number(itemIdRaw))
+    const itemIdNum = itemIdRaw && Number.isFinite(Number(itemIdRaw))
       ? Number(itemIdRaw)
       : null;
     try {
@@ -119,7 +139,8 @@ serve(async (req) => {
         .from("reports")
         .insert({
           reporter_id: userId,
-          item_id: itemIdNum ?? itemIdRaw,
+          item_id: itemIdNum ?? (itemIdRaw || null),
+          reported_user_id: reportedUserId,
           reason,
           details: reasonText,
           comments,
@@ -143,7 +164,8 @@ serve(async (req) => {
     let emailOk = false;
     if (resendKey) {
       const isComment = !!commentIdRaw;
-      const postUrl = `${APP_URL}/item/${encodeURIComponent(itemIdRaw)}`;
+      const isUserReport = !itemIdRaw;
+      const postUrl = itemIdRaw ? `${APP_URL}/item/${encodeURIComponent(itemIdRaw)}` : "";
       const row = (label: string, value: string) =>
         `<tr><td><strong>${label}</strong></td><td>${value}</td></tr>`;
       const html = `
@@ -152,8 +174,10 @@ serve(async (req) => {
           ${row("Rapportör", escape(reporterName))}
           ${row("Rapportör-email", escape(reporterEmail))}
           ${row("Rapportör-ID", `<code>${escape(userId)}</code>`)}
-          ${row("Inlägg-ID", `<code>${escape(itemIdRaw)}</code>`)}
-          ${row("Inlägg-URL", `<a href="${escape(postUrl)}">${escape(postUrl)}</a>`)}
+          ${reportedUserId ? row("Rapporterad användare", escape(reportedName || "(namn saknas)")) : ""}
+          ${reportedUserId ? row("Användar-ID", `<code>${escape(reportedUserId)}</code>`) : ""}
+          ${itemIdRaw ? row("Inlägg-ID", `<code>${escape(itemIdRaw)}</code>`) : ""}
+          ${itemIdRaw ? row("Inlägg-URL", `<a href="${escape(postUrl)}">${escape(postUrl)}</a>`) : ""}
           ${isComment ? row("Kommentar-ID", `<code>${escape(commentIdRaw)}</code>`) : ""}
           ${commentText ? row("Kommentar", escapeMultiline(commentText)) : ""}
           ${row("Anledning", escape(reason))}
@@ -172,7 +196,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: REPORT_FROM,
             to: [REPORT_TO],
-            subject: `PIF-rapport${isComment ? " (kommentar)" : ""}: ${reason}`,
+            subject: `PIF-rapport${isUserReport ? " (användare)" : isComment ? " (kommentar)" : ""}: ${reason}`,
             html,
           }),
         });
