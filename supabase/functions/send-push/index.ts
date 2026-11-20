@@ -95,9 +95,11 @@ serve(async (req) => {
   }
 
   const keyP8 = Deno.env.get("APNS_KEY_P8");
-  const keyId = Deno.env.get("APNS_KEY_ID");
-  const teamId = Deno.env.get("APNS_TEAM_ID") || "JZS9N2HAC8";
-  const topic = Deno.env.get("APNS_TOPIC") || "community.pif.pif";
+  // Trim: a pasted secret easily picks up a trailing space or newline, and
+  // APNs then answers 403 InvalidProviderToken.
+  const keyId = Deno.env.get("APNS_KEY_ID")?.trim();
+  const teamId = Deno.env.get("APNS_TEAM_ID")?.trim() || "JZS9N2HAC8";
+  const topic = Deno.env.get("APNS_TOPIC")?.trim() || "community.pif.pif";
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -151,6 +153,14 @@ serve(async (req) => {
         removed++;
       } else {
         console.error(`send-push: APNs ${env} ${r.status} ${r.reason ?? ""} for device ${d.id}`);
+        if (r.reason === "InvalidProviderToken") {
+          // Shape only, never the values: lets a wrong paste be told apart from a wrong key.
+          console.error(
+            `send-push: key id is ${keyId.length} chars, ${/^[A-Z0-9]{10}$/.test(keyId) ? "well-formed" : "MALFORMED"}; ` +
+              `team id ${/^[A-Z0-9]{10}$/.test(teamId) ? "well-formed" : "MALFORMED"}; ` +
+              `p8 ${keyP8.includes("BEGIN PRIVATE KEY") ? "has" : "LACKS"} a PEM header`,
+          );
+        }
       }
     }
 
