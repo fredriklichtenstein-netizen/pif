@@ -504,6 +504,11 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   no history — always cherry-pick explicit SHAs). Until 2026-10-27 staging lived in a second repo,
   `pif-staging`, created by a Lovable remix; it's archived. Both Lovable projects were deleted and
   their `*.lovable.app` URLs removed from Mapbox, the auth allow-list and DNS (H6).
+- **Never cache `/assets/*` as immutable** (`public/_headers`). Cloudflare Pages answers a missing
+  asset with `index.html` (200, `text/html`), so a browser that asks for a chunk mid-deploy stores
+  HTML in its place; with `immutable, max-age=1y` every lazy page then shows "Kunde inte ladda
+  sidan" until site data is cleared (hit 2026-11-20, `house-*.js`). Now `max-age=3600` (Cloudflare
+  serves 4 h). Symptom in the console: `'text/html' is not a valid JavaScript MIME type`.
 - **`IS_STAGING` export** in `client.ts` (`true` whenever `SUPABASE_URL` isn't production's) drives
   a small "STAGING" pill (`src/components/debug/StagingBadge.tsx`, mounted in `App.tsx`) — a
   permanent visual guard against mistaking one environment's preview for the other's (this
