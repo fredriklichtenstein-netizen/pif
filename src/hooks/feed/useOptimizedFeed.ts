@@ -339,8 +339,16 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
   }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeInactive, feedVersion, authUserId]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
+  // Active posts only: archived/completed ones take no new interest, so the
+  // resume catch-up doesn't refresh their counts.
+  const activePostIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     visiblePostIdsRef.current = new Set(allPosts.map((post) => String(post.id)));
+    activePostIdsRef.current = new Set(
+      allPosts
+        .filter((post) => post.pif_status !== 'archived' && post.pif_status !== 'completed')
+        .map((post) => String(post.id)),
+    );
   }, [allPosts]);
 
   // Load more posts. Uses a ref-guarded functional updater so rapid
@@ -411,9 +419,9 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
       clearPostsCache();
       invalidateOptimizedFeedQueries(queryClient);
       // The invalidation only refetches the page being observed; posts from
-      // earlier pages keep their old counts. Refresh every listed post's
-      // counts in one call.
-      const ids = [...visiblePostIdsRef.current]
+      // earlier pages keep their old counts. Refresh every listed active
+      // post's counts in one call.
+      const ids = [...activePostIdsRef.current]
         .map((id) => parseInt(id, 10))
         .filter((id) => !Number.isNaN(id));
       if (ids.length === 0) return;
