@@ -22,6 +22,11 @@ const config: CapacitorConfig = {
       overlaysWebView: true,
       style: 'LIGHT',
     },
+    // Show pushes as a banner even while PIF is open (iOS hides them by
+    // default for the app in front).
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 600,

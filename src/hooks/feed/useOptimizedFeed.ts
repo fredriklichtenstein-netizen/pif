@@ -10,6 +10,7 @@ import { useInitialCountsStore } from '@/stores/initialCountsStore';
 import type { Post } from '@/types/post';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 import { isSafeMode } from '@/utils/safeMode';
+import { onAppResume } from '@/lib/onAppResume';
 
 // Smaller first page = faster cold paint. Subsequent pages use a
 // larger size to reduce round-trips while scrolling.
@@ -398,6 +399,17 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
 
     return () => clearTimeout(timer);
   }, [page, includeInactive, isAuthenticated]);
+
+  // Realtime is paused while the app sits in the background (iOS suspends
+  // the web view, e.g. with the phone locked), so interests, likes and new
+  // posts that arrived meanwhile were missed. Catch up when it comes back.
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    return onAppResume(() => {
+      clearPostsCache();
+      invalidateOptimizedFeedQueries(queryClient);
+    });
+  }, [queryClient]);
 
   // Feed-level realtime only: one shared channel for new items and visible
   // interaction-count changes. Item cards must never open per-card channels.

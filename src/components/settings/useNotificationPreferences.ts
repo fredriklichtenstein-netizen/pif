@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { fetchMyProfile } from '@/services/profile/myProfile';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,9 @@ export function useNotificationPreferences() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  // Switches stay inert until the stored values are in, so an early flip
+  // can't overwrite them with the defaults below.
+  const [loaded, setLoaded] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     email_messages: true,
     email_mentions: true,
@@ -60,19 +63,20 @@ export function useNotificationPreferences() {
 
         setPreferences(typedPreferences);
       }
+      setLoaded(true);
     } catch (error) {
       console.error("Error in fetchNotificationPreferences:", error);
     }
   };
 
-  const handleToggle = (key: keyof NotificationPreferences) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
+  // Each switch saves as soon as it is flipped (there is no save button).
+  // Saves run one after another, each with the latest state, so quick
+  // successive flips can't land out of order.
+  const latest = useRef(preferences);
+  latest.current = preferences;
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
-  const savePreferences = async () => {
+  const persist = async (next: NotificationPreferences, key: keyof NotificationPreferences) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -81,7 +85,7 @@ export function useNotificationPreferences() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          notification_preferences: preferences as any,
+          notification_preferences: next as any,
         })
         .eq('id', user.id);
 
@@ -89,8 +93,9 @@ export function useNotificationPreferences() {
         console.error("Error updating notification preferences:", error);
         throw error;
       }
-
     } catch (error: any) {
+      // Put the switch back so it shows what is actually stored.
+      setPreferences(prev => ({ ...prev, [key]: !next[key] }));
       toast({
         title: t('post.error'),
         description: error.message,
@@ -101,6 +106,14 @@ export function useNotificationPreferences() {
     }
   };
 
+  const handleToggle = (key: keyof NotificationPreferences) => {
+    if (!loaded) return;
+    const next = { ...latest.current, [key]: !latest.current[key] };
+    latest.current = next;
+    setPreferences(next);
+    saveQueue.current = saveQueue.current.then(() => persist(next, key));
+  };
+
   useEffect(() => {
     fetchNotificationPreferences();
   }, []);
@@ -108,7 +121,7 @@ export function useNotificationPreferences() {
   return {
     preferences,
     loading,
+    loaded,
     handleToggle,
-    savePreferences
   };
 }
