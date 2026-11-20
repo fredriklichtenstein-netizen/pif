@@ -11,6 +11,7 @@ import type { Post } from '@/types/post';
 import type { OperationType } from '@/hooks/feed/useOptimisticFeedUpdates';
 import { isSafeMode } from '@/utils/safeMode';
 import { onAppResume } from '@/lib/onAppResume';
+import { useBlockStore } from '@/stores/blockStore';
 import { OptimizedQueries } from '@/services/database';
 
 // Smaller first page = faster cold paint. Subsequent pages use a
@@ -71,6 +72,7 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
   // Query automatically issues a corrected fetch instead of serving the
   // stale early one indefinitely.
   const authUserId = useAuthStore((s) => s.user?.id) ?? null;
+  const hiddenUserIds = useBlockStore((s) => s.hiddenIds);
   const isAuthenticated = !!authUserId;
   const [page, setPage] = useState(0);
   // Bumped for every archive/restore realtime event. This makes React Query
@@ -322,6 +324,9 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
     return posts.filter((p) => {
       const id = String(p.id);
       if (removedIds.has(id)) return false;
+      // Blocked users (either direction) are hidden from each other.
+      const authorId = String((p as any).user_id ?? p.postedBy?.id ?? '');
+      if (authorId && hiddenUserIds.has(authorId)) return false;
       // Both 'archived' and 'completed' are terminal for feed visibility —
       // completed handoffs live in the Archived/Completed tab. Mirror the
       // helper used by services/posts/optimized.ts so a stale cached page
@@ -336,7 +341,7 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
       if (activeArchivedIds.has(id)) return false;
       return true;
     });
-  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeInactive, feedVersion, authUserId]);
+  }, [page, queryClient, currentPageData, removedIds, activeArchivedIds, includeInactive, feedVersion, authUserId, hiddenUserIds]);
 
   const visiblePostIdsRef = useRef<Set<string>>(new Set());
   // Active posts only: archived/completed ones take no new interest, so the

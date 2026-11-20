@@ -11,16 +11,21 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
+import { useBlockStore } from "@/stores/blockStore";
 
 interface ReportPostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  itemId: string | number;
+  /** The post the report is about; omit when reporting a person. */
+  itemId?: string | number | null;
   commentId?: string | number | null;
   commentText?: string | null;
+  /** Who the report is about. With it, a successful report offers to block them. */
+  reportedUserId?: string | null;
+  reportedUserName?: string | null;
 }
 
-export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commentText }: ReportPostDialogProps) {
+export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commentText, reportedUserId, reportedUserName }: ReportPostDialogProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { session } = useGlobalAuth();
@@ -86,7 +91,8 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
       const result = (await Promise.race([
         supabase.functions.invoke("send-report", {
           body: {
-            itemId: String(itemId),
+            itemId: itemId != null && itemId !== "" ? String(itemId) : null,
+            reportedUserId: reportedUserId ?? null,
             commentId: commentId != null ? String(commentId) : null,
             commentText: commentText ?? null,
             reason: selected?.label ?? reason,
@@ -99,6 +105,22 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
       if (result?.error) throw new Error(result.error.message || "Failed");
       toast.success(t("interactions.report_post_success"));
       onOpenChange(false);
+      // Offer to block the person too, unless it's me or already hidden.
+      if (
+        reportedUserId &&
+        reportedUserId !== userId &&
+        !useBlockStore.getState().hiddenIds.has(String(reportedUserId))
+      ) {
+        const name = reportedUserName?.trim() || undefined;
+        toast(t("blocking.offer_block", { name: name?.split(" ")[0] ?? t("blocking.this_person") }), {
+          duration: 10000,
+          action: {
+            label: t("blocking.offer_block_action"),
+            onClick: () =>
+              useBlockStore.getState().requestBlock({ id: String(reportedUserId), name }),
+          },
+        });
+      }
     } catch (e) {
       console.error("Failed to submit report", e);
       toast.error(t("interactions.report_post_error"));

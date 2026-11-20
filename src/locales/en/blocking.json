@@ -1,0 +1,26 @@
+{
+  "blocking": {
+    "this_person": "this person",
+    "menu_block": "Block {{name}}",
+    "menu_block_generic": "Block user",
+    "confirm_title": "Block {{name}}?",
+    "confirm_body_1": "You and {{name}} will no longer see each other's posts or comments, and neither of you can message, comment on or show interest in the other's posts.",
+    "confirm_body_2": "The other person is not told that you blocked them.",
+    "confirm_body_3": "You can unblock at any time under Settings → Blocked users.",
+    "confirm_button": "Block",
+    "cancel": "Cancel",
+    "blocked_toast": "{{name}} is blocked",
+    "error": "That didn't work. Please try again.",
+    "unblock": "Unblock",
+    "unblocked_toast": "{{name}} is unblocked",
+    "settings_title": "Blocked users",
+    "settings_hint": "You don't see each other's posts or comments and can't contact each other.",
+    "settings_empty": "You haven't blocked anyone.",
+    "chat_blocked": "Messages can't be sent in this conversation.",
+    "cannot_send": "Can't be sent",
+    "report_user": "Report {{name}}",
+    "report_user_generic": "Report user",
+    "offer_block": "Do you also want to block {{name}}?",
+    "offer_block_action": "Block"
+  }
+}

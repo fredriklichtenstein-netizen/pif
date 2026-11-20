@@ -9,19 +9,24 @@ import { MoreHorizontal, Pencil, Trash2, Flag } from "lucide-react";
 import { Button } from "../ui/button";
 import { useTranslation } from 'react-i18next';
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
+import { BlockUserMenuItem } from "@/components/blocking/BlockUserMenuItem";
 
 interface CommentActionsProps {
   isCurrentUserAuthor: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onReport: () => void;
+  authorId?: string;
+  authorName?: string;
 }
 
 export function CommentActions({ 
   isCurrentUserAuthor, 
   onEdit, 
   onDelete, 
-  onReport 
+  onReport,
+  authorId,
+  authorName,
 }: CommentActionsProps) {
   const { t } = useTranslation();
   const { session } = useGlobalAuth();
@@ -52,10 +57,13 @@ export function CommentActions({
           </>
         )}
         {!isCurrentUserAuthor && (
-          <DropdownMenuItem onClick={onReport}>
-            <Flag className="mr-2 h-4 w-4" />
-            {t('comments.report')}
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem onClick={onReport}>
+              <Flag className="mr-2 h-4 w-4" />
+              {t('comments.report')}
+            </DropdownMenuItem>
+            <BlockUserMenuItem userId={authorId} name={authorName} />
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,0 +1,26 @@
+{
+  "blocking": {
+    "this_person": "den här personen",
+    "menu_block": "Blockera {{name}}",
+    "menu_block_generic": "Blockera användare",
+    "confirm_title": "Blockera {{name}}?",
+    "confirm_body_1": "Du och {{name}} ser inte längre varandras inlägg eller kommentarer, och ni kan inte skicka meddelanden, kommentera eller visa intresse för varandras inlägg.",
+    "confirm_body_2": "Den andra personen får inget besked om att du har blockerat.",
+    "confirm_body_3": "Du kan häva blockeringen när som helst under Inställningar → Blockerade användare.",
+    "confirm_button": "Blockera",
+    "cancel": "Avbryt",
+    "blocked_toast": "{{name}} är blockerad",
+    "error": "Det gick inte. Försök igen.",
+    "unblock": "Häv blockering",
+    "unblocked_toast": "Blockeringen av {{name}} är hävd",
+    "settings_title": "Blockerade användare",
+    "settings_hint": "Ni ser inte varandras inlägg eller kommentarer och kan inte kontakta varandra.",
+    "settings_empty": "Du har inte blockerat någon.",
+    "chat_blocked": "Det går inte att skicka meddelanden i den här konversationen.",
+    "cannot_send": "Det går inte att skicka",
+    "report_user": "Rapportera {{name}}",
+    "report_user_generic": "Rapportera användare",
+    "offer_block": "Vill du också blockera {{name}}?",
+    "offer_block_action": "Blockera"
+  }
+}

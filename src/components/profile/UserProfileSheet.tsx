@@ -16,6 +16,8 @@ import { parseCoordinates } from "@/utils/post/parseCoordinates";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useProfileSheetStore } from "@/stores/profileSheetStore";
 import { useUserFilterProfileStore } from "@/stores/userFilterProfileStore";
+import { useBlockStore } from "@/stores/blockStore";
+import { ReportPostDialog } from "@/components/item/ReportPostDialog";
 
 /** "Annas" / "Lars" (sv), "Anna's" / "James'" (en). */
 function possessive(name: string, english: boolean): string {
@@ -53,6 +55,9 @@ export function UserProfileSheet() {
   const [profile, setProfile] = useState<LoadedProfile | null>(null);
   const [stats, setStats] = useState<UserPublicStats | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const requestBlock = useBlockStore((s) => s.requestBlock);
+  const isHidden = useBlockStore((s) => !!target?.id && s.hiddenIds.has(target.id));
 
   const userId = target?.id ?? null;
   const isOwn = !!userId && userId === user?.id;
@@ -196,10 +201,40 @@ export function UserProfileSheet() {
               <Button variant="ghost" className="w-full" onClick={close}>
                 {t("common.close", "Stäng")}
               </Button>
+              {!isOwn && user && userId && (
+                <div className="flex justify-center gap-4 pt-1 text-xs">
+                  <button
+                    type="button"
+                    className="text-muted-foreground underline-offset-2 hover:underline"
+                    onClick={() => setReportOpen(true)}
+                  >
+                    {t("blocking.report_user", { name: firstName })}
+                  </button>
+                  {!isHidden && (
+                    <button
+                      type="button"
+                      className="text-destructive underline-offset-2 hover:underline"
+                      onClick={() => {
+                        close();
+                        requestBlock({ id: userId, name });
+                      }}
+                    >
+                      {t("blocking.menu_block", { name: firstName })}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </SheetContent>
       </Sheet>
+
+      <ReportPostDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        reportedUserId={userId}
+        reportedUserName={name}
+      />
 
       <Dialog open={mapOpen} onOpenChange={setMapOpen}>
         <DialogContent className="max-w-md">

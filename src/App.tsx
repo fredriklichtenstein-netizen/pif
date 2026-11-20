@@ -26,6 +26,7 @@ import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
 import { StagingBadge } from "@/components/debug/StagingBadge";
 import { CampaignTracker } from "@/components/analytics/CampaignTracker";
+import { BlockUserDialogHost } from "@/components/blocking/BlockUserDialogHost";
 import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
 import { debugLog } from "@/utils/authDebug";
 import "./App.css";
@@ -88,6 +89,7 @@ function App() {
               <FeedbackTab />
               <UserProfileSheet />
               <CampaignTracker />
+              <BlockUserDialogHost />
               <Toaster />
               <Sonner />
               <AuthHydrationDebugPanel />
