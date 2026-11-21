@@ -19,7 +19,9 @@ interface Issue {
   subject: Text;
   preview: Text;
   intro: Text;
-  pifs: number[];
+  /** Post ids, or { id, image } to replace the share Worker's /og/<id>.webp
+   *  (e.g. a photo narrower than 1200 px, which the Worker can't crop wide). */
+  pifs: (number | { id: number; image: string })[];
   tips: { title: Text; body: Text }[];
   outro: Text;
   /** Heading over the tips box (default "Tips"). */
@@ -79,12 +81,12 @@ async function fetchPifs(ids: number[]) {
 }
 
 // Photo only, linking to the post (title kept as alt text).
-function pifCard(p: { id: number; title: string }) {
+function pifCard(p: { id: number; title: string; image?: string }) {
   const link = `${APP_URL}/feed?post=${p.id}`;
   return `
     <tr><td style="padding: 0 0 16px;">
       <a href="${link}" style="text-decoration: none; color: inherit; display: block;">
-        <img src="${IMAGE_ORIGIN}/og/${p.id}.webp" width="480" alt="${escape(p.title.trim())}"
+        <img src="${escape(p.image ?? `${IMAGE_ORIGIN}/og/${p.id}.webp`)}" width="480" alt="${escape(p.title.trim())}"
              style="display: block; width: 100%; max-width: 480px; height: auto; border-radius: 12px; border: 0;" />
       </a>
     </td></tr>`;
@@ -171,7 +173,11 @@ if (!file) {
   process.exit(1);
 }
 const issue: Issue = JSON.parse(readFileSync(file, "utf8"));
-const pifs = await fetchPifs(issue.pifs);
+const pifIds = issue.pifs.map((p) => (typeof p === "number" ? p : p.id));
+const imageOverride = new Map(
+  issue.pifs.flatMap((p) => (typeof p === "number" ? [] : [[p.id, p.image] as const])),
+);
+const pifs = (await fetchPifs(pifIds)).map((p) => ({ ...p, image: imageOverride.get(p.id) }));
 const outDir = "newsletter/out";
 mkdirSync(outDir, { recursive: true });
 const name = basename(file, ".json");
