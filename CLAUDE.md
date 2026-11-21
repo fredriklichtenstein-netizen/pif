@@ -304,8 +304,16 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
   pif.today stays untracked: tracking is per domain, so it would also hit auth and notification
   mail, and a tracked domain doesn't route through Resend Forge. The privacy policy (section 6)
   says the newsletter is measured. Like pif.today, news.pif.today has no MX, so it can't receive.
-- **External sign-ups** (107 from the old site's form, CSV) aren't imported yet. They get a welcome
-  email first. Importing puts them in the language segments, i.e. in the next broadcast.
+- **External sign-ups** (107 from the old Wix site's form, CSV, signed up 2022-12 → 2026-01)
+  were imported 2026-11-21: 96 new contacts (76 sv / 20 en, language from "Språkval" before
+  "Språk"), `source` = `external`, in the language segments **and** in two welcome segments,
+  *Välkomst externa – svenska* (`1cfafaff-…`) / *– English* (`08ee921d-…`). The other 11 were
+  already contacts (app users) and were left alone, so they got no welcome. The welcome email
+  (`newsletter/issues/2026-11-welcome-external.json`) went to the welcome segments only, as two
+  broadcasts with `topic_id`, scheduled 2026-11-22 08:00 UTC. The CSV holds personal data and is
+  not in the repo. Issue files may give a post `{ id, image }` to replace `/og/<id>.webp`: a photo
+  narrower than 1200 px comes back from the Worker as a tall image (Supabase's render won't
+  upscale), so use `/storage/v1/render/image/public/<path>?width=500&height=263&resize=cover`.
 - **Language** is per device. `useLanguageSeed` writes the shown language to `profiles.language`
   each session, so emails match what the user sees.
 
