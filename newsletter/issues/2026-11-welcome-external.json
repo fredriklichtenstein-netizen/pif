@@ -1,0 +1,57 @@
+{
+  "subject": {
+    "sv": "Välkommen till PIF – nu är vi igång!",
+    "en": "Welcome to PIF – we're up and running!"
+  },
+  "preview": {
+    "sv": "Appen är lanserad och över 180 grannar är redan med. Så här kommer du igång.",
+    "en": "The app is live and over 180 neighbours have already joined. Here's how to get started."
+  },
+  "intro": {
+    "sv": "Hej!\nFör ett tag sedan anmälde du dig för att få nyheter om PIF – Pay it Forward. Det har tagit sin tid, men nu är vi igång på riktigt: appen är lanserad och över 180 grannar i Stockholmsområdet har redan gått med.\nPIF är ett enkelt sätt att ge bort saker du inte längre använder till någon i närheten – och att hitta det du behöver, helt gratis. Så här ser det ut i flödet just nu:",
+    "en": "Hi!\nA while ago you signed up for news about PIF – Pay it Forward. It's taken a while, but we're properly up and running now: the app has launched and over 180 neighbours in the Stockholm area have already joined.\nPIF is a simple way to give things you no longer use to someone nearby – and to find what you need, completely free. Here's what's in the feed right now:"
+  },
+  "pifs": [146, 148, 144],
+  "tipsTitle": {
+    "sv": "Så funkar PIF",
+    "en": "How PIF works"
+  },
+  "tips": [
+    {
+      "title": { "sv": "Piffa – ge bort", "en": "Pif – give it away" },
+      "body": {
+        "sv": "Fota saken, skriv några rader och publicera. Grannar som vill ha den visar intresse, och du väljer själv vem som får den.",
+        "en": "Take a photo, write a few lines and publish. Neighbours who want it show interest, and you choose who gets it."
+      }
+    },
+    {
+      "title": { "sv": "Önska – be om något", "en": "Wish – ask for something" },
+      "body": {
+        "sv": "Letar du efter något? Lägg upp en önskan, så kan grannar som har det över höra av sig.",
+        "en": "Looking for something? Post a wish, and neighbours who have one to spare can get in touch."
+      }
+    },
+    {
+      "title": { "sv": "Din adress syns aldrig", "en": "Your address is never shown" },
+      "body": {
+        "sv": "Andra ser bara ditt område och en ungefärlig plats på kartan. Upphämtningsdetaljerna får bara den du har valt.",
+        "en": "Others only see your area and an approximate spot on the map. Pickup details go only to the person you've chosen."
+      }
+    },
+    {
+      "title": { "sv": "Appar på väg", "en": "Apps on the way" },
+      "body": {
+        "sv": "Redan nu kan du lägga PIF på hemskärmen direkt från webbläsaren. Appar för iPhone och Android är på väg.",
+        "en": "You can already add PIF to your home screen straight from the browser. Apps for iPhone and Android are on the way."
+      }
+    }
+  ],
+  "outro": {
+    "sv": "Skapa ett konto på pif.today – det tar en minut. Och har du något som står oanvänt hemma? Lägg upp det som din första piff!\nFramöver får du vårt nyhetsbrev då och då, med utvalda piffar och nyheter om appen.",
+    "en": "Create an account at pif.today – it takes a minute. And got something sitting unused at home? Post it as your first pif!\nFrom now on you'll get our newsletter now and then, with featured pifs and news about the app."
+  },
+  "cta": {
+    "text": { "sv": "Kom igång med PIF", "en": "Get started with PIF" },
+    "path": "/"
+  }
+}
