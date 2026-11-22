@@ -13,6 +13,7 @@ import { isSafeMode } from '@/utils/safeMode';
 import { onAppResume } from '@/lib/onAppResume';
 import { useBlockStore } from '@/stores/blockStore';
 import { OptimizedQueries } from '@/services/database';
+import { recentFeedPage, rememberFeedPage } from '@/lib/feedScrollMemory';
 
 // Smaller first page = faster cold paint. Subsequent pages use a
 // larger size to reduce round-trips while scrolling.
@@ -74,12 +75,25 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
   const authUserId = useAuthStore((s) => s.user?.id) ?? null;
   const hiddenUserIds = useBlockStore((s) => s.hiddenIds);
   const isAuthenticated = !!authUserId;
-  const [page, setPage] = useState(0);
+  const queryClient = useQueryClient();
+  // Coming back within a few minutes continues with the pages that were
+  // loaded, so the Feed page can scroll back to the same spot (Trello #123).
+  // Only when every one of those pages is still cached; otherwise page 0.
+  const [page, setPage] = useState(() => {
+    if (DEMO_MODE) return 0;
+    const remembered = recentFeedPage(includeInactive);
+    if (!remembered) return 0;
+    for (let i = 0; i <= remembered; i++) {
+      if (!queryClient.getQueryData(['posts', 'optimized', i, includeInactive, 0, authUserId])) return 0;
+    }
+    return remembered;
+  });
+  const pageRef = useRef(page);
+  pageRef.current = page;
   // Bumped for every archive/restore realtime event. This makes React Query
   // create a fresh feed query instead of relying on invalidating an older key,
   // which could be left stale across repeated archive/restore cycles.
   const [feedVersion, setFeedVersion] = useState(0);
-  const queryClient = useQueryClient();
   // Items currently animating out (still rendered, with fade-out class).
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
   // Items fully removed everywhere (hard delete).
@@ -88,6 +102,9 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
   const [activeArchivedIds, setActiveArchivedIds] = useState<Set<string>>(new Set());
   // Items animating back in after undo/restore.
   const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
+  // Read by the realtime handler, which is created once per scope.
+  const hiddenIdsRef = useRef({ removed: removedIds, archived: activeArchivedIds });
+  hiddenIdsRef.current = { removed: removedIds, archived: activeArchivedIds };
   // Pending fade timers, keyed by item id, so undo can cancel them.
   const fadeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   // Pending fade-in timers so we can clear the class once the animation finishes.
@@ -293,22 +310,15 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
     enabled: !DEMO_MODE // Skip query in demo mode
   });
 
-  // On unmount, purge the React Query cache entries for THIS scope so a
-  // future mount of the opposite scope can never render stale rows from a
-  // prior session before its own fresh fetch completes. Entries are scoped
-  // by `includeInactive` in the query key; removing them is safe because
-  // the surviving scope's cache is untouched.
+  // On unmount, remember how many pages were loaded (see the page state
+  // above). The cached pages are left for React Query's gcTime (5 min) instead
+  // of being purged, so a quick return can show them again; the query key
+  // carries the scope, so the other scope never reads them.
   useEffect(() => {
     return () => {
-      queryClient.removeQueries({
-        predicate: (q) =>
-          Array.isArray(q.queryKey) &&
-          q.queryKey[0] === 'posts' &&
-          q.queryKey[1] === 'optimized' &&
-          q.queryKey[3] === includeInactive,
-      });
+      rememberFeedPage(includeInactive, pageRef.current);
     };
-  }, [queryClient, includeInactive]);
+  }, [includeInactive]);
 
   // Aggregate all pages of posts, then strip optimistically-removed items.
   const allPosts = useMemo(() => {
@@ -499,6 +509,20 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
       refreshCount(itemId, table, countKey);
     };
 
+    // Was this post hidden by this feed, or cached here as archived/completed?
+    const wasOffFeed = (idStr: string): boolean => {
+      if (hiddenIdsRef.current.removed.has(idStr) || hiddenIdsRef.current.archived.has(idStr)) return true;
+      const cached = queryClient.getQueriesData<Post[]>({ queryKey: ['posts', 'optimized'] });
+      for (const [, rows] of cached) {
+        const row = Array.isArray(rows) ? rows.find((p) => String(p.id) === idStr) : undefined;
+        if (row) {
+          const s = (row as any).status ?? (row as any).pif_status;
+          return s === 'archived' || s === 'completed' || !!row.archived_at;
+        }
+      }
+      return false;
+    };
+
     const channel = supabase
       .channel(`feed-shared-realtime-${includeInactive ? 'all' : 'active'}`)
       .on(
@@ -516,48 +540,51 @@ export function useOptimizedFeed(options: { includeInactive?: boolean } = {}) {
         { event: 'UPDATE', schema: 'public', table: 'items' },
         (payload: any) => {
           const newStatus = payload?.new?.pif_status;
-          const oldStatus = payload?.old?.pif_status;
-          // React to any transition that moves an item off (or back onto) the
-          // active feed. Both 'archived' and 'completed' are terminal for feed
-          // visibility — completed items live in the Archived/Completed tab.
-          // `old` may be missing if REPLICA IDENTITY isn't FULL, so we also
-          // treat a present 'archived'/'completed'/'active' status as actionable.
-          const isTerminal = (s: any) => s === 'archived' || s === 'completed';
-          const archivedChanged =
-            (oldStatus !== undefined && newStatus !== oldStatus &&
-              (isTerminal(newStatus) || isTerminal(oldStatus))) ||
-            (oldStatus === undefined &&
-              (isTerminal(newStatus) || newStatus === 'active'));
-          if (!archivedChanged) return;
-          clearPostsCache();
           const itemId = payload?.new?.id ?? payload?.old?.id;
-          if (itemId != null) {
-            const idStr = String(itemId);
-            if (isTerminal(newStatus)) {
-              removePostFromActiveCache(queryClient, idStr);
-              if (!includeInactive) {
-                setActiveArchivedIds((prev) => {
-                  if (prev.has(idStr)) return prev;
-                  const next = new Set(prev);
-                  next.add(idStr);
-                  return next;
-                });
-              }
-            } else {
-              setRemovedIds((prev) => {
-                if (!prev.has(idStr)) return prev;
-                const next = new Set(prev);
-                next.delete(idStr);
-                return next;
-              });
+          if (itemId == null) return;
+          const idStr = String(itemId);
+          // Both 'archived' and 'completed' are terminal for feed visibility.
+          // items has REPLICA IDENTITY DEFAULT, so payload.old never carries
+          // pif_status: compare with what this feed is showing instead. This
+          // used to treat EVERY update of an active post (an edit, the daily
+          // stale job, ...) as "back on the feed" and reset the whole feed to
+          // page 0 — everyone's feed jumped to the top (Trello #124).
+          const isTerminal = (s: any) => s === 'archived' || s === 'completed';
+
+          if (isTerminal(newStatus)) {
+            // A post left the active feed: hide it (or let its badge update)
+            // without moving the reader.
+            clearPostsCache();
+            removePostFromActiveCache(queryClient, idStr);
+            if (!includeInactive) {
               setActiveArchivedIds((prev) => {
-                if (!prev.has(idStr)) return prev;
+                if (prev.has(idStr)) return prev;
                 const next = new Set(prev);
-                next.delete(idStr);
+                next.add(idStr);
                 return next;
               });
             }
+            invalidateOptimizedFeedQueries(queryClient);
+            return;
           }
+
+          if (newStatus !== 'active' || !wasOffFeed(idStr)) return;
+
+          // A post this feed had hidden or showed as archived/completed is
+          // active again (undo / reactivate): reload so it reappears in place.
+          clearPostsCache();
+          setRemovedIds((prev) => {
+            if (!prev.has(idStr)) return prev;
+            const next = new Set(prev);
+            next.delete(idStr);
+            return next;
+          });
+          setActiveArchivedIds((prev) => {
+            if (!prev.has(idStr)) return prev;
+            const next = new Set(prev);
+            next.delete(idStr);
+            return next;
+          });
           setPage(0);
           setFeedVersion((version) => version + 1);
           invalidateOptimizedFeedQueries(queryClient);

@@ -5,6 +5,7 @@ import { LocationPermissionBanner } from "@/components/feed/LocationPermissionBa
 import { HowItWorksBanner } from "@/components/home/HowItWorksBanner";
 
 import { useEffect } from "react";
+import { recentFeedScrollY, rememberFeedScroll } from "@/lib/feedScrollMemory";
 import { FadeIn } from "@/components/animation/FadeIn";
 import { useAnnouncement } from "@/hooks/accessibility/useAnnouncement";
 import { useTranslation } from "react-i18next";
@@ -15,8 +16,39 @@ export default function Feed() {
 
   useEffect(() => {
     announce(t('feed.announcement'));
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [announce, t]);
+
+  // Back on the feed within a few minutes: return to the same spot instead of
+  // the top (Trello #123). The feed hook reloads the same pages from cache;
+  // we wait until they're tall enough, then scroll. A deep link (?post=) or
+  // the drafts view decides its own position.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const target = params.has('post') || params.get('view') === 'drafts' ? null : recentFeedScrollY();
+    let frame = 0;
+    if (!target) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    } else {
+      const started = performance.now();
+      const tryRestore = () => {
+        const reachable = document.documentElement.scrollHeight - window.innerHeight;
+        if (reachable >= target || performance.now() - started > 2500) {
+          window.scrollTo({ top: Math.min(target, Math.max(0, reachable)), left: 0, behavior: 'auto' });
+          return;
+        }
+        frame = requestAnimationFrame(tryRestore);
+      };
+      frame = requestAnimationFrame(tryRestore);
+    }
+    // Tracked while scrolling: by the time an unmount cleanup runs, the next
+    // page has replaced the DOM and window.scrollY is already clamped.
+    const onScroll = () => rememberFeedScroll(window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen-dvh bg-background">
