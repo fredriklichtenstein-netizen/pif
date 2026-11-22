@@ -177,7 +177,19 @@ export function useFetchPosts(options = { includeArchived: false }) {
           archived_reason: item.archived_reason,
           can_meet_elsewhere: !!item.can_meet_elsewhere,
           user_name: user.name,
-          user_avatar: user.avatar || ''
+          user_avatar: user.avatar || '',
+          // The map opens these rows in the full feed card (MapPostCard ->
+          // FeedItemCard), which reads the feed's shape: without postedBy the
+          // poster showed as "Anonymous" (Trello #118), without createdAt no
+          // age, without imageCrops the photo uncropped. Same derivation as
+          // services/posts/transform.ts.
+          postedBy: {
+            ...user,
+            avatar: user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=Unknown',
+          },
+          created_at: (item as any).created_at,
+          createdAt: (item as any).created_at || '',
+          imageCrops: Array.isArray((item as any).image_crops) ? (item as any).image_crops : undefined,
         };
       }) || [], options.includeArchived);
 

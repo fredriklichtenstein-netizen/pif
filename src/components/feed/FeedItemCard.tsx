@@ -60,9 +60,11 @@ function FeedItemCardComponent({ post, onItemOperationSuccess }: FeedItemCardPro
           item_type={normalizedItemType}
           measurements={post.measurements}
           postedBy={post.postedBy || {
+            // Map rows (useFetchPosts) carry user_name / user_avatar; older
+            // cached map rows have no postedBy at all.
             id: post.user_id,
-            name: 'Anonymous',
-            avatar: '',
+            name: post.user_name || 'Anonymous',
+            avatar: post.user_avatar || '',
           }}
           createdAt={post.createdAt}
           archived_at={post.archived_at}
