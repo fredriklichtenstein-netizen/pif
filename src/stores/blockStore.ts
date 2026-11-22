@@ -19,10 +19,13 @@ interface BlockState {
   unblock: (userId: string) => Promise<void>;
 }
 
-const rpc = supabase.rpc as unknown as (
+// Called through the client object: supabase.rpc uses `this`, so a detached
+// reference fails with "undefined is not an object (evaluating 'this.rest')".
+const rpc = (
   fn: string,
   args?: Record<string, unknown>,
-) => Promise<{ data: any; error: { message: string } | null }>;
+): Promise<{ data: any; error: { message: string } | null }> =>
+  (args === undefined ? (supabase.rpc as any)(fn) : (supabase.rpc as any)(fn, args)) as Promise<{ data: any; error: { message: string } | null }>;
 
 export const useBlockStore = create<BlockState>((set, get) => ({
   hiddenIds: new Set(),

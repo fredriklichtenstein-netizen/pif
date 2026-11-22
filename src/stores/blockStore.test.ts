@@ -1,7 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const rpc = vi.fn();
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => rpc(...a) } }));
+// Like the real client, rpc only works when called on the client object.
+vi.mock("@/integrations/supabase/client", () => {
+  const supabase = {
+    rest: {},
+    rpc(this: { rest?: unknown }, ...a: unknown[]) {
+      if (!this?.rest) throw new TypeError("undefined is not an object (evaluating 'this.rest')");
+      return rpc(...a);
+    },
+  };
+  return { supabase };
+});
 
 import { isHiddenUser, isUserBlockedError, useBlockStore } from "./blockStore";
 
