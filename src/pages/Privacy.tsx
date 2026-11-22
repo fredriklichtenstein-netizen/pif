@@ -76,10 +76,6 @@ function SwedishPolicy() {
           </tbody>
         </table>
       </div>
-      <p className={p}>
-        Vill du inte att dina inlägg visas i nyhetsbrev eller sociala medier? Mejla
-        hej@pif.community, så använder vi dem inte.
-      </p>
       <p className={p}>Vi säljer aldrig dina personuppgifter till tredje part.</p>
 
       <h2 className={h2}>3. Delning av uppgifter</h2>
@@ -247,10 +243,6 @@ function EnglishPolicy() {
           </tbody>
         </table>
       </div>
-      <p className={p}>
-        Don't want your posts to appear in newsletters or on social media? Email
-        hej@pif.community and we won't use them.
-      </p>
       <p className={p}>We never sell your personal data to third parties.</p>
 
       <h2 className={h2}>3. Sharing of Data</h2>
