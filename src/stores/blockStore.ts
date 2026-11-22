@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 export interface BlockTarget {
   id: string;
   name?: string;
+  /** Runs after a confirmed block (e.g. the profile sheet closes itself). */
+  onBlocked?: () => void;
 }
 
 interface BlockState {

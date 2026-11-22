@@ -215,8 +215,9 @@ export function UserProfileSheet() {
                       type="button"
                       className="text-destructive underline-offset-2 hover:underline"
                       onClick={() => {
-                        close();
-                        requestBlock({ id: userId, name });
+                        // The sheet stays open under the dialog, so "Avbryt"
+                        // returns here; it closes once the block is confirmed.
+                        requestBlock({ id: userId, name, onBlocked: close });
                       }}
                     >
                       {t("blocking.menu_block", { name: firstName })}

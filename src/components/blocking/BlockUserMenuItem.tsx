@@ -11,7 +11,13 @@ export function BlockUserMenuItem({ userId, name }: { userId?: string | null; na
   const first = name?.trim().split(" ")[0];
   return (
     <DropdownMenuItem
-      onClick={() => requestBlock({ id: String(userId), name: name?.trim() || undefined })}
+      onSelect={() => {
+        // Open the dialog only after the menu has finished closing: opening
+        // it in the same tick leaves Radix's body pointer-events lock behind
+        // and the whole page stops responding.
+        const target = { id: String(userId), name: name?.trim() || undefined };
+        setTimeout(() => requestBlock(target), 0);
+      }}
       className="text-destructive"
     >
       <Ban className="mr-2 h-4 w-4" />
