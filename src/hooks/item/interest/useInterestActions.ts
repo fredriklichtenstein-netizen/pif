@@ -125,11 +125,16 @@ const addInterest = async (itemId: number, userId: string, note?: string) => {
   const payload: Record<string, unknown> = { user_id: userId, item_id: itemId };
   if (note && note.trim()) payload.note = note.trim();
 
+  // Always ON CONFLICT DO NOTHING. "DO UPDATE" (to refresh the note) needs
+  // an UPDATE policy on interests, which deliberately doesn't exist (users
+  // must never update their own status): when the row already existed the
+  // whole request failed with 42501 (Trello #125). An existing row means the
+  // interest is already registered; its earlier note is kept.
   const { error } = await (supabase
     .from('interests') as any)
     .upsert([payload], {
       onConflict: 'user_id,item_id',
-      ignoreDuplicates: !note, // re-upsert when a note is provided so the note isn't lost
+      ignoreDuplicates: true,
     });
 
   if (error) throw error;

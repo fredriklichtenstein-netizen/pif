@@ -419,7 +419,11 @@ export function InteractionButtonWithPopup({
         </PopoverContent>
       </Popover>
 
-      {useWishGrantFlow && (
+      {/* Kept mounted while open, like the pif dialog below: the optimistic
+          flip to "interested" during submit turns useWishGrantFlow false, and
+          unmounting an open Radix dialog leaves the page locked (body
+          pointer-events) -- Trello #124/#125. */}
+      {(useWishGrantFlow || grantOpen) && (
         <GrantWishDialog
           open={grantOpen}
           onOpenChange={(o) => !granting && setGrantOpen(o)}
