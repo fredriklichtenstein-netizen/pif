@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { flashToast } from "@/lib/flashToast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,13 +40,13 @@ export function BlockUserDialogHost() {
     setBusy(true);
     try {
       await block(pending.id);
-      toast.success(t("blocking.blocked_toast", { name }), { duration: 2500 });
+      flashToast("success", t("blocking.blocked_toast", { name }));
       const after = pending.onBlocked;
       cancel();
       after?.();
     } catch (e) {
       console.error("[blocks] block failed", e);
-      toast.error(t("blocking.error"), { duration: 3000 });
+      flashToast("error", t("blocking.error"), 3000);
     } finally {
       setBusy(false);
     }
@@ -56,14 +56,18 @@ export function BlockUserDialogHost() {
     <AlertDialog open={!!pending} onOpenChange={(open) => { if (!open && !busy) cancel(); }}>
       <AlertDialogContent
         onCloseAutoFocus={(e) => {
-          // Don't jump focus back to the (already gone) menu trigger, and lift
-          // a body pointer-events lock Radix can leave behind when this
-          // dialog opened from a closing menu. Keep the lock if another modal
-          // (e.g. the profile sheet) is still open underneath.
+          // Another modal underneath (the profile sheet): let Radix put focus
+          // back on the button there, so the sheet doesn't see focus leave
+          // and close. Opened from a ⋯ menu: that trigger is gone, so skip
+          // the focus return and lift the body pointer-events lock Radix can
+          // leave behind, which otherwise freezes the page.
+          const otherModalOpen = document.querySelector('[role="dialog"][data-state="open"]');
+          if (otherModalOpen) return;
           e.preventDefault();
           setTimeout(() => {
-            const otherModalOpen = document.querySelector('[role="dialog"][data-state="open"]');
-            if (!otherModalOpen) document.body.style.pointerEvents = "";
+            if (!document.querySelector('[role="dialog"][data-state="open"]')) {
+              document.body.style.pointerEvents = "";
+            }
           }, 0);
         }}
       >
