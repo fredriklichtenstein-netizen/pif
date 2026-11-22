@@ -37,6 +37,16 @@ const LOGO_URL = "https://pif.today/pif-logo-long.png";
 const TURQUOISE = "#00CC99";
 const UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
 
+// Campaign tag on every link into the app (?ref=nl-<issue file name>), so sign-ups
+// and first posts/interests/saves can be counted per issue. See "Campaign
+// attribution" in CLAUDE.md; the app reads it in src/components/analytics.
+let CAMPAIGN = "";
+const appLink = (path: string) => {
+  const url = new URL(path, APP_URL);
+  if (CAMPAIGN) url.searchParams.set("ref", CAMPAIGN);
+  return url.toString();
+};
+
 const COPY = {
   sv: {
     lang: "sv",
@@ -82,7 +92,7 @@ async function fetchPifs(ids: number[]) {
 
 // Photo only, linking to the post (title kept as alt text).
 function pifCard(p: { id: number; title: string; image?: string }) {
-  const link = `${APP_URL}/feed?post=${p.id}`;
+  const link = escape(appLink(`/feed?post=${p.id}`));
   return `
     <tr><td style="padding: 0 0 16px;">
       <a href="${link}" style="text-decoration: none; color: inherit; display: block;">
@@ -94,7 +104,7 @@ function pifCard(p: { id: number; title: string; image?: string }) {
 
 const ctaOf = (issue: Issue, lang: Lang) => ({
   text: issue.cta?.text[lang] ?? COPY[lang].cta,
-  url: `${APP_URL}${issue.cta?.path ?? "/feed"}`,
+  url: appLink(issue.cta?.path ?? "/feed"),
 });
 const tipsTitleOf = (issue: Issue, lang: Lang) => issue.tipsTitle?.[lang] ?? COPY[lang].tips;
 
@@ -123,7 +133,7 @@ function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang)
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
          style="max-width: 520px; background: #ffffff; border-radius: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2937;">
     <tr><td style="padding: 28px 20px 8px; text-align: center;">
-      <a href="${APP_URL}"><img src="${LOGO_URL}" alt="PIF - Pay it Forward" height="32" style="height: 32px; width: auto; border: 0;" /></a>
+      <a href="${escape(appLink("/"))}"><img src="${LOGO_URL}" alt="PIF - Pay it Forward" height="32" style="height: 32px; width: auto; border: 0;" /></a>
     </td></tr>
     <tr><td style="padding: 16px 20px 4px;">
       ${paragraphs(issue.intro[lang], "margin: 0 0 12px; font-size: 16px; line-height: 1.55;")}
@@ -141,7 +151,7 @@ function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang)
       ${paragraphs(issue.outro[lang], "margin: 0 0 12px; font-size: 16px; line-height: 1.55;")}
     </td></tr>
     <tr><td align="center" style="padding: 12px 20px 28px;">
-      <a href="${cta.url}" style="display: inline-block; background: ${TURQUOISE}; color: #ffffff; text-decoration: none; padding: 13px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">${escape(cta.text)}</a>
+      <a href="${escape(cta.url)}" style="display: inline-block; background: ${TURQUOISE}; color: #ffffff; text-decoration: none; padding: 13px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">${escape(cta.text)}</a>
     </td></tr>
   </table>
   <p style="max-width: 520px; margin: 16px auto 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; line-height: 1.5; color: #9ca3af; text-align: center;">
@@ -160,7 +170,7 @@ function renderText(issue: Issue, pifs: { id: number; title: string }[], lang: L
   const cta = ctaOf(issue, lang);
   return [
     issue.intro[lang],
-    ...pifs.map((p) => `${p.title.trim()}\n${APP_URL}/feed?post=${p.id}`),
+    ...pifs.map((p) => `${p.title.trim()}\n${appLink(`/feed?post=${p.id}`)}`),
     `${tipsTitleOf(issue, lang).toUpperCase()}\n` + issue.tips.map((t) => `${t.title[lang]}: ${t.body[lang]}`).join("\n"),
     `${issue.outro[lang]}\n${cta.text}: ${cta.url}`,
     `--\n${c.footer}\n${c.unsubscribe}: ${UNSUBSCRIBE}`,
@@ -181,6 +191,8 @@ const pifs = (await fetchPifs(pifIds)).map((p) => ({ ...p, image: imageOverride.
 const outDir = "newsletter/out";
 mkdirSync(outDir, { recursive: true });
 const name = basename(file, ".json");
+CAMPAIGN = `nl-${name.toLowerCase().replace(/[^a-z0-9-]+/g, "-")}`.slice(0, 63);
+console.log(`campaign tag: ${CAMPAIGN}`);
 for (const lang of ["sv", "en"] as Lang[]) {
   const path = join(outDir, `${name}.${lang}.html`);
   writeFileSync(path, render(issue, pifs, lang));

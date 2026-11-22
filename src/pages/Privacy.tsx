@@ -70,11 +70,16 @@ function SwedishPolicy() {
             <tr><td className={td}>Matcha piffar och önskningar mellan användare</td><td className={td}>Fullgörande av avtal (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Skicka aviseringar om aktivitet som rör dig</td><td className={td}>Fullgörande av avtal (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Skicka vårt nyhetsbrev (du kan avsluta det i varje utskick och under Inställningar)</td><td className={td}>Berättigat intresse (GDPR art. 6.1.f)</td></tr>
+            <tr><td className={td}>Visa vad som finns i PIF: bilder och rubriker från offentliga inlägg kan visas i vårt nyhetsbrev och när vi berättar om PIF i sociala medier (aldrig din adress eller ditt namn)</td><td className={td}>Berättigat intresse (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Hantera rapporter och säkerhet</td><td className={td}>Berättigat intresse (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Förbättra tjänsten</td><td className={td}>Berättigat intresse (GDPR art. 6.1.f)</td></tr>
           </tbody>
         </table>
       </div>
+      <p className={p}>
+        Vill du inte att dina inlägg visas i nyhetsbrev eller sociala medier? Mejla
+        hej@pif.community, så använder vi dem inte.
+      </p>
       <p className={p}>Vi säljer aldrig dina personuppgifter till tredje part.</p>
 
       <h2 className={h2}>3. Delning av uppgifter</h2>
@@ -138,6 +143,14 @@ function SwedishPolicy() {
         och länkar som går via vår e-posttjänst Resend. Vi använder det bara för att förstå vad
         som är intressant och göra nyhetsbrevet bättre. Övriga mejl från PIF, som aviseringar och
         inloggningsmejl, mäts inte. Du kan när som helst avsluta nyhetsbrevet.
+      </p>
+      <p className={p}>
+        Länkarna i nyhetsbrevet är märkta med vilket utskick de kommer från. Om du klickar på en
+        sådan länk och inom 30 dagar skapar ett konto, lägger upp ditt första inlägg, visar intresse
+        eller sparar ett inlägg, sparar vi vilket utskick det var, kopplat till ditt konto. Har du
+        anmält dig till nyhetsbrevet innan du skapade ett konto kan vi också se att du har gått med.
+        Vi tittar bara på sammanlagda siffror per utskick, till exempel hur många som skapade ett
+        konto efter ett visst nyhetsbrev, för att förstå vilka utskick som gör nytta.
       </p>
 
       <h2 className={h2}>7. Åldersgräns</h2>
@@ -228,11 +241,16 @@ function EnglishPolicy() {
             <tr><td className={td}>Matching pifs and wishes between users</td><td className={td}>Performance of contract (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Sending notifications about activity relevant to you</td><td className={td}>Performance of contract (GDPR art. 6.1.b)</td></tr>
             <tr><td className={td}>Sending our newsletter (you can unsubscribe in every issue and under Settings)</td><td className={td}>Legitimate interest (GDPR art. 6.1.f)</td></tr>
+            <tr><td className={td}>Showing what's on PIF: photos and titles from public posts may appear in our newsletter and when we talk about PIF on social media (never your address or your name)</td><td className={td}>Legitimate interest (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Managing reports and security</td><td className={td}>Legitimate interest (GDPR art. 6.1.f)</td></tr>
             <tr><td className={td}>Improving the service</td><td className={td}>Legitimate interest (GDPR art. 6.1.f)</td></tr>
           </tbody>
         </table>
       </div>
+      <p className={p}>
+        Don't want your posts to appear in newsletters or on social media? Email
+        hej@pif.community and we won't use them.
+      </p>
       <p className={p}>We never sell your personal data to third parties.</p>
 
       <h2 className={h2}>3. Sharing of Data</h2>
@@ -296,6 +314,14 @@ function EnglishPolicy() {
         small image and links that pass through our email service Resend. We use this only to
         understand what is interesting and to improve the newsletter. Other emails from PIF, such
         as notifications and sign-in emails, are not measured. You can unsubscribe at any time.
+      </p>
+      <p className={p}>
+        Links in the newsletter are tagged with the issue they come from. If you click such a link
+        and within 30 days create an account, post for the first time, show interest or save a
+        post, we store which issue it was, linked to your account. If you signed up for the
+        newsletter before creating an account, we can also see that you have joined. We only look
+        at totals per issue, for example how many people created an account after a given
+        newsletter, to understand which issues are useful.
       </p>
 
       <h2 className={h2}>7. Age Restriction</h2>
