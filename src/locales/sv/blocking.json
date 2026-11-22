@@ -21,6 +21,8 @@
     "report_user": "Rapportera {{name}}",
     "report_user_generic": "Rapportera användare",
     "offer_block": "Vill du också blockera {{name}}?",
-    "offer_block_action": "Blockera"
+    "offer_block_action": "Blockera",
+    "unblock_confirm_title": "Häva blockeringen av {{name}}?",
+    "unblock_confirm_body": "Ni kommer att se varandras inlägg och kommentarer igen, och ni kan skicka meddelanden till varandra."
   }
 }

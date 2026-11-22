@@ -21,6 +21,8 @@
     "report_user": "Report {{name}}",
     "report_user_generic": "Report user",
     "offer_block": "Do you also want to block {{name}}?",
-    "offer_block_action": "Block"
+    "offer_block_action": "Block",
+    "unblock_confirm_title": "Unblock {{name}}?",
+    "unblock_confirm_body": "You will see each other's posts and comments again, and you can message each other."
   }
 }

@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
 import { useBlockStore } from "@/stores/blockStore";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface BlockedUser {
   user_id: string;
@@ -21,6 +31,8 @@ export function BlockedUsersSettings() {
   const hiddenIds = useBlockStore((s) => s.hiddenIds);
   const [users, setUsers] = useState<BlockedUser[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Asked first, so an unblock never happens by a stray tap.
+  const [confirmUser, setConfirmUser] = useState<BlockedUser | null>(null);
 
   const load = useCallback(async () => {
     const { data, error } = await (supabase.rpc as any)("get_my_blocked_users");
@@ -56,7 +68,32 @@ export function BlockedUsersSettings() {
     return <p className="text-sm text-muted-foreground">{t("blocking.settings_empty")}</p>;
   }
 
+  const confirmName = confirmUser
+    ? [confirmUser.first_name, confirmUser.last_name].filter(Boolean).join(" ") || t("blocking.this_person")
+    : "";
+
   return (
+    <>
+    <AlertDialog open={!!confirmUser} onOpenChange={(open) => { if (!open) setConfirmUser(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("blocking.unblock_confirm_title", { name: confirmName })}</AlertDialogTitle>
+          <AlertDialogDescription>{t("blocking.unblock_confirm_body")}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("blocking.cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              const u = confirmUser;
+              setConfirmUser(null);
+              if (u) void handleUnblock(u);
+            }}
+          >
+            {t("blocking.unblock")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <ul className="divide-y">
       {users.map((u) => {
         const name = [u.first_name, u.last_name].filter(Boolean).join(" ");
@@ -70,7 +107,7 @@ export function BlockedUsersSettings() {
               variant="outline"
               size="sm"
               disabled={busyId === u.user_id}
-              onClick={() => void handleUnblock(u)}
+              onClick={() => setConfirmUser(u)}
             >
               {t("blocking.unblock")}
             </Button>
@@ -78,5 +115,6 @@ export function BlockedUsersSettings() {
         );
       })}
     </ul>
+    </>
   );
 }
