@@ -1,0 +1,83 @@
+{
+  "subject": {
+    "sv": "Äntligen! PIF finns nu på riktigt 🎉",
+    "en": "It's finally here! PIF is up and running 🎉"
+  },
+  "preview": {
+    "sv": "När du anmälde dig var PIF en idé. Nu är appen här – så här funkar den.",
+    "en": "When you signed up, PIF was just an idea. Now the app is here – here's how it works."
+  },
+  "intro": {
+    "sv": "Hej!\nNär du anmälde dig till PIF – Pay it Forward var det bara en idé: tänk om det vore lika enkelt att ge bort saker till grannarna som att slänga dem. Nu är idén verklighet! Appen är lanserad, och över 180 grannar i Stockholmsområdet har redan gått med och lagt upp över 100 piffar och önskningar.\nSå här funkar det: i PIF ser du saker som grannar i närheten ger bort – i ett flöde och på en karta. Ser du något du vill ha visar du intresse, och den som ger bort saken väljer vem som får den. Ni bestämmer upphämtning i chatten, och sedan är det klart. Allt är gratis, alltid – inga pengar, ingen budgivning.\nHär är fyra saker som just nu väntar på en ny ägare:",
+    "en": "Hi!\nWhen you signed up for PIF – Pay it Forward, it was just an idea: what if giving things to your neighbours were as easy as throwing them away? Now that idea is real! The app has launched, and over 180 neighbours in the Stockholm area have already joined and posted more than 100 pifs and wishes.\nHere's how it works: in PIF you see things that neighbours nearby are giving away – in a feed and on a map. See something you'd like? Show interest, and the person giving it away chooses who gets it. You arrange the pickup in the chat, and that's it. Everything is free, always – no money, no bidding.\nHere are four things waiting for a new owner right now:"
+  },
+  "pifs": [
+    150,
+    121,
+    110,
+    116
+  ],
+  "tipsTitle": {
+    "sv": "Det här kan du göra i PIF",
+    "en": "What you can do in PIF"
+  },
+  "tips": [
+    {
+      "title": { "sv": "Piffa – ge bort det du inte använder", "en": "Pif – give away what you don't use" },
+      "body": {
+        "sv": "Ta en bild, skriv några rader, välj kategori – klart på en minut. Du kan spara utkast och schemalägga när inlägget ska publiceras.",
+        "en": "Take a photo, write a few lines, pick a category – done in a minute. You can save drafts and schedule when the post goes live."
+      }
+    },
+    {
+      "title": { "sv": "Hitta saker nära dig", "en": "Find things near you" },
+      "body": {
+        "sv": "Bläddra i flödet eller på kartan, filtrera på kategori och avstånd, och spara det du vill hålla koll på.",
+        "en": "Browse the feed or the map, filter by category and distance, and save the things you want to keep an eye on."
+      }
+    },
+    {
+      "title": { "sv": "Ingen kapplöpning", "en": "No race to be first" },
+      "body": {
+        "sv": "Den som piffar väljer själv vem som får saken bland alla som visat intresse – du behöver inte vara snabbast.",
+        "en": "The person giving something away chooses who gets it from everyone who showed interest – you don't have to be the fastest."
+      }
+    },
+    {
+      "title": { "sv": "Önska det du behöver", "en": "Wish for what you need" },
+      "body": {
+        "sv": "Letar du efter en barnstol, en borrmaskin eller en ny bok? Lägg upp en önskan, så kan flera grannar som har något över hjälpa till.",
+        "en": "Looking for a high chair, a drill or a new book? Post a wish, and neighbours who have one to spare can help out."
+      }
+    },
+    {
+      "title": { "sv": "Chatta och kom överens", "en": "Chat and agree" },
+      "body": {
+        "sv": "Bestäm tid och plats i appens chatt. Hämta på adressen eller mötas upp någon annanstans – det väljer ni.",
+        "en": "Agree on a time and place in the app's chat. Pick up at the address or meet somewhere else – it's up to you."
+      }
+    },
+    {
+      "title": { "sv": "Din adress syns aldrig", "en": "Your address is never shown" },
+      "body": {
+        "sv": "Andra ser bara ditt område och en ungefärlig plats på kartan. Upphämtningsdetaljerna får bara den du har valt.",
+        "en": "Others only see your area and an approximate spot on the map. Pickup details go only to the person you've chosen."
+      }
+    },
+    {
+      "title": { "sv": "I mobilen – och snart i App Store", "en": "On your phone – and soon in the app stores" },
+      "body": {
+        "sv": "Lägg PIF på hemskärmen direkt från webbläsaren, så funkar den som en app. Appar för iPhone och Android är på väg.",
+        "en": "Add PIF to your home screen straight from the browser and it works like an app. Apps for iPhone and Android are on the way."
+      }
+    }
+  ],
+  "outro": {
+    "sv": "Det enda som saknas nu är du! Skapa ett gratis konto på pif.today – det tar en minut. Har du något som står oanvänt hemma? Lägg upp det som din första piff och se hur snabbt det hittar ett nytt hem. Och ju fler grannar som är med, desto mer finns att hitta – så tipsa gärna någon du känner.\nFramöver får du vårt nyhetsbrev då och då, med utvalda piffar och nyheter om appen. Varmt välkommen!",
+    "en": "The only thing missing now is you! Create a free account at pif.today – it takes a minute. Got something sitting unused at home? Post it as your first pif and see how quickly it finds a new home. And the more neighbours who join, the more there is to find – so feel free to tell someone you know.\nFrom now on you'll get our newsletter now and then, with featured pifs and news about the app. A warm welcome!"
+  },
+  "cta": {
+    "text": { "sv": "Kom igång med PIF", "en": "Get started with PIF" },
+    "path": "/"
+  }
+}

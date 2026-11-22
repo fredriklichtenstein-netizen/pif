@@ -19,9 +19,15 @@ interface Issue {
   subject: Text;
   preview: Text;
   intro: Text;
-  pifs: number[];
+  /** Post ids, or { id, image } to replace the share Worker's /og/<id>.webp
+   *  (e.g. a photo narrower than 1200 px, which the Worker can't crop wide). */
+  pifs: (number | { id: number; image: string })[];
   tips: { title: Text; body: Text }[];
   outro: Text;
+  /** Heading over the tips box (default "Tips"). */
+  tipsTitle?: Text;
+  /** Button text + app path (default "Öppna PIF" -> /feed). */
+  cta?: { text: Text; path: string };
 }
 
 const APP_URL = "https://pif.today";
@@ -30,6 +36,16 @@ const IMAGE_ORIGIN = "https://app.pif.community";
 const LOGO_URL = "https://pif.today/pif-logo-long.png";
 const TURQUOISE = "#00CC99";
 const UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
+
+// Campaign tag on every link into the app (?ref=nl-<issue file name>), so sign-ups
+// and first posts/interests/saves can be counted per issue. See "Campaign
+// attribution" in CLAUDE.md; the app reads it in src/components/analytics.
+let CAMPAIGN = "";
+const appLink = (path: string) => {
+  const url = new URL(path, APP_URL);
+  if (CAMPAIGN) url.searchParams.set("ref", CAMPAIGN);
+  return url.toString();
+};
 
 const COPY = {
   sv: {
@@ -75,19 +91,26 @@ async function fetchPifs(ids: number[]) {
 }
 
 // Photo only, linking to the post (title kept as alt text).
-function pifCard(p: { id: number; title: string }) {
-  const link = `${APP_URL}/feed?post=${p.id}`;
+function pifCard(p: { id: number; title: string; image?: string }) {
+  const link = escape(appLink(`/feed?post=${p.id}`));
   return `
     <tr><td style="padding: 0 0 16px;">
       <a href="${link}" style="text-decoration: none; color: inherit; display: block;">
-        <img src="${IMAGE_ORIGIN}/og/${p.id}.webp" width="480" alt="${escape(p.title.trim())}"
+        <img src="${escape(p.image ?? `${IMAGE_ORIGIN}/og/${p.id}.webp`)}" width="480" alt="${escape(p.title.trim())}"
              style="display: block; width: 100%; max-width: 480px; height: auto; border-radius: 12px; border: 0;" />
       </a>
     </td></tr>`;
 }
 
+const ctaOf = (issue: Issue, lang: Lang) => ({
+  text: issue.cta?.text[lang] ?? COPY[lang].cta,
+  url: appLink(issue.cta?.path ?? "/feed"),
+});
+const tipsTitleOf = (issue: Issue, lang: Lang) => issue.tipsTitle?.[lang] ?? COPY[lang].tips;
+
 function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang) {
   const c = COPY[lang];
+  const cta = ctaOf(issue, lang);
   const tips = issue.tips
     .map(
       (t) => `
@@ -110,7 +133,7 @@ function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang)
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
          style="max-width: 520px; background: #ffffff; border-radius: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1f2937;">
     <tr><td style="padding: 28px 20px 8px; text-align: center;">
-      <a href="${APP_URL}"><img src="${LOGO_URL}" alt="PIF - Pay it Forward" height="32" style="height: 32px; width: auto; border: 0;" /></a>
+      <a href="${escape(appLink("/"))}"><img src="${LOGO_URL}" alt="PIF - Pay it Forward" height="32" style="height: 32px; width: auto; border: 0;" /></a>
     </td></tr>
     <tr><td style="padding: 16px 20px 4px;">
       ${paragraphs(issue.intro[lang], "margin: 0 0 12px; font-size: 16px; line-height: 1.55;")}
@@ -120,7 +143,7 @@ function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang)
     </td></tr>
     <tr><td style="padding: 0 20px;">
       <div style="background: #FFF7E6; border-left: 4px solid #FFCC66; border-radius: 8px; padding: 16px 16px 4px;">
-        <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #92400e;">${c.tips}</p>
+        <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #92400e;">${escape(tipsTitleOf(issue, lang))}</p>
         ${tips}
       </div>
     </td></tr>
@@ -128,7 +151,7 @@ function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang)
       ${paragraphs(issue.outro[lang], "margin: 0 0 12px; font-size: 16px; line-height: 1.55;")}
     </td></tr>
     <tr><td align="center" style="padding: 12px 20px 28px;">
-      <a href="${APP_URL}/feed" style="display: inline-block; background: ${TURQUOISE}; color: #ffffff; text-decoration: none; padding: 13px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">${c.cta}</a>
+      <a href="${escape(cta.url)}" style="display: inline-block; background: ${TURQUOISE}; color: #ffffff; text-decoration: none; padding: 13px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">${escape(cta.text)}</a>
     </td></tr>
   </table>
   <p style="max-width: 520px; margin: 16px auto 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; line-height: 1.5; color: #9ca3af; text-align: center;">
@@ -144,11 +167,12 @@ function render(issue: Issue, pifs: { id: number; title: string }[], lang: Lang)
 
 function renderText(issue: Issue, pifs: { id: number; title: string }[], lang: Lang) {
   const c = COPY[lang];
+  const cta = ctaOf(issue, lang);
   return [
     issue.intro[lang],
-    ...pifs.map((p) => `${p.title.trim()}\n${APP_URL}/feed?post=${p.id}`),
-    `${c.tips.toUpperCase()}\n` + issue.tips.map((t) => `${t.title[lang]}: ${t.body[lang]}`).join("\n"),
-    `${issue.outro[lang]}\n${APP_URL}/feed`,
+    ...pifs.map((p) => `${p.title.trim()}\n${appLink(`/feed?post=${p.id}`)}`),
+    `${tipsTitleOf(issue, lang).toUpperCase()}\n` + issue.tips.map((t) => `${t.title[lang]}: ${t.body[lang]}`).join("\n"),
+    `${issue.outro[lang]}\n${cta.text}: ${cta.url}`,
     `--\n${c.footer}\n${c.unsubscribe}: ${UNSUBSCRIBE}`,
   ].join("\n\n");
 }
@@ -159,10 +183,16 @@ if (!file) {
   process.exit(1);
 }
 const issue: Issue = JSON.parse(readFileSync(file, "utf8"));
-const pifs = await fetchPifs(issue.pifs);
+const pifIds = issue.pifs.map((p) => (typeof p === "number" ? p : p.id));
+const imageOverride = new Map(
+  issue.pifs.flatMap((p) => (typeof p === "number" ? [] : [[p.id, p.image] as const])),
+);
+const pifs = (await fetchPifs(pifIds)).map((p) => ({ ...p, image: imageOverride.get(p.id) }));
 const outDir = "newsletter/out";
 mkdirSync(outDir, { recursive: true });
 const name = basename(file, ".json");
+CAMPAIGN = `nl-${name.toLowerCase().replace(/[^a-z0-9-]+/g, "-")}`.slice(0, 63);
+console.log(`campaign tag: ${CAMPAIGN}`);
 for (const lang of ["sv", "en"] as Lang[]) {
   const path = join(outDir, `${name}.${lang}.html`);
   writeFileSync(path, render(issue, pifs, lang));

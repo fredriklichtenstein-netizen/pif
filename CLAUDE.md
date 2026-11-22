@@ -304,10 +304,40 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
   pif.today stays untracked: tracking is per domain, so it would also hit auth and notification
   mail, and a tracked domain doesn't route through Resend Forge. The privacy policy (section 6)
   says the newsletter is measured. Like pif.today, news.pif.today has no MX, so it can't receive.
-- **External sign-ups** (107 from the old site's form, CSV) aren't imported yet. They get a welcome
-  email first. Importing puts them in the language segments, i.e. in the next broadcast.
+- **External sign-ups** (107 from the old Wix site's form, CSV, signed up 2022-12 → 2026-01)
+  were imported 2026-11-21: 96 new contacts (76 sv / 20 en, language from "Språkval" before
+  "Språk"), `source` = `external`, in the language segments **and** in two welcome segments,
+  *Välkomst externa – svenska* (`1cfafaff-…`) / *– English* (`08ee921d-…`). The other 11 were
+  already contacts (app users) and were left alone, so they got no welcome. The welcome email
+  (`newsletter/issues/2026-11-welcome-external.json`) went to the welcome segments only, as two
+  broadcasts with `topic_id`, scheduled 2026-11-22 08:00 UTC. The CSV holds personal data and is
+  not in the repo. Issue files may give a post `{ id, image }` to replace `/og/<id>.webp`: a photo
+  narrower than 1200 px comes back from the Worker as a tall image (Supabase's render won't
+  upscale), so use `/storage/v1/render/image/public/<path>?width=500&height=263&resize=cover`.
 - **Language** is per device. `useLanguageSeed` writes the shown language to `profiles.language`
   each session, so emails match what the user sees.
+
+## Campaign attribution (since 2026-11-22)
+
+What people do in the app after clicking a newsletter link. Reported per campaign as counts only.
+- **Links:** `scripts/newsletter.ts` adds `?ref=nl-<issue file name>` to every link into the app
+  (logo, posts, button, text version). Only `nl-[a-z0-9-]{1,60}` is accepted anywhere.
+- **App:** `src/components/analytics/CampaignTracker.tsx` (mounted in `App.tsx`) picks the tag up
+  on any route (also in-app deep links), keeps it on the device for 30 days
+  (`src/lib/campaignRef.ts`, latest click wins), removes it from the URL, and once signed in calls
+  `record_campaign_touch(p_campaign, p_touched_at)`. That returns false until the profile exists
+  (a new account is signed in before "Skapa profil"), so the tag is kept and retried.
+- **DB** (migration `20261122010000_campaign_attribution`): `campaign_touches` and
+  `campaign_events` (PK user + campaign + event), RLS on with no policies and no client grants.
+  `signup` = account created after the click (5 min clock slack); triggers on `items` / `interests`
+  / `likes` add `first_post` / `first_interest` / `first_save` for the latest touch within 30 days.
+  Triggers swallow their own errors.
+- **Report:** `bun scripts/campaign-report.ts` (production; `PROJECT=<ref>` for another): per
+  campaign, and how many of the imported external sign-ups have an account and what they have done
+  since the import. Uses the Management API + Resend API (proxy-injected in cloud sessions).
+- **Privacy policy** section 6 describes it; section 2 says photos and titles of public posts may
+  appear in the newsletter and on social media (never address or name). No separate opt-out:
+  the right to object (section 5) covers it, and an objection must be honoured.
 
 ## Native apps (Capacitor, Trello G3 — decided 2026-11-15)
 
