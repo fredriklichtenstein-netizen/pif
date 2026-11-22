@@ -279,10 +279,16 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
       ctaKind === "select_receiver" || ctaKind === "select_fulfiller" ? { selectReceiver: "true" } : {},
     );
     const heading = copy.heading(itemTitle, daysOpen);
+    // Posts with a chosen receiver/helper are never auto-archived (Trello #122,
+    // _process_stale_items since 2026-11-22), so the warning only goes with
+    // the cases that still can be.
+    const archiveNote = ["no_interest", "select_receiver", "select_fulfiller"].includes(ctaKind)
+      ? `<p style="color:#6b7280; font-size: 14px;">Piffar och önskningar som inte avslutas arkiveras automatiskt efter 30 dagar.</p>`
+      : "";
     return {
       subject: heading,
       html: wrapEmail(
-        `<h2 style="font-size: 18px;">${escape(heading)}</h2><p>${escape(copy.body(daysOpen))}</p><p style="color:#6b7280; font-size: 14px;">Piffar och önskningar som inte avslutas arkiveras automatiskt efter 30 dagar.</p>`,
+        `<h2 style="font-size: 18px;">${escape(heading)}</h2><p>${escape(copy.body(daysOpen))}</p>${archiveNote}`,
         itemUrl,
         copy.ctaLabel,
         unsubscribeUrl,

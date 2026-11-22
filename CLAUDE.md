@@ -227,6 +227,14 @@ more. The toolbar is just Filtrera + sort, with removable chips for active filte
 (alla / mina / visat intresse / utkast) in Filtrera is one choice over `onlyOwnPosts`/
 `onlyInterested` (shared with the map) and the drafts view.
 
+**Stale posts** (`_process_stale_items()`, cron `process-stale-items` 06:00 UTC; since 2026-11-22,
+migration `20261122140000_stale_items_selected_receiver`): reminders at 7/14/21/28 days and
+auto-archive at 30 only for posts with **nobody chosen**. A pif whose giver confirmed the handover
+is marked `completed` at 30 days even if the receiver never confirmed; a post with a chosen
+receiver/helper is never archived and keeps a weekly "confirm" reminder up to 8 weeks. The
+in-app/push title is worded per situation (like the email's `STALE_CTA_COPY`), and the email's
+"arkiveras efter 30 dagar" line only shows for `no_interest` / `select_receiver` / `select_fulfiller`.
+
 Feedback screenshots: html2canvas copies a WebGL canvas (Mapbox) as blank unless it was created
 with `preserveDrawingBuffer: true` — all three maps set it; keep it on any new map.
 
