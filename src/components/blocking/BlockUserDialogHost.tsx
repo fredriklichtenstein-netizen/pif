@@ -40,11 +40,13 @@ export function BlockUserDialogHost() {
     setBusy(true);
     try {
       await block(pending.id);
-      toast.success(t("blocking.blocked_toast", { name }));
+      toast.success(t("blocking.blocked_toast", { name }), { duration: 2500 });
+      const after = pending.onBlocked;
       cancel();
+      after?.();
     } catch (e) {
       console.error("[blocks] block failed", e);
-      toast.error(t("blocking.error"));
+      toast.error(t("blocking.error"), { duration: 3000 });
     } finally {
       setBusy(false);
     }
@@ -52,7 +54,19 @@ export function BlockUserDialogHost() {
 
   return (
     <AlertDialog open={!!pending} onOpenChange={(open) => { if (!open && !busy) cancel(); }}>
-      <AlertDialogContent>
+      <AlertDialogContent
+        onCloseAutoFocus={(e) => {
+          // Don't jump focus back to the (already gone) menu trigger, and lift
+          // a body pointer-events lock Radix can leave behind when this
+          // dialog opened from a closing menu. Keep the lock if another modal
+          // (e.g. the profile sheet) is still open underneath.
+          e.preventDefault();
+          setTimeout(() => {
+            const otherModalOpen = document.querySelector('[role="dialog"][data-state="open"]');
+            if (!otherModalOpen) document.body.style.pointerEvents = "";
+          }, 0);
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{t("blocking.confirm_title", { name })}</AlertDialogTitle>
           <AlertDialogDescription asChild>

@@ -41,11 +41,11 @@ export function BlockedUsersSettings() {
     setBusyId(u.user_id);
     try {
       await unblock(u.user_id);
-      toast.success(t("blocking.unblocked_toast", { name }));
+      toast.success(t("blocking.unblocked_toast", { name }), { duration: 2500 });
       await load();
     } catch (e) {
       console.error("[blocks] unblock failed", e);
-      toast.error(t("blocking.error"));
+      toast.error(t("blocking.error"), { duration: 3000 });
     } finally {
       setBusyId(null);
     }

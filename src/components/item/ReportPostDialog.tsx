@@ -103,7 +103,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
         timeout,
       ])) as { error?: { message?: string } | null };
       if (result?.error) throw new Error(result.error.message || "Failed");
-      toast.success(t("interactions.report_post_success"));
+      toast.success(t("interactions.report_post_success"), { duration: 2500 });
       onOpenChange(false);
       // Offer to block the person too, unless it's me or already hidden.
       if (
@@ -113,7 +113,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
       ) {
         const name = reportedUserName?.trim() || undefined;
         toast(t("blocking.offer_block", { name: name?.split(" ")[0] ?? t("blocking.this_person") }), {
-          duration: 10000,
+          duration: 6000,
           action: {
             label: t("blocking.offer_block_action"),
             onClick: () =>
