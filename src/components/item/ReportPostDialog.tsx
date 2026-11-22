@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AvatarImage } from "@/components/ui/optimized-image";
-import { toast } from "sonner";
+import { flashToast } from "@/lib/flashToast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
 import { useCachedProfile } from "@/hooks/profile/useCachedProfile";
@@ -103,7 +103,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
         timeout,
       ])) as { error?: { message?: string } | null };
       if (result?.error) throw new Error(result.error.message || "Failed");
-      toast.success(t("interactions.report_post_success"), { duration: 2500 });
+      flashToast("success", t("interactions.report_post_success"));
       onOpenChange(false);
       // Offer to block the person too, unless it's me or already hidden.
       if (
@@ -112,8 +112,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
         !useBlockStore.getState().hiddenIds.has(String(reportedUserId))
       ) {
         const name = reportedUserName?.trim() || undefined;
-        toast(t("blocking.offer_block", { name: name?.split(" ")[0] ?? t("blocking.this_person") }), {
-          duration: 6000,
+        flashToast("message", t("blocking.offer_block", { name: name?.split(" ")[0] ?? t("blocking.this_person") }), 6000, {
           action: {
             label: t("blocking.offer_block_action"),
             onClick: () =>
@@ -123,7 +122,7 @@ export function ReportPostDialog({ open, onOpenChange, itemId, commentId, commen
       }
     } catch (e) {
       console.error("Failed to submit report", e);
-      toast.error(t("interactions.report_post_error"));
+      flashToast("error", t("interactions.report_post_error"), 3000);
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { flashToast } from "@/lib/flashToast";
 import { Button } from "@/components/ui/button";
 import { AvatarImage } from "@/components/ui/optimized-image";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,11 +41,11 @@ export function BlockedUsersSettings() {
     setBusyId(u.user_id);
     try {
       await unblock(u.user_id);
-      toast.success(t("blocking.unblocked_toast", { name }), { duration: 2500 });
+      flashToast("success", t("blocking.unblocked_toast", { name }));
       await load();
     } catch (e) {
       console.error("[blocks] unblock failed", e);
-      toast.error(t("blocking.error"), { duration: 3000 });
+      flashToast("error", t("blocking.error"), 3000);
     } finally {
       setBusyId(null);
     }

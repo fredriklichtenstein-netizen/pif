@@ -125,7 +125,18 @@ export function UserProfileSheet() {
   return (
     <>
       <Sheet open={!!target} onOpenChange={(open) => { if (!open) close(); }}>
-        <SheetContent side="bottom" className="max-w-md mx-auto rounded-t-2xl max-h-[90dvh] overflow-y-auto">
+        <SheetContent
+          side="bottom"
+          className="max-w-md mx-auto rounded-t-2xl max-h-[90dvh] overflow-y-auto"
+          // The block confirmation and the report dialog open on top of this
+          // sheet; their clicks/focus count as "outside" and would close it.
+          onInteractOutside={(e) => {
+            if (reportOpen || useBlockStore.getState().pending) e.preventDefault();
+          }}
+          onFocusOutside={(e) => {
+            if (reportOpen || useBlockStore.getState().pending) e.preventDefault();
+          }}
+        >
           <SheetHeader>
             <SheetTitle className="sr-only">{name}</SheetTitle>
             <SheetDescription className="sr-only">{t("profile.popup_description", "Profil")}</SheetDescription>
@@ -215,9 +226,9 @@ export function UserProfileSheet() {
                       type="button"
                       className="text-destructive underline-offset-2 hover:underline"
                       onClick={() => {
-                        // The sheet stays open under the dialog, so "Avbryt"
-                        // returns here; it closes once the block is confirmed.
-                        requestBlock({ id: userId, name, onBlocked: close });
+                        // The sheet stays open under the dialog, whether the
+                        // block is confirmed or cancelled.
+                        requestBlock({ id: userId, name });
                       }}
                     >
                       {t("blocking.menu_block", { name: firstName })}
