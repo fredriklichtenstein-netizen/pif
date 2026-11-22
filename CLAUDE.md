@@ -452,6 +452,12 @@ It is not a second product — no native-only features or UI.
   at install time and caches it — after changing the file, delete and reinstall the app, and
   expect up to a day's delay. `app.pif.community` share links are not associated yet (the Worker
   would have to serve the file itself).
+- **Staging emails on a phone with the TestFlight (production) app:** both builds share the app
+  ID, so iOS hands `staging.pif.today` links to the installed app; a production build ignores
+  staging hosts and just stays on its current screen (seen 2026-11-20 with a staging password
+  reset). Not a bug, and users never get staging mail. When testing staging on the phone,
+  long-press the link → Öppna i Safari, or open it on the Mac. Decided not to build an in-app
+  browser fallback for it (2026-11-22).
 - **Link domain: `pif.today` is canonical** for Universal Links / App Links (`site_url` stays
   `https://pif.today`). `app.pif.community` is a secondary associated domain; the share Worker
   must then serve the two association files itself instead of redirecting. Staging app:
