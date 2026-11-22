@@ -336,7 +336,8 @@ What people do in the app after clicking a newsletter link. Reported per campaig
   campaign, and how many of the imported external sign-ups have an account and what they have done
   since the import. Uses the Management API + Resend API (proxy-injected in cloud sessions).
 - **Privacy policy** section 6 describes it; section 2 says photos and titles of public posts may
-  appear in the newsletter and on social media (never address or name), with opt-out by email.
+  appear in the newsletter and on social media (never address or name). No separate opt-out:
+  the right to object (section 5) covers it, and an objection must be honoured.
 
 ## Native apps (Capacitor, Trello G3 — decided 2026-11-15)
 
