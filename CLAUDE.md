@@ -313,6 +313,27 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
 - **Language** is per device. `useLanguageSeed` writes the shown language to `profiles.language`
   each session, so emails match what the user sees.
 
+## Campaign attribution (since 2026-11-22)
+
+What people do in the app after clicking a newsletter link. Reported per campaign as counts only.
+- **Links:** `scripts/newsletter.ts` adds `?ref=nl-<issue file name>` to every link into the app
+  (logo, posts, button, text version). Only `nl-[a-z0-9-]{1,60}` is accepted anywhere.
+- **App:** `src/components/analytics/CampaignTracker.tsx` (mounted in `App.tsx`) picks the tag up
+  on any route (also in-app deep links), keeps it on the device for 30 days
+  (`src/lib/campaignRef.ts`, latest click wins), removes it from the URL, and once signed in calls
+  `record_campaign_touch(p_campaign, p_touched_at)`. That returns false until the profile exists
+  (a new account is signed in before "Skapa profil"), so the tag is kept and retried.
+- **DB** (migration `20261122010000_campaign_attribution`): `campaign_touches` and
+  `campaign_events` (PK user + campaign + event), RLS on with no policies and no client grants.
+  `signup` = account created after the click (5 min clock slack); triggers on `items` / `interests`
+  / `likes` add `first_post` / `first_interest` / `first_save` for the latest touch within 30 days.
+  Triggers swallow their own errors.
+- **Report:** `bun scripts/campaign-report.ts` (production; `PROJECT=<ref>` for another): per
+  campaign, and how many of the imported external sign-ups have an account and what they have done
+  since the import. Uses the Management API + Resend API (proxy-injected in cloud sessions).
+- **Privacy policy** section 6 describes it; section 2 says photos and titles of public posts may
+  appear in the newsletter and on social media (never address or name), with opt-out by email.
+
 ## Native apps (Capacitor, Trello G3 — decided 2026-11-15)
 
 A shell around the same web bundle. It exists for three things the PWA can't do: push
