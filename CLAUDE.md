@@ -497,6 +497,17 @@ It is not a second product — no native-only features or UI.
   (`scripts/native-build.sh production` on `main`), uploaded from Xcode (Any iOS Device → Product
   → Archive → Distribute App → App Store Connect). No side-by-side staging app yet; staging builds
   go to a phone straight from Xcode and replace the TestFlight install (same app ID).
+  **Without clicking (since 2026-11-24, build 3):** with Fredrik's Mac attached to a cloud session
+  (Remote Control, folder `pif`), on `main`: bump `CURRENT_PROJECT_VERSION` in
+  `ios/App/App.xcodeproj/project.pbxproj` (both configs) and push; then on the Mac
+  `scripts/native-build.sh production`, `xcodebuild -project ios/App/App.xcodeproj -scheme App
+  -configuration Release -destination 'generic/platform=iOS' -archivePath
+  ~/pif-archives/PIF-<ver>-<build>.xcarchive -allowProvisioningUpdates archive`, then
+  `xcodebuild -exportArchive ... -exportOptionsPlist ~/pif-archives/ExportOptions.plist
+  -allowProvisioningUpdates` (method `app-store-connect`, destination `upload`, team
+  `JZS9N2HAC8`, automatic signing, `manageAppVersionAndBuildNumber` false). Uses the Apple account
+  signed in to Xcode; archives and logs stay in `~/pif-archives`, outside the repo. Before building,
+  grep `ios/App/App/public/assets` for the production ref and that the staging ref is absent.
 - Known gaps before store review: Android push (Firebase),
   the minimum-version check, real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
   OAuth client id). Sign in with Apple is built and live.
