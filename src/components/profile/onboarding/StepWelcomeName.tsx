@@ -2,17 +2,21 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { TermsConsent } from "@/components/terms/TermsConsent";
 
 interface StepWelcomeNameProps {
   firstName: string;
   lastName: string;
   onChange: (patch: { firstName?: string; lastName?: string }) => void;
   onNext: () => void;
+  /** "Jag godkänner användarvillkoren och integritetspolicyn" (required). */
+  termsAccepted: boolean;
+  onTermsAcceptedChange: (accepted: boolean) => void;
 }
 
-export function StepWelcomeName({ firstName, lastName, onChange, onNext }: StepWelcomeNameProps) {
+export function StepWelcomeName({ firstName, lastName, onChange, onNext, termsAccepted, onTermsAcceptedChange }: StepWelcomeNameProps) {
   const { t } = useTranslation();
-  const canContinue = firstName.trim().length > 0 && lastName.trim().length > 0;
+  const canContinue = firstName.trim().length > 0 && lastName.trim().length > 0 && termsAccepted;
 
   return (
     <div className="space-y-6">
@@ -43,6 +47,8 @@ export function StepWelcomeName({ firstName, lastName, onChange, onNext }: StepW
           />
         </div>
       </div>
+
+      <TermsConsent checked={termsAccepted} onCheckedChange={onTermsAcceptedChange} />
 
       <Button className="w-full" onClick={onNext} disabled={!canContinue}>
         {t("profile.onboarding.next")}

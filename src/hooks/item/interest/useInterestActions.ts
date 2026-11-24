@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { ensureTermsAccepted } from "@/stores/termsStore";
 import { useAuthCheck } from "../utils/authCheck";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -42,6 +43,8 @@ export const useInterestActions = (
 
     const wasInterested = getCurrentShowInterest();
     const nextInterested = !wasInterested;
+    // Showing interest needs the current terms; withdrawing it doesn't.
+    if (nextInterested && !ensureTermsAccepted()) return;
 
     // Optimistic UI: flip the toggle immediately and broadcast the new
     // value into the global store so other instances of this item's

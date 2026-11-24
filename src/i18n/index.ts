@@ -21,6 +21,7 @@ import enLanguage from '../locales/en/language.json';
 import enPages from '../locales/en/pages.json';
 import enAnnouncements from '../locales/en/announcements.json';
 import enBlocking from '../locales/en/blocking.json';
+import enTerms from '../locales/en/terms.json';
 
 // Import Swedish translations
 import svNavigation from '../locales/sv/navigation.json';
@@ -39,6 +40,7 @@ import svLanguage from '../locales/sv/language.json';
 import svPages from '../locales/sv/pages.json';
 import svAnnouncements from '../locales/sv/announcements.json';
 import svBlocking from '../locales/sv/blocking.json';
+import svTerms from '../locales/sv/terms.json';
 
 const resources = {
   en: {
@@ -58,7 +60,8 @@ const resources = {
       ...enLanguage,
       ...enPages,
       ...enAnnouncements,
-      ...enBlocking
+      ...enBlocking,
+      ...enTerms
     }
   },
   sv: {
@@ -78,7 +81,8 @@ const resources = {
       ...svLanguage,
       ...svPages,
       ...svAnnouncements,
-      ...svBlocking
+      ...svBlocking,
+      ...svTerms
     }
   }
 };
