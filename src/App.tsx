@@ -26,6 +26,7 @@ import { startBootSafetyFuse } from "@/utils/bootSafetyFuse";
 import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPanel";
 import { StagingBadge } from "@/components/debug/StagingBadge";
 import { BlockUserDialogHost } from "@/components/blocking/BlockUserDialogHost";
+import { UpdateRequiredGate } from "@/components/native/UpdateRequiredGate";
 import { CampaignTracker } from "@/components/analytics/CampaignTracker";
 import { TermsGate } from "@/components/terms/TermsGate";
 import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
@@ -90,6 +91,7 @@ function App() {
               <FeedbackTab />
               <UserProfileSheet />
               <BlockUserDialogHost />
+              <UpdateRequiredGate />
               <CampaignTracker />
               <TermsGate />
               <Toaster />
