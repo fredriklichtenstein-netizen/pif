@@ -12,7 +12,6 @@ import { GrantWishDialog } from "./GrantWishDialog";
 import { ShowInterestDialog } from "./ShowInterestDialog";
 import { useItemSelectedReceiver } from "@/hooks/item/useItemSelectedReceiver";
 import { useIgnoreToastOutsideClicks } from "@/hooks/useIgnoreToastOutsideClicks";
-import { onInterestListRequest } from "@/lib/markHandedOverEvents";
 import type { User } from "@/hooks/item/useItemInteractions";
 import type { FetchPage } from "@/services/interactions/fetchPaginatedUsers";
 
@@ -104,16 +103,6 @@ export function InteractionButtonWithPopup({
     });
     setShowPopup(true);
   }, [itemId, location.pathname, location.search, shouldAutoOpenSelection]);
-
-  // "Markera som piffad / uppfylld" in the post's ⋯ menu opens this list so
-  // the owner can pick who got it (Trello #132). Opened a moment later so the
-  // closing dropdown's focus return doesn't count as a click outside.
-  useEffect(() => {
-    if (type !== "interest" || !isOwner || !itemId) return;
-    return onInterestListRequest(itemId, () => {
-      window.setTimeout(() => setShowPopup(true), 150);
-    });
-  }, [type, isOwner, itemId]);
 
   const ACTIVE_COLOR = type === "interest" && itemType === "request" ? "#F59E0B" : "#00D1A0";
   const PASSIVE_COLOR = "#333333";

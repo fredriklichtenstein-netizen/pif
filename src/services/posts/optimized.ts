@@ -67,7 +67,16 @@ export const getOptimizedPosts = async (
     // ---- Stage 2: bulk interaction counts ----
     const itemIds = (data as any[]).map((item: any) => item.id);
     const countsStart = performance.now();
-    const interactionsMap = await OptimizedQueries.getInteractionCounts(itemIds);
+    // Counts are not worth failing the feed over: on an error (after
+    // getInteractionCounts' own retries) show the posts without them, don't
+    // cache this page (so the next fetch gets real counts), and leave the
+    // counts store alone instead of writing zeros into it.
+    let countsFailed = false;
+    const interactionsMap = await OptimizedQueries.getInteractionCounts(itemIds).catch((err: unknown) => {
+      console.error("[getOptimizedPosts] interaction counts failed; showing posts without them", err);
+      countsFailed = true;
+      return new Map();
+    });
     const countsMs = performance.now() - countsStart;
     performanceMetrics.recordStage('interaction-counts', countsMs, {
       ids: String(itemIds.length),
@@ -138,7 +147,7 @@ export const getOptimizedPosts = async (
 
     // ---- Stage 4: cache writes (in-memory only) ----
     const cacheStart = performance.now();
-    DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
+    if (!countsFailed) DatabaseCache.set(cacheKey, transformedPosts, CACHE_TTL);
     const cacheMs = performance.now() - cacheStart;
     performanceMetrics.recordStage('cache-write', cacheMs);
 

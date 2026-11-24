@@ -1,7 +1,7 @@
 {
   "terms": {
     "link": "Användarvillkor",
-    "gate_title": "Vi har användarvillkor",
+    "gate_title": "Godkänn användarvillkor",
     "gate_body": "För att fortsätta lägga upp, visa intresse, kommentera och skicka meddelanden behöver du godkänna PIF:s användarvillkor. De handlar bland annat om vad som är tillåtet i PIF, hur vi hanterar rapporter och att bild och rubrik från dina inlägg kan visas i vårt nyhetsbrev.",
     "gate_read": "Läs användarvillkoren",
     "gate_hide": "Dölj användarvillkoren",
