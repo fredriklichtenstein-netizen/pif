@@ -627,6 +627,12 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   HTML in its place; with `immutable, max-age=1y` every lazy page then shows "Kunde inte ladda
   sidan" until site data is cleared (hit 2026-11-20, `house-*.js`). Now `max-age=3600` (Cloudflare
   serves 4 h). Symptom in the console: `'text/html' is not a valid JavaScript MIME type`.
+  Hit again 2026-11-24 (chunk *and* stylesheet → unstyled "Kunde inte ladda sidan"; a plain reload
+  doesn't help). Since then the app repairs itself (`src/lib/assetRecovery.ts` + a boot guard in
+  `index.html`): it refetches the page's `/assets/` files with `cache: "reload"` (overwrites the
+  bad copy) and reloads, at most once a minute per file; "Försök igen" does the same. The CSS
+  check tests `--background` from `index.css`, because an HTML page served as CSS still gets a
+  `<link>.sheet`.
 - **`IS_STAGING` export** in `client.ts` (`true` whenever `SUPABASE_URL` isn't production's) drives
   a small "STAGING" pill (`src/components/debug/StagingBadge.tsx`, mounted in `App.tsx`) — a
   permanent visual guard against mistaking one environment's preview for the other's (this

@@ -6,6 +6,7 @@ import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { OnboardingGate } from "@/components/auth/OnboardingGate";
 import i18n from "@/i18n";
 import { DRAFTS_FEED_PATH } from "@/lib/feedLinks";
+import { autoRecoverOnce, refreshAssetsAndReload } from "@/lib/assetRecovery";
 
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -14,11 +15,13 @@ const LoadingFallback = () => (
   </div>
 );
 
+let lastLoadError: unknown;
+
 const ErrorFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
     <p className="text-destructive font-semibold mb-2">{i18n.t('interactions.failed_load_page')}</p>
     <button 
-      onClick={() => window.location.reload()}
+      onClick={() => void refreshAssetsAndReload(lastLoadError)}
       className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded"
     >
       {i18n.t('interactions.try_again')}
@@ -31,6 +34,10 @@ const enhancedLazy = (importFn: () => Promise<any>) => {
     importFn()
       .catch(error => {
         console.error("Failed to load component:", error);
+        lastLoadError = error;
+        // Usually a cached HTML copy in place of the chunk after a deploy:
+        // refetch the assets past the cache and reload (once a minute at most).
+        if (autoRecoverOnce(error)) return { default: LoadingFallback };
         return { default: ErrorFallback };
       })
   );
