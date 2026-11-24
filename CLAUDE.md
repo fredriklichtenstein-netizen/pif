@@ -512,6 +512,26 @@ It is not a second product — no native-only features or UI.
   the minimum-version check, real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
   OAuth client id). Sign in with Apple is built and live.
 
+## Terms of use (Apple 1.2; staging 2026-11-24)
+
+- **Page:** `/villkor` (`src/pages/Terms.tsx`, sv + en; `/terms` redirects). Text approved by
+  Fredrik 2026-11-24. `TERMS_VERSION` / `TERMS_EFFECTIVE_DATE` live in `src/lib/terms.ts`; bump the
+  version for a material change and everyone sees the one-time screen again.
+- **Stored on the account:** `profiles.terms_version` + `terms_accepted_at` (migration
+  `20261124090000_terms_acceptance`). No SELECT grant: read via `get_my_terms_acceptance()`, written
+  via `accept_terms(p_version)` (both SECURITY DEFINER, authenticated only).
+- **New accounts** tick "Jag godkänner användarvillkoren och integritetspolicyn" on step 1 of
+  "Skapa profil" (`TermsConsent`, texts open in a dialog — a new tab doesn't work in the native
+  apps); `CreateProfile` calls `accept_terms` after `complete_onboarding`.
+- **Everyone else** gets the one-time screen from `TermsGate` (mounted in `App.tsx`), once per
+  session, "Jag godkänner" / "Inte nu". After "Inte nu" they can browse; `ensureTermsAccepted()`
+  (`src/stores/termsStore.ts`) brings the screen back before a new post or draft publish, a new
+  interest (checked before the wish/pif dialog opens), a comment or a message. Withdrawing interest
+  and editing a post stay allowed. Status "unknown" (not loaded / lookup failed) never blocks.
+- **Not yet:** the database-side block (BEFORE INSERT guards like `user_blocks`', plus scheduled
+  drafts). Decided order: web first, then the native build with the screen, then the guard —
+  installed app builds without the screen couldn't accept otherwise.
+
 ## Blocking and reports (Apple 1.2; staging 2026-11-20)
 
 - **A block works both ways** (decided by Fredrik 2026-11-20): neither person sees the other's

@@ -27,6 +27,7 @@ import { AuthHydrationDebugPanel } from "@/components/debug/AuthHydrationDebugPa
 import { StagingBadge } from "@/components/debug/StagingBadge";
 import { BlockUserDialogHost } from "@/components/blocking/BlockUserDialogHost";
 import { CampaignTracker } from "@/components/analytics/CampaignTracker";
+import { TermsGate } from "@/components/terms/TermsGate";
 import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
 import { debugLog } from "@/utils/authDebug";
 import "./App.css";
@@ -90,6 +91,7 @@ function App() {
               <UserProfileSheet />
               <BlockUserDialogHost />
               <CampaignTracker />
+              <TermsGate />
               <Toaster />
               <Sonner />
               <AuthHydrationDebugPanel />

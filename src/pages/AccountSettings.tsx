@@ -130,6 +130,20 @@ export default function AccountSettings() {
                   </Link>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('terms.link')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Link
+                    to="/villkor"
+                    className="text-primary hover:underline text-sm"
+                  >
+                    {t('terms.link')} →
+                  </Link>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">

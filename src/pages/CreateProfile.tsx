@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { fetchMyProfile } from "@/services/profile/myProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/hooks/auth/authStore";
+import { TERMS_VERSION } from "@/lib/terms";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
@@ -86,6 +87,7 @@ export default function CreateProfile() {
   const [countryCode, setCountryCode] = useState("+46");
 
   const [pickupData, setPickupData] = useState<PickupPreferencesData>({});
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Prefill from existing profile row, then decide where to resume.
   useEffect(() => {
@@ -285,6 +287,14 @@ export default function CreateProfile() {
       });
       if (rpcError) throw rpcError;
 
+      // Step 1 required the terms checkbox. Recorded after the profile
+      // exists; if this one call fails, the one-time terms screen asks again
+      // later instead of failing the whole onboarding.
+      if (termsAccepted) {
+        const { error: termsError } = await (supabase.rpc as any)("accept_terms", { p_version: TERMS_VERSION });
+        if (termsError) console.warn("accept_terms after onboarding failed", termsError);
+      }
+
       useAuthStore.getState().setProfileCompleted(true);
 
 
@@ -354,6 +364,8 @@ export default function CreateProfile() {
                   if (patch.lastName !== undefined) setLastName(patch.lastName);
                 }}
                 onNext={() => setStep(2)}
+                termsAccepted={termsAccepted}
+                onTermsAcceptedChange={setTermsAccepted}
               />
             )}
 

@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { ensureTermsAccepted } from "@/stores/termsStore";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -73,6 +74,10 @@ export function usePostFormSubmission(initialData?: any) {
       });
       return;
     }
+
+    // A new post (or publishing a draft) needs the current terms; editing an
+    // existing post doesn't.
+    if (!initialData?.id && !ensureTermsAccepted()) return;
 
     setIsSubmitting(true);
 
