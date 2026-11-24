@@ -24,6 +24,10 @@ function SwedishPolicy() {
         integritetspolicy förklarar hur vi samlar in, använder och skyddar dina personuppgifter
         när du använder vår tjänst på app.pif.community.
       </p>
+      <p className={p}>
+        Vad som gäller när du använder PIF står i våra{" "}
+        <Link to="/villkor" className="text-primary underline">användarvillkor</Link>.
+      </p>
       <div className={block}>
         <strong>Personuppgiftsansvarig</strong>
         <br />PIF App AB
@@ -191,6 +195,10 @@ function EnglishPolicy() {
         policy explains how we collect, use, and protect your personal data when you use our
         service at app.pif.community.
       </p>
+      <p className={p}>
+        The rules for using PIF are in our{" "}
+        <Link to="/villkor" className="text-primary underline">terms of use</Link>.
+      </p>
       <div className={block}>
         <strong>Data Controller</strong>
         <br />PIF App AB
@@ -346,6 +354,12 @@ function EnglishPolicy() {
       <p className="text-sm text-muted-foreground italic mt-8">Last updated: November 2026</p>
     </article>
   );
+}
+
+/** The policy text in the current language, without the page frame (used in dialogs). */
+export function PrivacyContent() {
+  const { i18n } = useTranslation();
+  return i18n.language?.startsWith("sv") ? <SwedishPolicy /> : <EnglishPolicy />;
 }
 
 export default function Privacy() {

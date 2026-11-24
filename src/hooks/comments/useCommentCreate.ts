@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { ensureTermsAccepted } from "@/stores/termsStore";
 import { Comment } from "@/types/comment";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +36,7 @@ export const useCommentCreate = (
   const handleAddComment = async (text: string, parentId?: string) => {
     if (!text.trim()) return;
     if (!currentUser || !currentUser.id) return;
+    if (!DEMO_MODE && !ensureTermsAccepted()) return;
 
     setIsLoading(true);
 

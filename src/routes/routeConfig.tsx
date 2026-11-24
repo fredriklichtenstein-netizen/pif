@@ -53,6 +53,7 @@ const ProfileEdit = enhancedLazy(() => import("@/pages/ProfileEdit"));
 const NotFound = enhancedLazy(() => import("@/pages/NotFound"));
 const PostRedirect = enhancedLazy(() => import("@/pages/PostRedirect"));
 const Privacy = enhancedLazy(() => import("@/pages/Privacy"));
+const Terms = enhancedLazy(() => import("@/pages/Terms"));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -72,6 +73,8 @@ export const publicRoutes = [
   { path: "/item/:id", element: withSuspense(PostRedirect) },
   { path: "/share/:id", element: withSuspense(PostRedirect) },
   { path: "/privacy", element: withSuspense(Privacy) },
+  { path: "/villkor", element: withSuspense(Terms) },
+  { path: "/terms", element: <Navigate to="/villkor" replace /> },
   { path: "*", element: withSuspense(NotFound) },
 ];
 

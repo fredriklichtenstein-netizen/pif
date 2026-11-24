@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Download, ExternalLink } from "lucide-react";
+import { Download } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -41,30 +42,12 @@ export function PrivacySettings() {
           {t('settings.privacy_policies_description')}
         </p>
         <div className="space-y-2">
-          <a 
-            href="#privacy-policy" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center text-primary hover:underline"
-          >
-            {t('settings.privacy_policy')} <ExternalLink className="ml-1 h-4 w-4" />
-          </a>
-          <a 
-            href="#terms-of-service" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center text-primary hover:underline"
-          >
-            {t('settings.terms_of_service')} <ExternalLink className="ml-1 h-4 w-4" />
-          </a>
-          <a 
-            href="#cookie-policy" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center text-primary hover:underline"
-          >
-            {t('settings.cookie_policy')} <ExternalLink className="ml-1 h-4 w-4" />
-          </a>
+          <Link to="/privacy" className="flex items-center text-primary hover:underline">
+            {t('settings.privacy_policy')}
+          </Link>
+          <Link to="/villkor" className="flex items-center text-primary hover:underline">
+            {t('terms.link')}
+          </Link>
         </div>
       </div>
 

@@ -1,0 +1,22 @@
+{
+  "terms": {
+    "link": "Användarvillkor",
+    "gate_title": "Vi har användarvillkor",
+    "gate_body": "För att fortsätta lägga upp, visa intresse, kommentera och skicka meddelanden behöver du godkänna PIF:s användarvillkor. De handlar bland annat om vad som är tillåtet i PIF, hur vi hanterar rapporter och att bild och rubrik från dina inlägg kan visas i vårt nyhetsbrev.",
+    "gate_read": "Läs användarvillkoren",
+    "gate_hide": "Dölj användarvillkoren",
+    "gate_accept": "Jag godkänner",
+    "gate_later": "Inte nu",
+    "gate_accept_failed": "Det gick inte att spara. Försök igen.",
+    "required_title": "Godkänn användarvillkoren först",
+    "consent_prefix": "Jag godkänner ",
+    "consent_terms": "användarvillkoren",
+    "consent_middle": " och ",
+    "consent_privacy": "integritetspolicyn",
+    "consent_suffix": ".",
+    "consent_required": "Du behöver godkänna användarvillkoren och integritetspolicyn för att fortsätta.",
+    "signup_notice_prefix": "Genom att skapa ett konto godkänner du ",
+    "signup_notice_middle": " och ",
+    "signup_notice_suffix": "."
+  }
+}

@@ -12,6 +12,7 @@ import { validateAuthForm } from "./FormValidation";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 import { NativeSignInButtons } from "./NativeSignInButtons";
 import { Capacitor } from "@capacitor/core";
+import { LegalTextDialog, type LegalDoc } from "@/components/terms/LegalTextDialog";
 
 interface SignUpFormProps {
   loading: boolean;
@@ -27,6 +28,7 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
   const [formError, setFormError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [requestTimeout, setRequestTimeout] = useState<NodeJS.Timeout | null>(null);
   const [timeoutWarning, setTimeoutWarning] = useState<string | null>(null);
   const [privacyConsent, setPrivacyConsent] = useState(false);
@@ -167,14 +169,27 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
             className="text-sm text-gray-700 leading-snug cursor-pointer"
           >
             {t("auth.privacy_consent_prefix")}
-            <Link
-              to="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setLegalDoc("terms");
+              }}
+              className="text-green-600 hover:text-green-700 underline"
+            >
+              {t("terms.consent_terms")}
+            </button>
+            {t("terms.consent_middle")}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setLegalDoc("privacy");
+              }}
               className="text-green-600 hover:text-green-700 underline"
             >
               {t("auth.privacy_consent_link")}
-            </Link>
+            </button>
             {t("auth.privacy_consent_suffix")}
           </label>
         </div>
@@ -197,6 +212,8 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
         </div>
       </form>
 
+      <LegalTextDialog doc={legalDoc} onClose={() => setLegalDoc(null)} />
+
       <div className="text-center">
         <Button
           type="button"
@@ -209,7 +226,10 @@ export function SignUpForm({ loading, error, onSubmit, onToggleMode }: SignUpFor
         </Button>
       </div>
 
-      <div className="mt-4 text-center">
+      <div className="mt-4 flex justify-center gap-4">
+        <Link to="/villkor" className="text-xs text-gray-500 hover:text-gray-700 underline">
+          {t("terms.link")}
+        </Link>
         <Link to="/privacy" className="text-xs text-gray-500 hover:text-gray-700 underline">
           {t("auth.privacy_policy_link")}
         </Link>

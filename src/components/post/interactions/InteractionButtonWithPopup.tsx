@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { ensureTermsAccepted } from "@/stores/termsStore";
 import { useTranslation } from 'react-i18next';
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { InteractionIcon } from "./button/InteractionIcon";
@@ -205,6 +206,9 @@ export function InteractionButtonWithPopup({
       return;
     }
     if (isToggleDisabled) return;
+    // Before the wish/pif dialog opens, so nobody writes a note only to be
+    // stopped by the terms check when sending it.
+    if (type === "interest" && !isActive && !ensureTermsAccepted()) return;
     if (useWishGrantFlow) {
       setGrantOpen(true);
       return;
