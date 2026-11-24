@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { TermsContent } from "@/pages/Terms";
-import { PrivacyContent } from "@/pages/Privacy";
+import { LegalTextDialog, type LegalDoc } from "@/components/terms/LegalTextDialog";
 
 interface TermsConsentProps {
   checked: boolean;
@@ -18,7 +16,7 @@ interface TermsConsentProps {
  */
 export function TermsConsent({ checked, onCheckedChange, disabled }: TermsConsentProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState<"terms" | "privacy" | null>(null);
+  const [open, setOpen] = useState<LegalDoc | null>(null);
   const linkClass = "text-primary underline underline-offset-2";
 
   return (
@@ -44,15 +42,7 @@ export function TermsConsent({ checked, onCheckedChange, disabled }: TermsConsen
         </label>
       </div>
 
-      <Dialog open={open !== null} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
-          <DialogTitle className="sr-only">
-            {open === "privacy" ? t("terms.consent_privacy") : t("terms.consent_terms")}
-          </DialogTitle>
-          {open === "terms" && <TermsContent />}
-          {open === "privacy" && <PrivacyContent />}
-        </DialogContent>
-      </Dialog>
+      <LegalTextDialog doc={open} onClose={() => setOpen(null)} />
     </>
   );
 }

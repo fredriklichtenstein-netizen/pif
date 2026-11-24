@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -15,6 +15,7 @@ import { useAuthStore } from "@/hooks/auth/authStore";
 import { useTermsStore } from "@/stores/termsStore";
 import { flashToast } from "@/lib/flashToast";
 import { TERMS_SCREEN_EXEMPT_PATHS, TERMS_VERSION } from "@/lib/terms";
+import { TermsContent } from "@/pages/Terms";
 
 /**
  * Terms of use acceptance (Trello "Användarvillkor", decided 2026-11-22).
@@ -36,6 +37,8 @@ export function TermsGate() {
   const openScreen = useTermsStore((s) => s.openScreen);
   const closeScreen = useTermsStore((s) => s.closeScreen);
   const [saving, setSaving] = useState(false);
+  // The text opens inside the screen, so the buttons are still there after reading.
+  const [showText, setShowText] = useState(false);
   const autoShownFor = useRef<string | null>(null);
 
   // Load the acceptance once per signed-in, onboarded person.
@@ -86,10 +89,14 @@ export function TermsGate() {
     <AlertDialog
       open={screenOpen && status === "required" && !exempt}
       onOpenChange={(open) => {
-        if (!open && !saving) closeScreen();
+        if (!open && !saving) {
+          closeScreen();
+          setShowText(false);
+        }
       }}
     >
       <AlertDialogContent
+        className={showText ? "flex max-h-[90dvh] flex-col sm:max-w-2xl" : undefined}
         onCloseAutoFocus={(e) => {
           // Same as the block dialog: no trigger to return focus to, and lift
           // the body pointer-events lock Radix can leave behind.
@@ -107,15 +114,32 @@ export function TermsGate() {
             <div className="space-y-3 text-sm text-muted-foreground">
               <p>{t("terms.gate_body")}</p>
               <p>
-                <Link to="/villkor" className="text-primary underline" onClick={() => closeScreen()}>
-                  {t("terms.gate_read")}
-                </Link>
+                <button
+                  type="button"
+                  className="text-primary underline"
+                  onClick={() => setShowText((v) => !v)}
+                  aria-expanded={showText}
+                >
+                  {showText ? t("terms.gate_hide") : t("terms.gate_read")}
+                </button>
               </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {showText && (
+          <div className="min-h-0 flex-1 overflow-y-auto rounded-md border p-4 text-left">
+            <TermsContent />
+          </div>
+        )}
         <AlertDialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => closeScreen()} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              closeScreen();
+              setShowText(false);
+            }}
+            disabled={saving}
+          >
             {t("terms.gate_later")}
           </Button>
           <Button onClick={accept} disabled={saving}>

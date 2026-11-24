@@ -4,6 +4,7 @@
     "gate_title": "We have terms of use",
     "gate_body": "To keep posting, showing interest, commenting and sending messages, you need to accept PIF's terms of use. Among other things, they cover what's allowed in PIF, how we handle reports, and that the photo and title of your posts may appear in our newsletter.",
     "gate_read": "Read the terms of use",
+    "gate_hide": "Hide the terms of use",
     "gate_accept": "I accept",
     "gate_later": "Not now",
     "gate_accept_failed": "Couldn't save that. Please try again.",
