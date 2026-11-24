@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { LegalBackButton } from "@/components/legal/LegalBackButton";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { LanguageSelector } from "@/components/common/LanguageSelector";
 
 // Shared typography classes
@@ -372,12 +371,7 @@ export default function Privacy() {
           max-w-3xl (768px) standard for exact consistency. See Feed.tsx. */}
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="gap-1">
-              <ArrowLeft size={16} />
-              {isSwedish ? "Tillbaka" : "Back"}
-            </Button>
-          </Link>
+          <LegalBackButton label={isSwedish ? "Tillbaka" : "Back"} />
           <LanguageSelector />
         </div>
         {isSwedish ? <SwedishPolicy /> : <EnglishPolicy />}

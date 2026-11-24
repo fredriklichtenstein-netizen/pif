@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { LegalBackButton } from "@/components/legal/LegalBackButton";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { LanguageSelector } from "@/components/common/LanguageSelector";
 import { TERMS_EFFECTIVE_DATE, TERMS_VERSION } from "@/lib/terms";
 
@@ -262,12 +261,7 @@ export default function Terms() {
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 pb-24 text-left">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="gap-1">
-              <ArrowLeft size={16} />
-              {isSwedish ? "Tillbaka" : "Back"}
-            </Button>
-          </Link>
+          <LegalBackButton label={isSwedish ? "Tillbaka" : "Back"} />
           <LanguageSelector />
         </div>
         {isSwedish ? <SwedishTerms /> : <EnglishTerms />}
