@@ -1,4 +1,3 @@
-
 {
   "ui": {
     "categories": "Categories",
@@ -27,6 +26,10 @@
     "mark_given_away_done_pif": "The pif is marked as given away",
     "mark_given_away_done_wish": "The wish is marked as fulfilled",
     "mark_given_away_failed": "Couldn't mark the post",
+    "mark_outside_pif": "Gave it away outside PIF?",
+    "mark_outside_wish": "Fulfilled outside PIF?",
+    "mark_pick_hint_pif": "Did someone here get the pif? Choose them and tap “Mark as given away” next to them, so it's linked with your conversation.",
+    "mark_pick_hint_wish": "Did someone here help you? Tap “Mark as fulfilled” next to them, so it's linked with your conversation.",
     "republish": "Republish",
     "republished": "Pif republished",
     "republish_failed": "Could not republish pif",
