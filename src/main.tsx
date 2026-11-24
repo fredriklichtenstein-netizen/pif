@@ -11,6 +11,12 @@ import { Capacitor } from "@capacitor/core";
 import { installNativeDeepLinks } from "./native/deepLinks";
 import { installNativeGeolocation } from "./native/geolocationBridge";
 import { installNativePush } from "./native/push";
+import { installAssetRecovery } from "./lib/assetRecovery";
+
+// A cached HTML copy in place of a chunk or the stylesheet (after a deploy)
+// repairs itself instead of leaving "Kunde inte ladda sidan" / an unstyled page.
+installAssetRecovery();
+(window as Window & { __pifBooted?: boolean }).__pifBooted = true;
 
 // Native apps only (no-op on the web): must run before anything asks for a position.
 installNativeGeolocation();

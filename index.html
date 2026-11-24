@@ -55,6 +55,29 @@
       </div>
     </noscript>
     <div id="root"></div>
+    <script>
+      // If the main script or stylesheet came back as a cached HTML page after a
+      // deploy (see src/lib/assetRecovery.ts), the app never starts. Refetch the
+      // page's /assets/ files past the browser cache and reload, at most once a
+      // minute. main.tsx sets window.__pifBooted; index.css defines --background.
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          var styled = getComputedStyle(document.documentElement).getPropertyValue("--background").trim() !== "";
+          if (window.__pifBooted && styled) return;
+          try {
+            var k = "pif-asset-recovery-boot", last = Number(sessionStorage.getItem(k) || 0);
+            if (Date.now() - last < 60000) return;
+            sessionStorage.setItem(k, String(Date.now()));
+          } catch (e) { return; }
+          var urls = [];
+          document.querySelectorAll('script[src^="/assets/"],link[href^="/assets/"]').forEach(function (el) {
+            urls.push(el.getAttribute("src") || el.getAttribute("href"));
+          });
+          Promise.all(urls.map(function (u) { return fetch(u, { cache: "reload" }).catch(function () {}); }))
+            .then(function () { location.reload(); });
+        }, 3000);
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
