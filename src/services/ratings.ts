@@ -10,8 +10,8 @@ interface SubmitRatingArgs {
   outcome: RatingOutcome;
   note?: string;
   /**
-   * Optional explicit ratee used by Demo Mode. In real mode this is not
-   * forwarded: submit_rating resolves the selected counter-party server-side.
+   * Explicit ratee: a wish helper (submit_rating_for). Without it,
+   * submit_rating resolves the selected counter-party server-side.
    */
   helperId?: string;
   /**
@@ -52,16 +52,25 @@ export async function submitRating({
   const itemIdNum =
     typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
 
-  // Note: submit_helper_rating does not exist in the database.
-  // Both pif and wish ratings go through submit_rating, which resolves
-  // the ratee via the interests table. helperId is accepted for API
-  // compatibility but not forwarded — the RPC infers the ratee.
-  void helperId;
-  const { error } = await (supabase as any).rpc("submit_rating", {
-    p_item_id: itemIdNum,
-    p_outcome: outcome,
-    p_note: note ?? null,
-  });
+  // A named ratee (a wish helper -- a wish can have several) goes through
+  // submit_rating_for, which also lets the wisher rate right after marking
+  // the wish granted. Otherwise submit_rating resolves the selected
+  // counter-party server-side (one receiver on a pif).
+  let error: any = null;
+  if (helperId) {
+    ({ error } = await (supabase as any).rpc("submit_rating_for", {
+      p_item_id: itemIdNum,
+      p_ratee: helperId,
+      p_outcome: outcome,
+      p_note: note ?? null,
+    }));
+  } else {
+    ({ error } = await (supabase as any).rpc("submit_rating", {
+      p_item_id: itemIdNum,
+      p_outcome: outcome,
+      p_note: note ?? null,
+    }));
+  }
 
   if (error) {
     console.error("submit_rating failed", error);
