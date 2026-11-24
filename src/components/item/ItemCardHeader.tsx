@@ -7,9 +7,10 @@ import { ProfileLink } from "@/components/profile/ProfileLink";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SimpleDeleteDialog } from "./delete/SimpleDeleteDialog";
 import { MarkGivenAwayDialog } from "./MarkGivenAwayDialog";
+import { onGivenAwayOutsideRequest, requestInterestList } from "@/lib/markHandedOverEvents";
 import { BookmarkPlus, BookmarkCheck, Flag, Archive, Trash2, Pencil, RotateCcw, CheckCircle2 } from "lucide-react";
 import { useItemSharing } from "@/hooks/item/useItemSharing";
 import { useGlobalAuth } from "@/hooks/useGlobalAuth";
@@ -161,6 +162,17 @@ export function ItemCardHeader({
     handleReport({} as React.MouseEvent);
   };
   
+  // Trello #132: pick who got it in the interest list (linked with the chat);
+  // the list's "outside PIF" button comes back here. Straight to the outside
+  // dialog only when this card has no interest list to open.
+  const handleMarkHandedOverClick = () => {
+    if (!requestInterestList(itemId)) setShowGivenAwayDialog(true);
+  };
+  useEffect(() => {
+    if (!isOwner) return;
+    return onGivenAwayOutsideRequest(itemId, () => setShowGivenAwayDialog(true));
+  }, [isOwner, itemId]);
+
   const handleLocalDeleteClick = () => {
     setShowDeleteDialog(true);
   };
@@ -293,7 +305,7 @@ export function ItemCardHeader({
                 ) : (
                   <>
                     {!isCompleted && (
-                      <DropdownMenuItem onClick={() => setShowGivenAwayDialog(true)} className="text-primary">
+                      <DropdownMenuItem onClick={handleMarkHandedOverClick} className="text-primary">
                         <CheckCircle2 className="mr-2 h-4 w-4" />
                         <span>{t(isWish ? 'ui.mark_given_away_wish' : 'ui.mark_given_away_pif')}</span>
                       </DropdownMenuItem>

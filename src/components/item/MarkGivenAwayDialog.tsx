@@ -56,7 +56,20 @@ export function MarkGivenAwayDialog({ itemId, itemTitle, isWish, isOpen, onClose
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent
+        className="max-w-md"
+        onCloseAutoFocus={(e) => {
+          // Opened from the post's ⋯ menu: when both close together Radix can
+          // leave body `pointer-events: none` behind and the page "freezes"
+          // until a reload (#133). Same cleanup as SimpleDeleteDialog.
+          e.preventDefault();
+          setTimeout(() => {
+            if (!document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) {
+              document.body.style.pointerEvents = "";
+            }
+          }, 0);
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t(`ui.mark_given_away_${kind}_title`)}</DialogTitle>
           <DialogDescription>

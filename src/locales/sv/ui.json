@@ -1,4 +1,3 @@
-
 {
   "ui": {
     "categories": "Kategorier",
@@ -27,6 +26,10 @@
     "mark_given_away_done_pif": "Piffen är markerad som piffad",
     "mark_given_away_done_wish": "Önskan är markerad som uppfylld",
     "mark_given_away_failed": "Det gick inte att markera inlägget",
+    "mark_outside_pif": "Gav du bort den utanför PIF?",
+    "mark_outside_wish": "Uppfylldes önskan utanför PIF?",
+    "mark_pick_hint_pif": "Fick någon här piffen? Välj personen och tryck på ”Markera som piffad” vid hen – då hänger det ihop med er konversation.",
+    "mark_pick_hint_wish": "Hjälpte någon här dig? Tryck på ”Markera som uppfylld” vid personen – då hänger det ihop med er konversation.",
     "republish": "Återpublicera",
     "republished": "Piffen har återpublicerats",
     "republish_failed": "Kunde inte återpublicera piffen",

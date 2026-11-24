@@ -35,6 +35,7 @@ import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreS
 import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
 import type { WithdrawCopy } from "@/hooks/item/useWithdrawInterestConfirm";
 import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
+import { requestGivenAwayOutside } from "@/lib/markHandedOverEvents";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -875,6 +876,46 @@ export function InterestSelectionList({
                           </Button>
                         )
                       )}
+                      {/* Pif: the chosen receiver gets the same "Markera som
+                          piffad" as the chat (confirm_pif_handoff via the
+                          handler above), so marking it on the post and in the
+                          chat is one and the same (Trello #132). */}
+                      {isOwner && !isWish && (
+                        completion.pifferConfirmed &&
+                        completion.pifStatus !== "completed" &&
+                        completion.pifStatus !== "archived" ? (
+                          <AwaitingConfirmationPopover
+                            itemType="offer"
+                            receiverConfirmed={completion.receiverConfirmed}
+                            onHardComplete={() =>
+                              setForceHelperRating({ helperId: r.user_id, helperName: displayName(r) })
+                            }
+                            onUndo={async () => {
+                              const res = await completion.undoConfirmation("piffer");
+                              if (!res.ok) {
+                                toast({
+                                  variant: "destructive",
+                                  title: t("interactions.error_title"),
+                                  description: t("ui.failed_mark_piffed"),
+                                });
+                              }
+                            }}
+                          />
+                        ) : completion.pifStatus !== "completed" && completion.pifStatus !== "archived" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={wishGrantingHelperId !== null}
+                            className="text-xs py-1 px-2 h-auto whitespace-nowrap text-primary"
+                            onClick={() => handleMarkWishGranted(r)}
+                          >
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {wishGrantingHelperId === r.user_id
+                              ? t("interactions.loading")
+                              : t("ui.mark_given_away_pif")}
+                          </Button>
+                        ) : null
+                      )}
                       {isOwner && isWish && (
                         <Button
                           size="sm"
@@ -996,6 +1037,35 @@ export function InterestSelectionList({
                 )
               : t("interactions.unlock_messaging")}
           </p>
+        )}
+
+      {/* Trello #132: the ⋯ menu's "Markera som piffad" opens this list. Pick
+          the person above (linked with the chat), or record it as given away
+          outside PIF (MarkGivenAwayDialog on the card). Hidden once the owner
+          has confirmed a handover with someone. */}
+      {isOwner &&
+        !completion.loading &&
+        !completion.pifferConfirmed &&
+        completion.pifStatus !== "completed" &&
+        completion.pifStatus !== "archived" && (
+          <div className="mt-3 border-t pt-2 space-y-2">
+            {rows.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {t(isWish ? "ui.mark_pick_hint_wish" : "ui.mark_pick_hint_pif")}
+              </p>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-center text-xs"
+              onClick={() => {
+                setShowPopup(false);
+                window.setTimeout(() => requestGivenAwayOutside(itemId), 150);
+              }}
+            >
+              {t(isWish ? "ui.mark_outside_wish" : "ui.mark_outside_pif")}
+            </Button>
+          </div>
         )}
 
       <AlertDialog
