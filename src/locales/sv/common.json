@@ -66,5 +66,11 @@
   "demo": {
     "title": "Du tittar på demoinnehåll",
     "description": "Detta är exempeldata för att visa appen."
+  },
+  "update_required": {
+    "title": "Uppdatering krävs",
+    "body": "Den här versionen av PIF fungerar inte längre. Uppdatera appen för att fortsätta.",
+    "button_ios": "Uppdatera i App Store",
+    "button_android": "Uppdatera i Google Play"
   }
 }
