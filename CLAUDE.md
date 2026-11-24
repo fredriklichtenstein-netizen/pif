@@ -446,8 +446,15 @@ It is not a second product — no native-only features or UI.
     change an RPC signature or change an edge function's request/response shape while a shipped
     build still uses it. Add the new thing, ship the app, remove the old thing only when old
     builds are gone.
-  - v1 must ship a minimum-version check (small JSON on `pif.today`) with an "update required"
-    screen — it can't be added to builds already installed.
+  - **Minimum-version check (since 2026-11-24, staging; first shipped in build 4):**
+    `public/app-version.json` (`{"ios":{"minBuild":N},"android":{"minBuild":N}}`, served
+    `no-store` with CORS via `public/_headers`). `UpdateRequiredGate` (App.tsx) checks it at
+    launch and on resume in the native apps and covers the app with "Uppdatering krävs" + a store
+    link when the build number (iOS `CURRENT_PROJECT_VERSION` / Android `versionCode`) is below
+    the minimum. Build numbers must only ever go up, across versions too. Offline, timeouts or a
+    broken file never block (`src/native/minVersion.ts`). Production builds read
+    `pif.today/app-version.json` (so raising it is a commit to `main`); staging builds read
+    staging's copy. Builds 1–3 predate the check and can't be stopped by it.
 - **App links (2026-11-16, staging):** `public/.well-known/apple-app-site-association` (app id
   `JZS9N2HAC8.community.pif.pif`, all paths) and `assetlinks.json` (Play signing key), served as
   JSON via `public/_headers`; iOS entitlement `applinks:pif.today` + `applinks:staging.pif.today`;
@@ -505,7 +512,7 @@ It is not a second product — no native-only features or UI.
   signed in to Xcode; archives and logs stay in `~/pif-archives`, outside the repo. Before building,
   grep `ios/App/App/public/assets` for the production ref and that the staging ref is absent.
 - Known gaps before store review: Android push (Firebase),
-  the minimum-version check, real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
+  real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
   OAuth client id). Sign in with Apple is built and live.
 
 ## Terms of use (Apple 1.2; staging 2026-11-24)

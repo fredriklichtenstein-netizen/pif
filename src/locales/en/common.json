@@ -66,5 +66,11 @@
   "demo": {
     "title": "You're viewing demo content",
     "description": "This is example data to showcase the app."
+  },
+  "update_required": {
+    "title": "Update required",
+    "body": "This version of PIF no longer works. Please update the app to continue.",
+    "button_ios": "Update in the App Store",
+    "button_android": "Update in Google Play"
   }
 }

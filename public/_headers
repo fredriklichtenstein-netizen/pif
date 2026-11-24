@@ -23,3 +23,11 @@
   Content-Type: application/json
 /.well-known/assetlinks.json
   Content-Type: application/json
+
+# Minimum app version (src/native/minVersion.ts). Read by the native apps from
+# capacitor://localhost / https://localhost, so it needs CORS; never cached, so
+# raising the minimum takes effect at once.
+/app-version.json
+  Content-Type: application/json
+  Cache-Control: no-store
+  Access-Control-Allow-Origin: *
