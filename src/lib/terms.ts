@@ -5,7 +5,7 @@
 export const TERMS_VERSION = "1";
 
 /** Shown at the top of the terms page. The day version 1 went live on pif.today. */
-export const TERMS_EFFECTIVE_DATE = { sv: "25 november 2026", en: "25 November 2026" };
+export const TERMS_EFFECTIVE_DATE = { sv: "24 november 2026", en: "24 November 2026" };
 
 /** Pages where the one-time terms screen never pops up. */
 export const TERMS_SCREEN_EXEMPT_PATHS = ["/villkor", "/terms", "/privacy", "/auth", "/create-profile", "/reset-password", "/email-confirmation"];
