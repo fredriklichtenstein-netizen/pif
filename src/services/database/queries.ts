@@ -183,6 +183,11 @@ export class OptimizedQueries {
       supabase.from('interests').select('item_id').in('item_id', itemIds),
       supabase.from('comments').select('item_id').in('item_id', itemIds)
     ]);
+    // A failed request must not turn into "0 interested" (the counter then
+    // stays blank until a reload, seen on staging 2026-11-24 after a network
+    // drop): throw so withRetry tries again.
+    const failed = likes.error || interests.error || comments.error;
+    if (failed) throw failed;
     
     const countsMap = new Map();
     const likesCounts = new Map<number, number>();

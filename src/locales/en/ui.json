@@ -26,10 +26,8 @@
     "mark_given_away_done_pif": "The pif is marked as given away",
     "mark_given_away_done_wish": "The wish is marked as fulfilled",
     "mark_given_away_failed": "Couldn't mark the post",
-    "mark_outside_pif": "Gave it away outside PIF?",
-    "mark_outside_wish": "Fulfilled outside PIF?",
-    "mark_pick_hint_pif": "Did someone here get the pif? Choose them and tap “Mark as given away” next to them, so it's linked with your conversation.",
-    "mark_pick_hint_wish": "Did someone here help you? Tap “Mark as fulfilled” next to them, so it's linked with your conversation.",
+    "mark_outside_pif": "Given away outside the app",
+    "mark_outside_wish": "Fulfilled outside the app",
     "republish": "Republish",
     "republished": "Pif republished",
     "republish_failed": "Could not republish pif",
@@ -50,6 +48,10 @@
     "pif_marked_piffed_receiver": "The pif has been marked as piffed. The receiver can now confirm.",
     "failed_mark_piffed": "Failed to mark this pif as piffed. Please try again.",
     "pif_given_away": "The pif has been given away",
-    "pif_given_to": "The pif \"{{title}}\" has been given to {{name}}."
+    "pif_given_to": "The pif \"{{title}}\" has been given to {{name}}.",
+    "mark_choose_pif_title": "Who got the pif?",
+    "mark_choose_wish_title": "Who fulfilled the wish?",
+    "mark_choose_pif_description": "Choose the receiver and tap “Mark as given away” next to them. Gave it to someone else? Choose “Given away outside the app”.",
+    "mark_choose_wish_description": "Tap “Mark as fulfilled” next to the person who helped you. Fulfilled some other way? Choose “Fulfilled outside the app”."
   }
 }

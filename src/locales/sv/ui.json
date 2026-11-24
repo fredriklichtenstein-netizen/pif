@@ -26,10 +26,8 @@
     "mark_given_away_done_pif": "Piffen är markerad som piffad",
     "mark_given_away_done_wish": "Önskan är markerad som uppfylld",
     "mark_given_away_failed": "Det gick inte att markera inlägget",
-    "mark_outside_pif": "Gav du bort den utanför PIF?",
-    "mark_outside_wish": "Uppfylldes önskan utanför PIF?",
-    "mark_pick_hint_pif": "Fick någon här piffen? Välj personen och tryck på ”Markera som piffad” vid hen – då hänger det ihop med er konversation.",
-    "mark_pick_hint_wish": "Hjälpte någon här dig? Tryck på ”Markera som uppfylld” vid personen – då hänger det ihop med er konversation.",
+    "mark_outside_pif": "Piffad utanför appen",
+    "mark_outside_wish": "Uppfylld utanför appen",
     "republish": "Återpublicera",
     "republished": "Piffen har återpublicerats",
     "republish_failed": "Kunde inte återpublicera piffen",
@@ -50,6 +48,10 @@
     "pif_marked_piffed_receiver": "Piffen har markerats som piffad. Mottagaren kan nu bekräfta.",
     "failed_mark_piffed": "Misslyckades att markera denna pif som piffad. Försök igen.",
     "pif_given_away": "Piffen har getts bort",
-    "pif_given_to": "Piffen \"{{title}}\" har getts till {{name}}."
+    "pif_given_to": "Piffen \"{{title}}\" har getts till {{name}}.",
+    "mark_choose_pif_title": "Vem fick piffen?",
+    "mark_choose_wish_title": "Vem uppfyllde önskan?",
+    "mark_choose_pif_description": "Välj mottagaren och tryck på ”Markera som piffad” vid hen. Gav du bort den till någon annan, välj ”Piffad utanför appen”.",
+    "mark_choose_wish_description": "Tryck på ”Markera som uppfylld” vid den som hjälpte dig. Uppfylldes den på annat sätt, välj ”Uppfylld utanför appen”."
   }
 }

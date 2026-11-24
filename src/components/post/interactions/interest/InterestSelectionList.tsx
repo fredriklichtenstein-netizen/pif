@@ -35,7 +35,6 @@ import { withdrawPreSelectionInterest } from "@/hooks/item/interest/withdrawPreS
 import { WithdrawInterestDialog } from "@/components/item/WithdrawInterestDialog";
 import type { WithdrawCopy } from "@/hooks/item/useWithdrawInterestConfirm";
 import { getProfileEmbedColumns } from "@/services/profile/publicColumns";
-import { requestGivenAwayOutside } from "@/lib/markHandedOverEvents";
 
 interface InterestSelectionListProps {
   itemId: string | number;
@@ -43,6 +42,8 @@ interface InterestSelectionListProps {
   currentUserId?: string;
   /** When 'request', enables multi-helper selection and the wish-flow copy. */
   itemType?: 'offer' | 'request';
+  /** Told whether the owner has confirmed a handover (MarkGivenAwayDialog hides "outside the app" then). */
+  onHandoverStateChange?: (state: { loading: boolean; pifferConfirmed: boolean }) => void;
   setShowPopup: (show: boolean) => void;
 }
 
@@ -81,6 +82,7 @@ export function InterestSelectionList({
   currentUserId,
   itemType,
   setShowPopup,
+  onHandoverStateChange,
 }: InterestSelectionListProps) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith("sv") ? sv : enUS;
@@ -100,7 +102,7 @@ export function InterestSelectionList({
   const [confirmSelfWithdrawOpen, setConfirmSelfWithdrawOpen] = useState(false);
   /** Helper currently being rated via the per-helper "Mark as granted" flow. */
   const [ratingHelper, setRatingHelper] = useState<{
-    helperId: string;
+    helperId?: string;
     helperName: string;
   } | null>(null);
   /** Helper being force-completed via the "Markera som klar ändå" override. */
@@ -129,6 +131,10 @@ export function InterestSelectionList({
     currentUserId ?? null,
     undefined,
   );
+
+  useEffect(() => {
+    onHandoverStateChange?.({ loading: completion.loading, pifferConfirmed: completion.pifferConfirmed });
+  }, [completion.loading, completion.pifferConfirmed, onHandoverStateChange]);
 
   useEffect(() => {
     console.log("[InterestSelectionList] mounted; fetching fresh interest rows", {
@@ -593,12 +599,20 @@ export function InterestSelectionList({
             );
           }
         }
-        setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
+        if (isWish) {
+          setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
+        } else if (receiverAlreadyConfirmed) {
+          // A pif can only be rated once it's completed (submit_rating:
+          // "Item not in a rateable state" while it waits for the receiver),
+          // as in the chat. No helperId: that switches the dialog to wish copy.
+          setRatingHelper({ helperId: undefined, helperName: displayName(row) });
+        }
       } finally {
         setWishGrantingHelperId(null);
       }
     },
     [
+      isWish,
       completion.pifferConfirmed,
       completion.receiverConfirmed,
       completion.pifStatus,
@@ -787,7 +801,7 @@ export function InterestSelectionList({
                   userId={r.user_id}
                   name={displayName(r)}
                   avatar={r.profile?.avatar_url || undefined}
-                  className="flex items-center gap-2 min-w-0 flex-1 text-left hover:underline"
+                  className="flex items-center gap-2 min-w-[10rem] flex-1 text-left hover:underline"
                 >
                   <AvatarImage
                     src={r.profile?.avatar_url || ""}
@@ -1039,35 +1053,6 @@ export function InterestSelectionList({
           </p>
         )}
 
-      {/* Trello #132: the ⋯ menu's "Markera som piffad" opens this list. Pick
-          the person above (linked with the chat), or record it as given away
-          outside PIF (MarkGivenAwayDialog on the card). Hidden once the owner
-          has confirmed a handover with someone. */}
-      {isOwner &&
-        !completion.loading &&
-        !completion.pifferConfirmed &&
-        completion.pifStatus !== "completed" &&
-        completion.pifStatus !== "archived" && (
-          <div className="mt-3 border-t pt-2 space-y-2">
-            {rows.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {t(isWish ? "ui.mark_pick_hint_wish" : "ui.mark_pick_hint_pif")}
-              </p>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-center text-xs"
-              onClick={() => {
-                setShowPopup(false);
-                window.setTimeout(() => requestGivenAwayOutside(itemId), 150);
-              }}
-            >
-              {t(isWish ? "ui.mark_outside_wish" : "ui.mark_outside_pif")}
-            </Button>
-          </div>
-        )}
-
       <AlertDialog
         open={confirmId !== null}
         onOpenChange={(o) => !o && setConfirmId(null)}
@@ -1141,7 +1126,7 @@ export function InterestSelectionList({
           receiverName={ratingHelper.helperName}
           helperId={ratingHelper.helperId}
           demoRaterId={currentUserId}
-          demoRateeId={ratingHelper.helperId}
+          demoRateeId={ratingHelper.helperId ?? ""}
           onSubmitted={() => {
             setRatingHelper(null);
             reloadRatedHelpers();
