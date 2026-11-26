@@ -8,6 +8,9 @@ const config: CapacitorConfig = {
   appName: 'PIF',
   webDir: 'dist',
   backgroundColor: '#ffffff',
+  // The Xcode target/scheme is named PIF (folder and App.xcodeproj stay `App`,
+  // which Capacitor's paths expect); `cap run ios` must use the same scheme.
+  ios: { scheme: 'PIF' },
   plugins: {
     // Native sign-in sheets. Only Apple and Google are built in; the
     // Facebook SDK is left out of the binary entirely.
