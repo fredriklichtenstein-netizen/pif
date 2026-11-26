@@ -519,6 +519,20 @@ It is not a second product — no native-only features or UI.
   real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
   OAuth client id). Sign in with Apple is built and live.
 
+## Ratings (decided by Fredrik 2026-11-26)
+
+- **The one who gives rates the one who receives, never the other way round.** Pif: the piffer
+  rates the receiver (`interests.receiver_rating` / `rating_comment` on the receiver's row).
+  Wish: the helper rates the wisher (`interests.owner_rating` / `owner_rating_comment` on the
+  helper's own row). Wishers don't rate helpers; receivers don't rate piffers.
+- Stars (`PifRatingModal`, modes `complete` / `rate` / `complete_no_rating`). Ratings saved after
+  the post is done go through `rate_after_handover()`; `complete_pif_with_rating()` is only for
+  "Markera som klar ändå" (it refuses a completed post) and takes `p_rating` null for a wish.
+  Migration `20261126090000_wish_owner_rating`.
+- The profile rating (`get_user_public_stats`) = receiver_rating on pifs + owner_rating on one's
+  own wishes. The old `ratings` table ("Gick bra / Dök inte upp", `submit_rating`) has no UI left
+  except the legacy `ReceiverConfirmation`; production had 0 rows.
+
 ## Terms of use (Apple 1.2; staging 2026-11-24)
 
 - **Page:** `/villkor` (`src/pages/Terms.tsx`, sv + en; `/terms` redirects). Text approved by

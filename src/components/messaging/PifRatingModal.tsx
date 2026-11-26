@@ -27,10 +27,22 @@ interface Props {
   allowSkip?: boolean;
   /** When true the underlying item is a wish (item_type='request'). */
   isRequest?: boolean;
+  /**
+   * "complete": the rating also completes the post (Markera som klar ändå) --
+   * shows the "closes the conversation" note.
+   * "rate": the post is already done; only the rating is saved.
+   * "complete_no_rating": a wisher completes their wish -- no stars
+   * (helpers are not rated, 2026-11-26); onSubmit gets rating 0.
+   */
+  mode?: "complete" | "rate" | "complete_no_rating";
+  /** Who is being rated: a pif's receiver (by the piffer) or a wisher (by a helper). */
+  ratee?: "receiver" | "wisher";
 }
 
 /**
- * Piffer-facing rating modal. Submits via complete_pif_with_rating RPC.
+ * Star rating after a handover: the piffer rates the receiver, a wish's
+ * helper rates the wisher (never the other way round). The caller decides
+ * what onSubmit does (complete_pif_with_rating or rate_after_handover).
  * A low rating (<=2) surfaces a follow-up nudge to file a formal report.
  */
 export function PifRatingModal({
@@ -40,7 +52,10 @@ export function PifRatingModal({
   onLowRatingReport,
   allowSkip = true,
   isRequest = false,
+  mode = "complete",
+  ratee = "receiver",
 }: Props) {
+  const noRating = mode === "complete_no_rating";
   const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
@@ -63,13 +78,13 @@ export function PifRatingModal({
       rating,
       hasComment: !!comment.trim(),
     });
-    if (rating < 1) return;
+    if (rating < 1 && !noRating) return;
     setSubmitting(true);
     try {
       const res = await onSubmit(rating, comment.trim() || undefined);
       setSubmitting(false);
       if (!res.ok) return;
-      if (rating <= 2 && onLowRatingReport) {
+      if (!noRating && rating <= 2 && onLowRatingReport) {
         setAskReport(true);
       } else {
         onOpenChange(false);
@@ -87,15 +102,21 @@ export function PifRatingModal({
           <>
             <DialogHeader>
               <DialogTitle>
-                {isRequest
-                  ? t("interactions.rate_helper_modal_title")
-                  : t("interactions.rate_receiver_modal_title")}
+                {noRating
+                  ? t("interactions.complete_wish_modal_title")
+                  : ratee === "wisher"
+                    ? t("interactions.rate_wisher_modal_title")
+                    : t("interactions.rate_receiver_modal_title")}
               </DialogTitle>
               <DialogDescription>
-                {t("interactions.rate_modal_description")}
+                {noRating
+                  ? t("interactions.complete_wish_modal_description")
+                  : t("interactions.rate_modal_description")}
               </DialogDescription>
             </DialogHeader>
 
+            {!noRating && (
+            <>
             <div className="flex justify-center gap-1 py-2">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
@@ -121,17 +142,23 @@ export function PifRatingModal({
             <Textarea
               rows={3}
               placeholder={
-                isRequest
-                  ? t("interactions.rate_helper_modal_placeholder")
+                ratee === "wisher"
+                  ? t("interactions.rate_wisher_modal_placeholder")
                   : t("interactions.rate_receiver_modal_placeholder")
               }
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
+            </>
+            )}
 
-            <p className="text-xs text-muted-foreground">
-              {t("interactions.rate_modal_closes_conversation_note")}
-            </p>
+            {mode !== "rate" && (
+              <p className="text-xs text-muted-foreground">
+                {isRequest
+                  ? t("interactions.rate_modal_closes_conversation_note_wish")
+                  : t("interactions.rate_modal_closes_conversation_note")}
+              </p>
+            )}
 
             <DialogFooter className="gap-2 sm:gap-2">
               {allowSkip && (
@@ -145,12 +172,14 @@ export function PifRatingModal({
               )}
               <Button
                 onClick={handleSubmit}
-                disabled={rating < 1 || submitting}
+                disabled={(!noRating && rating < 1) || submitting}
               >
                 {submitting && (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 )}
-                {t("interactions.rate_modal_submit")}
+                {noRating
+                  ? t("interactions.complete_wish_modal_submit")
+                  : t("interactions.rate_modal_submit")}
               </Button>
             </DialogFooter>
           </>
