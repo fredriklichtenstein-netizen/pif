@@ -40,7 +40,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { PifCompletionBanner } from "./PifCompletionBanner";
 import { PifRatingModal } from "./PifRatingModal";
-import { rememberWishRatingSkipped, wishRatingSkipped } from "@/lib/wishRatingSkip";
+import { rememberRatingSkipped, ratingSkipped } from "@/lib/ratingSkip";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
 import { BlockUserMenuItem } from "@/components/blocking/BlockUserMenuItem";
 import { useBlockStore } from "@/stores/blockStore";
@@ -290,36 +290,22 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
     const isPiffer = role === "piffer";
     const isRater = isPiffer ? !isRequest : isRequest;
-    // A wish's helper is asked whenever they open the chat of a fulfilled
-    // wish they haven't rated -- the wisher often completes it while the
-    // helper is elsewhere ("Markera som klar ändå"). "Hoppa över" is
-    // remembered on this device.
-    if (!isPiffer && isRequest) {
-      if (
-        completion.pifStatus === "completed" &&
-        hasRatedLoaded &&
-        !hasRated &&
-        !ratedPromptedRef.current &&
-        !wishRatingSkipped(item.id)
-      ) {
-        ratedPromptedRef.current = true;
-        setRatingOpen(true);
-      }
-      return;
-    }
-    const shouldOpenRating =
-      completion.pifStatus === "completed" &&
+    // The rater (a pif's piffer, a wish's helper) is asked whenever they open
+    // the chat of a post completed in the last 30 days that they haven't
+    // rated -- the other side often completes it while they're elsewhere.
+    // "Hoppa över" is remembered on this device (shared with RatingPrompt).
+    const completedRecently =
+      !!completion.completedAt &&
+      Date.now() - new Date(completion.completedAt).getTime() < 30 * 24 * 60 * 60 * 1000;
+    if (
       isRater &&
-      !initialStatusSeenRef.current &&
-      !hasRated;
-    console.log("[PifRatingModal] trigger evaluation", {
-      pifStatus: completion.pifStatus,
-      isPiffer,
-      initialStatusSeenRef: initialStatusSeenRef.current,
-      hasRated,
-      shouldOpenRating,
-    });
-    if (shouldOpenRating && !ratedPromptedRef.current) {
+      completion.pifStatus === "completed" &&
+      completedRecently &&
+      hasRatedLoaded &&
+      !hasRated &&
+      !ratedPromptedRef.current &&
+      !ratingSkipped(item.id)
+    ) {
       ratedPromptedRef.current = true;
       setRatingOpen(true);
     }
@@ -329,6 +315,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     item?.id,
     completion.loading,
     completion.pifStatus,
+    completion.completedAt,
     hasRated,
     hasRatedLoaded,
   ]);
@@ -777,7 +764,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           open={ratingOpen}
           onOpenChange={(open) => {
             setRatingOpen(open);
-            if (!open && role !== "piffer" && isRequest && item?.id != null) rememberWishRatingSkipped(item.id);
+            if (!open && completion.pifStatus === "completed" && (role === "piffer" ? !isRequest : isRequest) && item?.id != null) rememberRatingSkipped(item.id);
           }}
           mode={
             completion.pifStatus === "completed"

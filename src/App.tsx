@@ -29,7 +29,7 @@ import { BlockUserDialogHost } from "@/components/blocking/BlockUserDialogHost";
 import { UpdateRequiredGate } from "@/components/native/UpdateRequiredGate";
 import { CampaignTracker } from "@/components/analytics/CampaignTracker";
 import { TermsGate } from "@/components/terms/TermsGate";
-import { WishRatingPrompt } from "@/components/rating/WishRatingPrompt";
+import { RatingPrompt } from "@/components/rating/RatingPrompt";
 import { AnnouncementModal } from "@/components/announcements/AnnouncementModal";
 import { debugLog } from "@/utils/authDebug";
 import "./App.css";
@@ -95,7 +95,7 @@ function App() {
               <UpdateRequiredGate />
               <CampaignTracker />
               <TermsGate />
-              <WishRatingPrompt />
+              <RatingPrompt />
               <Toaster />
               <Sonner />
               <AuthHydrationDebugPanel />
