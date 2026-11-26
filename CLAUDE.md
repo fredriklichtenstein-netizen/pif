@@ -528,6 +528,11 @@ It is not a second product — no native-only features or UI.
   the post is done go through `rate_after_handover()`; `complete_pif_with_rating()` is only for
   "Markera som klar ändå" (it refuses a completed post) and takes `p_rating` null for a wish.
   Migration `20261126090000_wish_owner_rating`.
+- **Who gets asked, and where:** the rater is asked in the chat whenever they open a completed
+  post's chat, and app-wide by `RatingPrompt` (App.tsx) — both for posts completed in the last
+  30 days that they haven't rated. "Hoppa över" is remembered per device (`src/lib/ratingSkip.ts`).
+  Needed because the other side often completes the post while the rater is elsewhere, and the
+  chat then sits under "Historik".
 - The profile rating (`get_user_public_stats`) = receiver_rating on pifs + owner_rating on one's
   own wishes. The old `ratings` table ("Gick bra / Dök inte upp", `submit_rating`) has no UI left
   except the legacy `ReceiverConfirmation`; production had 0 rows.
