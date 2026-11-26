@@ -127,6 +127,10 @@ export function InterestSelectionList({
     undefined,
   );
 
+  // A completed/archived post's list is read-only: who got it stays visible,
+  // but no Välj / Avmarkera (staging test 2026-11-26).
+  const postClosed = completion.pifStatus === "completed" || completion.pifStatus === "archived";
+
   useEffect(() => {
     onHandoverStateChange?.({ loading: completion.loading, pifferConfirmed: completion.pifferConfirmed });
   }, [completion.loading, completion.pifferConfirmed, onHandoverStateChange]);
@@ -893,7 +897,7 @@ export function InterestSelectionList({
                           {t("interactions.message_btn")}
                         </Button>
                       )}
-                      {isOwner && (
+                      {isOwner && !postClosed && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -930,7 +934,7 @@ export function InterestSelectionList({
                       )}
                     </>
                   )}
-                  {r.status === "pending" && isOwner && (
+                  {r.status === "pending" && isOwner && !postClosed && (
                     <Button
                       size="sm"
                       disabled={busyId !== null}
@@ -992,7 +996,7 @@ export function InterestSelectionList({
         </div>
       )}
 
-      {isOwner && rows.some((r) => r.status === "pending") &&
+      {isOwner && !postClosed && rows.some((r) => r.status === "pending") &&
         (isWish || !rows.some((r) => r.status === "selected")) && (
           <p className="text-xs text-muted-foreground mt-3 border-t pt-2">
             {isWish
@@ -1098,8 +1102,15 @@ export function InterestSelectionList({
           mode={isWish ? "complete_no_rating" : "complete"}
           ratee="receiver"
           onSubmit={async (rating, comment) => {
-            // Wishes complete without rating the helper (2026-11-26).
-            const res = await completion.completeWithRating(isWish ? null : rating, comment);
+            // Wishes complete without rating the helper (2026-11-26). The
+            // helper's chat gets the completion messages (this list has no
+            // conversation of its own) -- that's where they're told, and
+            // where they're asked to rate the wisher.
+            const convId = await resolveConversationId(forceHelperRating.helperId).catch(() => null);
+            const res = await completion.completeWithRating(isWish ? null : rating, comment, {
+              conversationId: convId ?? null,
+              otherUserId: forceHelperRating.helperId,
+            });
             if (res.ok) {
               setForceHelperRating(null);
             } else {
