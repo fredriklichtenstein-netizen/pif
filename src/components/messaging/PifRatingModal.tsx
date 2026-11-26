@@ -37,6 +37,8 @@ interface Props {
   mode?: "complete" | "rate" | "complete_no_rating";
   /** Who is being rated: a pif's receiver (by the piffer) or a wisher (by a helper). */
   ratee?: "receiver" | "wisher";
+  /** Shown under the title, e.g. which wish (when not opened from its chat). */
+  context?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export function PifRatingModal({
   isRequest = false,
   mode = "complete",
   ratee = "receiver",
+  context,
 }: Props) {
   const noRating = mode === "complete_no_rating";
   const { t } = useTranslation();
@@ -108,6 +111,7 @@ export function PifRatingModal({
                     ? t("interactions.rate_wisher_modal_title")
                     : t("interactions.rate_receiver_modal_title")}
               </DialogTitle>
+              {context && <p className="text-sm font-medium">{context}</p>}
               <DialogDescription>
                 {noRating
                   ? t("interactions.complete_wish_modal_description")
