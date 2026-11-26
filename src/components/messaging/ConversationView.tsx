@@ -40,6 +40,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { PifCompletionBanner } from "./PifCompletionBanner";
 import { PifRatingModal } from "./PifRatingModal";
+import { rememberWishRatingSkipped, wishRatingSkipped } from "@/lib/wishRatingSkip";
 import { ReportPostDialog } from "@/components/item/ReportPostDialog";
 import { BlockUserMenuItem } from "@/components/blocking/BlockUserMenuItem";
 import { useBlockStore } from "@/stores/blockStore";
@@ -58,25 +59,6 @@ const messageDraftKey = (conversationId: string) => `pif:message-draft:${convers
 interface ConversationViewProps {
   conversationId: string;
   onBack?: () => void;
-}
-
-// A wish helper who skipped rating the wisher isn't asked again on this device.
-const WISH_RATING_SKIP_KEY = "pif-wish-rating-skipped";
-function wishRatingSkipped(itemId: string | number): boolean {
-  try {
-    return (JSON.parse(localStorage.getItem(WISH_RATING_SKIP_KEY) || "[]") as string[]).includes(String(itemId));
-  } catch {
-    return false;
-  }
-}
-function rememberWishRatingSkipped(itemId: string | number): void {
-  try {
-    const ids = new Set(JSON.parse(localStorage.getItem(WISH_RATING_SKIP_KEY) || "[]") as string[]);
-    ids.add(String(itemId));
-    localStorage.setItem(WISH_RATING_SKIP_KEY, JSON.stringify([...ids].slice(-200)));
-  } catch {
-    /* private mode etc. */
-  }
 }
 
 export function ConversationView({ conversationId, onBack }: ConversationViewProps) {

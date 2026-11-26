@@ -640,7 +640,8 @@
     "complete_wish_modal_title": "Markera önskan som uppfylld?",
     "complete_wish_modal_description": "Använd det här om önskan har uppfyllts men den som hjälpte dig inte har bekräftat.",
     "complete_wish_modal_submit": "Markera som uppfylld",
-    "awaiting_finish_btn_wish": "Slutför"
+    "awaiting_finish_btn_wish": "Slutför",
+    "rate_wisher_context": "Önskan: {{title}}"
   },
   "comments": {
     "welcome_message": "Välkommen till vår cirkulära ekonomi! Dela saker du inte längre behöver och hitta skatter som andra delar."
