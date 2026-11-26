@@ -259,18 +259,17 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       }
       const numericItemId = parseInt(String(item.id), 10);
       if (!Number.isFinite(numericItemId)) return;
-      const { data, error } = await (supabase.from("interests") as any)
-        .select(isRequest ? "owner_rating" : "receiver_rating")
-        .eq("item_id", numericItemId)
-        .eq("status", "selected")
-        .eq("user_id", isRequest ? currentUserId : otherUserId)
-        .maybeSingle();
+      // Ratings aren't readable from the table (privacy, 2026-11-27).
+      const { data, error } = await (supabase.rpc as any)("has_rated_handover", {
+        p_item_id: numericItemId,
+        p_other_user_id: otherUserId,
+      });
       if (cancelled) return;
       if (error) {
         console.warn("[PifRatingModal] hasRated lookup failed", error);
         return;
       }
-      setHasRated((isRequest ? data?.owner_rating : data?.receiver_rating) != null);
+      setHasRated(data === true);
       setHasRatedLoaded(true);
     };
     loadHasRated();

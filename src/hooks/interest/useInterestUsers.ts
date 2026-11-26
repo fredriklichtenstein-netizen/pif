@@ -22,7 +22,7 @@ export function useInterestUsers(itemId: number) {
       const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
       const { data, error } = await supabase
         .from("interests")
-        .select(`*, profiles:user_id(${getProfileEmbedColumns(!!authUser)})`)
+        .select(`id, item_id, user_id, status, created_at, selected_at, profiles:user_id(${getProfileEmbedColumns(!!authUser)})`)
         .eq("item_id", numericItemId)
         .order("created_at", { ascending: false });
         

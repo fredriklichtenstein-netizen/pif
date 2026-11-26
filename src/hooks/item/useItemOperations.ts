@@ -22,7 +22,7 @@ export function useItemOperations({ onSuccess }: UseItemOperationsProps = {}) {
   const checkInterestedCount = useCallback(async (itemId: string | number): Promise<number> => {
     try {
       const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-      const { count, error } = await supabase.from('interests').select('*', { count: 'exact', head: true }).eq('item_id', numericId);
+      const { count, error } = await supabase.from('interests').select('id', { count: 'exact', head: true }).eq('item_id', numericId);
       if (error) { console.error('Error checking interests:', error); throw error; }
       return count || 0;
     } catch (err: any) {

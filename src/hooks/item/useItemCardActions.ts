@@ -27,7 +27,7 @@ export const useItemCardActions = (id: string | number, postedById?: string) => 
 
       const { count, error } = await supabase
         .from('interests')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('item_id', numericId)
         .abortSignal(controller.signal);
 
