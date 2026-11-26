@@ -14,7 +14,7 @@ export function InterestsInMyPifsList({ userId }: { userId: string }) {
   const fetchItems = async () => {
     const { data } = await supabase
       .from("items")
-      .select("id,title,created_at,interests:interests(*)")
+      .select("id,title,created_at,interests:interests(id)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
     const list = (data as any[]) || [];

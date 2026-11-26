@@ -205,7 +205,7 @@ export function InterestSelectionList({
         const queryPromise = (supabase
           .from("interests") as any)
           .select(
-            `id, user_id, status, created_at, note, profiles:user_id(${getProfileEmbedColumns(!!currentUserId, ["reliability_score", "completed_pifs", "no_shows"])})`
+            `id, user_id, status, created_at, profiles:user_id(${getProfileEmbedColumns(!!currentUserId, ["reliability_score", "completed_pifs", "no_shows"])})`
           )
           .eq("item_id", numericItemId)
           .order("created_at", { ascending: false })
@@ -216,13 +216,25 @@ export function InterestSelectionList({
         ])) as { data: any[] | null; error: any };
         if (err) throw err;
         const fetched = (data || []) as any[];
+        // Wish notes aren't readable from the table (privacy, 2026-11-27):
+        // get_interest_notes returns them to the post's owner (all) and to a
+        // person for their own row.
+        const notesById = new Map<number, string>();
+        if (isWish && currentUserId && fetched.length > 0) {
+          const { data: notes } = await (supabase.rpc as any)("get_interest_notes", {
+            p_item_id: numericItemId,
+          });
+          for (const n of (Array.isArray(notes) ? notes : []) as Array<{ interest_id: number; note: string }>) {
+            notesById.set(Number(n.interest_id), n.note);
+          }
+        }
         const more = fetched.length > PAGE_SIZE;
         const slice = fetched.slice(0, PAGE_SIZE).map((r) => ({
           id: r.id,
           user_id: r.user_id,
           status: r.status,
           created_at: r.created_at,
-          note: r.note ?? null,
+          note: notesById.get(Number(r.id)) ?? null,
           profile: r.profiles,
         })) as InterestRow[];
         offsetRef.current = offset + slice.length;

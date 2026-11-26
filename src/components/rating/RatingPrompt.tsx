@@ -47,45 +47,20 @@ export function RatingPrompt() {
     }
     let cancelled = false;
     void (async () => {
-      const since = Date.now() - ASK_WITHIN_DAYS * 24 * 60 * 60 * 1000;
-      const recent = (it: any) =>
-        it && it.pif_status === "completed" && it.completed_at && new Date(it.completed_at).getTime() >= since;
-      const itemCols = "id, title, pif_status, item_type, completed_at, completed_outside_app, user_id";
-
-      const [helping, giving] = await Promise.all([
-        // Wishes I helped with and haven't rated the wisher on.
-        (supabase.from("interests") as any)
-          .select(`item_id, item:items(${itemCols})`)
-          .eq("user_id", userId)
-          .eq("status", "selected")
-          .is("owner_rating", null),
-        // My pifs whose receiver I haven't rated.
-        (supabase.from("interests") as any)
-          .select(`item_id, user_id, item:items!inner(${itemCols})`)
-          .eq("status", "selected")
-          .is("receiver_rating", null)
-          .eq("item.user_id", userId)
-          .eq("item.item_type", "offer")
-          .eq("item.pif_status", "completed"),
-      ]);
-      if (cancelled) return;
-
+      // Ratings aren't readable from the table (privacy, 2026-11-27):
+      // get_pending_ratings works out, server-side, which posts the caller
+      // should rate (pif's piffer -> receiver, wish's helper -> wisher).
+      const { data, error } = await (supabase.rpc as any)("get_pending_ratings", {
+        p_days: ASK_WITHIN_DAYS,
+      });
+      if (cancelled || error || !Array.isArray(data)) return;
       const pending: Pending[] = [];
       const seen = new Set<number>();
-      for (const row of (helping.error ? [] : helping.data ?? []) as any[]) {
-        const it = row.item;
-        if (!recent(it) || it.item_type !== "request" || it.user_id === userId) continue;
-        if (ratingSkipped(it.id) || seen.has(Number(it.id))) continue;
-        seen.add(Number(it.id));
-        pending.push({ itemId: Number(it.id), title: it.title ?? "", isWish: true, rateeId: it.user_id });
-      }
-      for (const row of (giving.error ? [] : giving.data ?? []) as any[]) {
-        const it = row.item;
-        // Given away outside the app: nobody here received it.
-        if (!recent(it) || it.completed_outside_app || row.user_id === userId) continue;
-        if (ratingSkipped(it.id) || seen.has(Number(it.id))) continue;
-        seen.add(Number(it.id));
-        pending.push({ itemId: Number(it.id), title: it.title ?? "", isWish: false, rateeId: row.user_id });
+      for (const row of data as Array<{ item_id: number; title: string | null; is_wish: boolean; ratee_id: string }>) {
+        const id = Number(row.item_id);
+        if (seen.has(id) || ratingSkipped(id)) continue;
+        seen.add(id);
+        pending.push({ itemId: id, title: row.title ?? "", isWish: !!row.is_wish, rateeId: row.ratee_id });
       }
       setQueue(pending);
     })();

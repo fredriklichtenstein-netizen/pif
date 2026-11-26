@@ -71,6 +71,14 @@ always use `heurpehcwbhohwklqnir` and verify against `src/integrations/supabase/
   authenticated`.** If a query selects, filters or orders by it before then, it fails with 42501
   and the feed breaks. `is_inactive` (generated: archived or completed) is what the feed orders
   by: active first.
+- **`interests` is readable column by column too** (since 2026-11-27, migrations
+  `20261127090000_interests_private_rpcs` + `20261127090100_interests_column_grants`): clients may
+  SELECT `id, item_id, user_id, created_at, status, selected_at, item_type` only. `note`,
+  `receiver_rating`, `rating_comment`, `owner_rating`, `owner_rating_comment` are read through
+  `get_interest_notes()` (post owner + the note's writer), `has_rated_handover()` and
+  `get_pending_ratings()`. `select('*')` on interests (also embedded, `interests(*)`) fails; a new
+  column needs its own `GRANT SELECT (<col>)` if clients should read it. Before this, anyone could
+  read every rating, rating comment and wish note via REST.
 - The `conversations` table has no participant columns — joined via `conversation_participants`.
 - PostgREST cannot auto-embed across the `auth.users` boundary — fetch `public.profiles` separately
   using `user_id`.
