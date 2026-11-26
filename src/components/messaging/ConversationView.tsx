@@ -60,6 +60,25 @@ interface ConversationViewProps {
   onBack?: () => void;
 }
 
+// A wish helper who skipped rating the wisher isn't asked again on this device.
+const WISH_RATING_SKIP_KEY = "pif-wish-rating-skipped";
+function wishRatingSkipped(itemId: string | number): boolean {
+  try {
+    return (JSON.parse(localStorage.getItem(WISH_RATING_SKIP_KEY) || "[]") as string[]).includes(String(itemId));
+  } catch {
+    return false;
+  }
+}
+function rememberWishRatingSkipped(itemId: string | number): void {
+  try {
+    const ids = new Set(JSON.parse(localStorage.getItem(WISH_RATING_SKIP_KEY) || "[]") as string[]);
+    ids.add(String(itemId));
+    localStorage.setItem(WISH_RATING_SKIP_KEY, JSON.stringify([...ids].slice(-200)));
+  } catch {
+    /* private mode etc. */
+  }
+}
+
 export function ConversationView({ conversationId, onBack }: ConversationViewProps) {
   const { session } = useAuth();
   const currentUserId = session?.user?.id;
@@ -71,6 +90,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
   const openProfile = useProfileSheetStore((s) => s.open);
   const [ratingOpen, setRatingOpen] = useState(false);
   const [hasRated, setHasRated] = useState(false);
+  // Known once the hasRated lookup has answered (the helper's prompt waits for it).
+  const [hasRatedLoaded, setHasRatedLoaded] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawReceiverOpen, setWithdrawReceiverOpen] = useState(false);
@@ -249,6 +270,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       // wisher (owner_rating on the helper's own interest row). Wishers
       // don't rate helpers and receivers don't rate piffers.
       const rater = role === "piffer" ? !isRequest : isRequest;
+      if (!cancelled) setHasRatedLoaded(false);
       if (!rater || !item?.id || !otherUserId || !currentUserId) {
         if (!cancelled) setHasRated(false);
         return;
@@ -267,6 +289,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         return;
       }
       setHasRated((isRequest ? data?.owner_rating : data?.receiver_rating) != null);
+      setHasRatedLoaded(true);
     };
     loadHasRated();
     return () => {
@@ -285,6 +308,23 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
     const isPiffer = role === "piffer";
     const isRater = isPiffer ? !isRequest : isRequest;
+    // A wish's helper is asked whenever they open the chat of a fulfilled
+    // wish they haven't rated -- the wisher often completes it while the
+    // helper is elsewhere ("Markera som klar ändå"). "Hoppa över" is
+    // remembered on this device.
+    if (!isPiffer && isRequest) {
+      if (
+        completion.pifStatus === "completed" &&
+        hasRatedLoaded &&
+        !hasRated &&
+        !ratedPromptedRef.current &&
+        !wishRatingSkipped(item.id)
+      ) {
+        ratedPromptedRef.current = true;
+        setRatingOpen(true);
+      }
+      return;
+    }
     const shouldOpenRating =
       completion.pifStatus === "completed" &&
       isRater &&
@@ -308,6 +348,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     completion.loading,
     completion.pifStatus,
     hasRated,
+    hasRatedLoaded,
   ]);
 
   const handleSendMessage = async () => {
@@ -752,7 +793,10 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       {(role === "piffer" || isRequest) && (
         <PifRatingModal
           open={ratingOpen}
-          onOpenChange={setRatingOpen}
+          onOpenChange={(open) => {
+            setRatingOpen(open);
+            if (!open && role !== "piffer" && isRequest && item?.id != null) rememberWishRatingSkipped(item.id);
+          }}
           mode={
             completion.pifStatus === "completed"
               ? "rate"

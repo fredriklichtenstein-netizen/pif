@@ -141,6 +141,8 @@ export function usePifCompletion(
   otherUserId?: string | null,
 ) {
   const id = numericItemId(itemId);
+  const conversationIdArg = conversationId;
+  const otherUserIdArg = otherUserId;
   const queryClient = useQueryClient();
   const [state, setState] = useState<PifCompletionState>({
     pifferConfirmed: false,
@@ -417,9 +419,16 @@ export function usePifCompletion(
   );
 
   const completeWithRating = useCallback(
-    async (rating: number | null, comment?: string) => {
+    async (
+      rating: number | null,
+      comment?: string,
+      /** For callers without a conversation (the post's interest list): whose chat gets the messages. */
+      target?: { conversationId: string | null; otherUserId: string | null },
+    ) => {
       if (id === null) return { ok: false } as const;
       if (!(await ensureSession("complete_pif_with_rating"))) return { ok: false } as const;
+      const conversationId = target?.conversationId ?? conversationIdArg;
+      const otherUserId = target?.otherUserId ?? otherUserIdArg;
       // rating null: a wish completed by the wisher ("Markera som klar ändå")
       // -- helpers are not rated (2026-11-26).
       const args: Record<string, unknown> = {
