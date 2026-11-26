@@ -412,6 +412,9 @@ It is not a second product — no native-only features or UI.
     private-relay email service must list our sending domain or mail to "Hide My Email"
     addresses bounces; account deletion should revoke the Apple token.
 - The Xcode project carries `DEVELOPMENT_TEAM = JZS9N2HAC8`, so signing needs no manual step.
+- **Xcode target/scheme is `PIF`** (renamed from Capacitor's `App` 2026-11-26; the product is
+  `PIF.app`). The folder `ios/App` and `App.xcodeproj` keep Capacitor's names, which its CLI
+  expects; `capacitor.config.ts` sets `ios.scheme: 'PIF'` for `cap run ios`.
 - **Icons and splash** are generated from `assets/` with `bunx @capacitor/assets generate --ios
   --android` (then `git checkout android/app/src/main/AndroidManifest.xml` — the tool reformats
   it). The current source is the 512 px web icon upscaled; replace `assets/icon-only.png` with
@@ -503,7 +506,7 @@ It is not a second product — no native-only features or UI.
   **Without clicking (since 2026-11-24, build 3):** with Fredrik's Mac attached to a cloud session
   (Remote Control, folder `pif`), on `main`: bump `CURRENT_PROJECT_VERSION` in
   `ios/App/App.xcodeproj/project.pbxproj` (both configs) and push; then on the Mac
-  `scripts/native-build.sh production`, `xcodebuild -project ios/App/App.xcodeproj -scheme App
+  `scripts/native-build.sh production`, `xcodebuild -project ios/App/App.xcodeproj -scheme PIF
   -configuration Release -destination 'generic/platform=iOS' -archivePath
   ~/pif-archives/PIF-<ver>-<build>.xcarchive -allowProvisioningUpdates archive`, then
   `xcodebuild -exportArchive ... -exportOptionsPlist ~/pif-archives/ExportOptions.plist
