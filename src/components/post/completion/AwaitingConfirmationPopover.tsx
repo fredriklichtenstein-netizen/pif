@@ -116,7 +116,9 @@ export function AwaitingConfirmationPopover({
               }}
             >
               {receiverConfirmed
-                ? t("interactions.awaiting_finish_btn", "Slutför och betygsätt")
+                ? isWish
+                  ? t("interactions.awaiting_finish_btn_wish", "Slutför")
+                  : t("interactions.awaiting_finish_btn", "Slutför och betygsätt")
                 : t(
                     "interactions.awaiting_hard_complete_btn",
                     "Markera som klar ändå",

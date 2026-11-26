@@ -26,8 +26,6 @@ import { MOCK_INTERESTED_USERS } from "@/data/mockProfiles";
 import {
   useDemoSelectionsStore,
 } from "@/stores/demoSelectionsStore";
-import { useDemoRatingsStore } from "@/stores/demoRatingsStore";
-import { PifferRatingDialog } from "@/components/profile/completion/PifferRatingDialog";
 import { PifRatingModal } from "@/components/messaging/PifRatingModal";
 import { usePifCompletion, postPifSystemMessage } from "@/hooks/usePifCompletion";
 import { AwaitingConfirmationPopover } from "@/components/post/completion/AwaitingConfirmationPopover";
@@ -100,21 +98,18 @@ export function InterestSelectionList({
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [withdrawId, setWithdrawId] = useState<number | null>(null);
   const [confirmSelfWithdrawOpen, setConfirmSelfWithdrawOpen] = useState(false);
-  /** Helper currently being rated via the per-helper "Mark as granted" flow. */
+  /** Pif receiver to rate once the pif is completed (stars, rate_after_handover). */
   const [ratingHelper, setRatingHelper] = useState<{
-    helperId?: string;
     helperName: string;
+    conversationId: string | null;
   } | null>(null);
   /** Helper being force-completed via the "Markera som klar ändå" override. */
   const [forceHelperRating, setForceHelperRating] = useState<{
     helperId: string;
     helperName: string;
   } | null>(null);
-  /** Helper user_ids the wisher has already rated for this item. */
-  const [ratedHelperIds, setRatedHelperIds] = useState<Set<string>>(new Set());
   const [wishGrantingHelperId, setWishGrantingHelperId] = useState<string | null>(null);
 
-  const demoRatings = useDemoRatingsStore();
 
   const offsetRef = useRef(0);
   const inFlightRef = useRef(false);
@@ -311,45 +306,6 @@ export function InterestSelectionList({
     return () => observer.disconnect();
   }, [hasMore, loading, loadingMore, loadPage]);
 
-  // Wisher-only: keep track of which helpers we've already rated so we
-  // can swap the "Mark as granted" CTA for a "Granted ✓" badge and
-  // avoid asking again. Cheap query (filtered by item + current user).
-  const reloadRatedHelpers = useCallback(async () => {
-    if (!isWish || !isOwner || !currentUserId) return;
-    if (DEMO_MODE) {
-      const set = new Set<string>();
-      for (const r of demoRatings.ratings) {
-        if (
-          String(r.itemId) === String(itemId) &&
-          r.raterId === currentUserId
-        ) {
-          set.add(r.rateeId);
-        }
-      }
-      setRatedHelperIds(set);
-      return;
-    }
-    if (isNaN(numericItemId)) return;
-    try {
-      const { data, error: rerr } = await (supabase
-        .from("ratings") as any)
-        .select("ratee_id")
-        .eq("item_id", numericItemId)
-        .eq("rater_id", currentUserId);
-      if (rerr) throw rerr;
-      const set = new Set<string>();
-      for (const row of (data || []) as Array<{ ratee_id: string }>) {
-        set.add(row.ratee_id);
-      }
-      setRatedHelperIds(set);
-    } catch (e) {
-      console.warn("[InterestSelectionList] load my ratings failed", e);
-    }
-  }, [isWish, isOwner, currentUserId, numericItemId, itemId, demoRatings.ratings]);
-
-  useEffect(() => {
-    reloadRatedHelpers();
-  }, [reloadRatedHelpers]);
 
 
   const displayName = (r: InterestRow) => {
@@ -528,10 +484,7 @@ export function InterestSelectionList({
 
   const handleMarkWishGranted = useCallback(
     async (row: InterestRow) => {
-      if (DEMO_MODE) {
-        setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
-        return;
-      }
+      if (DEMO_MODE) return;
       setWishGrantingHelperId(row.user_id);
       try {
         // Resolve the per-helper conversation BEFORE the RPC so the
@@ -574,38 +527,36 @@ export function InterestSelectionList({
           if (!receiverAlreadyConfirmed) {
             await postPifSystemMessage(
               convId,
-              "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning.",
+              (isWish ? "Du har bekräftat att önskan är uppfylld. Väntar på att den som uppfyllde önskan också bekräftar." : "Du har bekräftat överlämning. Väntar på att mottagaren bekräftar mottagning."),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               convId,
-              "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning.",
+              (isWish ? "Önskaren har bekräftat att önskan är uppfylld. Väntar på att du också bekräftar." : "Piffaren har bekräftat överlämning. Väntar på att du bekräftar mottagning."),
               { targetUserId: row.user_id },
             );
           } else {
             await postPifSystemMessage(
               convId,
-              "Du har bekräftat överlämning.",
+              (isWish ? "Du har bekräftat att önskan är uppfylld." : "Du har bekräftat överlämning."),
               { targetUserId: currentUserId ?? null },
             );
             await postPifSystemMessage(
               convId,
-              "Piffaren har bekräftat överlämning.",
+              (isWish ? "Önskaren har bekräftat att önskan är uppfylld." : "Piffaren har bekräftat överlämning."),
               { targetUserId: row.user_id },
             );
             await postPifSystemMessage(
               convId,
-              "Piffen är genomförd! Tack för att ni använde PIF. 🎉",
+              (isWish ? "Önskan är uppfylld! Tack för att ni använde PIF. 🎉" : "Piffen är genomförd! Tack för att ni använde PIF. 🎉"),
             );
           }
         }
-        if (isWish) {
-          setRatingHelper({ helperId: row.user_id, helperName: displayName(row) });
-        } else if (receiverAlreadyConfirmed) {
-          // A pif can only be rated once it's completed (submit_rating:
-          // "Item not in a rateable state" while it waits for the receiver),
-          // as in the chat. No helperId: that switches the dialog to wish copy.
-          setRatingHelper({ helperId: undefined, helperName: displayName(row) });
+        // Ratings (2026-11-26): wishers don't rate helpers (the helper rates
+        // the wisher in their chat). A pif's receiver is rated once the pif
+        // is completed, as in the chat.
+        if (!isWish && receiverAlreadyConfirmed) {
+          setRatingHelper({ helperName: displayName(row), conversationId: convId ?? null });
         }
       } finally {
         setWishGrantingHelperId(null);
@@ -832,7 +783,7 @@ export function InterestSelectionList({
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
                   {r.status === "selected" && (
                     <>
-                      {isWish && ratedHelperIds.has(r.user_id) ? (
+                      {isWish && completion.pifStatus === "completed" ? (
                         <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs whitespace-nowrap inline-flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3" />
                           {t("interactions.helper_granted_badge", "Granted")}
@@ -844,7 +795,7 @@ export function InterestSelectionList({
                             : t("interactions.selected_badge")}
                         </span>
                       )}
-                      {isOwner && isWish && !ratedHelperIds.has(r.user_id) && (
+                      {isOwner && isWish && completion.pifStatus !== "completed" && completion.pifStatus !== "archived" && (
                         completion.pifferConfirmed &&
                         completion.pifStatus !== "completed" &&
                         completion.pifStatus !== "archived" ? (
@@ -1118,18 +1069,22 @@ export function InterestSelectionList({
         copy={selfWithdrawCopy}
       />
 
-      {ratingHelper && (
-        <PifferRatingDialog
+      {ratingHelper && !DEMO_MODE && (
+        <PifRatingModal
           open={!!ratingHelper}
           onOpenChange={(o) => !o && setRatingHelper(null)}
-          itemId={itemId}
-          receiverName={ratingHelper.helperName}
-          helperId={ratingHelper.helperId}
-          demoRaterId={currentUserId}
-          demoRateeId={ratingHelper.helperId ?? ""}
-          onSubmitted={() => {
-            setRatingHelper(null);
-            reloadRatedHelpers();
+          mode="rate"
+          ratee="receiver"
+          onSubmit={async (rating, comment) => {
+            const res = await completion.rateAfterHandover(rating, comment);
+            if (res.ok && comment && comment.trim() && ratingHelper.conversationId) {
+              await postPifSystemMessage(
+                ratingHelper.conversationId,
+                `Kommentar från piffaren: ${comment.trim()}`,
+              );
+            }
+            if (res.ok) setRatingHelper(null);
+            return { ok: res.ok };
           }}
         />
       )}
@@ -1139,11 +1094,14 @@ export function InterestSelectionList({
           open={!!forceHelperRating}
           onOpenChange={(o) => !o && setForceHelperRating(null)}
           allowSkip={false}
+          isRequest={isWish}
+          mode={isWish ? "complete_no_rating" : "complete"}
+          ratee="receiver"
           onSubmit={async (rating, comment) => {
-            const res = await completion.completeWithRating(rating, comment);
+            // Wishes complete without rating the helper (2026-11-26).
+            const res = await completion.completeWithRating(isWish ? null : rating, comment);
             if (res.ok) {
               setForceHelperRating(null);
-              reloadRatedHelpers();
             } else {
               toast({
                 variant: "destructive",

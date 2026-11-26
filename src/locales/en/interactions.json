@@ -621,7 +621,7 @@
     "rate_helper_modal_placeholder": "Leave a comment (shown to the wish fulfiller)",
     "rate_modal_skip": "Skip",
     "rate_modal_submit": "Submit rating",
-    "rate_modal_closes_conversation_note": "This marks the exchange as completed and closes the conversation. It can be reopened within 7 days by requesting it from the other party.",
+    "rate_modal_closes_conversation_note": "This marks the handover as completed and closes the conversation. It can be reopened within 7 days by requesting it from the other party.",
     "stars_aria": "{{count}} stars",
     "show_interest_confirm_title": "Show interest?",
     "show_interest_distance": "About {{distance}} from you",
@@ -633,7 +633,14 @@
     "show_interest_explainer": "The piffer chooses who gets the pif. If you're chosen, you'll get a notification and arrange pickup in the chat.",
     "show_interest_confirm": "Show interest",
     "show_interest_submitting": "Sending…",
-    "show_interest_pickup_flexible": "Flexible handover"
+    "show_interest_pickup_flexible": "Flexible handover",
+    "rate_modal_closes_conversation_note_wish": "This marks the wish as fulfilled and closes the conversation. It can be reopened within 7 days by requesting it from the other party.",
+    "rate_wisher_modal_title": "Rate the wisher",
+    "rate_wisher_modal_placeholder": "Leave a comment (shown to the wisher)",
+    "complete_wish_modal_title": "Mark the wish as fulfilled?",
+    "complete_wish_modal_description": "Use this if the wish has been fulfilled but the person who helped you hasn't confirmed.",
+    "complete_wish_modal_submit": "Mark as fulfilled",
+    "awaiting_finish_btn_wish": "Finish"
   },
   "comments": {
     "welcome_message": "Welcome to our circular economy community! Share items you no longer need, and find treasures others are sharing."

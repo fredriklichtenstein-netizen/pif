@@ -244,32 +244,35 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     let cancelled = false;
     const loadHasRated = async () => {
       const otherUserId = otherParticipant?.user_id;
-      if (role !== "piffer" || !item?.id || !otherUserId) {
+      // Who rates whom (2026-11-26): on a pif the piffer rates the receiver
+      // (the receiver's receiver_rating); on a wish the helper rates the
+      // wisher (owner_rating on the helper's own interest row). Wishers
+      // don't rate helpers and receivers don't rate piffers.
+      const rater = role === "piffer" ? !isRequest : isRequest;
+      if (!rater || !item?.id || !otherUserId || !currentUserId) {
         if (!cancelled) setHasRated(false);
         return;
       }
       const numericItemId = parseInt(String(item.id), 10);
       if (!Number.isFinite(numericItemId)) return;
-      // Scope by the conversation's other participant so this lookup is
-      // safe on wishes (which can have multiple selected helpers).
       const { data, error } = await (supabase.from("interests") as any)
-        .select("receiver_rating")
+        .select(isRequest ? "owner_rating" : "receiver_rating")
         .eq("item_id", numericItemId)
         .eq("status", "selected")
-        .eq("user_id", otherUserId)
+        .eq("user_id", isRequest ? currentUserId : otherUserId)
         .maybeSingle();
       if (cancelled) return;
       if (error) {
         console.warn("[PifRatingModal] hasRated lookup failed", error);
         return;
       }
-      setHasRated(data?.receiver_rating != null);
+      setHasRated((isRequest ? data?.owner_rating : data?.receiver_rating) != null);
     };
     loadHasRated();
     return () => {
       cancelled = true;
     };
-  }, [role, item?.id, otherParticipant?.user_id]);
+  }, [role, isRequest, item?.id, otherParticipant?.user_id, currentUserId]);
 
   useEffect(() => {
     if (!item?.id) return;
@@ -281,9 +284,10 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
       initialStatusCapturedRef.current = true;
     }
     const isPiffer = role === "piffer";
+    const isRater = isPiffer ? !isRequest : isRequest;
     const shouldOpenRating =
       completion.pifStatus === "completed" &&
-      isPiffer &&
+      isRater &&
       !initialStatusSeenRef.current &&
       !hasRated;
     console.log("[PifRatingModal] trigger evaluation", {
@@ -299,6 +303,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     }
   }, [
     role,
+    isRequest,
     item?.id,
     completion.loading,
     completion.pifStatus,
@@ -740,13 +745,28 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
         </DialogContent>
       </Dialog>
 
-      {/* Piffer rating modal */}
-      {role === "piffer" && (
+      {/* Rating after the handover: the piffer rates a pif's receiver, a
+          wish's helper rates the wisher. A wisher's "Markera som klar ändå"
+          completes the wish without stars. "complete" = the rating also
+          completes the post (receiver hadn't confirmed); "rate" = it's done. */}
+      {(role === "piffer" || isRequest) && (
         <PifRatingModal
           open={ratingOpen}
           onOpenChange={setRatingOpen}
+          mode={
+            completion.pifStatus === "completed"
+              ? "rate"
+              : role === "piffer" && isRequest
+                ? "complete_no_rating"
+                : "complete"
+          }
+          ratee={isRequest ? "wisher" : "receiver"}
+          allowSkip={completion.pifStatus === "completed"}
           onSubmit={async (rating, comment) => {
-            const res = await completion.completeWithRating(rating, comment);
+            const res =
+              completion.pifStatus === "completed"
+                ? await completion.rateAfterHandover(rating, comment)
+                : await completion.completeWithRating(role === "piffer" && isRequest ? null : rating, comment);
             if (res.ok) setHasRated(true);
             return res;
           }}

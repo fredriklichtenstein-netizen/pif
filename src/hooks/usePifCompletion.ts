@@ -417,9 +417,11 @@ export function usePifCompletion(
   );
 
   const completeWithRating = useCallback(
-    async (rating: number, comment?: string) => {
+    async (rating: number | null, comment?: string) => {
       if (id === null) return { ok: false } as const;
       if (!(await ensureSession("complete_pif_with_rating"))) return { ok: false } as const;
+      // rating null: a wish completed by the wisher ("Markera som klar ändå")
+      // -- helpers are not rated (2026-11-26).
       const args: Record<string, unknown> = {
         p_item_id: id,
         p_rating: rating,
@@ -541,6 +543,41 @@ export function usePifCompletion(
       return { ok: true } as const;
     },
     [id, conversationId, currentUserId, otherUserId, isRequest, queryClient],
+  );
+
+  /**
+   * Star rating once the post is done (rate_after_handover): the piffer rates
+   * the receiver of a completed pif; a wish's helper rates the wisher. A
+   * written comment is posted to the conversation, like completeWithRating's.
+   */
+  const rateAfterHandover = useCallback(
+    async (rating: number, comment?: string) => {
+      if (id === null) return { ok: false } as const;
+      const { error } = await (supabase.rpc as any)("rate_after_handover", {
+        p_item_id: id,
+        p_rating: rating,
+        p_comment: comment?.trim() || null,
+      });
+      if (error) {
+        console.error("rate_after_handover failed:", error);
+        toast({
+          title: "Kunde inte spara betyget",
+          description: "Försök igen om en stund.",
+          variant: "destructive",
+        });
+        return { ok: false, error } as const;
+      }
+      if (conversationId && comment && comment.trim()) {
+        await postPifSystemMessage(
+          conversationId,
+          isRequest
+            ? `Kommentar från den som uppfyllde önskan: ${comment.trim()}`
+            : `Kommentar från piffaren: ${comment.trim()}`,
+        );
+      }
+      return { ok: true } as const;
+    },
+    [id, conversationId, isRequest],
   );
 
   const undoConfirmation = useCallback(
@@ -693,6 +730,7 @@ export function usePifCompletion(
     ...state,
     isRequest,
     confirmHandoff,
+    rateAfterHandover,
     completeWithRating,
     withdraw,
     undoConfirmation,
