@@ -1,4 +1,4 @@
 {
-  "ios": { "minBuild": 99 },
+  "ios": { "minBuild": 1 },
   "android": { "minBuild": 38 }
 }
