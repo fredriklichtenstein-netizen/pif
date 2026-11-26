@@ -49,11 +49,11 @@ Audio, Gameplay, Other Data.
 - **Name:** PIF
 - **Subtitle** (28/30): Ge och ta emot i grannskapet
 - **Promotional text** (89/170): Ge bort det du inte behöver och önska det du saknar – gratis och enkelt i ditt närområde.
-- **Keywords** (97/100): `piff,pay it forward,ge bort,skänka,gratis,grannar,återbruk,begagnat,önskelista,hållbart,cirkulärt` — "pif" isn't needed: Apple already indexes the
+- **Keywords** (98/100): `piff,pay it forward,ge bort,skänka,gratis,grannar,återbruk,begagnat,hållbart,cirkulärt,byta,loppis` — "pif" isn't needed: Apple already indexes the
   app name, and words from the subtitle count too.
-- **Description** (1274/4000):
+- **Description** (1326/4000):
 
-PIF står för Pay It Forward – att ge vidare. Med PIF ger du bort saker du inte längre behöver till någon i närheten som har nytta av dem, och önskar dig det du själv saknar.
+PIF står för Pay It Forward – att ge vidare utan att be om något tillbaka. Med PIF ger du bort saker du inte längre behöver till någon i närheten som har nytta av dem, och önskar dig det du själv saknar.
 
 Att piffa gör din granne, din plånbok och planeten glad! Sakerna får ett nytt liv i stället för att samla damm eller hamna på tippen, och du hittar det du behöver utan att köpa nytt.
 
@@ -74,7 +74,7 @@ TRYGGT OCH ENKELT
 • Blockera och rapportera användare som inte sköter sig.
 
 GRATIS
-PIF är gratis att använda.
+PIF är gratis att använda och fritt från reklam.
 
 Ge vidare – det som blir över hos dig kan vara precis det någon annan behöver.
 
@@ -82,10 +82,10 @@ Ge vidare – det som blir över hos dig kan vara precis det någon annan behöv
 - **Name:** PIF
 - **Subtitle** (23/30): Give and receive nearby
 - **Promotional text** (101/170): Give away what you don't need and wish for what you're missing – free and easy in your neighbourhood.
-- **Keywords** (94/100): `pif,pay it forward,give away,free stuff,neighbours,reuse,second hand,wishlist,sustainable,swap`
-- **Description** (1194/4000):
+- **Keywords** (97/100): `pif,pay it forward,give away,free stuff,neighbours,reuse,second hand,sustainable,swap,flea market`
+- **Description** (1264/4000):
 
-PIF stands for Pay It Forward. With PIF you give things you no longer need to someone nearby who can use them, and wish for the things you're missing.
+PIF stands for Pay It Forward – passing it on without asking for anything in return. With PIF you give things you no longer need to someone nearby who can use them, and wish for the things you're missing.
 
 Piffing makes your neighbour, your wallet and the planet happy! Things get a new life instead of gathering dust or ending up at the dump, and you find what you need without buying new.
 
@@ -106,7 +106,7 @@ SAFE AND SIMPLE
 • Block and report users who misbehave.
 
 FREE
-PIF is free to use.
+PIF is free to use and free of ads.
 
 Pay it forward – what's left over at your place may be exactly what someone else needs.
 
@@ -117,8 +117,8 @@ Pay it forward – what's left over at your place may be exactly what someone el
 - **Age rating:** 16+ (decided 2026-11-26; matches the privacy policy and terms). Answer the
   questionnaire honestly (user-generated content, messaging between users) and pick 16+ if Apple
   suggests lower.
-- **No promise of "no ads / we never sell your data"** in the store texts (decided 2026-11-26, to
-  keep options open). The privacy policy still says data is never sold.
+- **"Fritt från reklam" / "free of ads"** is in the description (Fredrik 2026-11-26); "we never
+  sell your data" is not promised in the store texts (the privacy policy still says so).
 - **App Review demo account** (production; Apple signs in with it during review and for later
   updates):
   1. In Google Workspace, add an alias such as `appreview@pif.community` to the hej@ mailbox, so
