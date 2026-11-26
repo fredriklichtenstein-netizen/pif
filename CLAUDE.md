@@ -674,6 +674,15 @@ A parallel staging pipeline exists so changes can be tested before touching prod
   bad copy) and reloads, at most once a minute per file; "Försök igen" does the same. The CSS
   check tests `--background` from `index.css`, because an HTML page served as CSS still gets a
   `<link>.sheet`.
+- **Testing on staging as a user (since 2026-11-27, Fredrik's OK):** two staging-only accounts,
+  *Testare A* / *Testare B* (`hej+staging-testare-a|b@pif.community`, ids `ad0857e1-…` /
+  `4313c67b-…`, profiles complete, terms accepted, every email/push notification off).
+  `scripts/staging-test/login.sh a|b <outdir>` signs one into staging.pif.today in headless
+  Chromium via a one-time login link and writes `<outdir>/state-<a|b>.json` (Playwright
+  `storageState`); a test script then opens pages with `browser.newContext({ storageState })`.
+  The service-role key is fetched from the Management API per run and never stored. Use
+  `waitUntil: "domcontentloaded"` + a few seconds' wait (a signed-in page never goes network-idle).
+  Test data goes on staging only, titled `[Test] …`. Never use this against production.
 - **`IS_STAGING` export** in `client.ts` (`true` whenever `SUPABASE_URL` isn't production's) drives
   a small "STAGING" pill (`src/components/debug/StagingBadge.tsx`, mounted in `App.tsx`) — a
   permanent visual guard against mistaking one environment's preview for the other's (this
