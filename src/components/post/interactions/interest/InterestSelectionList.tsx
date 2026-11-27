@@ -608,22 +608,23 @@ export function InterestSelectionList({
       // affected. Pifs (offers) ignore p_fulfiller_id server-side.
       const targetRow = rows.find((r) => r.id === targetId);
       const fulfillerId = targetRow?.user_id ?? null;
-      // withdraw_pif removes the selected interest row from the DB and
-      // reopens the pif for everyone else. Use the RPC (instead of a
-      // direct update) so the server-side rules + notifications run.
+      // withdraw_pif puts the person back in the queue (and on a pif
+      // reopens it for everyone). Use the RPC (instead of a direct
+      // update) so the server-side rules + notifications run.
       const { error } = await (supabase.rpc as any)("withdraw_pif", {
         p_item_id: numericItemId,
         p_action: "reopen",
         p_fulfiller_id: isWish ? fulfillerId : null,
       });
       if (error) throw error;
-      // Optimistically remove the withdrawn row and reset siblings back
-      // to pending so the popup reflects the new state immediately,
-      // without waiting for the realtime DELETE event to arrive.
+      // Optimistic update until reload() lands. The deselected person goes
+      // back to the queue (pifs and wishes alike since 2026-11-27): on a
+      // pif everyone is pending again; on a wish only that helper is, the
+      // other chosen helpers stay chosen.
       setRows((prev) =>
-        prev
-          .filter((r) => (targetId != null ? r.id !== targetId : r.status !== "selected"))
-          .map((r) => ({ ...r, status: "pending" })),
+        prev.map((r) =>
+          !isWish || r.id === targetId ? { ...r, status: "pending" } : r,
+        ),
       );
       reload();
       window.dispatchEvent(new CustomEvent('pif:conversation-refetch'));
