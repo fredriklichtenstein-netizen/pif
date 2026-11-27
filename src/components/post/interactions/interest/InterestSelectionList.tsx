@@ -52,6 +52,9 @@ interface InterestRow {
   created_at: string;
   /** Helper note left when granting a wish. */
   note?: string | null;
+  /** Wish: this helper's handover (per helper since 2026-11-27). */
+  owner_confirmed_at?: string | null;
+  helper_confirmed_at?: string | null;
   profile?: {
     id: string;
     first_name?: string | null;
@@ -205,7 +208,7 @@ export function InterestSelectionList({
         const queryPromise = (supabase
           .from("interests") as any)
           .select(
-            `id, user_id, status, created_at, profiles:user_id(${getProfileEmbedColumns(!!currentUserId, ["reliability_score", "completed_pifs", "no_shows"])})`
+            `id, user_id, status, created_at, owner_confirmed_at, helper_confirmed_at, profiles:user_id(${getProfileEmbedColumns(!!currentUserId, ["reliability_score", "completed_pifs", "no_shows"])})`
           )
           .eq("item_id", numericItemId)
           .order("created_at", { ascending: false })
@@ -235,6 +238,8 @@ export function InterestSelectionList({
           status: r.status,
           created_at: r.created_at,
           note: notesById.get(Number(r.id)) ?? null,
+          owner_confirmed_at: r.owner_confirmed_at ?? null,
+          helper_confirmed_at: r.helper_confirmed_at ?? null,
           profile: r.profiles,
         })) as InterestRow[];
         offsetRef.current = offset + slice.length;
@@ -519,10 +524,18 @@ export function InterestSelectionList({
           receiverConfirmed: completion.receiverConfirmed,
           pifStatus: completion.pifStatus,
         });
-        const { error: rpcError } = await (supabase.rpc as any)(
-          "confirm_pif_handoff",
-          { p_item_id: numericItemId, p_role: "piffer" },
-        );
+        // Wish: this helper's handover only (never closes the wish).
+        // Pif: the post's handover, as in the chat.
+        const { data: rpcData, error: rpcError } = isWish
+          ? await (supabase.rpc as any)("confirm_wish_handoff", {
+              p_item_id: numericItemId,
+              p_helper_id: row.user_id,
+              p_role: "owner",
+            })
+          : await (supabase.rpc as any)("confirm_pif_handoff", {
+              p_item_id: numericItemId,
+              p_role: "piffer",
+            });
         if (rpcError) {
           console.error("[InterestSelectionList] confirm_pif_handoff failed", rpcError);
           toast({
@@ -538,7 +551,18 @@ export function InterestSelectionList({
           .select("receiver_confirmed_receipt")
           .eq("id", numericItemId)
           .maybeSingle();
-        const receiverAlreadyConfirmed = !!latestRow?.receiver_confirmed_receipt;
+        const receiverAlreadyConfirmed = isWish
+          ? !!(rpcData as any)?.helper_confirmed
+          : !!latestRow?.receiver_confirmed_receipt;
+        if (isWish) {
+          setRows((prev) =>
+            prev.map((r) =>
+              r.id === row.id
+                ? { ...r, owner_confirmed_at: new Date().toISOString(), helper_confirmed_at: receiverAlreadyConfirmed ? (r.helper_confirmed_at ?? new Date().toISOString()) : null }
+                : r,
+            ),
+          );
+        }
         if (convId) {
           if (!receiverAlreadyConfirmed) {
             await postPifSystemMessage(
@@ -562,10 +586,13 @@ export function InterestSelectionList({
               (isWish ? "Önskaren har bekräftat att önskan är uppfylld." : "Piffaren har bekräftat överlämning."),
               { targetUserId: row.user_id },
             );
-            await postPifSystemMessage(
-              convId,
-              (isWish ? "Önskan är uppfylld! Tack för att ni använde PIF. 🎉" : "Piffen är genomförd! Tack för att ni använde PIF. 🎉"),
-            );
+            // A wish stays open until the wisher closes it (complete_wish
+            // posts its own message then).
+            if (!isWish) {
+              await postPifSystemMessage(convId, "Piffen är genomförd! Tack för att ni använde PIF. 🎉");
+            } else {
+              await postPifSystemMessage(convId, "Ni har båda bekräftat att önskan är uppfylld.");
+            }
           }
         }
         // Ratings (2026-11-26): wishers don't rate helpers (the helper rates
@@ -800,7 +827,7 @@ export function InterestSelectionList({
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
                   {r.status === "selected" && (
                     <>
-                      {isWish && completion.pifStatus === "completed" ? (
+                      {isWish && (completion.pifStatus === "completed" || (r.owner_confirmed_at && r.helper_confirmed_at)) && (r.owner_confirmed_at || completion.pifStatus === "completed") ? (
                         <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs whitespace-nowrap inline-flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3" />
                           {t("interactions.helper_granted_badge", "Granted")}
@@ -812,24 +839,24 @@ export function InterestSelectionList({
                             : t("interactions.selected_badge")}
                         </span>
                       )}
-                      {isOwner && isWish && completion.pifStatus !== "completed" && completion.pifStatus !== "archived" && (
-                        completion.pifferConfirmed &&
-                        completion.pifStatus !== "completed" &&
-                        completion.pifStatus !== "archived" ? (
+                      {isOwner && isWish && completion.pifStatus !== "completed" && completion.pifStatus !== "archived" && !(r.owner_confirmed_at && r.helper_confirmed_at) && (
+                        r.owner_confirmed_at ? (
+                          // This helper's handover, waiting for the helper
+                          // (per helper since 2026-11-27). Closing the wish
+                          // is separate ("Stäng önskan").
                           <AwaitingConfirmationPopover
                             itemType="request"
-                            receiverConfirmed={completion.receiverConfirmed}
-                            onHardComplete={() => {
-                              // Force-complete: use complete_pif_with_rating
-                              // (same as messaging banner). submit_rating
-                              // can't run here — pif_status is still 'active'.
-                              setForceHelperRating({
-                                helperId: r.user_id,
-                                helperName: displayName(r),
-                              });
-                            }}
+                            receiverConfirmed={!!r.helper_confirmed_at}
                             onUndo={async () => {
-                              const res = await completion.undoConfirmation("piffer");
+                              const { error: undoErr } = await (supabase.rpc as any)("undo_wish_handoff", {
+                                p_item_id: numericItemId,
+                                p_helper_id: r.user_id,
+                                p_role: "owner",
+                              });
+                              const res = { ok: !undoErr };
+                              if (res.ok) {
+                                setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, owner_confirmed_at: null, helper_confirmed_at: null } : x)));
+                              }
                               if (!res.ok) {
                                 toast({
                                   variant: "destructive",

@@ -637,9 +637,9 @@
     "rate_modal_closes_conversation_note_wish": "This marks the wish as fulfilled and closes the conversation. It can be reopened within 7 days by requesting it from the other party.",
     "rate_wisher_modal_title": "Rate the wisher",
     "rate_wisher_modal_placeholder": "Leave a comment (shown to the wisher)",
-    "complete_wish_modal_title": "Mark the wish as fulfilled?",
-    "complete_wish_modal_description": "Use this if the wish has been fulfilled but the person who helped you hasn't confirmed.",
-    "complete_wish_modal_submit": "Mark as fulfilled",
+    "complete_wish_modal_title": "Close the wish?",
+    "complete_wish_modal_description": "The wish is marked as fulfilled and closed. Everyone you chose is told.",
+    "complete_wish_modal_submit": "Close the wish",
     "awaiting_finish_btn_wish": "Finish",
     "rate_wisher_context": "Wish: {{title}}",
     "rate_receiver_context": "Pif: {{title}}"

@@ -296,10 +296,13 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     const completedRecently =
       !!completion.completedAt &&
       Date.now() - new Date(completion.completedAt).getTime() < 30 * 24 * 60 * 60 * 1000;
+    // A wish helper's part is done when both have confirmed their handover,
+    // even while the wish stays open for other helpers (2026-11-27).
+    const helperPartDone =
+      isRequest && !isPiffer && completion.pifferConfirmed && completion.receiverConfirmed;
     if (
       isRater &&
-      completion.pifStatus === "completed" &&
-      completedRecently &&
+      ((completion.pifStatus === "completed" && completedRecently) || helperPartDone) &&
       hasRatedLoaded &&
       !hasRated &&
       !ratedPromptedRef.current &&
@@ -315,6 +318,8 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
     completion.loading,
     completion.pifStatus,
     completion.completedAt,
+    completion.pifferConfirmed,
+    completion.receiverConfirmed,
     hasRated,
     hasRatedLoaded,
   ]);
@@ -643,6 +648,7 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           onConfirm={() => completion.confirmHandoff(role)}
           onHardComplete={() => setRatingOpen(true)}
           onUndo={() => completion.undoConfirmation(role)}
+          onCloseWish={isRequest && role === "piffer" ? () => setRatingOpen(true) : undefined}
           isRequest={isRequest}
         />
       )}
@@ -763,20 +769,20 @@ export function ConversationView({ conversationId, onBack }: ConversationViewPro
           open={ratingOpen}
           onOpenChange={(open) => {
             setRatingOpen(open);
-            if (!open && completion.pifStatus === "completed" && (role === "piffer" ? !isRequest : isRequest) && item?.id != null) rememberRatingSkipped(item.id);
+            if (!open && (completion.pifStatus === "completed" || (isRequest && role !== "piffer")) && (role === "piffer" ? !isRequest : isRequest) && item?.id != null) rememberRatingSkipped(item.id);
           }}
           mode={
-            completion.pifStatus === "completed"
+            completion.pifStatus === "completed" || (isRequest && role !== "piffer")
               ? "rate"
               : role === "piffer" && isRequest
                 ? "complete_no_rating"
                 : "complete"
           }
           ratee={isRequest ? "wisher" : "receiver"}
-          allowSkip={completion.pifStatus === "completed"}
+          allowSkip={completion.pifStatus === "completed" || (isRequest && role !== "piffer")}
           onSubmit={async (rating, comment) => {
             const res =
-              completion.pifStatus === "completed"
+              completion.pifStatus === "completed" || (isRequest && role !== "piffer")
                 ? await completion.rateAfterHandover(rating, comment)
                 : await completion.completeWithRating(role === "piffer" && isRequest ? null : rating, comment);
             if (res.ok) setHasRated(true);

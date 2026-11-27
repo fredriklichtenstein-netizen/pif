@@ -637,9 +637,9 @@
     "rate_modal_closes_conversation_note_wish": "Detta markerar önskningen som uppfylld och stänger konversationen. Den kan öppnas igen inom 7 dagar genom en förfrågan till den andra parten.",
     "rate_wisher_modal_title": "Betygsätt önskaren",
     "rate_wisher_modal_placeholder": "Lämna en kommentar (visas för önskaren)",
-    "complete_wish_modal_title": "Markera önskan som uppfylld?",
-    "complete_wish_modal_description": "Använd det här om önskan har uppfyllts men den som hjälpte dig inte har bekräftat.",
-    "complete_wish_modal_submit": "Markera som uppfylld",
+    "complete_wish_modal_title": "Stäng önskan?",
+    "complete_wish_modal_description": "Önskan markeras som uppfylld och stängs. Alla du har valt får besked.",
+    "complete_wish_modal_submit": "Stäng önskan",
     "awaiting_finish_btn_wish": "Slutför",
     "rate_wisher_context": "Önskan: {{title}}",
     "rate_receiver_context": "Pif: {{title}}"
