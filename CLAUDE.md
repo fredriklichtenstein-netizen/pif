@@ -329,6 +329,19 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
 - **Language** is per device. `useLanguageSeed` writes the shown language to `profiles.language`
   each session, so emails match what the user sees.
 
+## Weekly key figures email (since 2026-11-27, Trello #135)
+
+- pg_cron `send-weekly-report` (Mondays 06:41 UTC) → `_send_weekly_report()` → one pg_net call
+  (vault `notification_email_function_url` with the slug swapped, `x-internal-secret`) → edge
+  function `weekly-report` (verify_jwt off) → `_weekly_report_stats(from, to)` for last week
+  (Mon–Sun, Swedish time) and the week before → one email via Resend from
+  `PIF <reports@pif.today>`, reply-to hej@pif.community. Migration `20261127170000_weekly_report`.
+- **Counts only** — no names, emails or addresses — because a recipient is outside the
+  organisation. Keep it that way when adding figures.
+- Recipients: function secret `WEEKLY_REPORT_TO` (comma-separated); without it the function
+  sends nothing (staging has none, so staging's Monday job is a no-op). A test send: POST with
+  body `{"to": "<address>"}` sends only there (staging subjects get `[Staging]`).
+
 ## Campaign attribution (since 2026-11-22)
 
 What people do in the app after clicking a newsletter link. Reported per campaign as counts only.
