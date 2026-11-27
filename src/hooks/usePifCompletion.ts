@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { debugLog } from "@/utils/authDebug";
@@ -155,6 +155,35 @@ export function usePifCompletion(
   // wish-vs-pif copy in every system message posted from this hook. Fetched
   // once with the initial items row; item_type does not change after creation.
   const [isRequest, setIsRequest] = useState(false);
+  // Wishes (since 2026-11-27): the handover is confirmed per chosen helper,
+  // on that helper's interest row (owner_confirmed_at / helper_confirmed_at),
+  // and confirming never completes the wish -- the wisher closes it
+  // (complete_wish). The helper in this conversation is the other participant
+  // when the viewer owns the wish, otherwise the viewer. Without a helper
+  // (the post's interest list) the hook has no per-helper state.
+  const isRequestRef = useRef(false);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const helperId = !isRequest || !ownerId
+    ? null
+    : currentUserId && currentUserId === ownerId
+      ? (otherUserId ?? null)
+      : (currentUserId ?? null);
+  const helperIdRef = useRef<string | null>(null);
+  helperIdRef.current = helperId;
+
+  const loadHelperRow = useCallback(async (): Promise<{ owner: boolean; helper: boolean } | null> => {
+    const hid = helperIdRef.current;
+    if (id === null || !hid) return null;
+    const { data } = await (supabase.from("interests") as any)
+      .select("owner_confirmed_at, helper_confirmed_at")
+      .eq("item_id", id)
+      .eq("user_id", hid)
+      .eq("status", "selected")
+      .maybeSingle();
+    const next = { owner: !!data?.owner_confirmed_at, helper: !!data?.helper_confirmed_at };
+    setState((s) => ({ ...s, pifferConfirmed: next.owner, receiverConfirmed: next.helper }));
+    return next;
+  }, [id]);
 
   const applyRow = useCallback((row: any) => {
     if (!row) return;
@@ -185,9 +214,10 @@ export function usePifCompletion(
           /* noop */
         }
       }
+      const wish = isRequestRef.current;
       return {
-        pifferConfirmed: !!row.piffer_confirmed_handoff,
-        receiverConfirmed: !!row.receiver_confirmed_receipt,
+        pifferConfirmed: wish ? prev.pifferConfirmed : !!row.piffer_confirmed_handoff,
+        receiverConfirmed: wish ? prev.receiverConfirmed : !!row.receiver_confirmed_receipt,
         pifStatus: nextStatus,
         completedAt: (row.completed_at as string) ?? null,
         loading: false,
@@ -205,7 +235,7 @@ export function usePifCompletion(
     (async () => {
       const { data, error } = await (supabase
         .from("items") as any)
-        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, completed_at, item_type")
+        .select("piffer_confirmed_handoff, receiver_confirmed_receipt, pif_status, completed_at, item_type, user_id")
         .eq("id", id)
         .maybeSingle();
       if (cancelled) return;
@@ -217,6 +247,8 @@ export function usePifCompletion(
       const nextIsRequest =
         String((data as any)?.item_type || "offer").toLowerCase() === "request";
       setIsRequest(nextIsRequest);
+      isRequestRef.current = nextIsRequest;
+      setOwnerId(((data as any)?.user_id as string) ?? null);
       console.log("[copy-audit] usePifCompletion isRequest derived", {
         itemId: id,
         rawItemType: (data as any)?.item_type ?? null,
@@ -237,13 +269,30 @@ export function usePifCompletion(
         },
         (payload) => applyRow(payload.new),
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "interests",
+          filter: `item_id=eq.${id}`,
+        },
+        () => {
+          if (isRequestRef.current) void loadHelperRow();
+        },
+      )
       .subscribe();
 
     return () => {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [id, applyRow]);
+  }, [id, applyRow, loadHelperRow]);
+
+  // Wish: load this conversation's helper handover once the helper is known.
+  useEffect(() => {
+    if (isRequest && helperId) void loadHelperRow();
+  }, [isRequest, helperId, loadHelperRow]);
 
   const confirmHandoff = useCallback(
     async (role: PifRole) => {
@@ -257,6 +306,41 @@ export function usePifCompletion(
         return { ok: false } as const;
       }
       if (!(await ensureSession("confirm_pif_handoff"))) return { ok: false } as const;
+      if (isRequestRef.current) {
+        const hid = helperIdRef.current;
+        if (!hid) return { ok: false } as const;
+        const { data: res, error: wErr } = await (supabase.rpc as any)("confirm_wish_handoff", {
+          p_item_id: id,
+          p_helper_id: hid,
+          p_role: role === "piffer" ? "owner" : "helper",
+        });
+        if (wErr) {
+          console.error("confirm_wish_handoff failed:", wErr);
+          return { ok: false, error: wErr } as const;
+        }
+        const ownerOk = !!(res as any)?.owner_confirmed;
+        const helperOk = !!(res as any)?.helper_confirmed;
+        setState((s) => ({ ...s, pifferConfirmed: ownerOk, receiverConfirmed: helperOk }));
+        if (conversationId) {
+          const otherDone = role === "piffer" ? helperOk : ownerOk;
+          if (role === "piffer") {
+            await postPifSystemMessage(conversationId,
+              otherDone ? "Du har bekräftat att önskan är uppfylld. Ni har båda bekräftat." : "Du har bekräftat att önskan är uppfylld. Väntar på att den som hjälpte dig också bekräftar.",
+              { targetUserId: currentUserId ?? null });
+            await postPifSystemMessage(conversationId,
+              otherDone ? "Önskaren har bekräftat att önskan är uppfylld. Ni har båda bekräftat." : "Önskaren har bekräftat att önskan är uppfylld. Väntar på att du också bekräftar.",
+              { targetUserId: otherUserId ?? null });
+          } else {
+            await postPifSystemMessage(conversationId,
+              otherDone ? "Du har bekräftat att önskan är uppfylld. Ni har båda bekräftat." : "Du har bekräftat att önskan är uppfylld. Väntar på att önskaren också bekräftar.",
+              { targetUserId: currentUserId ?? null });
+            await postPifSystemMessage(conversationId,
+              otherDone ? "Den som hjälpte dig har bekräftat. Ni har båda bekräftat." : "Den som hjälpte dig har bekräftat att önskan är uppfylld. Väntar på att du också bekräftar.",
+              { targetUserId: otherUserId ?? null });
+          }
+        }
+        return { ok: true } as const;
+      }
       console.log("[usePifCompletion] calling confirm_pif_handoff RPC", {
         p_item_id: id,
         p_role: role,
@@ -426,6 +510,8 @@ export function usePifCompletion(
       target?: { conversationId: string | null; otherUserId: string | null },
     ) => {
       if (id === null) return { ok: false } as const;
+      // Wish closed by the wisher ("Stäng önskan ändå"): no helper rating.
+      if (isRequestRef.current && rating === null) return closeWish();
       if (!(await ensureSession("complete_pif_with_rating"))) return { ok: false } as const;
       const conversationId = target?.conversationId ?? conversationIdArg;
       const otherUserId = target?.otherUserId ?? otherUserIdArg;
@@ -595,6 +681,26 @@ export function usePifCompletion(
       if (!(await ensureSession("undo_pif_handoff_confirmation"))) {
         return { ok: false } as const;
       }
+      if (isRequestRef.current) {
+        const hid = helperIdRef.current;
+        if (!hid) return { ok: false } as const;
+        const { error: wErr } = await (supabase.rpc as any)("undo_wish_handoff", {
+          p_item_id: id,
+          p_helper_id: hid,
+          p_role: role === "piffer" ? "owner" : "helper",
+        });
+        if (wErr) {
+          console.error("undo_wish_handoff failed:", wErr);
+          toast({ title: "Det gick inte att ångra", description: wErr.message || "Försök igen.", variant: "destructive" });
+          return { ok: false, error: wErr } as const;
+        }
+        await loadHelperRow();
+        if (conversationId) {
+          await postPifSystemMessage(conversationId,
+            role === "piffer" ? "Önskaren har ångrat sin bekräftelse." : "Den som hjälpte till har ångrat sin bekräftelse.");
+        }
+        return { ok: true } as const;
+      }
       const { data, error } = await (supabase.rpc as any)(
         "undo_pif_handoff_confirmation",
         { p_item_id: id, p_role: role },
@@ -657,8 +763,24 @@ export function usePifCompletion(
       }
       return { ok: true } as const;
     },
-    [id, conversationId, currentUserId, otherUserId, isRequest, applyRow],
+    [id, conversationId, currentUserId, otherUserId, isRequest, applyRow, loadHelperRow],
   );
+
+  /** Wish: the wisher closes the whole wish. complete_wish posts to every chosen
+   *  helper's chat and notifies them. */
+  const closeWish = useCallback(async () => {
+    if (id === null) return { ok: false } as const;
+    if (!(await ensureSession("complete_wish"))) return { ok: false } as const;
+    const { error } = await (supabase.rpc as any)("complete_wish", { p_item_id: id });
+    if (error) {
+      console.error("complete_wish failed:", error);
+      toast({ title: "Det gick inte att stänga önskan", description: error.message || "Försök igen.", variant: "destructive" });
+      return { ok: false, error } as const;
+    }
+    notifyFeedItemLeftActivePool(id, queryClient);
+    setState((s) => ({ ...s, pifStatus: "completed" }));
+    return { ok: true } as const;
+  }, [id, queryClient]);
 
   const requestReopen = useCallback(
     async (comment?: string) => {
@@ -740,6 +862,7 @@ export function usePifCompletion(
     isRequest,
     confirmHandoff,
     rateAfterHandover,
+    closeWish,
     completeWithRating,
     withdraw,
     undoConfirmation,

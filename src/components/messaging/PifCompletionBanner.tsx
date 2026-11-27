@@ -20,6 +20,9 @@ interface Props {
   onConfirm: () => Promise<unknown>;
   onHardComplete: () => void; // opens rating modal
   onUndo?: () => Promise<unknown>;
+  /** Wish, wisher only: close the whole wish (complete_wish). Confirming one
+   *  helper's handover no longer closes it (per-helper handover, 2026-11-27). */
+  onCloseWish?: () => void;
   /** When true the underlying item is a wish (item_type='request'). */
   isRequest?: boolean;
 }
@@ -35,6 +38,7 @@ export function PifCompletionBanner({
   onConfirm,
   onHardComplete,
   onUndo,
+  onCloseWish,
   isRequest = false,
 }: Props) {
   const [busy, setBusy] = useState(false);
@@ -93,11 +97,11 @@ export function PifCompletionBanner({
             {otherAlreadyConfirmed
               ? pick(
                   "Den andra parten har redan bekräftat. Detta markerar piffen som genomförd och stänger konversationen. Den kan öppnas igen inom 7 dagar genom en förfrågan till den andra parten.",
-                  "Den andra parten har redan bekräftat. Detta markerar önskan som uppfylld och stänger konversationen. Den kan öppnas igen inom 7 dagar genom en förfrågan till den andra parten.",
+                  "Den andra parten har redan bekräftat, så er del är klar. Önskan är öppen tills önskaren stänger den.",
                 )
               : pick(
                   "Detta bekräftar din del av utbytet. När den andra parten också bekräftar markeras piffen som genomförd och konversationen stängs (kan öppnas igen inom 7 dagar genom en förfrågan).",
-                  "Detta bekräftar din del av utbytet. När den andra parten också bekräftar markeras önskan som uppfylld och konversationen stängs (kan öppnas igen inom 7 dagar genom en förfrågan).",
+                  "Detta bekräftar din del. När den andra parten också bekräftar är er del klar. Önskan är öppen tills önskaren stänger den.",
                 )}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -108,6 +112,26 @@ export function PifCompletionBanner({
       </AlertDialogContent>
     </AlertDialog>
   );
+
+  if (bothDone && isRequest) {
+    // Wish: this helper's part is done; the wish itself stays open until the
+    // wisher closes it (other helpers may still be on their way).
+    return (
+      <div className="border-t bg-emerald-50 px-4 py-3 space-y-2 text-center text-sm text-emerald-800">
+        <div className="font-medium flex items-center justify-center gap-2">
+          <PartyPopper className="h-4 w-4" />
+          Ni har båda bekräftat att önskan är uppfylld! 🎉
+        </div>
+        {role === "piffer" && onCloseWish ? (
+          <Button type="button" size="sm" className="w-full" onClick={onCloseWish}>
+            Stäng önskan
+          </Button>
+        ) : (
+          <p className="text-xs text-emerald-700">Önskaren stänger önskan när den är klar.</p>
+        )}
+      </div>
+    );
+  }
 
   if (bothDone) {
     return (
@@ -144,7 +168,7 @@ export function PifCompletionBanner({
               )
             : pick(
                 "Jag har lämnat över piffen ✓",
-                "Min önskan är uppfylld ✓",
+                "Hjälpen är klar ✓",
               )}
         </Button>
         {canUndo && (
@@ -172,9 +196,9 @@ export function PifCompletionBanner({
               size="sm"
               variant="outline"
               className="w-full"
-              onClick={onHardComplete}
+              onClick={isRequest && onCloseWish ? onCloseWish : onHardComplete}
             >
-              Markera som klar ändå
+              {isRequest ? "Stäng önskan ändå" : "Markera som klar ändå"}
             </Button>
           </>
         )}

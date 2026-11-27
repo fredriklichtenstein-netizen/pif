@@ -530,6 +530,22 @@ It is not a second product — no native-only features or UI.
   real 1024 px icon artwork, Google sign-in on iOS (needs the iOS
   OAuth client id). Sign in with Apple is built and live.
 
+## Pif and wish flows (audit 2026-11-27, Trello #141)
+
+- **Wish handover is per helper** (migration `20261127150000_wish_per_helper_handover`):
+  `interests.owner_confirmed_at` / `helper_confirmed_at` on each chosen helper's row,
+  `confirm_wish_handoff(item, helper, 'owner'|'helper')` / `undo_wish_handoff`. Confirming never
+  completes a wish; the wisher closes it with `complete_wish()` ("Stäng önskan", in the chat banner
+  and the ⋯ dialog), which tells every chosen helper. Pifs keep the post-level flags
+  (`items.piffer_confirmed_handoff` / `receiver_confirmed_receipt`) and complete when both confirm.
+  `confirm_pif_handoff` / `undo_pif_handoff_confirmation` on a wish act on the caller's own row, or
+  the only chosen helper; with several chosen helpers they refuse (installed app builds).
+- **Withdrawing (decided 2026-11-27, migration `20261127120000_flow_consistency_round1`):** the
+  owner deselecting puts the person back in the queue with their note; someone withdrawing
+  themselves is removed — same for pifs and wishes. "Återpublicera" puts whoever was chosen back
+  in the queue. Choosing refuses archived/completed posts and notifies the chosen person
+  (`receiver_selected` / `helper_selected`, push too).
+
 ## Ratings (decided by Fredrik 2026-11-26)
 
 - **The one who gives rates the one who receives, never the other way round.** Pif: the piffer

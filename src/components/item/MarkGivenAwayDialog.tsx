@@ -36,7 +36,7 @@ export function MarkGivenAwayDialog({ itemId, itemTitle, isWish, itemOwnerId, is
   const queryClient = useQueryClient();
   const currentUserId = useAuthStore((s) => s.user?.id ?? null);
   const [busy, setBusy] = useState(false);
-  const [step, setStep] = useState<"choose" | "outside">("choose");
+  const [step, setStep] = useState<"choose" | "outside" | "close">("choose");
   const kind = isWish ? "wish" : "pif";
   // From the list's own completion state (one realtime subscription per post).
   const [handover, setHandover] = useState({ loading: true, pifferConfirmed: false });
@@ -74,6 +74,32 @@ export function MarkGivenAwayDialog({ itemId, itemTitle, isWish, itemOwnerId, is
     }
   };
 
+
+  // Wish: the wisher closes the whole wish (per-helper handover, 2026-11-27).
+  const handleCloseWish = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const numericId = typeof itemId === "number" ? itemId : parseInt(String(itemId), 10);
+      const { error } = await (supabase as any).rpc("complete_wish", { p_item_id: numericId });
+      if (error) throw error;
+      try {
+        clearPostsCache();
+        queryClient.removeQueries({ queryKey: ["posts", "optimized"] });
+        queryClient.invalidateQueries({ queryKey: ["posts"] });
+      } catch (e) {
+        console.error("feed cache invalidation failed", e);
+      }
+      toast({ title: t("ui.mark_given_away_done_wish") });
+      onClose();
+      onSuccess?.();
+    } catch (err: any) {
+      console.error("complete_wish failed", err);
+      toast({ title: t("ui.mark_given_away_failed"), description: err?.message, variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
@@ -113,11 +139,36 @@ export function MarkGivenAwayDialog({ itemId, itemTitle, isWish, itemOwnerId, is
               <Button variant="outline" onClick={onClose}>
                 {t("common.close", "Stäng")}
               </Button>
-              {!handover.loading && !handover.pifferConfirmed && (
-                <Button variant="secondary" onClick={() => setStep("outside")}>
-                  {t(`ui.mark_outside_${kind}`)}
-                </Button>
+              {isWish ? (
+                <>
+                  <Button variant="secondary" onClick={() => setStep("outside")}>
+                    {t("ui.mark_outside_wish")}
+                  </Button>
+                  <Button onClick={() => setStep("close")}>{t("interactions.complete_wish_modal_submit")}</Button>
+                </>
+              ) : (
+                !handover.loading && !handover.pifferConfirmed && (
+                  <Button variant="secondary" onClick={() => setStep("outside")}>
+                    {t(`ui.mark_outside_${kind}`)}
+                  </Button>
+                )
               )}
+            </DialogFooter>
+          </>
+        ) : step === "close" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t("interactions.complete_wish_modal_title")}</DialogTitle>
+              <DialogDescription>{t("interactions.complete_wish_modal_description")}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setStep("choose")} disabled={busy}>
+                {t("common.back", "Tillbaka")}
+              </Button>
+              <Button onClick={handleCloseWish} disabled={busy}>
+                {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t("interactions.complete_wish_modal_submit")}
+              </Button>
             </DialogFooter>
           </>
         ) : (
