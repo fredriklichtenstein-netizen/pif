@@ -1,6 +1,6 @@
 # PIF – Google Play-uppgifter
 
-Samma upplägg som `appstore/metadata.md`. Grafik: `playstore/grafik/` och skärmdumpar i `playstore/skarmdumpar/<version>/<enhet>/`.
+Samma upplägg som `appstore/metadata.md`. Beskrivningen är den godkända från 2026-11-26 (se källan överst i appstore/metadata.md); Play har ingen reklamtext, så den korta beskrivningen är ny. Grafik: `playstore/grafik/` och skärmdumpar i `playstore/skarmdumpar/<version>/<enhet>/`.
 Kontrollera texterna med `python3 scripts/kolla-appstore.py 2.0.0 --play`.
 
 ## Det här stoppar en release just nu
@@ -11,7 +11,7 @@ Kontrollera texterna med `python3 scripts/kolla-appstore.py 2.0.0 --play`.
 ## App-information
 - **Paketnamn:** community.pif.pif (samma som gamla "PIF Pay it Forward", v1.2.1, versionCode 37)
 - **Version:** versionName **2.0.0**, versionCode **38** (`android/app/build.gradle`). versionCode får bara gå uppåt.
-- **App-namn (30):** PIF – Pay it Forward
+- **App-namn (30):** PIF
 - **Kategori:** Shopping
 - **Taggar:** Shopping, Socialt, Livsstil
 - **Kontakt:** hej@pif.community · webbplats https://pif.today
@@ -47,32 +47,34 @@ Samma data som App Store-integriteten:
 
 ### Kort beskrivning (80 tecken)
 
-Ge bort det du inte behöver och önska det du saknar – hos grannarna.
+Ge bort det du inte behöver och önska det du saknar – gratis och nära dig.
 
 ### Fullständig beskrivning (4000 tecken)
 
-PIF gör det enkelt att ge bort det du inte behöver och hitta det du saknar – hos grannarna.
+PIF står för Pay It Forward – att ge vidare utan att be om något tillbaka. Med PIF ger du bort saker du inte längre behöver till någon i närheten som har nytta av dem, och önskar dig det du själv saknar.
 
-Fotografera en sak du inte använder längre, skriv några rader och piffa den. Grannar som vill ha den visar intresse, och du väljer vem som får den. Saknar du något? Lägg upp en önskan, så kan grannar som har det över höra av sig.
+Att piffa gör din granne, din plånbok och planeten glad! Sakerna får ett nytt liv i stället för att samla damm eller hamna på tippen, och du hittar det du behöver utan att köpa nytt.
 
-• Flöde med piffar och önskningar från ditt närområde
-• Karta som visar vad som finns nära dig
-• Visa intresse med ett tryck – den som piffar väljer mottagare
-• Önskningar där flera grannar kan hjälpa till
-• Chatt med den du ska lämna till eller hämta från
-• Kommentera, spara och dela inlägg
-• Filtrera på typ, kategori och plats
-• Utkast och schemalagda inlägg
-• Notiser när någon visar intresse, skriver eller kommenterar
-• Betyg efter genomförda överlämningar
-• Logga in med Google eller e-post
-• Svenska och engelska
+GE BORT EN PIFF
+Fotografera saken, skriv några rader och publicera. Grannar som vill ha den visar intresse, och du väljer själv vem som får den. Ni bestämmer upphämtning i chatten.
 
-Din adress är din. Andra ser bara området och en ungefärlig punkt på kartan, aldrig din exakta adress – den får bara den du har valt som mottagare.
+ÖNSKA DIG NÅGOT
+Letar du efter en barnvagn, en borrmaskin eller en kruka? Lägg upp en önskan, så kan någon i närheten hjälpa dig.
 
-Du kan blockera och rapportera användare och inlägg, och vi går igenom rapporter varje dag.
+HITTA NÄRA DIG
+Se piffar och önskningar i flödet eller på kartan, sorterade efter avstånd eller efter när de publicerades.
 
-PIF är gratis och utan reklam. Ju fler som piffar, desto mindre slängs.
+TRYGGT OCH ENKELT
+• Din exakta adress visas aldrig för andra – bara området och en ungefärlig plats.
+• Upphämtningsadressen delas bara med den du valt att ge till.
+• Chatta direkt i appen och få notiser när någon visar intresse, kommenterar eller skriver till dig.
+• Lämna omdömen efter genomförda utbyten.
+• Blockera och rapportera användare som inte sköter sig.
+
+GRATIS
+PIF är gratis att använda och fritt från reklam.
+
+Ge vidare – det som blir över hos dig kan vara precis det någon annan behöver.
 
 ### Nyheter i den här versionen (500 tecken)
 
