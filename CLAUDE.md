@@ -507,6 +507,13 @@ It is not a second product — no native-only features or UI.
   inside them is gitignored. On the Mac: `bun install`, `scripts/native-build.sh staging`, then
   `bunx cap open ios` / `bunx cap open android`. Re-run the script after every web or plugin
   change. Both are portrait-only on phones.
+- **No Simulator.app in Xcode 27.** The simulator window is DeviceHub,
+  `/Applications/Xcode.app/Contents/Applications/DeviceHub.app` — open or grant that app (e.g.
+  for computer use), not "Simulator". `xcrun simctl` works as before: `simctl io <id> screenshot`,
+  `simctl status_bar <id> override`, `simctl location <id> set`, `simctl addmedia`. `xcrun simctl
+  openurl <id> https://pif.today/<path>` navigates inside the installed app (Universal Link); if a
+  "◀ <app>" back link then shows in the status bar, `simctl terminate` + `launch` the app before a
+  screenshot.
 - **TestFlight (decided 2026-11-19):** TestFlight builds are the production build
   (`scripts/native-build.sh production` on `main`), uploaded from Xcode (Any iOS Device → Product
   → Archive → Distribute App → App Store Connect). No side-by-side staging app yet; staging builds
