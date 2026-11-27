@@ -937,7 +937,9 @@ export function InterestSelectionList({
                           {t("interactions.message_btn")}
                         </Button>
                       )}
-                      {isOwner && !postClosed && (
+                      {/* No "Avmarkera" for a helper who has fulfilled the wish
+                          (both confirmed their handover), 2026-11-27. */}
+                      {isOwner && !postClosed && !(isWish && r.owner_confirmed_at && r.helper_confirmed_at) && (
                         <Button
                           size="sm"
                           variant="outline"
