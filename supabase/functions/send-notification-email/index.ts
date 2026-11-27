@@ -194,12 +194,21 @@ function wrapEmail(bodyHtml: string, ctaUrl: string, ctaLabel: string, unsubscri
  *  syntax as a router Link. */
 const ANNOUNCEMENT_LINK = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
 
-function announcementLine(line: string): string {
+/** Campaign tag on links into the app from a feature-update email
+ *  (?ref=fa-<publish date>), counted by the app's campaign attribution like
+ *  the newsletter's nl- tags (2026-11-27). */
+function withRef(url: string, campaign?: string): string {
+  if (!campaign || !/^fa-[a-z0-9-]{1,60}$/.test(campaign)) return url;
+  const [base, hash] = url.split("#");
+  return `${base}${base.includes("?") ? "&" : "?"}ref=${campaign}${hash ? `#${hash}` : ""}`;
+}
+
+function announcementLine(line: string, campaign?: string): string {
   let html = "";
   let last = 0;
   for (const m of line.matchAll(ANNOUNCEMENT_LINK)) {
     html += escape(line.slice(last, m.index));
-    html += `<a href="${escape(APP_URL + m[2])}" style="color: ${BRAND_TURQUOISE}; font-weight: 600;">${escape(m[1])}</a>`;
+    html += `<a href="${escape(withRef(APP_URL + m[2], campaign))}" style="color: ${BRAND_TURQUOISE}; font-weight: 600;">${escape(m[1])}</a>`;
     last = m.index! + m[0].length;
   }
   return html + escape(line.slice(last));
@@ -207,12 +216,12 @@ function announcementLine(line: string): string {
 
 /** Each line of an announcement body is its own paragraph, with spacing
  *  between them (a bare <br> ran them together). */
-function announcementParagraphs(body: string): string {
+function announcementParagraphs(body: string, campaign?: string): string {
   return body
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => `<p style="margin: 0 0 12px; line-height: 1.5;">${announcementLine(line)}</p>`)
+    .map((line) => `<p style="margin: 0 0 12px; line-height: 1.5;">${announcementLine(line, campaign)}</p>`)
     .join("");
 }
 
@@ -361,6 +370,7 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
     const title = String(data.title ?? (lang === "en" ? "News from PIF" : "Nyheter i PIF"));
     const actionUrl = data.actionUrl ? String(data.actionUrl) : "";
     const actionLabel = data.actionLabel ? String(data.actionLabel) : (lang === "en" ? "Open PIF" : "Öppna PIF");
+    const campaign = data.campaign ? String(data.campaign) : undefined;
     // Several announcements published together arrive as `sections` and go
     // out as one email; a single one is just `title` + `body`.
     const sections = Array.isArray(data.sections) && data.sections.length > 0
@@ -376,14 +386,14 @@ function buildEmail(type: string, data: Record<string, unknown>, unsubscribeUrl?
     const bodyHtml = sections
       .map(
         (s, i) =>
-          `<h2 style="font-size: 18px; margin: ${i === 0 ? "0" : "28px"} 0 8px;">${escape(s.title)}</h2>${announcementParagraphs(s.body)}${announcementImage(s.image, s.title)}`,
+          `<h2 style="font-size: 18px; margin: ${i === 0 ? "0" : "28px"} 0 8px;">${escape(s.title)}</h2>${announcementParagraphs(s.body, campaign)}${announcementImage(s.image, s.title)}`,
       )
       .join("");
     return {
       subject,
       html: wrapEmail(
         bodyHtml,
-        actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`,
+        withRef(actionUrl ? `${APP_URL}${actionUrl}` : `${APP_URL}/`, campaign),
         actionLabel,
         unsubscribeUrl,
         lang,
@@ -593,6 +603,8 @@ serve(async (req) => {
         );
         const data = {
           lang: isEnglish ? "en" : "sv",
+          // fa-<publish date>: one tag per batch (one email).
+          campaign: `fa-${String(announcement.published_at).slice(0, 10)}`,
           title: sections[0].title,
           sections,
           actionUrl: withAction.action_url,

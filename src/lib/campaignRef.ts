@@ -1,12 +1,13 @@
-// Newsletter campaign tags (?ref=nl-<issue>), see "Campaign attribution" in
-// CLAUDE.md. The tag is kept on this device for 30 days and handed to the
+// Campaign tags: the newsletter's ?ref=nl-<issue> and the feature-update
+// emails' ?ref=fa-<publish date> (since 2026-11-27), see "Campaign
+// attribution" in CLAUDE.md. The tag is kept on this device for 30 days and handed to the
 // database (record_campaign_touch) once the person is signed in.
 
 import { safeGetItem, safeRemoveItem, safeSetItem } from "@/utils/safeStorage";
 
 const KEY = "pif_campaign_ref";
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
-export const CAMPAIGN_PATTERN = /^nl-[a-z0-9-]{1,60}$/;
+export const CAMPAIGN_PATTERN = /^(nl|fa)-[a-z0-9-]{1,60}$/;
 
 export interface CampaignRef {
   campaign: string;

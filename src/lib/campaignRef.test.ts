@@ -51,4 +51,10 @@ describe("campaignRef", () => {
     expect(searchWithoutRef("?post=12&ref=nl-a&comment=3")).toBe("?post=12&comment=3");
     expect(searchWithoutRef("?ref=nl-a")).toBe("");
   });
+
+  it("accepts feature-update email tags (fa-) as well as newsletter tags", () => {
+    expect(campaignFromSearch("?ref=fa-2026-11-17")).toBe("fa-2026-11-17");
+    expect(campaignFromSearch("?ref=nl-2026-11-21")).toBe("nl-2026-11-21");
+    expect(campaignFromSearch("?ref=xx-2026")).toBeNull();
+  });
 });

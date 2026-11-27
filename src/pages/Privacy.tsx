@@ -141,15 +141,16 @@ function SwedishPolicy() {
         I vårt nyhetsbrev mäter vi om det öppnas och vilka länkar som klickas, med en liten bild
         och länkar som går via vår e-posttjänst Resend. Vi använder det bara för att förstå vad
         som är intressant och göra nyhetsbrevet bättre. Övriga mejl från PIF, som aviseringar och
-        inloggningsmejl, mäts inte. Du kan när som helst avsluta nyhetsbrevet.
+        inloggningsmejl, mäts inte på det sättet. Du kan när som helst avsluta nyhetsbrevet.
       </p>
       <p className={p}>
-        Länkarna i nyhetsbrevet är märkta med vilket utskick de kommer från. Om du klickar på en
-        sådan länk och inom 30 dagar skapar ett konto, lägger upp ditt första inlägg, visar intresse
-        eller sparar ett inlägg, sparar vi vilket utskick det var, kopplat till ditt konto. Har du
-        anmält dig till nyhetsbrevet innan du skapade ett konto kan vi också se att du har gått med.
-        Vi tittar bara på sammanlagda siffror per utskick, till exempel hur många som skapade ett
-        konto efter ett visst nyhetsbrev, för att förstå vilka utskick som gör nytta.
+        Länkarna i nyhetsbrevet och i våra mejl om nyheter i PIF är märkta med vilket utskick de
+        kommer från. Om du klickar på en sådan länk sparar vi, kopplat till ditt konto, att du kom
+        in i appen från det utskicket, och om du inom 30 dagar skapar ett konto, lägger upp ditt
+        första inlägg, visar intresse eller sparar ett inlägg. Har du anmält dig till nyhetsbrevet
+        innan du skapade ett konto kan vi också se att du har gått med. Vi tittar bara på
+        sammanlagda siffror per utskick, till exempel hur många som kom in i appen eller skapade ett
+        konto efter ett visst utskick, för att förstå vilka utskick som gör nytta.
       </p>
 
       <h2 className={h2}>7. Åldersgräns</h2>
@@ -312,15 +313,16 @@ function EnglishPolicy() {
         In our newsletter we measure whether it is opened and which links are clicked, using a
         small image and links that pass through our email service Resend. We use this only to
         understand what is interesting and to improve the newsletter. Other emails from PIF, such
-        as notifications and sign-in emails, are not measured. You can unsubscribe at any time.
+        as notifications and sign-in emails, are not measured in that way. You can unsubscribe at any time.
       </p>
       <p className={p}>
-        Links in the newsletter are tagged with the issue they come from. If you click such a link
-        and within 30 days create an account, post for the first time, show interest or save a
-        post, we store which issue it was, linked to your account. If you signed up for the
-        newsletter before creating an account, we can also see that you have joined. We only look
-        at totals per issue, for example how many people created an account after a given
-        newsletter, to understand which issues are useful.
+        Links in the newsletter and in our emails about what's new in PIF are tagged with the email
+        they come from. If you click such a link, we store, linked to your account, that you came
+        into the app from that email, and whether within 30 days you create an account, post for
+        the first time, show interest or save a post. If you signed up for the newsletter before
+        creating an account, we can also see that you have joined. We only look at totals per
+        email, for example how many people came into the app or created an account after a given
+        email, to understand which emails are useful.
       </p>
 
       <h2 className={h2}>7. Age Restriction</h2>

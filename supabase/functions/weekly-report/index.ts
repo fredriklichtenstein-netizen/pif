@@ -131,9 +131,29 @@ function render(cur: Stats, prev: Stats, weekNo: number, from: Date, to: Date) {
     head(s.section);
     for (const [k, label] of s.rows) row(label, num(cur, k), num(prev, k));
   }
-  if (campRows.length) {
-    head("Nyhetsbrev");
-    for (const [k, label] of campRows) row(label, camp(cur)[k] ?? 0, camp(prev)[k] ?? 0);
+  head("Nyhetsbrev");
+  row("Kom in i appen från nyhetsbrevet", num(cur, "newsletter_clicks"), num(prev, "newsletter_clicks"));
+  for (const [k, label] of campRows) row(label, camp(cur)[k] ?? 0, camp(prev)[k] ?? 0);
+
+  // Feature updates: the popup in the app and the email (?ref=fa- links).
+  const fev = (s: Stats) => (s.feature_events && typeof s.feature_events === "object" ? (s.feature_events as Record<string, number>) : {});
+  const fevKeys = Array.from(new Set([...Object.keys(fev(cur)), ...Object.keys(fev(prev))]));
+  const latest = typeof (cur as any).announcement_latest === "string" ? String((cur as any).announcement_latest) : "";
+  head("Funktionsnyheter");
+  if (latest) {
+    const d = new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "short" }).format(new Date(`${latest}T12:00:00Z`));
+    // A snapshot (only the latest "seen" time is stored), so no comparison.
+    const seen = num(cur, "announcement_seen_total");
+    html += `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">Har sett senaste nyheten i appen (${d}), totalt</td>`
+      + `<td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:600">${seen}</td>`
+      + `<td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;color:#6b7280">–</td><td style="border-bottom:1px solid #eee"></td></tr>`;
+    text += `  Har sett senaste nyheten i appen (${d}), totalt: ${seen}\n`;
+    row("… varav nya den här veckan", num(cur, "announcement_seen_new"), num(prev, "announcement_seen_new"));
+  }
+  row("Kom in i appen från nyhetsmejlet", num(cur, "feature_clicks"), num(prev, "feature_clicks"));
+  for (const k of fevKeys) {
+    const label = (CAMPAIGN_LABELS[k] ?? k).replace("via nyhetsbrev", "via nyhetsmejlet");
+    row(label, fev(cur)[k] ?? 0, fev(prev)[k] ?? 0);
   }
   html += `</table><p style="margin-top:16px;color:#9ca3af;font-size:12px">Skickas varje måndag från PIF. Svara på mejlet för frågor.</p></div>`;
   return { title, html, text };
