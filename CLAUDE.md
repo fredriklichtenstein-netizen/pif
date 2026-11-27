@@ -340,6 +340,9 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
   function `weekly-report` (verify_jwt off) → `_weekly_report_stats(from, to)` for last week
   (Mon–Sun, Swedish time) and the week before → one email via Resend from
   `PIF <reports@pif.today>`, reply-to hej@pif.community. Migration `20261127170000_weekly_report`.
+- Sections include newsletter and feature-email click-throughs (`nl-` / `fa-` touches) and how
+  many have seen the latest feature popup (`last_seen_announcement_at`; a running total, so no
+  week-before figure).
 - **Counts only** — no names, emails or addresses — because a recipient is outside the
   organisation. Keep it that way when adding figures.
 - Recipients: function secret `WEEKLY_REPORT_TO` (comma-separated); without it the function
@@ -350,7 +353,9 @@ Resend broadcasts, one per language. Never call it "weekly" or name a weekday in
 
 What people do in the app after clicking a newsletter link. Reported per campaign as counts only.
 - **Links:** `scripts/newsletter.ts` adds `?ref=nl-<issue file name>` to every link into the app
-  (logo, posts, button, text version). Only `nl-[a-z0-9-]{1,60}` is accepted anywhere.
+  (logo, posts, button, text version). Feature-update emails (`send-notification-email`,
+  broadcast mode) tag their app links `?ref=fa-<published_at date>` (since 2026-11-27, migration
+  `20261127200000_feature_email_tracking`). Only `(nl|fa)-[a-z0-9-]{1,60}` is accepted anywhere.
 - **App:** `src/components/analytics/CampaignTracker.tsx` (mounted in `App.tsx`) picks the tag up
   on any route (also in-app deep links), keeps it on the device for 30 days
   (`src/lib/campaignRef.ts`, latest click wins), removes it from the URL, and once signed in calls
