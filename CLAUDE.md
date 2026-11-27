@@ -499,6 +499,11 @@ It is not a second product — no native-only features or UI.
   inside them is gitignored. On the Mac: `bun install`, `scripts/native-build.sh staging`, then
   `bunx cap open ios` / `bunx cap open android`. Re-run the script after every web or plugin
   change. Both are portrait-only on phones.
+- **No Simulator.app in Xcode 27** (seen 2026-11-26, Xcode 27.2): the simulator window is
+  **DeviceHub** (`/Applications/Xcode.app/Contents/Applications/DeviceHub.app`, bundle id
+  `com.apple.dt.Devices`). `open -a Simulator` fails; `xcrun simctl` (install, openurl, io
+  screenshot, status_bar, addmedia) works as before. App Store screenshot devices: iPhone 17 Pro
+  Max (6.9", 1320×2868) and iPad Pro 13-inch (M5) (2064×2752).
 - **TestFlight (decided 2026-11-19):** TestFlight builds are the production build
   (`scripts/native-build.sh production` on `main`), uploaded from Xcode (Any iOS Device → Product
   → Archive → Distribute App → App Store Connect). No side-by-side staging app yet; staging builds
