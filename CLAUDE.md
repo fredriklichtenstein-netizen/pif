@@ -532,6 +532,12 @@ It is not a second product — no native-only features or UI.
   openurl <id> https://pif.today/<path>` navigates inside the installed app (Universal Link); if a
   "◀ <app>" back link then shows in the status bar, `simctl terminate` + `launch` the app before a
   screenshot.
+- **Store listings** (same layout as the Morot project): `appstore/metadata.md` (texts, keywords,
+  privacy answers, review notes, one `## Version X` section per release) with screenshots in
+  `appstore/skarmdumpar/<version>/<iphone-6.9|ipad-13>/` as JPEG, and `playstore/metadata.md` for
+  Google Play. Check lengths and emoji with `python3 scripts/kolla-appstore.py <version> [--play]`.
+  Take store screenshots with a demo account on **staging**, not production (2026-11-27 they were
+  taken on production and the demo posts then had to be deleted).
 - **TestFlight (decided 2026-11-19):** TestFlight builds are the production build
   (`scripts/native-build.sh production` on `main`), uploaded from Xcode (Any iOS Device → Product
   → Archive → Distribute App → App Store Connect). No side-by-side staging app yet; staging builds
